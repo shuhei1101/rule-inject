@@ -406,7 +406,7 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. 冴頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し、記録フォルダのログへ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にする）
+      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し、記録フォルダのログへ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にする）
       2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に足す
       3. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
     unit_tests:

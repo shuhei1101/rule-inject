@@ -87,5 +87,5 @@ requirements:
     value: 3.12 以上
     rationale: PoC 検証と設計の段で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
     measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動き、後者は版が足りない知らせが出ることを確かめる
-    overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冴頭で版を確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` の版」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
+    overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冒頭で版を確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` の版」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
 lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。
