@@ -1,0 +1,79 @@
+title: "ルールを読んでからファイルを触る"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし（実の Claude Code を `claude -p` で動かす）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: ルールの場所と、当てるパスの glob（対象のファイルに当たる）・書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: プロジェクト用の環境変数で指す
+    flow: |-
+      ```mermaid
+      flowchart TD
+        A[対象のファイルを書こうとする] --> B[未読のルールの案内を受ける<br/>（操作が止められる）]
+        B --> C[ルールの本文を MCP のツールで取得する<br/>（既読になる）]
+        C --> D[同じ書く操作をやり直す]
+        D --> E[案内なしで書ける]
+      ```
+    expected:
+      - 1 回目の書く操作は止められ、案内にルールの場所が載っている
+      - ルールの本文を取得したツールの応答に、ルールの本文が載っている
+      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+    test: test_normal
+  - name: 正常シナリオ（本文を Bash で読む）
+    setup:
+      - name: Mock
+        description: なし（実の Claude Code を `claude -p` で動かす）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 正常シナリオと同じエントリを 1 つ持つ YAML
+    flow: |-
+      ```mermaid
+      flowchart TD
+        A[対象のファイルを書こうとする] --> B[未読のルールの案内を受ける<br/>（操作が止められる）]
+        B --> C[ルールの本文を Bash の cat で読む<br/>（既読が記録される）]
+        C --> D[同じ書く操作をやり直す]
+        D --> E[案内なしで書ける]
+      ```
+    expected:
+      - 1 回目の書く操作は止められ、案内にルールの場所が載っている
+      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+    test: test_normal_when_read_by_bash
+  - name: 正常シナリオ（圧縮の後）
+    setup:
+      - name: Mock
+        description: なし（実の Claude Code を `claude -p` で動かす）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 正常シナリオと同じエントリを 1 つ持つ YAML
+      - name: 既読のセッション
+        description: 正常シナリオを終え、ルールを既読にしたセッション
+        notes: 同じセッションを `--resume` で続ける
+    flow: |-
+      ```mermaid
+      flowchart TD
+        A[会話を圧縮する<br/>（既読の記録が捨てられる）] --> B[対象のファイルを書こうとする]
+        B --> C[未読のルールの案内を受ける<br/>（操作が止められる）]
+        C --> D[ルールの本文を MCP のツールで取得する]
+        D --> E[案内なしで書ける]
+      ```
+    expected:
+      - 圧縮の後の 1 回目の書く操作は止められ、案内にルールの場所が載っている
+      - 本文を取得し直した後の書く操作は止められず、対象のファイルに中身が書かれている
+    test: test_normal_when_after_compact
+lead: Claude Code がファイルを書こうとしたとき、当たる未読のルールで止められ、ルールの本文を読んでから同じ操作をやり直して通る一連の流れ。
+issue: 2
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: ユーザー
+    interest: 索引に書いたルールが、対象のファイルを書く前に必ず読まれること
+trigger: Claude Code が、索引のエントリに当たるファイルを書こうとする
+preconditions:
+  - プラグインが Claude Code に読み込まれている
+  - 索引を指す環境変数が設定され、対象のファイルに当たるエントリ（書く操作が必須）が 1 つある
+success_guarantee: 対象のファイルは、当たるルールの本文を読んだ後にだけ書かれる。
+minimal_guarantee: ルールを読むまで、対象のファイルは書かれない。
