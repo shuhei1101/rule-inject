@@ -1,0 +1,262 @@
+title: "プラグイン / 共通"
+lead: フックと MCP サーバーが共有する、記録フォルダ・場所の解決・ログ・例外。標準ライブラリだけで書く。
+directory: |-
+  ```text
+  src/rule_inject/
+  ├── __init__.py
+  └── shared/
+      ├── __init__.py
+      ├── errors.py     # 索引・既読の記録の読み書きの例外
+      ├── paths.py      # 記録フォルダとルールの場所の解決
+      └── logger.py     # 失敗をログ（JSON Lines）へ書く
+  ```
+classes:
+  - name: RuleInjectError
+    title: プラグインの例外
+    container: shared/errors.py
+    usecase: 共通
+    summary: このプラグインが送出する例外の基底
+    kind: クラス
+    inherits: Exception
+    properties:
+      - name: path
+        type: str
+        description: 失敗した操作の対象のファイル・フォルダ・場所
+      - name: reason
+        type: str
+        description: 理由（元の例外のクラス名と文面）
+  - name: IndexReadError
+    title: 索引が読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 索引が無い・読めない・書式に合わない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: RecordReadError
+    title: 既読の記録が読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 記録ファイルはあるが読めない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: RecordWriteError
+    title: 既読の記録に書けない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 記録フォルダが作れない・記録ファイルに追記できない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: RecordDeleteError
+    title: 既読の記録を消せない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 記録ファイルはあるが消せない
+    kind: クラス
+    inherits: RuleInjectError
+enums:
+  - name: LogOperation
+    title: 失敗した操作
+    container: shared/logger.py
+    usecase: 共通
+    summary: ログの `operation` の値
+    values:
+      - value: read_index
+        title: 索引の読み込み
+        description: 索引が読めない
+      - value: read_record
+        title: 既読の読み込み
+        description: 記録ファイルが読めない
+      - value: write_record
+        title: 既読の追記
+        description: 記録に書けない
+      - value: delete_record
+        title: 既読の削除
+        description: 記録ファイルを消せない
+      - value: unexpected
+        title: 想定外
+        description: 上のどれにも当たらない例外
+  - name: Component
+    title: 出した元
+    container: shared/logger.py
+    usecase: 共通
+    summary: ログの `component` の値（インターフェース定義の識別子）
+    values:
+      - value: rule_guide
+        title: ルール案内
+        description: PreToolUse の案内
+      - value: session_id_injection
+        title: セッションIDの付与
+        description: PreToolUse の session_id の注入
+      - value: record_read
+        title: 既読の記録
+        description: PostToolUse
+      - value: discard_read
+        title: 既読の記録の破棄
+        description: PreCompact
+      - value: work_rules
+        title: 作業の決まりの注入
+        description: SessionStart
+      - value: read_rules
+        title: ルール本文の取得
+        description: MCP のツール
+constants:
+  - name: STATE_DIR_NAME
+    title: 記録フォルダの名前
+    container: shared/paths.py
+    summary: 既定の記録フォルダの最後の名前
+    value: '`rule-inject`'
+  - name: LOG_FILE_NAME
+    title: ログのファイル名
+    container: shared/logger.py
+    summary: 記録フォルダの下のログの名前
+    value: '`rule-inject.log`'
+functions:
+  - name: state_dir
+    title: 記録フォルダの解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: 環境変数から既読の記録とログを置くフォルダを決める
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: Path
+      description: 記録フォルダの絶対パス（作らない）
+    process: |-
+      1. `RULE_INJECT_STATE_DIR` があれば `~` を展開して返す
+      2. 無ければ `XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `STATE_DIR_NAME` を返す
+    unit_tests:
+      - name: test_state_dir_when_env_set
+        case: 正常
+        summary: 環境変数の値を使う
+        condition: '`RULE_INJECT_STATE_DIR=~/x`'
+        mock: なし
+        expected: '`~` を展開した `x` の絶対パス'
+      - name: test_state_dir_when_xdg_state_home
+        case: 正常
+        summary: XDG_STATE_HOME の下を使う
+        condition: '`RULE_INJECT_STATE_DIR` なし、`XDG_STATE_HOME=/s`'
+        mock: なし
+        expected: '`/s/rule-inject`'
+      - name: test_state_dir_when_no_env
+        case: 正常
+        summary: 既定の場所を使う
+        condition: どちらの環境変数も無い
+        mock: なし
+        expected: '`~/.local/state/rule-inject` の絶対パス'
+  - name: resolve_location
+    title: 場所の解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: ルールの場所や対象のパスを、照合・記録に使う正規の形へ揃える
+    kind: 関数
+    scope: public
+    args:
+      - name: location
+        type: str
+        required: true
+        passing: positional
+        description: URL・絶対パス・`~` で始まるパス・相対パス
+      - name: base
+        type: Path
+        required: true
+        passing: positional
+        description: 相対パスを解く基準
+    returns:
+      type: str
+      description: URL はそのまま、パスは `~` を展開して基準から解き、`..` を畳んだ絶対パス（シンボリックリンクは辿らない）
+    process: |-
+      1. `http://` / `https://` で始まればそのまま返す
+      2. `~` を展開し、相対なら `base` と結ぶ
+      3. `os.path.normpath` で畳んで返す
+    unit_tests:
+      - name: test_resolve_location_when_url
+        case: 正常
+        summary: URL は変えない
+        condition: '`https://example.com/a.md`'
+        mock: なし
+        expected: 同じ文字列
+      - name: test_resolve_location_when_relative
+        case: 正常
+        summary: 相対パスを基準から解く
+        condition: '`../r/a.md`、基準 `/p/idx`'
+        mock: なし
+        expected: '`/p/r/a.md`'
+      - name: test_resolve_location_when_home
+        case: 正常
+        summary: '`~` を展開する'
+        condition: '`~/r/a.md`'
+        mock: なし
+        expected: ホームの下の `r/a.md` の絶対パス
+  - name: write_log
+    title: ログの書き出し
+    container: shared/logger.py
+    usecase: 共通
+    summary: 失敗した操作を ER 図「ログ」の形で 1 行追記する
+    kind: 関数
+    scope: public
+    side_effects: ログに 1 行追記する。書けないときは標準エラー出力へ 1 行出す
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: component
+        type: Component
+        required: true
+        passing: keyword
+        description: 出した元
+      - name: operation
+        type: LogOperation
+        required: true
+        passing: keyword
+        description: 失敗した操作
+      - name: reason
+        type: str
+        required: true
+        passing: keyword
+        description: 理由
+      - name: session_id
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: セッション
+      - name: path
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 対象のパス
+      - name: now
+        type: Callable[[], datetime]
+        required: false
+        default: 現在の UTC の時刻
+        passing: injected
+        description: 時刻の取得
+    returns:
+      type: None
+      description: なし
+    process: |-
+      1. 時刻（UTC の ISO 8601）と引数を JSON の 1 行にする
+      2. 記録フォルダを作り、`rule-inject.log` へ追記する
+      3. OSError なら同じ 1 行を標準エラー出力へ出す（例外は送出しない）
+    unit_tests:
+      - name: test_write_log
+        case: 正常
+        summary: ログに 1 行追記する
+        condition: 書ける一時フォルダ、`now` は固定の時刻
+        mock: なし
+        expected: '`rule-inject.log` に time・component・session_id・operation・path・reason を持つ JSON が 1 行ある'
+      - name: test_write_log_when_unwritable
+        case: 異常
+        summary: 書けないとき標準エラー出力へ出す
+        condition: 書き込み権限の無いフォルダ
+        mock: なし
+        expected: 例外を送出せず、標準エラー出力に同じ JSON が 1 行出る

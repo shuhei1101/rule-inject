@@ -1,0 +1,310 @@
+title: "プラグイン / 本文の取得"
+lead: '`read_rules` の中身。索引に載ったルールの本文をローカルか URL から読み、応答の上限に収めて返し、返した場所を既読にする。'
+directory: |-
+  ```text
+  src/rule_inject/features/fetch/
+  ├── __init__.py   # 公開 API
+  ├── types.py      # RulePage・FetchFailure・ReadRulesResult・FetchUrlFn
+  ├── client.py     # URL の本文の取得（urllib）
+  └── service.py    # read_rules の展開と応答の組み立て
+  ```
+constants:
+  - name: MAX_RESULT_CHARS
+    title: 応答の上限
+    container: features/fetch/service.py
+    summary: 応答の JSON 全体の字数の上限（`anthropic/maxResultSizeChars` にも同じ値を付ける）
+    value: '`40000`'
+    refs:
+      - dev/設計書/非機能要件/非機能要件#requirements[MCPのツールの応答の大きさ]
+  - name: FETCH_TIMEOUT_SEC
+    title: URL の取得の待ち時間
+    container: features/fetch/client.py
+    summary: URL 1 件あたりの待ち時間（秒）
+    value: '`1.0`'
+    refs:
+      - dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
+classes:
+  - name: FetchError
+    title: URL の取得の失敗
+    container: features/fetch/client.py
+    usecase: ルールの本文を取得する
+    summary: HTTP の応答コード・待ち時間の超過・接続の失敗
+    kind: クラス
+    inherits: RuleInjectError
+  - name: ToolArgumentError
+    title: 引数が足りない
+    container: features/fetch/service.py
+    usecase: ルールの本文を取得する
+    summary: '`session_id` が無い・形が外れている、または `locations` と `paths` が空'
+    kind: クラス
+    inherits: ValueError
+data_models:
+  - name: RulePage
+    title: ルールの本文
+    container: features/fetch/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: '`pages[]` の 1 件'
+    properties:
+      - name: location
+        type: str
+        description: 解決後の場所
+      - name: body
+        type: str
+        description: 本文
+  - name: FetchFailure
+    title: 取得できなかった場所
+    container: features/fetch/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: '`failures[]` の 1 件'
+    properties:
+      - name: location
+        type: str
+        description: 場所
+      - name: reason
+        type: str
+        description: 理由
+  - name: ReadRulesResult
+    title: read_rules の応答
+    container: features/fetch/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: 返す本文・次に回す場所・取得できなかった場所
+    properties:
+      - name: pages
+        type: list[RulePage]
+        description: 返す本文
+      - name: deferred
+        type: list[str]
+        description: 上限に収まらず返さなかった場所
+      - name: failures
+        type: list[FetchFailure]
+        description: 取得できなかった場所
+function_types:
+  - name: FetchUrlFn
+    title: URL の取得の関数型
+    container: features/fetch/types.py
+    usecase: ルールの本文を取得する
+    summary: URL と待ち時間を受けて本文を返す（テストで差し替える）
+    args:
+      - name: url
+        type: str
+        required: true
+        description: URL
+      - name: timeout
+        type: float
+        required: true
+        description: 待ち時間（秒）
+    returns:
+      type: str
+      description: 本文。失敗は FetchError
+    implementations:
+      - target: fetch_url
+functions:
+  - name: fetch_url
+    title: URL の本文の取得
+    container: features/fetch/client.py
+    usecase: ルールの本文を取得する
+    summary: URL を 1 回だけ GET して本文を返す（再試行しない）
+    kind: 関数
+    scope: public
+    inherits: FetchUrlFn
+    args:
+      - name: url
+        type: str
+        required: true
+        passing: positional
+        description: '`http://` / `https://` の URL'
+      - name: timeout
+        type: float
+        required: false
+        default: FETCH_TIMEOUT_SEC
+        passing: positional
+        description: 待ち時間（秒）
+    returns:
+      type: str
+      description: UTF-8 で読んだ本文
+    process: |-
+      1. `urllib.request.urlopen` を `timeout` つきで 1 回呼ぶ
+      2. 200 以外は `HTTP {コード}`、待ち時間の超過は `待ち時間（{timeout} 秒）の超過`、そのほかの URLError / OSError はその文面で FetchError にする
+    exceptions:
+      - name: FetchError
+        condition: 200 以外の応答・待ち時間の超過・接続の失敗
+    unit_tests:
+      - name: test_fetch_url
+        case: 正常
+        summary: 本文を返す
+        condition: 200 と本文を返す Mock
+        mock: '`urllib.request.urlopen`'
+        expected: 本文。urlopen に `timeout=1.0` が渡り、1 回だけ呼ばれる
+      - name: test_fetch_url_when_http_error
+        case: 異常
+        summary: '404'
+        condition: HTTPError(404) を送出する Mock
+        mock: '`urllib.request.urlopen`'
+        expected: FetchError（reason が `HTTP 404`）。1 回だけ呼ばれる
+        exception: 200 以外の応答
+      - name: test_fetch_url_when_timeout
+        case: 異常
+        summary: 待ち時間の超過
+        condition: TimeoutError を送出する Mock
+        mock: '`urllib.request.urlopen`'
+        expected: FetchError（reason に待ち時間の超過）
+        exception: 待ち時間の超過
+    connectivity_tests:
+      - name: test_ext_fetch_url_when_github_raw
+        api: GitHub の raw のファイル
+        summary: 実際の URL から本文を取得できる
+        checks: '`https://raw.githubusercontent.com/shuhei1101/rule-inject/master/README.md` が 1 秒以内に返り、本文が空でない'
+        cost: なし
+  - name: read_rules
+    title: ルールの本文の取得
+    container: features/fetch/service.py
+    usecase: ルールの本文を取得する
+    summary: 索引に載ったルールの本文を集め、上限に収めて返し、返した場所を既読にする
+    kind: 関数
+    scope: public
+    side_effects: 返した場所を既読の記録へ追記する
+    args:
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 読みたいルールの場所
+      - name: paths
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 触るファイルのパス
+      - name: session_id
+        type: str | None
+        required: true
+        passing: positional
+        description: セッション
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: keyword
+        description: 索引のエントリ
+      - name: state_dir
+        type: Path
+        required: true
+        passing: keyword
+        description: 記録フォルダ
+      - name: fetch
+        type: FetchUrlFn
+        required: false
+        default: fetch_url
+        passing: injected
+        description: URL の取得
+      - name: limit
+        type: int
+        required: false
+        default: MAX_RESULT_CHARS
+        passing: keyword
+        description: 応答の上限
+    returns:
+      type: ReadRulesResult
+      description: 返す本文・次に回す場所・取得できなかった場所
+    process: |-
+      1. `session_id` が形に合わない、または `locations` と `paths` がどちらも空なら ToolArgumentError
+      2. `locations` を `resolve_location` で解き、`rule_locations(entries)` に無いものは `索引に載っていない場所` として failures へ
+      3. `paths` ごとに `match_path(entries, path, "read")` の場所を足し、重なりを落とす
+      4. 場所ごとに本文を読む（URL は `fetch`、パスは UTF-8）。失敗は failures へ
+      5. `render_result` で数えた字数が `limit` を超える本文は deferred へ回す。本文 1 件だけで超えるものは failures へ
+      6. pages の場所を `append_record` で既読にする
+    exceptions:
+      - name: ToolArgumentError
+        condition: '`session_id` が無い・形が外れている'
+      - name: ToolArgumentError
+        condition: '`locations` と `paths` がどちらも空'
+      - name: RecordWriteError
+        condition: 既読の記録に書けない（append_record からそのまま送出）
+    unit_tests:
+      - name: test_read_rules
+        case: 正常
+        summary: 場所で引いて既読にする
+        condition: 索引に載ったローカルのルール 1 件
+        mock: なし
+        expected: pages に 1 件、記録ファイルにその場所
+      - name: test_read_rules_when_by_path
+        case: 正常
+        summary: 対象のパスで引く
+        condition: '`**/*.py` と `**/*.ts` のエントリ、`paths` に `.py`'
+        mock: なし
+        expected: pages に `.py` のルールだけ
+      - name: test_read_rules_when_url
+        case: 正常
+        summary: URL を fetch で取得する
+        condition: 索引に載った URL、fetch は本文を返す
+        mock: fetch
+        expected: pages に URL と本文。fetch に URL と `1.0` が渡る
+      - name: test_read_rules_when_not_in_index
+        case: 正常
+        summary: 索引に無い場所は読まない
+        condition: 索引に無い実在するパスと URL
+        mock: fetch
+        expected: failures に 2 件（索引に載っていない場所）。fetch は呼ばれない
+      - name: test_read_rules_when_over_limit
+        case: 正常
+        summary: 上限を超える本文を deferred へ回す
+        condition: '`limit=100` と、合わせると 100 字を超える本文 2 件'
+        mock: なし
+        expected: pages 1 件、deferred 1 件、記録は pages の 1 件だけ
+      - name: test_read_rules_when_single_over_limit
+        case: 正常
+        summary: 1 件で上限を超える本文
+        condition: '`limit=100` と 200 字の本文 1 件'
+        mock: なし
+        expected: failures に 1 件（上限を超える）
+      - name: test_read_rules_when_fetch_failed
+        case: 正常
+        summary: 取得できない場所を failures へ
+        condition: 実在しないローカルの場所と、FetchError を送出する URL
+        mock: fetch
+        expected: failures に 2 件、記録ファイルが無い
+      - name: test_read_rules_when_no_session_id
+        case: 異常
+        summary: session_id が無い
+        condition: '`session_id=None`'
+        mock: なし
+        expected: ToolArgumentError
+        exception: '`session_id` が無い・形が外れている'
+      - name: test_read_rules_when_no_target
+        case: 異常
+        summary: 引く対象が無い
+        condition: '`locations` と `paths` が空'
+        mock: なし
+        expected: ToolArgumentError
+        exception: '`locations` と `paths` がどちらも空'
+      - name: test_read_rules_when_record_unwritable
+        case: 異常
+        summary: 記録に書けない
+        condition: 書き込み権限の無い記録フォルダ
+        mock: なし
+        expected: RecordWriteError
+        exception: 既読の記録に書けない
+  - name: render_result
+    title: 応答の JSON 化
+    container: features/fetch/service.py
+    usecase: ルールの本文を取得する
+    summary: ReadRulesResult を応答の JSON 文字列にする（字数の数え方と実際の応答を揃える）
+    kind: 関数
+    scope: public
+    args:
+      - name: result
+        type: ReadRulesResult
+        required: true
+        passing: positional
+        description: 応答
+    returns:
+      type: str
+      description: '`ensure_ascii=False` の JSON'
+    unit_tests:
+      - name: test_render_result
+        case: 正常
+        summary: 3 つのキーを持つ JSON
+        condition: pages 1 件・deferred 1 件・failures 1 件
+        mock: なし
+        expected: pages・deferred・failures を持ち、日本語がエスケープされていない
