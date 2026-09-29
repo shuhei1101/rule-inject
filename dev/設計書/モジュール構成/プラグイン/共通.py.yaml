@@ -529,3 +529,7 @@ functions:
         condition: '`rule-inject.log` を置き、記録フォルダを書き込み権限なし（`chmod 555`）'
         mock: なし
         expected: LogDeleteError（path がそのファイル）で、ファイルが残る
+test_files:
+  - tests/unit/rule_inject/shared/test_paths.py
+  - tests/unit/rule_inject/shared/test_logger.py
+  - tests/unit/rule_inject/shared/test_settings.py

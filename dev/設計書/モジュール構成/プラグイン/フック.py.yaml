@@ -503,3 +503,12 @@ notes:
   hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
   Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
+test_files:
+  - tests/unit/rule_inject/hooks/test_runner.py
+  - tests/unit/rule_inject/hooks/test_rule_guide.py
+  - tests/unit/rule_inject/hooks/test_session_id_injection.py
+  - tests/unit/rule_inject/hooks/test_record_read.py
+  - tests/unit/rule_inject/hooks/test_discard_read.py
+  - tests/unit/rule_inject/hooks/test_work_rules.py
+  - tests/unit/rule_inject/hooks/test_sweep_read.py
+  - tests/unit/hooks/test_run.py
