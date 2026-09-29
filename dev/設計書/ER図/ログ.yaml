@@ -5,12 +5,15 @@ tables:
     title: ログ
     datastore: JSON Lines（UTF-8、1 行 = 1 件）
     summary: 失敗した操作とその理由
-    scale: 次のセッションの開始の時点で、`rule-inject.log` と `rule-inject.log.1` を合わせて非機能要件「ログの上限の大きさ」の 2 倍まで
+    scale: '`rule-inject.log` は非機能要件「ログの上限の大きさ」に、最後の付け替えの後のセッションで書き足した分を足した大きさまで。`rule-inject.log.1` は付け替えた時点のログの大きさ'
     growth: 失敗のたびに 1 行追記する
     retention: '大きさが上限を超えたら、次のセッションの開始で `rule-inject.log.1` へ付け替える。`rule-inject.log.1` は次の付け替えまで残る'
     deletion: 付け替えでそれまでの `rule-inject.log.1` を置き換える（物理削除）。利用者が手で消してもよい
     access: 追記（O_APPEND）だけで書く。プラグインは読まない
-    description: フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
+    description: |-
+      フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
+
+      付け替えは、同じフォルダの空の錠のファイル `rule-inject.log.lock` を `flock` で取ったセッションだけが行う。錠のファイルは消さない。
     columns:
       - name: time
         title: 時刻
