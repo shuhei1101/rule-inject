@@ -5,10 +5,10 @@ tables:
     title: ログ
     datastore: JSON Lines（UTF-8、1 行 = 1 件）
     summary: 失敗した操作とその理由
-    scale: 失敗のときだけ書くため数十行のオーダー
+    scale: 次のセッションの開始の時点で、`rule-inject.log` と `rule-inject.log.1` を合わせて非機能要件「ログの上限の大きさ」の 2 倍まで
     growth: 失敗のたびに 1 行追記する
-    retention: '消さない（既読の記録の掃除の対象に含めず、ログの掃除は #11）'
-    deletion: 利用者が手で消す
+    retention: '大きさが上限を超えたら、次のセッションの開始で `rule-inject.log.1` へ付け替える。`rule-inject.log.1` は次の付け替えまで残る'
+    deletion: 付け替えでそれまでの `rule-inject.log.1` を置き換える（物理削除）。利用者が手で消してもよい
     access: 追記（O_APPEND）だけで書く。プラグインは読まない
     description: フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
     columns:
@@ -31,7 +31,7 @@ tables:
         title: 失敗した操作
         type: string
         not_null: true
-        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `unexpected` のいずれか'
+        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `rotate_log` / `unexpected` のいずれか'
       - name: path
         title: 対象のパス
         type: string
