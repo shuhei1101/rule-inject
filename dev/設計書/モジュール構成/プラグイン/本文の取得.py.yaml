@@ -266,3 +266,6 @@ functions:
         condition: 実在しないローカルの場所と、FetchError を送出する URL
         mock: fetch
         expected: failures に 2 件、pages は空
+test_files:
+  - tests/unit/rule_inject/features/fetch/test_client.py
+  - tests/unit/rule_inject/features/fetch/test_service.py

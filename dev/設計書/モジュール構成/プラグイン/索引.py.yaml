@@ -431,3 +431,6 @@ functions:
         condition: '`locations` に `rules/a.md`、`paths` に `src/a.py`'
         mock: なし
         expected: targets は空、rejected に 2 件（相対パスの理由）
+test_files:
+  - tests/unit/rule_inject/features/index/test_yaml.py
+  - tests/unit/rule_inject/features/index/test_service.py
