@@ -57,6 +57,8 @@ flows:
         description: なし
       - name: 既読の記録
         description: 対象のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
+      - name: ログのフォルダ
+        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
         description: '`trigger: manual`'
     flow: |-

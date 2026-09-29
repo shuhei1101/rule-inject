@@ -102,7 +102,7 @@ requirements:
     english_name: log_retention
     category: 保守性
     external_constraint: 制限なし
-    source_kind: 制限なし
+    source_kind: ユーザー要望
     source: https://github.com/shuhei1101/rule-inject/pull/12#discussion_r4134801433
     value: '3'
     unit: 日
