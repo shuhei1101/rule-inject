@@ -1,0 +1,40 @@
+title: "非機能要件"
+requirements:
+  - name: フックの実行時間
+    english_name: hook_duration
+    category: 性能
+    external_constraint: command フックの既定のタイムアウト 600 秒
+    source_kind: 実行基盤の制限
+    source: https://code.claude.com/docs/en/hooks
+    value: 未確定
+    unit: 秒
+    rationale: フックは操作のたびに走るため、外部の上限より短い値が要る。索引の読み込みと照合の件数が決まる単一ユースケース設計で決める
+  - name: フックの案内文の長さ
+    english_name: hook_context_length
+    category: 性能
+    external_constraint: フックの additionalContext などの文字列は 1 つあたり 10,000 字まで。超えるとファイルへ退避され、先頭 2,000 字のプレビューに置き換わる
+    source_kind: 実行基盤の制限
+    source: https://code.claude.com/docs/en/hooks
+    value: 10,000
+    unit: 字
+    rationale: 外部の上限そのまま
+    overflow: 案内文を出力する前に字数を数える。超えたときの処置は単一ユースケース設計で決め、黙って切り捨てない
+  - name: MCP のツールの応答の大きさ
+    english_name: mcp_output_size
+    category: 性能
+    external_constraint: MCP のツールの出力は既定で 25,000 トークンまで（10,000 トークンを超えると警告）。超えるとファイルへ退避され、会話にはファイルのパスだけが載る
+    source_kind: 実行基盤の制限
+    source: https://code.claude.com/docs/en/mcp
+    value: 25,000
+    unit: トークン
+    rationale: 外部の上限そのまま（利用者が `MAX_MCP_OUTPUT_TOKENS` で変えない前提）
+    overflow: ルールの本文を返す前に大きさを数える。超えたときの処置は単一ユースケース設計で決め、黙って切り捨てない
+  - name: 対応 OS
+    english_name: supported_os
+    category: 動作環境
+    external_constraint: 未確定
+    source_kind: ユーザー要望
+    source: https://github.com/shuhei1101/rule-inject/issues/2
+    value: 未確定
+    rationale: Issue の構成方針は Linux / WSL。版の範囲は PoC 検証で動かした環境をもとに設計で決める
+lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。
