@@ -176,3 +176,4 @@ response:
     constraints: 10,000 字以内
 notes:
   対象外のツール: 組み込みの Grep は matcher に含めない。一致した行だけを返し、ルールの本文全体を読んだことにならないため、既読にはしない（案内はルール案内が行う）。Bash の `grep` も同じ理由で、既読にするのは全体を出す読むコマンド（`cat` / `bat` / `less` / `more`）だけにする
+test_file: tests/integration/plugin/test_record_read.py

@@ -320,3 +320,4 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力（MCP のログに残る）へ出す
     notes: stdio の MCP サーバーは標準出力が通信に使われるため、標準出力へは書かない
+test_file: tests/integration/plugin/test_read_rules.py

@@ -87,3 +87,4 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
 identifier: session_id_injection
+test_file: tests/integration/plugin/test_session_id_injection.py

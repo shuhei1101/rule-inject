@@ -86,3 +86,4 @@ request:
     required: true
     description: セッションが始まったきっかけ
     notes: '`compact` のときだけ、消し残った既読の記録ファイルが無いかを確かめる'
+test_file: tests/integration/plugin/test_work_rules.py

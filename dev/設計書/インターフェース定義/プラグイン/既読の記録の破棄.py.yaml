@@ -109,3 +109,4 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
 identifier: discard_read
+test_file: tests/integration/plugin/test_discard_read.py
