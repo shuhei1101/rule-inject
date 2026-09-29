@@ -91,6 +91,7 @@ def test_error_when_record_unwritable(
     hook_payload: Callable[..., dict[str, Any]],
     rule_index: tuple[Path, Path],
     state_dir: Path,
+    log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
     """記録のフォルダに書けないとき、既読にできなかった理由を載せる（異常系）。"""
@@ -98,6 +99,8 @@ def test_error_when_record_unwritable(
     index, rule = rule_index
     state_dir.mkdir()
     unwritable(state_dir, 0o555)
+    log_folder.mkdir()
+    unwritable(log_folder, 0o555)
     payload = hook_payload("PostToolUse", tool_name="Read", tool_input={"file_path": str(rule)})
     # 実行
     completed = run_hook("record_read", payload, index=index)

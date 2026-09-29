@@ -1,10 +1,10 @@
 title: "プラグイン / 既読の記録"
-lead: セッションごとの既読の記録ファイル（ER 図「既読の記録」）の読み・追記・削除。
+lead: セッションごとの既読の記録ファイル（ER 図「既読の記録」）の読み・追記・削除・掃除。
 directory: |-
   ```text
   src/rule_inject/features/record/
   ├── __init__.py   # 公開 API
-  └── service.py    # 記録ファイルの読み・追記・削除
+  └── service.py    # 記録ファイルの読み・追記・削除・掃除
   ```
 constants:
   - name: SESSION_ID_PATTERN
@@ -216,5 +216,78 @@ functions:
         condition: 記録ファイルがあるセッションと無いセッション
         mock: なし
         expected: True と False
+  - name: sweep_records
+    title: 既読の掃除
+    container: features/record/service.py
+    usecase: 終わったセッションの既読の記録が掃除される
+    summary: 保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものを返す
+    kind: 関数
+    scope: public
+    side_effects: 記録ファイルを消す
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: keep_session_id
+        type: str
+        required: true
+        passing: positional
+        description: 消さないセッション（始まったセッション）の、形を確かめた session_id
+      - name: now
+        type: Callable[[], float]
+        required: false
+        default: time.time
+        passing: injected
+        description: 現在の時刻（UNIX 時刻の秒）を返す関数
+      - name: retention_days
+        type: int
+        required: true
+        passing: keyword
+        description: 保持日数（1 以上。呼び出し元が `read_retention_days` で読む）
+    returns:
+      type: tuple[RecordDeleteError, ...]
+      description: 消せなかった記録ファイルごとの失敗。全て消せたか消すものが無ければ空
+    process: |-
+      1. `os.scandir(state_dir)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
+      2. 名前が `{session_id}{RECORD_SUFFIX}` の形（`is_valid_session_id`）に合い、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
+      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
+      4. 消せないもの（その他の OSError）は RecordDeleteError にして集め、残りの掃除を続ける
+    exceptions:
+      - name: OSError
+        condition: 記録フォルダはあるが列挙できない（FileNotFoundError 以外）。捕まえずに送出し、フックの最上位が `unexpected` として扱う
+    unit_tests:
+      - name: test_sweep_records
+        case: 正常
+        summary: 保持期間を過ぎた記録ファイルだけを消す
+        condition: '`retention_days` が 30、最終更新が 31 日前と 29 日前の記録ファイル、`now` を固定'
+        mock: '`now`'
+        expected: 31 日前のファイルが無く 29 日前のファイルが残る。戻り値は空
+      - name: test_sweep_records_when_kept_session
+        case: 正常
+        summary: 始まったセッションの記録は消さない
+        condition: '`keep_session_id` の記録ファイルの最終更新が 31 日前'
+        mock: '`now`'
+        expected: そのファイルが残る
+      - name: test_sweep_records_when_not_record
+        case: 正常
+        summary: 記録ファイルでないものは消さない
+        condition: 最終更新が 31 日前の `rule-inject.log`、名前が session_id の形に合わない `a b.txt`、`.txt` で終わるサブフォルダ、`.txt` で終わるシンボリックリンク
+        mock: '`now`'
+        expected: どれも残る
+      - name: test_sweep_records_when_missing
+        case: 正常
+        summary: 記録フォルダが無ければ何もしない
+        condition: まだ無い記録フォルダ
+        mock: なし
+        expected: 戻り値が空で、フォルダを作らない
+      - name: test_sweep_records_when_undeletable
+        case: 異常
+        summary: 消せない記録ファイルを返す
+        condition: 最終更新が 31 日前の記録ファイルを置き、記録フォルダを書き込み権限なし（`chmod 555`）
+        mock: '`now`'
+        expected: RecordDeleteError が 1 件（path がその記録ファイル）で、ファイルが残る
+        exception: 消せない記録ファイルを払い出さずに返す
 test_files:
   - tests/unit/rule_inject/features/record/test_service.py

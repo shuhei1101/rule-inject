@@ -1,0 +1,307 @@
+title: "既読の記録の掃除"
+entry:
+  kind: trigger
+  value: '`SessionStart` フック（timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: 保持期間を過ぎた記録ファイルだけを消す
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 既読の記録
+        description: 別のセッションの記録ファイルを 2 つ置き、最終更新を保持期間より 1 日前と 1 日後にする。記録フォルダに名前が `session_id` の形に合わないファイル（`a b.txt`）も置き、最終更新を保持期間より前にする
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant ST as 記録フォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>ST: 記録ファイルを列挙する
+        ST-->>C: 記録ファイルと最終更新
+        C->>ST: 保持期間を過ぎた記録ファイルを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 保持期間を過ぎた記録ファイルが無い
+      - 保持期間の内側の記録ファイルが残っている
+      - '`a b.txt` が残っている'
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal
+  - name: 正常系（始まったセッションの記録が古い）
+    summary: 始まったセッション自身の記録ファイルは、保持期間を過ぎていても消さない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 既読の記録
+        description: 始まったセッションの記録ファイルと、別のセッションの記録ファイルを 1 つずつ置き、どちらも最終更新を保持期間より 1 日前にする
+        notes: 古い記録を持つセッションを再開した状態。別のセッションのファイルが消えることで、掃除が走ったうえで始まったセッションのファイルだけが残ったと見分ける
+      - name: 入力
+        description: '`source: resume`、`session_id` は始まったセッション'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant ST as 記録フォルダ
+
+        CC->>C: 標準入力（session_id・source: resume）
+        C->>ST: 記録ファイルを列挙する
+        C->>C: 始まったセッションのファイルを除く
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 始まったセッションの記録ファイルが残っている
+      - 別のセッションの記録ファイルが無い
+      - 終了コードが `0`
+    test: test_normal_when_own_record_old
+  - name: 正常系（記録フォルダが無い）
+    summary: 記録フォルダがまだ無くても正常に終える
+    setup:
+      - name: Mock
+        description: なし
+      - name: 既読の記録
+        description: '`RULE_INJECT_STATE_DIR` がまだ無いフォルダを指す'
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+
+        CC->>C: 標準入力（session_id・source）
+        C->>C: 記録フォルダが無い
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録フォルダを作らない
+      - 終了コードが `0`
+    test: test_normal_when_no_state_dir
+  - name: 異常系（記録を消せない・ログにも書けない）
+    summary: 記録ファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 既読の記録
+        description: 保持期間を過ぎた別のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
+      - name: ログのフォルダ
+        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+        notes: 今日のログのファイルも作れないため、標準エラー出力へ出る経路に定まる
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant ST as 記録フォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>ST: 古い記録ファイルを消す（消せない）
+        C->>C: ログに書けないため標準エラー出力へ出す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - '標準エラー出力に `component: sweep_read`・`operation: delete_record` の 1 行がある'
+      - 記録ファイルが残っている（次のセッションの開始でまた消す）
+      - 終了コードが `0`
+    test: test_error_when_record_undeletable
+  - name: 正常系（保持日数を過ぎたログがある）
+    summary: 日付が保持日数以上前のログのファイルだけを消す
+    setup:
+      - name: Mock
+        description: なし（今日の日付は実行時の UTC から求める）
+      - name: ログ
+        description: '`RULE_INJECT_LOG_DIR` のフォルダに、日付が今日・2 日前・3 日前の `{yyyymmdd}_rule-inject.log` と、名前が形に合わないファイル（`notes.txt`）を置く'
+        notes: '`RULE_INJECT_LOG_RETENTION_DAYS` は置かず、既定の 3 日で動かす。2 日前が残り 3 日前が消えることで境界を確かめる'
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant LG as ログのフォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>LG: ログのファイルを列挙する
+        LG-->>C: ファイル名の日付
+        C->>LG: 日付が保持日数以上前のファイルを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 3 日前のログのファイルが無い
+      - 今日と 2 日前のログのファイルが残っている
+      - '`notes.txt` が残っている'
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_old_logs
+  - name: 正常系（保持の値を環境変数で変える）
+    summary: 環境変数で指した保持の値で、記録ファイルとログのファイルを消す
+    setup:
+      - name: Mock
+        description: なし
+      - name: 環境変数
+        description: '`RULE_INJECT_RECORD_RETENTION_DAYS=1`・`RULE_INJECT_LOG_RETENTION_DAYS=1`'
+      - name: 既読の記録
+        description: 別のセッションの記録ファイルを 1 つ置き、最終更新を 2 日前にする
+      - name: ログ
+        description: 日付が今日と 1 日前のログのファイルを置く
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant ST as 記録フォルダ
+        participant LG as ログのフォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>C: 環境変数から保持の値を読む
+        C->>ST: 1 日を過ぎた記録ファイルを消す
+        C->>LG: 日付が 1 日以上前のログのファイルを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが無い
+      - 1 日前のログのファイルが無い
+      - 今日のログのファイルが残っている
+      - 終了コードが `0`
+    test: test_normal_when_retention_env
+  - name: 異常系（ログを消せない・ログにも書けない）
+    summary: 保持日数を過ぎたログのファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: ログ
+        description: 日付が 3 日前のログのファイルだけを置き、ログのフォルダを書き込み権限なし（`chmod 555`）にする
+        notes: 今日のログのファイルも作れないため、標準エラー出力へ出る経路に定まる
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant LG as ログのフォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>LG: 古いログのファイルを消す（消せない）
+        C->>C: ログに書けないため標準エラー出力へ出す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - '標準エラー出力に `component: sweep_read`・`operation: delete_log` の 1 行がある'
+      - 3 日前のログのファイルが残っている（次のセッションの開始でまた消す）
+      - 終了コードが `0`
+    test: test_error_when_log_undeletable
+  - name: 正常系（変更前のログが残っている）
+    summary: 記録フォルダに残った変更前のログ（`rule-inject.log`）を、最終更新によらず消す
+    setup:
+      - name: Mock
+        description: なし
+      - name: 変更前のログ
+        description: 記録フォルダの直下に `rule-inject.log` を置き、最終更新を今にする
+        notes: 変更後のプラグインはこのファイルに書かないため、新しくても消す
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant ST as 記録フォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>ST: 変更前のログを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録フォルダの `rule-inject.log` が無い
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_legacy_log
+  - name: 正常系（保持の値が不正）
+    summary: 環境変数の保持の値が 1 以上の整数でないときは、既定の値で掃除する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 環境変数
+        description: '`RULE_INJECT_LOG_RETENTION_DAYS=0`'
+        notes: '`abc` など整数でない値も同じ扱い。単体テストで並べて確かめる'
+      - name: ログ
+        description: 日付が今日・2 日前・3 日前のログのファイルを置く
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant LG as ログのフォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>C: 保持の値が不正なので既定の 3 日を使う
+        C->>LG: 日付が 3 日以上前のログのファイルを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 3 日前のログのファイルが無い
+      - 今日と 2 日前のログのファイルが残っている
+      - 終了コードが `0`
+    test: test_normal_when_invalid_setting
+lead: セッションの開始時に、最終更新から非機能要件「既読の記録の保持期間」を過ぎた既読の記録ファイルと、日付が非機能要件「ログの保持日数」を過ぎたログのファイルを消す。始まったセッション自身の記録ファイルと、記録ファイルでもログのファイルでもないファイルは消さない。
+identifier: sweep_read
+idempotent: true
+side_effects: 保持期間を過ぎた別のセッションの既読の記録ファイルと、保持日数を過ぎた日付のログのファイルと、記録フォルダに残った変更前のログを消す
+exclusivity: 複数のセッションが同時に始まって同じファイルを消すとき、先に消されて無いファイルは消した状態と同じとして扱う。ログは今日（UTC）の日付のファイルだけに書き足され、消すのは保持日数以上前の日付のファイルだけなので、消すことと追記は同じファイルに当たらない
+request:
+  - name: '`session_id`'
+    type: str
+    required: true
+    description: 始まったセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: このセッションの記録ファイルは消さない。形が外れた値のときは何も消さない
+  - name: '`source`'
+    type: Literal['startup', 'resume', 'clear', 'compact', 'fork']
+    required: true
+    description: セッションが始まったきっかけ
+    notes: どれでも同じように掃除する
+exceptions:
+  - name: なし（正常終了）
+    condition: 終了コード 0 で終え、標準出力には何も出さない
+  - name: OSError（記録を消せない）
+    condition: 保持期間を過ぎた記録ファイルはあるが消せない（権限など）
+    notes: フックの中で捕まえ、ログへ `delete_record` を書き、残りのファイルの掃除を続けて終了コード 0 で終える（セッションの開始は止めない）。消せなかったファイルは次のセッションの開始でまた消す
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
+  - name: OSError（ログを消せない）
+    condition: 保持日数を過ぎたログのファイルか、記録フォルダに残った変更前のログ（`rule-inject.log`）はあるが消せない（権限など）
+    notes: フックの中で捕まえ、ログへ `delete_log` を書き、残りのファイルの掃除を続けて終了コード 0 で終える（セッションの開始は止めない）。消せなかったファイルは次のセッションの開始でまた消す
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: 保持期間
+    constraint: 最終更新から 30 日（`RULE_INJECT_RECORD_RETENTION_DAYS` で変えられる）を過ぎた記録ファイルを消す
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[既読の記録の保持期間]
+  - item: 消す対象
+    constraint: 記録フォルダの直下で、名前が `{session_id}.txt`（`session_id` の形）に合う通常のファイルと変更前のログ（`rule-inject.log`）、ログのフォルダの直下で、名前が `{yyyymmdd}_rule-inject.log` に合う通常のファイルだけ。それ以外のファイル・サブフォルダ・シンボリックリンクは消さない
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+  - item: ログの保持日数
+    constraint: ファイル名の日付が今日（UTC）から 3 日（`RULE_INJECT_LOG_RETENTION_DAYS` で変えられる）以上前のログのファイルを消す。中身は読まない
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[ログの保持日数]
+notes:
+  作業の決まりの注入との分担: 同じ `SessionStart` で動く作業の決まりの注入とは別のフックにする。注入は標準出力へ additionalContext を返し、掃除は何も返さない。始まったセッション自身の記録ファイルを消さないため、注入の圧縮の後の消し残りの確認とぶつからない
+  ログの掃除を同じフックに載せた理由: ログの掃除も同じ `SessionStart` の契機と保持の値の読み方を使うため、別のフックに分けずこのフックに載せた（名前は `sweep_read` のまま）
+test_file: tests/integration/plugin/test_sweep_read.py

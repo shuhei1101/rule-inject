@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from rule_inject.shared.errors import (
@@ -20,6 +21,7 @@ RECORD_SUFFIX = ".txt"
 # 他のプロセスと同時に追記しても行が混ざらないよう、追記専用で開くときのフラグ
 APPEND_FLAGS = os.O_WRONLY | os.O_APPEND | os.O_CREAT
 RECORD_FILE_MODE = 0o600
+SECONDS_PER_DAY = 86_400
 
 
 def _record_path(state_dir: Path, session_id: str) -> Path:
@@ -85,3 +87,42 @@ def delete_record(state_dir: Path, session_id: str) -> None:
 def record_exists(state_dir: Path, session_id: str) -> bool:
     """そのセッションの記録ファイルがあるかを返す。"""
     return _record_path(state_dir, session_id).is_file()
+
+
+def sweep_records(
+    state_dir: Path,
+    keep_session_id: str,
+    *,
+    now: Callable[[], float] = time.time,
+    retention_days: int,
+) -> tuple[RecordDeleteError, ...]:
+    """保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものを返す。"""
+    try:
+        entries = list(os.scandir(state_dir))
+    except FileNotFoundError:
+        # 記録フォルダがまだ無ければ掃除するものが無い（フォルダは作らない）
+        return ()
+    # この時刻より前に更新された記録ファイルが、保持期間を過ぎたもの
+    threshold = now() - retention_days * SECONDS_PER_DAY
+    failures: list[RecordDeleteError] = []
+    for entry in entries:
+        # 記録ファイルの名前でなければ対象にしない
+        if not entry.name.endswith(RECORD_SUFFIX):
+            continue
+        entry_session_id = entry.name.removesuffix(RECORD_SUFFIX)
+        if not is_valid_session_id(entry_session_id) or entry_session_id == keep_session_id:
+            continue
+        # シンボリックリンクとフォルダは辿らず、通常のファイルだけを対象にする
+        if not entry.is_file(follow_symlinks=False):
+            continue
+        try:
+            expired = entry.stat(follow_symlinks=False).st_mtime < threshold
+            if expired:
+                os.unlink(entry.path)
+        except FileNotFoundError:
+            # 別のセッションが先に消していれば、消した状態と同じ
+            continue
+        except OSError as exc:
+            # 消せないものは集め、残りの掃除を続ける
+            failures.append(RecordDeleteError(path=entry.path, reason=describe(exc)))
+    return tuple(failures)

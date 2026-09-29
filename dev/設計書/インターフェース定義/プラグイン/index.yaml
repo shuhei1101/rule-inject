@@ -12,3 +12,5 @@ items:
     summary: 圧縮の前にそのセッションの既読の記録を消す（PreCompact）
   - page: 作業の決まりの注入.py.yaml
     summary: 新しいファイルは空で作ってから書く決まりを載せる（SessionStart）
+  - page: 既読の記録の掃除.py.yaml
+    summary: セッションの開始時に、保持期間を過ぎた既読の記録を消す（SessionStart）

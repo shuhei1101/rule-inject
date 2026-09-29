@@ -6,7 +6,9 @@ import json
 import os
 import subprocess
 import sys
+import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +18,7 @@ SESSION_ID = "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 HOOK_RUN = PROJECT_ROOT / "hooks" / "run.py"
 HOOK_TIMEOUT_SEC = 30
+SECONDS_PER_DAY = 86_400
 
 
 @pytest.fixture
@@ -31,10 +34,17 @@ def state_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def base_env(state_dir: Path, tmp_path: Path) -> dict[str, str]:
-    """このプラグインの環境変数を外し、記録フォルダとプロジェクトの直下だけを足した環境変数。"""
+def log_folder(tmp_path: Path) -> Path:
+    """日付ごとのログを置くログのフォルダ（まだ作らない）。"""
+    return tmp_path / "logs"
+
+
+@pytest.fixture
+def base_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
+    """このプラグインの環境変数を外し、記録フォルダ・ログのフォルダ・プロジェクトの直下だけを足した環境変数。"""
     env = {name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")}
     env["RULE_INJECT_STATE_DIR"] = str(state_dir)
+    env["RULE_INJECT_LOG_DIR"] = str(log_folder)
     env["CLAUDE_PROJECT_DIR"] = str(tmp_path)
     return env
 
@@ -44,10 +54,14 @@ def run_hook(base_env: dict[str, str]) -> Callable[..., subprocess.CompletedProc
     """フックを子プロセスとして起動し、標準入力へ JSON を渡して結果を返す factory。"""
 
     def _run(
-        name: str, payload: dict[str, Any], *, index: Path | str | None = None
+        name: str,
+        payload: dict[str, Any],
+        *,
+        index: Path | str | None = None,
+        extra_env: Mapping[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        """hooks/run.py に name を渡して起動する。index があればプロジェクト用の索引として指す。"""
-        env = dict(base_env)
+        """hooks/run.py に name を渡して起動する。index があればプロジェクト用の索引として指し、extra_env を環境変数に足す。"""
+        env = {**base_env, **(extra_env or {})}
         if index is not None:
             env["RULE_INJECT_INDEXES_PROJECT"] = str(index)
         return subprocess.run(
@@ -151,6 +165,19 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
 
 
 @pytest.fixture
+def set_age_days() -> Callable[[Path, int], Path]:
+    """ファイルの最終更新を、現在から指定の日数前に戻す factory。"""
+
+    def _set(path: Path, age_days: int) -> Path:
+        """path の最終更新を age_days 日前にして返す。"""
+        modified = time.time() - age_days * SECONDS_PER_DAY
+        os.utime(path, (modified, modified))
+        return path
+
+    return _set
+
+
+@pytest.fixture
 def read_lines() -> Callable[[Path], list[str]]:
     """ファイルを UTF-8 で読み、行のリストを返す。"""
 
@@ -162,15 +189,32 @@ def read_lines() -> Callable[[Path], list[str]]:
 
 
 @pytest.fixture
-def read_log(state_dir: Path) -> Callable[[], list[dict[str, Any]]]:
-    """記録フォルダのログ（JSON Lines）を読み、1 行ごとの dict を返す。"""
+def read_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
+    """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
 
     def _read() -> list[dict[str, Any]]:
-        """rule-inject.log の各行を JSON として読む。"""
-        text = (state_dir / "rule-inject.log").read_text(encoding="utf-8")
-        return [json.loads(line) for line in text.splitlines()]
+        """{yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
+        texts = [
+            path.read_text(encoding="utf-8")
+            for path in sorted(log_folder.glob("*_rule-inject.log"))
+        ]
+        return [json.loads(line) for text in texts for line in text.splitlines()]
 
     return _read
+
+
+@pytest.fixture
+def write_dated_log(log_folder: Path) -> Callable[[date], Path]:
+    """日付を名前に持つログのファイルを、ログのフォルダに置く factory。"""
+
+    def _write(day: date) -> Path:
+        """day の日付の `{yyyymmdd}_rule-inject.log` をログのフォルダに置く。"""
+        path = log_folder / f"{day:%Y%m%d}_rule-inject.log"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+        return path
+
+    return _write
 
 
 @pytest.fixture

@@ -10,9 +10,10 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -31,6 +32,7 @@ DEFAULT_MAX_TURNS = 5
 # MCP サーバーの起動の待ち時間（ミリ秒）。入れた直後の最初の起動は uv が依存を取得する分だけ遅い
 MCP_TIMEOUT_MS = "60000"
 READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
+SECONDS_PER_DAY = 86_400
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -171,6 +173,12 @@ def state_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def log_folder(tmp_path: Path) -> Path:
+    """日付ごとのログを置くログのフォルダ。"""
+    return tmp_path / "logs"
+
+
+@pytest.fixture
 def e2e_project(tmp_path: Path) -> Path:
     """Claude Code を起動するプロジェクトのフォルダ（対象のファイルもここへ置く）。"""
     project = tmp_path / "project"
@@ -179,8 +187,10 @@ def e2e_project(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def configure_index(e2e_project: Path, state_dir: Path) -> Callable[[Path | str], None]:
-    """プロジェクトの設定の `env` に、索引と記録フォルダを書く。"""
+def configure_index(
+    e2e_project: Path, state_dir: Path, log_folder: Path
+) -> Callable[[Path | str], None]:
+    """プロジェクトの設定の `env` に、索引・記録フォルダ・ログのフォルダを書く。"""
 
     def _configure(index: Path | str) -> None:
         """index をプロジェクト用の索引として指す。"""
@@ -188,6 +198,7 @@ def configure_index(e2e_project: Path, state_dir: Path) -> Callable[[Path | str]
             "env": {
                 "RULE_INJECT_INDEXES_PROJECT": str(index),
                 "RULE_INJECT_STATE_DIR": str(state_dir),
+                "RULE_INJECT_LOG_DIR": str(log_folder),
             }
         }
         (e2e_project / ".claude" / "settings.json").write_text(
@@ -286,6 +297,36 @@ def record_locations(state_dir: Path) -> Callable[[str], list[str]]:
         return path.read_text(encoding="utf-8").splitlines() if path.exists() else []
 
     return _read
+
+
+@pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[[str, int], Path]:
+    """最終更新を現在から指定の日数前に戻した既読の記録ファイルを置く factory。"""
+
+    def _write(record_session_id: str, age_days: int) -> Path:
+        """record_session_id の記録ファイルを置き、最終更新を age_days 日前にして返す。"""
+        path = state_dir / f"{record_session_id}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("/r/a.md\n", encoding="utf-8")
+        modified = time.time() - age_days * SECONDS_PER_DAY
+        os.utime(path, (modified, modified))
+        return path
+
+    return _write
+
+
+@pytest.fixture
+def write_dated_log(log_folder: Path) -> Callable[[date], Path]:
+    """日付を名前に持つログのファイルを、ログのフォルダに置く factory。"""
+
+    def _write(day: date) -> Path:
+        """day の日付の `{yyyymmdd}_rule-inject.log` をログのフォルダに置いて返す。"""
+        path = log_folder / f"{day:%Y%m%d}_rule-inject.log"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+        return path
+
+    return _write
 
 
 @pytest.fixture

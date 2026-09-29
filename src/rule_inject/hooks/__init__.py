@@ -10,6 +10,7 @@ from rule_inject.hooks.discard_read import discard_read
 from rule_inject.hooks.record_read import record_read
 from rule_inject.hooks.rule_guide import guide_rules
 from rule_inject.hooks.session_id_injection import inject_session_id
+from rule_inject.hooks.sweep_read import sweep_read
 from rule_inject.hooks.work_rules import work_rules
 from rule_inject.shared.logger import Component
 
@@ -39,4 +40,5 @@ HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
     "record_read": (Component.RECORD_READ, record_read, _notice_of("PostToolUse", "既読の記録")),
     "discard_read": (Component.DISCARD_READ, discard_read, _silent),
     "work_rules": (Component.WORK_RULES, work_rules, _silent),
+    "sweep_read": (Component.SWEEP_READ, sweep_read, _silent),
 }

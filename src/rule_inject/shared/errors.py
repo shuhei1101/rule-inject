@@ -1,4 +1,4 @@
-"""索引・既読の記録の読み書きの例外。"""
+"""索引・既読の記録・ログの読み書きの例外。"""
 
 from __future__ import annotations
 
@@ -27,6 +27,10 @@ class RecordWriteError(RuleInjectError):
 
 class RecordDeleteError(RuleInjectError):
     """記録ファイルはあるが消せない。"""
+
+
+class LogDeleteError(RuleInjectError):
+    """消す対象のログのファイルはあるが消せない。"""
 
 
 def describe(exc: BaseException) -> str:

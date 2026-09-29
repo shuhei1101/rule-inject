@@ -94,6 +94,8 @@ flows:
         description: ルールの場所を持つエントリを 1 つ持つ
       - name: 既読の記録
         description: '`RULE_INJECT_STATE_DIR` を書き込み権限の無いフォルダ（`chmod 555`）にする'
+      - name: ログのフォルダ
+        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
         description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
     flow: |-
@@ -163,7 +165,7 @@ constraints:
     constraint: 索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。それ以外のパスは記録しない
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
-    notes: 既読の記録と同じフォルダのため、記録に書けないときはログにも書けないことが多い。そのときも `additionalContext` で理由が見える
+    notes: 記録にもログにも書けないときも `additionalContext` で理由が見える
 identifier: record_read
 response:
   - name: '`hookSpecificOutput.hookEventName`'

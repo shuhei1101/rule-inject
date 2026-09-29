@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from collections.abc import Callable, Iterator, Sequence
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 SESSION_ID = "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
+SECONDS_PER_DAY = 86_400
+# 掃除の単体テストが固定する現在の時刻（UNIX 時刻の秒）
+FIXED_NOW = 1_800_000_000.0
 
 
 @pytest.fixture
@@ -20,16 +25,29 @@ def session_id() -> str:
 
 
 @pytest.fixture
+def now() -> Callable[[], float]:
+    """固定した現在の時刻（UNIX 時刻の秒）を返す関数。"""
+    return lambda: FIXED_NOW
+
+
+@pytest.fixture
 def state_dir(tmp_path: Path) -> Path:
     """既読の記録とログを置く記録フォルダ（まだ作らない）。"""
     return tmp_path / "state"
 
 
 @pytest.fixture
-def hook_env(state_dir: Path, tmp_path: Path) -> dict[str, str]:
-    """フックと MCP サーバーに渡す環境変数（記録フォルダとプロジェクトの直下だけ）。"""
+def log_folder(tmp_path: Path) -> Path:
+    """日付ごとのログを置くログのフォルダ（まだ作らない）。"""
+    return tmp_path / "logs"
+
+
+@pytest.fixture
+def hook_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
+    """フックと MCP サーバーに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
     return {
         "RULE_INJECT_STATE_DIR": str(state_dir),
+        "RULE_INJECT_LOG_DIR": str(log_folder),
         "CLAUDE_PROJECT_DIR": str(tmp_path),
     }
 
@@ -154,6 +172,24 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
 
 
 @pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[..., Path]:
+    """最終更新を過去に戻した既読の記録ファイルを、指定のセッションで置く factory。"""
+
+    def _write(target_session_id: str, age_days: int, *, base: float | None = None) -> Path:
+        """target_session_id の記録ファイルを置き、最終更新を base の age_days 日前にする。"""
+        path = state_dir / f"{target_session_id}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("/r/a.md\n", encoding="utf-8")
+        # 基準の時刻が無ければ実際の現在から戻す
+        reference = time.time() if base is None else base
+        modified = reference - age_days * SECONDS_PER_DAY
+        os.utime(path, (modified, modified))
+        return path
+
+    return _write
+
+
+@pytest.fixture
 def read_lines() -> Callable[[Path], list[str]]:
     """ファイルを UTF-8 で読み、行のリストを返す。"""
 
@@ -165,15 +201,32 @@ def read_lines() -> Callable[[Path], list[str]]:
 
 
 @pytest.fixture
-def read_log(state_dir: Path) -> Callable[[], list[dict[str, Any]]]:
-    """記録フォルダのログ（JSON Lines）を読み、1 行ごとの dict を返す。"""
+def read_daily_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
+    """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
 
     def _read() -> list[dict[str, Any]]:
-        """rule-inject.log の各行を JSON として読む。"""
-        text = (state_dir / "rule-inject.log").read_text(encoding="utf-8")
-        return [json.loads(line) for line in text.splitlines()]
+        """{yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
+        texts = [
+            path.read_text(encoding="utf-8")
+            for path in sorted(log_folder.glob("*_rule-inject.log"))
+        ]
+        return [json.loads(line) for text in texts for line in text.splitlines()]
 
     return _read
+
+
+@pytest.fixture
+def write_dated_log(log_folder: Path) -> Callable[[date], Path]:
+    """日付を名前に持つログのファイルを、ログのフォルダに置く factory。"""
+
+    def _write(day: date) -> Path:
+        """day の日付の `{yyyymmdd}_rule-inject.log` をログのフォルダに置く。"""
+        path = log_folder / f"{day:%Y%m%d}_rule-inject.log"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+        return path
+
+    return _write
 
 
 @pytest.fixture

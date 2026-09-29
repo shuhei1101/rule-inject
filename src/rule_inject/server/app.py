@@ -25,7 +25,7 @@ from rule_inject.features.index.types import IndexEntry
 from rule_inject.features.record import append_record, is_valid_session_id
 from rule_inject.shared.errors import RecordWriteError, describe
 from rule_inject.shared.logger import Component, LogOperation, write_log
-from rule_inject.shared.paths import state_dir
+from rule_inject.shared.paths import log_dir, state_dir
 
 SERVER_NAME = "rule-inject"
 LOCATIONS_DESCRIPTION = (
@@ -83,11 +83,12 @@ def build_server(env: Mapping[str, str], fetch: FetchUrlFn = fetch_url) -> MCPSe
         """ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して既読にする。"""
         # 呼ばれるたびに索引と記録フォルダを求める（環境変数の変更を次の呼び出しで反映する）
         folder = state_dir(env)
+        log_folder = log_dir(env)
         log_session = session_id if is_valid_session_id(session_id) else None
         loaded = load_indexes(env)
         for failure in loaded.failures:
             write_log(
-                folder,
+                log_folder,
                 component=Component.READ_RULES,
                 operation=LogOperation.READ_INDEX,
                 reason=failure.reason,
@@ -104,15 +105,15 @@ def build_server(env: Mapping[str, str], fetch: FetchUrlFn = fetch_url) -> MCPSe
                 fetch=fetch,
             )
         except ToolArgumentError as exc:
-            _log_failure(folder, LogOperation.UNEXPECTED, log_session, None, str(exc))
+            _log_failure(log_folder, LogOperation.UNEXPECTED, log_session, None, str(exc))
             raise ToolError(str(exc)) from exc
         except RecordWriteError as exc:
-            _log_failure(folder, LogOperation.WRITE_RECORD, log_session, exc.path, exc.reason)
+            _log_failure(log_folder, LogOperation.WRITE_RECORD, log_session, exc.path, exc.reason)
             raise ToolError(
                 f"既読の記録に書けませんでした（本文は返していません）: {exc.path}: {exc.reason}"
             ) from exc
         except Exception as exc:
-            _log_failure(folder, LogOperation.UNEXPECTED, log_session, None, describe(exc))
+            _log_failure(log_folder, LogOperation.UNEXPECTED, log_session, None, describe(exc))
             raise ToolError(describe(exc)) from exc
         return render_result(result)
 
@@ -120,7 +121,7 @@ def build_server(env: Mapping[str, str], fetch: FetchUrlFn = fetch_url) -> MCPSe
 
 
 def _log_failure(
-    folder: Path,
+    log_folder: Path,
     operation: LogOperation,
     session_id: str | None,
     path: str | None,
@@ -128,7 +129,7 @@ def _log_failure(
 ) -> None:
     """read_rules の失敗をログへ書く。"""
     write_log(
-        folder,
+        log_folder,
         component=Component.READ_RULES,
         operation=operation,
         reason=reason,
