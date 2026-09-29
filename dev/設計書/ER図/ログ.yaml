@@ -7,7 +7,7 @@ tables:
     summary: 失敗した操作とその理由
     scale: 失敗のときだけ書くため数十行のオーダー
     growth: 失敗のたびに 1 行追記する
-    retention: 消さない（掃除は既読の記録と合わせてスコープ外の起票予定）
+    retention: 消さない（既読の記録の掃除の対象に含めず、ログの掃除は起票予定）
     deletion: 利用者が手で消す
     access: 追記（O_APPEND）だけで書く。プラグインは読まない
     description: フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
@@ -21,7 +21,7 @@ tables:
         title: 出した元
         type: string
         not_null: true
-        description: インターフェース定義の識別子（`rule_guide` / `session_id_injection` / `read_rules` / `record_read` / `discard_read` / `work_rules`）
+        description: インターフェース定義の識別子（`rule_guide` / `session_id_injection` / `read_rules` / `record_read` / `discard_read` / `work_rules` / `sweep_read`）
       - name: session_id
         title: セッション
         type: string
