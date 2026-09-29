@@ -81,13 +81,14 @@ flows:
       - 記録フォルダを作らない
       - 終了コードが `0`
     test: test_normal_when_no_state_dir
-  - name: 異常系（記録を消せない・ログに書く）
-    summary: 記録ファイルを消せないとき、セッションの開始は止めずにログと標準エラー出力に書く
+  - name: 異常系（記録を消せない・ログにも書けない）
+    summary: 記録ファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
     setup:
       - name: Mock
         description: なし
       - name: 既読の記録
-        description: 保持期間を過ぎた別のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
+        description: 保持期間を過ぎた別のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする。`rule-inject.log` は置かない
+        notes: ログも作れないため、標準エラー出力へ出る経路に定まる
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -121,7 +122,7 @@ request:
     constraints: 1〜128 文字の英数字 / `_` / `-`
     notes: このセッションの記録ファイルは消さない。形が外れた値のときは何も消さない
   - name: '`source`'
-    type: Literal['startup', 'resume', 'clear', 'compact']
+    type: Literal['startup', 'resume', 'clear', 'compact', 'fork']
     required: true
     description: セッションが始まったきっかけ
     notes: どれでも同じように掃除する
