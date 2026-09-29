@@ -3,12 +3,13 @@ scenarios:
   - name: 正常シナリオ
     setup:
       - name: Mock
-        description: なし（実の Claude Code を `claude -p` で動かす）
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定（`~/.claude`）のフック・プラグイン・MCP サーバーを読み込ませない
+        notes: 残るのは組み込みのプラグイン（agents-md・telemetry）だけ。起動時の init のプラグイン一覧で確かめた（2026-09-29）。`--bare` は API キーの課金になるため使わない
       - name: ルールの本文
         description: ローカルに置いたルールの Markdown
       - name: 索引
         description: ルールの場所と、当てるパスの glob（対象のファイルに当たる）・書く操作を必須とするエントリを 1 つ持つ YAML
-        notes: プロジェクト用の環境変数で指す
+        notes: プロジェクト用の環境変数で指す。対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
     flow: |-
       ```mermaid
       flowchart TD
@@ -29,11 +30,14 @@ scenarios:
   - name: 正常シナリオ（本文を Bash で読む）
     setup:
       - name: Mock
-        description: なし（実の Claude Code を `claude -p` で動かす）
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
         description: ローカルに置いたルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
+      - name: 読み方の指示
+        description: プロンプトで、ルールの本文を MCP のツールではなく Bash の `cat` で読むよう指示する
+        notes: '`--allowedTools` で Bash を許可し、MCP のツールを `--disallowedTools` で外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       flowchart TD
@@ -53,14 +57,17 @@ scenarios:
   - name: 正常シナリオ（圧縮の後）
     setup:
       - name: Mock
-        description: なし（実の Claude Code を `claude -p` で動かす）
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
         description: ローカルに置いたルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
       - name: 既読のセッション
         description: 正常シナリオを終え、ルールを既読にしたセッション
-        notes: 同じセッションを `--resume` で続ける
+        notes: 以降の実行は、このセッションを `--resume {session_id}` で続ける
+      - name: 圧縮
+        description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を起こす'
+        notes: '`-p` の `--resume` でも、同じ session_id に `PreCompact`（`trigger: manual`）が走ることを確かめた（2026-09-29、Claude Code 2.1.284）'
     flow: |-
       ```mermaid
       flowchart TD
