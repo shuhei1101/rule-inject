@@ -11,6 +11,54 @@ layers:
       uv run pytest tests/integration
       ```
   - name: E2E テスト
-    run_all: 未確定
+    description: 実の Claude Code（`claude -p --plugin-dir {プラグインのフォルダ} --setting-sources project`）を起動して、シナリオごとに確かめる。pytest で実行し、`--run-e2e` を付けたときだけ動く（付けなければ全て skip する）。
+    prerequisites:
+      - '`claude`（Claude Code の CLI）が PATH にあり、ログイン済みであること。`claude -p` を起動するたびに費用がかかる'
+      - Python 3.12 と uv（プラグインの MCP サーバーの起動に使う）。入れた直後の最初の起動は遅いため、テストが `MCP_TIMEOUT` を 60000（ミリ秒）にして起動する
+      - 利用者の設定（`~/.claude`）のフック・プラグイン・MCP サーバーを読み込ませない（`--setting-sources project`）。`--bare` は API の課金になるため使わない
+      - 誤実行を防ぐため `--run-e2e` を必須にする
+      - 環境変数 `E2E_CLAUDE_BIN`（`claude` の場所）と `E2E_CLAUDE_MODEL`（`--model` に渡すモデル）は、必要なときだけ指す
+    run_all: |-
+      ```bash
+      uv run pytest tests/e2e --run-e2e
+      ```
+    run_one:
+      label: シナリオ
+      command: |-
+        ```bash
+        uv run pytest {シナリオのテストファイルパス} --run-e2e
+        ```
+    carry_over: |-
+      実行を始めたセッションが終わっても続くよう、進行の記録のフォルダ `RUN_DIR` を決め、環境変数 `E2E_RUN_DIR` で渡してバックグラウンドで動かす。
+
+      ```bash
+      RUN_DIR=$(mktemp -d)
+      E2E_RUN_DIR="$RUN_DIR" nohup uv run pytest tests/e2e --run-e2e > "$RUN_DIR/pytest.log" 2>&1 &
+      ```
+
+      `RUN_DIR` の中身は次のとおり。
+
+      | ファイル | 中身 |
+      | --- | --- |
+      | `results.jsonl` | シナリオが終わるたびに 1 行（`nodeid`・`outcome`・`duration_sec`・`time`）追記する |
+      | `done` | 実行が終わったとき（中断も含む）に書く。中身は pytest の終了コード |
+      | `release_head` | 実行を始めた時点の commit（`git rev-parse HEAD`） |
+      | `abort` | 中断の合図。実行の中では作らない |
+    monitoring: |-
+      `results.jsonl` に行が増えることで、シナリオごとの進行を見る。`done` が現れたら終わり。
+
+      ```bash
+      tail -f "$RUN_DIR/results.jsonl"
+      ```
+    abort: |-
+      合図のファイルを作る。pytest は、次のシナリオを始める前にこのファイルを見つけて止まる（動いているシナリオは終わるまで続く）。
+
+      ```bash
+      touch "$RUN_DIR/abort"
+      ```
+    duration: 1 シナリオで `claude -p` を 1〜3 回起動する（読み込みだけのもの 1 回、既読にしてからのもの 2 回、圧縮を含むもの 2〜3 回）。所要時間は実測していない
+    parallel: false
+    external_cost: 16 シナリオで `claude -p` を 20 回起動し、そのたびに Claude Code の利用枠か API の利用料がかかる。全件を実行する前に、費用がかかることをユーザーが承知していること
+    results: 進行と結果は `$RUN_DIR/results.jsonl`。全 pass のログはテストの側では置かない（E2E の結果の集約は tester が担う）
   - name: 非機能要件テスト
     run_all: 未確定
