@@ -20,16 +20,16 @@ def test_normal(
     # 準備
     expired = set_age_days(write_record(["/r/a.md"], "expired-session"), 31)
     within = set_age_days(write_record(["/r/b.md"], "within-session"), 29)
-    notes = state_dir / "notes.txt"
-    notes.write_text("メモ\n", encoding="utf-8")
-    set_age_days(notes, 31)
+    not_record = state_dir / "a b.txt"
+    not_record.write_text("メモ\n", encoding="utf-8")
+    set_age_days(not_record, 31)
     payload = hook_payload("SessionStart", source="startup")
     # 実行
     completed = run_hook("sweep_read", payload)
     # 検証
     assert not expired.exists()
     assert within.exists()
-    assert notes.exists()
+    assert not_record.exists()
     assert completed.stdout == ""
     assert completed.returncode == 0
 
