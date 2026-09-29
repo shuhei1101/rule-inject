@@ -141,6 +141,7 @@ flows:
       - '`notes.txt` が残っている'
       - 標準出力が空
       - 終了コードが `0`
+    test: test_normal_when_old_logs
   - name: 正常系（保持の値を環境変数で変える）
     summary: 環境変数で指した保持の値で、記録ファイルとログのファイルを消す
     setup:
@@ -173,6 +174,7 @@ flows:
       - 1 日前のログのファイルが無い
       - 今日のログのファイルが残っている
       - 終了コードが `0`
+    test: test_normal_when_retention_env
   - name: 異常系（ログを消せない・ログにも書けない）
     summary: 保持日数を過ぎたログのファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
     setup:
@@ -200,6 +202,7 @@ flows:
       - '標準エラー出力に `component: sweep_read`・`operation: delete_log` の 1 行がある'
       - 3 日前のログのファイルが残っている（次のセッションの開始でまた消す）
       - 終了コードが `0`
+    test: test_error_when_log_undeletable
   - name: 正常系（変更前のログが残っている）
     summary: 記録フォルダに残った変更前のログ（`rule-inject.log`）を、最終更新によらず消す
     setup:
@@ -225,6 +228,7 @@ flows:
       - 記録フォルダの `rule-inject.log` が無い
       - 標準出力が空
       - 終了コードが `0`
+    test: test_normal_when_legacy_log
   - name: 正常系（保持の値が不正）
     summary: 環境変数の保持の値が 1 以上の整数でないときは、既定の値で掃除する
     setup:
@@ -253,6 +257,7 @@ flows:
       - 3 日前のログのファイルが無い
       - 今日と 2 日前のログのファイルが残っている
       - 終了コードが `0`
+    test: test_normal_when_invalid_setting
 lead: セッションの開始時に、最終更新から非機能要件「既読の記録の保持期間」を過ぎた既読の記録ファイルと、日付が非機能要件「ログの保持日数」を過ぎたログのファイルを消す。始まったセッション自身の記録ファイルと、記録ファイルでもログのファイルでもないファイルは消さない。
 identifier: sweep_read
 idempotent: true
