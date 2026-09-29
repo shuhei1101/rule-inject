@@ -38,6 +38,9 @@ catalogs:
       - name: .claude-plugin/marketplace.json
         kind: ファイル
         purpose: リポジトリを marketplace として載せ、`/plugin marketplace add` と `/plugin install` で入れられるようにする
+      - name: CLAUDE_PLUGIN_DATA
+        kind: 環境変数
+        purpose: 版をまたいで残るプラグインのデータの場所。`.mcp.json` で MCP サーバーの仮想環境（`UV_PROJECT_ENVIRONMENT`）を指す
 lead: Anthropic の AI コーディングエージェントの CLI（`claude`）。プラグインが持つフックと MCP サーバーを読み込み、出来事ごとに呼ぶ。
 dependency_scope: 必須
 adoption: 採用

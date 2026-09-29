@@ -68,4 +68,4 @@ functions:
         mock: なし
         expected: '`read_rules` を含む応答'
 notes:
-  .mcp.json: '`{"mcpServers": {"rule-inject": {"command": "uv", "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}", "python", "-m", "rule_inject.server"]}}}`。サーバーのキーとプラグイン名がどちらも `rule-inject` のため、ツールの完全名は `mcp__plugin_rule-inject_rule-inject__read_rules` になる'
+  .mcp.json: '`{"mcpServers": {"rule-inject": {"command": "uv", "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}", "python", "-m", "rule_inject.server"], "env": {"UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/venv"}}}}`。サーバーのキーとプラグイン名がどちらも `rule-inject` のため、ツールの完全名は `mcp__plugin_rule-inject_rule-inject__read_rules` になる。仮想環境は版をまたいで残る `${CLAUDE_PLUGIN_DATA}/venv` に置き、版のフォルダ（`${CLAUDE_PLUGIN_ROOT}`）には書き込まない。入れた直後と依存が変わった版の最初の起動は、uv が依存を取得する分だけ遅い'
