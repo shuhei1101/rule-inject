@@ -37,19 +37,19 @@ requirements:
     external_constraint: MCP のツールの出力は既定で 25,000 トークンまで（10,000 トークンを超えると警告）。超えるとファイルへ退避され、会話にはファイルのパスだけが載る。ツールごとに `anthropic/maxResultSizeChars` で最大 500,000 字まで上げられる（テキストの応答。`MAX_MCP_OUTPUT_TOKENS` とは別に効く）
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/mcp
-    value: 20,000
-    rationale: '`anthropic/maxResultSizeChars` は付けず、既定の 25,000 トークンの中に収める（1 回の取得でコンテキストを使いすぎないため）。手元でトークンは数えられないため、1 字を 1 トークン以下とみなして字数で数え、規約『資源の値の決め方』の安全率 20% を引く。展開の形はインターフェース定義「ルール本文の取得」'
+    value: 40,000
+    rationale: '`read_rules` に `anthropic/maxResultSizeChars` を付け、退避の判定と手元で数える単位を字数に揃える（トークンの見積もりを使わない）。値は、どのルールも 1 回で返せ、かつ 1 回の取得でコンテキストを使いすぎない量として、実際の索引の最大の本文に安全率 20% を足して切り上げた。展開の形はインターフェース定義「ルール本文の取得」'
     unit: 字
     breakdown:
-      - part: 外部の上限
-        value: 25,000
-        notes: MCP のツールの出力の既定の上限（トークン）。1 字 ≤ 1 トークンとみなして字に読み替える
+      - part: 最大の本文
+        value: 32,010 字
+        notes: 参考の実装の利用者の索引（229 件）のルールの本文の最大（p50 985 字、p95 5,928 字、2026-09-29）
       - part: 安全率
-        value: 5,000
-        notes: 20%
-      - part: 決定値
-        value: 20,000
-        notes: 応答の JSON 全体の字数
+        value: 6,402 字
+        notes: 20%。応答の JSON の括弧・キー・エスケープを含む
+      - part: 合計
+        value: 38,412 字
+        notes: 切り上げて 40,000 字。外部の上限（500,000 字）の内側
     overflow: 返す前に応答の字数を数える。収まらない本文は返さず、次の呼び出しで取得する場所として応答に並べ、既読にしない。本文 1 件だけで収まらないときは、取得できなかった場所として理由を添えて返す
   - name: 対応 OS
     english_name: supported_os

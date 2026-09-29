@@ -10,6 +10,8 @@ flows:
         description: なし（ツールの関数を直接呼ぶ）
       - name: ルールの本文
         description: 一時フォルダに置いた Markdown 1 件
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ
       - name: 既読の記録
         description: 空の一時フォルダ（`RULE_INJECT_STATE_DIR`）
     flow: |-
@@ -64,6 +66,8 @@ flows:
     setup:
       - name: Mock
         description: HTTP（URL に 200 と本文を返す）
+      - name: 索引
+        description: その URL をルールの場所に持つエントリを 1 つ持つ
       - name: 既読の記録
         description: 空の一時フォルダ
     flow: |-
@@ -91,8 +95,10 @@ flows:
       - name: Mock
         description: なし
       - name: ルールの本文
-        description: 1 件 8,000 字の Markdown 3 件
-        notes: 2 件までは 20,000 字に収まり、3 件目で超える
+        description: 1 件 16,000 字の Markdown 3 件
+        notes: 2 件までは 40,000 字に収まり、3 件目で超える
+      - name: 索引
+        description: 3 件のルールの場所を持つエントリを 3 つ持つ
       - name: 既読の記録
         description: 空の一時フォルダ
     flow: |-
@@ -105,22 +111,25 @@ flows:
 
         CC->>T: locations（3 件）+ session_id
         T->>RULE: 読む
-        T->>T: 20,000 字に収まる分だけ pages に載せる
+        T->>T: 40,000 字に収まる分だけ pages に載せる
         T->>ST: 載せた 2 件の場所を追記する
         T-->>CC: pages（2 件）+ deferred（1 件）
       ```
     expected:
-      - 応答の JSON が 20,000 字以内
+      - 応答の JSON が 40,000 字以内
       - '`deferred` に 3 件目の場所が載っている'
       - 記録ファイルに 3 件目の場所が無い
+      - '`tools/list` の `read_rules` の `_meta["anthropic/maxResultSizeChars"]` が `40000`'
     test: test_normal_when_over_limit
   - name: 異常系（場所から本文を取れない・failures）
     summary: 実在しないローカルの場所と、取得に失敗した URL を failures に載せ、再試行も既読もしない
     setup:
       - name: Mock
         description: HTTP（1 つ目の URL に 404、2 つ目の URL に待ち時間の超過を返す）
+      - name: 索引
+        description: 実在しないローカルのパス 1 つと URL 2 つをルールの場所に持つ 3 エントリ
       - name: 入力
-        description: '`locations` に実在しないローカルのパス 1 つと URL 2 つ'
+        description: '`locations` にその 3 つの場所'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -163,6 +172,33 @@ flows:
       - ToolError が返り、文面に足りない引数が載っている
       - 記録ファイルが作られていない
     test: test_error_when_arguments_missing
+  - name: 異常系（索引に載っていない場所・failures）
+    summary: 索引に無い絶対パスと URL を読まずに failures に載せる
+    setup:
+      - name: Mock
+        description: HTTP（呼ばれたら失敗にする）
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 入力
+        description: '`locations` に、実在するが索引に無い絶対パス 1 つと索引に無い URL 1 つ'
+        notes: 絶対パスは読めるファイルにし、読めても返さないことを確かめる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant IDX as 索引
+
+        CC->>T: locations（2 件）+ session_id
+        T->>IDX: 索引のルールの場所と照合する（一致しない）
+        T-->>CC: failures（2 件・索引に載っていない場所）
+      ```
+    expected:
+      - '`pages` が空'
+      - '`failures` に 2 件が「索引に載っていない場所」として載っている'
+      - ファイルを開いておらず、HTTP の取得もしていない
+      - 記録ファイルが作られていない
+    test: test_error_when_location_not_in_index
 lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録する。
 identifier: read_rules
 idempotent: true
@@ -175,7 +211,7 @@ request:
     default: '`[]`'
     location: argument
     description: 読みたいルールの場所。案内に載った場所をそのまま渡す
-    constraints: 絶対パス・`~` で始まるパス・`http://` / `https://` の URL
+    constraints: 絶対パス・`~` で始まるパス・`http://` / `https://` の URL。索引に載ったルールの場所だけを読む
     notes: ツールの引数の説明に「ルールの場所を渡す。これから触るファイルのパスは `paths` へ」と書く
   - name: '`paths`'
     type: list[str]
@@ -234,7 +270,7 @@ exceptions:
     notes: '`session_id` が無いのはフックが動いていない設定の誤りとして扱い、本文も返さない'
 constraints:
   - item: 応答の大きさ
-    constraint: 応答の JSON 全体で 20,000 字。収まらない本文は `deferred` へ回す
+    constraint: 応答の JSON 全体で 40,000 字。`tools/list` の `_meta["anthropic/maxResultSizeChars"]` に同じ 40,000 を付ける。収まらない本文は `deferred` へ回す
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPのツールの応答の大きさ]
   - item: URL の取得の待ち時間
     constraint: 1 件あたり 1 秒。超えたら `failures` に載せ、再試行しない
@@ -243,7 +279,7 @@ constraints:
     constraint: ルール案内と同じ環境変数・同じ読み方で読む（`paths` を照合するときに使う）
     notes: プロジェクトの索引の相対パスは、MCP サーバーの起動時の作業フォルダから解く
   - item: 許す場所
-    constraint: 制限なし（索引に載っていない場所も読む）
-    notes: 読むだけで書かない。利用者の端末で利用者の権限で動く
+    constraint: 索引に載ったルールの場所（解決後の絶対パスか URL）に一致するものだけを読む。一致しない `locations` は読まずに `failures` に「索引に載っていない場所」として載せる
+    notes: Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
   - item: 認可
     constraint: 制限なし（ツールの許可は利用者の Claude Code の設定に従う）
