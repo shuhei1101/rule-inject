@@ -28,3 +28,4 @@ lead: 会話が圧縮されるとき、`PreCompact` フックがそのセッシ�
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: 会話の圧縮（手動の `/compact` か自動）
+test_file: tests/e2e/単一ユースケース/test_record_discarded_on_compact.py

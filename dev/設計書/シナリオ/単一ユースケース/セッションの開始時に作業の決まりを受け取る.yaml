@@ -23,3 +23,4 @@ lead: セッションの開始時に `SessionStart` フックが、新しいフ�
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・圧縮の後）
+test_file: tests/e2e/単一ユースケース/test_receive_work_rules_at_session_start.py

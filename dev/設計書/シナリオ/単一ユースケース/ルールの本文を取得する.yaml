@@ -106,3 +106,4 @@ trigger: Claude Code が、案内に載ったルールの場所か、これか�
 preconditions:
   - プラグインが Claude Code に読み込まれ、MCP サーバーが起動している
   - 索引を指す環境変数が設定されている
+test_file: tests/e2e/単一ユースケース/test_fetch_rule_body.py

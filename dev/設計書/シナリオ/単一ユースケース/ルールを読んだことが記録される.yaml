@@ -61,3 +61,4 @@ lead: Claude Code が Read か Bash（`cat` など）でルールの本文のフ
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: Read か Bash のツールが、索引に載ったルールの場所を読み終える
+test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py
