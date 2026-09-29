@@ -201,18 +201,6 @@ def read_lines() -> Callable[[Path], list[str]]:
 
 
 @pytest.fixture
-def read_log(state_dir: Path) -> Callable[[], list[dict[str, Any]]]:
-    """記録フォルダのログ（JSON Lines）を読み、1 行ごとの dict を返す。"""
-
-    def _read() -> list[dict[str, Any]]:
-        """rule-inject.log の各行を JSON として読む。"""
-        text = (state_dir / "rule-inject.log").read_text(encoding="utf-8")
-        return [json.loads(line) for line in text.splitlines()]
-
-    return _read
-
-
-@pytest.fixture
 def read_daily_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
     """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
 
