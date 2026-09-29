@@ -6,7 +6,10 @@ layers:
       uv run pytest tests/unit
       ```
   - name: 結合テスト（バック）
-    run_all: 未確定
+    run_all: |-
+      ```bash
+      uv run pytest tests/integration
+      ```
   - name: E2E テスト
     run_all: 未確定
   - name: 非機能要件テスト
