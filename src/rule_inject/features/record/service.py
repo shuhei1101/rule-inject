@@ -94,6 +94,7 @@ def record_exists(state_dir: Path, session_id: str) -> bool:
 def sweep_records(
     state_dir: Path,
     keep_session_id: str,
+    *,
     now: Callable[[], float] = time.time,
 ) -> tuple[RecordDeleteError, ...]:
     """保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものを返す。"""
