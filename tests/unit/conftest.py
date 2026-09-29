@@ -6,6 +6,7 @@ import json
 import os
 import time
 from collections.abc import Callable, Iterator, Sequence
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -36,10 +37,17 @@ def state_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def hook_env(state_dir: Path, tmp_path: Path) -> dict[str, str]:
-    """フックと MCP サーバーに渡す環境変数（記録フォルダとプロジェクトの直下だけ）。"""
+def log_folder(tmp_path: Path) -> Path:
+    """日付ごとのログを置くログのフォルダ（まだ作らない）。"""
+    return tmp_path / "logs"
+
+
+@pytest.fixture
+def hook_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
+    """フックと MCP サーバーに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
     return {
         "RULE_INJECT_STATE_DIR": str(state_dir),
+        "RULE_INJECT_LOG_DIR": str(log_folder),
         "CLAUDE_PROJECT_DIR": str(tmp_path),
     }
 
@@ -193,15 +201,32 @@ def read_lines() -> Callable[[Path], list[str]]:
 
 
 @pytest.fixture
-def read_log(state_dir: Path) -> Callable[[], list[dict[str, Any]]]:
-    """記録フォルダのログ（JSON Lines）を読み、1 行ごとの dict を返す。"""
+def read_daily_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
+    """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
 
     def _read() -> list[dict[str, Any]]:
-        """rule-inject.log の各行を JSON として読む。"""
-        text = (state_dir / "rule-inject.log").read_text(encoding="utf-8")
-        return [json.loads(line) for line in text.splitlines()]
+        """{yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
+        texts = [
+            path.read_text(encoding="utf-8")
+            for path in sorted(log_folder.glob("*_rule-inject.log"))
+        ]
+        return [json.loads(line) for text in texts for line in text.splitlines()]
 
     return _read
+
+
+@pytest.fixture
+def write_dated_log(log_folder: Path) -> Callable[[date], Path]:
+    """日付を名前に持つログのファイルを、ログのフォルダに置く factory。"""
+
+    def _write(day: date) -> Path:
+        """day の日付の `{yyyymmdd}_rule-inject.log` をログのフォルダに置く。"""
+        path = log_folder / f"{day:%Y%m%d}_rule-inject.log"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n", encoding="utf-8")
+        return path
+
+    return _write
 
 
 @pytest.fixture

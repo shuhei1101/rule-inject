@@ -18,17 +18,17 @@ MIN_PYTHON = (3, 12)
 NOTICE_EVENTS = ("PreToolUse", "PostToolUse", "SessionStart")
 # 版が足りなくても知らせを返さないフック
 SILENT_HOOK = "sweep_read"
-STATE_DIR_ENV = "RULE_INJECT_STATE_DIR"
-LOG_FILE_NAME = "rule-inject.log"
+LOG_DIR_ENV = "RULE_INJECT_LOG_DIR"
+LOG_FILE_SUFFIX = "_rule-inject.log"
 
 
-def _state_dir() -> Path:
-    """記録フォルダを環境変数から決める（パッケージを使わない、古い版でも読める書き方）。"""
-    configured = os.environ.get(STATE_DIR_ENV)
+def _log_dir() -> Path:
+    """ログのフォルダを環境変数から決める（パッケージを使わない、古い版でも読める書き方）。"""
+    configured = os.environ.get(LOG_DIR_ENV)
     if configured:
         return Path(configured).expanduser()
     state_home = os.environ.get("XDG_STATE_HOME") or "~/.local/state"
-    return Path(state_home).expanduser() / "rule-inject"
+    return Path(state_home).expanduser() / "rule-inject" / "logs"
 
 
 def _report_old_python(hook_name: str) -> int:
@@ -59,9 +59,10 @@ def _report_old_python(hook_name: str) -> int:
         ensure_ascii=False,
     )
     try:
-        folder = _state_dir()
+        folder = _log_dir()
         folder.mkdir(parents=True, exist_ok=True)
-        with (folder / LOG_FILE_NAME).open("a", encoding="utf-8") as log_file:
+        # 今日（UTC）の日付のログのファイルに書く
+        with (folder / f"{now:%Y%m%d}{LOG_FILE_SUFFIX}").open("a", encoding="utf-8") as log_file:
             log_file.write(line + "\n")
     except OSError:
         print(line, file=sys.stderr)

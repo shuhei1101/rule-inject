@@ -12,13 +12,6 @@ constants:
     container: features/record/service.py
     summary: 記録ファイル名に使える session_id の形
     value: '`^[A-Za-z0-9_-]{1,128}$`'
-  - name: RECORD_RETENTION_DAYS
-    title: 既読の記録の保持期間
-    container: features/record/service.py
-    summary: 最終更新からこの日数を過ぎた記録ファイルを掃除で消す
-    value: '`30`'
-    refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[既読の記録の保持期間]
 functions:
   - name: is_valid_session_id
     title: セッションの識別子の判定
@@ -248,13 +241,18 @@ functions:
         default: time.time
         passing: injected
         description: 現在の時刻（UNIX 時刻の秒）を返す関数
+      - name: retention_days
+        type: int
+        required: true
+        passing: keyword
+        description: 保持日数（1 以上。呼び出し元が `read_retention_days` で読む）
     returns:
       type: tuple[RecordDeleteError, ...]
       description: 消せなかった記録ファイルごとの失敗。全て消せたか消すものが無ければ空
     process: |-
       1. `os.scandir(state_dir)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
       2. 名前が `{session_id}{RECORD_SUFFIX}` の形（`is_valid_session_id`）に合い、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
-      3. 最終更新（`st_mtime`）が `now() - RECORD_RETENTION_DAYS 日` より前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
+      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
       4. 消せないもの（その他の OSError）は RecordDeleteError にして集め、残りの掃除を続ける
     exceptions:
       - name: OSError
@@ -263,7 +261,7 @@ functions:
       - name: test_sweep_records
         case: 正常
         summary: 保持期間を過ぎた記録ファイルだけを消す
-        condition: 最終更新が 31 日前と 29 日前の記録ファイル、`now` を固定
+        condition: '`retention_days` が 30、最終更新が 31 日前と 29 日前の記録ファイル、`now` を固定'
         mock: '`now`'
         expected: 31 日前のファイルが無く 29 日前のファイルが残る。戻り値は空
       - name: test_sweep_records_when_kept_session

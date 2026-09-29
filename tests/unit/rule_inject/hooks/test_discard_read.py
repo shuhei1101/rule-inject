@@ -31,6 +31,7 @@ def test_discard_read_when_undeletable(
     hook_env: dict[str, str],
     hook_payload: Callable[..., dict[str, Any]],
     state_dir: Path,
+    log_folder: Path,
     write_record: Callable[[Sequence[str]], Path],
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
@@ -39,6 +40,8 @@ def test_discard_read_when_undeletable(
     # 準備
     write_record(["/r/a.md"])
     unwritable(state_dir, 0o555)
+    log_folder.mkdir()
+    unwritable(log_folder, 0o555)
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
     result = discard_read(payload, hook_env)

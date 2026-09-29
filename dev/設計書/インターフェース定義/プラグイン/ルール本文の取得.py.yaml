@@ -210,6 +210,8 @@ flows:
         description: そのルールの場所を持つエントリを 1 つ持つ
       - name: 既読の記録
         description: '`RULE_INJECT_STATE_DIR` を書き込み権限の無いフォルダ（`chmod 555`）にする'
+      - name: ログのフォルダ
+        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
     flow: |-
       ```mermaid
       sequenceDiagram

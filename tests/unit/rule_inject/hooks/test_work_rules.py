@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,7 @@ def test_work_rules(
 def test_work_rules_when_record_left_after_compact(
     hook_env: dict[str, str],
     hook_payload: Callable[..., dict[str, Any]],
-    state_dir: Path,
+    log_folder: Path,
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
     """圧縮の後の消し残りを知らせる（正常系）。"""
@@ -41,4 +42,4 @@ def test_work_rules_when_record_left_after_compact(
     context = result["hookSpecificOutput"]["additionalContext"]
     assert WORK_RULES in context
     assert str(record_file) in context
-    assert str(state_dir / "rule-inject.log") in context
+    assert str(log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context

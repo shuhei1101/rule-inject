@@ -159,7 +159,7 @@ def test_handle_when_index_unreadable(
     hook_env: dict[str, str],
     make_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
-    read_log: Callable[[], list[dict[str, Any]]],
+    read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """索引が読めないとき止めずに理由を載せる（正常系）。"""
     # 準備
@@ -178,7 +178,7 @@ def test_handle_when_index_unreadable(
     assert "permissionDecision" not in output
     assert str(missing) in output["additionalContext"]
     assert str(broken) in output["additionalContext"]
-    assert read_log()[0]["operation"] == "read_index"
+    assert read_daily_log()[0]["operation"] == "read_index"
 
 
 def test_handle_when_record_unreadable(
@@ -188,7 +188,7 @@ def test_handle_when_record_unreadable(
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[[Sequence[str]], Path],
     unwritable: Callable[[Path, int], Path],
-    read_log: Callable[[], list[dict[str, Any]]],
+    read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """記録が読めないとき止めずに理由を載せる（正常系）。"""
     # 準備
@@ -205,4 +205,4 @@ def test_handle_when_record_unreadable(
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert str(record_file) in output["additionalContext"]
-    assert read_log()[0]["operation"] == "read_record"
+    assert read_daily_log()[0]["operation"] == "read_record"

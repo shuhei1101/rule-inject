@@ -8,7 +8,7 @@ from typing import Any
 from rule_inject.features.record import delete_record, is_valid_session_id
 from rule_inject.shared.errors import RecordDeleteError
 from rule_inject.shared.logger import Component, LogOperation, write_log
-from rule_inject.shared.paths import state_dir
+from rule_inject.shared.paths import log_dir, state_dir
 
 
 def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
@@ -23,7 +23,7 @@ def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
     except RecordDeleteError as exc:
         # 消し残りは、圧縮の後の作業の決まりの注入が見つけて知らせる
         write_log(
-            folder,
+            log_dir(env),
             component=Component.DISCARD_READ,
             operation=LogOperation.DELETE_RECORD,
             reason=exc.reason,

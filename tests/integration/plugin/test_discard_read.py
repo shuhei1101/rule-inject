@@ -44,12 +44,15 @@ def test_error_when_record_undeletable(
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[[Sequence[str]], Path],
     state_dir: Path,
+    log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
     """記録ファイルを消せないとき、圧縮は止めずにログと標準エラー出力に書く（異常系）。"""
     # 準備
     record_file = write_record(["/r/a.md"])
     unwritable(state_dir, 0o555)
+    log_folder.mkdir()
+    unwritable(log_folder, 0o555)
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
     completed = run_hook("discard_read", payload)

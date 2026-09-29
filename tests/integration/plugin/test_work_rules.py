@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,7 @@ def test_normal_when_record_left_after_compact(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[[Sequence[str]], Path],
-    state_dir: Path,
+    log_folder: Path,
 ) -> None:
     """圧縮の後に記録ファイルが残っていれば、消せなかったことも載せる（正常系）。"""
     # 準備
@@ -41,5 +42,5 @@ def test_normal_when_record_left_after_compact(
     assert "空の内容で作り" in context
     assert "消せませんでした" in context
     assert str(record_file) in context
-    assert str(state_dir / "rule-inject.log") in context
+    assert str(log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
     assert completed.returncode == 0

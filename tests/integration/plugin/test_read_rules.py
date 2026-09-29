@@ -256,6 +256,7 @@ def test_error_when_record_unwritable(
     call_read_rules: Callable[..., Any],
     rule_file: Callable[..., Path],
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
@@ -266,6 +267,8 @@ def test_error_when_record_unwritable(
     env = server_env({"rule": str(rule)})
     state_dir.mkdir()
     unwritable(state_dir, 0o555)
+    log_folder.mkdir()
+    unwritable(log_folder, 0o555)
     # 実行
     result = call_read_rules(env, {"locations": [str(rule)], "session_id": session_id})
     # 検証

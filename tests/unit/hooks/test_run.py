@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -75,6 +76,7 @@ def test_main_when_python_too_old(
     capsys: pytest.CaptureFixture[str],
     run_module: ModuleType,
     state_dir: Path,
+    log_folder: Path,
     hook_payload: Callable[..., dict[str, Any]],
     imported_rule_inject_modules: Callable[[], list[str]],
     without_rule_inject: None,
@@ -82,6 +84,7 @@ def test_main_when_python_too_old(
     """版が足りないとき知らせて終える（正常系）。"""
     # 準備
     monkeypatch.setenv("RULE_INJECT_STATE_DIR", str(state_dir))
+    monkeypatch.setenv("RULE_INJECT_LOG_DIR", str(log_folder))
     payload = hook_payload("PreToolUse", tool_name="Write", tool_input={"file_path": "/p/a.py"})
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
     monkeypatch.setattr(sys, "version_info", (3, 11, 0, "final", 0))
@@ -100,13 +103,15 @@ def test_main_when_python_too_old_and_sweep_read(
     capsys: pytest.CaptureFixture[str],
     run_module: ModuleType,
     state_dir: Path,
+    log_folder: Path,
     hook_payload: Callable[..., dict[str, Any]],
-    read_log: Callable[[], list[dict[str, Any]]],
+    read_lines: Callable[[Path], list[str]],
     without_rule_inject: None,
 ) -> None:
     """掃除のフックは版が足りなくても知らせを重ねない（正常系）。"""
     # 準備
     monkeypatch.setenv("RULE_INJECT_STATE_DIR", str(state_dir))
+    monkeypatch.setenv("RULE_INJECT_LOG_DIR", str(log_folder))
     payload = hook_payload("SessionStart", source="startup")
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
     monkeypatch.setattr(sys, "version_info", (3, 11, 0, "final", 0))
@@ -115,4 +120,6 @@ def test_main_when_python_too_old_and_sweep_read(
     # 検証
     assert code == 0
     assert capsys.readouterr().out == ""
-    assert len(read_log()) == 1
+    today_log = log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log"
+    assert len(read_lines(today_log)) == 1
+    assert not (state_dir / "rule-inject.log").exists()
