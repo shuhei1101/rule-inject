@@ -357,7 +357,7 @@ functions:
       - name: test_discard_read_when_undeletable
         case: 正常
         summary: 消せないときログに書く
-        condition: 書き込み権限の無い記録フォルダ
+        condition: 書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（`RULE_INJECT_LOG_DIR`）
         mock: なし
         expected: None、標準エラー出力に `delete_record`
   - name: work_rules
@@ -490,7 +490,7 @@ functions:
       - name: test_main_when_python_too_old
         case: 正常
         summary: 版が足りないとき知らせて終える
-        condition: '`sys.version_info` を (3, 11) に差し替え、PreToolUse の JSON を渡す'
+        condition: '`sys.version_info` を (3, 11) に差し替え、`RULE_INJECT_LOG_DIR` をテスト用のフォルダにして、PreToolUse の JSON を渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力の additionalContext に必要な版と動いた版、`rule_inject` を import していない
       - name: test_main_when_python_too_old_and_sweep_read
