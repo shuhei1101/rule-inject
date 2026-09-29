@@ -5,14 +5,12 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from rule_inject.features.fetch.client import FetchError
-from rule_inject.features.fetch.service import ToolArgumentError, read_rules, render_result
+from rule_inject.features.fetch.service import collect_pages, render_result
 from rule_inject.features.fetch.types import FetchFailure, ReadRulesResult, RulePage
-from rule_inject.shared.errors import RecordWriteError
 
 WEB_URL = "https://example.com/rules/web.md"
 
@@ -42,100 +40,51 @@ def _failing_fetch(url: str, timeout: float) -> str:
     raise FetchError(path=url, reason="HTTP 500")
 
 
-def test_read_rules(
-    state_dir: Path,
-    session_id: str,
+def test_collect_pages(
     rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-    read_lines: Callable[[Path], list[str]],
+    make_fetch: Callable[..., tuple[Callable[[str, float], str], list[tuple[str, float]]]],
 ) -> None:
-    """場所で引いて既読にする（正常系）。"""
+    """ローカルの本文を返す（正常系）。"""
     # 準備
     rule = rule_file("python.md", "# Python の規約\n")
-    entries = [make_entry(str(rule))]
+    fetch, calls = make_fetch()
     # 実行
-    result = read_rules([str(rule)], [], session_id, entries=entries, state_dir=state_dir)
+    result = collect_pages([str(rule)], fetch=fetch)
     # 検証
     assert result.pages == [RulePage(location=str(rule), body="# Python の規約\n")]
-    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert calls == []
 
 
-def test_read_rules_when_by_path(
-    state_dir: Path,
-    session_id: str,
-    rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-) -> None:
-    """対象のパスで引く（正常系）。"""
-    # 準備
-    py_rule = rule_file("python.md", "# Python の規約\n")
-    ts_rule = rule_file("typescript.md", "# TypeScript の規約\n")
-    entries = [
-        make_entry(str(py_rule), paths=["**/*.py"]),
-        make_entry(str(ts_rule), paths=["**/*.ts"]),
-    ]
-    # 実行
-    result = read_rules([], ["/p/src/a.py"], session_id, entries=entries, state_dir=state_dir)
-    # 検証
-    assert result.pages == [RulePage(location=str(py_rule), body="# Python の規約\n")]
-
-
-def test_read_rules_when_url(
-    state_dir: Path,
-    session_id: str,
-    make_entry: Callable[..., Any],
-    make_fetch: Callable[..., Any],
+def test_collect_pages_when_url(
+    make_fetch: Callable[..., tuple[Callable[[str, float], str], list[tuple[str, float]]]],
 ) -> None:
     """URL を fetch で取得する（正常系）。"""
     # 準備
     fetch, calls = make_fetch("# Web の規約\n")
-    entries = [make_entry(WEB_URL)]
     # 実行
-    result = read_rules(
-        [WEB_URL], [], session_id, entries=entries, state_dir=state_dir, fetch=fetch
-    )
+    result = collect_pages([WEB_URL], fetch=fetch)
     # 検証
     assert result.pages == [RulePage(location=WEB_URL, body="# Web の規約\n")]
     assert calls == [(WEB_URL, 1.0)]
 
 
-def test_read_rules_when_not_in_index(
-    state_dir: Path,
-    session_id: str,
-    rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-    make_fetch: Callable[..., Any],
-) -> None:
-    """索引に無い場所は読まない（正常系）。"""
+def test_collect_pages_when_given_failures(rule_file: Callable[..., Path]) -> None:
+    """呼び出し元の failures を先頭に載せる（正常系）。"""
     # 準備
-    listed = rule_file("listed.md")
-    unlisted = rule_file("unlisted.md")
-    fetch, calls = make_fetch()
-    entries = [make_entry(str(listed))]
+    rule = rule_file()
+    given = FetchFailure(location="/r/unlisted.md", reason="索引に載っていない場所")
     # 実行
-    result = read_rules(
-        [str(unlisted), WEB_URL], [], session_id, entries=entries, state_dir=state_dir, fetch=fetch
-    )
+    result = collect_pages([str(rule)], failures=[given])
     # 検証
-    assert result.pages == []
-    assert len(result.failures) == 2
-    assert "索引に載っていない場所" in result.failures[0].reason
-    assert "索引に載っていない場所" in result.failures[1].reason
-    assert calls == []
+    assert result.failures[0] == given
+    assert len(result.pages) == 1
 
 
-def test_read_rules_when_over_limit(
-    state_dir: Path,
-    session_id: str,
-    rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-    read_lines: Callable[[Path], list[str]],
-) -> None:
+def test_collect_pages_when_over_limit(rule_file: Callable[..., Path]) -> None:
     """上限を超える本文を deferred へ回す（正常系）。"""
     # 準備
     first = rule_file("a.md", "a" * 50)
     second = rule_file("b.md", "b" * 50)
-    entries = [make_entry(str(first)), make_entry(str(second))]
     one_page_and_deferred = ReadRulesResult(
         pages=[RulePage(location=str(first), body="a" * 50)],
         deferred=[str(second)],
@@ -143,34 +92,19 @@ def test_read_rules_when_over_limit(
     )
     limit = len(render_result(one_page_and_deferred))
     # 実行
-    result = read_rules(
-        [str(first), str(second)],
-        [],
-        session_id,
-        entries=entries,
-        state_dir=state_dir,
-        limit=limit,
-    )
+    result = collect_pages([str(first), str(second)], limit=limit)
     # 検証
     assert result.pages == [RulePage(location=str(first), body="a" * 50)]
     assert result.deferred == [str(second)]
-    assert read_lines(state_dir / f"{session_id}.txt") == [str(first)]
+    assert len(render_result(result)) <= limit
 
 
-def test_read_rules_when_single_over_limit(
-    state_dir: Path,
-    session_id: str,
-    rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-) -> None:
+def test_collect_pages_when_single_over_limit(rule_file: Callable[..., Path]) -> None:
     """1 件で上限を超える本文は failures へ回す（正常系）。"""
     # 準備
     large = rule_file("large.md", "x" * 200)
-    entries = [make_entry(str(large))]
     # 実行
-    result = read_rules(
-        [str(large)], [], session_id, entries=entries, state_dir=state_dir, limit=100
-    )
+    result = collect_pages([str(large)], limit=100)
     # 検証
     assert result.pages == []
     assert result.deferred == []
@@ -178,68 +112,34 @@ def test_read_rules_when_single_over_limit(
     assert "上限" in result.failures[0].reason
 
 
-def test_read_rules_when_fetch_failed(
-    tmp_path: Path,
-    state_dir: Path,
-    session_id: str,
-    make_entry: Callable[..., Any],
-) -> None:
-    """取得できない場所を failures へ回して既読にしない（正常系）。"""
+def test_collect_pages_when_none_fit_with_others(rule_file: Callable[..., Path]) -> None:
+    """1 件も載せられないときは進む形で failures へ回す（正常系）。"""
+    # 準備
+    first = rule_file("a.md", "a" * 50)
+    second = rule_file("b.md", "b" * 50)
+    third = rule_file("c.md", "c" * 50)
+    single_page = ReadRulesResult(pages=[RulePage(location=str(first), body="a" * 50)])
+    limit = len(render_result(single_page))
+    # 実行
+    result = collect_pages([str(first), str(second), str(third)], limit=limit)
+    # 検証
+    assert result.pages == []
+    assert result.deferred == []
+    assert len(result.failures) == 3
+    assert "取り直す" in result.failures[0].reason
+    assert "取り直す" in result.failures[1].reason
+    assert "取り直す" in result.failures[2].reason
+
+
+def test_collect_pages_when_fetch_failed(tmp_path: Path) -> None:
+    """取得できない場所を failures へ回す（正常系）。"""
     # 準備
     missing = tmp_path / "rules" / "missing.md"
-    entries = [make_entry(str(missing)), make_entry(WEB_URL)]
     # 実行
-    result = read_rules(
-        [str(missing), WEB_URL],
-        [],
-        session_id,
-        entries=entries,
-        state_dir=state_dir,
-        fetch=_failing_fetch,
-    )
+    result = collect_pages([str(missing), WEB_URL], fetch=_failing_fetch)
     # 検証
     assert result.pages == []
     assert len(result.failures) == 2
-    assert not (state_dir / f"{session_id}.txt").exists()
-
-
-def test_read_rules_when_no_session_id(
-    state_dir: Path,
-    rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-) -> None:
-    """session_id が無ければ ToolArgumentError にする（異常系）。"""
-    # 準備
-    rule = rule_file()
-    entries = [make_entry(str(rule))]
-    # 実行・検証
-    with pytest.raises(ToolArgumentError, match="session_id"):
-        read_rules([str(rule)], [], None, entries=entries, state_dir=state_dir)
-
-
-def test_read_rules_when_no_target(state_dir: Path, session_id: str) -> None:
-    """引く対象が無ければ ToolArgumentError にする（異常系）。"""
-    # 実行・検証
-    with pytest.raises(ToolArgumentError, match="locations"):
-        read_rules([], [], session_id, entries=[], state_dir=state_dir)
-
-
-def test_read_rules_when_record_unwritable(
-    state_dir: Path,
-    session_id: str,
-    rule_file: Callable[..., Path],
-    make_entry: Callable[..., Any],
-    unwritable: Callable[[Path, int], Path],
-) -> None:
-    """記録に書けなければ RecordWriteError にする（異常系）。"""
-    # 準備
-    rule = rule_file()
-    entries = [make_entry(str(rule))]
-    state_dir.mkdir()
-    unwritable(state_dir, 0o555)
-    # 実行・検証
-    with pytest.raises(RecordWriteError):
-        read_rules([str(rule)], [], session_id, entries=entries, state_dir=state_dir)
 
 
 def test_render_result() -> None:
