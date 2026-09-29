@@ -436,8 +436,8 @@ functions:
         expected: 記録ファイルが残る、None
       - name: test_sweep_read_when_undeletable
         case: 正常
-        summary: 消せないときログに書く
-        condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダ
+        summary: 消せず、ログにも書けないとき標準エラー出力に書く
+        condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダ。`rule-inject.log` は置かない
         mock: なし
         expected: 'None、標準エラー出力に `component: sweep_read`・`operation: delete_record`'
   - name: main
