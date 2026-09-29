@@ -107,4 +107,4 @@ tests/unit/rule_inject/shared/test_paths.py::test_resolve_location_when_url PASS
 tests/unit/rule_inject/shared/test_paths.py::test_resolve_location_when_relative PASSED [ 99%]
 tests/unit/rule_inject/shared/test_paths.py::test_resolve_location_when_home PASSED [100%]
 
-============================= 100 passed in 9.31s ==============================
+============================= 100 passed in 9.09s ==============================
