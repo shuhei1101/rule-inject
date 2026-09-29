@@ -27,9 +27,9 @@ upstream: modelcontextprotocol/python-sdk
 license: MIT（商用利用可）
 official_url: https://github.com/modelcontextprotocol/python-sdk
 verification:
-  state: 未確認
+  state: 済
   date: '2026-09-29'
-  detail: PoC 検証（#4）で 2.2.0 の `MCPServer` を stdio で動かし、ツールが Claude Code から呼べることを確かめた。本実装での確認はまだ
+  detail: 本実装で 2.2.0（uv.lock）の `MCPServer.tool`（`name`・`meta`・`Annotated` の `Field` による引数の説明）を、単体テストのインメモリのクライアントと stdio の子プロセスで動かし、ツールの一覧の `_meta`・引数の説明・`ToolError` のエラー応答が想定どおりに返ることを確かめた。Claude Code からの呼び出しは PoC 検証（#4）で確かめた
 selection:
   candidates: 公式の Python SDK（`mcp`）だけを候補にした。
   decision: Issue の構成方針（MCP サーバーは Python の uv のプロジェクト）に合う公式の実装で、stdio のサーバーを数行で書ける。

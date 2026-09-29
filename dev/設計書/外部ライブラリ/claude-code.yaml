@@ -50,4 +50,4 @@ docs_url: https://code.claude.com/docs/en/hooks
 verification:
   state: 未確認
   date: '2026-09-29'
-  detail: PoC 検証（#4）と設計の段で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装での確認はまだ
+  detail: PoC 検証（#4）と設計の段で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装のフックは、入力の JSON を標準入力へ渡す単体テストで確かめ、`claude plugin validate` でプラグインと marketplace のマニフェストを通した。実際の Claude Code に本実装のフックと MCP サーバーを動かさせる確認は API の利用（課金）が要り、E2E テストの実行を担う tester が行うため、この工程では動かせない

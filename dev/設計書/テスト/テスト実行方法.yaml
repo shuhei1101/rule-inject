@@ -1,7 +1,10 @@
 title: "テスト実行方法"
 layers:
   - name: 単体テスト（バック）
-    run_all: 未確定
+    run_all: |-
+      ```bash
+      uv run pytest tests/unit
+      ```
   - name: 結合テスト（バック）
     run_all: 未確定
   - name: E2E テスト
