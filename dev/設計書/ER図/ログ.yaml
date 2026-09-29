@@ -1,19 +1,19 @@
 title: "ER 図: ログ"
 lead: フックと MCP サーバーが、失敗した操作を後から追えるように書き出すログ。
 tables:
-  - name: '{RULE_INJECT_STATE_DIR}/rule-inject.log'
+  - name: '{RULE_INJECT_LOG_DIR}/{yyyymmdd}_rule-inject.log'
     title: ログ
     datastore: JSON Lines（UTF-8、1 行 = 1 件）
     summary: 失敗した操作とその理由
-    scale: '`rule-inject.log` は非機能要件「ログの上限の大きさ」に、最後の付け替えの後のセッションで書き足した分を足した大きさまで。`rule-inject.log.1` は付け替えた時点のログの大きさ'
-    growth: 失敗のたびに 1 行追記する
-    retention: '大きさが上限を超えたら、次のセッションの開始で `rule-inject.log.1` へ付け替える。`rule-inject.log.1` は次の付け替えまで残る'
-    deletion: 付け替えでそれまでの `rule-inject.log.1` を置き換える（物理削除）。利用者が手で消してもよい
+    scale: '1 日 1 ファイル。失敗が続いても 1 ファイル数 MB で、残るのは非機能要件「ログの保持日数」の分のファイル'
+    growth: 失敗のたびに、その時刻（UTC）の日付のファイルへ 1 行追記する。ファイルが無ければ作る
+    retention: 'ファイル名の日付が今日（UTC）から非機能要件「ログの保持日数」以上前になったら、次のセッションの開始で消す'
+    deletion: ファイルごとの物理削除。利用者が手で消してもよい
     access: 追記（O_APPEND）だけで書く。プラグインは読まない
     description: |-
       フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
 
-      付け替えは、同じフォルダの空の錠のファイル `rule-inject.log.lock` を `flock` で取ったセッションだけが行う。錠のファイルは消さない。
+      `{RULE_INJECT_LOG_DIR}` は設定『プラグイン』の `RULE_INJECT_LOG_DIR`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。`{yyyymmdd}` は `time` の UTC の日付。
     columns:
       - name: time
         title: 時刻
@@ -34,7 +34,7 @@ tables:
         title: 失敗した操作
         type: string
         not_null: true
-        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `rotate_log` / `unexpected` のいずれか'
+        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `delete_log` / `unexpected` のいずれか'
       - name: path
         title: 対象のパス
         type: string

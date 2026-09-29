@@ -96,15 +96,16 @@ requirements:
     source: https://code.claude.com/docs/en/sessions
     value: '30'
     unit: 日
-    rationale: 再開できるセッションの記録を消すと、文脈に残っているルールがまた案内される。会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を残す。最終更新はルールを読んだ最後の時刻のため、読み足さないまま 30 日を超えて続いたセッションでは、消えた後にルールがまた案内される（読めば既読に戻る）
+    rationale: 再開できるセッションの記録を消すと、文脈に残っているルールがまた案内される。会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を残す。最終更新はルールを読んだ最後の時刻のため、読み足さないまま 30 日を超えて続いたセッションでは、消えた後にルールがまた案内される（読めば既読に戻る）。`cleanupPeriodDays` を変えた利用者は `RULE_INJECT_RECORD_RETENTION_DAYS` で合わせられる（設定『プラグイン』）
     overflow: 最終更新から 30 日を過ぎた記録ファイルを、次に始まったセッションの `SessionStart` で消す（単一ユースケース「終わったセッションの既読の記録が掃除される」）
-  - name: ログの上限の大きさ
-    english_name: log_size_limit
+  - name: ログの保持日数
+    english_name: log_retention
     category: 保守性
     external_constraint: 制限なし
     source_kind: 制限なし
-    value: '1'
-    unit: MiB
-    rationale: ログの 1 行は数百バイトで、1 MiB で数千行の失敗が残る。失敗が続く状態でも、利用者が原因を追うには直近の数千行で足りる。付け替えの判断は大きさだけを見るため、値の大小はフックの実行時間に効かない
-    overflow: 大きさが 1 MiB を超えた `rule-inject.log` を、次に始まったセッションの `SessionStart` で `rule-inject.log.1` へ付け替え、それまでの `rule-inject.log.1` を消す（単一ユースケース「古いログが掃除される」）。1 つのセッションの中では付け替えず、超えたまま追記する
+    source: https://github.com/shuhei1101/rule-inject/pull/12#discussion_r4134801433
+    value: '3'
+    unit: 日
+    rationale: 利用者の回答で既定を 3 日にした。失敗の原因を追うのに要るのは直近の失敗で、失敗が続いても 1 日のファイルは数 MB に収まる。長く残したい利用者は `RULE_INJECT_LOG_RETENTION_DAYS` で変える（設定『プラグイン』）
+    overflow: 日付が今日（UTC）から保持日数以上前のログのファイルを、次に始まったセッションの `SessionStart` で消す（単一ユースケース「古いログが掃除される」）
 lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。

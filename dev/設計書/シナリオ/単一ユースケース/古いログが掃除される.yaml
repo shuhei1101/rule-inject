@@ -4,11 +4,13 @@ scenarios:
     setup:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
-      - name: 上限を超えたログ
-        description: 記録フォルダに `rule-inject.log` を置き、大きさを上限より 1 バイト大きくする
-        notes: 中身は ER 図「ログ」の形の行を並べる
-      - name: 1 世代前のログ
-        description: 記録フォルダに `rule-inject.log.1` を置き、上限を超えたログと見分けられる中身にする
+      - name: ログのフォルダ
+        description: '`RULE_INJECT_LOG_DIR` でテスト用のフォルダを指す'
+        notes: '`RULE_INJECT_LOG_RETENTION_DAYS` は置かず、既定の 3 日で動かす'
+      - name: 古いログ
+        description: 日付が 3 日前（UTC）のログのファイルを置く
+      - name: 新しいログ
+        description: 日付が 2 日前（UTC）のログのファイルを置く
       - name: 操作
         description: プロンプトで、ツールを呼ばずに 1 語で答えるよう指示する
         notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
@@ -17,21 +19,20 @@ scenarios:
       sequenceDiagram
         participant CC as Claude Code
         participant S as SessionStart フック
-        participant ST as ログ
+        participant LG as ログのフォルダ
 
         CC->>S: セッションの開始（session_id・source）
-        S->>ST: ログの大きさを確かめる
-        ST-->>S: 上限を超えた大きさ
-        S->>ST: 1 世代前のログを消し、ログを 1 世代前の名前へ付け替える
+        S->>LG: ログのファイルを列挙する
+        LG-->>S: ファイル名の日付
+        S->>LG: 日付が保持日数以上前のファイルを消す
       ```
     expected:
-      - '`rule-inject.log.1` の中身が、置いた上限を超えたログの中身と同じ'
-      - 置いた 1 世代前のログの中身がどこにも残っていない
-      - '`rule-inject.log` が無い'
+      - 古いログのファイルが無い
+      - 新しいログのファイルが残っている
     test: test_normal
-lead: セッションの開始時に `SessionStart` フックが、上限の大きさを超えたログを 1 世代前の名前（`rule-inject.log.1`）へ付け替え、それまでの 1 世代前を消す。失敗が続いても、ログは次のセッションの開始で上限を超えた分が 1 世代前へ移る。
+lead: ログは日付ごとのファイル（`{yyyymmdd}_rule-inject.log`）に分かれる。セッションの開始時に `SessionStart` フックが、日付が保持日数以上前のログのファイルを消す。
 issue: 11
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 notes:
-  付け替えにする理由: ログは失敗のたびに 1 行書くため、索引が読めないなど失敗が続く状態では `PreToolUse` のたびに行が増える。最終更新の古さでファイルごと消すと、その状態では消えない。古い行だけを落として書き直すと、書き直す間に別のセッションが追記した行を失う。付け替えは中身を読まずに大きさだけで決まり、付け替えた後の追記は新しいファイルへ入る
+  日付で分ける理由: '消すのは書き足されなくなった過去の日付のファイルだけなので、消している間に別のセッションが書いた行を失わない。中身を読まずにファイル名だけで決まるため、フックの実行時間にも効かない（PR #12 の確認事項で利用者が決めた形）'

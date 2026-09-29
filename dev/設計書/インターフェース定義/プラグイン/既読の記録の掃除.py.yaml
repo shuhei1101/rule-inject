@@ -9,7 +9,7 @@ flows:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 既読の記録
-        description: 別のセッションの記録ファイルを 2 つ置き、最終更新を保持期間より 1 日前と 1 日後にする。記録フォルダにログ（`rule-inject.log`）も上限の大きさ以下で置き、最終更新を保持期間より前にする
+        description: 別のセッションの記録ファイルを 2 つ置き、最終更新を保持期間より 1 日前と 1 日後にする。記録フォルダにログ（`rule-inject.log`）も置き、最終更新を保持期間より前にする
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -110,14 +110,14 @@ flows:
       - 記録ファイルが残っている（次のセッションの開始でまた消す）
       - 終了コードが `0`
     test: test_error_when_record_undeletable
-  - name: 正常系（ログが上限を超えている）
-    summary: 上限の大きさを超えたログを 1 世代前の名前へ付け替え、それまでの 1 世代前を消す
+  - name: 正常系（保持日数を過ぎたログがある）
+    summary: 日付が保持日数以上前のログのファイルだけを消す
     setup:
       - name: Mock
-        description: なし
+        description: なし（今日の日付は実行時の UTC から求める）
       - name: ログ
-        description: '`rule-inject.log` を上限の大きさより 1 バイト大きく置き、`rule-inject.log.1` を見分けられる中身で置く'
-        notes: 上限とちょうど同じ大きさの境界は「ログが上限以下」のフローで確かめる
+        description: '`RULE_INJECT_LOG_DIR` のフォルダに、日付が今日・2 日前・3 日前の `{yyyymmdd}_rule-inject.log` と、名前が形に合わないファイル（`notes.txt`）を置く'
+        notes: '`RULE_INJECT_LOG_RETENTION_DAYS` は置かず、既定の 3 日で動かす。2 日前が残り 3 日前が消えることで境界を確かめる'
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -125,29 +125,31 @@ flows:
       sequenceDiagram
         participant CC as Claude Code
         participant C as 既読の記録の掃除
-        participant ST as 記録フォルダ
+        participant LG as ログのフォルダ
 
         CC->>C: 標準入力（session_id・source）
-        C->>ST: 保持期間を過ぎた記録ファイルを消す
-        C->>ST: 錠のファイルを待たずに取る
-        C->>ST: ログの大きさを確かめる
-        ST-->>C: 上限を超えた大きさ
-        C->>ST: ログを 1 世代前の名前へ付け替える
-        C->>ST: 錠を放す
+        C->>LG: ログのファイルを列挙する
+        LG-->>C: ファイル名の日付
+        C->>LG: 日付が保持日数以上前のファイルを消す
         C-->>CC: 終了コード 0
       ```
     expected:
-      - '`rule-inject.log.1` の中身が、置いた `rule-inject.log` の中身と同じ'
-      - '`rule-inject.log` が無い'
+      - 3 日前のログのファイルが無い
+      - 今日と 2 日前のログのファイルが残っている
+      - '`notes.txt` が残っている'
       - 標準出力が空
       - 終了コードが `0`
-  - name: 正常系（ログが上限以下）
-    summary: 大きさが上限ちょうどのログは付け替えない
+  - name: 正常系（保持の値を環境変数で変える）
+    summary: 環境変数で指した保持の値で、記録ファイルとログのファイルを消す
     setup:
       - name: Mock
         description: なし
+      - name: 環境変数
+        description: '`RULE_INJECT_RECORD_RETENTION_DAYS=1`・`RULE_INJECT_LOG_RETENTION_DAYS=1`'
+      - name: 既読の記録
+        description: 別のセッションの記録ファイルを 1 つ置き、最終更新を 2 日前にする
       - name: ログ
-        description: '`rule-inject.log` を上限の大きさちょうどで置き、`rule-inject.log.1` を見分けられる中身で置く'
+        description: 日付が今日と 1 日前のログのファイルを置く
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -156,24 +158,29 @@ flows:
         participant CC as Claude Code
         participant C as 既読の記録の掃除
         participant ST as 記録フォルダ
+        participant LG as ログのフォルダ
 
         CC->>C: 標準入力（session_id・source）
-        C->>ST: ログの大きさを確かめる
-        ST-->>C: 上限以下の大きさ
+        C->>C: 環境変数から保持の値を読む
+        C->>ST: 1 日を過ぎた記録ファイルを消す
+        C->>LG: 日付が 1 日以上前のログのファイルを消す
         C-->>CC: 終了コード 0
       ```
     expected:
-      - '`rule-inject.log` の中身が置いたまま'
-      - '`rule-inject.log.1` の中身が置いたまま'
+      - 記録ファイルが無い
+      - 1 日前のログのファイルが無い
+      - 今日のログのファイルが残っている
       - 終了コードが `0`
-  - name: 異常系（ログを付け替えられない）
-    summary: 上限を超えたログを付け替えられないとき、セッションの開始は止めずに失敗を書く
+  - name: 正常系（保持の値が不正）
+    summary: 環境変数の保持の値が 1 以上の整数でないときは、既定の値で掃除する
     setup:
       - name: Mock
         description: なし
+      - name: 環境変数
+        description: '`RULE_INJECT_LOG_RETENTION_DAYS=0`'
+        notes: '`abc` など整数でない値も同じ扱い。単体テストで並べて確かめる'
       - name: ログ
-        description: '`rule-inject.log` を上限の大きさより 1 バイト大きく置き、`rule-inject.log.lock` も置いてから、フォルダを書き込み権限なし（`chmod 555`）にする'
-        notes: 錠は取れるが、フォルダに書き込めないため付け替えられない。既にある `rule-inject.log` への追記はできるため、失敗はログへ書かれる
+        description: 日付が今日・2 日前・3 日前のログのファイルを置く
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -181,51 +188,49 @@ flows:
       sequenceDiagram
         participant CC as Claude Code
         participant C as 既読の記録の掃除
-        participant ST as 記録フォルダ
+        participant LG as ログのフォルダ
 
         CC->>C: 標準入力（session_id・source）
-        C->>ST: ログを 1 世代前の名前へ付け替える（付け替えられない）
-        C->>ST: ログへ失敗を 1 行書く
+        C->>C: 保持の値が不正なので既定の 3 日を使う
+        C->>LG: 日付が 3 日以上前のログのファイルを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 3 日前のログのファイルが無い
+      - 今日と 2 日前のログのファイルが残っている
+      - 終了コードが `0`
+  - name: 異常系（ログを消せない・ログにも書けない）
+    summary: 保持日数を過ぎたログのファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: ログ
+        description: 日付が 3 日前のログのファイルだけを置き、ログのフォルダを書き込み権限なし（`chmod 555`）にする
+        notes: 今日のログのファイルも作れないため、標準エラー出力へ出る経路に定まる
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant LG as ログのフォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>LG: 古いログのファイルを消す（消せない）
+        C->>C: ログに書けないため標準エラー出力へ出す
         C-->>CC: 終了コード 0
       ```
     expected:
       - 標準出力が空
-      - '`rule-inject.log` の最後の行が `component: sweep_read`・`operation: rotate_log`'
-      - '`rule-inject.log.1` が無い（次のセッションの開始でまた付け替える）'
+      - '標準エラー出力に `component: sweep_read`・`operation: delete_log` の 1 行がある'
+      - 3 日前のログのファイルが残っている（次のセッションの開始でまた消す）
       - 終了コードが `0`
-  - name: 正常系（別のセッションが付け替えている）
-    summary: 錠を取れないとき、ログが上限を超えていても付け替えずに終える
-    setup:
-      - name: Mock
-        description: なし
-      - name: ログ
-        description: '`rule-inject.log` を上限の大きさより 1 バイト大きく置く'
-      - name: 錠
-        description: テストのプロセスが `rule-inject.log.lock` を `flock(LOCK_EX)` で取ったままフックを起動する
-        notes: 別のセッションが付け替えている状態を決定的に作る
-      - name: 入力
-        description: '`source: startup`'
-    flow: |-
-      ```mermaid
-      sequenceDiagram
-        participant CC as Claude Code
-        participant C as 既読の記録の掃除
-        participant ST as 記録フォルダ
-
-        CC->>C: 標準入力（session_id・source）
-        C->>ST: 錠のファイルを待たずに取る（取れない）
-        C-->>CC: 終了コード 0
-      ```
-    expected:
-      - '`rule-inject.log` の中身が置いたまま'
-      - '`rule-inject.log.1` が無い'
-      - 標準出力が空
-      - 終了コードが `0`
-lead: セッションの開始時に、最終更新から非機能要件「既読の記録の保持期間」を過ぎた既読の記録ファイルを消し、非機能要件「ログの上限の大きさ」を超えたログを 1 世代前の名前へ付け替える。始まったセッション自身の記録ファイルと、記録ファイルでもログでもないファイルは消さない。
+lead: セッションの開始時に、最終更新から非機能要件「既読の記録の保持期間」を過ぎた既読の記録ファイルと、日付が非機能要件「ログの保持日数」を過ぎたログのファイルを消す。始まったセッション自身の記録ファイルと、記録ファイルでもログのファイルでもないファイルは消さない。
 identifier: sweep_read
 idempotent: true
-side_effects: 保持期間を過ぎた別のセッションの既読の記録ファイルを消す。上限の大きさを超えた `rule-inject.log` を `rule-inject.log.1` へ付け替え、それまでの `rule-inject.log.1` を消す
-exclusivity: 複数のセッションが同時に始まって同じファイルを消すとき、先に消されて無いファイルは消した状態と同じとして扱う。ログは、錠のファイル `rule-inject.log.lock` を `flock(LOCK_EX | LOCK_NB)` で取れたときだけ、錠を持ったまま大きさを確かめて付け替える。取れなければ、別のセッションが付け替えているとして何もしない（待たない）。錠を取った後にログが無いか上限以下なら、先に付け替えられた状態と同じとして付け替えない。付け替えと同時の追記は、付け替えた後の 1 世代前か新しいログのどちらかに入る（`write_log` は書くたびにログを開き直す）
+side_effects: 保持期間を過ぎた別のセッションの既読の記録ファイルと、保持日数を過ぎた日付のログのファイルを消す
+exclusivity: 複数のセッションが同時に始まって同じファイルを消すとき、先に消されて無いファイルは消した状態と同じとして扱う。ログは今日（UTC）の日付のファイルだけに書き足され、消すのは保持日数以上前の日付のファイルだけなので、消すことと追記は同じファイルに当たらない
 request:
   - name: '`session_id`'
     type: str
@@ -247,23 +252,23 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
-  - name: OSError（ログを付け替えられない）
-    condition: 上限を超えたログはあるが、錠のファイルを開けないか付け替えられない（権限など）。錠を他のセッションが持っていることは失敗にしない
-    notes: フックの中で捕まえ、ログへ `rotate_log` を書き、終了コード 0 で終える（セッションの開始は止めない）。既読の記録の掃除は続ける。付け替えられなかったログは次のセッションの開始でまた付け替える
+  - name: OSError（ログを消せない）
+    condition: 保持日数を過ぎたログのファイルはあるが消せない（権限など）
+    notes: フックの中で捕まえ、ログへ `delete_log` を書き、残りのファイルの掃除を続けて終了コード 0 で終える（セッションの開始は止めない）。消せなかったファイルは次のセッションの開始でまた消す
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
   - item: 保持期間
-    constraint: 最終更新から 30 日を過ぎた記録ファイルを消す
+    constraint: 最終更新から 30 日（`RULE_INJECT_RECORD_RETENTION_DAYS` で変えられる）を過ぎた記録ファイルを消す
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[既読の記録の保持期間]
   - item: 消す対象
-    constraint: 記録フォルダの直下で、名前が `{session_id}.txt`（`session_id` の形）に合う通常のファイルだけ。ログ・錠のファイル・サブフォルダ・シンボリックリンクは消さない（ログは付け替えの対象）
+    constraint: 記録フォルダの直下で、名前が `{session_id}.txt`（`session_id` の形）に合う通常のファイルと、ログのフォルダの直下で、名前が `{yyyymmdd}_rule-inject.log` に合う通常のファイルだけ。それ以外のファイル・サブフォルダ・シンボリックリンクは消さない
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
-  - item: ログの付け替え
-    constraint: 錠のファイル `rule-inject.log.lock` を取れたときだけ、記録フォルダの直下の `rule-inject.log` が通常のファイルで大きさが 1 MiB を超えるとき、`rule-inject.log.1` へ付け替える（それまでの `rule-inject.log.1` は置き換わって消える）。中身は読まない
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[ログの上限の大きさ]
+  - item: ログの保持日数
+    constraint: ファイル名の日付が今日（UTC）から 3 日（`RULE_INJECT_LOG_RETENTION_DAYS` で変えられる）以上前のログのファイルを消す。中身は読まない
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[ログの保持日数]
 notes:
   作業の決まりの注入との分担: 同じ `SessionStart` で動く作業の決まりの注入とは別のフックにする。注入は標準出力へ additionalContext を返し、掃除は何も返さない。始まったセッション自身の記録ファイルを消さないため、注入の圧縮の後の消し残りの確認とぶつからない
 test_file: tests/integration/plugin/test_sweep_read.py
