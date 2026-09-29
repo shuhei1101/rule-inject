@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from rule_inject.features.index.types import MatchedRule
+from rule_inject.features.guidance.types import GuidedRule
 from rule_inject.shared.errors import RuleInjectError
 
 # 案内文 1 つの字数の上限
@@ -29,7 +29,7 @@ def _omitted_line(count: int) -> str:
     return f"ほか {count} 件のルールは、上のルールを読んで操作をやり直したときに案内します。"
 
 
-def build_guidance(rules: Sequence[MatchedRule], *, limit: int = GUIDANCE_LIMIT) -> str:
+def build_guidance(rules: Sequence[GuidedRule], *, limit: int = GUIDANCE_LIMIT) -> str:
     """未読のルールの場所を、上限に収まる分だけ並べた案内文を返す。"""
     # 止めるルールを先に、元の順を保って並べる
     ordered = [rule for rule in rules if rule.blocking] + [

@@ -8,12 +8,14 @@ from rule_inject.features.guidance.service import (
     build_failure_notice,
     build_guidance,
 )
+from rule_inject.features.guidance.types import GuidedRule
 
 __all__ = [
     "BLOCKING_HEADER",
     "GUIDANCE_LIMIT",
     "NON_BLOCKING_HEADER",
     "WORK_RULES",
+    "GuidedRule",
     "build_failure_notice",
     "build_guidance",
 ]
