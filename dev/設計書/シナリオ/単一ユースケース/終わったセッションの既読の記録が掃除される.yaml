@@ -34,4 +34,4 @@ primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 notes:
   終わりで消さない理由: 'Claude Code は会話を保持期間（`cleanupPeriodDays`、既定 30 日）のあいだ残し、`/exit` や `/clear` で終えたセッションも `--resume` か `/resume` で再開できる。再開したセッションは同じ `session_id` で続き、読んだルールの本文も文脈に残る（PR #9 の PoC 検証の回 4）。セッションの終わり（`SessionEnd`）で記録を消すと、再開したときに読んだルールがまた案内されるため、終わりでは消さず、保持期間で消す'
-  対応テストファイル: '`tests/e2e/単一ユースケース/test_ended_session_records_cleaned.py` に置く。`test_file` は実在するファイルしか書けないため、E2E テスト作成でファイルを作った後に `test_file` へ移す'
+test_file: tests/e2e/単一ユースケース/test_ended_session_records_cleaned.py
