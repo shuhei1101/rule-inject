@@ -76,6 +76,7 @@ def test_main_when_python_too_old(
     capsys: pytest.CaptureFixture[str],
     run_module: ModuleType,
     state_dir: Path,
+    log_folder: Path,
     hook_payload: Callable[..., dict[str, Any]],
     imported_rule_inject_modules: Callable[[], list[str]],
     without_rule_inject: None,
@@ -83,6 +84,7 @@ def test_main_when_python_too_old(
     """版が足りないとき知らせて終える（正常系）。"""
     # 準備
     monkeypatch.setenv("RULE_INJECT_STATE_DIR", str(state_dir))
+    monkeypatch.setenv("RULE_INJECT_LOG_DIR", str(log_folder))
     payload = hook_payload("PreToolUse", tool_name="Write", tool_input={"file_path": "/p/a.py"})
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
     monkeypatch.setattr(sys, "version_info", (3, 11, 0, "final", 0))
