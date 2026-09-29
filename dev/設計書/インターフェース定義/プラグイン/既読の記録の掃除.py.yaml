@@ -173,34 +173,6 @@ flows:
       - 1 日前のログのファイルが無い
       - 今日のログのファイルが残っている
       - 終了コードが `0`
-  - name: 正常系（保持の値が不正）
-    summary: 環境変数の保持の値が 1 以上の整数でないときは、既定の値で掃除する
-    setup:
-      - name: Mock
-        description: なし
-      - name: 環境変数
-        description: '`RULE_INJECT_LOG_RETENTION_DAYS=0`'
-        notes: '`abc` など整数でない値も同じ扱い。単体テストで並べて確かめる'
-      - name: ログ
-        description: 日付が今日・2 日前・3 日前のログのファイルを置く
-      - name: 入力
-        description: '`source: startup`'
-    flow: |-
-      ```mermaid
-      sequenceDiagram
-        participant CC as Claude Code
-        participant C as 既読の記録の掃除
-        participant LG as ログのフォルダ
-
-        CC->>C: 標準入力（session_id・source）
-        C->>C: 保持の値が不正なので既定の 3 日を使う
-        C->>LG: 日付が 3 日以上前のログのファイルを消す
-        C-->>CC: 終了コード 0
-      ```
-    expected:
-      - 3 日前のログのファイルが無い
-      - 今日と 2 日前のログのファイルが残っている
-      - 終了コードが `0`
   - name: 異常系（ログを消せない・ログにも書けない）
     summary: 保持日数を過ぎたログのファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
     setup:
@@ -253,6 +225,40 @@ flows:
       - 記録フォルダの `rule-inject.log` が無い
       - 標準出力が空
       - 終了コードが `0`
+  - name: 異常系（保持の値が不正）
+    summary: 環境変数の保持の値が 1 以上の整数でないとき、その掃除だけを飛ばしてログへ書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 環境変数
+        description: '`RULE_INJECT_LOG_RETENTION_DAYS=0`'
+        notes: '`abc` など整数でない値も同じ扱い。単体テストで並べて確かめる'
+      - name: 既読の記録
+        description: 別のセッションの記録ファイルを置き、最終更新を保持期間より 1 日前にする
+      - name: ログ
+        description: 日付が 3 日前のログのファイルを置く
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の掃除
+        participant ST as 記録フォルダ
+        participant LG as ログのフォルダ
+
+        CC->>C: 標準入力（session_id・source）
+        C->>ST: 保持期間を過ぎた記録ファイルを消す
+        C->>C: ログの保持日数が不正なのでログのファイルの掃除を飛ばす
+        C->>LG: ログへ失敗を 1 行書く
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが無い
+      - 3 日前のログのファイルが残っている
+      - '今日のログのファイルに `component: sweep_read`・`operation: read_setting`・`path: RULE_INJECT_LOG_RETENTION_DAYS` の 1 行がある'
+      - 標準出力が空
+      - 終了コードが `0`
 lead: セッションの開始時に、最終更新から非機能要件「既読の記録の保持期間」を過ぎた既読の記録ファイルと、日付が非機能要件「ログの保持日数」を過ぎたログのファイルを消す。始まったセッション自身の記録ファイルと、記録ファイルでもログのファイルでもないファイルは消さない。
 identifier: sweep_read
 idempotent: true
@@ -280,8 +286,11 @@ exceptions:
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
   - name: OSError（ログを消せない）
-    condition: 保持日数を過ぎたログのファイルはあるが消せない（権限など）
+    condition: 保持日数を過ぎたログのファイルか、記録フォルダに残った変更前のログ（`rule-inject.log`）はあるが消せない（権限など）
     notes: フックの中で捕まえ、ログへ `delete_log` を書き、残りのファイルの掃除を続けて終了コード 0 で終える（セッションの開始は止めない）。消せなかったファイルは次のセッションの開始でまた消す
+  - name: SettingError（保持の値が不正）
+    condition: '`RULE_INJECT_RECORD_RETENTION_DAYS` か `RULE_INJECT_LOG_RETENTION_DAYS` が 1 以上の整数でない'
+    notes: フックの中で捕まえ、ログへ `read_setting`（path は環境変数の名前）を書き、その値を使う掃除だけを飛ばして残りを続け、終了コード 0 で終える。既定値で掃除すると、書いた値が効いていないことに気づけないため
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）

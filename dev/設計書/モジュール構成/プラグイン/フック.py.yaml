@@ -399,7 +399,7 @@ functions:
     title: 既読の記録の掃除の処理
     container: hooks/sweep_read.py
     usecase: 終わったセッションの既読の記録が掃除される
-    summary: 保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものをログへ書く
+    summary: 保持期間を過ぎた別のセッションの記録ファイル、変更前のログ、保持日数を過ぎたログのファイルを消し、失敗をログへ書く
     kind: フック
     scope: public
     inherits: HookHandler
@@ -419,8 +419,10 @@ functions:
       description: 常に出力しない
     process: |-
       1. session_id の形が外れていれば何もしない
-      2. `sweep_records(state_dir(env), session_id)` を呼ぶ
-      3. 返った RecordDeleteError ごとに、ログ（`delete_record`）へ path と理由を書く
+      2. 失敗は全て `write_log(log_dir(env), component=sweep_read, ...)` で書く
+      3. `read_retention_days(env, RECORD_RETENTION_DAYS_ENV, DEFAULT_RECORD_RETENTION_DAYS)` を読む。SettingError ならログ（`read_setting`、path は環境変数の名前）へ書き、記録ファイルの掃除を飛ばす。読めたら `sweep_records(state_dir(env), session_id, retention_days=日数)` を呼び、返った RecordDeleteError ごとにログ（`delete_record`）へ書く
+      4. `delete_legacy_log(state_dir(env))` を呼び、LogDeleteError が返ればログ（`delete_log`）へ書く
+      5. `read_retention_days(env, LOG_RETENTION_DAYS_ENV, DEFAULT_LOG_RETENTION_DAYS)` を読む。SettingError ならログ（`read_setting`）へ書き、ログのファイルの掃除を飛ばす。読めたら `sweep_logs(log_dir(env), 日数)` を呼び、返った LogDeleteError ごとにログ（`delete_log`）へ書く
     unit_tests:
       - name: test_sweep_read
         case: 正常
@@ -437,9 +439,27 @@ functions:
       - name: test_sweep_read_when_undeletable
         case: 正常
         summary: 消せず、ログにも書けないとき標準エラー出力に書く
-        condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダ。`rule-inject.log` は置かない
+        condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（`RULE_INJECT_LOG_DIR`）
         mock: なし
         expected: 'None、標準エラー出力に `component: sweep_read`・`operation: delete_record`'
+      - name: test_sweep_read_when_old_logs
+        case: 正常
+        summary: 保持日数を過ぎたログのファイルを消す
+        condition: '`RULE_INJECT_LOG_DIR` に日付が今日と 3 日前（UTC）のログのファイル'
+        mock: なし
+        expected: 3 日前のファイルが無く、今日のファイルが残る、None
+      - name: test_sweep_read_when_legacy_log
+        case: 正常
+        summary: 変更前のログを消す
+        condition: 記録フォルダに最終更新が今の `rule-inject.log`
+        mock: なし
+        expected: '`rule-inject.log` が無い、None'
+      - name: test_sweep_read_when_invalid_setting
+        case: 異常
+        summary: 保持の値が不正ならその掃除を飛ばし、ログへ書く
+        condition: '`RULE_INJECT_LOG_RETENTION_DAYS=0`、日付が 3 日前のログのファイル、最終更新が 31 日前の別のセッションの記録ファイル'
+        mock: なし
+        expected: '3 日前のログのファイルが残り、記録ファイルは無い。今日のログのファイルに `operation: read_setting`・`path: RULE_INJECT_LOG_RETENTION_DAYS` の 1 行がある、None'
   - name: main
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
@@ -483,12 +503,3 @@ notes:
   hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
   Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
-test_files:
-  - tests/unit/rule_inject/hooks/test_runner.py
-  - tests/unit/rule_inject/hooks/test_rule_guide.py
-  - tests/unit/rule_inject/hooks/test_session_id_injection.py
-  - tests/unit/rule_inject/hooks/test_record_read.py
-  - tests/unit/rule_inject/hooks/test_discard_read.py
-  - tests/unit/rule_inject/hooks/test_work_rules.py
-  - tests/unit/rule_inject/hooks/test_sweep_read.py
-  - tests/unit/hooks/test_run.py
