@@ -1,2 +1,8 @@
 summary: 環境変数・索引の書式・MCP ツール
-items: []
+items:
+  - page: 環境変数.md
+    summary: 索引と既読の記録の置き場所を指す環境変数の一覧
+  - page: 索引の書式.md
+    summary: ルール索引の YAML のキー
+  - page: MCPツール.md
+    summary: ルールの本文を返すツール read_rules の引数と戻り値
