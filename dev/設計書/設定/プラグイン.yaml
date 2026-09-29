@@ -32,9 +32,10 @@ settings:
     description: そのプロジェクトだけで使う索引のパス。カンマ区切りで複数並べられる
     env_var: RULE_INJECT_INDEXES_PROJECT
     reload: immediate
-    allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（Claude Code の `cwd`）からの相対パス
+    allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（環境変数 `CLAUDE_PROJECT_DIR`）からの相対パス
     visibility: user
     status: planned
+    reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、フックにも stdio の MCP サーバーにも同じ値で渡る。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない'
   - key: RULE_INJECT_STATE_DIR
     title: 既読の記録の置き場所
     file: ~/.claude/settings.json

@@ -299,7 +299,7 @@ request:
     type: str
     required: true
     description: セッションの作業フォルダ
-    notes: プロジェクトの索引の相対パスと、Bash のコマンドの相対パスを解く基準
+    notes: Bash のコマンドの相対パスを解く基準。プロジェクトの索引の相対パスは `cwd` ではなく環境変数 `CLAUDE_PROJECT_DIR` から解く
   - name: '`tool_name`'
     type: str
     required: true
@@ -376,7 +376,7 @@ constraints:
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
   - item: 索引
     constraint: 環境変数 `RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` のカンマ区切りのパスを順に読み、全てのエントリを合わせて当てる
-    notes: 書式は設定の設計書。標準ライブラリだけで読む
+    notes: 書式は設定の設計書。標準ライブラリだけで読む。プロジェクトの索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く
   - item: ルールのまとめ方
     constraint: 同じルールの場所（解決後の絶対パスか URL）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
   - item: 読むコマンド

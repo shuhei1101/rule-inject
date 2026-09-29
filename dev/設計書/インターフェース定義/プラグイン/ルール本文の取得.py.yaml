@@ -277,7 +277,7 @@ constraints:
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
   - item: 索引
     constraint: ルール案内と同じ環境変数・同じ読み方で読む（`paths` を照合するときに使う）
-    notes: プロジェクトの索引の相対パスは、MCP サーバーの起動時の作業フォルダから解く
+    notes: プロジェクトの索引の相対パスは、ルール案内と同じく環境変数 `CLAUDE_PROJECT_DIR` から解く
   - item: 許す場所
     constraint: 索引に載ったルールの場所（解決後の絶対パスか URL）に一致するものだけを読む。一致しない `locations` は読まずに `failures` に「索引に載っていない場所」として載せる
     notes: Read の拒否ルールや WebFetch の許可を、このツールで迂回させない

@@ -99,7 +99,7 @@ request:
   - name: '`cwd`'
     type: str
     required: true
-    description: セッションの作業フォルダ
+    description: セッションの作業フォルダ。Bash のコマンドの相対パスを解く基準（プロジェクトの索引の相対パスは `CLAUDE_PROJECT_DIR` から解く）
   - name: '`tool_name`'
     type: Literal['Read', 'Bash']
     required: true
