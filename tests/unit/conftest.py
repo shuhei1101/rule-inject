@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
@@ -11,12 +12,21 @@ from typing import Any
 import pytest
 
 SESSION_ID = "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
+SECONDS_PER_DAY = 86_400
+# 掃除の単体テストが固定する現在の時刻（UNIX 時刻の秒）
+FIXED_NOW = 1_800_000_000.0
 
 
 @pytest.fixture
 def session_id() -> str:
     """テストで使うセッションの識別子。"""
     return SESSION_ID
+
+
+@pytest.fixture
+def now() -> Callable[[], float]:
+    """固定した現在の時刻（UNIX 時刻の秒）を返す関数。"""
+    return lambda: FIXED_NOW
 
 
 @pytest.fixture
@@ -148,6 +158,24 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
         path = state_dir / f"{session_id}.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
+        return path
+
+    return _write
+
+
+@pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[..., Path]:
+    """最終更新を過去に戻した既読の記録ファイルを、指定のセッションで置く factory。"""
+
+    def _write(target_session_id: str, age_days: int, *, base: float | None = None) -> Path:
+        """target_session_id の記録ファイルを置き、最終更新を base の age_days 日前にする。"""
+        path = state_dir / f"{target_session_id}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("/r/a.md\n", encoding="utf-8")
+        # 基準の時刻が無ければ実際の現在から戻す
+        reference = time.time() if base is None else base
+        modified = reference - age_days * SECONDS_PER_DAY
+        os.utime(path, (modified, modified))
         return path
 
     return _write
