@@ -1,0 +1,1 @@
+# PoC: PreToolUse の updatedInput でプラグインの MCP ツールへ session_id を足す
