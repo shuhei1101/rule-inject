@@ -1,0 +1,36 @@
+title: "mcp"
+kind: "ライブラリ"
+version:
+  current: 2.2.0
+  latest: 2.2.0
+  checked_on: '2026-09-29'
+  source: '`uv.lock`'
+  pinning: '`mcp>=2.2,<3`'
+catalogs:
+  - name: API
+    version: 2.2.0
+    entries:
+      - name: MCPServer
+        kind: クラス
+        purpose: stdio の MCP サーバーを作る（`mcp.server.mcpserver`）
+      - name: MCPServer.tool
+        kind: デコレータ
+        purpose: 関数をツールとして登録し、引数の型と docstring から入力の Schema と説明を作る
+      - name: MCPServer.run
+        kind: メソッド
+        purpose: stdio でサーバーを動かす
+lead: Model Context Protocol の公式の Python SDK。MCP のサーバーとクライアントを書くためのクラスを持つ。
+purl: pkg:pypi/mcp
+dependency_scope: 必須
+adoption: 採用
+upstream: modelcontextprotocol/python-sdk
+license: MIT（商用利用可）
+official_url: https://github.com/modelcontextprotocol/python-sdk
+verification:
+  state: 未確認
+  date: '2026-09-29'
+  detail: PoC 検証（#4）で 2.2.0 の `MCPServer` を stdio で動かし、ツールが Claude Code から呼べることを確かめた。本実装での確認はまだ
+selection:
+  candidates: 公式の Python SDK（`mcp`）だけを候補にした。
+  decision: Issue の構成方針（MCP サーバーは Python の uv のプロジェクト）に合う公式の実装で、stdio のサーバーを数行で書ける。
+  consequences: 2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使わない。メジャー版で API が変わるので `<3` で固定する。

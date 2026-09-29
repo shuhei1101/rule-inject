@@ -1,0 +1,129 @@
+title: "既読の記録"
+entry:
+  kind: trigger
+  value: '`PostToolUse` フック（matcher `Read|Bash`、timeout 1 秒）'
+flows:
+  - name: 正常系（Readで読む）
+    summary: Read で読んだルールの場所を記録する
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+        participant ST as 記録ファイル
+
+        CC->>P: 標準入力（Read・ルールの場所）
+        P->>IDX: 読む
+        P->>ST: ルールの場所を追記する
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルにルールの場所が 1 行ある
+      - 終了コードが `0`
+    test: test_normal_when_read_by_read_tool
+  - name: 正常系（Bashで読む）
+    summary: Bash の読むコマンドの引数にあるルールの場所を記録する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Bash`、`tool_input.command` は `cat {ルールの場所の相対パス}`'
+        notes: '`cwd` からの相対パスで渡し、絶対パスへ解くことを確かめる'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+        participant ST as 記録ファイル
+
+        CC->>P: 標準入力（Bash・コマンド）
+        P->>P: 読むコマンドの引数からパスを取り出す
+        P->>IDX: 読む
+        P->>ST: ルールの場所を追記する
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルにルールの場所の絶対パスが 1 行ある
+    test: test_normal_when_read_by_bash
+  - name: 正常系（ルールの場所でない）
+    summary: 索引に載っていないパスを読んでも記録しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` は索引に載っていないパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（Read・関係のないパス）
+        P->>IDX: 読む（当たらない）
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが作られていない
+    test: test_normal_when_not_rule
+lead: Read か Bash の読むコマンドで読んだパスのうち、索引に載ったルールの場所を、そのセッションの既読として記録する。
+idempotent: true
+side_effects: そのセッションの既読の記録ファイルへルールの場所を 1 行ずつ追記する
+exclusivity: 追記（O_APPEND）だけで書くため、MCP サーバーと同時に書いても行が混ざらない
+request:
+  - name: '`session_id`'
+    type: str
+    required: true
+    description: 呼び出し元のセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: 形が外れた値のときは記録しない
+  - name: '`cwd`'
+    type: str
+    required: true
+    description: セッションの作業フォルダ
+  - name: '`tool_name`'
+    type: Literal['Read', 'Bash']
+    required: true
+    description: 実行されたツール
+  - name: '`tool_input.file_path`'
+    type: str
+    required: false
+    default: なし（記録しない）
+    description: Read で読んだファイルのパス
+  - name: '`tool_input.command`'
+    type: str
+    required: false
+    default: なし（記録しない）
+    description: Bash で実行したコマンド
+    notes: ルール案内と同じ規則で読む対象のパスを取り出す
+exceptions:
+  - name: なし（正常終了）
+    condition: 常に終了コード 0 で終え、標準出力には何も出さない
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: 記録の置き場所
+    constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 1 場所）'
+    notes: 書式は ER 図「既読の記録」
+  - item: 記録する場所
+    constraint: 索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。それ以外のパスは記録しない

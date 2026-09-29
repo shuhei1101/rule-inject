@@ -8,6 +8,8 @@ items:
     summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
   - page: 設定/
     summary: 設定と環境変数のキー定義
+  - page: ER図/
+    summary: データストア（テキストファイル）の定義
   - page: アーキテクチャ図/
     summary: システム全体構成（Claude Code・フック・MCP サーバー・索引の関係）
   - page: 非機能要件/

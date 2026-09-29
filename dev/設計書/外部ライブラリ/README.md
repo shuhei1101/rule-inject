@@ -6,3 +6,5 @@
 
 | ページ | 概要 |
 | --- | --- |
+| [claude-code](./claude-code.yaml) | フックと MCP サーバーを呼ぶ Claude Code の CLI |
+| [mcp](./mcp.yaml) | MCP サーバーを書く公式の Python SDK |

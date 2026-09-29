@@ -1,0 +1,75 @@
+title: "既読の記録の破棄"
+entry:
+  kind: trigger
+  value: '`PreCompact` フック（timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: そのセッションの記録ファイルだけを消す
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 既読の記録
+        description: 対象のセッションと別のセッションの記録ファイルを 1 つずつ置く
+      - name: 入力
+        description: '`session_id` は対象のセッション、`trigger: manual`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の破棄
+        participant ST as 記録ファイル
+
+        CC->>C: 標準入力（session_id・trigger）
+        C->>ST: そのセッションのファイルを消す
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 対象のセッションの記録ファイルが無い
+      - 別のセッションの記録ファイルが残っている
+      - 終了コードが `0`
+    test: test_normal
+  - name: 正常系（記録が無い）
+    summary: 記録ファイルが無いセッションでも正常に終える
+    setup:
+      - name: Mock
+        description: なし
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`trigger: auto`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の破棄
+
+        CC->>C: 標準入力（session_id・trigger）
+        C->>C: 消すファイルが無い
+        C-->>CC: 終了コード 0
+      ```
+    expected:
+      - 終了コードが `0`
+    test: test_normal_when_no_record
+lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルを消す。
+idempotent: true
+side_effects: そのセッションの既読の記録ファイルを消す
+request:
+  - name: '`session_id`'
+    type: str
+    required: true
+    description: 圧縮するセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: 形が外れた値のときは何も消さない
+  - name: '`trigger`'
+    type: Literal['manual', 'auto']
+    required: true
+    description: 圧縮のきっかけ
+    notes: どちらでも同じように消す
+exceptions:
+  - name: なし（正常終了）
+    condition: 常に終了コード 0 で終える
+    notes: 終了コード 2 は圧縮を止める合図になるため使わない
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]

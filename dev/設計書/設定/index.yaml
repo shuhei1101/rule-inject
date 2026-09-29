@@ -1,2 +1,4 @@
 summary: 設定と環境変数のキー定義
-items: []
+items:
+  - page: プラグイン.yaml
+    summary: 索引を指す環境変数・既読の記録の置き場所・ルール索引の YAML のキー

@@ -1,0 +1,47 @@
+title: "claude-code"
+kind: "CLI"
+version:
+  current: 2.1.284
+  checked_on: '2026-09-29'
+  source: '`claude --version`'
+catalogs:
+  - name: フック
+    version: 2.1.284
+    entries:
+      - name: PreToolUse
+        kind: フック
+        purpose: ツールを呼ぶ直前に、案内（`permissionDecision` / `permissionDecisionReason` / `additionalContext`）と引数の置き換え（`updatedInput`）を返す
+      - name: PostToolUse
+        kind: フック
+        purpose: ツールを呼んだ後に、読んだ場所を既読として記録する
+      - name: PreCompact
+        kind: フック
+        purpose: 圧縮の前に既読の記録を捨てる
+      - name: SessionStart
+        kind: フック
+        purpose: セッションの開始時に作業の決まりを載せる
+  - name: プラグインのファイル
+    version: 2.1.284
+    entries:
+      - name: .claude-plugin/plugin.json
+        kind: ファイル
+        purpose: プラグインの名前と版
+      - name: hooks/hooks.json
+        kind: ファイル
+        purpose: フックの出来事・matcher・コマンド・timeout
+      - name: .mcp.json
+        kind: ファイル
+        purpose: 同梱の MCP サーバーの起動コマンド
+      - name: CLAUDE_PLUGIN_ROOT
+        kind: 環境変数
+        purpose: フックと `.mcp.json` の中でプラグインの場所を指す
+lead: Anthropic の AI コーディングエージェントの CLI（`claude`）。プラグインが持つフックと MCP サーバーを読み込み、出来事ごとに呼ぶ。
+dependency_scope: 必須
+adoption: 採用
+upstream: anthropics/claude-code
+license: Anthropic の商用利用規約（オープンソースではない）
+docs_url: https://code.claude.com/docs/en/hooks
+verification:
+  state: 未確認
+  date: '2026-09-29'
+  detail: PoC 検証（#4）と設計の段で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装での確認はまだ

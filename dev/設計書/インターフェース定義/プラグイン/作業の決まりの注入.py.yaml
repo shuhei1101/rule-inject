@@ -1,0 +1,45 @@
+title: "作業の決まりの注入"
+entry:
+  kind: trigger
+  value: '`SessionStart` フック（timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: 作業の決まりを additionalContext で返す
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 入力
+        description: '`hook_event_name: SessionStart`、`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as 作業の決まりの注入
+
+        CC->>S: 標準入力（SessionStart）
+        S-->>CC: additionalContext（作業の決まり）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` に空で作ってから書く決まりが載っている'
+      - 終了コードが `0`
+    test: test_normal
+lead: セッションの開始時に、新しいファイルは空で作ってから中身を書くという作業の決まりを `additionalContext` で載せる。
+idempotent: true
+side_effects: なし
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['SessionStart']
+    description: フックの種類
+  - name: '`hookSpecificOutput.additionalContext`'
+    type: str
+    description: 新しいファイルは Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書く、という決まり
+    constraints: 10,000 字以内（固定の文面）
+exceptions:
+  - name: なし（正常終了）
+    condition: 常に終了コード 0 で終える
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: 文面
+    constraint: 特定の開発基盤や作者の環境を思わせる語を含めない

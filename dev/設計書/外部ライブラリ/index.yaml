@@ -1,2 +1,6 @@
 summary: 採用済みの外部ライブラリ / 外部ツールのリファレンス
-items: []
+items:
+  - page: claude-code.yaml
+    summary: フックと MCP サーバーを呼ぶ Claude Code の CLI
+  - page: mcp.yaml
+    summary: MCP サーバーを書く公式の Python SDK
