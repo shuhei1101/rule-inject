@@ -19,7 +19,7 @@ settings:
     default: なし（ユーザーの索引を読まない）
     description: 全プロジェクトで使う索引のパス。カンマ区切りで複数並べられる
     env_var: RULE_INJECT_INDEXES_USER
-    reload: immediate
+    reload: restart
     allowed: 絶対パスか `~` で始まるパス
     visibility: user
     status: planned
@@ -31,7 +31,7 @@ settings:
     default: なし（プロジェクトの索引を読まない）
     description: そのプロジェクトだけで使う索引のパス。カンマ区切りで複数並べられる
     env_var: RULE_INJECT_INDEXES_PROJECT
-    reload: immediate
+    reload: restart
     allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（環境変数 `CLAUDE_PROJECT_DIR`）からの相対パス
     visibility: user
     status: planned
@@ -44,7 +44,7 @@ settings:
     default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
     description: セッションごとの既読の記録ファイルを置くフォルダ
     env_var: RULE_INJECT_STATE_DIR
-    reload: immediate
+    reload: restart
     allowed: 絶対パスか `~` で始まるパス
     visibility: user
     status: planned
