@@ -71,21 +71,28 @@ def _fit_to_limit(
     bodies: Sequence[tuple[str, str]], failures: list[FetchFailure], limit: int
 ) -> ReadRulesResult:
     """応答が上限に収まる分だけ本文を載せ、収まらない場所は次に回す。"""
-    pages: list[RulePage] = []
-    deferred: list[str] = []
+    # 1 件だけでも収まらない本文は、次の呼び出しでも返せないため取得できなかった場所にする
+    fitting: list[RulePage] = []
     for location, body in bodies:
         page = RulePage(location=location, body=body)
-        candidate = ReadRulesResult(pages=[*pages, page], deferred=deferred, failures=failures)
-        if len(render_result(candidate)) <= limit:
-            pages.append(page)
-            continue
-        # 1 件だけでも収まらない本文は、次の呼び出しでも返せないため取得できなかった場所にする
         if len(render_result(ReadRulesResult(pages=[page]))) > limit:
             failures.append(
                 FetchFailure(location=location, reason=f"1 件で応答の上限（{limit} 字）を超える")
             )
         else:
-            deferred.append(location)
+            fitting.append(page)
+    pages: list[RulePage] = []
+    deferred: list[str] = []
+    for index, page in enumerate(fitting):
+        # まだ判定していない場所は、収まらなければ deferred に回る。最終の応答に入る形で数える
+        pending = [later.location for later in fitting[index + 1 :]]
+        candidate = ReadRulesResult(
+            pages=[*pages, page], deferred=[*deferred, *pending], failures=failures
+        )
+        if len(render_result(candidate)) <= limit:
+            pages.append(page)
+        else:
+            deferred.append(page.location)
     return ReadRulesResult(pages=pages, deferred=deferred, failures=failures)
 
 
