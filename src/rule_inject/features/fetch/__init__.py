@@ -1,12 +1,7 @@
-"""索引に載ったルールの本文の取得（読み込み・応答の上限・既読の記録）。"""
+"""ルールの本文の読み込みと、応答の上限への収め方。"""
 
 from rule_inject.features.fetch.client import FETCH_TIMEOUT_SEC, FetchError, fetch_url
-from rule_inject.features.fetch.service import (
-    MAX_RESULT_CHARS,
-    ToolArgumentError,
-    read_rules,
-    render_result,
-)
+from rule_inject.features.fetch.service import MAX_RESULT_CHARS, collect_pages, render_result
 from rule_inject.features.fetch.types import (
     FetchFailure,
     FetchUrlFn,
@@ -22,8 +17,7 @@ __all__ = [
     "FetchUrlFn",
     "ReadRulesResult",
     "RulePage",
-    "ToolArgumentError",
+    "collect_pages",
     "fetch_url",
-    "read_rules",
     "render_result",
 ]

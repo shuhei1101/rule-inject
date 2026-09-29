@@ -15,14 +15,20 @@ from rule_inject.features.index.types import (
     IndexLoadResult,
     MatchedRule,
     Operation,
+    RejectedLocation,
+    SelectedLocations,
 )
 from rule_inject.shared.errors import IndexReadError, describe
-from rule_inject.shared.paths import resolve_location
+from rule_inject.shared.paths import URL_SCHEMES, resolve_location
 
 # 読む順に並べた、索引を指す環境変数の名前
 INDEX_ENV_NAMES = ("RULE_INJECT_INDEXES_USER", "RULE_INJECT_INDEXES_PROJECT")
 PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
 INDEX_SEPARATOR = ","
+HOME_MARK = "~"
+NOT_IN_INDEX_REASON = "索引に載っていない場所"
+RELATIVE_LOCATION_REASON = "相対パスは読まない。絶対パス・~・https:// の URL で渡す"
+RELATIVE_PATH_REASON = "相対パスは照合しない。絶対パスで渡す"
 
 
 def _index_paths(env: Mapping[str, str]) -> list[str]:
@@ -157,3 +163,36 @@ def match_tool(entries: Sequence[IndexEntry], tool_name: str) -> list[MatchedRul
 def rule_locations(entries: Sequence[IndexEntry]) -> frozenset[str]:
     """索引に載ったルールの場所の集合を返す。"""
     return frozenset(entry.location for entry in entries)
+
+
+def _is_absolute_location(location: str) -> bool:
+    """場所が、絶対パス・`~` で始まるパス・URL のどれかかを返す。"""
+    return location.startswith((*URL_SCHEMES, HOME_MARK)) or os.path.isabs(location)
+
+
+def select_locations(
+    entries: Sequence[IndexEntry], locations: Sequence[str], paths: Sequence[str]
+) -> SelectedLocations:
+    """`read_rules` に渡された場所とパスから、索引に載ったルールの場所だけを選ぶ。"""
+    listed = rule_locations(entries)
+    targets: list[str] = []
+    rejected: list[RejectedLocation] = []
+    # 場所で引く: 相対パスは解かず、索引に載ったルールの場所だけを読む
+    for location in locations:
+        if not _is_absolute_location(location):
+            rejected.append(RejectedLocation(location=location, reason=RELATIVE_LOCATION_REASON))
+            continue
+        resolved = resolve_location(location, Path(os.sep))
+        if resolved in listed:
+            targets.append(resolved)
+        else:
+            rejected.append(RejectedLocation(location=resolved, reason=NOT_IN_INDEX_REASON))
+    # 対象のパスで引く: 絶対パスだけを、読む操作として当たるルールの場所へ引く
+    for path in paths:
+        if not os.path.isabs(path):
+            rejected.append(RejectedLocation(location=path, reason=RELATIVE_PATH_REASON))
+            continue
+        resolved = resolve_location(path, Path(os.sep))
+        targets.extend(rule.location for rule in match_path(entries, resolved, "read"))
+    # 重なりは 1 つにする（並びは保つ）
+    return SelectedLocations(targets=tuple(dict.fromkeys(targets)), rejected=tuple(rejected))

@@ -1,4 +1,4 @@
-"""read_rules の中身（本文の読み込み・応答の上限・既読の記録）。"""
+"""ルールの本文の読み込みと、応答の上限への収め方。"""
 
 from __future__ import annotations
 
@@ -14,50 +14,16 @@ from rule_inject.features.fetch.types import (
     ReadRulesResult,
     RulePage,
 )
-from rule_inject.features.index.service import match_path, rule_locations
-from rule_inject.features.index.types import IndexEntry
-from rule_inject.features.record.service import append_record, is_valid_session_id
 from rule_inject.shared.errors import describe
-from rule_inject.shared.paths import URL_SCHEMES, resolve_location
+from rule_inject.shared.paths import URL_SCHEMES
 
 # 応答の JSON 全体の字数の上限（`anthropic/maxResultSizeChars` にも同じ値を付ける）
 MAX_RESULT_CHARS = 40000
-NOT_IN_INDEX_REASON = "索引に載っていない場所"
-
-
-class ToolArgumentError(ValueError):
-    """session_id が無い・形が外れている、または locations と paths が空。"""
 
 
 def render_result(result: ReadRulesResult) -> str:
     """ReadRulesResult を、日本語をエスケープしない応答の JSON 文字列にする。"""
     return json.dumps(dataclasses.asdict(result), ensure_ascii=False)
-
-
-def _target_locations(
-    locations: Sequence[str],
-    paths: Sequence[str],
-    entries: Sequence[IndexEntry],
-    failures: list[FetchFailure],
-) -> list[str]:
-    """本文を取りに行く場所を並べる。索引に載っていない場所は failures へ回す。"""
-    base = Path.cwd()
-    listed = rule_locations(entries)
-    targets: list[str] = []
-    # 場所で引く: 索引に載ったルールの場所だけを読む
-    for location in locations:
-        resolved = resolve_location(location, base)
-        if resolved in listed:
-            targets.append(resolved)
-        else:
-            failures.append(FetchFailure(location=resolved, reason=NOT_IN_INDEX_REASON))
-    # 対象のパスで引く: 読む操作として当たるルールの場所を足す
-    for path in paths:
-        targets.extend(
-            rule.location for rule in match_path(entries, resolve_location(path, base), "read")
-        )
-    # 重なりは 1 つにする（並びは保つ）
-    return list(dict.fromkeys(targets))
 
 
 def _read_body(location: str, fetch: FetchUrlFn) -> str:
@@ -108,33 +74,23 @@ def _fit_to_limit(
     return ReadRulesResult(pages=pages, deferred=deferred, failures=failures)
 
 
-def read_rules(
+def collect_pages(
     locations: Sequence[str],
-    paths: Sequence[str],
-    session_id: str | None,
     *,
-    entries: Sequence[IndexEntry],
-    state_dir: Path,
+    failures: Sequence[FetchFailure] = (),
     fetch: FetchUrlFn = fetch_url,
     limit: int = MAX_RESULT_CHARS,
 ) -> ReadRulesResult:
-    """索引に載ったルールの本文を集め、上限に収めて返し、返した場所を既読にする。"""
-    # 引数が足りなければ、何も読まずにエラーにする
-    if session_id is None or not is_valid_session_id(session_id):
-        raise ToolArgumentError("session_id が無いか、形が外れています（フックが足す値です）")
-    if not locations and not paths:
-        raise ToolArgumentError("locations と paths のどちらかに、場所かパスを渡してください")
-    failures: list[FetchFailure] = []
+    """場所ごとに本文を読み、応答の上限に収めて返す。"""
+    # 呼び出し元が先に決めた failures を先頭に置き、上限の計算に含める
+    all_failures = list(failures)
     bodies: list[tuple[str, str]] = []
-    for location in _target_locations(locations, paths, entries, failures):
-        # 読めなかった場所は理由を添えて failures へ回す（再試行も既読もしない）
+    for location in locations:
+        # 読めなかった場所は理由を添えて failures へ回す（再試行はしない）
         try:
             bodies.append((location, _read_body(location, fetch)))
         except FetchError as exc:
-            failures.append(FetchFailure(location=location, reason=exc.reason))
+            all_failures.append(FetchFailure(location=location, reason=exc.reason))
         except (OSError, ValueError) as exc:
-            failures.append(FetchFailure(location=location, reason=describe(exc)))
-    result = _fit_to_limit(bodies, failures, limit)
-    # 返した本文の場所だけを既読にする
-    append_record(state_dir, session_id, [page.location for page in result.pages])
-    return result
+            all_failures.append(FetchFailure(location=location, reason=describe(exc)))
+    return _fit_to_limit(bodies, all_failures, limit)

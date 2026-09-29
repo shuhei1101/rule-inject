@@ -1,8 +1,8 @@
-"""stdio の MCP サーバーの入口。read_rules を登録し、本文の取得の関数へつなぐ。"""
+"""stdio の MCP サーバーの入口。read_rules を登録し、索引・本文の取得・既読の記録の機能を順に呼んで組み立てる。"""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated
 
@@ -12,14 +12,17 @@ from pydantic import Field
 
 from rule_inject.features.fetch import (
     MAX_RESULT_CHARS,
+    FetchFailure,
     FetchUrlFn,
-    ToolArgumentError,
+    ReadRulesResult,
+    collect_pages,
     fetch_url,
-    read_rules,
     render_result,
 )
 from rule_inject.features.index import load_indexes
-from rule_inject.features.record import is_valid_session_id
+from rule_inject.features.index.service import select_locations
+from rule_inject.features.index.types import IndexEntry
+from rule_inject.features.record import append_record, is_valid_session_id
 from rule_inject.shared.errors import RecordWriteError, describe
 from rule_inject.shared.logger import Component, LogOperation, write_log
 from rule_inject.shared.paths import state_dir
@@ -32,6 +35,37 @@ PATHS_DESCRIPTION = (
     "触るファイルの絶対パスを渡す。まだ無いパスでもよい。ルールの場所は locations へ"
 )
 SESSION_ID_DESCRIPTION = "渡さない。フックが足す"
+
+
+class ToolArgumentError(ValueError):
+    """session_id が無い・形が外れている、または locations と paths が空。"""
+
+
+def read_rules(
+    locations: Sequence[str],
+    paths: Sequence[str],
+    session_id: str | None,
+    *,
+    entries: Sequence[IndexEntry],
+    state_dir: Path,
+    fetch: FetchUrlFn = fetch_url,
+    limit: int = MAX_RESULT_CHARS,
+) -> ReadRulesResult:
+    """索引で読む場所を選び、本文を上限に収めて集め、返した場所を既読にする。"""
+    # 引数が足りなければ、何も読まずにエラーにする
+    if session_id is None or not is_valid_session_id(session_id):
+        raise ToolArgumentError("session_id が無いか、形が外れています（フックが足す値です）")
+    if not locations and not paths:
+        raise ToolArgumentError("locations と paths のどちらかに、場所かパスを渡してください")
+    # 読まない場所は理由つきで failures の先頭に載せ、読む場所の本文を集める
+    selected = select_locations(entries, locations, paths)
+    rejected = [
+        FetchFailure(location=item.location, reason=item.reason) for item in selected.rejected
+    ]
+    result = collect_pages(selected.targets, failures=rejected, fetch=fetch, limit=limit)
+    # 返した本文の場所だけを既読にする
+    append_record(state_dir, session_id, [page.location for page in result.pages])
+    return result
 
 
 def build_server(env: Mapping[str, str], fetch: FetchUrlFn = fetch_url) -> MCPServer:
