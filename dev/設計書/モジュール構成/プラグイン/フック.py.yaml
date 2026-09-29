@@ -477,7 +477,7 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し（`sweep_read` は同じ SessionStart の `work_rules` が知らせるため返さない）、記録フォルダのログへ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にする）
+      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し（`sweep_read` は同じ SessionStart の `work_rules` が知らせるため返さない）、ログのフォルダ（`RULE_INJECT_LOG_DIR`。無ければ `XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にするため、`log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
       2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に足す
       3. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
     unit_tests:
@@ -498,7 +498,7 @@ functions:
         summary: 掃除のフックは版が足りなくても知らせを重ねない
         condition: '`sys.version_info` を (3, 11) に差し替え、`sweep_read` に SessionStart の JSON を渡す'
         mock: '`sys.version_info`'
-        expected: 戻り値 0、標準出力が空、ログに 1 行
+        expected: 戻り値 0、標準出力が空、ログのフォルダ（`RULE_INJECT_LOG_DIR`）の今日の日付のファイルに 1 行。記録フォルダに `rule-inject.log` を作らない
 notes:
   hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
