@@ -1,0 +1,31 @@
+title: ""
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: 上限を超えたログ
+        description: 記録フォルダに `rule-inject.log` を置き、大きさを上限より 1 バイト大きくする
+        notes: 中身は ER 図「ログ」の形の行を並べる
+      - name: 1 世代前のログ
+        description: 記録フォルダに `rule-inject.log.1` を置き、上限を超えたログと見分けられる中身にする
+      - name: 操作
+        description: プロンプトで、ツールを呼ばずに 1 語で答えるよう指示する
+        notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as SessionStart フック
+        participant ST as ログ
+
+        CC->>S: セッションの開始（session_id・source）
+        S->>ST: ログの大きさを確かめる
+        ST-->>S: 上限を超えた大きさ
+        S->>ST: 1 世代前のログを消し、ログを 1 世代前の名前へ付け替える
+      ```
+    expected:
+      - '`rule-inject.log.1` の中身が、置いた上限を超えたログの中身と同じ'
+      - 置いた 1 世代前のログの中身がどこにも残っていない
+      - '`rule-inject.log` が無い'
+    test: test_normal
