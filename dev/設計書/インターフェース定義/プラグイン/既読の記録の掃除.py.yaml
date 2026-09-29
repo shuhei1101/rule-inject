@@ -38,10 +38,10 @@ flows:
       - name: Mock
         description: なし
       - name: 既読の記録
-        description: 始まったセッションの記録ファイルを置き、最終更新を保持期間より 1 日前にする
-        notes: 古い記録を持つセッションを再開した状態
+        description: 始まったセッションの記録ファイルと、別のセッションの記録ファイルを 1 つずつ置き、どちらも最終更新を保持期間より 1 日前にする
+        notes: 古い記録を持つセッションを再開した状態。別のセッションのファイルが消えることで、掃除が走ったうえで始まったセッションのファイルだけが残ったと見分ける
       - name: 入力
-        description: '`source: resume`、`session_id` はそのセッション'
+        description: '`source: resume`、`session_id` は始まったセッション'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -56,6 +56,7 @@ flows:
       ```
     expected:
       - 始まったセッションの記録ファイルが残っている
+      - 別のセッションの記録ファイルが無い
       - 終了コードが `0`
     test: test_normal_when_own_record_old
   - name: 正常系（記録フォルダが無い）
