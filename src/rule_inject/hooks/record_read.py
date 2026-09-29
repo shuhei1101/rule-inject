@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,8 +12,8 @@ from rule_inject.features.guidance import build_failure_notice
 from rule_inject.features.index import load_indexes, rule_locations
 from rule_inject.features.record import append_record, is_valid_session_id
 from rule_inject.shared.errors import RecordWriteError
-from rule_inject.shared.logger import LOG_FILE_NAME, Component, LogOperation, write_log
-from rule_inject.shared.paths import resolve_location, state_dir
+from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
+from rule_inject.shared.paths import log_dir, resolve_location, state_dir
 
 
 def _read_paths(payload: Mapping[str, Any]) -> list[str]:
@@ -37,8 +38,9 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     try:
         append_record(folder, session_id, locations)
     except RecordWriteError as exc:
+        log_folder = log_dir(env)
         write_log(
-            folder,
+            log_folder,
             component=Component.RECORD_READ,
             operation=LogOperation.WRITE_RECORD,
             reason=exc.reason,
@@ -46,6 +48,7 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             path=exc.path,
         )
         summary = f"次のルールを既読にできませんでした（{', '.join(locations)}）。"
-        notice = build_failure_notice(summary, [exc], folder / LOG_FILE_NAME)
+        log_path = log_file_path(log_folder, datetime.now(UTC).date())
+        notice = build_failure_notice(summary, [exc], log_path)
         return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": notice}}
     return None

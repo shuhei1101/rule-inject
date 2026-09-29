@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,8 +18,8 @@ from rule_inject.features.index import load_indexes, match_path, match_tool
 from rule_inject.features.index.types import IndexEntry, MatchedRule, Operation
 from rule_inject.features.record import is_valid_session_id, read_record
 from rule_inject.shared.errors import RecordReadError
-from rule_inject.shared.logger import LOG_FILE_NAME, Component, LogOperation, write_log
-from rule_inject.shared.paths import resolve_location, state_dir
+from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
+from rule_inject.shared.paths import log_dir, resolve_location, state_dir
 
 # このプラグインの MCP のツール名の頭（ルールを読むためのツールが止められないよう対象外にする）
 OWN_TOOL_PREFIX = "mcp__plugin_rule-inject_rule-inject__"
@@ -89,7 +90,8 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if payload["tool_name"].startswith(OWN_TOOL_PREFIX):
         return None
     folder = state_dir(env)
-    log_path = folder / LOG_FILE_NAME
+    log_folder = log_dir(env)
+    log_path = log_file_path(log_folder, datetime.now(UTC).date())
     session_id = payload.get("session_id")
     valid_session = is_valid_session_id(session_id)
     notices: list[str] = []
@@ -97,7 +99,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     loaded = load_indexes(env)
     for failure in loaded.failures:
         write_log(
-            folder,
+            log_folder,
             component=Component.RULE_GUIDE,
             operation=LogOperation.READ_INDEX,
             reason=failure.reason,
@@ -116,7 +118,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
         except RecordReadError as exc:
             record_failed = True
             write_log(
-                folder,
+                log_folder,
                 component=Component.RULE_GUIDE,
                 operation=LogOperation.READ_RECORD,
                 reason=exc.reason,

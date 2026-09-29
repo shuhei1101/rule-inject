@@ -21,8 +21,6 @@ RECORD_SUFFIX = ".txt"
 # 他のプロセスと同時に追記しても行が混ざらないよう、追記専用で開くときのフラグ
 APPEND_FLAGS = os.O_WRONLY | os.O_APPEND | os.O_CREAT
 RECORD_FILE_MODE = 0o600
-# 最終更新からこの日数を過ぎた記録ファイルを掃除で消す
-RECORD_RETENTION_DAYS = 30
 SECONDS_PER_DAY = 86_400
 
 
@@ -96,6 +94,7 @@ def sweep_records(
     keep_session_id: str,
     *,
     now: Callable[[], float] = time.time,
+    retention_days: int,
 ) -> tuple[RecordDeleteError, ...]:
     """保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものを返す。"""
     try:
@@ -104,7 +103,7 @@ def sweep_records(
         # 記録フォルダがまだ無ければ掃除するものが無い（フォルダは作らない）
         return ()
     # この時刻より前に更新された記録ファイルが、保持期間を過ぎたもの
-    threshold = now() - RECORD_RETENTION_DAYS * SECONDS_PER_DAY
+    threshold = now() - retention_days * SECONDS_PER_DAY
     failures: list[RecordDeleteError] = []
     for entry in entries:
         # 記録ファイルの名前でなければ対象にしない
