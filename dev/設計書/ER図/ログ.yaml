@@ -1,0 +1,44 @@
+title: "ER 図: ログ"
+lead: フックと MCP サーバーが、失敗した操作を後から追えるように書き出すログ。
+tables:
+  - name: '{RULE_INJECT_STATE_DIR}/rule-inject.log'
+    title: ログ
+    datastore: JSON Lines（UTF-8、1 行 = 1 件）
+    summary: 失敗した操作とその理由
+    scale: 失敗のときだけ書くため数十行のオーダー
+    growth: 失敗のたびに 1 行追記する
+    retention: 消さない（掃除は既読の記録と合わせてスコープ外の起票予定）
+    deletion: 利用者が手で消す
+    access: 追記（O_APPEND）だけで書く。プラグインは読まない
+    description: フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
+    columns:
+      - name: time
+        title: 時刻
+        type: string
+        not_null: true
+        description: UTC のタイムゾーン付き ISO 8601（`2026-09-29T08:00:00+00:00`）
+      - name: component
+        title: 出した元
+        type: string
+        not_null: true
+        description: インターフェース定義の識別子（`rule_guide` / `session_id_injection` / `read_rules` / `record_read` / `discard_read` / `work_rules`）
+      - name: session_id
+        title: セッション
+        type: string
+        not_null: false
+        description: 入力にあればその値
+      - name: operation
+        title: 失敗した操作
+        type: string
+        not_null: true
+        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `unexpected` のいずれか'
+      - name: path
+        title: 対象のパス
+        type: string
+        not_null: false
+        description: 失敗した操作の対象のファイルかフォルダ
+      - name: reason
+        title: 理由
+        type: string
+        not_null: true
+        description: 例外のクラス名と文面

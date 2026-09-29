@@ -1,0 +1,97 @@
+title: "アーキテクチャ図"
+overview:
+  direction: LR
+  nodes:
+    - id: U
+      label: ユーザー
+      shape: stadium
+      kind: actor
+    - id: CC
+      label: Claude Code
+      kind: external
+    - id: HOOK
+      label: フック
+      kind: system
+    - id: MCP
+      label: MCP サーバー
+      kind: system
+    - id: STATE
+      label: 既読の記録
+      shape: cylinder
+      kind: store
+    - id: IDX
+      label: ルール索引（YAML）
+      shape: cylinder
+      kind: store
+    - id: RULE
+      label: ルールの本文（ローカル）
+      shape: cylinder
+      kind: store
+    - id: WEB
+      label: ルールの配信元（URL）
+      kind: external
+  edges:
+    - from: U
+      to: IDX
+      label: 記述
+    - from: CC
+      to: HOOK
+      label: フックの呼び出し
+    - from: CC
+      to: MCP
+      label: stdio
+    - from: HOOK
+      to: IDX
+      label: 照合
+    - from: MCP
+      to: IDX
+      label: 照合
+    - from: HOOK
+      to: STATE
+      label: 読み書き
+    - from: MCP
+      to: STATE
+      label: 読み書き
+    - from: MCP
+      to: RULE
+      label: 読み込み
+    - from: MCP
+      to: WEB
+      label: HTTPS
+  subgraphs:
+    - id: SYS
+      label: rule-inject
+      nodes:
+        - HOOK
+        - MCP
+        - STATE
+repository:
+  style: モノレポ
+  repositories:
+    - name: shuhei1101/rule-inject
+subsystems:
+  - name: プラグイン
+    scope: plugin
+    role: Claude Code の操作の対象に当たる未読のルールの案内と、ルールの本文の返却・既読の記録
+    runtime: Python 3（フックは標準ライブラリだけ、MCP サーバーは uv のプロジェクト）
+    runs_on: ユーザーの端末（Linux / WSL）
+lead: rule-inject のサブシステムと、Claude Code・ルールの置き場所との境界。
+external_systems:
+  - name: Claude Code
+    purpose: フックの呼び出しと MCP のツールの呼び出し
+    direction: 双方向
+    protocol: フックの JSON（標準入出力）/ MCP（stdio）
+    notes:
+      事前確認: 不要。Claude Code がフックと MCP サーバーを起動する側のため、呼ばれた時点で到達している。
+    detail: dev/設計書/外部ライブラリ/claude-code#
+  - name: ルールの配信元（URL）
+    purpose: URL で書かれたルールの本文の取得
+    direction: 受信のみ
+    protocol: HTTPS
+    notes:
+      事前確認: 起動時の確認は不要（ルールの置き場所の 1 つで、起動に必須ではない）。取得に失敗した場所は、失敗として呼び出し元へ返す。
+constraints: |-
+  - フックは Python の標準ライブラリだけで書く
+  - MCP サーバーは uv のプロジェクトとして持ち、`.mcp.json` から `uv run` で起動する
+  - 動かす場所はユーザーの端末（Linux / WSL）で、常駐するサーバーは持たない
+  - 特定の開発基盤に依存する処理と、特定の開発基盤や作者の環境を思わせる語を持たない

@@ -1,0 +1,323 @@
+title: "ルール本文の取得"
+entry:
+  kind: mcp_tool
+  value: '`read_rules`（完全名 `mcp__plugin_rule-inject_rule-inject__read_rules`）'
+flows:
+  - name: 正常系（場所で引く）
+    summary: ローカルの場所の本文を返して既読にする
+    setup:
+      - name: Mock
+        description: なし（ツールの関数を直接呼ぶ）
+      - name: ルールの本文
+        description: 一時フォルダに置いた Markdown 1 件
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ（`RULE_INJECT_STATE_DIR`）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant RULE as ルールの本文
+        participant ST as 記録ファイル
+
+        CC->>T: locations + session_id
+        T->>RULE: 読む
+        T->>ST: 場所を追記する
+        T-->>CC: pages
+      ```
+    expected:
+      - '`pages` に場所と本文が 1 件載っている'
+      - 記録ファイルに場所が 1 行ある
+    test: test_normal
+  - name: 正常系（対象のパスで引く）
+    summary: 対象のパスに当たるルールだけの本文を返す
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`**/*.py` に当たるルールと `**/*.ts` に当たるルールの 2 エントリ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`paths` に `.py` のパスを 1 つ'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant IDX as 索引
+        participant RULE as ルールの本文
+        participant ST as 記録ファイル
+
+        CC->>T: paths + session_id
+        T->>IDX: 当たるエントリを選ぶ
+        T->>RULE: 読む
+        T->>ST: 場所を追記する
+        T-->>CC: pages
+      ```
+    expected:
+      - '`pages` に `.py` のルールだけが載っている'
+      - 記録ファイルに `.py` のルールの場所だけがある
+    test: test_normal_when_by_target_path
+  - name: 正常系（URLの場所）
+    summary: URL の場所の本文を HTTPS で取得して返す
+    setup:
+      - name: Mock
+        description: HTTP（URL に 200 と本文を返す）
+      - name: 索引
+        description: その URL をルールの場所に持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant W as ルールの配信元
+        participant ST as 記録ファイル
+
+        CC->>T: locations（URL）+ session_id
+        T->>W: GET（待ち 1 秒）
+        W-->>T: 200 + 本文
+        T->>ST: URL を追記する
+        T-->>CC: pages
+      ```
+    expected:
+      - '`pages` に URL と本文が載っている'
+      - 記録ファイルに URL が 1 行ある
+      - 待ち時間 1 秒を付けて取得している
+    test: test_normal_when_url
+  - name: 正常系（応答の上限を超える）
+    summary: 収まらない本文を deferred に回し、既読にしない
+    setup:
+      - name: Mock
+        description: なし
+      - name: ルールの本文
+        description: 1 件 16,000 字の Markdown 3 件
+        notes: 2 件までは 40,000 字に収まり、3 件目で超える
+      - name: 索引
+        description: 3 件のルールの場所を持つエントリを 3 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant RULE as ルールの本文
+        participant ST as 記録ファイル
+
+        CC->>T: locations（3 件）+ session_id
+        T->>RULE: 読む
+        T->>T: 40,000 字に収まる分だけ pages に載せる
+        T->>ST: 載せた 2 件の場所を追記する
+        T-->>CC: pages（2 件）+ deferred（1 件）
+      ```
+    expected:
+      - 応答の JSON が 40,000 字以内
+      - '`deferred` に 3 件目の場所が載っている'
+      - 記録ファイルに 3 件目の場所が無い
+      - '`tools/list` の `read_rules` の `_meta["anthropic/maxResultSizeChars"]` が `40000`'
+    test: test_normal_when_over_limit
+  - name: 異常系（場所から本文を取れない・failures）
+    summary: 実在しないローカルの場所と、取得に失敗した URL を failures に載せ、再試行も既読もしない
+    setup:
+      - name: Mock
+        description: HTTP（1 つ目の URL に 404、2 つ目の URL に待ち時間の超過を返す）
+      - name: 索引
+        description: 実在しないローカルのパス 1 つと URL 2 つをルールの場所に持つ 3 エントリ
+      - name: 入力
+        description: '`locations` にその 3 つの場所'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant RULE as ルールの本文
+        participant W as ルールの配信元
+
+        CC->>T: locations（3 件）+ session_id
+        T->>RULE: 読む（無い）
+        T->>W: GET（1 件目）
+        W-->>T: 404
+        T->>W: GET（2 件目）
+        W-->>T: 応答なし（1 秒で打ち切り）
+        T-->>CC: failures（3 件）
+      ```
+    expected:
+      - '`failures` に 3 件が理由つきで載っている'
+      - 各 URL への取得が 1 回ずつで、再試行していない
+      - 記録ファイルが作られていない
+    test: test_error_when_location_unreadable
+  - name: 異常系（引数が足りない・ToolError）
+    summary: session_id が無い呼び出しと、引く対象が無い呼び出しをエラーにする
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: '`locations` だけを渡す呼び出しと、`session_id` だけを渡す呼び出しの 2 つ'
+        notes: パラメータ化して同じテストで確かめる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+
+        CC->>T: 足りない引数
+        T-->>CC: ToolError
+      ```
+    expected:
+      - ToolError が返り、文面に足りない引数が載っている
+      - 記録ファイルが作られていない
+    test: test_error_when_arguments_missing
+  - name: 異常系（索引に載っていない場所・failures）
+    summary: 索引に無い絶対パスと URL を読まずに failures に載せる
+    setup:
+      - name: Mock
+        description: HTTP（呼ばれたら失敗にする）
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 入力
+        description: '`locations` に、実在するが索引に無い絶対パス 1 つと索引に無い URL 1 つ'
+        notes: 絶対パスは読めるファイルにし、読めても返さないことを確かめる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant IDX as 索引
+
+        CC->>T: locations（2 件）+ session_id
+        T->>IDX: 索引のルールの場所と照合する（一致しない）
+        T-->>CC: failures（2 件・索引に載っていない場所）
+      ```
+    expected:
+      - '`pages` が空'
+      - '`failures` に 2 件が「索引に載っていない場所」として載っている'
+      - ファイルを開いておらず、HTTP の取得もしていない
+      - 記録ファイルが作られていない
+    test: test_error_when_location_not_in_index
+  - name: 異常系（既読の記録に書けない・ToolError）
+    summary: 記録のフォルダに書けないとき、記録フォルダの場所と理由を載せたエラーにする
+    setup:
+      - name: Mock
+        description: なし
+      - name: ルールの本文
+        description: 一時フォルダに置いた Markdown 1 件
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: '`RULE_INJECT_STATE_DIR` を書き込み権限の無いフォルダ（`chmod 555`）にする'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant RULE as ルールの本文
+        participant ST as 記録ファイル
+
+        CC->>T: locations + session_id
+        T->>RULE: 読む
+        T->>ST: 追記する（書けない）
+        T-->>CC: ToolError（記録フォルダの場所と理由）
+      ```
+    expected:
+      - ToolError が返り、文面に記録フォルダの場所と理由が載っている
+      - '標準エラー出力に `operation: write_record` の 1 行がある'
+    test: test_error_when_record_unwritable
+lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録する。
+identifier: read_rules
+idempotent: true
+side_effects: そのセッションの既読の記録ファイルへ、本文を返した場所を 1 行ずつ追記する。URL の場所は HTTPS で取得し、`http://` の URL は取得せずに `failures` に載せる
+exclusivity: 追記（O_APPEND）だけで書くため、フックと同時に書いても行が混ざらない
+request:
+  - name: '`locations`'
+    type: list[str]
+    required: false
+    default: '`[]`'
+    location: argument
+    description: 読みたいルールの場所。案内に載った場所をそのまま渡す
+    constraints: 絶対パス・`~` で始まるパス・`https://` の URL。索引に載ったルールの場所だけを読む（`http://` の URL は取得せずに `failures` に載せる。相対パスは解かずに、絶対パスで渡すよう理由を添えて `failures` に載せる）
+    notes: ツールの引数の説明に「ルールの場所を渡す。これから触るファイルのパスは `paths` へ」と書く
+  - name: '`paths`'
+    type: list[str]
+    required: false
+    default: '`[]`'
+    location: argument
+    description: これから作る・変えるファイルのパス。当たるルールの本文を返す
+    constraints: 絶対パス。まだ無いパスも渡せる（相対パスは照合せずに、絶対パスで渡すよう理由を添えて `failures` に載せる）
+    notes: ツールの引数の説明に「触るファイルのパスを渡す。ルールの場所は `locations` へ」と書く
+  - name: '`session_id`'
+    type: str
+    required: true
+    location: argument
+    description: 呼び出し元のセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: インターフェース定義「セッションIDの付与」が足す。ツールの引数の説明に「渡さない。フックが足す」と書く
+request_example: |-
+  ```json
+  {
+    "locations": ["/home/user/rules/python.md"],
+    "paths": ["/home/user/project/src/app.py"],
+    "session_id": "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
+  }
+  ```
+response:
+  - name: '`pages[].location`'
+    type: str
+    description: 本文を返したルールの場所（解決後の絶対パスか URL）
+  - name: '`pages[].body`'
+    type: str
+    description: ルールの本文
+  - name: '`deferred[]`'
+    type: list[str]
+    description: 応答の上限に収まらず返さなかった場所。次の呼び出しで `locations` に渡す
+    notes: 既読にしない
+  - name: '`failures[].location`'
+    type: str
+    description: 本文を取得できなかった場所
+  - name: '`failures[].reason`'
+    type: str
+    description: 取得できなかった理由（無い・HTTP の応答コード・待ち時間の超過・1 件で応答の上限を超える など）
+    notes: 既読にしない
+response_example: |-
+  ```json
+  {
+    "pages": [{"location": "/home/user/rules/python.md", "body": "# Python の規約\n..."}],
+    "deferred": [],
+    "failures": [{"location": "https://example.com/rules/web.md", "reason": "HTTP 404"}]
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: 一部の場所を取得できなかったときも、`failures` に載せて正常に返す
+  - name: ToolError（引数が足りない）
+    condition: '`session_id` が無いか形が外れている、または `locations` と `paths` がどちらも空'
+    notes: '`session_id` が無いのはフックが動いていない設定の誤りとして扱い、本文も返さない'
+  - name: ToolError（既読の記録に書けない）
+    condition: '`RULE_INJECT_STATE_DIR` が作れない・書けない（権限・容量）'
+    notes: 本文を返しても既読にならず書く操作が止まり続けるため、記録フォルダの場所と理由を文面に載せてエラーにし、ログへ `write_record` を書く
+  - name: ToolError（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 例外のクラス名と文面を載せてエラーにし、ログへ `unexpected` を書く
+constraints:
+  - item: 応答の大きさ
+    constraint: 応答の JSON 全体で 40,000 字。`tools/list` の `_meta["anthropic/maxResultSizeChars"]` に同じ 40,000 を付ける。収まらない本文は `deferred` へ回す
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPのツールの応答の大きさ]
+  - item: URL の取得の待ち時間
+    constraint: 1 件あたり 1 秒。超えたら `failures` に載せ、再試行しない
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
+  - item: 索引
+    constraint: ルール案内と同じ環境変数・同じ読み方で読む（`paths` を照合するときに使う）
+    notes: プロジェクトの索引の相対パスは、ルール案内と同じく環境変数 `CLAUDE_PROJECT_DIR` から解く
+  - item: 許す場所
+    constraint: 索引に載ったルールの場所（解決後の絶対パスか URL）に一致するものだけを読む。一致しない `locations` は読まずに `failures` に「索引に載っていない場所」として載せる
+    notes: Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
+  - item: 認可
+    constraint: 制限なし（ツールの許可は利用者の Claude Code の設定に従う）
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力（MCP のログに残る）へ出す
+    notes: stdio の MCP サーバーは標準出力が通信に使われるため、標準出力へは書かない
+test_file: tests/integration/plugin/test_read_rules.py

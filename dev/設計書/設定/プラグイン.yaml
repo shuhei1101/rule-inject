@@ -1,0 +1,116 @@
+title: "設定: プラグイン"
+lead: プラグインが読む環境変数と、ルール索引（YAML）のキーの一覧。
+files:
+  - file: ~/.claude/settings.json
+    manages: 全プロジェクトで使う索引を指す環境変数（`env`）
+    notes: Claude Code のユーザーの設定。フックと MCP サーバーは `env` の値を環境変数として受け取る
+  - file: .claude/settings.json
+    manages: そのプロジェクトだけで使う索引を指す環境変数（`env`）
+    notes: Claude Code のプロジェクトの設定（利用者のプロジェクトのリポジトリに置く）
+  - file: 索引（*.yaml）
+    manages: ルールの場所と、当てるパス・ツール名・操作の種別の紐づけ
+    notes: 利用者が書く。置き場所と名前は自由で、環境変数で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形（マップ・文字列のリスト・文字列）だけを読む
+settings:
+  - key: RULE_INJECT_INDEXES_USER
+    title: ユーザーの索引
+    file: ~/.claude/settings.json
+    type: str
+    required: false
+    default: なし（ユーザーの索引を読まない）
+    description: 全プロジェクトで使う索引のパス。カンマ区切りで複数並べられる
+    env_var: RULE_INJECT_INDEXES_USER
+    reload: restart
+    allowed: 絶対パスか `~` で始まるパス
+    visibility: user
+    status: planned
+  - key: RULE_INJECT_INDEXES_PROJECT
+    title: プロジェクトの索引
+    file: .claude/settings.json
+    type: str
+    required: false
+    default: なし（プロジェクトの索引を読まない）
+    description: そのプロジェクトだけで使う索引のパス。カンマ区切りで複数並べられる
+    env_var: RULE_INJECT_INDEXES_PROJECT
+    reload: restart
+    allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（環境変数 `CLAUDE_PROJECT_DIR`）からの相対パス
+    visibility: user
+    status: planned
+    reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、フックにも stdio の MCP サーバーにも同じ値で渡る。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない'
+  - key: RULE_INJECT_STATE_DIR
+    title: 既読の記録の置き場所
+    file: ~/.claude/settings.json
+    type: str
+    required: false
+    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
+    description: セッションごとの既読の記録ファイルを置くフォルダ
+    env_var: RULE_INJECT_STATE_DIR
+    reload: restart
+    allowed: 絶対パスか `~` で始まるパス
+    visibility: user
+    status: planned
+    reason: フックと MCP サーバーが同じ場所を読み書きするため、両方が同じ規則で場所を決める
+  - key: default_on
+    title: 既定の必須の操作
+    file: 索引（*.yaml）
+    type: list[Literal['read', 'write', 'mcp']]
+    required: false
+    default: '`[read, write, mcp]`'
+    description: その索引のエントリが `on` を書かないときの、操作を止める操作の種別
+    reload: immediate
+    visibility: user
+    status: planned
+  - key: rules[].rule
+    title: ルールの場所
+    file: 索引（*.yaml）
+    type: str
+    required: true
+    description: ルールの本文の場所
+    missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる
+    reload: immediate
+    allowed: '`https://` で始まる URL、絶対パス、`~` で始まるパス、索引ファイルのフォルダからの相対パス。`http://` の URL は書けるが、本文は取得しない（平文で取得したルールを案内に使わないため）'
+    visibility: user
+    status: planned
+  - key: rules[].paths
+    title: 当てるパス
+    file: 索引（*.yaml）
+    type: list[str]
+    required: false
+    default: なし（パスでは当てない）
+    description: 操作の対象の絶対パスに当てる glob
+    reload: immediate
+    allowed: '`**/` か `*` で始まる glob。`**` はフォルダをまたぐ'
+    visibility: user
+    status: planned
+  - key: rules[].exclude
+    title: 外すパス
+    file: 索引（*.yaml）
+    type: list[str]
+    required: false
+    default: なし（外さない）
+    description: '`paths` に当たっても、この glob に当たるパスにはそのエントリを当てない'
+    reload: immediate
+    allowed: '`paths` と同じ書き方の glob'
+    visibility: user
+    status: planned
+  - key: rules[].tools
+    title: 当てるツール名
+    file: 索引（*.yaml）
+    type: list[str]
+    required: false
+    default: なし（ツール名では当てない）
+    description: MCP のツールの完全名に当てる glob
+    reload: immediate
+    allowed: '`mcp__` で始まる glob（例 `mcp__*__create_*`）'
+    visibility: user
+    status: planned
+  - key: rules[].on
+    title: 止める操作
+    file: 索引（*.yaml）
+    type: list[Literal['read', 'write', 'mcp']]
+    required: false
+    default: 索引の `default_on`
+    description: 未読のときに操作を止める操作の種別。当たった操作がここに無ければ、止めずに案内する
+    reload: immediate
+    allowed: '`read`（Read・Bash での読み取り）/ `write`（Edit・Write）/ `mcp`（MCP のツールの呼び出し）'
+    visibility: user
+    status: planned

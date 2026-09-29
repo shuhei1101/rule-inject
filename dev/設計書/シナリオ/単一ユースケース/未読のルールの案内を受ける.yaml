@@ -1,0 +1,220 @@
+title: "未読のルールの案内を受ける"
+scenarios:
+  - name: 正常シナリオ（止めて案内する）
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 対象のファイルに当たるパスの glob と、書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: プロジェクト用の環境変数で指す
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所（書く操作が必須）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H-->>CC: 操作を止め、ルールの場所と読み方を案内する
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Write が載っている'
+      - 止めた理由の文面に、ルールの場所が載っている
+      - 対象のファイルが作られていない
+    test: test_normal_when_blocked
+  - name: 正常シナリオ（既読のため案内しない）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML
+      - name: 既読の記録
+        description: そのセッションでルールの場所が既読になっている
+        notes: 前の実行でルールの本文を取得したセッションを `--resume {session_id}` で続ける
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant FS as 対象のファイル
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 既読
+        H-->>CC: 何も返さない
+        CC->>FS: 書く
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 対象のファイルに中身が書かれている
+    test: test_normal_when_already_read
+  - name: 正常シナリオ（止めずに案内する）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 対象のファイルに当たるパスの glob と、書く操作だけを必須とするエントリを 1 つ持つ YAML
+        notes: 読む操作は必須に含めない
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、既にある対象のファイルを Read で読むよう指示する
+        notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を置く
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant FS as 対象のファイル
+
+        CC->>H: Read（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所（読む操作は必須でない）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H-->>CC: 操作を止めず、ルールの場所をコンテキストへ載せる
+        CC->>FS: 読む
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 応答に対象のファイルの文字列が出ている
+      - セッションの記録（transcript）に、操作を止めない案内の文面とルールの場所が載っている
+    test: test_normal_when_not_blocked
+  - name: 正常シナリオ（Bashで読む対象に当たる）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 対象のファイルに当たるパスの glob と、読む操作を必須とするエントリを 1 つ持つ YAML
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、既にある対象のファイルを Bash の `cat` で読むよう指示する
+        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で外して読み方を 1 つに定める'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: Bash（cat 対象のパス）
+        H->>H: コマンドから読む対象のパスを取り出す
+        H->>IDX: 対象のパスと読む操作に当たるエントリを引く
+        IDX-->>H: ルールの場所（読む操作が必須）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H-->>CC: 操作を止め、ルールの場所と読み方を案内する
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Bash が載っている'
+      - 止めた理由の文面に、ルールの場所が載っている
+    test: test_normal_when_read_by_bash
+  - name: 正常シナリオ（案内が長い）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown を 100 件
+        notes: 場所のパスを 1 件 150 字前後にし、全件を並べると 10,000 字を超えるようにする
+      - name: 索引
+        description: 100 件のルールそれぞれに、対象のファイルに当たるパスの glob と書く操作を必須とするエントリを持つ YAML
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所 100 件
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 全件未読
+        H->>H: 10,000 字に収まるところまで場所を並べ、残りの件数を添える
+        H-->>CC: 操作を止め、載せた場所と残りの件数を案内する
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Write が載っている'
+      - 止めた理由の文面が 10,000 字以内
+      - 止めた理由の文面に、載せきれなかったルールの件数が載っている
+    test: test_normal_when_guidance_too_long
+  - name: 異常シナリオ（索引が読めない）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: 索引
+        description: YAML として読めないファイルを指す
+        notes: 実在しないパスを指す場合も同じ結末になる
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant FS as 対象のファイル
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 読む
+        IDX-->>H: 読めない
+        H-->>CC: 操作を止めず、読めなかった索引の場所と理由をコンテキストへ載せる
+        CC->>FS: 書く
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 対象のファイルに中身が書かれている
+      - セッションの記録（transcript）に、読めなかった索引の場所と理由が載っている
+    test: test_error_when_index_unreadable
+lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。
+issue: 2
+primary_actor: Claude Code のセッション
+trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ
+preconditions:
+  - プラグインが Claude Code に読み込まれている
+  - 索引を指す環境変数が設定されている
+notes:
+  結合テストで確かめる要望: |-
+    次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
+
+    - 同じルールに複数のエントリが当たったとき、案内と止めるかの判定をルールごとに 1 つへまとめる
+    - エントリの当てる範囲から外すパスの glob
+    - 当てるツール名で MCP のツールの呼び出しに当たる案内
+    - ルールの場所が URL のときの本文の取得と、取得に失敗したときの扱い（単一ユースケース「ルールの本文を取得する」の異常シナリオと同じ結末）
+test_file: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py

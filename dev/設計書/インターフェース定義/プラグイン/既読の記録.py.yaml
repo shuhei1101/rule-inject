@@ -1,0 +1,179 @@
+title: "既読の記録"
+entry:
+  kind: trigger
+  value: '`PostToolUse` フック（matcher `Read|Bash`、timeout 1 秒）'
+flows:
+  - name: 正常系（Readで読む）
+    summary: Read で読んだルールの場所を記録する
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+        participant ST as 記録ファイル
+
+        CC->>P: 標準入力（Read・ルールの場所）
+        P->>IDX: 読む
+        P->>ST: ルールの場所を追記する
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルにルールの場所が 1 行ある
+      - 終了コードが `0`
+    test: test_normal_when_read_by_read_tool
+  - name: 正常系（Bashで読む）
+    summary: Bash の読むコマンドの引数にあるルールの場所を記録する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Bash`、`tool_input.command` は `cat {ルールの場所の相対パス}`'
+        notes: '`cwd` からの相対パスで渡し、絶対パスへ解くことを確かめる'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+        participant ST as 記録ファイル
+
+        CC->>P: 標準入力（Bash・コマンド）
+        P->>P: 読むコマンドの引数からパスを取り出す
+        P->>IDX: 読む
+        P->>ST: ルールの場所を追記する
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルにルールの場所の絶対パスが 1 行ある
+    test: test_normal_when_read_by_bash
+  - name: 正常系（ルールの場所でない）
+    summary: 索引に載っていないパスを読んでも記録しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` は索引に載っていないパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（Read・関係のないパス）
+        P->>IDX: 読む（当たらない）
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが作られていない
+    test: test_normal_when_not_rule
+  - name: 異常系（既読の記録に書けない・理由を載せる）
+    summary: 記録のフォルダに書けないとき、既読にできなかった理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: '`RULE_INJECT_STATE_DIR` を書き込み権限の無いフォルダ（`chmod 555`）にする'
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant ST as 記録ファイル
+
+        CC->>P: 標準入力（Read・ルールの場所）
+        P->>ST: 追記する（書けない）
+        P->>P: ログにも書けないため標準エラー出力へ出す
+        P-->>CC: additionalContext（既読にできなかった場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所と理由が載っている'
+      - '標準エラー出力に `operation: write_record` の 1 行がある'
+      - 終了コードが `0`
+    test: test_error_when_record_unwritable
+lead: Read か Bash の読むコマンドで読んだパスのうち、索引に載ったルールの場所を、そのセッションの既読として記録する。
+idempotent: true
+side_effects: そのセッションの既読の記録ファイルへルールの場所を 1 行ずつ追記する
+exclusivity: 追記（O_APPEND）だけで書くため、MCP サーバーと同時に書いても行が混ざらない
+request:
+  - name: '`session_id`'
+    type: str
+    required: true
+    description: 呼び出し元のセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: 形が外れた値のときは記録しない
+  - name: '`cwd`'
+    type: str
+    required: true
+    description: セッションの作業フォルダ。Bash のコマンドの相対パスを解く基準（プロジェクトの索引の相対パスは `CLAUDE_PROJECT_DIR` から解く）
+  - name: '`tool_name`'
+    type: Literal['Read', 'Bash']
+    required: true
+    description: 実行されたツール
+  - name: '`tool_input.file_path`'
+    type: str
+    required: false
+    default: なし（記録しない）
+    description: Read で読んだファイルのパス
+  - name: '`tool_input.command`'
+    type: str
+    required: false
+    default: なし（記録しない）
+    description: Bash で実行したコマンド
+    notes: ルール案内と同じ規則で引数からパスを取り出す。既読にするのは `cat` / `bat` / `less` / `more` の引数だけ
+exceptions:
+  - name: なし（正常終了）
+    condition: 記録できたとき・記録する場所が無いときは、標準出力に何も出さず終了コード 0 で終える
+  - name: OSError（既読の記録に書けない）
+    condition: '`RULE_INJECT_STATE_DIR` が作れない・書けない（権限・容量）'
+    notes: フックの中で捕まえ、`hookSpecificOutput.additionalContext`（PostToolUse）へ「既読にできなかったルールの場所と理由」を載せ、ログへ `write_record` を書いて終了コード 0 で終える。既読にならず書く操作が止まり続ける理由が、モデルと利用者に見える
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 最上位で捕まえ、`additionalContext` へ「既読の記録が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: 記録の置き場所
+    constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 1 場所）'
+    notes: 書式は ER 図「既読の記録」
+  - item: 記録する場所
+    constraint: 索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。それ以外のパスは記録しない
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+    notes: 既読の記録と同じフォルダのため、記録に書けないときはログにも書けないことが多い。そのときも `additionalContext` で理由が見える
+identifier: record_read
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['PostToolUse']
+    description: フックの種類
+    notes: 既読に書けなかったときだけ出力する
+  - name: '`hookSpecificOutput.additionalContext`'
+    type: str
+    description: 既読にできなかったルールの場所と理由
+    constraints: 10,000 字以内
+notes:
+  対象外のツール: 組み込みの Grep は matcher に含めない。一致した行だけを返し、ルールの本文全体を読んだことにならないため、既読にはしない（案内はルール案内が行う）。Bash の `grep` も同じ理由で、既読にするのは全体を出す読むコマンド（`cat` / `bat` / `less` / `more`）だけにする
+test_file: tests/integration/plugin/test_record_read.py

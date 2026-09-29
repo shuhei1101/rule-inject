@@ -1,0 +1,436 @@
+title: "プラグイン / 索引"
+lead: 環境変数が指す索引を標準ライブラリだけで読み、操作の対象のパスかツール名に当たるルールをルールごとにまとめて返す。
+directory: |-
+  ```text
+  src/rule_inject/features/index/
+  ├── __init__.py   # 公開 API（load_indexes / match_path / match_tool / rule_locations）
+  ├── types.py      # Operation・IndexEntry・MatchedRule・IndexLoadResult
+  ├── _yaml.py      # 索引の YAML の一部だけを読む
+  └── service.py    # 索引の読み込みと照合
+  ```
+enums:
+  - name: Operation
+    title: 操作の種別
+    container: features/index/types.py
+    usecase: 共通
+    summary: エントリの `on`・`default_on` と呼ばれた操作の種別（Literal）
+    values:
+      - value: read
+        title: 読む
+        description: Read・Grep・Bash の読むコマンド
+      - value: write
+        title: 書く
+        description: Edit・Write・NotebookEdit
+      - value: mcp
+        title: MCP
+        description: MCP のツールの呼び出し
+constants:
+  - name: DEFAULT_ON
+    title: 既定の止める操作
+    container: features/index/types.py
+    summary: 索引が `default_on` を書かないときの値
+    value: '`("read", "write", "mcp")`'
+  - name: INDEX_ENV_NAMES
+    title: 索引を指す環境変数
+    container: features/index/service.py
+    summary: 読む順に並べた環境変数の名前
+    value: '`("RULE_INJECT_INDEXES_USER", "RULE_INJECT_INDEXES_PROJECT")`'
+data_models:
+  - name: IndexEntry
+    title: 索引のエントリ
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: 索引の 1 エントリ（場所を解決し、`on` を埋めた後）
+    properties:
+      - name: location
+        type: str
+        description: 解決後のルールの場所（絶対パスか URL）
+      - name: paths
+        type: tuple[str, ...]
+        description: 当てるパスの glob
+      - name: exclude
+        type: tuple[str, ...]
+        description: 外すパスの glob
+      - name: tools
+        type: tuple[str, ...]
+        description: 当てるツール名の glob
+      - name: on
+        type: frozenset[Operation]
+        description: 止める操作
+  - name: MatchedRule
+    title: 当たったルール
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: ルールの場所ごとに 1 件へまとめた照合の結果
+    properties:
+      - name: location
+        type: str
+        description: ルールの場所
+      - name: blocking
+        type: bool
+        description: 当たったエントリのどれか 1 つでも操作の種別が `on` に入っていれば True
+  - name: IndexLoadResult
+    title: 索引の読み込みの結果
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: 読めたエントリと読めなかった索引
+    properties:
+      - name: entries
+        type: tuple[IndexEntry, ...]
+        description: 読めた全ての索引のエントリ
+      - name: failures
+        type: tuple[IndexReadError, ...]
+        description: 読めなかった索引ごとの例外
+  - name: RejectedLocation
+    title: 読まない場所
+    container: features/index/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: '`read_rules` で読まないと決めた場所かパスと、その理由'
+    properties:
+      - name: location
+        type: str
+        description: 渡された場所かパス（解けたものは解決後）
+      - name: reason
+        type: str
+        description: 理由
+  - name: SelectedLocations
+    title: 読む場所の選び出しの結果
+    container: features/index/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: 本文を読む場所と、読まない場所
+    properties:
+      - name: targets
+        type: tuple[str, ...]
+        description: 本文を読むルールの場所（解決後。重なりを落とし、並びを保つ）
+      - name: rejected
+        type: tuple[RejectedLocation, ...]
+        description: 読まない場所かパス
+functions:
+  - name: parse_index
+    title: 索引の YAML の読み取り
+    container: features/index/_yaml.py
+    usecase: 共通
+    summary: 索引の YAML のうち設定の設計書に挙げたキーと形だけを読む
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 索引のファイルの中身
+    returns:
+      type: tuple[tuple[Operation, ...] | None, list[dict[str, str | list[str]]]]
+      description: '`default_on`（無ければ None）と、`rules` の各エントリのキーと値'
+    process: |-
+      1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
+      2. 最上位のキーは `default_on` と `rules` だけを許す
+      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `on` だけを許す
+      4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
+      5. 許さないキー・形・`rule` の無いエントリ・`on` の外の値は行番号つきの ValueError にする
+    exceptions:
+      - name: ValueError
+        condition: 許さないキー・形・値がある
+        message: '`{行番号}行目: {理由}`'
+    unit_tests:
+      - name: test_parse_index
+        case: 正常
+        summary: フローとブロックのリスト、引用符、コメントを読む
+        condition: '`default_on: [write]` と、`paths` をブロック、`on` をフローで書いた 2 エントリ。引用符の中に `#` を含む値'
+        mock: なし
+        expected: '`default_on` と 2 エントリのキーと値が読め、引用符の中の `#` が残る'
+      - name: test_parse_index_when_no_default_on
+        case: 正常
+        summary: '`default_on` が無い'
+        condition: '`rules` だけの索引'
+        mock: なし
+        expected: '`default_on` が None'
+      - name: test_parse_index_when_unknown_key
+        case: 異常
+        summary: 許さないキーを拒む
+        condition: エントリに `foo:` がある
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形・値がある
+      - name: test_parse_index_when_rule_missing
+        case: 異常
+        summary: '`rule` の無いエントリを拒む'
+        condition: '`paths` だけのエントリ'
+        mock: なし
+        expected: ValueError
+        exception: 許さないキー・形・値がある
+      - name: test_parse_index_when_invalid_on
+        case: 異常
+        summary: '`on` の外の値を拒む'
+        condition: '`on: [delete]`'
+        mock: なし
+        expected: ValueError
+        exception: 許さないキー・形・値がある
+  - name: load_indexes
+    title: 索引の読み込み
+    container: features/index/service.py
+    usecase: 共通
+    summary: 環境変数が指す全ての索引を読み、読めたエントリと読めなかった索引を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`INDEX_ENV_NAMES` と `CLAUDE_PROJECT_DIR` を使う）
+    returns:
+      type: IndexLoadResult
+      description: 読めたエントリと読めなかった索引
+    process: |-
+      1. `INDEX_ENV_NAMES` の順に、値をカンマで分けて前後の空白を落とす
+      2. 各パスを `resolve_location` で解く（基準は `CLAUDE_PROJECT_DIR`。無ければ相対パスの索引は読めない索引にする）
+      3. UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
+      4. エントリの `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
+    unit_tests:
+      - name: test_load_indexes
+        case: 正常
+        summary: ユーザーとプロジェクトの索引を合わせて読む
+        condition: ユーザーに絶対パス 1 つ、プロジェクトに `CLAUDE_PROJECT_DIR` からの相対パスと絶対パスをカンマ区切りで 2 つ
+        mock: なし
+        expected: 3 索引のエントリが読め、`rule` が索引のフォルダから解かれている。`failures` が空
+      - name: test_load_indexes_when_on_missing
+        case: 正常
+        summary: '`on` を `default_on` と `DEFAULT_ON` で埋める'
+        condition: '`default_on: [write]` の索引と `default_on` の無い索引。どちらも `on` を書かないエントリ'
+        mock: なし
+        expected: 前者の `on` が `{write}`、後者が `{read, write, mcp}`
+      - name: test_load_indexes_when_unreadable
+        case: 正常
+        summary: 読めない索引を failures に集めて続ける
+        condition: 実在しないパス、書式に合わないファイル、正しい索引の 3 つ
+        mock: なし
+        expected: '`failures` に 2 件（パスと理由）、`entries` に正しい索引のエントリ'
+      - name: test_load_indexes_when_no_env
+        case: 正常
+        summary: 環境変数が無い
+        condition: どちらの環境変数も無い
+        mock: なし
+        expected: '`entries` も `failures` も空'
+  - name: match_path
+    title: パスの照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: 対象のパスに当たるエントリをルールごとに 1 件へまとめる
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: path
+        type: str
+        required: true
+        passing: positional
+        description: 対象の絶対パス
+      - name: operation
+        type: Operation
+        required: true
+        passing: positional
+        description: 操作の種別
+    returns:
+      type: list[MatchedRule]
+      description: 当たったルール（索引の順）
+    process: |-
+      1. `paths` のどれかに当たり、`exclude` のどれにも当たらないエントリを選ぶ（glob の `**` はフォルダをまたぐ。`_glob_match`）
+      2. 同じ `location` を 1 件にまとめ、`operation` がどれかの `on` に入っていれば `blocking` を True にする
+    unit_tests:
+      - name: test_match_path
+        case: 正常
+        summary: 当たるエントリを選ぶ
+        condition: '`**/*.py` と `**/*.ts` の 2 エントリ、`/p/src/a.py`、`write`'
+        mock: なし
+        expected: '`.py` のルール 1 件、`blocking` が True'
+      - name: test_match_path_when_excluded
+        case: 正常
+        summary: 外すパスには当てない
+        condition: '`exclude: ["**/tests/**"]`、`/p/tests/a.py`'
+        mock: なし
+        expected: 空
+      - name: test_match_path_when_duplicate
+        case: 正常
+        summary: 同じルールのエントリを 1 件にまとめる
+        condition: '同じ `location` で `on: [read]` と `on: [write]` の 2 エントリ、`write`'
+        mock: なし
+        expected: 1 件、`blocking` が True
+      - name: test_match_path_when_not_blocking
+        case: 正常
+        summary: 操作が `on` に無ければ止めない
+        condition: '`on: [write]` のエントリ、`read`'
+        mock: なし
+        expected: 1 件、`blocking` が False
+  - name: match_tool
+    title: ツール名の照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: MCP のツール名に当たるエントリをルールごとに 1 件へまとめる
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: tool_name
+        type: str
+        required: true
+        passing: positional
+        description: MCP のツールの完全名
+    returns:
+      type: list[MatchedRule]
+      description: 当たったルール。操作の種別は `mcp` として `blocking` を決める
+    process: |-
+      1. `tools` のどれかに `fnmatch.fnmatchcase` で当たるエントリを選ぶ
+      2. `match_path` と同じ規則でルールごとにまとめる
+    unit_tests:
+      - name: test_match_tool
+        case: 正常
+        summary: ツール名の glob に当てる
+        condition: '`tools: ["mcp__*__create_*"]`、`mcp__github__create_issue`'
+        mock: なし
+        expected: 1 件、`blocking` が True（`on` に `mcp` を含む）
+      - name: test_match_tool_when_not_matched
+        case: 正常
+        summary: 当たらない
+        condition: '`mcp__github__list_issues`'
+        mock: なし
+        expected: 空
+  - name: rule_locations
+    title: ルールの場所の一覧
+    container: features/index/service.py
+    usecase: 共通
+    summary: 索引に載ったルールの場所の集合を返す（既読の記録と `read_rules` の許す場所の判定に使う）
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+    returns:
+      type: frozenset[str]
+      description: 解決後のルールの場所
+    unit_tests:
+      - name: test_rule_locations
+        case: 正常
+        summary: 重なりを落とした集合を返す
+        condition: 同じ `location` を持つ 2 エントリと別の 1 エントリ
+        mock: なし
+        expected: 2 件の集合
+  - name: _glob_match
+    title: glob の照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: '`**` をフォルダをまたぐ一致として扱い、絶対パスに glob を当てる'
+    kind: 関数
+    scope: internal
+    args:
+      - name: pattern
+        type: str
+        required: true
+        passing: positional
+        description: glob
+      - name: path
+        type: str
+        required: true
+        passing: positional
+        description: 絶対パス
+    returns:
+      type: bool
+      description: 当たるか
+    process: |-
+      1. glob を正規表現へ読み替える（`**/` → 0 個以上のフォルダ、`*` → `/` を含まない文字列、`?` → `/` 以外の 1 字、`{a,b}` → 選択）
+      2. パス全体に当てる
+    reason: フックの Python の最低の版（3.12）には `PurePath.full_match` が無く、`fnmatch` は `*` が `/` もまたぐため
+    unit_tests:
+      - name: test_glob_match_when_double_star
+        case: 正常
+        summary: '`**` がフォルダをまたぐ'
+        condition: '`**/*.py` と `/a/b/c.py`、`/c.py`'
+        mock: なし
+        expected: どちらも True
+      - name: test_glob_match_when_single_star
+        case: 正常
+        summary: '`*` はフォルダをまたがない'
+        condition: '`*/x/*.md` と `/a/x/b/c.md`'
+        mock: なし
+        expected: 'False'
+      - name: test_glob_match_when_braces
+        case: 正常
+        summary: 波括弧の候補を選ぶ
+        condition: '`**/*.{ts,tsx}` と `/a/b.tsx`、`/a/b.js`'
+        mock: なし
+        expected: True と False
+  - name: select_locations
+    title: 読む場所の選び出し
+    container: features/index/service.py
+    usecase: ルールの本文を取得する
+    summary: '`read_rules` に渡された場所とパスから、索引に載ったルールの場所だけを選ぶ'
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 読みたいルールの場所
+      - name: paths
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 触るファイルのパス
+    returns:
+      type: SelectedLocations
+      description: 読む場所と読まない場所
+    process: |-
+      1. `locations` のうち、絶対パス・`~` で始まるパス・URL のどれでもないものは、解かずに `相対パスは読まない。絶対パス・~・https:// の URL で渡す` として rejected へ
+      2. 残りの `locations` を `resolve_location` で解き、`rule_locations(entries)` に無いものは `索引に載っていない場所` として rejected へ。あるものを targets へ
+      3. `paths` のうち絶対パスでないものは `相対パスは照合しない。絶対パスで渡す` として rejected へ。絶対パスは `match_path(entries, path, "read")` の場所を targets へ足す
+      4. targets の重なりを落とす（並びは保つ）
+    unit_tests:
+      - name: test_select_locations
+        case: 正常
+        summary: 索引に載った場所を選ぶ
+        condition: 索引に載った絶対パス 1 件と URL 1 件
+        mock: なし
+        expected: targets に 2 件、rejected は空
+      - name: test_select_locations_when_by_path
+        case: 正常
+        summary: 対象のパスで引く
+        condition: '`**/*.py` と `**/*.ts` のエントリ、`paths` に `.py` の絶対パス、`locations` に同じルールの場所'
+        mock: なし
+        expected: targets に `.py` のルールだけが 1 件（重なりを落とす）
+      - name: test_select_locations_when_not_in_index
+        case: 正常
+        summary: 索引に無い場所は読まない
+        condition: 索引に無い絶対パスと URL
+        mock: なし
+        expected: targets は空、rejected に 2 件（`索引に載っていない場所`）
+      - name: test_select_locations_when_relative
+        case: 正常
+        summary: 相対パスは解かない
+        condition: '`locations` に `rules/a.md`、`paths` に `src/a.py`'
+        mock: なし
+        expected: targets は空、rejected に 2 件（相対パスの理由）
+test_files:
+  - tests/unit/rule_inject/features/index/test_yaml.py
+  - tests/unit/rule_inject/features/index/test_service.py
