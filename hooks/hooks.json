@@ -1,0 +1,68 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "操作の対象に当たる未読のルールを案内し、必須の操作なら止める",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" rule_guide",
+            "timeout": 1
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__plugin_rule-inject_rule-inject__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "このプラグインの MCP のツールの引数へ session_id を足す",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" session_id_injection",
+            "timeout": 1
+          }
+        ]
+      }
+    ],
+
+    "PostToolUse": [
+      {
+        "matcher": "Read|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "Read か Bash で読んだルールの場所を既読として記録する",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" record_read",
+            "timeout": 1
+          }
+        ]
+      }
+    ],
+
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "圧縮の前に、そのセッションの既読の記録を捨てる",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" discard_read",
+            "timeout": 1
+          }
+        ]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "新しいファイルは空で作ってから中身を書く決まりを載せる",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" work_rules",
+            "timeout": 1
+          }
+        ]
+      }
+    ]
+  }
+}
