@@ -67,7 +67,7 @@ settings:
     description: ルールの本文の場所
     missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる
     reload: immediate
-    allowed: '`http://` / `https://` で始まる URL、絶対パス、`~` で始まるパス、索引ファイルのフォルダからの相対パス'
+    allowed: '`https://` で始まる URL、絶対パス、`~` で始まるパス、索引ファイルのフォルダからの相対パス。`http://` の URL は書けるが、本文は取得しない（平文で取得したルールを案内に使わないため）'
     visibility: user
     status: planned
   - key: rules[].paths

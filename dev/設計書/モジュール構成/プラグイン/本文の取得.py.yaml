@@ -115,7 +115,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: '`http://` / `https://` の URL'
+        description: '`https://` の URL'
       - name: timeout
         type: float
         required: false
@@ -126,9 +126,12 @@ functions:
       type: str
       description: UTF-8 で読んだ本文
     process: |-
-      1. `urllib.request.urlopen` を `timeout` つきで 1 回呼ぶ
-      2. 200 以外は `HTTP {コード}`、待ち時間の超過は `待ち時間（{timeout} 秒）の超過`、そのほかの URLError / OSError はその文面で FetchError にする
+      1. `https://` で始まらなければ、取得せずに `HTTPS でない URL は取得しない` で FetchError にする
+      2. `urllib.request.urlopen` を `timeout` つきで 1 回呼ぶ
+      3. 200 以外は `HTTP {コード}`、待ち時間の超過は `待ち時間（{timeout} 秒）の超過`、そのほかの URLError / OSError はその文面で FetchError にする
     exceptions:
+      - name: FetchError
+        condition: '`https://` でない URL'
       - name: FetchError
         condition: 200 以外の応答・待ち時間の超過・接続の失敗
     unit_tests:
@@ -152,6 +155,13 @@ functions:
         mock: '`urllib.request.urlopen`'
         expected: FetchError（reason に待ち時間の超過）
         exception: 待ち時間の超過
+      - name: test_fetch_url_when_http
+        case: 異常
+        summary: 平文の http:// は取得しない
+        condition: '`http://example.com/a.md`'
+        mock: '`urllib.request.urlopen`'
+        expected: FetchError（reason が `HTTPS でない URL は取得しない`）、urlopen は呼ばれない
+        exception: '`https://` でない URL'
     connectivity_tests:
       - name: test_ext_fetch_url_when_github_raw
         api: GitHub の raw のファイル

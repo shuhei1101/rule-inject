@@ -230,7 +230,7 @@ flows:
 lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録する。
 identifier: read_rules
 idempotent: true
-side_effects: そのセッションの既読の記録ファイルへ、本文を返した場所を 1 行ずつ追記する。URL の場所は HTTPS で取得する
+side_effects: そのセッションの既読の記録ファイルへ、本文を返した場所を 1 行ずつ追記する。URL の場所は HTTPS で取得し、`http://` の URL は取得せずに `failures` に載せる
 exclusivity: 追記（O_APPEND）だけで書くため、フックと同時に書いても行が混ざらない
 request:
   - name: '`locations`'
@@ -239,7 +239,7 @@ request:
     default: '`[]`'
     location: argument
     description: 読みたいルールの場所。案内に載った場所をそのまま渡す
-    constraints: 絶対パス・`~` で始まるパス・`http://` / `https://` の URL。索引に載ったルールの場所だけを読む
+    constraints: 絶対パス・`~` で始まるパス・`https://` の URL。索引に載ったルールの場所だけを読む（`http://` の URL は取得せずに `failures` に載せる）
     notes: ツールの引数の説明に「ルールの場所を渡す。これから触るファイルのパスは `paths` へ」と書く
   - name: '`paths`'
     type: list[str]

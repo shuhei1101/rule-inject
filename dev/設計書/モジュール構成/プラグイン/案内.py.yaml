@@ -23,12 +23,12 @@ constants:
     title: 止めない案内の冒頭
     container: features/guidance/service.py
     summary: 止めないときの案内文の冒頭（やり直しを促さない）
-    value: '`操作の対象に当る未読のルールがあります。必要に応じて read_rules に下の場所を渡して本文を読んでください。`'
+    value: '`操作の対象に当たる未読のルールがあります。必要に応じて read_rules に下の場所を渡して本文を読んでください。`'
   - name: WORK_RULES
     title: 作業の決まり
     container: features/guidance/service.py
     summary: SessionStart で載せる文面
-    value: '`新しいファイルは、まず Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書いてください。空で作った時点で、そのファイルに当るルールが案内されます。`'
+    value: '`新しいファイルは、まず Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書いてください。空で作った時点で、そのファイルに当たるルールが案内されます。`'
 functions:
   - name: build_guidance
     title: 案内文の組み立て
