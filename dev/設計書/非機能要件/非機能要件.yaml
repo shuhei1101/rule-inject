@@ -54,11 +54,11 @@ requirements:
   - name: 対応 OS
     english_name: supported_os
     category: 動作環境
-    external_constraint: 未確定
+    external_constraint: 制限なし
     source_kind: ユーザー要望
     source: https://github.com/shuhei1101/rule-inject/issues/2
-    value: 未確定
-    rationale: Issue の構成方針は Linux / WSL。版の範囲は PoC 検証で動かした環境をもとに設計で決める
+    value: Linux / WSL
+    rationale: Issue の構成方針のとおり。PoC 検証と設計の段の実測は WSL（Linux 6.6）で行った。macOS・Windows（WSL なし）は要件のスコープ外
   - name: URLのルールの取得の待ち時間
     english_name: rule_fetch_timeout
     category: 性能
@@ -79,4 +79,13 @@ requirements:
       - part: 合計
         value: 485 ms
         notes: 秒に切り上げて 1 秒
+  - name: フックのPythonの版
+    english_name: hook_python_version
+    category: 動作環境
+    external_constraint: フックは利用者の端末の `python3`（OS が持つ版）で動く。MCP サーバーの `uv run` と違い、版を固定する仕組みが無い
+    source_kind: 実行基盤の制限
+    value: 3.12 以上
+    rationale: PoC 検証と設計の段で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
+    measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動き、後者は版が足りない知らせが出ることを確かめる
+    overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冴頭で版を確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` の版」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
 lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。

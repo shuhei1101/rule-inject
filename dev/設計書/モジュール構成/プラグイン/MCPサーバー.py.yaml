@@ -3,7 +3,7 @@ lead: stdio の MCP サーバーの入口。`read_rules` を登録し、本文�
 directory: |-
   ```text
   .mcp.json                   # rule-inject のサーバーを uv run で起動する
-  pyproject.toml              # uv のプロジェクト（依存は mcp>=2.2,<3）
+  pyproject.toml              # uv のプロジェクト（requires-python >=3.12、依存は mcp>=2.2,<3）
   src/rule_inject/server/
   ├── __init__.py
   ├── __main__.py             # python -m rule_inject.server で起動

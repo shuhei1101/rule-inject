@@ -329,7 +329,7 @@ functions:
     process: |-
       1. glob を正規表現へ読み替える（`**/` → 0 個以上のフォルダ、`*` → `/` を含まない文字列、`?` → `/` 以外の 1 字、`{a,b}` → 選択）
       2. パス全体に当てる
-    reason: フックを動かす Python 3.12 には `PurePath.full_match` が無く、`fnmatch` は `*` が `/` もまたぐため
+    reason: フックの Python の最低の版（3.12）には `PurePath.full_match` が無く、`fnmatch` は `*` が `/` もまたぐため
     unit_tests:
       - name: test_glob_match_when_double_star
         case: 正常

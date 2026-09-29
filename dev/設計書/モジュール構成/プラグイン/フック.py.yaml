@@ -53,6 +53,13 @@ constants:
         value: '`("discard_read", discard_read, 出力しない)`'
       - key: work_rules
         value: '`("work_rules", work_rules, 出力しない)`'
+  - name: MIN_PYTHON
+    title: フックの Python の最低の版
+    container: hooks/run.py（プラグインの直下）
+    summary: これより古い `python3` ではパッケージを import しない
+    value: '`(3, 12)`'
+    refs:
+      - dev/設計書/非機能要件/非機能要件#requirements[フックのPythonの版]
 function_types:
   - name: HookHandler
     title: フックの処理の関数型
@@ -399,8 +406,9 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. `Path(__file__).parents[1] / "src"` を sys.path の先頭に足す
-      2. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
+      1. 冴頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し、記録フォルダのログへ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にする）
+      2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に足す
+      3. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
     unit_tests:
       - name: test_main
         case: 正常
@@ -408,6 +416,13 @@ functions:
         condition: '`python3 hooks/run.py work_rules` に SessionStart の JSON を渡す'
         mock: なし
         expected: 終了コード 0、標準出力に additionalContext
+      - name: test_main_when_python_too_old
+        case: 正常
+        summary: 版が足りないとき知らせて終える
+        condition: '`sys.version_info` を (3, 11) に差し替え、PreToolUse の JSON を渡す'
+        mock: '`sys.version_info`'
+        expected: 戻り値 0、標準出力の additionalContext に必要な版と動いた版、`rule_inject` を import していない
 notes:
   hooks.json: '5 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない'
   標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
+  Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
