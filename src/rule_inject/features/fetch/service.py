@@ -91,8 +91,20 @@ def _fit_to_limit(
         )
         if len(render_result(candidate)) <= limit:
             pages.append(page)
-        else:
+        elif pages:
+            # 載せた本文がある: 次の呼び出しで取得する場所として回す
             deferred.append(page.location)
+        else:
+            # 1 件も載せていない: deferred に回すと呼び直しても進まないため、理由つきで failures へ回す
+            failures.append(
+                FetchFailure(
+                    location=page.location,
+                    reason=(
+                        f"ほかの場所と合わせると応答の上限（{limit} 字）を超える。"
+                        "この場所だけを locations に渡して取り直す"
+                    ),
+                )
+            )
     return ReadRulesResult(pages=pages, deferred=deferred, failures=failures)
 
 
