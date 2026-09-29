@@ -42,11 +42,13 @@ def test_normal_when_own_record_old(
     """始まったセッション自身の記録ファイルは、保持期間を過ぎていても消さない（正常系）。"""
     # 準備
     own = set_age_days(write_record(["/r/a.md"]), 31)
+    other = set_age_days(write_record(["/r/b.md"], "other-session"), 31)
     payload = hook_payload("SessionStart", source="resume")
     # 実行
     completed = run_hook("sweep_read", payload)
     # 検証
     assert own.exists()
+    assert not other.exists()
     assert completed.returncode == 0
 
 
