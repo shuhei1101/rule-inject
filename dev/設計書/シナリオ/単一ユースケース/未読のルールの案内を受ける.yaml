@@ -170,7 +170,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面が 10,000 字以内で、ファイルへの退避に置き換わっていない
+      - 止めた理由の文面が 10,000 字以内
       - 止めた理由の文面に、載せきれなかったルールの件数が載っている
     test: test_normal_when_guidance_too_long
   - name: 異常シナリオ（索引が読めない）

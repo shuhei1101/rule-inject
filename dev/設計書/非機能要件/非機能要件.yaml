@@ -24,12 +24,12 @@ requirements:
   - name: フックの案内文の長さ
     english_name: hook_context_length
     category: 性能
-    external_constraint: フックの additionalContext などの文字列は 1 つあたり 10,000 字まで。超えるとファイルへ退避され、先頭 2,000 字のプレビューに置き換わる
+    external_constraint: フックの additionalContext・systemMessage・initialUserMessage と plain stdout は 1 つあたり 10,000 字まで。超えるとファイルへ退避され、先頭 2,000 字のプレビューに置き換わる。止めるときの permissionDecisionReason はこの上限の対象に挙がっておらず、15,709 字を返すと切られず退避もされずにツールの結果へそのまま載った（2026-09-29、Claude Code 2.1.284 で実測）
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/hooks
     value: 10,000
     unit: 字
-    rationale: 外部の上限そのまま
+    rationale: 止めずに案内する additionalContext は外部の上限そのまま。止める案内の permissionDecisionReason には実行基盤の上限が無いが、コンテキストを消費する量として同じ 10,000 字を自分で決めた上限にし、2 つの案内で処置を揃える
     overflow: 案内文を出力する前に字数を数える。超えるときは、止めるルールを先に並べてルールの場所を 10,000 字に収まるところまで載せ、載せきれなかった件数を末尾に添える。載せきれなかったルールは未読のまま残るので、載せた分を読んで操作をやり直したときに案内される（単一ユースケース「未読のルールの案内を受ける」の正常シナリオ（案内が長い））
   - name: MCP のツールの応答の大きさ
     english_name: mcp_output_size
