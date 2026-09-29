@@ -35,6 +35,9 @@ catalogs:
       - name: CLAUDE_PLUGIN_ROOT
         kind: 環境変数
         purpose: フックと `.mcp.json` の中でプラグインの場所を指す
+      - name: .claude-plugin/marketplace.json
+        kind: ファイル
+        purpose: リポジトリを marketplace として載せ、`/plugin marketplace add` と `/plugin install` で入れられるようにする
 lead: Anthropic の AI コーディングエージェントの CLI（`claude`）。プラグインが持つフックと MCP サーバーを読み込み、出来事ごとに呼ぶ。
 dependency_scope: 必須
 adoption: 採用

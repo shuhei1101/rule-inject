@@ -2,7 +2,9 @@ title: "プラグイン / フック"
 lead: Claude Code が呼ぶフックの入口。標準入力の JSON を読み、機能の関数を呼んで標準出力へ JSON を返し、想定外の例外も捕まえて終了コード 0 で終える。標準ライブラリだけで動く。
 directory: |-
   ```text
-  .claude-plugin/plugin.json      # プラグインの名前（rule-inject）と版
+  .claude-plugin/
+  ├── plugin.json                 # プラグインの名前（rule-inject）と版
+  └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
   ├── hooks.json                  # 5 つのフックの matcher・timeout（1 秒）・コマンド
   └── run.py                      # src/ を sys.path に足して引数のフックを動かす
