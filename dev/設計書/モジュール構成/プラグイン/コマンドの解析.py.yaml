@@ -73,3 +73,5 @@ functions:
         condition: '`cat "a.md`（引用符が閉じていない）'
         mock: なし
         expected: 空（例外を送出しない）
+test_files:
+  - tests/unit/rule_inject/features/command/test_service.py

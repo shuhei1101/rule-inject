@@ -216,3 +216,5 @@ functions:
         condition: 記録ファイルがあるセッションと無いセッション
         mock: なし
         expected: True と False
+test_files:
+  - tests/unit/rule_inject/features/record/test_service.py

@@ -259,7 +259,7 @@ functions:
       - name: test_read_rules_when_over_limit
         case: 正常
         summary: 上限を超える本文を deferred へ回す
-        condition: '`limit=100` と、合わせると 100 字を超える本文 2 件'
+        condition: '50 字の本文 2 件と、`limit` を「本文 1 件と deferred 1 件を `render_result` した字数」にした呼び出し（ルールの場所は一時フォルダの絶対パスで長さが決まらないため）'
         mock: なし
         expected: pages 1 件、deferred 1 件、記録は pages の 1 件だけ
       - name: test_read_rules_when_single_over_limit
@@ -318,3 +318,6 @@ functions:
         condition: pages 1 件・deferred 1 件・failures 1 件
         mock: なし
         expected: pages・deferred・failures を持ち、日本語がエスケープされていない
+test_files:
+  - tests/unit/rule_inject/features/fetch/test_client.py
+  - tests/unit/rule_inject/features/fetch/test_service.py

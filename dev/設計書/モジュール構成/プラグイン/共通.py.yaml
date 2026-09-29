@@ -260,3 +260,6 @@ functions:
         condition: 書き込み権限の無いフォルダ
         mock: なし
         expected: 例外を送出せず、標準エラー出力に同じ JSON が 1 行出る
+test_files:
+  - tests/unit/rule_inject/shared/test_paths.py
+  - tests/unit/rule_inject/shared/test_logger.py

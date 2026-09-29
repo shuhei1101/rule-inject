@@ -64,8 +64,11 @@ functions:
       - name: test_main
         case: 正常
         summary: 子プロセスで起動して tools/list に答える
-        condition: '`uv run python -m rule_inject.server` に initialize と tools/list を送る'
+        condition: 'テストを動かしている環境の `python -m rule_inject.server`（`uv run pytest` の下では `uv run` と同じ環境）に initialize と tools/list を送る'
         mock: なし
         expected: '`read_rules` を含む応答'
 notes:
   .mcp.json: '`{"mcpServers": {"rule-inject": {"command": "uv", "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}", "python", "-m", "rule_inject.server"], "env": {"UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/venv"}}}}`。サーバーのキーとプラグイン名がどちらも `rule-inject` のため、ツールの完全名は `mcp__plugin_rule-inject_rule-inject__read_rules` になる。仮想環境は版をまたいで残る `${CLAUDE_PLUGIN_DATA}/venv` に置き、版のフォルダ（`${CLAUDE_PLUGIN_ROOT}`）には書き込まない。入れた直後と依存が変わった版の最初の起動は、uv が依存を取得する分だけ遅い'
+test_files:
+  - tests/unit/rule_inject/server/test_app.py
+  - tests/unit/rule_inject/server/test_main.py

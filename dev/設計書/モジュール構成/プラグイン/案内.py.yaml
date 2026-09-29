@@ -114,3 +114,5 @@ functions:
         condition: IndexReadError 2 件
         mock: なし
         expected: '2 行の `- {path}: {reason}` とログの場所を含む'
+test_files:
+  - tests/unit/rule_inject/features/guidance/test_service.py
