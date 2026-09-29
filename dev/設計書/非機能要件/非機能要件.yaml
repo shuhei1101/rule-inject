@@ -22,13 +22,11 @@ requirements:
   - name: MCP のツールの応答の大きさ
     english_name: mcp_output_size
     category: 性能
-    external_constraint: MCP のツールの出力は既定で 25,000 トークンまで（10,000 トークンを超えると警告）。超えるとファイルへ退避され、会話にはファイルのパスだけが載る
+    external_constraint: MCP のツールの出力は既定で 25,000 トークンまで（10,000 トークンを超えると警告）。超えるとファイルへ退避され、会話にはファイルのパスだけが載る。ツールごとに `anthropic/maxResultSizeChars` で最大 500,000 字まで上げられる（テキストの応答。`MAX_MCP_OUTPUT_TOKENS` とは別に効く）
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/mcp
-    value: 25,000
-    unit: トークン
-    rationale: 外部の上限そのまま（利用者が `MAX_MCP_OUTPUT_TOKENS` で変えない前提）
-    overflow: ルールの本文を返す前に大きさを数える。超えたときの処置は単一ユースケース設計で決め、黙って切り捨てない
+    value: 未確定
+    rationale: 上限の指定を付けるかと値は、本文を 1 回で返すか分けて返すかと一緒にインターフェース定義設計で決める
   - name: 対応 OS
     english_name: supported_os
     category: 動作環境
