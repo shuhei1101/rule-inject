@@ -89,6 +89,33 @@ def test_sweep_read_when_old_logs(
     assert today_log.exists()
 
 
+def test_sweep_read_when_retention_env(
+    hook_env: dict[str, str],
+    hook_payload: Callable[..., dict[str, Any]],
+    write_aged_record: Callable[..., Path],
+    write_dated_log: Callable[[date], Path],
+) -> None:
+    """環境変数で指した保持の値で、記録ファイルとログのファイルを消す（正常系）。"""
+    # 準備
+    env = {
+        **hook_env,
+        "RULE_INJECT_RECORD_RETENTION_DAYS": "1",
+        "RULE_INJECT_LOG_RETENTION_DAYS": "1",
+    }
+    expired_record = write_aged_record("expired-session", 2)
+    today = datetime.now(UTC).date()
+    today_log = write_dated_log(today)
+    expired_log = write_dated_log(today - timedelta(days=1))
+    payload = hook_payload("SessionStart", source="startup")
+    # 実行
+    result = sweep_read(payload, env)
+    # 検証
+    assert result is None
+    assert not expired_record.exists()
+    assert not expired_log.exists()
+    assert today_log.exists()
+
+
 def test_sweep_read_when_legacy_log(
     hook_env: dict[str, str],
     hook_payload: Callable[..., dict[str, Any]],

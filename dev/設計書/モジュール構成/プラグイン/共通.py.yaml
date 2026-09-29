@@ -490,6 +490,12 @@ functions:
         condition: 保持日数を過ぎたログのファイルを置き、ログのフォルダを書き込み権限なし（`chmod 555`）
         mock: '`today`'
         expected: LogDeleteError が 1 件（path がそのファイル）で、ファイルが残る
+      - name: test_sweep_logs_when_retention_too_long
+        case: 正常
+        summary: 暦の範囲を超えるほど大きい保持日数なら何も消さない
+        condition: '`today` を 2026-09-29 に固定、`retention_days` が 999999、日付が 2020-01-01 のログのファイル'
+        mock: '`today`'
+        expected: 例外を送出せず、ファイルが残り、戻り値は空
   - name: delete_legacy_log
     title: 変更前のログの削除
     container: shared/logger.py

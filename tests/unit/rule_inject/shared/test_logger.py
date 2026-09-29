@@ -124,6 +124,20 @@ def test_sweep_logs(
     assert result == ()
 
 
+def test_sweep_logs_when_retention_too_long(
+    log_folder: Path,
+    write_dated_log: Callable[[date], Path],
+) -> None:
+    """暦の範囲を超えるほど大きい保持日数なら何も消さない（正常系）。"""
+    # 準備
+    old_file = write_dated_log(date(2020, 1, 1))
+    # 実行
+    result = logger.sweep_logs(log_folder, 999999, today=_fixed_today)
+    # 検証
+    assert old_file.exists()
+    assert result == ()
+
+
 def test_sweep_logs_when_not_log(
     tmp_path: Path,
     log_folder: Path,

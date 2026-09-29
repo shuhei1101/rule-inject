@@ -460,6 +460,12 @@ functions:
         condition: '`RULE_INJECT_LOG_RETENTION_DAYS=0`、日付が今日・2 日前・3 日前のログのファイル'
         mock: なし
         expected: 3 日前のファイルが無く、今日と 2 日前のファイルが残る、None
+      - name: test_sweep_read_when_retention_env
+        case: 正常
+        summary: 環境変数で指した保持の値で、記録ファイルとログのファイルを消す
+        condition: '`RULE_INJECT_RECORD_RETENTION_DAYS=1`・`RULE_INJECT_LOG_RETENTION_DAYS=1`、最終更新が 2 日前の別のセッションの記録ファイル、日付が今日と 1 日前（UTC）のログのファイル'
+        mock: なし
+        expected: 記録ファイルと 1 日前のログのファイルが無く、今日のログのファイルが残る、None
   - name: main
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
