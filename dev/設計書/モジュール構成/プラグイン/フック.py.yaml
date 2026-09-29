@@ -6,7 +6,7 @@ directory: |-
   ├── plugin.json                 # プラグインの名前（rule-inject）と版
   └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
-  ├── hooks.json                  # 5 つのフックの matcher・timeout（1 秒）・コマンド
+  ├── hooks.json                  # 6 つのフックの matcher・timeout（1 秒）・コマンド
   └── run.py                      # src/ を sys.path に足して引数のフックを動かす
   src/rule_inject/hooks/
   ├── __init__.py
@@ -15,6 +15,7 @@ directory: |-
   ├── session_id_injection.py     # セッションIDの付与（PreToolUse）
   ├── record_read.py              # 既読の記録（PostToolUse）
   ├── discard_read.py             # 既読の記録の破棄（PreCompact）
+  ├── sweep_read.py               # 既読の記録の掃除（SessionStart）
   └── work_rules.py               # 作業の決まりの注入（SessionStart）
   ```
 constants:
@@ -55,6 +56,8 @@ constants:
         value: '`("discard_read", discard_read, 出力しない)`'
       - key: work_rules
         value: '`("work_rules", work_rules, 出力しない)`'
+      - key: sweep_read
+        value: '`("sweep_read", sweep_read, 出力しない)`'
   - name: MIN_PYTHON
     title: フックの Python の最低の版
     container: hooks/run.py（プラグインの直下）
@@ -86,6 +89,7 @@ function_types:
       - target: record_read
       - target: discard_read
       - target: work_rules
+      - target: sweep_read
 functions:
   - name: run_hook
     title: フックの実行
@@ -391,6 +395,51 @@ functions:
         condition: '`source: compact` で記録ファイルがある'
         mock: なし
         expected: additionalContext に `WORK_RULES` と記録ファイル・ログの場所
+  - name: sweep_read
+    title: 既読の記録の掃除の処理
+    container: hooks/sweep_read.py
+    usecase: 終わったセッションの既読の記録が掃除される
+    summary: 保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものをログへ書く
+    kind: フック
+    scope: public
+    inherits: HookHandler
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        passing: positional
+        description: SessionStart の入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: None
+      description: 常に出力しない
+    process: |-
+      1. session_id の形が外れていれば何もしない
+      2. `sweep_records(state_dir(env), session_id)` を呼ぶ
+      3. 返った RecordDeleteError ごとに、ログ（`delete_record`）へ path と理由を書く
+    unit_tests:
+      - name: test_sweep_read
+        case: 正常
+        summary: 保持期間を過ぎた記録を消す
+        condition: 最終更新が 31 日前の別のセッションの記録ファイル
+        mock: なし（最終更新は `os.utime` で戻す）
+        expected: 記録ファイルが無い、None
+      - name: test_sweep_read_when_invalid_session_id
+        case: 正常
+        summary: session_id の形が外れていれば何も消さない
+        condition: '`session_id` が `../x`、最終更新が 31 日前の記録ファイル'
+        mock: なし
+        expected: 記録ファイルが残る、None
+      - name: test_sweep_read_when_undeletable
+        case: 正常
+        summary: 消せず、ログにも書けないとき標準エラー出力に書く
+        condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダ。`rule-inject.log` は置かない
+        mock: なし
+        expected: 'None、標準エラー出力に `component: sweep_read`・`operation: delete_record`'
   - name: main
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
@@ -408,7 +457,7 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し、記録フォルダのログへ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にする）
+      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し（`sweep_read` は同じ SessionStart の `work_rules` が知らせるため返さない）、記録フォルダのログへ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にする）
       2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に足す
       3. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
     unit_tests:
@@ -424,8 +473,14 @@ functions:
         condition: '`sys.version_info` を (3, 11) に差し替え、PreToolUse の JSON を渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力の additionalContext に必要な版と動いた版、`rule_inject` を import していない
+      - name: test_main_when_python_too_old_and_sweep_read
+        case: 正常
+        summary: 掃除のフックは版が足りなくても知らせを重ねない
+        condition: '`sys.version_info` を (3, 11) に差し替え、`sweep_read` に SessionStart の JSON を渡す'
+        mock: '`sys.version_info`'
+        expected: 戻り値 0、標準出力が空、ログに 1 行
 notes:
-  hooks.json: '5 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない'
+  hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
   Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
 test_files:
@@ -435,4 +490,5 @@ test_files:
   - tests/unit/rule_inject/hooks/test_record_read.py
   - tests/unit/rule_inject/hooks/test_discard_read.py
   - tests/unit/rule_inject/hooks/test_work_rules.py
+  - tests/unit/rule_inject/hooks/test_sweep_read.py
   - tests/unit/hooks/test_run.py

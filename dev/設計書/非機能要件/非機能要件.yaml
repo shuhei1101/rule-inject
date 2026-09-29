@@ -88,4 +88,14 @@ requirements:
     rationale: PoC 検証と設計の段で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
     measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動き、後者は版が足りない知らせが出ることを確かめる
     overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冒頭で版を確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` の版」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
+  - name: 既読の記録の保持期間
+    english_name: record_retention
+    category: 保守性
+    external_constraint: Claude Code は会話の記録（transcript）を既定で 30 日残し（`cleanupPeriodDays`）、そのあいだは `/exit`・`/clear` で終えたセッションも再開できる
+    source_kind: 実行基盤の制限
+    source: https://code.claude.com/docs/en/sessions
+    value: '30'
+    unit: 日
+    rationale: 再開できるセッションの記録を消すと、文脈に残っているルールがまた案内される。会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を残す。最終更新はルールを読んだ最後の時刻のため、読み足さないまま 30 日を超えて続いたセッションでは、消えた後にルールがまた案内される（読めば既読に戻る）
+    overflow: 最終更新から 30 日を過ぎた記録ファイルを、次に始まったセッションの `SessionStart` で消す（単一ユースケース「終わったセッションの既読の記録が掃除される」）
 lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。

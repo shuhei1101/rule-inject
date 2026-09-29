@@ -99,6 +99,9 @@ enums:
       - value: read_rules
         title: ルール本文の取得
         description: MCP のツール
+      - value: sweep_read
+        title: 既読の記録の掃除
+        description: SessionStart
 constants:
   - name: STATE_DIR_NAME
     title: 記録フォルダの名前

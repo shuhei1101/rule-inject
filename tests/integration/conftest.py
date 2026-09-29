@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,7 @@ SESSION_ID = "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 HOOK_RUN = PROJECT_ROOT / "hooks" / "run.py"
 HOOK_TIMEOUT_SEC = 30
+SECONDS_PER_DAY = 86_400
 
 
 @pytest.fixture
@@ -148,6 +150,19 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
         return path
 
     return _write
+
+
+@pytest.fixture
+def set_age_days() -> Callable[[Path, int], Path]:
+    """ファイルの最終更新を、現在から指定の日数前に戻す factory。"""
+
+    def _set(path: Path, age_days: int) -> Path:
+        """path の最終更新を age_days 日前にして返す。"""
+        modified = time.time() - age_days * SECONDS_PER_DAY
+        os.utime(path, (modified, modified))
+        return path
+
+    return _set
 
 
 @pytest.fixture

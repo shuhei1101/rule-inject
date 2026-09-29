@@ -21,6 +21,7 @@ class Component(StrEnum):
     DISCARD_READ = "discard_read"
     WORK_RULES = "work_rules"
     READ_RULES = "read_rules"
+    SWEEP_READ = "sweep_read"
 
 
 class LogOperation(StrEnum):

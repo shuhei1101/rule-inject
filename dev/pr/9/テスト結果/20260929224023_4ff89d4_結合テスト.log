@@ -1,0 +1,47 @@
+$ uv run pytest tests/integration -v
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-record-cleanup-ended-sessions/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-record-cleanup-ended-sessions
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 36 items
+
+tests/integration/plugin/test_discard_read.py::test_normal PASSED        [  2%]
+tests/integration/plugin/test_discard_read.py::test_normal_when_no_record PASSED [  5%]
+tests/integration/plugin/test_discard_read.py::test_error_when_record_undeletable PASSED [  8%]
+tests/integration/plugin/test_read_rules.py::test_normal PASSED          [ 11%]
+tests/integration/plugin/test_read_rules.py::test_normal_when_by_target_path PASSED [ 13%]
+tests/integration/plugin/test_read_rules.py::test_normal_when_url PASSED [ 16%]
+tests/integration/plugin/test_read_rules.py::test_normal_when_over_limit PASSED [ 19%]
+tests/integration/plugin/test_read_rules.py::test_error_when_location_unreadable PASSED [ 22%]
+tests/integration/plugin/test_read_rules.py::test_error_when_arguments_missing[no_session_id] PASSED [ 25%]
+tests/integration/plugin/test_read_rules.py::test_error_when_arguments_missing[no_target] PASSED [ 27%]
+tests/integration/plugin/test_read_rules.py::test_error_when_location_not_in_index PASSED [ 30%]
+tests/integration/plugin/test_read_rules.py::test_error_when_record_unwritable PASSED [ 33%]
+tests/integration/plugin/test_record_read.py::test_normal_when_read_by_read_tool PASSED [ 36%]
+tests/integration/plugin/test_record_read.py::test_normal_when_read_by_bash PASSED [ 38%]
+tests/integration/plugin/test_record_read.py::test_normal_when_not_rule PASSED [ 41%]
+tests/integration/plugin/test_record_read.py::test_error_when_record_unwritable PASSED [ 44%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_blocked PASSED [ 47%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_already_read PASSED [ 50%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_not_blocked PASSED [ 52%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_read_by_bash PASSED [ 55%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_mcp_tool PASSED [ 58%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_duplicate_entries PASSED [ 61%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_excluded PASSED [ 63%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_guidance_too_long PASSED [ 66%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_own_tool PASSED [ 69%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_index_unreadable PASSED [ 72%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_record_unreadable PASSED [ 75%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_read_by_grep PASSED [ 77%]
+tests/integration/plugin/test_session_id_injection.py::test_normal PASSED [ 80%]
+tests/integration/plugin/test_session_id_injection.py::test_normal_when_model_supplied_session_id PASSED [ 83%]
+tests/integration/plugin/test_sweep_read.py::test_normal PASSED          [ 86%]
+tests/integration/plugin/test_sweep_read.py::test_normal_when_own_record_old PASSED [ 88%]
+tests/integration/plugin/test_sweep_read.py::test_normal_when_no_state_dir PASSED [ 91%]
+tests/integration/plugin/test_sweep_read.py::test_error_when_record_undeletable PASSED [ 94%]
+tests/integration/plugin/test_work_rules.py::test_normal PASSED          [ 97%]
+tests/integration/plugin/test_work_rules.py::test_normal_when_record_left_after_compact PASSED [100%]
+
+============================= 36 passed in 16.26s ==============================

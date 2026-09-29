@@ -19,7 +19,7 @@ catalogs:
         purpose: 圧縮の前に既読の記録を捨てる
       - name: SessionStart
         kind: フック
-        purpose: セッションの開始時に作業の決まりを載せる
+        purpose: セッションの開始時に作業の決まりを載せ、保持期間を過ぎた既読の記録を消す
   - name: プラグインのファイル
     version: 2.1.284
     entries:

@@ -6,6 +6,7 @@ from rule_inject.features.record.service import (
     is_valid_session_id,
     read_record,
     record_exists,
+    sweep_records,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "is_valid_session_id",
     "read_record",
     "record_exists",
+    "sweep_records",
 ]

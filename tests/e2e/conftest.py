@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -31,6 +32,7 @@ DEFAULT_MAX_TURNS = 5
 # MCP サーバーの起動の待ち時間（ミリ秒）。入れた直後の最初の起動は uv が依存を取得する分だけ遅い
 MCP_TIMEOUT_MS = "60000"
 READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
+SECONDS_PER_DAY = 86_400
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -286,6 +288,22 @@ def record_locations(state_dir: Path) -> Callable[[str], list[str]]:
         return path.read_text(encoding="utf-8").splitlines() if path.exists() else []
 
     return _read
+
+
+@pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[[str, int], Path]:
+    """最終更新を現在から指定の日数前に戻した既読の記録ファイルを置く factory。"""
+
+    def _write(record_session_id: str, age_days: int) -> Path:
+        """record_session_id の記録ファイルを置き、最終更新を age_days 日前にして返す。"""
+        path = state_dir / f"{record_session_id}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("/r/a.md\n", encoding="utf-8")
+        modified = time.time() - age_days * SECONDS_PER_DAY
+        os.utime(path, (modified, modified))
+        return path
+
+    return _write
 
 
 @pytest.fixture

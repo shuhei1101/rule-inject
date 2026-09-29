@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pytest
 
+from rule_inject.features.record import service
 from rule_inject.features.record.service import (
     append_record,
     delete_record,
@@ -174,3 +176,99 @@ def test_record_exists(
     # 検証
     assert with_record is True
     assert without_record is False
+
+
+def test_sweep_records(
+    state_dir: Path,
+    session_id: str,
+    now: Callable[[], float],
+    write_aged_record: Callable[..., Path],
+) -> None:
+    """保持期間を過ぎた記録ファイルだけを消す（正常系）。"""
+    # 準備
+    expired = write_aged_record("expired-session", 31, base=now())
+    within = write_aged_record("within-session", 29, base=now())
+    # 実行
+    result = service.sweep_records(state_dir, session_id, now=now)
+    # 検証
+    assert not expired.exists()
+    assert within.exists()
+    assert result == ()
+
+
+def test_sweep_records_when_kept_session(
+    state_dir: Path,
+    session_id: str,
+    now: Callable[[], float],
+    write_aged_record: Callable[..., Path],
+) -> None:
+    """始まったセッションの記録は消さない（正常系）。"""
+    # 準備
+    kept = write_aged_record(session_id, 31, base=now())
+    # 実行
+    service.sweep_records(state_dir, session_id, now=now)
+    # 検証
+    assert kept.exists()
+
+
+def test_sweep_records_when_not_record(
+    tmp_path: Path,
+    state_dir: Path,
+    session_id: str,
+    now: Callable[[], float],
+) -> None:
+    """記録ファイルでないものは消さない（正常系）。"""
+    # 準備
+    state_dir.mkdir()
+    # 固定した now の 31 日前
+    old = 1_797_321_600.0
+    log_file = state_dir / "rule-inject.log"
+    log_file.write_text("{}\n", encoding="utf-8")
+    invalid_name = state_dir / "a b.txt"
+    invalid_name.write_text("/r/a.md\n", encoding="utf-8")
+    folder = state_dir / "folder.txt"
+    folder.mkdir()
+    link_target = tmp_path / "link-target.txt"
+    link_target.write_text("/r/a.md\n", encoding="utf-8")
+    link = state_dir / "link.txt"
+    link.symlink_to(link_target)
+    # 名前を除いて、消す対象の全ての条件を満たすよう最終更新を戻す
+    for path in (log_file, invalid_name, folder, link_target):
+        os.utime(path, (old, old))
+    # 実行
+    service.sweep_records(state_dir, session_id, now=now)
+    # 検証
+    assert log_file.exists()
+    assert invalid_name.exists()
+    assert folder.is_dir()
+    assert link.is_symlink()
+    assert link_target.exists()
+
+
+def test_sweep_records_when_missing(state_dir: Path, session_id: str) -> None:
+    """記録フォルダが無ければ何もしない（正常系）。"""
+    # 実行
+    result = service.sweep_records(state_dir, session_id)
+    # 検証
+    assert result == ()
+    assert not state_dir.exists()
+
+
+def test_sweep_records_when_undeletable(
+    state_dir: Path,
+    session_id: str,
+    now: Callable[[], float],
+    write_aged_record: Callable[..., Path],
+    unwritable: Callable[[Path, int], Path],
+) -> None:
+    """消せない記録ファイルを返す（異常系）。"""
+    # 準備
+    expired = write_aged_record("expired-session", 31, base=now())
+    unwritable(state_dir, 0o555)
+    # 実行
+    result = service.sweep_records(state_dir, session_id, now=now)
+    # 検証
+    assert len(result) == 1
+    assert isinstance(result[0], RecordDeleteError)
+    assert result[0].path == str(expired)
+    assert expired.exists()

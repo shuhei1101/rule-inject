@@ -93,3 +93,26 @@ def test_main_when_python_too_old(
     assert "3.12" in context
     assert "3.11" in context
     assert imported_rule_inject_modules() == []
+
+
+def test_main_when_python_too_old_and_sweep_read(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    run_module: ModuleType,
+    state_dir: Path,
+    hook_payload: Callable[..., dict[str, Any]],
+    read_log: Callable[[], list[dict[str, Any]]],
+    without_rule_inject: None,
+) -> None:
+    """掃除のフックは版が足りなくても知らせを重ねない（正常系）。"""
+    # 準備
+    monkeypatch.setenv("RULE_INJECT_STATE_DIR", str(state_dir))
+    payload = hook_payload("SessionStart", source="startup")
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+    monkeypatch.setattr(sys, "version_info", (3, 11, 0, "final", 0))
+    # 実行
+    code = run_module.main(["sweep_read"])
+    # 検証
+    assert code == 0
+    assert capsys.readouterr().out == ""
+    assert len(read_log()) == 1
