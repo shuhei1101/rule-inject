@@ -4,6 +4,7 @@ directory: |-
   ```text
   src/rule_inject/features/guidance/
   ├── __init__.py   # 公開 API
+  ├── types.py      # GuidedRule（案内が読むルールの最小の型）
   └── service.py    # 案内文の組み立てと文面の定数
   ```
 constants:
@@ -39,7 +40,7 @@ functions:
     scope: public
     args:
       - name: rules
-        type: Sequence[MatchedRule]
+        type: Sequence[GuidedRule]
         required: true
         passing: positional
         description: 未読のルール
@@ -116,3 +117,17 @@ functions:
         expected: '2 行の `- {path}: {reason}` とログの場所を含む'
 test_files:
   - tests/unit/rule_inject/features/guidance/test_service.py
+data_models:
+  - name: GuidedRule
+    title: 案内するルール
+    container: features/guidance/types.py
+    usecase: 未読のルールの案内を受ける
+    role: Protocol
+    summary: 案内文の組み立てが読む属性だけを持つ型（`typing.Protocol`）。索引の `MatchedRule` を import せず、フックが `MatchedRule` をそのまま渡せる
+    properties:
+      - name: location
+        type: str
+        description: ルールの場所
+      - name: blocking
+        type: bool
+        description: 操作を止めるルールか
