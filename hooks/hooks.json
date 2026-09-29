@@ -60,6 +60,12 @@
             "_description": "新しいファイルは空で作ってから中身を書く決まりを載せる",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" work_rules",
             "timeout": 1
+          },
+          {
+            "type": "command",
+            "_description": "保持期間を過ぎた別のセッションの既読の記録を消す",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" sweep_read",
+            "timeout": 1
           }
         ]
       }
