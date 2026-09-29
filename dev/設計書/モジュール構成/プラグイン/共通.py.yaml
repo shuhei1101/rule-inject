@@ -6,7 +6,7 @@ directory: |-
   ├── __init__.py
   └── shared/
       ├── __init__.py
-      ├── errors.py     # 索引・既読の記録・ログ・設定の例外
+      ├── errors.py     # 索引・既読の記録・ログの例外
       ├── paths.py      # 記録フォルダ・ログのフォルダとルールの場所の解決
       ├── settings.py   # 保持の日数の環境変数の読み取り
       └── logger.py     # 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを消す
@@ -61,13 +61,6 @@ classes:
     summary: 消す対象のログのファイルはあるが消せない
     kind: クラス
     inherits: RuleInjectError
-  - name: SettingError
-    title: 設定の値が不正
-    container: shared/errors.py
-    usecase: 共通
-    summary: 環境変数の値が許す値に合わない。`path` は環境変数の名前
-    kind: クラス
-    inherits: RuleInjectError
 enums:
   - name: LogOperation
     title: 失敗した操作
@@ -93,9 +86,6 @@ enums:
       - value: delete_log
         title: ログの削除
         description: 保持日数を過ぎたログのファイルか変更前のログを消せない
-      - value: read_setting
-        title: 設定の読み取り
-        description: 保持の日数の環境変数が 1 以上の整数でない
   - name: Component
     title: 出した元
     container: shared/logger.py
@@ -380,17 +370,13 @@ functions:
         type: int
         required: true
         passing: positional
-        description: 環境変数が無いか空のときの日数
+        description: 環境変数が無いか、1 以上の整数として読めないときの日数
     returns:
       type: int
       description: 1 以上の日数
     process: |-
-      1. 環境変数が無いか空なら `default` を返す
-      2. 前後の空白を落として 10 進の整数として読む。1 以上なら返す
-      3. 整数として読めないか 1 未満なら SettingError（path は環境変数の名前、reason は書かれた値と許す値）を送出する
-    exceptions:
-      - name: SettingError
-        condition: 環境変数の値が 1 以上の整数でない
+      1. 前後の空白を落として 10 進の整数として読む。1 以上なら返す
+      2. 環境変数が無い・空・整数として読めない・1 未満のときは `default` を返す（利用者が決めた扱い。PR #12 の確認ログ）
     unit_tests:
       - name: test_read_retention_days
         case: 正常
@@ -405,11 +391,11 @@ functions:
         mock: なし
         expected: '3'
       - name: test_read_retention_days_when_invalid
-        case: 異常
-        summary: 1 以上の整数でなければ送出する
-        condition: 値が `0`・`-1`・`abc`・`1.5`（パラメータ展開）
+        case: 正常
+        summary: 1 以上の整数でなければ既定を返す
+        condition: 値が `0`・`-1`・`abc`・`1.5`（パラメータ展開）、`default` が 3
         mock: なし
-        expected: SettingError（path が環境変数の名前）
+        expected: '3'
   - name: log_file_path
     title: ログのファイルのパス
     container: shared/logger.py

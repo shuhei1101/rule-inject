@@ -122,7 +122,7 @@ settings:
     description: 最後に書き足してからこの日数を過ぎた既読の記録ファイルを、セッションの開始時に消す
     env_var: RULE_INJECT_RECORD_RETENTION_DAYS
     reload: restart
-    allowed: 1 以上の整数。それ以外の値のときは記録ファイルを消さず、ログに `read_setting` を書く
+    allowed: 1 以上の整数。それ以外の値は既定値で扱う
     status: planned
     visibility: user
   - key: RULE_INJECT_LOG_DIR
@@ -144,6 +144,6 @@ settings:
     description: 日付が今日（UTC）からこの日数以上前のログのファイルを、セッションの開始時に消す
     env_var: RULE_INJECT_LOG_RETENTION_DAYS
     reload: restart
-    allowed: 1 以上の整数。それ以外の値のときはログのファイルを消さず、ログに `read_setting` を書く
+    allowed: 1 以上の整数。それ以外の値は既定値で扱う
     status: planned
     visibility: user

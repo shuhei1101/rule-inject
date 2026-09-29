@@ -34,12 +34,12 @@ tables:
         title: 失敗した操作
         type: string
         not_null: true
-        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `delete_log` / `read_setting` / `unexpected` のいずれか'
+        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `delete_log` / `unexpected` のいずれか'
       - name: path
         title: 対象のパス
         type: string
         not_null: false
-        description: 失敗した操作の対象のファイルかフォルダ。`read_setting` のときは環境変数の名前
+        description: 失敗した操作の対象のファイルかフォルダ
       - name: reason
         title: 理由
         type: string

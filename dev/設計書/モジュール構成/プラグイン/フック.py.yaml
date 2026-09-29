@@ -420,9 +420,9 @@ functions:
     process: |-
       1. session_id の形が外れていれば何もしない
       2. 失敗は全て `write_log(log_dir(env), component=sweep_read, ...)` で書く
-      3. `read_retention_days(env, RECORD_RETENTION_DAYS_ENV, DEFAULT_RECORD_RETENTION_DAYS)` を読む。SettingError ならログ（`read_setting`、path は環境変数の名前）へ書き、記録ファイルの掃除を飛ばす。読めたら `sweep_records(state_dir(env), session_id, retention_days=日数)` を呼び、返った RecordDeleteError ごとにログ（`delete_record`）へ書く
+      3. `sweep_records(state_dir(env), session_id, retention_days=read_retention_days(env, RECORD_RETENTION_DAYS_ENV, DEFAULT_RECORD_RETENTION_DAYS))` を呼び、返った RecordDeleteError ごとにログ（`delete_record`）へ書く
       4. `delete_legacy_log(state_dir(env))` を呼び、LogDeleteError が返ればログ（`delete_log`）へ書く
-      5. `read_retention_days(env, LOG_RETENTION_DAYS_ENV, DEFAULT_LOG_RETENTION_DAYS)` を読む。SettingError ならログ（`read_setting`）へ書き、ログのファイルの掃除を飛ばす。読めたら `sweep_logs(log_dir(env), 日数)` を呼び、返った LogDeleteError ごとにログ（`delete_log`）へ書く
+      5. `sweep_logs(log_dir(env), read_retention_days(env, LOG_RETENTION_DAYS_ENV, DEFAULT_LOG_RETENTION_DAYS))` を呼び、返った LogDeleteError ごとにログ（`delete_log`）へ書く
     unit_tests:
       - name: test_sweep_read
         case: 正常
@@ -455,11 +455,11 @@ functions:
         mock: なし
         expected: '`rule-inject.log` が無い、None'
       - name: test_sweep_read_when_invalid_setting
-        case: 異常
-        summary: 保持の値が不正ならその掃除を飛ばし、ログへ書く
-        condition: '`RULE_INJECT_LOG_RETENTION_DAYS=0`、日付が 3 日前のログのファイル、最終更新が 31 日前の別のセッションの記録ファイル'
+        case: 正常
+        summary: 保持の値が不正なら既定の日数で掃除する
+        condition: '`RULE_INJECT_LOG_RETENTION_DAYS=0`、日付が今日・2 日前・3 日前のログのファイル'
         mock: なし
-        expected: '3 日前のログのファイルが残り、記録ファイルは無い。今日のログのファイルに `operation: read_setting`・`path: RULE_INJECT_LOG_RETENTION_DAYS` の 1 行がある、None'
+        expected: 3 日前のファイルが無く、今日と 2 日前のファイルが残る、None
   - name: main
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
