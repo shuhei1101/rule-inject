@@ -1,0 +1,220 @@
+title: "プラグイン / 既読の記録"
+lead: セッションごとの既読の記録ファイル（ER 図「既読の記録」）の読み・追記・削除。
+directory: |-
+  ```text
+  src/rule_inject/features/record/
+  ├── __init__.py   # 公開 API
+  └── service.py    # 記録ファイルの読み・追記・削除
+  ```
+constants:
+  - name: SESSION_ID_PATTERN
+    title: セッションの識別子の形
+    container: features/record/service.py
+    summary: 記録ファイル名に使える session_id の形
+    value: '`^[A-Za-z0-9_-]{1,128}$`'
+functions:
+  - name: is_valid_session_id
+    title: セッションの識別子の判定
+    container: features/record/service.py
+    usecase: 共通
+    summary: session_id が記録ファイル名に使える形かを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: session_id
+        type: object
+        required: true
+        passing: positional
+        description: 入力の値
+    returns:
+      type: bool
+      description: 文字列で `SESSION_ID_PATTERN` に合うか
+    unit_tests:
+      - name: test_is_valid_session_id
+        case: 正常
+        summary: UUID を許す
+        condition: '`2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10`'
+        mock: なし
+        expected: 'True'
+      - name: test_is_valid_session_id_when_invalid
+        case: 正常
+        summary: 形が外れた値を拒む
+        condition: '`../x`、空文字、129 文字、None'
+        mock: なし
+        expected: すべて False
+  - name: read_record
+    title: 既読の読み込み
+    container: features/record/service.py
+    usecase: 共通
+    summary: そのセッションの既読の場所の集合を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+    returns:
+      type: frozenset[str]
+      description: 既読の場所。ファイルが無ければ空
+    process: |-
+      1. `{state_dir}/{session_id}.txt` を UTF-8 で読む
+      2. 空行を除いた行を集合にする（重なりは 1 つになる）
+    exceptions:
+      - name: RecordReadError
+        condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_read_record
+        case: 正常
+        summary: 行を集合で返す
+        condition: 同じ場所が 2 行と別の場所が 1 行の記録ファイル
+        mock: なし
+        expected: 2 件の集合
+      - name: test_read_record_when_missing
+        case: 正常
+        summary: ファイルが無ければ空
+        condition: 記録ファイルが無い
+        mock: なし
+        expected: 空の集合
+      - name: test_read_record_when_unreadable
+        case: 異常
+        summary: 読めない
+        condition: 読み取り権限の無い記録ファイル（`chmod 000`）
+        mock: なし
+        expected: RecordReadError（path が記録ファイル）
+        exception: ファイルはあるが読めない
+  - name: append_record
+    title: 既読の追記
+    container: features/record/service.py
+    usecase: 共通
+    summary: 場所を 1 行ずつ記録ファイルへ追記する
+    kind: 関数
+    scope: public
+    side_effects: 記録フォルダを作り、記録ファイルへ追記する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 既読にする場所
+    returns:
+      type: None
+      description: なし
+    process: |-
+      1. `locations` が空なら何もしない
+      2. 記録フォルダを作る（親も含め、あればそのまま）
+      3. 全行を 1 つの文字列にし、`O_APPEND` で開いて 1 回で書く
+    exceptions:
+      - name: RecordWriteError
+        condition: フォルダが作れない・追記できない（OSError）
+    unit_tests:
+      - name: test_append_record
+        case: 正常
+        summary: フォルダを作って追記する
+        condition: まだ無い記録フォルダ、2 件の場所を 2 回に分けて追記
+        mock: なし
+        expected: 記録ファイルに 4 行が追記の順である
+      - name: test_append_record_when_empty
+        case: 正常
+        summary: 空なら書かない
+        condition: '`locations` が空'
+        mock: なし
+        expected: 記録ファイルもフォルダも作らない
+      - name: test_append_record_when_unwritable
+        case: 異常
+        summary: 書けない
+        condition: 書き込み権限の無い記録フォルダ（`chmod 555`）
+        mock: なし
+        expected: RecordWriteError（path が記録フォルダか記録ファイル）
+        exception: フォルダが作れない・追記できない
+  - name: delete_record
+    title: 既読の削除
+    container: features/record/service.py
+    usecase: 共通
+    summary: そのセッションの記録ファイルを消す
+    kind: 関数
+    scope: public
+    side_effects: 記録ファイルを消す
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+    returns:
+      type: None
+      description: なし（ファイルが無ければ何もしない）
+    exceptions:
+      - name: RecordDeleteError
+        condition: ファイルはあるが消せない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_delete_record
+        case: 正常
+        summary: 対象のセッションだけを消す
+        condition: 2 セッション分の記録ファイル
+        mock: なし
+        expected: 対象のファイルが無く、別のファイルが残る
+      - name: test_delete_record_when_missing
+        case: 正常
+        summary: 無ければ何もしない
+        condition: 記録ファイルが無い
+        mock: なし
+        expected: 例外を送出しない
+      - name: test_delete_record_when_undeletable
+        case: 異常
+        summary: 消せない
+        condition: 記録フォルダを書き込み権限なし（`chmod 555`）
+        mock: なし
+        expected: RecordDeleteError
+        exception: ファイルはあるが消せない
+  - name: record_exists
+    title: 記録の有無
+    container: features/record/service.py
+    usecase: 共通
+    summary: そのセッションの記録ファイルがあるかを返す（圧縮の後の消し残りの確認に使う）
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+    returns:
+      type: bool
+      description: あれば True
+    unit_tests:
+      - name: test_record_exists
+        case: 正常
+        summary: 有無を返す
+        condition: 記録ファイルがあるセッションと無いセッション
+        mock: なし
+        expected: True と False
+test_files:
+  - tests/unit/rule_inject/features/record/test_service.py

@@ -1,0 +1,89 @@
+"""フックの起動。src/ を import の探索に足し、引数で指したフックを動かす。
+
+Usage:
+python3 hooks/run.py rule_guide
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# フックの Python の最低の版（これより古い python3 ではパッケージを import しない）
+MIN_PYTHON = (3, 12)
+# 版が足りないことを知らせられる出来事（ほかの出来事は additionalContext を持たない）
+NOTICE_EVENTS = ("PreToolUse", "PostToolUse", "SessionStart")
+STATE_DIR_ENV = "RULE_INJECT_STATE_DIR"
+LOG_FILE_NAME = "rule-inject.log"
+
+
+def _state_dir() -> Path:
+    """記録フォルダを環境変数から決める（パッケージを使わない、古い版でも読める書き方）。"""
+    configured = os.environ.get(STATE_DIR_ENV)
+    if configured:
+        return Path(configured).expanduser()
+    state_home = os.environ.get("XDG_STATE_HOME") or "~/.local/state"
+    return Path(state_home).expanduser() / "rule-inject"
+
+
+def _report_old_python(hook_name: str) -> int:
+    """版が足りないことを知らせ、ログへ 1 行書いて終える。"""
+    major, minor, micro = sys.version_info[:3]
+    required = f"{MIN_PYTHON[0]}.{MIN_PYTHON[1]}"
+    reason = (
+        f"フックには Python {required} 以上が要ります（動いた python3 は {major}.{minor}.{micro}）"
+    )
+    try:
+        payload = json.load(sys.stdin)
+    except ValueError:
+        payload = {}
+    session_id = payload.get("session_id") if isinstance(payload, dict) else None
+    event = payload.get("hook_event_name") if isinstance(payload, dict) else None
+    # ログへ書けなければ、同じ 1 行を標準エラー出力へ出す
+    # datetime.UTC は 3.11 以降のため、古い版でも読める timezone.utc を使う
+    now = datetime.now(timezone.utc)  # noqa: UP017
+    line = json.dumps(
+        {
+            "time": now.isoformat(),
+            "component": hook_name,
+            "session_id": session_id,
+            "operation": "unexpected",
+            "path": sys.executable,
+            "reason": reason,
+        },
+        ensure_ascii=False,
+    )
+    try:
+        folder = _state_dir()
+        folder.mkdir(parents=True, exist_ok=True)
+        with (folder / LOG_FILE_NAME).open("a", encoding="utf-8") as log_file:
+            log_file.write(line + "\n")
+    except OSError:
+        print(line, file=sys.stderr)
+    # additionalContext を持てる出来事にだけ知らせる（PreCompact などは黙って終える）
+    if event in NOTICE_EVENTS:
+        output = {
+            "hookSpecificOutput": {"hookEventName": event, "additionalContext": reason + "。"}
+        }
+        print(json.dumps(output))
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    """引数で指したフックを動かして終了コードを返す（常に 0）。"""
+    if tuple(sys.version_info[:2]) < MIN_PYTHON:
+        return _report_old_python(argv[0])
+    # 版を確かめた後で、同梱のパッケージを import できるようにする
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+    from rule_inject.hooks import HOOKS
+    from rule_inject.hooks._runner import run_hook
+
+    component, handle, on_unexpected = HOOKS[argv[0]]
+    return run_hook(component, handle, on_unexpected)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

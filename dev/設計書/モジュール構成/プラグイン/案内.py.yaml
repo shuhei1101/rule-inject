@@ -1,0 +1,133 @@
+title: "プラグイン / 案内"
+lead: フックが返す案内文（止める案内・止めない案内・失敗の知らせ・作業の決まり）を組み立てる。
+directory: |-
+  ```text
+  src/rule_inject/features/guidance/
+  ├── __init__.py   # 公開 API
+  ├── types.py      # GuidedRule（案内が読むルールの最小の型）
+  └── service.py    # 案内文の組み立てと文面の定数
+  ```
+constants:
+  - name: GUIDANCE_LIMIT
+    title: 案内文の上限
+    container: features/guidance/service.py
+    summary: 案内文 1 つの字数の上限
+    value: '`10000`'
+    refs:
+      - dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
+  - name: BLOCKING_HEADER
+    title: 止める案内の冒頭
+    container: features/guidance/service.py
+    summary: 止めるときの案内文の冒頭
+    value: '`操作の対象に当たる未読のルールがあります。read_rules に下の場所を渡して本文を取得してから、同じ操作をやり直してください。`'
+  - name: NON_BLOCKING_HEADER
+    title: 止めない案内の冒頭
+    container: features/guidance/service.py
+    summary: 止めないときの案内文の冒頭（やり直しを促さない）
+    value: '`操作の対象に当たる未読のルールがあります。必要に応じて read_rules に下の場所を渡して本文を読んでください。`'
+  - name: WORK_RULES
+    title: 作業の決まり
+    container: features/guidance/service.py
+    summary: SessionStart で載せる文面
+    value: '`新しいファイルは、まず Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書いてください。空で作った時点で、そのファイルに当たるルールが案内されます。`'
+functions:
+  - name: build_guidance
+    title: 案内文の組み立て
+    container: features/guidance/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: 未読のルールの場所を上限に収まる分だけ並べた案内文を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: rules
+        type: Sequence[GuidedRule]
+        required: true
+        passing: positional
+        description: 未読のルール
+      - name: limit
+        type: int
+        required: false
+        default: GUIDANCE_LIMIT
+        passing: keyword
+        description: 字数の上限
+    returns:
+      type: str
+      description: 止めるルールがあれば `BLOCKING_HEADER`、無ければ `NON_BLOCKING_HEADER` で始まる案内文
+    process: |-
+      1. 止めるルールを先に、元の順を保って並べる
+      2. 冒頭の後に `- {場所}` を 1 行ずつ足し、末尾に残りの件数の行を足しても `limit` を超えないところまで載せる
+      3. 載せきれなかったときは `ほか {N} 件のルールは、上のルールを読んで操作をやり直したときに案内します。` を末尾に足す
+    unit_tests:
+      - name: test_build_guidance_when_blocking
+        case: 正常
+        summary: 止める案内
+        condition: 止めるルール 1 件と止めないルール 1 件
+        mock: なし
+        expected: '`BLOCKING_HEADER` で始まり、止めるルールが先に並ぶ'
+      - name: test_build_guidance_when_not_blocking
+        case: 正常
+        summary: 止めない案内
+        condition: 止めないルールだけ
+        mock: なし
+        expected: '`NON_BLOCKING_HEADER` で始まり、「やり直してください」を含まない'
+      - name: test_build_guidance_when_too_long
+        case: 正常
+        summary: 上限を超える分を件数にする
+        condition: 1 件 150 字の場所を 100 件、`limit=10000`
+        mock: なし
+        expected: 10,000 字以内で、末尾に載せきれなかった件数がある
+  - name: build_failure_notice
+    title: 失敗の知らせの組み立て
+    container: features/guidance/service.py
+    usecase: 共通
+    summary: 索引・記録の読み書きの失敗を、場所と理由とログの場所つきの文にする
+    kind: 関数
+    scope: public
+    args:
+      - name: summary
+        type: str
+        required: true
+        passing: positional
+        description: '何が起きたかの 1 文（例: 索引を読めませんでした）'
+      - name: errors
+        type: Sequence[RuleInjectError]
+        required: true
+        passing: positional
+        description: 失敗
+      - name: log_path
+        type: Path
+        required: true
+        passing: positional
+        description: ログの場所
+      - name: limit
+        type: int
+        required: false
+        default: GUIDANCE_LIMIT
+        passing: keyword
+        description: 字数の上限
+    returns:
+      type: str
+      description: '`{summary}` と `- {path}: {reason}` の行とログの場所'
+    unit_tests:
+      - name: test_build_failure_notice
+        case: 正常
+        summary: 場所と理由を並べる
+        condition: IndexReadError 2 件
+        mock: なし
+        expected: '2 行の `- {path}: {reason}` とログの場所を含む'
+test_files:
+  - tests/unit/rule_inject/features/guidance/test_service.py
+data_models:
+  - name: GuidedRule
+    title: 案内するルール
+    container: features/guidance/types.py
+    usecase: 未読のルールの案内を受ける
+    role: Protocol
+    summary: 案内文の組み立てが読む属性だけを持つ型（`typing.Protocol`）。索引の `MatchedRule` を import せず、フックが `MatchedRule` をそのまま渡せる
+    properties:
+      - name: location
+        type: str
+        description: ルールの場所
+      - name: blocking
+        type: bool
+        description: 操作を止めるルールか

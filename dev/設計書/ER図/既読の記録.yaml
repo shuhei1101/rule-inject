@@ -1,0 +1,20 @@
+title: "ER 図: 既読の記録"
+lead: フックと MCP サーバーが共有する、セッションごとの既読のルールの場所。
+tables:
+  - name: '{RULE_INJECT_STATE_DIR}/{session_id}.txt'
+    title: 既読の記録
+    datastore: テキストファイル（UTF-8、1 行 = 1 場所）
+    summary: そのセッションで本文を読んだルールの場所
+    primary_key: location
+    scale: 1 セッション ~1,000 行
+    growth: ルールを読むたびに 1 行ずつ追記する。同じ場所が重なっても消さず、読む側が集合として扱う
+    retention: そのセッションの次の圧縮まで。圧縮せずに終わったセッションのファイルは残る
+    deletion: 圧縮の前にファイルごと物理削除する
+    access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
+    description: フック（標準ライブラリだけの Python）と MCP サーバーが別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。
+    columns:
+      - name: location
+        title: ルールの場所
+        type: string
+        not_null: true
+        description: 解決後の絶対パスか URL。改行を含まない

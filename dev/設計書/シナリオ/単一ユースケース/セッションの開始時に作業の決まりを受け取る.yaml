@@ -1,0 +1,26 @@
+title: "セッションの開始時に作業の決まりを受け取る"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: 操作
+        description: プロンプトで、新しいファイルを作るときの手順を設定から読み取って答えるよう指示する
+        notes: ツールは呼ばせない（`--max-turns 1`）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as SessionStart フック
+
+        CC->>S: セッションの開始
+        S-->>CC: 空で作ってから書く決まり（additionalContext）
+      ```
+    expected:
+      - セッションの記録（transcript）に、空で作ってから書く決まりの文面が載っている
+    test: test_normal
+lead: セッションの開始時に `SessionStart` フックが、新しいファイルは空で作ってから中身を書くという作業の決まりをコンテキストへ載せる。空で作った時点で当たるルールが案内される。
+issue: 2
+primary_actor: Claude Code のセッション
+trigger: セッションの開始（新規・再開・圧縮の後）
+test_file: tests/e2e/単一ユースケース/test_receive_work_rules_at_session_start.py

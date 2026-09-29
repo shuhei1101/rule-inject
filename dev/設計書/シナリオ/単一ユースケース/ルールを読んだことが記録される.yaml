@@ -1,0 +1,64 @@
+title: "ルールを読んだことが記録される"
+scenarios:
+  - name: 正常シナリオ（Bashで読む）
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ YAML
+      - name: 操作
+        description: プロンプトで、ルールの本文のファイルを Bash の `cat` で読むよう指示する
+        notes: '`--allowedTools` で Bash を許可し、Read と MCP のツールを `--disallowedTools` で外して読み方を 1 つに定める'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>CC: Bash（cat ルールの場所）を実行する
+        CC->>P: Bash の入力と結果
+        P->>P: コマンドから読んだパスを取り出す
+        P->>IDX: 読んだパスがルールの場所かを引く
+        IDX-->>P: ルールの場所
+        P->>ST: そのセッションの既読に場所を足す
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所が載っている
+    test: test_normal_when_read_by_bash
+  - name: 正常シナリオ（Readで読む）
+    setup:
+      - name: Mock
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ YAML
+      - name: 操作
+        description: プロンプトで、ルールの本文のファイルを Read で読むよう指示する
+        notes: Bash と MCP のツールを `--disallowedTools` で外して読み方を 1 つに定める
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>CC: Read（ルールの場所）を実行する
+        CC->>P: Read の入力と結果
+        P->>IDX: 読んだパスがルールの場所かを引く
+        IDX-->>P: ルールの場所
+        P->>ST: そのセッションの既読に場所を足す
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所が載っている
+    test: test_normal_when_read_by_read_tool
+lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読んだ後、`PostToolUse` フックがその場所をそのセッションの既読として記録する。
+issue: 2
+primary_actor: Claude Code のセッション
+trigger: Read か Bash のツールが、索引に載ったルールの場所を読み終える
+test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py

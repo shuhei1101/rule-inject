@@ -1,0 +1,77 @@
+title: "プラグイン / コマンドの解析"
+lead: Bash のコマンドの文字列から、読むコマンドが読むファイルの絶対パスを取り出す。
+directory: |-
+  ```text
+  src/rule_inject/features/command/
+  ├── __init__.py   # 公開 API
+  └── service.py    # 読むコマンドの引数からパスを取り出す
+  ```
+constants:
+  - name: READ_COMMANDS
+    title: 読むコマンド
+    container: features/command/service.py
+    summary: ルール案内が読む操作として扱うコマンド
+    value: '`frozenset({"cat", "head", "tail", "less", "more", "grep", "rg", "sed", "awk", "wc", "bat"})`'
+  - name: FULL_READ_COMMANDS
+    title: 全体を読むコマンド
+    container: features/command/service.py
+    summary: 既読の記録が既読にするコマンド（本文全体を出すもの）
+    value: '`frozenset({"cat", "bat", "less", "more"})`'
+functions:
+  - name: extract_read_paths
+    title: 読むパスの取り出し
+    container: features/command/service.py
+    usecase: 共通
+    summary: コマンドの文字列から、指定のコマンドが読む実在するファイルの絶対パスを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: command
+        type: str
+        required: true
+        passing: positional
+        description: Bash のコマンド
+      - name: cwd
+        type: Path
+        required: true
+        passing: positional
+        description: 相対パスを解く基準（フックの入力の `cwd`）
+      - name: commands
+        type: frozenset[str]
+        required: true
+        passing: positional
+        description: 対象にするコマンド名（`READ_COMMANDS` か `FULL_READ_COMMANDS`）
+    returns:
+      type: list[str]
+      description: 実在するファイルの絶対パス（出てきた順、重なりなし）
+    process: |-
+      1. `shlex`（`punctuation_chars=True`）で語に分ける。引用符が閉じていないなどで分けられなければ空を返す
+      2. `&&` / `||` / `;` / `|` で区切った各コマンドを順に見る。`cd {フォルダ}` は以降の基準を動かす
+      3. 先頭の語のベース名が `commands` にあれば、`-` で始まらない引数を基準から解き、実在するファイルだけを残す
+    unit_tests:
+      - name: test_extract_read_paths
+        case: 正常
+        summary: cd とパイプをまたいでパスを取り出す
+        condition: '`cd src && cat app.py | head -n 5`、`src/app.py` が実在、`READ_COMMANDS`'
+        mock: なし
+        expected: '`{cwd}/src/app.py` の 1 件'
+      - name: test_extract_read_paths_when_pattern_arg
+        case: 正常
+        summary: 実在しない引数を捨てる
+        condition: '`grep -n foo a.md`、`a.md` だけ実在'
+        mock: なし
+        expected: '`a.md` の絶対パスだけ'
+      - name: test_extract_read_paths_when_not_full_read
+        case: 正常
+        summary: 対象外のコマンドは見ない
+        condition: '`grep foo a.md`、`FULL_READ_COMMANDS`'
+        mock: なし
+        expected: 空
+      - name: test_extract_read_paths_when_unparsable
+        case: 正常
+        summary: 分けられないコマンド
+        condition: '`cat "a.md`（引用符が閉じていない）'
+        mock: なし
+        expected: 空（例外を送出しない）
+test_files:
+  - tests/unit/rule_inject/features/command/test_service.py

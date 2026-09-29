@@ -1,0 +1,183 @@
+title: "プラグイン / MCPサーバー"
+lead: stdio の MCP サーバーの入口。`read_rules` を登録し、索引・本文の取得・既読の記録の機能を順に呼んで組み立てる。
+directory: |-
+  ```text
+  .mcp.json                   # rule-inject のサーバーを uv run で起動する
+  pyproject.toml              # uv のプロジェクト（requires-python >=3.12、依存は mcp>=2.2,<3）
+  src/rule_inject/server/
+  ├── __init__.py
+  ├── __main__.py             # python -m rule_inject.server で起動
+  └── app.py                  # read_rules（機能の組み立て）と build_server（登録）
+  ```
+functions:
+  - name: build_server
+    title: MCP サーバーの組み立て
+    container: server/app.py
+    usecase: ルールの本文を取得する
+    summary: '`read_rules` を登録した MCPServer を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+      - name: fetch
+        type: FetchUrlFn
+        required: false
+        default: fetch_url
+        passing: injected
+        description: URL の取得
+    returns:
+      type: MCPServer
+      description: 名前 `rule-inject` のサーバー
+    process: |-
+      1. `MCPServer("rule-inject")` を作る
+      2. `read_rules` を `tool(meta={"anthropic/maxResultSizeChars": MAX_RESULT_CHARS})` で登録する。引数の説明はインターフェース定義の文面を docstring の Args に書く
+      3. ツールの中では呼ばれるたびに `load_indexes(env)` と `state_dir(env)` を求め、同じファイルの `read_rules` を呼んで `render_result` を返す
+      4. ToolArgumentError・RecordWriteError・想定外の例外はログへ書いてから、文面を載せて送出し直す（SDK が isError の応答にする）
+    unit_tests:
+      - name: test_build_server
+        case: 正常
+        summary: read_rules が上限の指定つきで登録される
+        condition: 空の環境変数
+        mock: なし
+        expected: ツールの一覧に `read_rules` があり、`_meta["anthropic/maxResultSizeChars"]` が `40000`、引数の説明がある
+      - name: test_build_server_when_error
+        case: 正常
+        summary: 引数が足りない呼び出しをエラーにしてログに書く
+        condition: '`session_id` なしでツールを呼ぶ'
+        mock: なし
+        expected: エラーの応答、文面に session_id
+  - name: main
+    title: MCP サーバーの起動
+    container: server/__main__.py
+    usecase: ルールの本文を取得する
+    summary: '`build_server(os.environ)` を stdio で動かす'
+    kind: 関数
+    scope: public
+    returns:
+      type: None
+      description: なし
+    unit_tests:
+      - name: test_main
+        case: 正常
+        summary: 子プロセスで起動して tools/list に答える
+        condition: 'テストを動かしている環境の `python -m rule_inject.server`（`uv run pytest` の下では `uv run` と同じ環境）に initialize と tools/list を送る'
+        mock: なし
+        expected: '`read_rules` を含む応答'
+  - name: read_rules
+    title: ルールの本文の取得
+    container: server/app.py
+    usecase: ルールの本文を取得する
+    summary: 索引で読む場所を選び、本文を上限に収めて集め、返した場所を既読にする
+    kind: 関数
+    scope: public
+    side_effects: 返した場所を既読の記録へ追記する
+    args:
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 読みたいルールの場所
+      - name: paths
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 触るファイルのパス
+      - name: session_id
+        type: str | None
+        required: true
+        passing: positional
+        description: セッション
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: keyword
+        description: 索引のエントリ
+      - name: state_dir
+        type: Path
+        required: true
+        passing: keyword
+        description: 記録フォルダ
+      - name: fetch
+        type: FetchUrlFn
+        required: false
+        default: fetch_url
+        passing: injected
+        description: URL の取得
+      - name: limit
+        type: int
+        required: false
+        default: MAX_RESULT_CHARS
+        passing: keyword
+        description: 応答の上限
+    returns:
+      type: ReadRulesResult
+      description: 返す本文・次に回す場所・取得できなかった場所
+    process: |-
+      1. `session_id` が `is_valid_session_id` に合わない、または `locations` と `paths` がどちらも空なら ToolArgumentError
+      2. `select_locations(entries, locations, paths)` で読む場所を選ぶ
+      3. rejected を FetchFailure に変えて `collect_pages(targets, failures=...)` に渡し、本文を集める
+      4. pages の場所を `append_record` で既読にする
+    exceptions:
+      - name: ToolArgumentError
+        condition: '`session_id` が無い・形が外れている'
+      - name: ToolArgumentError
+        condition: '`locations` と `paths` がどちらも空'
+      - name: RecordWriteError
+        condition: 既読の記録に書けない（append_record からそのまま送出）
+    unit_tests:
+      - name: test_read_rules
+        case: 正常
+        summary: 場所で引いて既読にする
+        condition: 索引に載ったローカルのルール 1 件
+        mock: なし
+        expected: pages に 1 件、記録ファイルにその場所
+      - name: test_read_rules_when_rejected
+        case: 正常
+        summary: 読まない場所を failures に載せ、既読にしない
+        condition: 索引に無い場所 1 件と、索引に載ったルール 1 件
+        mock: なし
+        expected: failures に 1 件（`索引に載っていない場所`）、pages に 1 件、記録は pages の 1 件だけ
+      - name: test_read_rules_when_deferred
+        case: 正常
+        summary: 次に回した場所は既読にしない
+        condition: 50 字の本文 2 件と、`limit` を「本文 1 件と deferred 1 件を `render_result` した字数」にした呼び出し
+        mock: なし
+        expected: deferred に 1 件、記録は pages の 1 件だけ
+      - name: test_read_rules_when_no_session_id
+        case: 異常
+        summary: session_id が無い
+        condition: '`session_id=None`'
+        mock: なし
+        expected: ToolArgumentError
+        exception: '`session_id` が無い・形が外れている'
+      - name: test_read_rules_when_no_target
+        case: 異常
+        summary: 引く対象が無い
+        condition: '`locations` と `paths` が空'
+        mock: なし
+        expected: ToolArgumentError
+        exception: '`locations` と `paths` がどちらも空'
+      - name: test_read_rules_when_record_unwritable
+        case: 異常
+        summary: 記録に書けない
+        condition: 書き込み権限の無い記録フォルダ
+        mock: なし
+        expected: RecordWriteError
+        exception: 既読の記録に書けない
+notes:
+  .mcp.json: '`{"mcpServers": {"rule-inject": {"command": "uv", "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}", "--no-dev", "--frozen", "python", "-m", "rule_inject.server"], "env": {"UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/venv"}}}}`。サーバーのキーとプラグイン名がどちらも `rule-inject` のため、ツールの完全名は `mcp__plugin_rule-inject_rule-inject__read_rules` になる。仮想環境は版をまたいで残る `${CLAUDE_PLUGIN_DATA}/venv` に置き、版のフォルダ（`${CLAUDE_PLUGIN_ROOT}`）には書き込まない。`--no-dev` で開発用の依存グループ（pytest・ruff）を入れず、`--frozen` で `uv.lock` をそのまま使って書き換えない。入れた直後と依存が変わった版の最初の起動は、uv が依存を取得する分だけ遅い'
+classes:
+  - name: ToolArgumentError
+    title: 引数が足りない
+    container: server/app.py
+    usecase: ルールの本文を取得する
+    summary: '`session_id` が無い・形が外れている、または `locations` と `paths` が空'
+    kind: クラス
+    inherits: ValueError
+test_files:
+  - tests/unit/rule_inject/server/test_app.py
+  - tests/unit/rule_inject/server/test_main.py
