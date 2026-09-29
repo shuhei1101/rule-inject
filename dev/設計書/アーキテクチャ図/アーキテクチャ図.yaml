@@ -83,7 +83,7 @@ external_systems:
     protocol: フックの JSON（標準入出力）/ MCP（stdio）
     notes:
       事前確認: 不要。Claude Code がフックと MCP サーバーを起動する側のため、呼ばれた時点で到達している。
-  - name: ルールの配信元（銘柄未定）
+  - name: ルールの配信元（URL）
     purpose: URL で書かれたルールの本文の取得
     direction: 受信のみ
     protocol: HTTPS
