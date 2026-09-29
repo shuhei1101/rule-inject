@@ -1,0 +1,9 @@
+{"from": "hook", "run": "1", "mode": "none", "session_id": "f21771fc-59bc-48b4-95e7-cbf64c5072d3", "tool_name": "mcp__plugin_rule-inject-poc_poc__echo", "tool_input": {"location": "rules/sample-1.md"}}
+{"from": "tool", "run": "1", "location": "rules/sample-1.md", "session_id": "f21771fc-59bc-48b4-95e7-cbf64c5072d3", "env_session_id": "f21771fc-59bc-48b4-95e7-cbf64c5072d3"}
+{"from": "hook", "run": "2", "mode": "none", "session_id": "34a1c959-2652-4e09-9b85-ba135ba1abe0", "tool_name": "mcp__plugin_rule-inject-poc_poc__echo", "tool_input": {"location": "rules/sample-2.md", "session_id": "model-supplied"}}
+{"from": "tool", "run": "2", "location": "rules/sample-2.md", "session_id": "34a1c959-2652-4e09-9b85-ba135ba1abe0", "env_session_id": "34a1c959-2652-4e09-9b85-ba135ba1abe0"}
+{"from": "hook", "run": "3", "mode": "none", "session_id": "528b49b0-3cc3-4477-8c43-6c7a6380349e", "tool_name": "mcp__plugin_rule-inject-poc_poc__echo", "tool_input": {"location": "rules/sample-3.md"}}
+{"from": "tool", "run": "3", "location": "rules/sample-3.md", "session_id": "528b49b0-3cc3-4477-8c43-6c7a6380349e", "env_session_id": "528b49b0-3cc3-4477-8c43-6c7a6380349e"}
+{"from": "hook", "run": "4", "mode": "allow", "session_id": "e248b1e2-9acf-4159-b606-a95789c12d15", "tool_name": "mcp__plugin_rule-inject-poc_poc__echo", "tool_input": {"location": "rules/sample-4.md"}}
+{"from": "tool", "run": "4", "location": "rules/sample-4.md", "session_id": "e248b1e2-9acf-4159-b606-a95789c12d15", "env_session_id": "e248b1e2-9acf-4159-b606-a95789c12d15"}
+{"from": "hook", "run": "5", "mode": "ask", "session_id": "b8ea6afc-ea72-443e-b159-0892f5c21721", "tool_name": "mcp__plugin_rule-inject-poc_poc__echo", "tool_input": {"location": "rules/sample-5.md"}}

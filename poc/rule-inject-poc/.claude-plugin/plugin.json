@@ -1,0 +1,5 @@
+{
+  "name": "rule-inject-poc",
+  "version": "0.0.0",
+  "description": "PreToolUse の updatedInput で MCP ツールへ session_id を足せるかを確かめる PoC"
+}
