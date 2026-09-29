@@ -84,7 +84,7 @@ def test_main_when_python_too_old(
     monkeypatch.setenv("RULE_INJECT_STATE_DIR", str(state_dir))
     payload = hook_payload("PreToolUse", tool_name="Write", tool_input={"file_path": "/p/a.py"})
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
-    monkeypatch.setattr(sys, "version_info", type(sys.version_info)((3, 11, 0, "final", 0)))
+    monkeypatch.setattr(sys, "version_info", (3, 11, 0, "final", 0))
     # 実行
     code = run_module.main(["rule_guide"])
     # 検証
