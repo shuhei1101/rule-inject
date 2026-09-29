@@ -73,7 +73,10 @@ response:
     notes: '`updatedInput` は引数を丸ごと置き換えるため、元の引数を落とさない'
 exceptions:
   - name: なし（正常終了）
-    condition: 常に終了コード 0 で終える
+    condition: 終了コード 0 で終える
+  - name: Exception（想定外の例外）
+    condition: 入力が読めないなど、`updatedInput` を作れない
+    notes: 最上位で捕まえ、ログへ `unexpected` を書いて何も出力せず終了コード 0 で終える。`session_id` が足されないため、ツール側が ToolError で利用者に見せる
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -81,3 +84,6 @@ constraints:
   - item: 許可の判定
     constraint: '`permissionDecision` を返さない'
     notes: '`allow` を返すと利用者の許可の確認が飛ぶため（PoC 検証の回 4）。返さなくても `updatedInput` が効くことを PoC 検証の回 1〜3 で確かめた'
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+identifier: session_id_injection

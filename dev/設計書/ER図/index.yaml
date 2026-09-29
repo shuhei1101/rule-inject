@@ -2,3 +2,5 @@ summary: データストア（テキストファイル）の定義
 items:
   - page: 既読の記録.yaml
     summary: フックと MCP サーバーが共有する、セッションごとの既読のルールの場所
+  - page: ログ.yaml
+    summary: フックと MCP サーバーが失敗した操作を書き出すログ

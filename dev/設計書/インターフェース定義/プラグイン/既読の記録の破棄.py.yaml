@@ -50,6 +50,31 @@ flows:
     expected:
       - 終了コードが `0`
     test: test_normal_when_no_record
+  - name: 異常系（記録を消せない・利用者に見せる）
+    summary: 記録ファイルを消せないとき、圧縮は止めずに systemMessage とログで見せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 既読の記録
+        description: 対象のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
+      - name: 入力
+        description: '`trigger: manual`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant C as 既読の記録の破棄
+        participant ST as 記録ファイル
+
+        CC->>C: 標準入力（session_id・trigger）
+        C->>ST: 消す（消せない）
+        C-->>CC: systemMessage（記録ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`systemMessage` に記録ファイルの場所と理由が載っている'
+      - '標準エラー出力に `operation: delete_record` の 1 行がある'
+      - 終了コードが `0`
+    test: test_error_when_record_undeletable
 lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルを消す。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルを消す
@@ -67,9 +92,23 @@ request:
     notes: どちらでも同じように消す
 exceptions:
   - name: なし（正常終了）
-    condition: 常に終了コード 0 で終える
+    condition: 終了コード 0 で終える
     notes: 終了コード 2 は圧縮を止める合図になるため使わない
+  - name: OSError（記録を消せない）
+    condition: 記録ファイルはあるが消せない（権限など）
+    notes: フックの中で捕まえ、ログへ `delete_record` を書き、`systemMessage` で利用者に「圧縮の後も既読が残るため、ルールが案内されないこと」と記録ファイルの場所を見せ、終了コード 0 で終える（圧縮は止めない）
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 最上位で捕まえ、記録を消せないときと同じく `systemMessage` とログ（`unexpected`）で見せて終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+identifier: discard_read
+response:
+  - name: '`systemMessage`'
+    type: str
+    description: 記録を消せなかったときに利用者へ見せる文面
+    notes: 消せなかったときだけ出力する

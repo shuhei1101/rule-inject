@@ -1,7 +1,7 @@
 title: "ルール案内"
 entry:
   kind: trigger
-  value: '`PreToolUse` フック（matcher `Read|Edit|Write|NotebookEdit|Bash|mcp__.*`、timeout 1 秒）'
+  value: '`PreToolUse` フック（matcher `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、timeout 1 秒）'
 flows:
   - name: 正常系（止めて案内する）
     summary: 書く操作が必須の未読のルールで Write を止める
@@ -285,6 +285,64 @@ flows:
       - '`additionalContext` に 2 つの索引の場所と理由が載っている'
       - 終了コードが `0`
     test: test_error_when_index_unreadable
+  - name: 異常系（既読の記録が読めない・止めずに理由を載せる）
+    summary: 記録ファイルが読めないとき、操作を止めずに理由を載せ、ログに書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: そのセッションの記録ファイルを読み取り権限なし（`chmod 000`）で置く
+      - name: 入力
+        description: '`tool_name: Write`、`.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant ST as 既読の記録
+        participant LOG as ログ
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>ST: 読む（読めない）
+        H->>LOG: read_record を追記する
+        H-->>CC: additionalContext（記録ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に記録ファイルの場所と理由が載っている'
+      - 'ログに `operation: read_record` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_record_unreadable
+  - name: 正常系（Grepで読む対象に当たる）
+    summary: 組み込みの Grep が指すファイルで照合して止める
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [read]` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Grep`、`tool_input.path` は実在する `.py` のファイル'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（Grep・ファイルのパス）
+        H->>IDX: 読む
+        H->>ST: 既読を読む（未読）
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` にルールの場所が載っている'
+    test: test_normal_when_read_by_grep
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。
 idempotent: true
 side_effects: なし（既読の記録は読むだけ）
@@ -304,8 +362,8 @@ request:
     type: str
     required: true
     description: 呼ばれるツールの名前
-    constraints: '`Read` / `Edit` / `Write` / `NotebookEdit` / `Bash` / `mcp__` で始まる完全名'
-    notes: 操作の種別へ読み替える（`Read`・`Bash` の読み取り → `read`、`Edit`・`Write`・`NotebookEdit` → `write`、`mcp__*` → `mcp`）
+    constraints: '`Read` / `Grep` / `Edit` / `Write` / `NotebookEdit` / `Bash` / `mcp__` で始まる完全名'
+    notes: 操作の種別へ読み替える（`Read`・`Grep`・`Bash` の読み取り → `read`、`Edit`・`Write`・`NotebookEdit` → `write`、`mcp__*` → `mcp`）
   - name: '`tool_input.file_path`'
     type: str
     required: false
@@ -324,6 +382,12 @@ request:
     default: なし（パスでは照合しない）
     description: Bash で実行しようとしているコマンド
     notes: 読むコマンド（制約の「読むコマンド」）の引数から、読む対象のパスを取り出す
+  - name: '`tool_input.path`'
+    type: str
+    required: false
+    default: なし（パスでは照合しない）
+    description: Grep で検索するファイルかフォルダのパス
+    notes: Grep のとき届く。ファイルを指すときだけ照合する（フォルダは中のどのファイルを読むかが実行前に決まらないため照合しない）
 request_example: |-
   ```json
   {
@@ -365,8 +429,17 @@ response_example: |-
   ```
 exceptions:
   - name: なし（正常終了）
-    condition: 索引が読めないときも含め、終了コード 0 で終える
+    condition: 案内の有無に関わらず終了コード 0 で終える
     notes: 終了コード 2 は Claude Code が操作を止める合図になるため使わない
+  - name: OSError / 書式の誤り（索引が読めない）
+    condition: 索引が無い・読めない・書式に合わない
+    notes: フックの中で捕まえ、操作を止めずに `additionalContext` へ索引の場所と理由を載せ、ログへ `read_index` を書いて終了コード 0 で終える。読めた索引のエントリでの案内は続ける
+  - name: OSError（既読の記録が読めない）
+    condition: 記録ファイルはあるが読めない（権限など）
+    notes: 索引が読めないときと揃え、操作を止めずに `additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` を書く。ファイルが無いときは失敗ではなく既読なしとして扱う
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 最上位で捕まえ、操作を止めずに `additionalContext` へ「ルールの案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -387,3 +460,7 @@ constraints:
     notes: ルールを読むためのツールが止められて読めなくなるのを防ぐ
   - item: 認可
     constraint: 制限なし
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
+    notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+identifier: rule_guide

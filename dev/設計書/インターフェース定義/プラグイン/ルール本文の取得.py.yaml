@@ -199,6 +199,34 @@ flows:
       - ファイルを開いておらず、HTTP の取得もしていない
       - 記録ファイルが作られていない
     test: test_error_when_location_not_in_index
+  - name: 異常系（既読の記録に書けない・ToolError）
+    summary: 記録のフォルダに書けないとき、記録フォルダの場所と理由を載せたエラーにする
+    setup:
+      - name: Mock
+        description: なし
+      - name: ルールの本文
+        description: 一時フォルダに置いた Markdown 1 件
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: '`RULE_INJECT_STATE_DIR` を書き込み権限の無いフォルダ（`chmod 555`）にする'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant RULE as ルールの本文
+        participant ST as 記録ファイル
+
+        CC->>T: locations + session_id
+        T->>RULE: 読む
+        T->>ST: 追記する（書けない）
+        T-->>CC: ToolError（記録フォルダの場所と理由）
+      ```
+    expected:
+      - ToolError が返り、文面に記録フォルダの場所と理由が載っている
+      - '標準エラー出力に `operation: write_record` の 1 行がある'
+    test: test_error_when_record_unwritable
 lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録する。
 identifier: read_rules
 idempotent: true
@@ -265,9 +293,15 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 一部の場所を取得できなかったときも、`failures` に載せて正常に返す
-  - name: ToolError
+  - name: ToolError（引数が足りない）
     condition: '`session_id` が無いか形が外れている、または `locations` と `paths` がどちらも空'
     notes: '`session_id` が無いのはフックが動いていない設定の誤りとして扱い、本文も返さない'
+  - name: ToolError（既読の記録に書けない）
+    condition: '`RULE_INJECT_STATE_DIR` が作れない・書けない（権限・容量）'
+    notes: 本文を返しても既読にならず書く操作が止まり続けるため、記録フォルダの場所と理由を文面に載せてエラーにし、ログへ `write_record` を書く
+  - name: ToolError（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 例外のクラス名と文面を載せてエラーにし、ログへ `unexpected` を書く
 constraints:
   - item: 応答の大きさ
     constraint: 応答の JSON 全体で 40,000 字。`tools/list` の `_meta["anthropic/maxResultSizeChars"]` に同じ 40,000 を付ける。収まらない本文は `deferred` へ回す
@@ -283,3 +317,6 @@ constraints:
     notes: Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
   - item: 認可
     constraint: 制限なし（ツールの許可は利用者の Claude Code の設定に従う）
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力（MCP のログに残る）へ出す
+    notes: stdio の MCP サーバーは標準出力が通信に使われるため、標準出力へは書かない
