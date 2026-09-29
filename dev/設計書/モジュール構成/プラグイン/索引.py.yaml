@@ -84,6 +84,32 @@ data_models:
       - name: failures
         type: tuple[IndexReadError, ...]
         description: 読めなかった索引ごとの例外
+  - name: RejectedLocation
+    title: 読まない場所
+    container: features/index/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: '`read_rules` で読まないと決めた場所かパスと、その理由'
+    properties:
+      - name: location
+        type: str
+        description: 渡された場所かパス（解けたものは解決後）
+      - name: reason
+        type: str
+        description: 理由
+  - name: SelectedLocations
+    title: 読む場所の選び出しの結果
+    container: features/index/types.py
+    usecase: ルールの本文を取得する
+    role: DTO
+    summary: 本文を読む場所と、読まない場所
+    properties:
+      - name: targets
+        type: tuple[str, ...]
+        description: 本文を読むルールの場所（解決後。重なりを落とし、並びを保つ）
+      - name: rejected
+        type: tuple[RejectedLocation, ...]
+        description: 読まない場所かパス
 functions:
   - name: parse_index
     title: 索引の YAML の読み取り
@@ -349,6 +375,59 @@ functions:
         condition: '`**/*.{ts,tsx}` と `/a/b.tsx`、`/a/b.js`'
         mock: なし
         expected: True と False
-test_files:
-  - tests/unit/rule_inject/features/index/test_yaml.py
-  - tests/unit/rule_inject/features/index/test_service.py
+  - name: select_locations
+    title: 読む場所の選び出し
+    container: features/index/service.py
+    usecase: ルールの本文を取得する
+    summary: '`read_rules` に渡された場所とパスから、索引に載ったルールの場所だけを選ぶ'
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 読みたいルールの場所
+      - name: paths
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 触るファイルのパス
+    returns:
+      type: SelectedLocations
+      description: 読む場所と読まない場所
+    process: |-
+      1. `locations` のうち、絶対パス・`~` で始まるパス・URL のどれでもないものは、解かずに `相対パスは読まない。絶対パス・~・https:// の URL で渡す` として rejected へ
+      2. 残りの `locations` を `resolve_location` で解き、`rule_locations(entries)` に無いものは `索引に載っていない場所` として rejected へ。あるものを targets へ
+      3. `paths` のうち絶対パスでないものは `相対パスは照合しない。絶対パスで渡す` として rejected へ。絶対パスは `match_path(entries, path, "read")` の場所を targets へ足す
+      4. targets の重なりを落とす（並びは保つ）
+    unit_tests:
+      - name: test_select_locations
+        case: 正常
+        summary: 索引に載った場所を選ぶ
+        condition: 索引に載った絶対パス 1 件と URL 1 件
+        mock: なし
+        expected: targets に 2 件、rejected は空
+      - name: test_select_locations_when_by_path
+        case: 正常
+        summary: 対象のパスで引く
+        condition: '`**/*.py` と `**/*.ts` のエントリ、`paths` に `.py` の絶対パス、`locations` に同じルールの場所'
+        mock: なし
+        expected: targets に `.py` のルールだけが 1 件（重なりを落とす）
+      - name: test_select_locations_when_not_in_index
+        case: 正常
+        summary: 索引に無い場所は読まない
+        condition: 索引に無い絶対パスと URL
+        mock: なし
+        expected: targets は空、rejected に 2 件（`索引に載っていない場所`）
+      - name: test_select_locations_when_relative
+        case: 正常
+        summary: 相対パスは解かない
+        condition: '`locations` に `rules/a.md`、`paths` に `src/a.py`'
+        mock: なし
+        expected: targets は空、rejected に 2 件（相対パスの理由）

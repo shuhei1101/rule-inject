@@ -239,7 +239,7 @@ request:
     default: '`[]`'
     location: argument
     description: 読みたいルールの場所。案内に載った場所をそのまま渡す
-    constraints: 絶対パス・`~` で始まるパス・`https://` の URL。索引に載ったルールの場所だけを読む（`http://` の URL は取得せずに `failures` に載せる）
+    constraints: 絶対パス・`~` で始まるパス・`https://` の URL。索引に載ったルールの場所だけを読む（`http://` の URL は取得せずに `failures` に載せる。相対パスは解かずに、絶対パスで渡すよう理由を添えて `failures` に載せる）
     notes: ツールの引数の説明に「ルールの場所を渡す。これから触るファイルのパスは `paths` へ」と書く
   - name: '`paths`'
     type: list[str]
@@ -247,7 +247,7 @@ request:
     default: '`[]`'
     location: argument
     description: これから作る・変えるファイルのパス。当たるルールの本文を返す
-    constraints: 絶対パス。まだ無いパスも渡せる
+    constraints: 絶対パス。まだ無いパスも渡せる（相対パスは照合せずに、絶対パスで渡すよう理由を添えて `failures` に載せる）
     notes: ツールの引数の説明に「触るファイルのパスを渡す。ルールの場所は `locations` へ」と書く
   - name: '`session_id`'
     type: str
