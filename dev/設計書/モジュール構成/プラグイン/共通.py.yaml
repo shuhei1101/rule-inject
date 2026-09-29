@@ -458,9 +458,10 @@ functions:
       description: 消せなかったログのファイルごとの失敗。全て消せたか消すものが無ければ空
     process: |-
       1. `os.scandir(log_folder)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
-      2. 名前が `{8 桁の数字}{LOG_FILE_SUFFIX}` で、数字が `%Y%m%d` として読め、シンボリックリンクを辿らずに通常のファイルの項目だけを対象にする
-      3. 日付が `today() - retention_days 日` 以前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
-      4. 消せないもの（その他の OSError）は LogDeleteError にして集め、残りの掃除を続ける
+      2. `retention_days` が `today()` から `date.min` までの日数より大きければ、消すものが無いとして空を返す（日付の引き算が暇を超えないようにする）
+      3. 名前が `{8 桁の数字}{LOG_FILE_SUFFIX}` で、数字が `%Y%m%d` として読め、シンボリックリンクを辿らずに通常のファイルの項目だけを対象にする
+      4. 日付が `today() - retention_days 日` 以前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
+      5. 消せないもの（その他の OSError）は LogDeleteError にして集め、残りの掃除を続ける
     exceptions:
       - name: OSError
         condition: ログのフォルダはあるが列挙できない（FileNotFoundError 以外）。捕まえずに送出し、フックの最上位が `unexpected` として扱う
