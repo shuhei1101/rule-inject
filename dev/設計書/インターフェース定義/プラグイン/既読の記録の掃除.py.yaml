@@ -147,5 +147,5 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
 notes:
-  対応テストファイル: '`tests/integration/plugin/test_sweep_read.py` に置く。`test_file` は実在するファイルしか書けないため、結合テスト作成でファイルを作った後に `test_file` へ移す'
   作業の決まりの注入との分担: 同じ `SessionStart` で動く作業の決まりの注入とは別のフックにする。注入は標準出力へ additionalContext を返し、掃除は何も返さない。始まったセッション自身の記録ファイルを消さないため、注入の圧縮の後の消し残りの確認とぶつからない
+test_file: tests/integration/plugin/test_sweep_read.py
