@@ -9,7 +9,7 @@ flows:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 既読の記録
-        description: 別のセッションの記録ファイルを 2 つ置き、最終更新を保持期間より 1 日前と 1 日後にする。記録フォルダに記録ファイルでないファイル（`notes.txt`）も置き、最終更新を保持期間より前にする
+        description: 別のセッションの記録ファイルを 2 つ置き、最終更新を保持期間より 1 日前と 1 日後にする。記録フォルダに名前が `session_id` の形に合わないファイル（`a b.txt`）も置き、最終更新を保持期間より前にする
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -28,7 +28,7 @@ flows:
     expected:
       - 保持期間を過ぎた記録ファイルが無い
       - 保持期間の内側の記録ファイルが残っている
-      - '`notes.txt` が残っている'
+      - '`a b.txt` が残っている'
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal
