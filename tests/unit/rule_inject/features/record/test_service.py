@@ -189,7 +189,7 @@ def test_sweep_records(
     expired = write_aged_record("expired-session", 31, base=now())
     within = write_aged_record("within-session", 29, base=now())
     # 実行
-    result = service.sweep_records(state_dir, session_id, now=now)
+    result = service.sweep_records(state_dir, session_id, now=now, retention_days=30)
     # 検証
     assert not expired.exists()
     assert within.exists()
@@ -206,7 +206,7 @@ def test_sweep_records_when_kept_session(
     # 準備
     kept = write_aged_record(session_id, 31, base=now())
     # 実行
-    service.sweep_records(state_dir, session_id, now=now)
+    service.sweep_records(state_dir, session_id, now=now, retention_days=30)
     # 検証
     assert kept.exists()
 
@@ -236,7 +236,7 @@ def test_sweep_records_when_not_record(
     for path in (log_file, invalid_name, folder, link_target):
         os.utime(path, (old, old))
     # 実行
-    service.sweep_records(state_dir, session_id, now=now)
+    service.sweep_records(state_dir, session_id, now=now, retention_days=30)
     # 検証
     assert log_file.exists()
     assert invalid_name.exists()
@@ -248,7 +248,7 @@ def test_sweep_records_when_not_record(
 def test_sweep_records_when_missing(state_dir: Path, session_id: str) -> None:
     """記録フォルダが無ければ何もしない（正常系）。"""
     # 実行
-    result = service.sweep_records(state_dir, session_id)
+    result = service.sweep_records(state_dir, session_id, retention_days=30)
     # 検証
     assert result == ()
     assert not state_dir.exists()
@@ -266,7 +266,7 @@ def test_sweep_records_when_undeletable(
     expired = write_aged_record("expired-session", 31, base=now())
     unwritable(state_dir, 0o555)
     # 実行
-    result = service.sweep_records(state_dir, session_id, now=now)
+    result = service.sweep_records(state_dir, session_id, now=now, retention_days=30)
     # 検証
     assert len(result) == 1
     assert isinstance(result[0], RecordDeleteError)

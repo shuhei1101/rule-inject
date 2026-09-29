@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 from collections.abc import Callable, Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -75,8 +76,8 @@ def test_run_hook_when_none(hook_env: dict[str, str], session_id: str) -> None:
 def test_run_hook_when_unexpected(
     hook_env: dict[str, str],
     session_id: str,
-    state_dir: Path,
-    read_log: Callable[[], list[dict[str, Any]]],
+    log_folder: Path,
+    read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """想定外の例外を捕まえる（正常系）。"""
     # 準備
@@ -93,9 +94,9 @@ def test_run_hook_when_unexpected(
     )
     # 検証
     assert code == 0
-    logged = read_log()
+    logged = read_daily_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "unexpected"
     assert logged[0]["component"] == "rule_guide"
     context = json.loads(stdout.getvalue())["hookSpecificOutput"]["additionalContext"]
-    assert str(state_dir / "rule-inject.log") in context
+    assert str(log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
