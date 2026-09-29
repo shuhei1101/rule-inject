@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "そのセッションの記録ファイルへ 1 行足し、入力をログへ残す",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/poc_hook.py\" record",
+            "timeout": 1
+          }
+        ]
+      }
+    ],
+
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "そのセッションの記録ファイルを消し、入力と残りの記録ファイルをログへ残す",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/poc_hook.py\" end",
+            "timeout": 1
+          }
+        ]
+      }
+    ]
+  }
+}
