@@ -121,8 +121,12 @@ def sweep_logs(
     except FileNotFoundError:
         # ログのフォルダがまだ無ければ掃除するものが無い（フォルダは作らない）
         return ()
+    current = today()
+    # 暦の範囲を超えるほど大きい保持日数は、消すものが無いとして日付の引き算をしない
+    if retention_days > (current - date.min).days:
+        return ()
     # この日付以前のログのファイルが、保持日数を過ぎたもの
-    threshold = today() - timedelta(days=retention_days)
+    threshold = current - timedelta(days=retention_days)
     failures: list[LogDeleteError] = []
     for entry in entries:
         # 日付ごとのログのファイル名でなければ対象にしない
