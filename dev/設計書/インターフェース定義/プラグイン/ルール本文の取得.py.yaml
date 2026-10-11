@@ -236,7 +236,7 @@ flows:
         description: なし（MCP サーバーを子プロセスとして起動し、stdio でツールを呼ぶ）
       - name: ルールの本文
         description: '`!{SET_NAME}`・`!{EMPTY_NAME}`・`!{UNSET_NAME}` を 1 つずつ含み、`!{UNSET_NAME}` を 2 回書いたローカルの Markdown'
-        notes: 空白を挙む `!{ SET_NAME }` のように名前の形から外れた書き方も 1 つ置き、置き換えないことを見る
+        notes: 空白を挟む `!{ SET_NAME }` のように名前の形から外れた書き方も 1 つ置き、置き換えないことを見る
       - name: 索引
         description: そのルールの場所を持つエントリを 1 つ持つ
       - name: 環境変数
