@@ -139,3 +139,4 @@ notes:
     - 既読のルールを案内しないこと
     - 案内が非機能要件「フックの案内文の長さ」を超えるときの扱い
     - 索引・既読の記録・案内済みの記録が読めない、案内済みの記録が書けないときの扱い
+test_file: tests/e2e/単一ユースケース/test_receive_guidance_for_search_results.py
