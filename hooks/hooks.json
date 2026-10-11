@@ -36,6 +36,17 @@
             "timeout": 1
           }
         ]
+      },
+      {
+        "matcher": "Grep|Glob|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "検索の結果に出たファイルに当たる未読のルールを、止めずに案内する",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" search_guide",
+            "timeout": 1
+          }
+        ]
       }
     ],
 

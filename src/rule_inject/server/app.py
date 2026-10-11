@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import Annotated
 
 from mcp.server.mcpserver import MCPServer
@@ -35,6 +36,8 @@ PATHS_DESCRIPTION = (
     "触るファイルの絶対パスを渡す。まだ無いパスでもよい。ルールの場所は locations へ"
 )
 SESSION_ID_DESCRIPTION = "渡さない。フックが足す"
+# 環境変数を渡されないときの、変数参照を 1 つも展開しない環境変数
+NO_ENV: Mapping[str, str] = MappingProxyType({})
 
 
 class ToolArgumentError(ValueError):
@@ -50,8 +53,9 @@ def read_rules(
     state_dir: Path,
     fetch: FetchUrlFn = fetch_url,
     limit: int = MAX_RESULT_CHARS,
+    env: Mapping[str, str] = NO_ENV,
 ) -> ReadRulesResult:
-    """索引で読む場所を選び、本文を上限に収めて集め、返した場所を既読にする。"""
+    """索引で読む場所を選び、変数参照を展開した本文を上限に収めて集め、返した場所を既読にする。"""
     # 引数が足りなければ、何も読まずにエラーにする
     if session_id is None or not is_valid_session_id(session_id):
         raise ToolArgumentError("session_id が無いか、形が外れています（フックが足す値です）")
@@ -62,7 +66,7 @@ def read_rules(
     rejected = [
         FetchFailure(location=item.location, reason=item.reason) for item in selected.rejected
     ]
-    result = collect_pages(selected.targets, failures=rejected, fetch=fetch, limit=limit)
+    result = collect_pages(selected.targets, failures=rejected, fetch=fetch, limit=limit, env=env)
     # 返した本文の場所だけを既読にする
     append_record(state_dir, session_id, [page.location for page in result.pages])
     return result
@@ -103,6 +107,7 @@ def build_server(env: Mapping[str, str], fetch: FetchUrlFn = fetch_url) -> MCPSe
                 entries=loaded.entries,
                 state_dir=folder,
                 fetch=fetch,
+                env=env,
             )
         except ToolArgumentError as exc:
             _log_failure(log_folder, LogOperation.UNEXPECTED, log_session, None, str(exc))
