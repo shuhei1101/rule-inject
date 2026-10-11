@@ -1,0 +1,34 @@
+$ uv run pytest tests/unit --ignore=tests/unit/rule_inject/hooks/test_search_guide.py --ignore=tests/unit/rule_inject/shared/test_variables.py --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base_when_cd --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base_when_ls_dir --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base_when_not_search[git] --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base_when_not_search[cat] --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base_when_not_search[partial_name] --deselect=tests/unit/rule_inject/features/command/test_service.py::test_search_output_base_when_unparsable --deselect=tests/unit/rule_inject/features/command/test_service.py::test_extract_result_paths --deselect=tests/unit/rule_inject/features/command/test_service.py::test_extract_result_paths_when_colon_in_name --deselect=tests/unit/rule_inject/features/command/test_service.py::test_extract_result_paths_when_over_limit --deselect=tests/unit/rule_inject/features/fetch/test_service.py::test_collect_pages_when_body_has_variables --deselect=tests/unit/rule_inject/features/fetch/test_service.py::test_expand_body --deselect=tests/unit/rule_inject/features/fetch/test_service.py::test_expand_body_when_unset --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_guidance_when_blocking --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_guidance_when_not_blocking --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_guidance_when_too_long --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_guidance_when_shown --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_search_guidance --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_search_guidance_when_unchecked --deselect=tests/unit/rule_inject/features/guidance/test_service.py::test_build_search_guidance_when_too_long --deselect=tests/unit/rule_inject/features/index/test_service.py::test_load_indexes_when_default --deselect=tests/unit/rule_inject/features/index/test_service.py::test_load_indexes_when_default_config_home --deselect=tests/unit/rule_inject/features/index/test_service.py::test_load_indexes_when_env_empty --deselect=tests/unit/rule_inject/features/index/test_service.py::test_load_indexes_when_rule_has_variable --deselect=tests/unit/rule_inject/features/index/test_service.py::test_load_indexes_when_rule_variable_unset --deselect=tests/unit/rule_inject/features/record/test_service.py::test_sweep_records_when_guided --deselect=tests/unit/rule_inject/features/record/test_service.py::test_read_guided --deselect=tests/unit/rule_inject/features/record/test_service.py::test_read_guided_when_missing --deselect=tests/unit/rule_inject/features/record/test_service.py::test_read_guided_when_unreadable --deselect=tests/unit/rule_inject/features/record/test_service.py::test_append_guided --deselect=tests/unit/rule_inject/features/record/test_service.py::test_append_guided_when_unwritable --deselect=tests/unit/rule_inject/features/record/test_service.py::test_delete_guided --deselect=tests/unit/rule_inject/features/record/test_service.py::test_delete_guided_when_missing --deselect=tests/unit/rule_inject/features/record/test_service.py::test_delete_guided_when_undeletable --deselect=tests/unit/rule_inject/hooks/test_discard_read.py::test_discard_read_when_guided --deselect=tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_already_guided --deselect=tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_guided_recorded --deselect=tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_guided_unwritable --deselect=tests/unit/rule_inject/hooks/test_sweep_read.py::test_sweep_read_when_guided
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-plugin-ai-monitor-rule-injection-parity
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 171 items / 39 deselected / 132 selected
+
+tests/unit/hooks/test_run.py ...                                         [  2%]
+tests/unit/rule_inject/features/command/test_service.py ....             [  5%]
+tests/unit/rule_inject/features/fetch/test_client.py ....                [  8%]
+tests/unit/rule_inject/features/fetch/test_service.py ........           [ 14%]
+tests/unit/rule_inject/features/guidance/test_service.py .               [ 15%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 28%]
+..                                                                       [ 30%]
+tests/unit/rule_inject/features/index/test_yaml.py .....                 [ 34%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 46%]
+...                                                                      [ 49%]
+tests/unit/rule_inject/hooks/test_discard_read.py ..                     [ 50%]
+tests/unit/rule_inject/hooks/test_record_read.py ....                    [ 53%]
+tests/unit/rule_inject/hooks/test_rule_guide.py ........                 [ 59%]
+tests/unit/rule_inject/hooks/test_runner.py ...                          [ 62%]
+tests/unit/rule_inject/hooks/test_session_id_injection.py ..             [ 63%]
+tests/unit/rule_inject/hooks/test_sweep_read.py .......                  [ 68%]
+tests/unit/rule_inject/hooks/test_work_rules.py ..                       [ 70%]
+tests/unit/rule_inject/server/test_app.py ........                       [ 76%]
+tests/unit/rule_inject/server/test_main.py .                             [ 77%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 87%]
+tests/unit/rule_inject/shared/test_paths.py .........                    [ 94%]
+tests/unit/rule_inject/shared/test_settings.py .......                   [100%]
+
+===================== 132 passed, 39 deselected in 17.53s ======================
+exit code: 0

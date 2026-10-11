@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import dataclasses
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 
 from rule_inject.features.fetch.client import FETCH_TIMEOUT_SEC, FetchError, fetch_url
 from rule_inject.features.fetch.types import (
@@ -16,9 +17,15 @@ from rule_inject.features.fetch.types import (
 )
 from rule_inject.shared.errors import describe
 from rule_inject.shared.paths import URL_SCHEMES
+from rule_inject.shared.variables import expand_variables
 
 # 応答の JSON 全体の字数の上限（`anthropic/maxResultSizeChars` にも同じ値を付ける）
 MAX_RESULT_CHARS = 40000
+# 展開していない変数参照を本文の先頭で知らせる 1 行の形（`{names}` に名前を並べて入れる）
+UNRESOLVED_NOTE = "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {names}"
+NAME_SEPARATOR = "、"
+# 環境変数を渡されないときの、変数参照を 1 つも展開しない環境変数
+NO_ENV: Mapping[str, str] = MappingProxyType({})
 
 
 def render_result(result: ReadRulesResult) -> str:
@@ -31,6 +38,16 @@ def _read_body(location: str, fetch: FetchUrlFn) -> str:
     if location.startswith(URL_SCHEMES):
         return fetch(location, FETCH_TIMEOUT_SEC)
     return Path(location).read_text(encoding="utf-8")
+
+
+def expand_body(body: str, env: Mapping[str, str]) -> str:
+    """本文の変数参照を展開し、展開できなかった名前があれば先頭に注釈を 1 行足す。"""
+    expansion = expand_variables(body, env)
+    # 全て展開できたら、注釈を足さない
+    if not expansion.unresolved:
+        return expansion.text
+    note = UNRESOLVED_NOTE.format(names=NAME_SEPARATOR.join(expansion.unresolved))
+    return f"{note}\n{expansion.text}"
 
 
 def _fit_to_limit(
@@ -80,15 +97,16 @@ def collect_pages(
     failures: Sequence[FetchFailure] = (),
     fetch: FetchUrlFn = fetch_url,
     limit: int = MAX_RESULT_CHARS,
+    env: Mapping[str, str] = NO_ENV,
 ) -> ReadRulesResult:
-    """場所ごとに本文を読み、応答の上限に収めて返す。"""
+    """場所ごとに本文を読んで変数参照を展開し、応答の上限に収めて返す。"""
     # 呼び出し元が先に決めた failures を先頭に置き、上限の計算に含める
     all_failures = list(failures)
     bodies: list[tuple[str, str]] = []
     for location in locations:
         # 読めなかった場所は理由を添えて failures へ回す（再試行はしない）
         try:
-            bodies.append((location, _read_body(location, fetch)))
+            bodies.append((location, expand_body(_read_body(location, fetch), env)))
         except FetchError as exc:
             all_failures.append(FetchFailure(location=location, reason=exc.reason))
         except (OSError, ValueError) as exc:

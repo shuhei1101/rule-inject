@@ -18,6 +18,14 @@ SECONDS_PER_DAY = 86_400
 FIXED_NOW = 1_800_000_000.0
 
 
+@pytest.fixture(autouse=True)
+def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """実際のホームの既定の索引（`~/.config/rule-inject/rules.yaml`）を読まないよう HOME を一時フォルダへ向ける。"""
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    return home
+
+
 @pytest.fixture
 def session_id() -> str:
     """テストで使うセッションの識別子。"""
@@ -172,12 +180,32 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
 
 
 @pytest.fixture
-def write_aged_record(state_dir: Path) -> Callable[..., Path]:
-    """最終更新を過去に戻した既読の記録ファイルを、指定のセッションで置く factory。"""
+def write_guided(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], Path]:
+    """案内済みの記録ファイルを、場所を 1 行ずつ書いて置く factory。"""
 
-    def _write(target_session_id: str, age_days: int, *, base: float | None = None) -> Path:
-        """target_session_id の記録ファイルを置き、最終更新を base の age_days 日前にする。"""
-        path = state_dir / f"{target_session_id}.txt"
+    def _write(locations: Sequence[str]) -> Path:
+        """locations を 1 行ずつ、このセッションの案内済みの記録ファイルに書く。"""
+        path = state_dir / f"{session_id}.guided.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
+        return path
+
+    return _write
+
+
+@pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[..., Path]:
+    """最終更新を過去に戻した記録ファイルを、指定のセッションで置く factory。"""
+
+    def _write(
+        target_session_id: str,
+        age_days: int,
+        *,
+        base: float | None = None,
+        suffix: str = ".txt",
+    ) -> Path:
+        """target_session_id の記録ファイル（suffix の名前）を置き、最終更新を base の age_days 日前にする。"""
+        path = state_dir / f"{target_session_id}{suffix}"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("/r/a.md\n", encoding="utf-8")
         # 基準の時刻が無ければ実際の現在から戻す

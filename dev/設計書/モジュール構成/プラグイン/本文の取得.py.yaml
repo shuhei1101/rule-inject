@@ -23,6 +23,11 @@ constants:
     value: '`1.0`'
     refs:
       - dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
+  - name: UNRESOLVED_NOTE
+    title: 展開していない変数参照の注釈
+    container: features/fetch/service.py
+    summary: 本文の先頭に足す 1 行の形。`{names}` に名前を「、」で並べて入れる
+    value: '`> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {names}`'
 classes:
   - name: FetchError
     title: URL の取得の失敗
@@ -215,14 +220,21 @@ functions:
         default: MAX_RESULT_CHARS
         passing: keyword
         description: 応答の上限
+      - name: env
+        type: Mapping[str, str]
+        required: false
+        default: '`{}`'
+        passing: keyword
+        description: 本文の変数参照を展開する環境変数（MCP サーバーは `os.environ` を渡す）
     returns:
       type: ReadRulesResult
       description: 返す本文・次に回す場所・取得できなかった場所
     process: |-
       1. 場所ごとに本文を読む（URL は `fetch`、パスは UTF-8）。失敗は理由を添えて failures へ
-      2. `render_result` で数えて本文 1 件だけで `limit` を超えるものは `1 件で応答の上限（{limit} 字）を超える` として failures へ
-      3. 残りを順に見て、「載せた本文 + この本文」と「回した場所 + まだ判定していない場所」を deferred に入れた応答が `limit` に収まれば載せる
-      4. 収まらないとき、本文を 1 件でも載せていれば deferred へ。まだ 1 件も載せていなければ `ほかの場所と合わせると応答の上限（{limit} 字）を超える。この場所だけを locations に渡して取り直す` として failures へ（呼び出しのたびに少なくとも 1 件が pages か failures に出て、呼び直しで進む）
+      2. 読めた本文を `expand_body(body, env)` で展開する（以降の上限の計算は展開後の本文で行う）
+      3. `render_result` で数えて本文 1 件だけで `limit` を超えるものは `1 件で応答の上限（{limit} 字）を超える` として failures へ
+      4. 残りを順に見て、「載せた本文 + この本文」と「回した場所 + まだ判定していない場所」を deferred に入れた応答が `limit` に収まれば載せる
+      5. 収まらないとき、本文を 1 件でも載せていれば deferred へ。まだ 1 件も載せていなければ `ほかの場所と合わせると応答の上限（{limit} 字）を超える。この場所だけを locations に渡して取り直す` として failures へ（呼び出しのたびに少なくとも 1 件が pages か failures に出て、呼び直しで進む）
     unit_tests:
       - name: test_collect_pages
         case: 正常
@@ -266,6 +278,49 @@ functions:
         condition: 実在しないローカルの場所と、FetchError を送出する URL
         mock: fetch
         expected: failures に 2 件、pages は空
+      - name: test_collect_pages_when_body_has_variables
+        case: 正常
+        summary: 展開した本文を返し、展開後の字数で上限を数える
+        condition: '`!{X}` だけの本文 1 件、`env` に 200 字の `X`、`limit` は展開前の本文なら収まり展開後は超える字数'
+        mock: なし
+        expected: pages は空で、failures に 1 件（1 件で上限を超える）。`limit` を戻すと pages の本文が 200 字の値になる
+  - name: expand_body
+    title: 本文の展開
+    container: features/fetch/service.py
+    usecase: ルールの本文を取得する
+    summary: 本文の変数参照を展開し、展開できなかった名前があれば先頭に注釈を 1 行足す
+    kind: 関数
+    scope: public
+    args:
+      - name: body
+        type: str
+        required: true
+        passing: positional
+        description: 読んだ本文
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: MCP サーバーの環境変数
+    returns:
+      type: str
+      description: 展開して注釈を足した本文
+    process: |-
+      1. `expand_variables(body, env)` で展開する
+      2. `unresolved` があれば、`UNRESOLVED_NOTE` に名前を「、」で並べた 1 行と改行を、展開した本文の先頭に足す
+    unit_tests:
+      - name: test_expand_body
+        case: 正常
+        summary: 全て展開できれば注釈を足さない
+        condition: '`# A\n!{X}`、`env` に `X=1`'
+        mock: なし
+        expected: '`# A\n1`'
+      - name: test_expand_body_when_unset
+        case: 正常
+        summary: 展開できない名前を注釈で知らせる
+        condition: '`!{B} !{X} !{A} !{B}`、`env` に `X=1`'
+        mock: なし
+        expected: '1 行目が `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: B、A`、2 行目が `!{B} 1 !{A} !{B}`'
 test_files:
   - tests/unit/rule_inject/features/fetch/test_client.py
   - tests/unit/rule_inject/features/fetch/test_service.py

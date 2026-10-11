@@ -35,6 +35,16 @@ constants:
     container: features/index/service.py
     summary: 読む順に並べた環境変数の名前
     value: '`("RULE_INJECT_INDEXES_USER", "RULE_INJECT_INDEXES_PROJECT")`'
+  - name: USER_INDEX_DEFAULT
+    title: ユーザーの索引の既定の置き場所
+    container: features/index/service.py
+    summary: '`RULE_INJECT_INDEXES_USER` が無いときに読む索引の、設定フォルダからのパス。設定フォルダは `XDG_CONFIG_HOME`（無いか空なら `~/.config`）'
+    value: '`rule-inject/rules.yaml`'
+  - name: PROJECT_INDEX_DEFAULT
+    title: プロジェクトの索引の既定の置き場所
+    container: features/index/service.py
+    summary: '`RULE_INJECT_INDEXES_PROJECT` が無いときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス'
+    value: '`rules.yaml`'
 data_models:
   - name: IndexEntry
     title: 索引のエントリ
@@ -175,7 +185,7 @@ functions:
     title: 索引の読み込み
     container: features/index/service.py
     usecase: 共通
-    summary: 環境変数が指す全ての索引を読み、読めたエントリと読めなかった索引を返す
+    summary: 環境変数か既定の置き場所が指す全ての索引を読み、読めたエントリと読めなかった索引・読み飛ばしたエントリを返す
     kind: 関数
     scope: public
     args:
@@ -183,15 +193,17 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: positional
-        description: 環境変数（`INDEX_ENV_NAMES` と `CLAUDE_PROJECT_DIR` を使う）
+        description: 環境変数（`INDEX_ENV_NAMES`・`CLAUDE_PROJECT_DIR`・`XDG_CONFIG_HOME` と、`rule` の変数参照の値を使う）
     returns:
       type: IndexLoadResult
       description: 読めたエントリと読めなかった索引
     process: |-
-      1. `INDEX_ENV_NAMES` の順に、値をカンマで分けて前後の空白を落とす
-      2. 各パスを `resolve_location` で解く（基準は `CLAUDE_PROJECT_DIR`。無ければ相対パスの索引は読めない索引にする）
-      3. UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
-      4. エントリの `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
+      1. `INDEX_ENV_NAMES` の順に、環境変数があれば値をカンマで分けて前後の空白を落とす（空の文字列ならその索引は読まない）
+      2. 環境変数が無ければ既定の置き場所（ユーザーは `{XDG_CONFIG_HOME か ~/.config}/{USER_INDEX_DEFAULT}`、プロジェクトは `{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}`）を使う。既定の置き場所は、ファイルが無いときと `CLAUDE_PROJECT_DIR` が無いときは理由を載せずに飛ばす
+      3. 各パスを `resolve_location` で解く（基準は `CLAUDE_PROJECT_DIR`。無ければ相対パスの索引は読めない索引にする）
+      4. UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
+      5. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に足す。同じ索引のほかのエントリは読む
+      6. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
     unit_tests:
       - name: test_load_indexes
         case: 正常
@@ -213,10 +225,40 @@ functions:
         expected: '`failures` に 2 件（パスと理由）、`entries` に正しい索引のエントリ'
       - name: test_load_indexes_when_no_env
         case: 正常
-        summary: 環境変数が無い
-        condition: どちらの環境変数も無い
+        summary: 環境変数が無く、既定の置き場所にも索引が無い
+        condition: どちらの環境変数も無い。`XDG_CONFIG_HOME` と `CLAUDE_PROJECT_DIR` は空の一時フォルダ
         mock: なし
         expected: '`entries` も `failures` も空'
+      - name: test_load_indexes_when_default
+        case: 正常
+        summary: 環境変数が無ければ既定の置き場所を読む
+        condition: どちらの環境変数も無い。`{XDG_CONFIG_HOME}/rule-inject/rules.yaml` と `{CLAUDE_PROJECT_DIR}/rules.yaml` に索引を 1 つずつ置く
+        mock: なし
+        expected: 2 索引のエントリがユーザー→プロジェクトの順に読め、`failures` が空
+      - name: test_load_indexes_when_default_config_home
+        case: 正常
+        summary: '`XDG_CONFIG_HOME` が無ければ `~/.config` の下を読む'
+        condition: '`XDG_CONFIG_HOME` も `CLAUDE_PROJECT_DIR` も無い。`HOME` を一時フォルダに向け、`{HOME}/.config/rule-inject/rules.yaml` に索引を置く'
+        mock: '`HOME`（monkeypatch）'
+        expected: その索引のエントリが読め、`failures` が空
+      - name: test_load_indexes_when_env_empty
+        case: 正常
+        summary: 空の文字列の環境変数は既定の置き場所も読まない
+        condition: 両方の既定の置き場所に索引を置き、`RULE_INJECT_INDEXES_PROJECT` だけを空の文字列にする
+        mock: なし
+        expected: ユーザーの既定の索引だけが読める
+      - name: test_load_indexes_when_rule_has_variable
+        case: 正常
+        summary: '`rule` の変数参照を展開してから解く'
+        condition: '`rule: "!{RULES}/a.md"` と `rule: "./!{SUB}/b.md"` の 2 エントリ。`env` に `RULES=/r` と `SUB=s`'
+        mock: なし
+        expected: '`location` が `/r/a.md` と `{索引のフォルダ}/s/b.md`。`failures` が空'
+      - name: test_load_indexes_when_rule_variable_unset
+        case: 正常
+        summary: 展開できないエントリだけを読み飛ばす
+        condition: '`rule: "!{UNSET}/a.md"` と通常の `rule` の 2 エントリ。`UNSET` は `env` に無い'
+        mock: なし
+        expected: '`entries` に通常のエントリだけ。`failures` に 1 件（path が索引、reason に `!{UNSET}/a.md` と `UNSET`）'
   - name: match_path
     title: パスの照合
     container: features/index/service.py

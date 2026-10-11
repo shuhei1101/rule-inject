@@ -41,11 +41,13 @@ def log_folder(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def base_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
-    """このプラグインの環境変数を外し、記録フォルダ・ログのフォルダ・プロジェクトの直下だけを足した環境変数。"""
+    """このプラグインの環境変数を外し、記録フォルダ・ログのフォルダ・プロジェクトの直下・索引の無い設定フォルダだけを足した環境変数。"""
     env = {name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")}
     env["RULE_INJECT_STATE_DIR"] = str(state_dir)
     env["RULE_INJECT_LOG_DIR"] = str(log_folder)
     env["CLAUDE_PROJECT_DIR"] = str(tmp_path)
+    # 既定の索引が実際の設定フォルダの索引を読まないよう、索引の無い一時フォルダを指す
+    env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
     return env
 
 
@@ -157,6 +159,20 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
     def _write(locations: Sequence[str], name: str | None = None) -> Path:
         """locations を 1 行ずつ、name（無ければこのセッション）の記録ファイルに書く。"""
         path = state_dir / f"{name or session_id}.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
+        return path
+
+    return _write
+
+
+@pytest.fixture
+def write_guided(state_dir: Path, session_id: str) -> Callable[..., Path]:
+    """案内済みの記録ファイルを、場所を 1 行ずつ書いて置く factory。"""
+
+    def _write(locations: Sequence[str], name: str | None = None) -> Path:
+        """locations を 1 行ずつ、name（無ければこのセッション）の案内済みの記録ファイルに書く。"""
+        path = state_dir / f"{name or session_id}.guided.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
         return path

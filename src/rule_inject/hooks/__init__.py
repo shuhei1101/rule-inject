@@ -9,6 +9,7 @@ from rule_inject.hooks._runner import HookHandler, UnexpectedNotifier
 from rule_inject.hooks.discard_read import discard_read
 from rule_inject.hooks.record_read import record_read
 from rule_inject.hooks.rule_guide import guide_rules
+from rule_inject.hooks.search_guide import search_guide
 from rule_inject.hooks.session_id_injection import inject_session_id
 from rule_inject.hooks.sweep_read import sweep_read
 from rule_inject.hooks.work_rules import work_rules
@@ -38,6 +39,11 @@ HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
     "rule_guide": (Component.RULE_GUIDE, guide_rules, _notice_of("PreToolUse", "ルールの案内")),
     "session_id_injection": (Component.SESSION_ID_INJECTION, inject_session_id, _silent),
     "record_read": (Component.RECORD_READ, record_read, _notice_of("PostToolUse", "既読の記録")),
+    "search_guide": (
+        Component.SEARCH_GUIDE,
+        search_guide,
+        _notice_of("PostToolUse", "検索結果の案内"),
+    ),
     "discard_read": (Component.DISCARD_READ, discard_read, _silent),
     "work_rules": (Component.WORK_RULES, work_rules, _silent),
     "sweep_read": (Component.SWEEP_READ, sweep_read, _silent),

@@ -9,6 +9,11 @@ scenarios:
         notes: 最終更新は `os.utime` で戻す
       - name: 新しい既読の記録
         description: 別のセッションの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日新しく（保持期間の内側に）する
+      - name: 古い案内済みの記録
+        description: 古い既読の記録と同じセッションの案内済みの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日前にする
+        notes: 最終更新は `os.utime` で戻す
+      - name: 新しい案内済みの記録
+        description: 新しい既読の記録と同じセッションの案内済みの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日新しくする
       - name: 操作
         description: プロンプトで、ツールを呼ばずに 1 語で答えるよう指示する
         notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
@@ -18,17 +23,23 @@ scenarios:
         participant CC as Claude Code
         participant S as SessionStart フック
         participant ST as 既読の記録
+        participant GD as 案内済みの記録
 
         CC->>S: セッションの開始（session_id・source）
         S->>ST: 最終更新が保持期間を過ぎた記録ファイルを探す
         ST-->>S: 古い記録ファイル
         S->>ST: 古い記録ファイルを消す
+        S->>GD: 最終更新が保持期間を過ぎた記録ファイルを探す
+        GD-->>S: 古い記録ファイル
+        S->>GD: 古い記録ファイルを消す
       ```
     expected:
       - 古い既読の記録ファイルが無い
       - 新しい既読の記録ファイルが残っている
+      - 古い案内済みの記録ファイルが無い
+      - 新しい案内済みの記録ファイルが残っている
     test: test_normal
-lead: セッションの開始時に `SessionStart` フックが、最終更新から保持期間を過ぎた既読の記録ファイルを消す。圧縮しないまま終わったセッションの記録ファイルも、保持期間を過ぎれば残らない。
+lead: セッションの開始時に `SessionStart` フックが、最終更新から保持期間を過ぎた既読の記録ファイルと案内済みの記録ファイルを消す。圧縮しないまま終わったセッションの記録ファイルも、保持期間を過ぎれば残らない。
 issue: 5
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）

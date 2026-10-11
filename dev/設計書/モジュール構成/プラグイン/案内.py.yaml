@@ -1,10 +1,10 @@
 title: "プラグイン / 案内"
-lead: フックが返す案内文（止める案内・止めない案内・失敗の知らせ・作業の決まり）を組み立てる。
+lead: フックが返す案内文（止める案内・止めない案内・検索結果の案内・失敗の知らせ・作業の決まり）を組み立てる。
 directory: |-
   ```text
   src/rule_inject/features/guidance/
   ├── __init__.py   # 公開 API
-  ├── types.py      # GuidedRule（案内が読むルールの最小の型）
+  ├── types.py      # GuidedRule（案内が読むルールの最小の型）・Guidance（案内文と載せた場所）
   └── service.py    # 案内文の組み立てと文面の定数
   ```
 constants:
@@ -24,12 +24,17 @@ constants:
     title: 止めない案内の冒頭
     container: features/guidance/service.py
     summary: 止めないときの案内文の冒頭（やり直しを促さない）
-    value: '`操作の対象に当たる未読のルールがあります。必要に応じて read_rules に下の場所を渡して本文を読んでください。`'
+    value: '`操作の対象に当たる未読のルールがあります。必要に応じて read_rules に下の場所を渡して本文を読んでください。この案内はルールごとにセッションで 1 回だけ出ます。`'
   - name: WORK_RULES
     title: 作業の決まり
     container: features/guidance/service.py
     summary: SessionStart で載せる文面
     value: '`新しいファイルは、まず Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書いてください。空で作った時点で、そのファイルに当たるルールが案内されます。`'
+  - name: SEARCH_HEADER
+    title: 検索結果の案内の冒頭
+    container: features/guidance/service.py
+    summary: 検索結果の案内の冒頭（読むかは任意と伝え、やり直しを促さない）
+    value: '`検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は read_rules に下の場所を渡して本文を取得してください。この案内はルールごとにセッションで 1 回だけ出ます。`'
 functions:
   - name: build_guidance
     title: 案内文の組み立て
@@ -51,8 +56,8 @@ functions:
         passing: keyword
         description: 字数の上限
     returns:
-      type: str
-      description: 止めるルールがあれば `BLOCKING_HEADER`、無ければ `NON_BLOCKING_HEADER` で始まる案内文
+      type: Guidance
+      description: 止めるルールがあれば `BLOCKING_HEADER`、無ければ `NON_BLOCKING_HEADER` で始まる案内文と、載せた場所
     process: |-
       1. 止めるルールを先に、元の順を保って並べる
       2. 冒頭の後に `- {場所}` を 1 行ずつ足し、末尾に残りの件数の行を足しても `limit` を超えないところまで載せる
@@ -76,6 +81,12 @@ functions:
         condition: 1 件 150 字の場所を 100 件、`limit=10000`
         mock: なし
         expected: 10,000 字以内で、末尾に載せきれなかった件数がある
+      - name: test_build_guidance_when_shown
+        case: 正常
+        summary: 載せた場所だけを shown に返す
+        condition: 1 件 150 字の場所を 100 件、`limit=10000`
+        mock: なし
+        expected: '`shown` の件数が案内文の `- ` の行数と同じで、並びも同じ'
   - name: build_failure_notice
     title: 失敗の知らせの組み立て
     container: features/guidance/service.py
@@ -115,6 +126,57 @@ functions:
         condition: IndexReadError 2 件
         mock: なし
         expected: '2 行の `- {path}: {reason}` とログの場所を含む'
+  - name: build_search_guidance
+    title: 検索結果の案内文の組み立て
+    container: features/guidance/service.py
+    usecase: 検索の結果に出たファイルのルールの案内を受ける
+    summary: 検索で当たったファイルの未読・未案内のルールの場所を、上限に収まる分だけ並べた案内文を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 案内するルールの場所
+      - name: unchecked
+        type: int
+        required: false
+        default: '`0`'
+        passing: keyword
+        description: 照合するパスの数の上限で照合しなかったパスの件数
+      - name: limit
+        type: int
+        required: false
+        default: GUIDANCE_LIMIT
+        passing: keyword
+        description: 字数の上限
+    returns:
+      type: Guidance
+      description: '`SEARCH_HEADER` で始まる案内文と、載せた場所'
+    process: |-
+      1. 冒頭の後に `- {場所}` を 1 行ずつ、末尾の行を足しても `limit` を超えないところまで載せる
+      2. 載せきれなかったときは `ほか {N} 件のルールは、次に当たったときに案内します。` を末尾に足す
+      3. `unchecked` が 1 以上なら `検索結果のうち {unchecked} 件は照合していません。` を末尾に足す
+    unit_tests:
+      - name: test_build_search_guidance
+        case: 正常
+        summary: 読むかは任意と伝える案内
+        condition: 場所 2 件
+        mock: なし
+        expected: '`SEARCH_HEADER` で始まり 2 行の場所がある。「やり直してください」を含まない。`shown` が 2 件'
+      - name: test_build_search_guidance_when_unchecked
+        case: 正常
+        summary: 照合しなかった件数を添える
+        condition: 場所 1 件、`unchecked=5`
+        mock: なし
+        expected: 末尾に `検索結果のうち 5 件は照合していません。`
+      - name: test_build_search_guidance_when_too_long
+        case: 正常
+        summary: 上限を超える分を件数にする
+        condition: 1 件 150 字の場所を 100 件、`limit=10000`
+        mock: なし
+        expected: 10,000 字以内で、末尾に載せきれなかった件数があり、`shown` は載せた分だけ
 test_files:
   - tests/unit/rule_inject/features/guidance/test_service.py
 data_models:
@@ -131,3 +193,16 @@ data_models:
       - name: blocking
         type: bool
         description: 操作を止めるルールか
+  - name: Guidance
+    title: 案内文
+    container: features/guidance/types.py
+    usecase: 未読のルールの案内を受ける
+    role: DTO
+    summary: 組み立てた案内文と、上限に収まって載せたルールの場所。フックは `shown` だけを案内済みにする
+    properties:
+      - name: text
+        type: str
+        description: 案内文
+      - name: shown
+        type: tuple[str, ...]
+        description: 案内文に載せたルールの場所（載せた順）

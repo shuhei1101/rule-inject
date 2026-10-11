@@ -154,3 +154,19 @@ def test_sweep_read_when_invalid_setting(
     assert not expired_log.exists()
     assert within_log.exists()
     assert today_log.exists()
+
+
+def test_sweep_read_when_guided(
+    hook_env: dict[str, str],
+    hook_payload: Callable[..., dict[str, Any]],
+    write_aged_record: Callable[..., Path],
+) -> None:
+    """保持期間を過ぎた案内済みの記録も消す（正常系）。"""
+    # 準備
+    expired = write_aged_record("expired-session", 31, suffix=".guided.txt")
+    payload = hook_payload("SessionStart", source="startup")
+    # 実行
+    result = sweep_read(payload, hook_env)
+    # 検証
+    assert result is None
+    assert not expired.exists()

@@ -272,3 +272,134 @@ def test_sweep_records_when_undeletable(
     assert isinstance(result[0], RecordDeleteError)
     assert result[0].path == str(expired)
     assert expired.exists()
+
+
+def test_sweep_records_when_guided(
+    state_dir: Path,
+    session_id: str,
+    now: Callable[[], float],
+    write_aged_record: Callable[..., Path],
+) -> None:
+    """保持期間を過ぎた案内済みの記録ファイルも消す（正常系）。"""
+    # 準備
+    suffix = ".guided.txt"
+    expired = write_aged_record("expired-session", 31, base=now(), suffix=suffix)
+    within = write_aged_record("within-session", 29, base=now(), suffix=suffix)
+    kept = write_aged_record(session_id, 31, base=now(), suffix=suffix)
+    invalid_name = write_aged_record("a b", 31, base=now(), suffix=suffix)
+    # 実行
+    result = service.sweep_records(state_dir, session_id, now=now, retention_days=30)
+    # 検証
+    assert not expired.exists()
+    assert within.exists()
+    assert kept.exists()
+    assert invalid_name.exists()
+    assert result == ()
+
+
+def test_read_guided(
+    state_dir: Path,
+    session_id: str,
+    write_record: Callable[[Sequence[str]], Path],
+    write_guided: Callable[[Sequence[str]], Path],
+) -> None:
+    """案内済みの記録を集合で返す（正常系）。"""
+    # 準備
+    write_record(["/r/a.md"])
+    write_guided(["/r/b.md", "/r/b.md"])
+    # 実行
+    result = service.read_guided(state_dir, session_id)
+    # 検証
+    assert result == frozenset({"/r/b.md"})
+
+
+def test_read_guided_when_missing(state_dir: Path, session_id: str) -> None:
+    """ファイルが無ければ空を返す（正常系）。"""
+    # 実行
+    result = service.read_guided(state_dir, session_id)
+    # 検証
+    assert result == frozenset()
+
+
+def test_read_guided_when_unreadable(
+    state_dir: Path,
+    session_id: str,
+    write_guided: Callable[[Sequence[str]], Path],
+    unwritable: Callable[[Path, int], Path],
+) -> None:
+    """読めない案内済みの記録ファイルを RecordReadError にする（異常系）。"""
+    # 準備
+    guided_file = unwritable(write_guided(["/r/b.md"]), 0o000)
+    # 実行・検証
+    with pytest.raises(RecordReadError) as excinfo:
+        service.read_guided(state_dir, session_id)
+    assert excinfo.value.path == str(guided_file)
+
+
+def test_append_guided(
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """案内済みの記録ファイルへ追記する（正常系）。"""
+    # 実行
+    service.append_guided(state_dir, session_id, ["/r/a.md", "/r/b.md"])
+    # 検証
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == ["/r/a.md", "/r/b.md"]
+    assert not (state_dir / f"{session_id}.txt").exists()
+
+
+def test_append_guided_when_unwritable(
+    state_dir: Path,
+    session_id: str,
+    unwritable: Callable[[Path, int], Path],
+) -> None:
+    """追記できないとき RecordWriteError にする（異常系）。"""
+    # 準備
+    state_dir.mkdir()
+    unwritable(state_dir, 0o500)
+    # 実行・検証
+    with pytest.raises(RecordWriteError) as excinfo:
+        service.append_guided(state_dir, session_id, ["/r/a.md"])
+    assert excinfo.value.path == str(state_dir / f"{session_id}.guided.txt")
+
+
+def test_delete_guided(
+    state_dir: Path,
+    session_id: str,
+    write_record: Callable[[Sequence[str]], Path],
+    write_guided: Callable[[Sequence[str]], Path],
+) -> None:
+    """案内済みの記録ファイルだけを消す（正常系）。"""
+    # 準備
+    record_file = write_record(["/r/a.md"])
+    guided_file = write_guided(["/r/b.md"])
+    # 実行
+    service.delete_guided(state_dir, session_id)
+    # 検証
+    assert not guided_file.exists()
+    assert record_file.exists()
+
+
+def test_delete_guided_when_missing(state_dir: Path, session_id: str) -> None:
+    """ファイルが無ければ何もしない（正常系）。"""
+    # 実行
+    service.delete_guided(state_dir, session_id)
+    # 検証
+    assert not state_dir.exists()
+
+
+def test_delete_guided_when_undeletable(
+    state_dir: Path,
+    session_id: str,
+    write_guided: Callable[[Sequence[str]], Path],
+    unwritable: Callable[[Path, int], Path],
+) -> None:
+    """消せない案内済みの記録ファイルを RecordDeleteError にする（異常系）。"""
+    # 準備
+    guided_file = write_guided(["/r/b.md"])
+    unwritable(state_dir, 0o555)
+    # 実行・検証
+    with pytest.raises(RecordDeleteError) as excinfo:
+        service.delete_guided(state_dir, session_id)
+    assert excinfo.value.path == str(guided_file)

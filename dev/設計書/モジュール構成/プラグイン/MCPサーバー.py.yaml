@@ -35,7 +35,7 @@ functions:
     process: |-
       1. `MCPServer("rule-inject")` を作る
       2. `read_rules` を `tool(meta={"anthropic/maxResultSizeChars": MAX_RESULT_CHARS})` で登録する。引数の説明はインターフェース定義の文面を docstring の Args に書く
-      3. ツールの中では呼ばれるたびに `load_indexes(env)` と `state_dir(env)` を求め、同じファイルの `read_rules` を呼んで `render_result` を返す
+      3. ツールの中では呼ばれるたびに `load_indexes(env)` と `state_dir(env)` を求め、同じファイルの `read_rules` を `env=env` つきで呼んで `render_result` を返す
       4. ToolArgumentError・RecordWriteError・想定外の例外はログへ書いてから、文面を載せて送出し直す（SDK が isError の応答にする）
     unit_tests:
       - name: test_build_server
@@ -113,13 +113,19 @@ functions:
         default: MAX_RESULT_CHARS
         passing: keyword
         description: 応答の上限
+      - name: env
+        type: Mapping[str, str]
+        required: false
+        default: '`{}`'
+        passing: keyword
+        description: 本文の変数参照を展開する環境変数。`build_server` が受けた `env` を渡す
     returns:
       type: ReadRulesResult
       description: 返す本文・次に回す場所・取得できなかった場所
     process: |-
       1. `session_id` が `is_valid_session_id` に合わない、または `locations` と `paths` がどちらも空なら ToolArgumentError
       2. `select_locations(entries, locations, paths)` で読む場所を選ぶ
-      3. rejected を FetchFailure に変えて `collect_pages(targets, failures=...)` に渡し、本文を集める
+      3. rejected を FetchFailure に変えて `collect_pages(targets, failures=..., env=env)` に渡し、変数参照を展開した本文を集める
       4. pages の場所を `append_record` で既読にする
     exceptions:
       - name: ToolArgumentError
