@@ -276,3 +276,37 @@ def test_error_when_record_unwritable(
     assert str(state_dir) in result.content[0].text
     assert "PermissionError" in result.content[0].text
     assert '"operation": "write_record"' in capsys.readouterr().err
+
+
+def test_normal_when_body_has_variables(
+    server_env: Callable[..., Mapping[str, str]],
+    call_read_rules: Callable[..., Any],
+    rule_file: Callable[..., Path],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """設定された名前を展開し、未設定の名前を残して本文の先頭に注釈を足す（正常系）。"""
+    # 準備
+    body = (
+        "# 規約\n"
+        "set: !{SET_NAME}\n"
+        "empty: [!{EMPTY_NAME}]\n"
+        "unset: !{UNSET_NAME} / !{UNSET_NAME}\n"
+        "spaced: !{ SET_NAME }\n"
+    )
+    rule = rule_file("var.md", body)
+    env = {**server_env({"rule": str(rule)}), "SET_NAME": "value-1", "EMPTY_NAME": ""}
+    # 実行
+    result = call_read_rules(env, {"locations": [str(rule)], "session_id": session_id})
+    # 検証
+    expanded = _payload(result)["pages"][0]["body"]
+    assert "set: value-1" in expanded
+    assert "!{SET_NAME}" not in expanded
+    assert "empty: []" in expanded
+    assert "unset: !{UNSET_NAME} / !{UNSET_NAME}" in expanded
+    assert "spaced: !{ SET_NAME }" in expanded
+    assert expanded.splitlines()[0] == (
+        "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: UNSET_NAME"
+    )
+    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]

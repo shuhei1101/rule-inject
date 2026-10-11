@@ -12,17 +12,22 @@ def test_normal(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[..., Path],
+    write_guided: Callable[..., Path],
 ) -> None:
-    """そのセッションの記録ファイルだけを消す（正常系）。"""
+    """そのセッションの既読の記録ファイルと案内済みの記録ファイルだけを消す（正常系）。"""
     # 準備
     target = write_record(["/r/a.md"])
     other = write_record(["/r/b.md"], "other-session")
+    target_guided = write_guided(["/r/c.md"])
+    other_guided = write_guided(["/r/d.md"], "other-session")
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
     completed = run_hook("discard_read", payload)
     # 検証
     assert not target.exists()
+    assert not target_guided.exists()
     assert other.exists()
+    assert other_guided.exists()
     assert completed.returncode == 0
 
 

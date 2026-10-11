@@ -82,11 +82,14 @@ def test_normal_when_already_read(
 
 def test_normal_when_not_blocked(
     tmp_path: Path,
+    state_dir: Path,
+    session_id: str,
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
+    read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """操作の種別が `on` に当たらない未読のルールは止めずに案内する（正常系）。"""
+    """操作の種別が `on` に当たらない未読のルールは止めずに案内し、案内済みにする（正常系）。"""
     # 準備
     index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
     payload = hook_payload(
@@ -101,6 +104,7 @@ def test_normal_when_not_blocked(
     assert "permissionDecision" not in output
     assert RULE in output["additionalContext"]
     assert "やり直してください" not in output["additionalContext"]
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0
 
 
@@ -300,3 +304,176 @@ def test_normal_when_read_by_grep(
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
+
+
+@pytest.fixture
+def read_payload(
+    tmp_path: Path, hook_payload: Callable[..., dict[str, Any]]
+) -> Callable[..., dict[str, Any]]:
+    """まだ無い .py のパスを Read する PreToolUse の入力を作る factory。"""
+
+    def _make(relative: str = "src/app.py") -> dict[str, Any]:
+        """tmp_path の下の relative を読む Read の入力を返す。"""
+        return hook_payload(
+            "PreToolUse",
+            tool_name="Read",
+            tool_input={"file_path": str(tmp_path / relative)},
+        )
+
+    return _make
+
+
+def test_normal_when_already_guided(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    read_payload: Callable[..., dict[str, Any]],
+    write_guided: Callable[..., Path],
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """案内済みのルールは止めない案内を出さない（正常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
+    write_guided([RULE])
+    # 実行
+    completed = run_hook("rule_guide", read_payload(), index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
+    assert completed.returncode == 0
+
+
+def test_normal_when_blocked_twice(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """止める案内に並べたルールは案内済みにせず、次も止める（正常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
+    # 実行
+    first = run_hook("rule_guide", write_payload(), index=index)
+    second = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    assert json.loads(first.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert json.loads(second.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert not (state_dir / f"{session_id}.guided.txt").exists()
+
+
+def test_normal_when_default_index(
+    log_folder: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """索引の環境変数が無いとき、既定の置き場所の索引で案内する（正常系）。"""
+    # 準備
+    make_index(
+        index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
+        "rules.yaml",
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload())
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert RULE in output["permissionDecisionReason"]
+    assert "索引を読めませんでした" not in output["permissionDecisionReason"]
+    assert not log_folder.exists()
+
+
+def test_normal_when_index_env_empty(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """索引の環境変数が空の文字列のとき、既定の置き場所の索引を読まない（正常系）。"""
+    # 準備
+    make_index(
+        index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
+        "rules.yaml",
+    )
+    # 実行
+    completed = run_hook(
+        "rule_guide", write_payload(), extra_env={"RULE_INJECT_INDEXES_PROJECT": ""}
+    )
+    # 検証
+    assert completed.stdout == ""
+    assert completed.returncode == 0
+
+
+def test_normal_when_rule_has_variable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`rule` の変数参照を環境変数で展開した場所で案内する（正常系）。"""
+    # 準備
+    index = write_index({"rule": '"!{RULES_DIR}/python.md"', "paths": ["**/*.py"], "on": ["write"]})
+    # 実行
+    completed = run_hook(
+        "rule_guide", write_payload(), index=index, extra_env={"RULES_DIR": "/rules-dir"}
+    )
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert "/rules-dir/python.md" in output["permissionDecisionReason"]
+    assert "!{RULES_DIR}" not in output["permissionDecisionReason"]
+
+
+def test_error_when_rule_variable_unset(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """未設定の名前が残ったエントリを読み飛ばし、止めずに理由を載せる（異常系）。"""
+    # 準備
+    index = write_index(
+        {"rule": '"!{UNSET_DIR}/python.md"', "paths": ["**/*.py"], "on": ["write"]},
+        {"rule": RULE, "paths": ["**/*.md"], "on": ["write"]},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert str(index) in output["additionalContext"]
+    assert "!{UNSET_DIR}/python.md" in output["additionalContext"]
+    assert "UNSET_DIR" in output["additionalContext"]
+    logged = read_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_index"
+    assert completed.returncode == 0
+
+
+def test_error_when_guided_record_unwritable(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    read_payload: Callable[..., dict[str, Any]],
+    unwritable: Callable[[Path, int], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く（異常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
+    state_dir.mkdir()
+    unwritable(state_dir, 0o500)
+    # 実行
+    completed = run_hook("rule_guide", read_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert RULE in output["additionalContext"]
+    assert str(state_dir / f"{session_id}.guided.txt") in output["additionalContext"]
+    logged = read_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "write_record"
+    assert completed.returncode == 0
