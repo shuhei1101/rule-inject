@@ -229,6 +229,43 @@ flows:
       - ToolError が返り、文面に記録フォルダの場所と理由が載っている
       - '標準エラー出力に `operation: write_record` の 1 行がある'
     test: test_error_when_record_unwritable
+  - name: 正常系（本文に変数参照がある）
+    summary: 設定された名前を展開し、未設定の名前を残して本文の先頭に注釈を足す
+    setup:
+      - name: Mock
+        description: なし（MCP サーバーを子プロセスとして起動し、stdio でツールを呼ぶ）
+      - name: ルールの本文
+        description: '`!{SET_NAME}`・`!{EMPTY_NAME}`・`!{UNSET_NAME}` を 1 つずつ含み、`!{UNSET_NAME}` を 2 回書いたローカルの Markdown'
+        notes: 空白を挙む `!{ SET_NAME }` のように名前の形から外れた書き方も 1 つ置き、置き換えないことを見る
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ
+      - name: 環境変数
+        description: '`SET_NAME=value-1` と `EMPTY_NAME=`（空）を渡して MCP サーバーを起動する。`UNSET_NAME` は渡さない'
+      - name: 入力
+        description: '`locations` にそのルールの場所'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant MCP as ルール本文の取得
+        participant RULE as ルールの本文
+        participant ST as 既読の記録
+
+        CC->>MCP: read_rules（locations・session_id）
+        MCP->>RULE: 本文を読む
+        MCP->>MCP: 設定された名前を値に置き換え、未設定の名前を残して先頭に注釈を足す
+        MCP->>MCP: 展開した本文で応答の上限に収める
+        MCP->>ST: 場所を追記する
+        MCP-->>CC: pages（展開した本文）
+      ```
+    expected:
+      - '`pages[0].body` に `value-1` が載り、`!{SET_NAME}` が残っていない'
+      - '`!{EMPTY_NAME}` が空文字になっている'
+      - '`!{UNSET_NAME}` が 2 箇所ともそのまま残っている'
+      - '`!{ SET_NAME }` がそのまま残っている'
+      - '`pages[0].body` の 1 行目が `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: UNSET_NAME`'
+      - 既読の記録にルールの場所が 1 行ある
+    test: test_normal_when_body_has_variables
 lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録する。
 identifier: read_rules
 idempotent: true
@@ -312,8 +349,8 @@ constraints:
     constraint: 1 件あたり 1 秒。超えたら `failures` に載せ、再試行しない
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
   - item: 索引
-    constraint: ルール案内と同じ環境変数・同じ読み方で読む（`paths` を照合するときに使う）
-    notes: プロジェクトの索引の相対パスは、ルール案内と同じく環境変数 `CLAUDE_PROJECT_DIR` から解く
+    constraint: ルール案内と同じ環境変数・同じ既定の置き場所・同じ読み方で読む（`paths` を照合するときと、`locations` を索引に載った場所と照らすときに使う）。`rule` の変数参照もルール案内と同じく展開し、展開できない名前が残ったエントリは読み飛ばす
+    notes: プロジェクトの索引の相対パスは、ルール案内と同じく環境変数 `CLAUDE_PROJECT_DIR` から解く。読み飛ばしたエントリの理由はフックが載せるため、このツールは載せない。その場所を `locations` で渡されたときは「索引に載っていない場所」として `failures` に載る
   - item: 許す場所
     constraint: 索引に載ったルールの場所（解決後の絶対パスか URL）に一致するものだけを読む。一致しない `locations` は読まずに `failures` に「索引に載っていない場所」として載せる
     notes: Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
@@ -322,4 +359,7 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力（MCP のログに残る）へ出す
     notes: stdio の MCP サーバーは標準出力が通信に使われるため、標準出力へは書かない
+  - item: 本文の変数参照
+    constraint: '読んだ本文の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）を MCP サーバーが起動したときの環境変数の値に置き換える。空の値は空文字に置き換える。未設定の名前は `!{名前}` のまま残し、本文の先頭に `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {名前を「、」で並べたもの}` の 1 行を足す（同じ名前は 1 回だけ、本文に出た順）。応答の大きさは展開して注釈を足した後の本文で数える'
+    notes: 値を変えたときはセッションを起こし直す（MCP サーバーは起動時の環境を使う）。置き換えた値の中の `!{…}` は置き換え直さない。既読の記録は展開の前後で変わらないルールの場所で書く
 test_file: tests/integration/plugin/test_read_rules.py
