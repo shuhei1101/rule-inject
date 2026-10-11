@@ -387,3 +387,4 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
     notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+test_file: tests/integration/plugin/test_search_guide.py
