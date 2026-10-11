@@ -1,0 +1,135 @@
+title: "検索の結果に出たファイルのルールの案内を受ける"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 検索されるファイル
+        description: 検索で当たる文字列を含むファイルを 1 つ置く
+      - name: 索引
+        description: 検索されるファイルに当たるパスの glob と、書く操作だけを必須とするエントリを 1 つ持つ YAML
+        notes: 読む操作を必須に含めない
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、プロジェクトのフォルダを Grep で検索し、当たったファイルの名前だけを答えるよう指示する
+        notes: '`--allowedTools` で Grep だけを許可し、フォルダを検索させる（ファイルを指す Grep は `PreToolUse` の案内に当たる）'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>CC: Grep（フォルダ）を実行する
+        CC->>P: Grep の入力と結果
+        P->>P: 結果から実在するファイルの絶対パスを拾う
+        P->>IDX: 拾ったパスと読む操作に当たるエントリを引く
+        IDX-->>P: ルールの場所
+        P->>ST: そのセッションの既読を引く
+        ST-->>P: 未読
+        P->>GD: そのセッションの案内済みを引く
+        GD-->>P: 未案内
+        P->>GD: ルールの場所を足す
+        P-->>CC: ルールの場所と、読むかは任意であることをコンテキストへ載せる
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - セッションの記録（transcript）に、読むかは任意と伝える検索結果の案内の文面とルールの場所が載っている
+      - そのセッションの案内済みの記録に、ルールの場所が載っている
+    test: test_normal
+  - name: 正常シナリオ（Bashの検索の結果）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 検索されるファイル
+        description: 名前で見分けられるファイルを 1 つ置く
+      - name: 索引
+        description: 正常シナリオと同じエントリを 1 つ持つ YAML
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、プロジェクトのフォルダを Bash の `find` で探し、見つかったファイルの名前だけを答えるよう指示する
+        notes: '`--allowedTools` で Bash を許可し、Grep・Glob を `--disallowedTools` で外して探し方を 1 つに定める'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>CC: Bash（find）を実行する
+        CC->>P: Bash の入力と出力
+        P->>P: 検索のコマンドと見分け、出力から実在するファイルの絶対パスを拾う
+        P->>IDX: 拾ったパスと読む操作に当たるエントリを引く
+        IDX-->>P: ルールの場所
+        P->>ST: そのセッションの既読を引く
+        ST-->>P: 未読
+        P->>GD: そのセッションの案内済みを引く
+        GD-->>P: 未案内
+        P->>GD: ルールの場所を足す
+        P-->>CC: ルールの場所と、読むかは任意であることをコンテキストへ載せる
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - セッションの記録（transcript）に、検索結果の案内の文面とルールの場所が載っている
+    test: test_normal_when_bash_search
+  - name: 正常シナリオ（案内済みのため案内しない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 検索されるファイル
+        description: 正常シナリオと同じファイル
+      - name: 索引
+        description: 正常シナリオと同じエントリを 1 つ持つ YAML
+      - name: 案内済みの記録
+        description: そのセッションでルールの場所を案内している
+        notes: 正常シナリオを流したセッションを `--resume {session_id}` で続ける
+      - name: 操作
+        description: プロンプトで、同じ検索をもう一度 Grep で行うよう指示する
+        notes: '`--allowedTools` で Grep だけを許可する'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>CC: Grep（フォルダ）を実行する
+        CC->>P: Grep の入力と結果
+        P->>P: 結果から実在するファイルの絶対パスを拾う
+        P->>IDX: 拾ったパスと読む操作に当たるエントリを引く
+        IDX-->>P: ルールの場所
+        P->>ST: そのセッションの既読を引く
+        ST-->>P: 未読
+        P->>GD: そのセッションの案内済みを引く
+        GD-->>P: 案内済み
+        P-->>CC: 何も返さない
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - この実行で増えたセッションの記録（transcript）に、検索結果の案内の文面が載っていない
+    test: test_normal_when_already_guided
+lead: Claude Code が Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）を呼んだ直後に、`PostToolUse` フックが結果に出た実在するファイルに当たる、未読で未案内のルールを止めずに案内する。読むかは任意と伝える。
+issue: 16
+primary_actor: Claude Code のセッション
+trigger: Claude Code が Grep・Glob・検索の Bash を呼び、結果が返る
+preconditions:
+  - プラグインが Claude Code に読み込まれている
+  - 索引を、環境変数で指した場所か既定の置き場所に置いている
+notes:
+  結合テストで確かめる要望: |-
+    次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
+
+    - Glob の結果と、Grep の出力の形（ファイル名だけ・一致した行・件数）ごとのパスの拾い方
+    - `grep` `rg` `ls` の Bash の出力からのパスの拾い方と、検索でない Bash を対象にしないこと
+    - 実在しないパス・フォルダを照合しないこと
+    - 既読のルールを案内しないこと
+    - 案内が非機能要件「フックの案内文の長さ」を超えるときの扱い
+    - 索引・既読の記録・案内済みの記録が読めない、案内済みの記録が書けないときの扱い

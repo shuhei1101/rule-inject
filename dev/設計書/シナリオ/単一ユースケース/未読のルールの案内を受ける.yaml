@@ -84,12 +84,12 @@ scenarios:
         description: プロンプトで、既にある対象のファイルを Read で読むよう指示する
         notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を置く
     flow: |-
-      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
         participant IDX as 索引
         participant ST as 既読の記録
+        participant GD as 案内済みの記録
         participant FS as 対象のファイル
 
         CC->>H: Read（対象のパス）
@@ -97,13 +97,16 @@ scenarios:
         IDX-->>H: ルールの場所（読む操作は必須でない）
         H->>ST: そのセッションの既読を引く
         ST-->>H: 未読
+        H->>GD: そのセッションの案内済みを引く
+        GD-->>H: 未案内
+        H->>GD: ルールの場所を足す
         H-->>CC: 操作を止めず、ルールの場所をコンテキストへ載せる
         CC->>FS: 読む
-      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - 応答に対象のファイルの文字列が出ている
       - セッションの記録（transcript）に、操作を止めない案内の文面とルールの場所が載っている
+      - そのセッションの案内済みの記録に、ルールの場所が載っている
     test: test_normal_when_not_blocked
   - name: 正常シナリオ（Bashで読む対象に当たる）
     setup:
@@ -202,13 +205,144 @@ scenarios:
       - 対象のファイルに中身が書かれている
       - セッションの記録（transcript）に、読めなかった索引の場所と理由が載っている
     test: test_error_when_index_unreadable
-lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。
+  - name: 正常シナリオ（案内済みのため案内しない）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 止めずに案内するシナリオと同じエントリを 1 つ持つ YAML
+        notes: 読む操作は必須に含めない
+      - name: 案内済みの記録
+        description: そのセッションでルールの場所を止めずに案内している
+        notes: 止めずに案内するシナリオを流したセッションを `--resume {session_id}` で続ける
+      - name: 操作
+        description: プロンプトで、同じ対象のファイルをもう一度 Read で読むよう指示する
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+        participant FS as 対象のファイル
+
+        CC->>H: Read（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所（読む操作は必須でない）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H->>GD: そのセッションの案内済みを引く
+        GD-->>H: 案内済み
+        H-->>CC: 何も返さない
+        CC->>FS: 読む
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 応答に対象のファイルの文字列が出ている
+      - この実行で増えたセッションの記録（transcript）に、操作を止めない案内の文面が載っていない
+    test: test_normal_when_already_guided
+  - name: 正常シナリオ（既定の置き場所の索引）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML を、プロジェクトの直下の `rules.yaml` に置く
+        notes: 索引を指す 2 つの環境変数は設定しない。ユーザーの既定の置き場所は、`XDG_CONFIG_HOME` を空のフォルダに向けて索引が無い状態にする
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 既定の置き場所の索引
+        participant ST as 既読の記録
+
+        CC->>H: Write（対象のパス）
+        H->>H: 環境変数が無いため、既定の置き場所を索引にする
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所（書く操作が必須）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H-->>CC: 操作を止め、ルールの場所と読み方を案内する
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Write が載っている'
+      - 止めた理由の文面に、ルールの場所が載っている
+      - 止めた理由の文面に、ユーザーの既定の置き場所の索引が読めなかった知らせが載っていない
+    test: test_normal_when_default_index
+  - name: 正常シナリオ（ルールの場所に変数参照がある）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: ルールのフォルダを `!{名前}` で書いた `rule` と、書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: '`!{名前}` の環境変数にルールのフォルダを設定して起動する'
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 読む
+        IDX-->>H: エントリ（`rule` に変数参照）
+        H->>H: 変数参照を環境変数の値に置き換えて、ルールの場所を解く
+        H->>H: 対象のパス・操作の種別に当たるエントリを引く
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H-->>CC: 操作を止め、展開したルールの場所と読み方を案内する
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Write が載っている'
+      - 止めた理由の文面に、変数参照を展開したルールの場所が載っている
+    test: test_normal_when_rule_has_variable
+  - name: 異常シナリオ（ルールの場所の変数参照を展開できない）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: 索引
+        description: 設定していない環境変数の `!{名前}` を `rule` に書き、書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: その名前の環境変数を設定せずに起動する
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant FS as 対象のファイル
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 読む
+        IDX-->>H: エントリ（`rule` に未設定の変数参照）
+        H->>H: 展開できない名前が残ったエントリを読み飛ばす
+        H-->>CC: 操作を止めず、読み飛ばしたエントリと展開できない名前をコンテキストへ載せる
+        CC->>FS: 書く
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 対象のファイルに中身が書かれている
+      - セッションの記録（transcript）に、読み飛ばした索引の場所と展開できない名前が載っている
+    test: test_error_when_rule_variable_unset
+lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ
 preconditions:
   - プラグインが Claude Code に読み込まれている
-  - 索引を指す環境変数が設定されている
+  - 索引を、環境変数で指した場所か既定の置き場所に置いている
 notes:
   結合テストで確かめる要望: |-
     次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
@@ -217,4 +351,7 @@ notes:
     - エントリの当てる範囲から外すパスの glob
     - 当てるツール名で MCP のツールの呼び出しに当たる案内
     - ルールの場所が URL のときの本文の取得と、取得に失敗したときの扱い（単一ユースケース「ルールの本文を取得する」の異常シナリオと同じ結末）
+    - ユーザーの既定の置き場所の索引と、既定の置き場所にファイルが無いとき（`CLAUDE_PROJECT_DIR` が無いときを含む）に理由を載せずに読まないこと
+    - 案内済みの記録が読めない・書けないときの扱い
+    - 止める案内に載せたルールを、案内済みにしないこと（読むまで止め続ける）
 test_file: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py

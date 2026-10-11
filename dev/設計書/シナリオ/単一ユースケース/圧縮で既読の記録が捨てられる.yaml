@@ -7,24 +7,28 @@ scenarios:
       - name: 既読のセッション
         description: ルールの本文を取得し、既読の記録に場所が載ったセッション
         notes: 以降の実行はこのセッションを `--resume {session_id}` で続ける
+      - name: 案内済みの記録
+        description: 同じセッションで別のルールを止めずに案内され、案内済みの記録に場所が載っている
+        notes: 読む操作を必須にしないエントリに当たるファイルを Read で読ませる
       - name: 圧縮
         description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を起こす'
         notes: '`-p` の `--resume` でも同じ session_id に `PreCompact`（`trigger: manual`）が走る（2026-09-29、Claude Code 2.1.284 で確認）'
     flow: |-
-      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant C as PreCompact フック
         participant ST as 既読の記録
+        participant GD as 案内済みの記録
 
         CC->>C: 圧縮の前に呼ぶ（session_id・trigger）
         C->>ST: そのセッションの既読の記録を捨てる
+        C->>GD: そのセッションの案内済みの記録を捨てる
         CC->>CC: 会話を圧縮する
-      ```
     expected:
       - そのセッションの既読の記録が空になっている
+      - そのセッションの案内済みの記録が空になっている
     test: test_normal
-lead: 会話が圧縮されるとき、`PreCompact` フックがそのセッションの既読の記録を捨てる。圧縮で本文がコンテキストから消えたルールは、次に当たったときにまた案内される。
+lead: 会話が圧縮されるとき、`PreCompact` フックがそのセッションの既読の記録と案内済みの記録を捨てる。圧縮で本文がコンテキストから消えたルールは、次に当たったときにまた案内される。
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: 会話の圧縮（手動の `/compact` か自動）
