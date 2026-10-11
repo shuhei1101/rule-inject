@@ -112,6 +112,7 @@ scenarios:
         description: プロンプトで、ルールの場所を渡してツールを 1 回呼ぶよう指示する
         notes: '`--allowedTools` でツールを許可する'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -127,6 +128,7 @@ scenarios:
         MCP->>MCP: 設定された名前を値に置き換え、未設定の名前を残して先頭に注釈を足す
         MCP->>ST: そのセッションの既読に場所を足す
         MCP-->>CC: 展開した本文
+      ```
     expected:
       - ツールの応答の本文に、設定した環境変数の値が載り、その `!{名前}` が残っていない
       - ツールの応答の本文に、設定していない環境変数の `!{名前}` がそのまま残っている

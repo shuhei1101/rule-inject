@@ -17,6 +17,7 @@ scenarios:
         description: プロンプトで、プロジェクトのフォルダを Grep で検索し、当たったファイルの名前だけを答えるよう指示する
         notes: '`--allowedTools` で Grep だけを許可し、フォルダを検索させる（ファイルを指す Grep は `PreToolUse` の案内に当たる）'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as PostToolUse フック
@@ -35,6 +36,7 @@ scenarios:
         GD-->>P: 未案内
         P->>GD: ルールの場所を足す
         P-->>CC: ルールの場所と、読むかは任意であることをコンテキストへ載せる
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）に、読むかは任意と伝える検索結果の案内の文面とルールの場所が載っている
@@ -56,6 +58,7 @@ scenarios:
         description: プロンプトで、プロジェクトのフォルダを Bash の `find` で探し、見つかったファイルの名前だけを答えるよう指示する
         notes: '`--allowedTools` で Bash を許可し、Grep・Glob を `--disallowedTools` で外して探し方を 1 つに定める'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as PostToolUse フック
@@ -74,6 +77,7 @@ scenarios:
         GD-->>P: 未案内
         P->>GD: ルールの場所を足す
         P-->>CC: ルールの場所と、読むかは任意であることをコンテキストへ載せる
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）に、検索結果の案内の文面とルールの場所が載っている
@@ -95,6 +99,7 @@ scenarios:
         description: プロンプトで、同じ検索をもう一度 Grep で行うよう指示する
         notes: '`--allowedTools` で Grep だけを許可する'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as PostToolUse フック
@@ -112,6 +117,7 @@ scenarios:
         P->>GD: そのセッションの案内済みを引く
         GD-->>P: 案内済み
         P-->>CC: 何も返さない
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - この実行で増えたセッションの記録（transcript）に、検索結果の案内の文面が載っていない

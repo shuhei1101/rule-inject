@@ -18,6 +18,7 @@ scenarios:
         description: プロンプトで、ツールを呼ばずに 1 語で答えるよう指示する
         notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant S as SessionStart フック
@@ -31,6 +32,7 @@ scenarios:
         S->>GD: 最終更新が保持期間を過ぎた記録ファイルを探す
         GD-->>S: 古い記録ファイル
         S->>GD: 古い記録ファイルを消す
+      ```
     expected:
       - 古い既読の記録ファイルが無い
       - 新しい既読の記録ファイルが残っている

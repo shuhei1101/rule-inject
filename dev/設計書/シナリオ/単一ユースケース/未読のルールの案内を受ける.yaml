@@ -84,6 +84,7 @@ scenarios:
         description: プロンプトで、既にある対象のファイルを Read で読むよう指示する
         notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を置く
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -102,6 +103,7 @@ scenarios:
         H->>GD: ルールの場所を足す
         H-->>CC: 操作を止めず、ルールの場所をコンテキストへ載せる
         CC->>FS: 読む
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - 応答に対象のファイルの文字列が出ている
@@ -220,6 +222,7 @@ scenarios:
       - name: 操作
         description: プロンプトで、同じ対象のファイルをもう一度 Read で読むよう指示する
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -237,6 +240,7 @@ scenarios:
         GD-->>H: 案内済み
         H-->>CC: 何も返さない
         CC->>FS: 読む
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - 応答に対象のファイルの文字列が出ている
@@ -257,6 +261,7 @@ scenarios:
         description: プロンプトで、対象のファイルを Write で書くよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -270,6 +275,7 @@ scenarios:
         H->>ST: そのセッションの既読を引く
         ST-->>H: 未読
         H-->>CC: 操作を止め、ルールの場所と読み方を案内する
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
       - 止めた理由の文面に、ルールの場所が載っている
@@ -290,6 +296,7 @@ scenarios:
         description: プロンプトで、対象のファイルを Write で書くよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -304,6 +311,7 @@ scenarios:
         H->>ST: そのセッションの既読を引く
         ST-->>H: 未読
         H-->>CC: 操作を止め、展開したルールの場所と読み方を案内する
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
       - 止めた理由の文面に、変数参照を展開したルールの場所が載っている
@@ -319,6 +327,7 @@ scenarios:
         description: プロンプトで、対象のファイルを Write で書くよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -331,6 +340,7 @@ scenarios:
         H->>H: 展開できない名前が残ったエントリを読み飛ばす
         H-->>CC: 操作を止めず、読み飛ばしたエントリと展開できない名前をコンテキストへ載せる
         CC->>FS: 書く
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - 対象のファイルに中身が書かれている

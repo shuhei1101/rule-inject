@@ -14,6 +14,7 @@ scenarios:
         description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を起こす'
         notes: '`-p` の `--resume` でも同じ session_id に `PreCompact`（`trigger: manual`）が走る（2026-09-29、Claude Code 2.1.284 で確認）'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant C as PreCompact フック
@@ -24,6 +25,7 @@ scenarios:
         C->>ST: そのセッションの既読の記録を捨てる
         C->>GD: そのセッションの案内済みの記録を捨てる
         CC->>CC: 会話を圧縮する
+      ```
     expected:
       - そのセッションの既読の記録が空になっている
       - そのセッションの案内済みの記録が空になっている
