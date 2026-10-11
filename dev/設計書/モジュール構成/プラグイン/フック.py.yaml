@@ -613,6 +613,7 @@ test_files:
   - tests/unit/rule_inject/hooks/test_rule_guide.py
   - tests/unit/rule_inject/hooks/test_session_id_injection.py
   - tests/unit/rule_inject/hooks/test_record_read.py
+  - tests/unit/rule_inject/hooks/test_search_guide.py
   - tests/unit/rule_inject/hooks/test_discard_read.py
   - tests/unit/rule_inject/hooks/test_work_rules.py
   - tests/unit/rule_inject/hooks/test_sweep_read.py

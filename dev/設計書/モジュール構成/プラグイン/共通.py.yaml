@@ -606,6 +606,7 @@ test_files:
   - tests/unit/rule_inject/shared/test_paths.py
   - tests/unit/rule_inject/shared/test_logger.py
   - tests/unit/rule_inject/shared/test_settings.py
+  - tests/unit/rule_inject/shared/test_variables.py
 data_models:
   - name: Expansion
     title: 変数参照の展開の結果
