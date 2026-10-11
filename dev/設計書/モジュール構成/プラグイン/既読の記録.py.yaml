@@ -1,5 +1,5 @@
 title: "プラグイン / 既読の記録"
-lead: セッションごとの既読の記録ファイル（ER 図「既読の記録」）の読み・追記・削除・掃除。
+lead: セッションごとの既読の記録ファイルと案内済みの記録ファイル（ER 図「既読の記録」）の読み・追記・削除・掃除。
 directory: |-
   ```text
   src/rule_inject/features/record/
@@ -12,6 +12,11 @@ constants:
     container: features/record/service.py
     summary: 記録ファイル名に使える session_id の形
     value: '`^[A-Za-z0-9_-]{1,128}$`'
+  - name: GUIDED_SUFFIX
+    title: 案内済みの記録ファイルの名前の末尾
+    container: features/record/service.py
+    summary: 案内済みの記録ファイルは `{session_id}{GUIDED_SUFFIX}`
+    value: '`.guided.txt`'
 functions:
   - name: is_valid_session_id
     title: セッションの識別子の判定
@@ -220,7 +225,7 @@ functions:
     title: 既読の掃除
     container: features/record/service.py
     usecase: 終わったセッションの既読の記録が掃除される
-    summary: 保持期間を過ぎた別のセッションの記録ファイルを消し、消せなかったものを返す
+    summary: 保持期間を過ぎた別のセッションの既読の記録ファイルと案内済みの記録ファイルを消し、消せなかったものを返す
     kind: 関数
     scope: public
     side_effects: 記録ファイルを消す
@@ -251,8 +256,8 @@ functions:
       description: 消せなかった記録ファイルごとの失敗。全て消せたか消すものが無ければ空
     process: |-
       1. `os.scandir(state_dir)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
-      2. 名前が `{session_id}{RECORD_SUFFIX}` の形（`is_valid_session_id`）に合い、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
-      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
+      2. 名前が `{session_id}{GUIDED_SUFFIX}` か `{session_id}{RECORD_SUFFIX}` の形（末尾を `GUIDED_SUFFIX` から先に外し、残りが `is_valid_session_id` に合う）で、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
+      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを消す。既読の記録と案内済みの記録は、それぞれ自分の最終更新で比べる。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
       4. 消せないもの（その他の OSError）は RecordDeleteError にして集め、残りの掃除を続ける
     exceptions:
       - name: OSError
@@ -289,5 +294,149 @@ functions:
         mock: '`now`'
         expected: RecordDeleteError が 1 件（path がその記録ファイル）で、ファイルが残る
         exception: 消せない記録ファイルを払い出さずに返す
+      - name: test_sweep_records_when_guided
+        case: 正常
+        summary: 保持期間を過ぎた案内済みの記録ファイルも消す
+        condition: 最終更新が 31 日前と 29 日前の `{id}.guided.txt`、`keep_session_id` の 31 日前の `{id}.guided.txt`、名前が形に合わない 31 日前の `a b.guided.txt`
+        mock: '`now`'
+        expected: 31 日前の別のセッションの `.guided.txt` だけが無く、残りは残る
+  - name: read_guided
+    title: 案内済みの読み込み
+    container: features/record/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: そのセッションで止めずに案内した場所の集合を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+    returns:
+      type: frozenset[str]
+      description: 案内済みの場所。ファイルが無ければ空
+    process: |-
+      1. `{state_dir}/{session_id}{GUIDED_SUFFIX}` を `read_record` と同じ規則で読む（空行を除いた行の集合。無ければ空）
+      2. `read_record` と共通の内部の関数で読み、ファイル名の末尾だけを変える
+    exceptions:
+      - name: RecordReadError
+        condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_read_guided
+        case: 正常
+        summary: 案内済みの記録を集合で返す
+        condition: 同じセッションの `{id}.txt`（場所 A）と `{id}.guided.txt`（場所 B が 2 行）
+        mock: なし
+        expected: B だけの 1 件の集合（既読の記録を読まない）
+      - name: test_read_guided_when_missing
+        case: 正常
+        summary: ファイルが無ければ空
+        condition: 案内済みの記録ファイルが無い
+        mock: なし
+        expected: 空の集合
+      - name: test_read_guided_when_unreadable
+        case: 異常
+        summary: 読めない
+        condition: 読み取り権限の無い案内済みの記録ファイル（`chmod 000`）
+        mock: なし
+        expected: RecordReadError（path が `{id}.guided.txt`）
+        exception: ファイルはあるが読めない
+  - name: append_guided
+    title: 案内済みの追記
+    container: features/record/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: 止めずに案内した場所を 1 行ずつ案内済みの記録ファイルへ追記する
+    kind: 関数
+    scope: public
+    side_effects: 記録フォルダを作り、案内済みの記録ファイルへ追記する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 案内済みにする場所
+    returns:
+      type: None
+      description: なし
+    process: 1. `append_record` と共通の内部の関数で、`{state_dir}/{session_id}{GUIDED_SUFFIX}` へ同じ規則（空なら書かない・フォルダを作る・`O_APPEND` で 1 回に書く）で追記する
+    exceptions:
+      - name: RecordWriteError
+        condition: フォルダが作れない・追記できない（OSError）
+    unit_tests:
+      - name: test_append_guided
+        case: 正常
+        summary: 案内済みの記録ファイルへ追記する
+        condition: まだ無い記録フォルダ、2 件の場所
+        mock: なし
+        expected: '`{id}.guided.txt` に 2 行があり、`{id}.txt` は作らない'
+      - name: test_append_guided_when_unwritable
+        case: 異常
+        summary: 書けない
+        condition: 記録フォルダを書き込み権限なし（`chmod 500`）
+        mock: なし
+        expected: RecordWriteError（path が `{id}.guided.txt`）
+        exception: フォルダが作れない・追記できない
+  - name: delete_guided
+    title: 案内済みの削除
+    container: features/record/service.py
+    usecase: 圧縮で既読の記録が捨てられる
+    summary: そのセッションの案内済みの記録ファイルを消す（ファイルが無ければ何もしない）
+    kind: 関数
+    scope: public
+    side_effects: 案内済みの記録ファイルを消す
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形を確かめた session_id
+    returns:
+      type: None
+      description: なし
+    process: 1. `delete_record` と共通の内部の関数で `{state_dir}/{session_id}{GUIDED_SUFFIX}` を消す。無ければ（FileNotFoundError）何もしない
+    exceptions:
+      - name: RecordDeleteError
+        condition: ファイルはあるが消せない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_delete_guided
+        case: 正常
+        summary: 案内済みの記録ファイルだけを消す
+        condition: 同じセッションの `{id}.txt` と `{id}.guided.txt`
+        mock: なし
+        expected: '`{id}.guided.txt` が無く `{id}.txt` が残る'
+      - name: test_delete_guided_when_missing
+        case: 正常
+        summary: ファイルが無ければ何もしない
+        condition: 案内済みの記録ファイルが無い
+        mock: なし
+        expected: 例外を送出しない
+      - name: test_delete_guided_when_undeletable
+        case: 異常
+        summary: 消せない
+        condition: 案内済みの記録ファイルを置き、記録フォルダを書き込み権限なし（`chmod 555`）
+        mock: なし
+        expected: RecordDeleteError（path が `{id}.guided.txt`）
+        exception: ファイルはあるが消せない
 test_files:
   - tests/unit/rule_inject/features/record/test_service.py

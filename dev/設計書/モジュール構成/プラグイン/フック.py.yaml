@@ -6,7 +6,7 @@ directory: |-
   ├── plugin.json                 # プラグインの名前（rule-inject）と版
   └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
-  ├── hooks.json                  # 6 つのフックの matcher・timeout（1 秒）・コマンド
+  ├── hooks.json                  # 7 つのフックの matcher・timeout（1 秒）・コマンド
   └── run.py                      # src/ を sys.path に足して引数のフックを動かす
   src/rule_inject/hooks/
   ├── __init__.py
@@ -14,6 +14,7 @@ directory: |-
   ├── rule_guide.py               # ルール案内（PreToolUse）
   ├── session_id_injection.py     # セッションIDの付与（PreToolUse）
   ├── record_read.py              # 既読の記録（PostToolUse）
+  ├── search_guide.py             # 検索結果の案内（PostToolUse）
   ├── discard_read.py             # 既読の記録の破棄（PreCompact）
   ├── sweep_read.py               # 既読の記録の掃除（SessionStart）
   └── work_rules.py               # 作業の決まりの注入（SessionStart）
@@ -58,6 +59,8 @@ constants:
         value: '`("work_rules", work_rules, 出力しない)`'
       - key: sweep_read
         value: '`("sweep_read", sweep_read, 出力しない)`'
+      - key: search_guide
+        value: '`("search_guide", search_guide, additionalContext で知らせる)`'
   - name: MIN_PYTHON
     title: フックの Python の最低の版
     container: hooks/run.py（プラグインの直下）
@@ -183,10 +186,13 @@ functions:
       description: '止める案内（permissionDecision: deny）・止めない案内（additionalContext）・なし'
     process: |-
       1. `tool_name` が `OWN_TOOL_PREFIX` で始まれば None
-      2. `load_indexes` で索引を読む。読めない索引はログ（`read_index`）と知らせの文に回す
+      2. `load_indexes` で索引を読む。読めない索引と展開できずに読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
       3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）
       4. 当たったルールから `read_record` の既読を除く。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
-      5. 止めるルールがあれば deny と `build_guidance`、無ければ案内と知らせを additionalContext にする
+      5. 止めるルールがあれば deny と `build_guidance` を返す（案内済みにはしない）
+      6. 止めるルールが無ければ、`read_guided` の案内済みを除く。読めなければ未案内として扱い、ログ（`read_record`）と知らせの文に回す
+      7. 残ったルールを `build_guidance` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
+      8. 案内と知らせを additionalContext にする（どちらも無ければ None）
     unit_tests:
       - name: test_handle_when_blocked
         case: 正常
@@ -236,6 +242,24 @@ functions:
         condition: 読み取り権限の無い記録ファイル
         mock: なし
         expected: deny を出さず additionalContext に理由、ログに `read_record`
+      - name: test_handle_when_already_guided
+        case: 正常
+        summary: 案内済みなら止めない案内を出さない
+        condition: '`on: [write]` のエントリと Read、案内済みの記録に場所がある'
+        mock: なし
+        expected: None
+      - name: test_handle_when_guided_recorded
+        case: 正常
+        summary: 止めない案内に載せた場所だけを案内済みにする
+        condition: '`on: [write]` のエントリと Read を呼ぶ。別に `on: [write]` のエントリと Write を呼ぶ'
+        mock: なし
+        expected: Read の後は案内済みの記録に場所が 1 行。Write（deny）の後は行が増えない
+      - name: test_handle_when_guided_unwritable
+        case: 正常
+        summary: 案内済みに書けなくても案内を出す
+        condition: '`on: [write]` のエントリと Read、書き込み権限の無い記録フォルダ'
+        mock: なし
+        expected: additionalContext に場所と記録ファイルの理由、ログに `write_record`
   - name: inject_session_id
     title: セッションIDの付与の処理
     container: hooks/session_id_injection.py
@@ -326,7 +350,7 @@ functions:
     title: 既読の記録の破棄の処理
     container: hooks/discard_read.py
     usecase: 圧縮で既読の記録が捨てられる
-    summary: そのセッションの記録ファイルを消す
+    summary: そのセッションの既読の記録ファイルと案内済みの記録ファイルを消す
     kind: フック
     scope: public
     inherits: HookHandler
@@ -346,7 +370,7 @@ functions:
       description: 常に出力しない
     process: |-
       1. session_id の形が外れていれば何もしない
-      2. `delete_record` を呼ぶ。RecordDeleteError はログ（`delete_record`）へ書く
+      2. `delete_record` と `delete_guided` を順に呼ぶ。片方が RecordDeleteError でももう片方を呼び、それぞれログ（`delete_record`）へ書く
     unit_tests:
       - name: test_discard_read
         case: 正常
@@ -360,6 +384,12 @@ functions:
         condition: 書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（`RULE_INJECT_LOG_DIR`）
         mock: なし
         expected: None、標準エラー出力に `delete_record`
+      - name: test_discard_read_when_guided
+        case: 正常
+        summary: 案内済みの記録も消す
+        condition: そのセッションの `{id}.txt` と `{id}.guided.txt`
+        mock: なし
+        expected: どちらも無い、None
   - name: work_rules
     title: 作業の決まりの注入の処理
     container: hooks/work_rules.py
@@ -399,7 +429,7 @@ functions:
     title: 既読の記録の掃除の処理
     container: hooks/sweep_read.py
     usecase: 終わったセッションの既読の記録が掃除される
-    summary: 保持期間を過ぎた別のセッションの記録ファイル、変更前のログ、保持日数を過ぎたログのファイルを消し、失敗をログへ書く
+    summary: 保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル、変更前のログ、保持日数を過ぎたログのファイルを消し、失敗をログへ書く
     kind: フック
     scope: public
     inherits: HookHandler
@@ -466,6 +496,12 @@ functions:
         condition: '`RULE_INJECT_RECORD_RETENTION_DAYS=1`・`RULE_INJECT_LOG_RETENTION_DAYS=1`、最終更新が 2 日前の別のセッションの記録ファイル、日付が今日と 1 日前（UTC）のログのファイル'
         mock: なし
         expected: 記録ファイルと 1 日前のログのファイルが無く、今日のログのファイルが残る、None
+      - name: test_sweep_read_when_guided
+        case: 正常
+        summary: 保持期間を過ぎた案内済みの記録も消す
+        condition: 最終更新が 31 日前の別のセッションの `{id}.guided.txt`
+        mock: なし（最終更新は `os.utime` で戻す）
+        expected: '`{id}.guided.txt` が無い、None'
   - name: main
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
@@ -505,8 +541,71 @@ functions:
         condition: '`sys.version_info` を (3, 11) に差し替え、`sweep_read` に SessionStart の JSON を渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力が空、ログのフォルダ（`RULE_INJECT_LOG_DIR`）の今日の日付のファイルに 1 行。記録フォルダに `rule-inject.log` を作らない
+  - name: search_guide
+    title: 検索結果の案内の処理
+    container: hooks/search_guide.py
+    usecase: 検索の結果に出たファイルのルールの案内を受ける
+    summary: 検索の結果に出た実在するファイルに当たる未読・未案内のルールを案内する PostToolUse の出力を作る
+    kind: フック
+    scope: public
+    inherits: HookHandler
+    side_effects: 案内に載せた場所を案内済みの記録へ追記する
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        passing: positional
+        description: PostToolUse の入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: dict[str, Any] | None
+      description: additionalContext（案内と知らせ）か、無ければ None
+    process: |-
+      1. session_id の形が外れていれば None
+      2. 結果の行と基準を決める。Grep・Glob は `tool_response.filenames` と `tool_response.content` の各行、基準は `cwd`。Bash は `search_output_base(command, cwd)` が None なら None、あれば `tool_response.stdout` の各行とその基準
+      3. `extract_result_paths(lines, base)` で照合するパスを拾う。無ければ None
+      4. `load_indexes` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
+      5. パスごとに `match_path(entries, path, "read")` で当て、ルールの場所ごとに 1 件へまとめる（出た順）
+      6. `read_record` の既読と `read_guided` の案内済みを除く。読めない記録は空として扱い、ログ（`read_record`）と知らせの文に回す
+      7. 残った場所があれば `build_search_guidance(locations, unchecked=...)` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
+      8. 案内と知らせを `hookSpecificOutput.additionalContext`（`hookEventName: PostToolUse`）にする。どちらも無ければ None
+    unit_tests:
+      - name: test_search_guide
+        case: 正常
+        summary: Grep の結果に当たるルールを案内する
+        condition: '`**/*.py` のエントリ、`tool_response.filenames` に実在する `.py`'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: additionalContext が `SEARCH_HEADER` で始まり場所が載る。案内済みの記録に 1 行
+      - name: test_search_guide_when_not_search
+        case: 正常
+        summary: 検索でない Bash は見ない
+        condition: '`git merge main`、`stdout` に実在する `.py`'
+        mock: なし
+        expected: None
+      - name: test_search_guide_when_read_or_guided
+        case: 正常
+        summary: 既読と案内済みを除く
+        condition: 2 つのルールのうち 1 つが既読、1 つが案内済み
+        mock: なし
+        expected: None
+      - name: test_search_guide_when_invalid_session_id
+        case: 正常
+        summary: session_id の形が外れていれば案内しない
+        condition: '`session_id` が `../x`'
+        mock: なし
+        expected: None
+      - name: test_search_guide_when_guided_unwritable
+        case: 正常
+        summary: 案内済みに書けなくても案内を出す
+        condition: 書き込み権限の無い記録フォルダ
+        mock: なし
+        expected: additionalContext に場所と記録ファイルの理由、ログに `write_record`
 notes:
-  hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse が `Read|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
+  hooks.json: '7 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse の既読の記録が `Read|Bash`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
   Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
 test_files:
