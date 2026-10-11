@@ -48,3 +48,22 @@ def test_discard_read_when_undeletable(
     # 検証
     assert result is None
     assert "delete_record" in capsys.readouterr().err
+
+
+def test_discard_read_when_guided(
+    hook_env: dict[str, str],
+    hook_payload: Callable[..., dict[str, Any]],
+    write_record: Callable[[Sequence[str]], Path],
+    write_guided: Callable[[Sequence[str]], Path],
+) -> None:
+    """案内済みの記録も消す（正常系）。"""
+    # 準備
+    record_file = write_record(["/r/a.md"])
+    guided_file = write_guided(["/r/b.md"])
+    payload = hook_payload("PreCompact", trigger="manual")
+    # 実行
+    result = discard_read(payload, hook_env)
+    # 検証
+    assert result is None
+    assert not record_file.exists()
+    assert not guided_file.exists()

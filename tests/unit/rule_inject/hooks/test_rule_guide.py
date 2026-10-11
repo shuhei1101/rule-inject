@@ -206,3 +206,88 @@ def test_handle_when_record_unreadable(
     assert "permissionDecision" not in output
     assert str(record_file) in output["additionalContext"]
     assert read_daily_log()[0]["operation"] == "read_record"
+
+
+def test_handle_when_already_guided(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    write_guided: Callable[[Sequence[str]], Path],
+) -> None:
+    """案内済みなら止めない案内を出さない（正常系）。"""
+    # 準備
+    env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
+    write_guided([RULE])
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py")},
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is None
+
+
+def test_handle_when_guided_recorded(
+    tmp_path: Path,
+    state_dir: Path,
+    session_id: str,
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """止めない案内に載せた場所だけを案内済みにする（正常系）。"""
+    # 準備
+    env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
+    guided_file = state_dir / f"{session_id}.guided.txt"
+    write_payload = hook_payload(
+        "PreToolUse",
+        tool_name="Write",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py"), "content": ""},
+    )
+    read_payload = hook_payload(
+        "PreToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py")},
+    )
+    # 実行
+    blocked = guide_rules(write_payload, env)
+    guided_after_write = guided_file.exists()
+    guide_rules(read_payload, env)
+    # 検証
+    assert blocked["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert not guided_after_write
+    assert read_lines(guided_file) == [RULE]
+
+
+def test_handle_when_guided_unwritable(
+    tmp_path: Path,
+    state_dir: Path,
+    session_id: str,
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    unwritable: Callable[[Path, int], Path],
+    read_daily_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """案内済みに書けなくても案内を出す（正常系）。"""
+    # 準備
+    env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
+    state_dir.mkdir()
+    unwritable(state_dir, 0o555)
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py")},
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    output = result["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert RULE in output["additionalContext"]
+    assert str(state_dir / f"{session_id}.guided.txt") in output["additionalContext"]
+    assert read_daily_log()[0]["operation"] == "write_record"

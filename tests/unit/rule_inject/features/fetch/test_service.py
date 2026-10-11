@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from rule_inject.features.fetch import service
 from rule_inject.features.fetch.client import FetchError
 from rule_inject.features.fetch.service import collect_pages, render_result
 from rule_inject.features.fetch.types import FetchFailure, ReadRulesResult, RulePage
@@ -155,3 +156,39 @@ def test_render_result() -> None:
     # 検証
     assert set(json.loads(text)) == {"pages", "deferred", "failures"}
     assert "日本語の本文" in text
+
+
+def test_collect_pages_when_body_has_variables(rule_file: Callable[..., Path]) -> None:
+    """展開した本文を返し、展開後の字数で上限を数える（正常系）。"""
+    # 準備
+    rule = rule_file("var.md", "!{X}")
+    env = {"X": "x" * 200}
+    before_expansion = ReadRulesResult(pages=[RulePage(location=str(rule), body="!{X}")])
+    limit = len(render_result(before_expansion))
+    # 実行
+    over_limit = collect_pages([str(rule)], env=env, limit=limit)
+    within_limit = collect_pages([str(rule)], env=env)
+    # 検証
+    assert over_limit.pages == []
+    assert len(over_limit.failures) == 1
+    assert "上限" in over_limit.failures[0].reason
+    assert within_limit.pages == [RulePage(location=str(rule), body="x" * 200)]
+
+
+def test_expand_body() -> None:
+    """全て展開できれば注釈を足さない（正常系）。"""
+    # 実行
+    result = service.expand_body("# A\n!{X}", {"X": "1"})
+    # 検証
+    assert result == "# A\n1"
+
+
+def test_expand_body_when_unset() -> None:
+    """展開できない名前を注釈で知らせる（正常系）。"""
+    # 実行
+    result = service.expand_body("!{B} !{X} !{A} !{B}", {"X": "1"})
+    # 検証
+    assert result.splitlines() == [
+        "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: B、A",
+        "!{B} 1 !{A} !{B}",
+    ]
