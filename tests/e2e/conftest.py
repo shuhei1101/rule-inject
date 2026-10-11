@@ -188,21 +188,23 @@ def e2e_project(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def configure_index(
-    e2e_project: Path, state_dir: Path, log_folder: Path
-) -> Callable[[Path | str], None]:
-    """プロジェクトの設定の `env` に、索引・記録フォルダ・ログのフォルダを書く。"""
+    e2e_project: Path, tmp_path: Path, state_dir: Path, log_folder: Path
+) -> Callable[..., None]:
+    """プロジェクトの設定の `env` に、索引・記録フォルダ・ログのフォルダ・索引の無い設定フォルダを書く。"""
 
-    def _configure(index: Path | str) -> None:
-        """index をプロジェクト用の索引として指す。"""
-        settings = {
-            "env": {
-                "RULE_INJECT_INDEXES_PROJECT": str(index),
-                "RULE_INJECT_STATE_DIR": str(state_dir),
-                "RULE_INJECT_LOG_DIR": str(log_folder),
-            }
+    def _configure(index: Path | str | None, *, extra_env: Mapping[str, str] | None = None) -> None:
+        """index をプロジェクト用の索引として指し（None なら指さず既定の置き場所に任せ）、extra_env を足す。"""
+        env = {
+            "RULE_INJECT_STATE_DIR": str(state_dir),
+            "RULE_INJECT_LOG_DIR": str(log_folder),
+            # ユーザーの既定の索引が実際の設定フォルダの索引を読まないよう、索引の無いフォルダを指す
+            "XDG_CONFIG_HOME": str(tmp_path / "config"),
         }
+        if index is not None:
+            env["RULE_INJECT_INDEXES_PROJECT"] = str(index)
+        env.update(extra_env or {})
         (e2e_project / ".claude" / "settings.json").write_text(
-            json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps({"env": env}, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
     return _configure
@@ -300,12 +302,24 @@ def record_locations(state_dir: Path) -> Callable[[str], list[str]]:
 
 
 @pytest.fixture
-def write_aged_record(state_dir: Path) -> Callable[[str, int], Path]:
-    """最終更新を現在から指定の日数前に戻した既読の記録ファイルを置く factory。"""
+def guided_locations(state_dir: Path) -> Callable[[str], list[str]]:
+    """そのセッションの案内済みの記録の場所を返す（記録ファイルが無ければ空）。"""
 
-    def _write(record_session_id: str, age_days: int) -> Path:
-        """record_session_id の記録ファイルを置き、最終更新を age_days 日前にして返す。"""
-        path = state_dir / f"{record_session_id}.txt"
+    def _read(session_id: str) -> list[str]:
+        """案内済みの記録ファイルの行を返す。"""
+        path = state_dir / f"{session_id}.guided.txt"
+        return path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+
+    return _read
+
+
+@pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[..., Path]:
+    """最終更新を現在から指定の日数前に戻した記録ファイル（既読か案内済み）を置く factory。"""
+
+    def _write(record_session_id: str, age_days: int, *, suffix: str = ".txt") -> Path:
+        """record_session_id の記録ファイル（suffix の名前）を置き、最終更新を age_days 日前にして返す。"""
+        path = state_dir / f"{record_session_id}{suffix}"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("/r/a.md\n", encoding="utf-8")
         modified = time.time() - age_days * SECONDS_PER_DAY
@@ -358,8 +372,8 @@ def make_rule(tmp_path: Path) -> Callable[..., Path]:
 def make_index(tmp_path: Path) -> Callable[..., Path]:
     """エントリの dict を並べた索引の YAML を置き、そのパスを返す factory。"""
 
-    def _make(*entries: Mapping[str, Any]) -> Path:
-        """各エントリの rule・paths・on から索引を組み立てて書く。"""
+    def _make(*entries: Mapping[str, Any], to: str = "index.yaml") -> Path:
+        """各エントリの rule・paths・on から索引を組み立て、tmp_path の下の to に書く。"""
         lines = ["rules:"]
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
@@ -369,7 +383,8 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
                 lines.extend(f'      - "{value}"' for value in entry["paths"])
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
-        path = tmp_path / "index.yaml"
+        path = tmp_path / to
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return path
 

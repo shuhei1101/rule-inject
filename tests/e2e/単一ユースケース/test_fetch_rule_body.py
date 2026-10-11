@@ -95,3 +95,37 @@ def test_error_when_location_unreadable(
     assert str(missing) in results
     assert "failures" in results
     assert record_locations(run.session_id) == []
+
+
+def test_normal_when_body_has_variables(
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+    record_locations: Callable[[str], list[str]],
+    marker: Callable[[str], str],
+) -> None:
+    """本文の変数参照を展開し、未設定の名前を残して先頭に注釈が付く（正常シナリオ）。"""
+    # 準備
+    value = marker("SET-VALUE")
+    rule = make_rule(
+        "var.md",
+        "# 規約\nset: !{E2E_SET_NAME}\nunset: !{E2E_UNSET_NAME}\n",
+    )
+    configure_index(make_index({"rule": str(rule)}), extra_env={"E2E_SET_NAME": value})
+    prompt = (
+        f"MCP のツール read_rules を 1 回だけ呼んでください。locations に {rule} を渡し、"
+        "session_id は渡さないでください。"
+    )
+    # 実行
+    run = run_claude(prompt, allow=[READ_RULES_TOOL])
+    # 検証
+    results = _tool_results(run)
+    assert f"set: {value}" in results
+    assert "!{E2E_SET_NAME}" not in results
+    assert "unset: !{E2E_UNSET_NAME}" in results
+    assert (
+        '"body": "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: '
+        "E2E_UNSET_NAME\\n" in results
+    )
+    assert record_locations(run.session_id) == [str(rule)]
