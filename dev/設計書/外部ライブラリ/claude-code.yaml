@@ -1,8 +1,8 @@
 title: "claude-code"
 kind: "CLI"
 version:
-  current: 2.1.284
-  checked_on: '2026-09-29'
+  current: 2.1.296
+  checked_on: '2026-10-13'
   source: '`claude --version`'
 catalogs:
   - name: フック
@@ -41,6 +41,13 @@ catalogs:
       - name: CLAUDE_PLUGIN_DATA
         kind: 環境変数
         purpose: 版をまたいで残るプラグインのデータの場所。`.mcp.json` で MCP サーバーの仮想環境（`UV_PROJECT_ENVIRONMENT`）を指す
+  - name: セッションの記録
+    version: 2.1.296
+    entries:
+      - name: attachment.type が hook_additional_context の行
+        kind: 記録の行
+        purpose: フックが返した案内の文面を載せる、セッションの記録（`.jsonl`）の行。案内の回数はこの行の数で数える
+        description: '`type` が `attachment`、`attachment.type` が `hook_additional_context`。`attachment.content` は文字列の配列で、行の直下の `rendered[].content` に `<system-reminder>` で包んだ写しを持つ。'
 lead: Anthropic の AI コーディングエージェントの CLI（`claude`）。プラグインが持つフックと MCP サーバーを読み込み、出来事ごとに呼ぶ。
 dependency_scope: 必須
 adoption: 採用

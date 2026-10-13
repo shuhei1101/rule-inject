@@ -10,6 +10,9 @@ scenarios:
       - name: 索引
         description: ルールの場所と、当てるパスの glob（対象のファイルに当たる）・書く操作を必須とするエントリを 1 つ持つ YAML
         notes: プロジェクト用の環境変数で指す。対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+      - name: 書く操作の許可
+        description: '`--allowedTools` で Write と Edit を許可する'
+        notes: Claude Code は作業の決まりに従い、対象のファイルを Write で空で作ってから Edit で中身を書くことがある
     flow: |-
       ```mermaid
       flowchart TD
@@ -42,6 +45,8 @@ scenarios:
       - name: 読み方の指示
         description: プロンプトで、ルールの本文を MCP のツールではなく Bash の `cat` で読むよう指示する
         notes: '`--allowedTools` で Bash を許可し、MCP のツールを `--disallowedTools` で外して読み方を 1 つに定める'
+      - name: 書く操作の許可
+        description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
       ```mermaid
       flowchart TD
@@ -76,6 +81,8 @@ scenarios:
       - name: 圧縮
         description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を起こす'
         notes: '`-p` の `--resume` でも、同じ session_id に `PreCompact`（`trigger: manual`）が走ることを確かめた（2026-09-29、Claude Code 2.1.284）'
+      - name: 書く操作の許可
+        description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
       ```mermaid
       flowchart TD
