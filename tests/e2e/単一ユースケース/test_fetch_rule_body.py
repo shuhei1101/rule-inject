@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,25 @@ READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 def _tool_results(run: Any) -> str:
     """ツールの結果の文面を、全部つないで返す。"""
     return "\n".join(run.tool_results.values())
+
+
+def _first_page_body(run: Any) -> str:
+    """ツールの結果をほどいて、先頭のページの本文を返す。"""
+    # read_rules を呼んだ tool_use の id（ToolSearch など他のツールの結果と区別する）
+    (tool_use_id,) = (
+        block["id"]
+        for event in run.events
+        if event.get("type") == "assistant"
+        for block in event["message"]["content"]
+        if isinstance(block, dict)
+        and block.get("type") == "tool_use"
+        and block.get("name") == READ_RULES_TOOL
+    )
+    tool_result = run.tool_results[tool_use_id]
+    # 1 段目: ツールの結果の JSON から、ページの JSON を入れた文字列を取り出す
+    pages_json = json.loads(tool_result)["result"]
+    # 2 段目: ページの JSON をほどいて、先頭のページの本文を取り出す
+    return str(json.loads(pages_json)["pages"][0]["body"])
 
 
 def test_normal(
@@ -124,8 +144,7 @@ def test_normal_when_body_has_variables(
     assert f"set: {value}" in results
     assert "!{E2E_SET_NAME}" not in results
     assert "unset: !{E2E_UNSET_NAME}" in results
-    assert (
-        '"body": "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: '
-        "E2E_UNSET_NAME\\n" in results
+    assert _first_page_body(run).splitlines()[0] == (
+        "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: E2E_UNSET_NAME"
     )
     assert record_locations(run.session_id) == [str(rule)]
