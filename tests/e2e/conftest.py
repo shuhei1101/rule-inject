@@ -32,6 +32,8 @@ DEFAULT_MAX_TURNS = 5
 # MCP サーバーの起動の待ち時間（ミリ秒）。入れた直後の最初の起動は uv が依存を取得する分だけ遅い
 MCP_TIMEOUT_MS = "60000"
 READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
+# git が管理しているファイルと、管理外で .gitignore にも載らないファイルを、パスを NUL 区切りで返す
+GIT_LIST_FILES = ("git", "ls-files", "-co", "--exclude-standard", "-z")
 SECONDS_PER_DAY = 86_400
 
 
@@ -210,8 +212,30 @@ def configure_index(
     return _configure
 
 
+@pytest.fixture(scope="session")
+def plugin_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """プラグインのファイルを Linux 側の一時フォルダへ写し、そのフォルダを返す（実行ごとに 1 回）。"""
+    destination = tmp_path_factory.mktemp("plugin")
+    listed = subprocess.run(
+        GIT_LIST_FILES,
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout.decode("utf-8")
+    # 日本語のパスを含むため、クォートされない NUL 区切りの出力を分ける
+    for relative in filter(None, listed.split("\0")):
+        source = PROJECT_ROOT / relative
+        # フォルダの行と、作業ツリーから消えているファイルは写さない
+        if not source.is_file():
+            continue
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    return destination
+
+
 @pytest.fixture
-def run_claude(e2e_project: Path) -> Callable[..., ClaudeRun]:
+def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
     """利用者の設定を読み込ませずに `claude -p` を 1 回動かし、その結果を返す factory。"""
 
     def _run(
@@ -232,7 +256,7 @@ def run_claude(e2e_project: Path) -> Callable[..., ClaudeRun]:
             "-p",
             prompt,
             "--plugin-dir",
-            str(PROJECT_ROOT),
+            str(plugin_dir),
             "--setting-sources",
             "project",
             "--output-format",
