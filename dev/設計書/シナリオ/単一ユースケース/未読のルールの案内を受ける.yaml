@@ -47,7 +47,7 @@ scenarios:
         notes: 前の実行でルールの本文を取得したセッションを `--resume {session_id}` で続ける
       - name: 操作
         description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパス
+        notes: 対象のファイルはまだ無いパス。`--allowedTools` で Write と Edit を許可する（Claude Code は作業の決まりに従い、Write で空で作ってから Edit で中身を書くことがある）
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -187,7 +187,7 @@ scenarios:
         notes: 実在しないパスを指す場合も同じ結末になる
       - name: 操作
         description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパス
+        notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -325,7 +325,7 @@ scenarios:
         notes: その名前の環境変数を設定せずに起動する
       - name: 操作
         description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパス
+        notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
     flow: |-
       ```mermaid
       sequenceDiagram
