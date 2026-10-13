@@ -12,3 +12,8 @@ Claude Code がファイルを触る前に、そのファイルに当たるル�
 ```bash
 PROJECT_ROOT="$PWD" PYTHONPATH="$AI_MONITOR_HOME/src" python3 -m ai_monitor.inject.build_docs_index
 ```
+
+## 版
+
+版を持つファイルは `version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json` の 3 つ。
+版上げでは 3 つを同じ値へ更新する（`version.ini` は先頭に `v` を付ける）。
