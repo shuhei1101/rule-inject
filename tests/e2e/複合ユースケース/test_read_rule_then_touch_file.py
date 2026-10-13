@@ -47,7 +47,7 @@ def test_normal(
     # 実行
     run = run_claude(
         WRITE_THEN_READ_PROMPT.format(target=target),
-        allow=["Write", READ_RULES_TOOL],
+        allow=["Write", "Edit", READ_RULES_TOOL],
         max_turns=8,
     )
     # 検証
@@ -69,7 +69,7 @@ def test_normal_when_read_by_bash(
     # 実行
     run = run_claude(
         WRITE_THEN_CAT_PROMPT.format(target=target),
-        allow=["Write", "Bash"],
+        allow=["Write", "Edit", "Bash"],
         deny=[READ_RULES_TOOL],
         max_turns=8,
     )
@@ -90,7 +90,7 @@ def test_normal_when_after_compact(
     first_target = e2e_project / "first.txt"
     first_run = run_claude(
         WRITE_THEN_READ_PROMPT.format(target=first_target),
-        allow=["Write", READ_RULES_TOOL],
+        allow=["Write", "Edit", READ_RULES_TOOL],
         max_turns=8,
     )
     run_claude("/compact", resume=first_run.session_id, max_turns=None)
@@ -98,7 +98,7 @@ def test_normal_when_after_compact(
     # 実行
     run = run_claude(
         WRITE_THEN_READ_PROMPT.format(target=second_target),
-        allow=["Write", READ_RULES_TOOL],
+        allow=["Write", "Edit", READ_RULES_TOOL],
         resume=first_run.session_id,
         max_turns=8,
     )

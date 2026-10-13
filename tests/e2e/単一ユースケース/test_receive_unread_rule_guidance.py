@@ -61,7 +61,9 @@ def test_normal_when_already_read(
     target = e2e_project / "notes.txt"
     # 実行
     run = run_claude(
-        WRITE_PROMPT.format(target=target), allow=["Write"], resume=read_run.session_id
+        WRITE_PROMPT.format(target=target),
+        allow=["Write", "Edit"],
+        resume=read_run.session_id,
     )
     # 検証
     assert run.denied_tools == []
@@ -166,7 +168,7 @@ def test_error_when_index_unreadable(
     configure_index(broken)
     target = e2e_project / "notes.txt"
     # 実行
-    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
     # 検証
     assert run.denied_tools == []
     assert "hello" in target.read_text(encoding="utf-8")
@@ -262,7 +264,7 @@ def test_error_when_rule_variable_unset(
     configure_index(index)
     target = e2e_project / "notes.txt"
     # 実行
-    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
     # 検証
     assert run.denied_tools == []
     assert "hello" in target.read_text(encoding="utf-8")
