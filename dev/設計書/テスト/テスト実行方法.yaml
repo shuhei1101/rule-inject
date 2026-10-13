@@ -18,7 +18,7 @@ layers:
       - 利用者の設定（`~/.claude`）のフック・プラグイン・MCP サーバーを読み込ませない（`--setting-sources project`）。`--bare` は API の課金になるため使わない
       - 誤実行を防ぐため `--run-e2e` を必須にする
       - 環境変数 `E2E_CLAUDE_BIN`（`claude` の場所）と `E2E_CLAUDE_MODEL`（`--model` に渡すモデル）は、必要なときだけ指す
-      - クローンが `/mnt/c` にあっても、E2E はテストが Linux 側の一時フォルダへ写したプラグインのフォルダを読む
+      - pytest の一時フォルダ（`TMPDIR`、既定は `/tmp`）が Linux 側のファイルシステムにあること。クローンは `/mnt/c` にあってよい
     run_all: |-
       ```bash
       uv run pytest tests/e2e --run-e2e
