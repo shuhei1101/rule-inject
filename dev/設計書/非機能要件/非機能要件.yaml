@@ -139,23 +139,23 @@ requirements:
   - name: 版の一致
     english_name: version_consistency
     category: 保守性
-    external_constraint: marketplace から入れた利用者へ新しい版が届くのは、`.claude-plugin/plugin.json` の `version` が変わったときだけ（`plugin.json` の `version` が変わらない間は届かない）
+    external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はその版に固定される（値が変わらない間、marketplace から入れた利用者へ新しい版は届かない）'
     source_kind: 実行基盤の制限
-    source: https://github.com/shuhei1101/rule-inject/issues/24#issuecomment-6134976675
-    value: 3 つの値が全て一致
-    rationale: 版を持つ `version.ini`（先頭の `v` を除く）・`pyproject.toml` の `version`・`.claude-plugin/plugin.json` の `version` が 1 つでも食い違うと、版上げが利用者へ届かない（v0.1.1 で `plugin.json` が `0.1.0` のまま残った）。版上げでは 3 つを同じ値へ更新し（`CLAUDE.md`）、食い違いはテストで検知する
-    measurement: 3 つのファイルから版を取り出して比べる。食い違うときは 3 つの値を並べて fail する
+    source: https://code.claude.com/docs/en/plugins-reference
+    value: 4 つの値が全て一致
+    rationale: '`.claude-plugin/plugin.json` の `version` が `version.ini`（先頭の `v` を除く）とずれると、版上げが利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いはテストで検知する'
+    measurement: '`version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（`rule-inject` のパッケージ）の 4 つから版を取り出して比べる。食い違うときは 4 つの値を並べて fail する'
     test_file: tests/nfr/test_version_consistency.py
-    overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`plugin.json` の 3 つの値を並べて知らせる
+    overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`plugin.json`・`uv.lock` の 4 つの値を並べて知らせる
     tests:
       - name: test_version_consistency_when_all_match
-        summary: 3 つの版が一致するとき、検査が通る
-        condition: 'リポジトリの直下の `version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`（値は固定しない）'
-        measurement: 実物の 3 つのファイルから版を取り出し、`version.ini` は先頭の `v` を除いて比べる
+        summary: 4 つの版が一致するとき、検査が通る
+        condition: リポジトリの直下の `version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（値は固定しない）
+        measurement: 実物の 4 つのファイルから版を取り出し、`version.ini` は先頭の `v` を除いて比べる
         expected: 検査が通る（fail しない）
       - name: test_version_consistency_when_mismatch
-        summary: 版が 1 つでも食い違うとき、検査が 3 つの値を並べて fail する
-        condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
-        measurement: 食い違う版を置いた一時フォルダの 3 つのファイルを検査へ渡す
-        expected: 検査が fail し、失敗の文に `v0.1.1`・`0.1.1`・`0.1.0` の 3 つの値が並ぶ
+        summary: 版が 1 つでも食い違うとき、検査が 4 つの値を並べて fail する
+        condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
+        measurement: 食い違う版を置いた一時フォルダの 4 つのファイルを検査へ渡す
+        expected: 検査が fail し、失敗の文に 4 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
 lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。
