@@ -1,0 +1,390 @@
+title: "検索結果の案内"
+entry:
+  kind: trigger
+  value: '`PostToolUse` フック（matcher `Grep|Glob|Bash`、timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: Grep のファイル名の結果に当たる未読のルールを案内し、案内済みにする
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ一時ファイル'
+        notes: '`RULE_INJECT_INDEXES_PROJECT` で指す'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+        notes: '`RULE_INJECT_STATE_DIR` で指す'
+      - name: 入力
+        description: '`tool_name: Grep`、`tool_response.filenames` に `cwd` からの相対パスで実在する `.py` を 1 つ'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>P: 標準入力（Grep・結果）
+        P->>P: filenames から実在するファイルの絶対パスを拾う
+        P->>IDX: 読む
+        P->>ST: 既読を読む（未読）
+        P->>GD: 案内済みを読む（未案内）
+        P->>GD: ルールの場所を追記する
+        P-->>CC: additionalContext（案内）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所と「読むかは任意」が載り、「やり直してください」を含まない'
+      - '`permissionDecision` が無い'
+      - 案内済みの記録にルールの場所が 1 行ある
+      - 終了コードが `0`
+    test: test_normal
+  - name: 正常系（Grepの一致した行）
+    summary: Grep の `content` の各行の最初の `:` より前から拾ったパスで案内する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 正常系と同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Grep`、`tool_response.mode: content`、`filenames: []`、`content` に `{.py のパス}:1:needle` の行'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+
+        CC->>P: 標準入力（Grep・content）
+        P->>P: 各行の最初の : より前をパスとして拾う
+        P-->>CC: additionalContext（案内）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所が載っている'
+    test: test_normal_when_grep_content
+  - name: 正常系（Globの結果）
+    summary: Glob の `filenames` から拾ったパスで案内する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 正常系と同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Glob`、`tool_response.filenames` に実在する `.py` を 1 つ'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+
+        CC->>P: 標準入力（Glob・filenames）
+        P->>P: filenames からパスを拾う
+        P-->>CC: additionalContext（案内）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所が載っている'
+    test: test_normal_when_glob
+  - name: 正常系（Bashの検索のコマンド）
+    summary: '`find` と `grep -n` の標準出力から拾ったパスで案内する'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Bash`、`tool_input.command: find src -type f | head`、`stdout` に `.py` のパスの行と `{.md のパス}:3:needle` の行'
+        notes: 1 本のテストで 2 つの出力の形を拾えることを見る
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+
+        CC->>P: 標準入力（Bash・command・stdout）
+        P->>P: 最初のコマンドが find のため対象にする
+        P->>P: 各行からパスを拾う
+        P-->>CC: additionalContext（案内）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` に 2 つのルールの場所が載っている'
+    test: test_normal_when_bash_search
+  - name: 正常系（lsの出力）
+    summary: '`ls {フォルダ}` の出力の名前を、そのフォルダから解いて案内する'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 正常系と同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Bash`、`tool_input.command: ls src`、`stdout` に `app.py`（`src/app.py` は実在する）'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+
+        CC->>P: 標準入力（Bash・ls src）
+        P->>P: 出力の名前を src から解く
+        P-->>CC: additionalContext（案内）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所が載っている'
+    test: test_normal_when_ls
+  - name: 正常系（検索でないBash）
+    summary: 検索のコマンドでない Bash は、出力に実在するファイルがあっても案内しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 正常系と同じ
+      - name: 入力
+        description: '`tool_name: Bash`、`tool_input.command: git merge main`、`stdout` に実在する `.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+
+        CC->>P: 標準入力（Bash・git merge）
+        P->>P: 検索のコマンドでないため対象にしない
+        P-->>CC: 標準出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_not_search
+  - name: 正常系（既読か案内済みのため案内しない）
+    summary: 既読のルールと案内済みのルールは案内しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
+      - name: 既読の記録
+        description: '`.py` のルールの場所がある'
+      - name: 案内済みの記録
+        description: '`.md` のルールの場所がある'
+      - name: 入力
+        description: '`tool_name: Glob`、`filenames` に実在する `.py` と `.md`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>P: 標準入力（Glob・filenames）
+        P->>ST: 既読を読む（.py のルールは既読）
+        P->>GD: 案内済みを読む（.md のルールは案内済み）
+        P-->>CC: 標準出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 案内済みの記録の行が増えていない
+    test: test_normal_when_read_or_guided
+  - name: 正常系（照合するパスの数を超える）
+    summary: 100 件を超える結果は先頭 100 件だけを照合し、案内に照合しなかった件数を添える
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Glob`、`filenames` の先頭に実在する `.md` を 1 件、続けて実在する `.txt` を 99 件、その後に `.py` を 1 件と `.txt` を 4 件'
+        notes: 101 件目の `.py` は照合されない
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+
+        CC->>P: 標準入力（Glob・105 件）
+        P->>P: 先頭 100 件だけを照合する
+        P-->>CC: additionalContext（.md のルールと、照合しなかった 5 件）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` に `.md` のルールの場所が載り、`.py` のルールの場所が載っていない'
+      - '`additionalContext` に照合しなかった件数 5 が載っている'
+      - 終了コードが `0`
+    test: test_normal_when_too_many_paths
+  - name: 異常系（索引が読めない・理由を載せる）
+    summary: 索引が読めないとき、読めた索引で案内を続け、理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`RULE_INJECT_INDEXES_PROJECT` が、正常系と同じ索引と、書式に合わないファイルの 2 つを指す'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: 正常系と同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+        participant IDX as 索引
+        participant LOG as ログ
+
+        CC->>P: 標準入力（Grep・結果）
+        P->>IDX: 読む（1 つは読めない）
+        P->>LOG: read_index を追記する
+        P-->>CC: additionalContext（案内と、読めなかった索引の場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所と、読めなかった索引の場所と理由が載っている'
+      - 'ログに `operation: read_index` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_index_unreadable
+  - name: 異常系（案内済みの記録に書けない・理由を載せる）
+    summary: 案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 正常系と同じ
+      - name: 案内済みの記録
+        description: 記録フォルダを書き込み権限なし（`chmod 500`）で置く
+      - name: 入力
+        description: 正常系と同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+        participant GD as 案内済みの記録
+        participant LOG as ログ
+
+        CC->>P: 標準入力（Grep・結果）
+        P->>GD: 追記する（書けない）
+        P->>LOG: write_record を追記する
+        P-->>CC: additionalContext（案内と、記録ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` にルールの場所と、案内済みの記録ファイルの場所と理由が載っている'
+      - 'ログに `operation: write_record` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_guided_record_unwritable
+lead: Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）の結果に出た実在するファイルに当たるルールのうち、そのセッションで未読で未案内のものを、読むかは任意と伝えて案内する。操作はもう終わっているため止めない。
+identifier: search_guide
+idempotent: false
+side_effects: 案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
+exclusivity: 追記（O_APPEND）だけで書くため、ルール案内と同時に書いても行が混ざらない。同じ場所が 2 行入っても読む側が集合として扱う
+request:
+  - name: '`session_id`'
+    type: str
+    required: true
+    description: 呼び出し元のセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: 形が外れた値のときは何も出さない（案内済みを記録できず、毎回同じ案内が出るため）
+  - name: '`cwd`'
+    type: str
+    required: true
+    description: セッションの作業フォルダ
+    notes: 結果の相対パスを解く基準。Grep・Glob の `filenames` と Bash の出力は `cwd` からの相対パスで届く（2026-10-11、Claude Code 2.1.296 で確認）
+  - name: '`tool_name`'
+    type: Literal['Grep', 'Glob', 'Bash']
+    required: true
+    description: 実行されたツール
+  - name: '`tool_input.command`'
+    type: str
+    required: false
+    default: なし（Bash 以外）
+    description: Bash で実行したコマンド
+    notes: 検索のコマンド（制約の「検索のコマンド」）でなければ何も出さない
+  - name: '`tool_response.filenames`'
+    type: list[str]
+    required: false
+    default: なし（`content` から拾う）
+    description: 'Grep（`mode: files_with_matches`）と Glob が当たったファイルのパス'
+    notes: 'Grep の `mode: content` では空で届く'
+  - name: '`tool_response.content`'
+    type: str
+    required: false
+    default: なし
+    description: 'Grep（`mode: content` / `count`）の結果。各行が `{パス}:{行番号}:{行}` か `{パス}:{件数}`'
+    notes: 各行の最初の `:` より前をパスとして拾う
+  - name: '`tool_response.stdout`'
+    type: str
+    required: false
+    default: なし
+    description: Bash の標準出力
+    notes: 各行を、行全体が実在するファイルを指せばそのパス、指さなければ最初の `:` より前をパスとして拾う（`find` の 1 行 1 パスと、`grep -n` の `{パス}:{行番号}:{行}` の両方を拾う）
+request_example: |-
+  ```json
+  {
+    "session_id": "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10",
+    "cwd": "/home/user/project",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Grep",
+    "tool_input": {"pattern": "needle", "path": "src"},
+    "tool_response": {"mode": "files_with_matches", "filenames": ["src/app.py"], "numFiles": 1}
+  }
+  ```
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['PostToolUse']
+    description: フックの種類
+    notes: 案内か知らせがあるときだけ出力する。無いときは標準出力に何も出さない
+  - name: '`hookSpecificOutput.additionalContext`'
+    type: str
+    description: 検索で当たったファイルに未読のルールがあること・読むかは任意であること・読み方（MCP のツール `read_rules`）・この案内はルールごとにセッションで 1 回だけ出ることと、ルールの場所。索引・記録が読めないか書けないときはその場所と理由
+    constraints: 10,000 字以内
+    notes: 「やり直してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
+response_example: |-
+  ```json
+  {
+    "hookSpecificOutput": {
+      "hookEventName": "PostToolUse",
+      "additionalContext": "検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は read_rules に場所を渡して本文を取得してください。この案内はルールごとにセッションで 1 回だけ出ます。\n- /home/user/rules/python.md"
+    }
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: 案内の有無に関わらず終了コード 0 で終える
+    notes: 終了コード 2 は標準エラー出力をモデルへエラーとして渡す合図になるため使わない
+  - name: OSError / 書式の誤り（索引が読めない）
+    condition: 索引が無い・読めない・書式に合わない、または `rule` の変数参照を展開できないエントリがある
+    notes: ルール案内と同じく、`additionalContext` へ索引の場所と理由を載せ、ログへ `read_index` を書いて終了コード 0 で終える。読めた索引のエントリでの案内は続ける
+  - name: OSError（記録が読めない・書けない）
+    condition: 既読の記録か案内済みの記録のファイルはあるが読めない、または案内済みの記録に書けない（権限・容量）
+    notes: 読めない記録は空として扱って案内を出し、`additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` か `write_record` を書く。ファイルが無いときは失敗ではなく空として扱う
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 最上位で捕まえ、`additionalContext` へ「検索結果の案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: 案内文の長さ
+    constraint: 10,000 字。超えるときは収まるところまで場所を載せて残りの件数を添える
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
+  - item: 検索のコマンド
+    constraint: Bash のコマンドを `&&` / `||` / `;` / `|` で区切った、`cd` を除く最初のコマンドの名前（パスの最後の要素）が `grep` / `rg` / `find` / `ls` のときだけ対象にする
+    notes: 名前の部分一致にしない（`git merge` を `rg` と取り違えない）。出力の相対パスは、それまでの `cd` で動かした `cwd` から解く。`ls` は、`-` で始まらない引数が実在するフォルダ 1 つだけならそのフォルダから解く
+  - item: 照合するパス
+    constraint: 結果から拾ったパスを `cwd` から絶対パスに解き、実在するファイルだけを、出た順に重なりを除いて照合する。フォルダ・実在しないパスは捨てる
+  - item: 照合するパスの数
+    constraint: 先頭から 100 件まで。超えた分は照合せず、案内を出すときに照合しなかった件数を添える
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[検索結果から照合するパスの数]
+  - item: 当てる操作
+    constraint: 読む操作（`read`）としてエントリに当てる。エントリの `on` によらず止めない
+    notes: 索引の読み方・既定の置き場所・`rule` の変数参照の展開はルール案内と同じ
+  - item: 案内済みの記録
+    constraint: 既読の場所と、`{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt` に載った場所を案内から除く。案内に載せた場所を同じファイルへ 1 行ずつ追記する
+    notes: ルール案内と同じ記録を共有する。案内文の長さに収まらず載せなかった場所は記録しない
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
+    notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+test_file: tests/integration/plugin/test_search_guide.py

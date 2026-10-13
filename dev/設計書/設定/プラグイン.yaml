@@ -16,8 +16,8 @@ settings:
     file: ~/.claude/settings.json
     type: str
     required: false
-    default: なし（ユーザーの索引を読まない）
-    description: 全プロジェクトで使う索引のパス。カンマ区切りで複数並べられる
+    default: '`${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`（ファイルが無ければ理由を載せずに読まない）'
+    description: 全プロジェクトで使う索引のパス。カンマ区切りで複数並べられる。空の文字列にすると、既定の置き場所も読まない
     env_var: RULE_INJECT_INDEXES_USER
     reload: restart
     allowed: 絶対パスか `~` で始まるパス
@@ -28,8 +28,8 @@ settings:
     file: .claude/settings.json
     type: str
     required: false
-    default: なし（プロジェクトの索引を読まない）
-    description: そのプロジェクトだけで使う索引のパス。カンマ区切りで複数並べられる
+    default: '`${CLAUDE_PROJECT_DIR}/rules.yaml`（ファイルか `CLAUDE_PROJECT_DIR` が無ければ理由を載せずに読まない）'
+    description: そのプロジェクトだけで使う索引のパス。カンマ区切りで複数並べられる。空の文字列にすると、既定の置き場所も読まない
     env_var: RULE_INJECT_INDEXES_PROJECT
     reload: restart
     allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（環境変数 `CLAUDE_PROJECT_DIR`）からの相対パス
@@ -65,9 +65,9 @@ settings:
     type: str
     required: true
     description: ルールの本文の場所
-    missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる
+    missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる。設定されていない環境変数の `!{名前}` が残ったときも同じ
     reload: immediate
-    allowed: '`https://` で始まる URL、絶対パス、`~` で始まるパス、索引ファイルのフォルダからの相対パス。`http://` の URL は書けるが、本文は取得しない（平文で取得したルールを案内に使わないため）'
+    allowed: '`https://` で始まる URL、絶対パス、`~` で始まるパス、索引ファイルのフォルダからの相対パス。`http://` の URL は書けるが、本文は取得しない（平文で取得したルールを案内に使わないため）。`!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）を書くと、フックと MCP サーバーが受け取った環境変数の値に置き換えてから場所を解く'
     visibility: user
     status: planned
   - key: rules[].paths

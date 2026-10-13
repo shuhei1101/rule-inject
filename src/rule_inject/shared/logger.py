@@ -32,6 +32,7 @@ class Component(StrEnum):
     WORK_RULES = "work_rules"
     READ_RULES = "read_rules"
     SWEEP_READ = "sweep_read"
+    SEARCH_GUIDE = "search_guide"
 
 
 class LogOperation(StrEnum):

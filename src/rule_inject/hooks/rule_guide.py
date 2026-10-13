@@ -11,13 +11,19 @@ from typing import Any
 from rule_inject.features.command import READ_COMMANDS, extract_read_paths
 from rule_inject.features.guidance import (
     GUIDANCE_LIMIT,
+    Guidance,
     build_failure_notice,
     build_guidance,
 )
 from rule_inject.features.index import load_indexes, match_path, match_tool
 from rule_inject.features.index.types import IndexEntry, MatchedRule, Operation
-from rule_inject.features.record import is_valid_session_id, read_record
-from rule_inject.shared.errors import RecordReadError
+from rule_inject.features.record import (
+    append_guided,
+    is_valid_session_id,
+    read_guided,
+    read_record,
+)
+from rule_inject.shared.errors import RecordReadError, RecordWriteError
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
 from rule_inject.shared.paths import log_dir, resolve_location, state_dir
 
@@ -85,6 +91,23 @@ def _match(payload: Mapping[str, Any], entries: Sequence[IndexEntry]) -> list[Ma
     return _merge(matches)
 
 
+def _log_record_failure(
+    log_folder: Path,
+    operation: LogOperation,
+    session_id: str,
+    failure: RecordReadError | RecordWriteError,
+) -> None:
+    """記録の読み書きの失敗をログへ書く（操作は止めない）。"""
+    write_log(
+        log_folder,
+        component=Component.RULE_GUIDE,
+        operation=operation,
+        reason=failure.reason,
+        session_id=session_id,
+        path=failure.path,
+    )
+
+
 def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る。"""
     if payload["tool_name"].startswith(OWN_TOOL_PREFIX):
@@ -95,7 +118,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     session_id = payload.get("session_id")
     valid_session = is_valid_session_id(session_id)
     notices: list[str] = []
-    # 読めない索引は、ログと知らせの文に回して、読めた索引での案内は続ける
+    # 読めない索引と読み飛ばしたエントリは、ログと知らせの文に回して、読めたエントリでの案内は続ける
     loaded = load_indexes(env)
     for failure in loaded.failures:
         write_log(
@@ -117,31 +140,58 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             already_read = read_record(folder, session_id)
         except RecordReadError as exc:
             record_failed = True
-            write_log(
-                log_folder,
-                component=Component.RULE_GUIDE,
-                operation=LogOperation.READ_RECORD,
-                reason=exc.reason,
-                session_id=session_id,
-                path=exc.path,
-            )
+            _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)
             notices.append(build_failure_notice("既読の記録を読めませんでした。", [exc], log_path))
     unread = [rule for rule in matched if rule.location not in already_read]
     if record_failed:
         # 既読か分からないため、止めずに案内する
         unread = [MatchedRule(location=rule.location, blocking=False) for rule in unread]
+    # 止めるルールが無いときは、このセッションで案内済みの場所を除く（読めなければ未案内として扱う）
+    track_guided = valid_session and bool(unread) and not any(rule.blocking for rule in unread)
+    if track_guided:
+        try:
+            guided = read_guided(folder, session_id)
+        except RecordReadError as exc:
+            guided = frozenset()
+            _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)
+            notices.append(
+                build_failure_notice("案内済みの記録を読めませんでした。", [exc], log_path)
+            )
+        unread = [rule for rule in unread if rule.location not in guided]
     if not unread and not notices:
         return None
-    return _output(unread, notices)
+    guidance = _build(unread, notices)
+    # 止めない案内に載せた場所だけを案内済みにする。書けなければ案内は出して理由を知らせる
+    if track_guided and guidance is not None and guidance.shown:
+        try:
+            append_guided(folder, session_id, guidance.shown)
+        except RecordWriteError as exc:
+            _log_record_failure(log_folder, LogOperation.WRITE_RECORD, session_id, exc)
+            notices.append(
+                build_failure_notice("案内済みの記録に書けませんでした。", [exc], log_path)
+            )
+            # 知らせの分を引いた字数に、案内を収め直す
+            guidance = _build(unread, notices)
+    return _output(guidance, unread, notices)
 
 
-def _output(unread: Sequence[MatchedRule], notices: Sequence[str]) -> dict[str, Any]:
-    """未読のルールと知らせから、止める出力か止めない出力を作る。"""
-    notice_text = NOTICE_SEPARATOR.join(notices)
-    # 知らせの分を引いた字数に、案内を収める
-    budget = GUIDANCE_LIMIT - (len(NOTICE_SEPARATOR) + len(notice_text) if notices else 0)
-    guidance = build_guidance(unread, limit=budget) if unread else ""
-    text = NOTICE_SEPARATOR.join(part for part in (guidance, notice_text) if part)
+def _build(unread: Sequence[MatchedRule], notices: Sequence[str]) -> Guidance | None:
+    """知らせの分を引いた字数に収めた案内文を組み立てる（未読のルールが無ければ None）。"""
+    if not unread:
+        return None
+    budget = GUIDANCE_LIMIT - (
+        len(NOTICE_SEPARATOR) + len(NOTICE_SEPARATOR.join(notices)) if notices else 0
+    )
+    return build_guidance(unread, limit=budget)
+
+
+def _output(
+    guidance: Guidance | None, unread: Sequence[MatchedRule], notices: Sequence[str]
+) -> dict[str, Any]:
+    """案内と知らせから、止める出力か止めない出力を作る。"""
+    text = NOTICE_SEPARATOR.join(
+        part for part in (guidance.text if guidance else "", *notices) if part
+    )
     output: dict[str, Any] = {"hookEventName": "PreToolUse"}
     if any(rule.blocking for rule in unread):
         output["permissionDecision"] = "deny"

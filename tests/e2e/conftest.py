@@ -32,7 +32,11 @@ DEFAULT_MAX_TURNS = 5
 # MCP サーバーの起動の待ち時間（ミリ秒）。入れた直後の最初の起動は uv が依存を取得する分だけ遅い
 MCP_TIMEOUT_MS = "60000"
 READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
+# git が管理しているファイルと、管理外で .gitignore にも載らないファイルを、パスを NUL 区切りで返す
+GIT_LIST_FILES = ("git", "ls-files", "-co", "--exclude-standard", "-z")
 SECONDS_PER_DAY = 86_400
+# セッションの記録で、フックが返した案内の文面を載せる行の `attachment.type`
+HOOK_CONTEXT_ATTACHMENT_TYPE = "hook_additional_context"
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -188,28 +192,52 @@ def e2e_project(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def configure_index(
-    e2e_project: Path, state_dir: Path, log_folder: Path
-) -> Callable[[Path | str], None]:
-    """プロジェクトの設定の `env` に、索引・記録フォルダ・ログのフォルダを書く。"""
+    e2e_project: Path, tmp_path: Path, state_dir: Path, log_folder: Path
+) -> Callable[..., None]:
+    """プロジェクトの設定の `env` に、索引・記録フォルダ・ログのフォルダ・索引の無い設定フォルダを書く。"""
 
-    def _configure(index: Path | str) -> None:
-        """index をプロジェクト用の索引として指す。"""
-        settings = {
-            "env": {
-                "RULE_INJECT_INDEXES_PROJECT": str(index),
-                "RULE_INJECT_STATE_DIR": str(state_dir),
-                "RULE_INJECT_LOG_DIR": str(log_folder),
-            }
+    def _configure(index: Path | str | None, *, extra_env: Mapping[str, str] | None = None) -> None:
+        """index をプロジェクト用の索引として指し（None なら指さず既定の置き場所に任せ）、extra_env を足す。"""
+        env = {
+            "RULE_INJECT_STATE_DIR": str(state_dir),
+            "RULE_INJECT_LOG_DIR": str(log_folder),
+            # ユーザーの既定の索引が実際の設定フォルダの索引を読まないよう、索引の無いフォルダを指す
+            "XDG_CONFIG_HOME": str(tmp_path / "config"),
         }
+        if index is not None:
+            env["RULE_INJECT_INDEXES_PROJECT"] = str(index)
+        env.update(extra_env or {})
         (e2e_project / ".claude" / "settings.json").write_text(
-            json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps({"env": env}, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
     return _configure
 
 
+@pytest.fixture(scope="session")
+def plugin_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """プラグインのファイルを Linux 側の一時フォルダへ写し、そのフォルダを返す（実行ごとに 1 回）。"""
+    destination = tmp_path_factory.mktemp("plugin")
+    listed = subprocess.run(
+        GIT_LIST_FILES,
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout.decode("utf-8")
+    # 日本語のパスを含むため、クォートされない NUL 区切りの出力を分ける
+    for relative in filter(None, listed.split("\0")):
+        source = PROJECT_ROOT / relative
+        # フォルダの行と、作業ツリーから消えているファイルは写さない
+        if not source.is_file():
+            continue
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    return destination
+
+
 @pytest.fixture
-def run_claude(e2e_project: Path) -> Callable[..., ClaudeRun]:
+def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
     """利用者の設定を読み込ませずに `claude -p` を 1 回動かし、その結果を返す factory。"""
 
     def _run(
@@ -230,7 +258,7 @@ def run_claude(e2e_project: Path) -> Callable[..., ClaudeRun]:
             "-p",
             prompt,
             "--plugin-dir",
-            str(PROJECT_ROOT),
+            str(plugin_dir),
             "--setting-sources",
             "project",
             "--output-format",
@@ -273,18 +301,49 @@ def run_claude(e2e_project: Path) -> Callable[..., ClaudeRun]:
     return _run
 
 
+def _transcript_lines(session_id: str) -> list[str]:
+    """~/.claude（か CLAUDE_CONFIG_DIR）の下から、session_id の記録を探して、空でない行を返す。"""
+    config_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    path = next(config_dir.glob(f"projects/*/{session_id}.jsonl"))
+    return [line for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
 @pytest.fixture
 def transcript_text() -> Callable[[str], str]:
     """セッションの記録（transcript）の全文を、日本語をエスケープしない文字列にして返す。"""
 
     def _read(session_id: str) -> str:
-        """~/.claude（か CLAUDE_CONFIG_DIR）の下から、session_id の記録を探して読む。"""
-        config_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
-        path = next(config_dir.glob(f"projects/*/{session_id}.jsonl"))
-        lines = path.read_text(encoding="utf-8").splitlines()
-        return "\n".join(json.dumps(json.loads(line), ensure_ascii=False) for line in lines if line)
+        """session_id の記録の各行を、日本語をエスケープしない文字列にして連ねる。"""
+        return "\n".join(
+            json.dumps(json.loads(line), ensure_ascii=False)
+            for line in _transcript_lines(session_id)
+        )
 
     return _read
+
+
+@pytest.fixture
+def guidance_count() -> Callable[[str, str], int]:
+    """セッションの記録のうち、フックの案内の行に文面が載っている行の数を返す。"""
+
+    def _count(session_id: str, snippet: str) -> int:
+        """`hook_additional_context` の行のうち、`attachment.content` が snippet を含む行を数える。"""
+        count = 0
+        for line in _transcript_lines(session_id):
+            attachment = json.loads(line).get("attachment")
+            # 案内の行（attachment.type が hook_additional_context）だけを数える。`rendered[].content` の写しは見ない
+            if not isinstance(attachment, dict):
+                continue
+            if attachment.get("type") != HOOK_CONTEXT_ATTACHMENT_TYPE:
+                continue
+            content = attachment["content"]
+            # content は文字列の配列。文字列のときはその文字列で判定する
+            texts = [content] if isinstance(content, str) else content
+            if any(snippet in text for text in texts):
+                count += 1
+        return count
+
+    return _count
 
 
 @pytest.fixture
@@ -300,12 +359,24 @@ def record_locations(state_dir: Path) -> Callable[[str], list[str]]:
 
 
 @pytest.fixture
-def write_aged_record(state_dir: Path) -> Callable[[str, int], Path]:
-    """最終更新を現在から指定の日数前に戻した既読の記録ファイルを置く factory。"""
+def guided_locations(state_dir: Path) -> Callable[[str], list[str]]:
+    """そのセッションの案内済みの記録の場所を返す（記録ファイルが無ければ空）。"""
 
-    def _write(record_session_id: str, age_days: int) -> Path:
-        """record_session_id の記録ファイルを置き、最終更新を age_days 日前にして返す。"""
-        path = state_dir / f"{record_session_id}.txt"
+    def _read(session_id: str) -> list[str]:
+        """案内済みの記録ファイルの行を返す。"""
+        path = state_dir / f"{session_id}.guided.txt"
+        return path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+
+    return _read
+
+
+@pytest.fixture
+def write_aged_record(state_dir: Path) -> Callable[..., Path]:
+    """最終更新を現在から指定の日数前に戻した記録ファイル（既読か案内済み）を置く factory。"""
+
+    def _write(record_session_id: str, age_days: int, *, suffix: str = ".txt") -> Path:
+        """record_session_id の記録ファイル（suffix の名前）を置き、最終更新を age_days 日前にして返す。"""
+        path = state_dir / f"{record_session_id}{suffix}"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("/r/a.md\n", encoding="utf-8")
         modified = time.time() - age_days * SECONDS_PER_DAY
@@ -358,8 +429,8 @@ def make_rule(tmp_path: Path) -> Callable[..., Path]:
 def make_index(tmp_path: Path) -> Callable[..., Path]:
     """エントリの dict を並べた索引の YAML を置き、そのパスを返す factory。"""
 
-    def _make(*entries: Mapping[str, Any]) -> Path:
-        """各エントリの rule・paths・on から索引を組み立てて書く。"""
+    def _make(*entries: Mapping[str, Any], to: str = "index.yaml") -> Path:
+        """各エントリの rule・paths・on から索引を組み立て、tmp_path の下の to に書く。"""
         lines = ["rules:"]
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
@@ -369,7 +440,8 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
                 lines.extend(f'      - "{value}"' for value in entry["paths"])
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
-        path = tmp_path / "index.yaml"
+        path = tmp_path / to
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return path
 

@@ -1,5 +1,5 @@
 title: "プラグイン / 共通"
-lead: フックと MCP サーバーが共有する、記録フォルダ・ログのフォルダ・場所の解決・保持の日数の読み取り・ログ・例外。標準ライブラリだけで書く。
+lead: フックと MCP サーバーが共有する、記録フォルダ・ログのフォルダ・場所の解決・保持の日数の読み取り・変数参照の展開・ログ・例外。標準ライブラリだけで書く。
 directory: |-
   ```text
   src/rule_inject/
@@ -9,6 +9,7 @@ directory: |-
       ├── errors.py     # 索引・既読の記録・ログの例外
       ├── paths.py      # 記録フォルダ・ログのフォルダとルールの場所の解決
       ├── settings.py   # 保持の日数の環境変数の読み取り
+      ├── variables.py  # `!{名前}` を環境変数の値へ展開する
       └── logger.py     # 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを消す
   ```
 classes:
@@ -113,6 +114,9 @@ enums:
       - value: sweep_read
         title: 既読の記録の掃除
         description: SessionStart
+      - value: search_guide
+        title: 検索結果の案内
+        description: PostToolUse の検索結果への案内
 constants:
   - name: STATE_DIR_NAME
     title: 記録フォルダの名前
@@ -154,6 +158,11 @@ constants:
     container: shared/settings.py
     summary: 環境変数が無いときのログの保持日数
     value: '`3`'
+  - name: VARIABLE_PATTERN
+    title: 変数参照の形
+    container: shared/variables.py
+    summary: '`!{名前}` の正規表現。名前をグループで取る'
+    value: '`!\{([A-Za-z_][A-Za-z0-9_]*)\}`'
 functions:
   - name: state_dir
     title: 記録フォルダの解決
@@ -536,7 +545,79 @@ functions:
         condition: '`rule-inject.log` を置き、記録フォルダを書き込み権限なし（`chmod 555`）'
         mock: なし
         expected: LogDeleteError（path がそのファイル）で、ファイルが残る
+  - name: expand_variables
+    title: 変数参照の展開
+    container: shared/variables.py
+    usecase: 共通
+    summary: 文字列の `!{名前}` を環境変数の値に置き換え、展開できなかった名前と一緒に返す
+    description: 索引の `rule`（フックと MCP サーバー）とルールの本文（MCP サーバー）が同じ規則で展開するために共有する。
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 展開する文字列
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: Expansion
+      description: 展開した文字列と未設定の名前
+    process: |-
+      1. `VARIABLE_PATTERN` に当たる箇所を前から順に置き換える（`re.sub` を 1 回。置き換えた値の中の `!{…}` は展開し直さない）
+      2. 名前が `env` にあればその値（空なら空文字）に、無ければ `!{名前}` のままにする
+      3. 無かった名前を、重なりを落として出た順に `unresolved` へ並べる
+    unit_tests:
+      - name: test_expand_variables
+        case: 正常
+        summary: 設定された名前を展開する
+        condition: '`a !{X} b !{X}`、`env` に `X=1`'
+        mock: なし
+        expected: '`text` が `a 1 b 1`、`unresolved` が空'
+      - name: test_expand_variables_when_empty_value
+        case: 正常
+        summary: 空の値は空文字にする
+        condition: '`[!{E}]`、`env` に `E=`'
+        mock: なし
+        expected: '`text` が `[]`、`unresolved` が空'
+      - name: test_expand_variables_when_unset
+        case: 正常
+        summary: 未設定の名前を残して並べる
+        condition: '`!{B} !{A} !{B}`、`env` が空'
+        mock: なし
+        expected: '`text` がそのまま、`unresolved` が `("B", "A")`'
+      - name: test_expand_variables_when_not_name
+        case: 正常
+        summary: 名前の形に合わないものは置き換えない
+        condition: '`!{ X }`・`!{1X}`・`{X}`・`$X`、`env` に `X=1`'
+        mock: なし
+        expected: '`text` がそのまま、`unresolved` が空'
+      - name: test_expand_variables_when_value_has_reference
+        case: 正常
+        summary: 値の中の変数参照は展開し直さない
+        condition: '`!{X}`、`env` に `X=!{Y}` と `Y=2`'
+        mock: なし
+        expected: '`text` が `!{Y}`'
 test_files:
   - tests/unit/rule_inject/shared/test_paths.py
   - tests/unit/rule_inject/shared/test_logger.py
   - tests/unit/rule_inject/shared/test_settings.py
+  - tests/unit/rule_inject/shared/test_variables.py
+data_models:
+  - name: Expansion
+    title: 変数参照の展開の結果
+    container: shared/variables.py
+    usecase: 共通
+    role: DTO
+    summary: 展開した文字列と、展開できなかった名前
+    properties:
+      - name: text
+        type: str
+        description: 設定された名前を値に置き換え、未設定の名前を `!{名前}` のまま残した文字列
+      - name: unresolved
+        type: tuple[str, ...]
+        description: 未設定の名前。重なりを落とし、出た順に並べる

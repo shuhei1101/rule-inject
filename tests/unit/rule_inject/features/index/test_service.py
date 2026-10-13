@@ -73,13 +73,113 @@ def test_load_indexes_when_unreadable(
     assert [entry.location for entry in result.entries] == ["/r/ok.md"]
 
 
-def test_load_indexes_when_no_env() -> None:
-    """環境変数が無ければ何も読まない（正常系）。"""
+def test_load_indexes_when_no_env(tmp_path: Path) -> None:
+    """環境変数が無く、既定の置き場所にも索引が無ければ何も読まない（正常系）。"""
+    # 準備
+    config_home = tmp_path / "config"
+    project = tmp_path / "project"
+    config_home.mkdir()
+    project.mkdir()
+    env = {"XDG_CONFIG_HOME": str(config_home), "CLAUDE_PROJECT_DIR": str(project)}
     # 実行
-    result = load_indexes({})
+    result = load_indexes(env)
     # 検証
     assert not result.entries
     assert not result.failures
+
+
+def test_load_indexes_when_default(
+    tmp_path: Path,
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+) -> None:
+    """環境変数が無ければ既定の置き場所を読む（正常系）。"""
+    # 準備
+    make_index(index_text("/r/user.md"), "config/rule-inject/rules.yaml")
+    make_index(index_text("/r/project.md"), "project/rules.yaml")
+    env = {
+        "XDG_CONFIG_HOME": str(tmp_path / "config"),
+        "CLAUDE_PROJECT_DIR": str(tmp_path / "project"),
+    }
+    # 実行
+    result = load_indexes(env)
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/user.md", "/r/project.md"]
+    assert not result.failures
+
+
+def test_load_indexes_when_default_config_home(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+) -> None:
+    """`XDG_CONFIG_HOME` が無ければ `~/.config` の下を読む（正常系）。"""
+    # 準備
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    make_index(index_text("/r/home.md"), "home/.config/rule-inject/rules.yaml")
+    # 実行
+    result = load_indexes({})
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/home.md"]
+    assert not result.failures
+
+
+def test_load_indexes_when_env_empty(
+    tmp_path: Path,
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+) -> None:
+    """空の文字列の環境変数は既定の置き場所も読まない（正常系）。"""
+    # 準備
+    make_index(index_text("/r/user.md"), "config/rule-inject/rules.yaml")
+    make_index(index_text("/r/project.md"), "project/rules.yaml")
+    env = {
+        "XDG_CONFIG_HOME": str(tmp_path / "config"),
+        "CLAUDE_PROJECT_DIR": str(tmp_path / "project"),
+        "RULE_INJECT_INDEXES_PROJECT": "",
+    }
+    # 実行
+    result = load_indexes(env)
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/user.md"]
+    assert not result.failures
+
+
+def test_load_indexes_when_rule_has_variable(
+    tmp_path: Path,
+    make_index: Callable[..., Path],
+) -> None:
+    """`rule` の変数参照を展開してから解く（正常系）。"""
+    # 準備
+    index = make_index('rules:\n  - rule: "!{RULES}/a.md"\n  - rule: "./!{SUB}/b.md"\n')
+    env = {
+        "RULE_INJECT_INDEXES_PROJECT": str(index),
+        "RULES": "/r",
+        "SUB": "s",
+    }
+    # 実行
+    result = load_indexes(env)
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/a.md", str(tmp_path / "s" / "b.md")]
+    assert not result.failures
+
+
+def test_load_indexes_when_rule_variable_unset(
+    make_index: Callable[..., Path],
+) -> None:
+    """展開できないエントリだけを読み飛ばす（正常系）。"""
+    # 準備
+    index = make_index('rules:\n  - rule: "!{UNSET}/a.md"\n  - rule: /r/ok.md\n')
+    env = {"RULE_INJECT_INDEXES_PROJECT": str(index)}
+    # 実行
+    result = load_indexes(env)
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/ok.md"]
+    assert len(result.failures) == 1
+    assert result.failures[0].path == str(index)
+    assert "!{UNSET}/a.md" in result.failures[0].reason
+    assert "UNSET" in result.failures[0].reason
 
 
 def test_match_path(make_entry: Callable[..., Any]) -> None:

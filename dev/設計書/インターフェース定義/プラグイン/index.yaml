@@ -14,3 +14,5 @@ items:
     summary: 新しいファイルは空で作ってから書く決まりを載せる（SessionStart）
   - page: 既読の記録の掃除.py.yaml
     summary: セッションの開始時に、保持期間を過ぎた既読の記録を消す（SessionStart）
+  - page: 検索結果の案内.py.yaml
+    summary: 検索の結果に出たファイルに当たる未読のルールを、止めずに案内する（PostToolUse）

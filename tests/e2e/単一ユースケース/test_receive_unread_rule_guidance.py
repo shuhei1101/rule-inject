@@ -61,7 +61,9 @@ def test_normal_when_already_read(
     target = e2e_project / "notes.txt"
     # 実行
     run = run_claude(
-        WRITE_PROMPT.format(target=target), allow=["Write"], resume=read_run.session_id
+        WRITE_PROMPT.format(target=target),
+        allow=["Write", "Edit"],
+        resume=read_run.session_id,
     )
     # 検証
     assert run.denied_tools == []
@@ -75,9 +77,10 @@ def test_normal_when_not_blocked(
     configure_index: Callable[[Path | str], None],
     run_claude: Callable[..., Any],
     transcript_text: Callable[[str], str],
+    guided_locations: Callable[[str], list[str]],
     marker: Callable[[str], str],
 ) -> None:
-    """書く操作だけが必須のルールでは、Read を止めずに案内する（正常シナリオ）。"""
+    """書く操作だけが必須のルールでは、Read を止めずに案内し、案内済みにする（正常シナリオ）。"""
     # 準備
     rule = make_rule("notes.md", "# ノートの規約\n")
     configure_index(make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}))
@@ -93,6 +96,7 @@ def test_normal_when_not_blocked(
     transcript = transcript_text(run.session_id)
     assert NON_BLOCKING_GUIDANCE in transcript
     assert str(rule) in transcript
+    assert guided_locations(run.session_id) == [str(rule)]
 
 
 def test_normal_when_read_by_bash(
@@ -164,10 +168,106 @@ def test_error_when_index_unreadable(
     configure_index(broken)
     target = e2e_project / "notes.txt"
     # 実行
-    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
     # 検証
     assert run.denied_tools == []
     assert "hello" in target.read_text(encoding="utf-8")
     transcript = transcript_text(run.session_id)
     assert str(broken) in transcript
     assert "許さないキー" in transcript
+
+
+def test_normal_when_already_guided(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+    guidance_count: Callable[[str, str], int],
+    marker: Callable[[str], str],
+) -> None:
+    """案内済みのルールでは、同じファイルをもう一度 Read しても案内されない（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    configure_index(make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}))
+    file_marker = marker("FILE-BODY")
+    target = e2e_project / "notes.txt"
+    target.write_text(f"{file_marker}\n", encoding="utf-8")
+    prompt = f"Read で {target} を読み、中身をそのまま答えてください。他のことはしないでください。"
+    first_run = run_claude(prompt, allow=["Read"])
+    guided_count = guidance_count(first_run.session_id, NON_BLOCKING_GUIDANCE)
+    # 実行
+    run = run_claude(prompt, allow=["Read"], resume=first_run.session_id)
+    # 検証
+    assert guided_count == 1
+    assert run.denied_tools == []
+    assert file_marker in run.answer
+    assert guidance_count(run.session_id, NON_BLOCKING_GUIDANCE) == guided_count
+
+
+def test_normal_when_default_index(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+) -> None:
+    """索引の環境変数が無いとき、プロジェクトの直下の `rules.yaml` で Write が止められる（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}, to="project/rules.yaml")
+    configure_index(None)
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
+    # 検証
+    assert "Write" in run.denied_tools
+    assert str(rule) in run.denial_reasons[0]
+    assert "索引を読めませんでした" not in run.denial_reasons[0]
+
+
+def test_normal_when_rule_has_variable(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+) -> None:
+    """`rule` の変数参照を展開した場所で Write が止められる（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    index = make_index(
+        {"rule": '"!{E2E_RULES_DIR}/notes.md"', "paths": ["**/*.txt"], "on": ["write"]}
+    )
+    configure_index(index, extra_env={"E2E_RULES_DIR": str(rule.parent)})
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
+    # 検証
+    assert "Write" in run.denied_tools
+    assert str(rule) in run.denial_reasons[0]
+    assert "!{E2E_RULES_DIR}" not in run.denial_reasons[0]
+
+
+def test_error_when_rule_variable_unset(
+    e2e_project: Path,
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+    transcript_text: Callable[[str], str],
+) -> None:
+    """未設定の変数参照を持つエントリを読み飛ばし、Write を止めずに理由が載る（異常シナリオ）。"""
+    # 準備
+    index = make_index(
+        {"rule": '"!{E2E_UNSET_RULES_DIR}/notes.md"', "paths": ["**/*.txt"], "on": ["write"]}
+    )
+    configure_index(index)
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
+    # 検証
+    assert run.denied_tools == []
+    assert "hello" in target.read_text(encoding="utf-8")
+    transcript = transcript_text(run.session_id)
+    assert str(index) in transcript
+    assert "E2E_UNSET_RULES_DIR" in transcript

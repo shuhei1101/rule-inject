@@ -4,12 +4,14 @@ entry:
   value: '`PreCompact` フック（timeout 1 秒）'
 flows:
   - name: 正常系
-    summary: そのセッションの記録ファイルだけを消す
+    summary: そのセッションの既読の記録ファイルと案内済みの記録ファイルだけを消す
     setup:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 既読の記録
         description: 対象のセッションと別のセッションの記録ファイルを 1 つずつ置く
+      - name: 案内済みの記録
+        description: 対象のセッションと別のセッションの `{session_id}.guided.txt` を 1 つずつ置く
       - name: 入力
         description: '`session_id` は対象のセッション、`trigger: manual`'
     flow: |-
@@ -20,12 +22,14 @@ flows:
         participant ST as 記録ファイル
 
         CC->>C: 標準入力（session_id・trigger）
-        C->>ST: そのセッションのファイルを消す
+        C->>ST: そのセッションの既読の記録ファイルを消す
+        C->>ST: そのセッションの案内済みの記録ファイルを消す
         C-->>CC: 終了コード 0
       ```
     expected:
       - 対象のセッションの記録ファイルが無い
-      - 別のセッションの記録ファイルが残っている
+      - 対象のセッションの案内済みの記録ファイルが無い
+      - 別のセッションの記録ファイルと案内済みの記録ファイルが残っている
       - 終了コードが `0`
     test: test_normal
   - name: 正常系（記録が無い）
@@ -79,9 +83,9 @@ flows:
       - 記録ファイルが残っている（圧縮の後の作業の決まりの注入が知らせる）
       - 終了コードが `0`
     test: test_error_when_record_undeletable
-lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルを消す。
+lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルと案内済みの記録ファイルを消す。
 idempotent: true
-side_effects: そのセッションの既読の記録ファイルを消す
+side_effects: そのセッションの既読の記録ファイル（`{session_id}.txt`）と案内済みの記録ファイル（`{session_id}.guided.txt`）を消す。片方を消せなくてももう片方は消す
 request:
   - name: '`session_id`'
     type: str

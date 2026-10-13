@@ -82,15 +82,19 @@ flows:
         participant H as ルール案内
         participant IDX as 索引
         participant ST as 既読の記録
+        participant GD as 案内済みの記録
 
         CC->>H: 標準入力（Read・対象のパス）
         H->>IDX: 読む
         H->>ST: 既読を読む（未読）
+        H->>GD: 案内済みを読む（未案内）
+        H->>GD: ルールの場所を追記する
         H-->>CC: additionalContext（案内）<br>終了コード 0
       ```
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` にルールの場所が載り、「やり直してください」を含まない'
+      - 案内済みの記録にルールの場所が 1 行ある
       - 終了コードが `0`
     test: test_normal_when_not_blocked
   - name: 正常系（Bashで読む対象に当たる）
@@ -343,9 +347,208 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_read_by_grep
-lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。
-idempotent: true
-side_effects: なし（既読の記録は読むだけ）
+  - name: 正常系（案内済みのため案内しない）
+    summary: 止めない案内に当たるルールが案内済みなら何も出さない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 止めずに案内するフローと同じ
+      - name: 既読の記録
+        description: 空
+      - name: 案内済みの記録
+        description: そのセッションの案内済みの記録にルールの場所がある
+      - name: 入力
+        description: 止めずに案内するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>H: 標準入力（Read・対象のパス）
+        H->>ST: 既読を読む（未読）
+        H->>GD: 案内済みを読む（案内済み）
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 案内済みの記録の行が増えていない
+      - 終了コードが `0`
+    test: test_normal_when_already_guided
+  - name: 正常系（止める案内は案内済みにしない）
+    summary: 止める案内に並べたルールは案内済みにせず、次も止める
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 止めて案内するフローと同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: 止めて案内するフローと同じ入力を 2 回続けて渡す
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant GD as 案内済みの記録
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H-->>CC: permissionDecision: deny + 案内
+        CC->>H: 標準入力（同じ入力）
+        H-->>CC: permissionDecision: deny + 案内
+      ```
+    expected:
+      - 2 回とも `permissionDecision` が `deny`
+      - 案内済みの記録ファイルが無い
+    test: test_normal_when_blocked_twice
+  - name: 正常系（既定の置き場所の索引）
+    summary: 索引の環境変数が無いとき、既定の置き場所の索引で案内する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 止めて案内するフローと同じエントリを、`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` に置く
+        notes: '`RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` を渡さない。`XDG_CONFIG_HOME` は索引の無い空の一時フォルダを指す'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: 止めて案内するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 既定の置き場所の索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>H: 環境変数が無いため既定の置き場所を索引にする
+        H->>IDX: 読む（ユーザーの既定は無いため読まない）
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` にルールの場所が載り、索引が読めなかった知らせが載っていない'
+      - ログのファイルが無い
+    test: test_normal_when_default_index
+  - name: 正常系（索引の環境変数が空）
+    summary: 環境変数を空の文字列にしたとき、既定の置き場所の索引を読まない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 既定の置き場所のフローと同じ `rules.yaml` を置く
+        notes: '`RULE_INJECT_INDEXES_PROJECT` を空の文字列で渡す'
+      - name: 入力
+        description: 止めて案内するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>H: 空の環境変数の索引は読まない
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_index_env_empty
+  - name: 正常系（ルールの場所に変数参照がある）
+    summary: '`rule` の `!{名前}` を環境変数で展開した場所で案内する'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`rule: "!{RULES_DIR}/python.md"`・`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ'
+        notes: 環境変数 `RULES_DIR` にルールのフォルダを渡す
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: 止めて案内するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: rule の変数参照を展開して場所を解く
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` に展開したルールの場所（`{RULES_DIR の値}/python.md`）が載り、`!{RULES_DIR}` が載っていない'
+    test: test_normal_when_rule_has_variable
+  - name: 異常系（ルールの場所の変数参照を展開できない・止めずに理由を載せる）
+    summary: 未設定の名前が残ったエントリを読み飛ばし、理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`rule: "!{UNSET_DIR}/python.md"`・`on: [write]` のエントリと、`on: [write]` の通常のエントリを 1 つずつ持つ'
+        notes: '`UNSET_DIR` を渡さない。通常のエントリは別の glob（`**/*.md`）にし、読み飛ばしが他のエントリに及ばないことを見る'
+      - name: 入力
+        description: '`tool_name: Write`、`.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant LOG as ログ
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: 展開できない名前が残ったエントリを読み飛ばす
+        H->>LOG: read_index を追記する
+        H-->>CC: additionalContext（索引の場所・rule・展開できない名前）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に索引の場所・エントリの `rule`・`UNSET_DIR` が載っている'
+      - 'ログに `operation: read_index` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_rule_variable_unset
+  - name: 異常系（案内済みの記録に書けない・止めずに理由を載せる）
+    summary: 案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 止めずに案内するフローと同じ
+      - name: 案内済みの記録
+        description: 記録フォルダを書き込み権限なし（`chmod 500`）で置く
+      - name: 入力
+        description: 止めずに案内するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant GD as 案内済みの記録
+        participant LOG as ログ
+
+        CC->>H: 標準入力（Read・対象のパス）
+        H->>GD: 追記する（書けない）
+        H->>LOG: write_record を追記する
+        H-->>CC: additionalContext（案内と、記録ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` にルールの場所と、案内済みの記録ファイルの場所と理由が載っている'
+      - 'ログに `operation: write_record` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_guided_record_unwritable
+lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
+idempotent: false
+side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
 request:
   - name: '`session_id`'
     type: str
@@ -414,7 +617,7 @@ response:
     notes: '`permissionDecision` を載せたときだけ載せる。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 止めない案内。未読のルールの場所と読み方。索引が読めないときはその索引の場所と理由
+    description: 止めない案内。未読で未案内のルールの場所と読み方。索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 操作を止めないときだけ載せる。「やり直してください」は含めない
 response_example: |-
@@ -440,6 +643,9 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、操作を止めずに `additionalContext` へ「ルールの案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
+  - name: OSError（案内済みの記録が読めない・書けない）
+    condition: 案内済みの記録ファイルはあるが読めない、または記録フォルダか記録ファイルに書けない（権限・容量）
+    notes: 既読の記録が読めないときと揃え、操作を止めずに案内を出し、`additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` か `write_record` を書く。読めないときは未案内として扱う。ファイルが無いときは失敗ではなく未案内として扱う
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -448,8 +654,8 @@ constraints:
     constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を載せて残りの件数を添える
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
   - item: 索引
-    constraint: 環境変数 `RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` のカンマ区切りのパスを順に読み、全てのエントリを合わせて当てる
-    notes: 書式は設定の設計書。標準ライブラリだけで読む。プロジェクトの索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く
+    constraint: '環境変数 `RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` のカンマ区切りのパスを順に読み、全てのエントリを合わせて当てる。環境変数が無いときは既定の置き場所（ユーザー: `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`、プロジェクト: `${CLAUDE_PROJECT_DIR}/rules.yaml`）を読み、既定のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。環境変数が空の文字列のときは、その索引を読まない'
+    notes: 書式は設定の設計書。標準ライブラリだけで読む。プロジェクトの索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の文字列を既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
     constraint: 同じルールの場所（解決後の絶対パスか URL）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
   - item: 読むコマンド
@@ -463,5 +669,11 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
     notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+  - item: ルールの場所の変数参照
+    constraint: エントリの `rule` の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックが受け取った環境変数の値に置き換えてから場所を解く。空の値は空文字に置き換える。未設定の名前が残ったエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・展開できない名前を載せ、ログへ `read_index` を書く
+    notes: 置き換えの規則はインターフェース定義「ルール本文の取得」の本文の展開と同じ
+  - item: 案内済みの記録
+    constraint: 止めない案内（`additionalContext`）に載せたルールの場所を `{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に載せない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
+    notes: 書式は ER 図「既読の記録」の案内済みの記録。止める案内は読むまで毎回出す。案内文の長さに収まらず載せなかった場所は記録しない
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

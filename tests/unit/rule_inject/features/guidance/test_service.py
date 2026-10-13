@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from rule_inject.features.guidance import service
 from rule_inject.features.guidance.service import (
     BLOCKING_HEADER,
     NON_BLOCKING_HEADER,
@@ -26,6 +27,12 @@ def hundred_rules() -> list[MatchedRule]:
     ]
 
 
+@pytest.fixture
+def hundred_locations(hundred_rules: list[MatchedRule]) -> list[str]:
+    """1 件 150 字前後の場所 100 件。"""
+    return [rule.location for rule in hundred_rules]
+
+
 def test_build_guidance_when_blocking() -> None:
     """止める案内は止めるルールを先に並べる（正常系）。"""
     # 準備
@@ -36,8 +43,8 @@ def test_build_guidance_when_blocking() -> None:
     # 実行
     result = build_guidance(rules)
     # 検証
-    assert result.startswith(BLOCKING_HEADER)
-    assert result.index("/r/write.md") < result.index("/r/read.md")
+    assert result.text.startswith(BLOCKING_HEADER)
+    assert result.text.index("/r/write.md") < result.text.index("/r/read.md")
 
 
 def test_build_guidance_when_not_blocking() -> None:
@@ -47,8 +54,8 @@ def test_build_guidance_when_not_blocking() -> None:
     # 実行
     result = build_guidance(rules)
     # 検証
-    assert result.startswith(NON_BLOCKING_HEADER)
-    assert "やり直してください" not in result
+    assert result.text.startswith(NON_BLOCKING_HEADER)
+    assert "やり直してください" not in result.text
 
 
 def test_build_guidance_when_too_long(hundred_rules: list[MatchedRule]) -> None:
@@ -56,8 +63,17 @@ def test_build_guidance_when_too_long(hundred_rules: list[MatchedRule]) -> None:
     # 実行
     result = build_guidance(hundred_rules, limit=10000)
     # 検証
-    assert len(result) <= 10000
-    assert re.search(r"ほか \d+ 件のルールは", result)
+    assert len(result.text) <= 10000
+    assert re.search(r"ほか \d+ 件のルールは", result.text)
+
+
+def test_build_guidance_when_shown(hundred_rules: list[MatchedRule]) -> None:
+    """載せた場所だけを shown に返す（正常系）。"""
+    # 実行
+    result = build_guidance(hundred_rules, limit=10000)
+    # 検証
+    assert result.shown == tuple(re.findall(r"^- (.+)$", result.text, re.MULTILINE))
+    assert 0 < len(result.shown) < 100
 
 
 def test_build_failure_notice() -> None:
@@ -74,3 +90,34 @@ def test_build_failure_notice() -> None:
     assert "- /i/a.yaml: FileNotFoundError: no such file" in result
     assert "- /i/b.yaml: ValueError: 3行目: 許さないキー" in result
     assert "/s/rule-inject.log" in result
+
+
+def test_build_search_guidance() -> None:
+    """読むかは任意と伝える案内にする（正常系）。"""
+    # 実行
+    result = service.build_search_guidance(["/r/a.md", "/r/b.md"])
+    # 検証
+    assert result.text.startswith(service.SEARCH_HEADER)
+    assert "- /r/a.md" in result.text
+    assert "- /r/b.md" in result.text
+    assert "やり直してください" not in result.text
+    assert result.shown == ("/r/a.md", "/r/b.md")
+
+
+def test_build_search_guidance_when_unchecked() -> None:
+    """照合しなかった件数を添える（正常系）。"""
+    # 実行
+    result = service.build_search_guidance(["/r/a.md"], unchecked=5)
+    # 検証
+    assert result.text.rstrip().endswith("検索結果のうち 5 件は照合していません。")
+
+
+def test_build_search_guidance_when_too_long(hundred_locations: list[str]) -> None:
+    """上限を超える分を件数にする（正常系）。"""
+    # 実行
+    result = service.build_search_guidance(hundred_locations, limit=10000)
+    # 検証
+    assert len(result.text) <= 10000
+    assert re.search(r"ほか \d+ 件のルールは", result.text)
+    assert result.shown == tuple(re.findall(r"^- (.+)$", result.text, re.MULTILINE))
+    assert 0 < len(result.shown) < 100
