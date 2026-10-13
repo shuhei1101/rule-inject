@@ -78,17 +78,17 @@ def test_normal_when_already_guided(
     e2e_project: Path,
     searched_project: tuple[Path, str],
     run_claude: Callable[..., Any],
-    transcript_text: Callable[[str], str],
+    guidance_count: Callable[[str, str], int],
 ) -> None:
     """案内済みのルールは、同じ検索をもう一度しても案内されない（正常シナリオ）。"""
     # 準備
     _, needle = searched_project
     prompt = GREP_PROMPT.format(folder=e2e_project, needle=needle)
     first_run = run_claude(prompt, allow=["Grep"])
-    guided_count = transcript_text(first_run.session_id).count(SEARCH_GUIDANCE)
+    guided_count = guidance_count(first_run.session_id, SEARCH_GUIDANCE)
     # 実行
     run = run_claude(prompt, allow=["Grep"], resume=first_run.session_id)
     # 検証
     assert guided_count == 1
     assert run.denied_tools == []
-    assert transcript_text(run.session_id).count(SEARCH_GUIDANCE) == guided_count
+    assert guidance_count(run.session_id, SEARCH_GUIDANCE) == guided_count

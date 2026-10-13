@@ -35,6 +35,8 @@ READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 # git が管理しているファイルと、管理外で .gitignore にも載らないファイルを、パスを NUL 区切りで返す
 GIT_LIST_FILES = ("git", "ls-files", "-co", "--exclude-standard", "-z")
 SECONDS_PER_DAY = 86_400
+# セッションの記録で、フックが返した案内の文面を載せる行の `attachment.type`
+HOOK_CONTEXT_ATTACHMENT_TYPE = "hook_additional_context"
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -299,18 +301,49 @@ def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
     return _run
 
 
+def _transcript_lines(session_id: str) -> list[str]:
+    """~/.claude（か CLAUDE_CONFIG_DIR）の下から、session_id の記録を探して、空でない行を返す。"""
+    config_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    path = next(config_dir.glob(f"projects/*/{session_id}.jsonl"))
+    return [line for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
 @pytest.fixture
 def transcript_text() -> Callable[[str], str]:
     """セッションの記録（transcript）の全文を、日本語をエスケープしない文字列にして返す。"""
 
     def _read(session_id: str) -> str:
-        """~/.claude（か CLAUDE_CONFIG_DIR）の下から、session_id の記録を探して読む。"""
-        config_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
-        path = next(config_dir.glob(f"projects/*/{session_id}.jsonl"))
-        lines = path.read_text(encoding="utf-8").splitlines()
-        return "\n".join(json.dumps(json.loads(line), ensure_ascii=False) for line in lines if line)
+        """session_id の記録の各行を、日本語をエスケープしない文字列にして連ねる。"""
+        return "\n".join(
+            json.dumps(json.loads(line), ensure_ascii=False)
+            for line in _transcript_lines(session_id)
+        )
 
     return _read
+
+
+@pytest.fixture
+def guidance_count() -> Callable[[str, str], int]:
+    """セッションの記録のうち、フックの案内の行に文面が載っている行の数を返す。"""
+
+    def _count(session_id: str, snippet: str) -> int:
+        """`hook_additional_context` の行のうち、`attachment.content` が snippet を含む行を数える。"""
+        count = 0
+        for line in _transcript_lines(session_id):
+            attachment = json.loads(line).get("attachment")
+            # 案内の行（attachment.type が hook_additional_context）だけを数える。`rendered[].content` の写しは見ない
+            if not isinstance(attachment, dict):
+                continue
+            if attachment.get("type") != HOOK_CONTEXT_ATTACHMENT_TYPE:
+                continue
+            content = attachment["content"]
+            # content は文字列の配列。文字列のときはその文字列で判定する
+            texts = [content] if isinstance(content, str) else content
+            if any(snippet in text for text in texts):
+                count += 1
+        return count
+
+    return _count
 
 
 @pytest.fixture
