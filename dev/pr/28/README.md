@@ -1,0 +1,1 @@
+# plugin.json の版を version.ini・pyproject.toml と揃え、版上げで 3 つとも更新されるようにする
