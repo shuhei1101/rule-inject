@@ -150,8 +150,8 @@ requirements:
     tests:
       - name: test_version_consistency_when_all_match
         summary: 3 つの版が一致するとき、検査が通る
-        condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.1`'
-        measurement: 3 つのファイルから版を取り出し、`version.ini` は先頭の `v` を除いて比べる
+        condition: 'リポジトリの直下の `version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`（値は固定しない）'
+        measurement: 実物の 3 つのファイルから版を取り出し、`version.ini` は先頭の `v` を除いて比べる
         expected: 検査が通る（fail しない）
       - name: test_version_consistency_when_mismatch
         summary: 版が 1 つでも食い違うとき、検査が 3 つの値を並べて fail する
