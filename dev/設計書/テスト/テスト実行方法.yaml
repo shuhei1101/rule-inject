@@ -62,4 +62,7 @@ layers:
     external_cost: 16 シナリオで `claude -p` を 20 回起動し、そのたびに Claude Code の利用枠か API の利用料がかかる。全件を実行する前に、費用がかかることをユーザーが承知していること
     results: 進行と結果は `$RUN_DIR/results.jsonl`。全 pass のログはテストの側では置かない（E2E の結果の集約は tester が担う）
   - name: 非機能要件テスト
-    run_all: 未確定
+    run_all: |-
+      ```bash
+      uv run pytest tests/nfr
+      ```
