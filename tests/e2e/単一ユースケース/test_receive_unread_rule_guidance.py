@@ -183,7 +183,7 @@ def test_normal_when_already_guided(
     make_index: Callable[..., Path],
     configure_index: Callable[..., None],
     run_claude: Callable[..., Any],
-    transcript_text: Callable[[str], str],
+    guidance_count: Callable[[str, str], int],
     marker: Callable[[str], str],
 ) -> None:
     """案内済みのルールでは、同じファイルをもう一度 Read しても案内されない（正常シナリオ）。"""
@@ -195,14 +195,14 @@ def test_normal_when_already_guided(
     target.write_text(f"{file_marker}\n", encoding="utf-8")
     prompt = f"Read で {target} を読み、中身をそのまま答えてください。他のことはしないでください。"
     first_run = run_claude(prompt, allow=["Read"])
-    guided_count = transcript_text(first_run.session_id).count(NON_BLOCKING_GUIDANCE)
+    guided_count = guidance_count(first_run.session_id, NON_BLOCKING_GUIDANCE)
     # 実行
     run = run_claude(prompt, allow=["Read"], resume=first_run.session_id)
     # 検証
     assert guided_count == 1
     assert run.denied_tools == []
     assert file_marker in run.answer
-    assert transcript_text(run.session_id).count(NON_BLOCKING_GUIDANCE) == guided_count
+    assert guidance_count(run.session_id, NON_BLOCKING_GUIDANCE) == guided_count
 
 
 def test_normal_when_default_index(
