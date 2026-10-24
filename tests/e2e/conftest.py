@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -37,6 +38,29 @@ GIT_LIST_FILES = ("git", "ls-files", "-co", "--exclude-standard", "-z")
 SECONDS_PER_DAY = 86_400
 # セッションの記録で、フックが返した案内の文面を載せる行の `attachment.type`
 HOOK_CONTEXT_ATTACHMENT_TYPE = "hook_additional_context"
+# 文書の MCP サーバーが `get_doc` で返す本文を渡す環境変数
+DOCS_BODY_ENV = "E2E_DOCS_BODY"
+# 文書の MCP サーバー（`docs`）のスクリプト。`get_doc` が `id` に関わらず決めた本文を返す
+DOCS_SERVER_SCRIPT = f'''"""E2E テストが使う、文書を返す stdio の MCP サーバー。"""
+
+from __future__ import annotations
+
+import os
+
+from mcp.server.mcpserver import MCPServer
+
+server = MCPServer("docs")
+
+
+@server.tool(name="get_doc")
+def get_doc(id: str) -> str:
+    """id の文書の本文を返す。"""
+    return os.environ["{DOCS_BODY_ENV}"]
+
+
+if __name__ == "__main__":
+    server.run()
+'''
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -247,8 +271,9 @@ def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
         deny: Sequence[str] = (),
         resume: str | None = None,
         max_turns: int | None = DEFAULT_MAX_TURNS,
+        mcp_config: Path | None = None,
     ) -> ClaudeRun:
-        """プラグインだけを読み込み、プロジェクトの設定だけを使って prompt を実行する。"""
+        """プラグインだけを読み込み、プロジェクトの設定だけを使って prompt を実行する。mcp_config があれば、その MCP サーバーも渡す。"""
         binary = os.environ.get(CLAUDE_BIN_ENV) or shutil.which("claude")
         if binary is None:
             pytest.skip("claude が PATH に無い")
@@ -273,6 +298,8 @@ def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
             command += ["--disallowedTools", ",".join(deny)]
         if resume is not None:
             command += ["--resume", resume]
+        if mcp_config is not None:
+            command += ["--mcp-config", str(mcp_config)]
         if os.environ.get(CLAUDE_MODEL_ENV):
             command += ["--model", os.environ[CLAUDE_MODEL_ENV]]
         env = {
@@ -371,6 +398,41 @@ def guided_locations(state_dir: Path) -> Callable[[str], list[str]]:
 
 
 @pytest.fixture
+def record_history(state_dir: Path) -> Callable[[str], list[dict[str, Any]]]:
+    """そのセッションの既読の履歴の行を返す（履歴ファイルが無ければ空）。"""
+
+    def _read(session_id: str) -> list[dict[str, Any]]:
+        """履歴ファイルの各行を JSON として読む。"""
+        path = state_dir / f"{session_id}.history.jsonl"
+        if not path.exists():
+            return []
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+    return _read
+
+
+@pytest.fixture
+def docs_mcp_config(tmp_path: Path) -> Callable[[str], Path]:
+    """`get_doc` が決めた本文を返す stdio の MCP サーバー `docs` を置き、`--mcp-config` に渡す設定のファイルを返す factory。"""
+
+    def _make(body: str) -> Path:
+        """body を返す `get_doc`（引数 `id`）を持つサーバーのスクリプトと設定を tmp_path の下に書く。"""
+        script = tmp_path / "docs_server.py"
+        script.write_text(DOCS_SERVER_SCRIPT, encoding="utf-8")
+        config = tmp_path / "docs_mcp.json"
+        server = {
+            "type": "stdio",
+            "command": sys.executable,
+            "args": [str(script)],
+            "env": {DOCS_BODY_ENV: body},
+        }
+        config.write_text(json.dumps({"mcpServers": {"docs": server}}), encoding="utf-8")
+        return config
+
+    return _make
+
+
+@pytest.fixture
 def write_aged_record(state_dir: Path) -> Callable[..., Path]:
     """最終更新を現在から指定の日数前に戻した記録ファイル（既読か案内済み）を置く factory。"""
 
@@ -430,7 +492,7 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
     """エントリの dict を並べた索引の YAML を置き、そのパスを返す factory。"""
 
     def _make(*entries: Mapping[str, Any], to: str = "index.yaml") -> Path:
-        """各エントリの rule・paths・on から索引を組み立て、tmp_path の下の to に書く。"""
+        """各エントリの rule・paths・on・read_by から索引を組み立て、tmp_path の下の to に書く。"""
         lines = ["rules:"]
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
@@ -440,6 +502,17 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
                 lines.extend(f'      - "{value}"' for value in entry["paths"])
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
+            # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで書く
+            if entry.get("read_by"):
+                lines.append("    read_by:")
+                for condition in entry["read_by"]:
+                    lines.append("      - tools:")
+                    lines.extend(f'          - "{pattern}"' for pattern in condition["tools"])
+                    if condition.get("args"):
+                        lines.append("        args:")
+                        for arg_key, patterns in condition["args"].items():
+                            lines.append(f"          {arg_key}:")
+                            lines.extend(f'            - "{pattern}"' for pattern in patterns)
         path = tmp_path / to
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
