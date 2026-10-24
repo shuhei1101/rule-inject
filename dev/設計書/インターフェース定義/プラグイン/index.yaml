@@ -3,7 +3,7 @@ items:
   - page: ルール案内.py.yaml
     summary: 操作の対象に当たる未読のルールを、止めて、または止めずに案内する（PreToolUse）
   - page: セッションIDの付与.py.yaml
-    summary: この MCP のツールの引数へ session_id を足す（PreToolUse）
+    summary: この MCP のツールの引数へ session_id とセッションの環境変数を足す（PreToolUse）
   - page: ルール本文の取得.py.yaml
     summary: ルールの場所か対象のパスから本文を返し、既読として記録する（MCP のツール read_rules）
   - page: 既読の記録.py.yaml
@@ -16,3 +16,5 @@ items:
     summary: セッションの開始時に、保持期間を過ぎた既読の記録を消す（SessionStart）
   - page: 検索結果の案内.py.yaml
     summary: 検索の結果に出たファイルに当たる未読のルールを、止めずに案内する（PostToolUse）
+  - page: MCPサーバーの起動.py.yaml
+    summary: 127.0.0.1 のポートの /mcp で常駐の MCP サーバーを待ち受ける（python -m rule_inject.server）

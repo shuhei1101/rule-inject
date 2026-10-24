@@ -3,7 +3,7 @@ lead: プラグインが読む環境変数と、ルール索引（YAML）のキ�
 files:
   - file: ~/.claude/settings.json
     manages: 全プロジェクトで使う索引を指す環境変数（`env`）
-    notes: Claude Code のユーザーの設定。フックと MCP サーバーは `env` の値を環境変数として受け取る
+    notes: Claude Code のユーザーの設定。フックは `env` の値を環境変数として受け取り、常駐の MCP サーバーにはツールの引数で渡す
   - file: .claude/settings.json
     manages: そのプロジェクトだけで使う索引を指す環境変数（`env`）
     notes: Claude Code のプロジェクトの設定（利用者のプロジェクトのリポジトリに置く）
@@ -35,7 +35,7 @@ settings:
     allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（環境変数 `CLAUDE_PROJECT_DIR`）からの相対パス
     visibility: user
     status: planned
-    reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、フックにも stdio の MCP サーバーにも同じ値で渡る。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない'
+    reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、フックに渡り、常駐の MCP サーバーにはフックがツールの引数（`session_env`）で同じ値を渡す。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない'
   - key: RULE_INJECT_STATE_DIR
     title: 既読の記録の置き場所
     file: ~/.claude/settings.json
@@ -189,5 +189,19 @@ settings:
     description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。書いた全てのキーの値がどれかのパターンに当たるときだけ既読にする
     reload: immediate
     allowed: '`rules[].args` と同じ書き方と照合の規則'
+    status: planned
+    visibility: user
+  - key: RULE_INJECT_PORT
+    title: 常駐サーバーのポート
+    file: ~/.claude/settings.json
+    type: str
+    required: false
+    default: '8783'
+    description: 常駐の MCP サーバーが待ち受け、`.mcp.json` の `url` がつなぐ `127.0.0.1` のポート。他のプロセスとぶつかるときだけ書く
+    missing: 8783 で待ち受ける。値が 1〜65535 の整数でなければ、常駐サーバーは起動時にエラーで止まる
+    env_var: RULE_INJECT_PORT
+    reload: restart
+    allowed: 1〜65535 の整数
+    reason: Claude Code の設定と常駐サーバーを起動する環境の両方に同じ値を置く。既定値は knowledge『MCP サーバー作成ルール』の既定のポートの台帳
     status: planned
     visibility: user

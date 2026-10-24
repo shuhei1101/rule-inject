@@ -4,12 +4,14 @@ entry:
   value: '`PreToolUse` フック（matcher `mcp__plugin_rule-inject_rule-inject__.*`、timeout 1 秒）'
 flows:
   - name: 正常系
-    summary: 元の引数に session_id を足した updatedInput を返す
+    summary: 元の引数に session_id と session_env を足した updatedInput を返す
     setup:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 入力
-        description: '`tool_input` に `locations` と `paths` を持ち、`session_id` を持たない'
+        description: '`tool_input` に `locations` と `paths` を持ち、`session_id` と `session_env` を持たない'
+      - name: 環境変数
+        description: フックの子プロセスに `CLAUDE_PROJECT_DIR` と `RULE_INJECT_INDEXES_USER` を渡す
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -17,13 +19,14 @@ flows:
         participant H as セッションIDの付与
 
         CC->>H: 標準入力（session_id・tool_input）
-        H->>H: tool_input を写して session_id を足す
+        H->>H: tool_input を写して session_id と session_env を足す
         H-->>CC: updatedInput<br>終了コード 0
       ```
     expected:
       - '`updatedInput` に `locations` と `paths` が元の値のまま載っている'
       - '`updatedInput.session_id` が入力の `session_id` と同じ'
       - '`permissionDecision` が無い'
+      - '`updatedInput.session_env` に子プロセスへ渡した `CLAUDE_PROJECT_DIR` と `RULE_INJECT_INDEXES_USER` が同じ値で載っている'
     test: test_normal
   - name: 正常系（モデルがsession_idを渡した）
     summary: モデルが渡した session_id をフックの入力の値で上書きする
@@ -45,7 +48,7 @@ flows:
     expected:
       - '`updatedInput.session_id` が入力の `session_id` と同じで、`model-supplied` でない'
     test: test_normal_when_model_supplied_session_id
-lead: このプラグインの MCP のツールが呼ばれる直前に、元の引数をすべて写して `session_id` を足した `updatedInput` を返す。許可の判定（`permissionDecision`）は返さない。
+lead: このプラグインの MCP のツールが呼ばれる直前に、元の引数をすべて写して `session_id` と `session_env`（セッションの環境変数）を足した `updatedInput` を返す。許可の判定（`permissionDecision`）は返さない。
 idempotent: true
 side_effects: なし
 request:
@@ -62,21 +65,21 @@ request:
     type: dict[str, Any]
     required: true
     description: モデルが渡した引数
-    notes: モデルが `session_id` を渡していても、フックの入力の `session_id` で上書きする
+    notes: モデルが `session_id`・`session_env` を渡していても、フックの入力の `session_id` とフックのプロセスの環境変数で上書きする
 response:
   - name: '`hookSpecificOutput.hookEventName`'
     type: Literal['PreToolUse']
     description: フックの種類
   - name: '`hookSpecificOutput.updatedInput`'
     type: dict[str, Any]
-    description: '`tool_input` をすべて写し、`session_id` をフックの入力の値にした引数'
+    description: '`tool_input` をすべて写し、`session_id` をフックの入力の値にし、`session_env` をフックのプロセスの環境変数をすべて写したマップにした引数'
     notes: '`updatedInput` は引数を丸ごと置き換えるため、元の引数を落とさない'
 exceptions:
   - name: なし（正常終了）
     condition: 終了コード 0 で終える
   - name: Exception（想定外の例外）
     condition: 入力が読めないなど、`updatedInput` を作れない
-    notes: 最上位で捕まえ、ログへ `unexpected` を書いて何も出力せず終了コード 0 で終える。`session_id` が足されないため、ツール側が ToolError で利用者に見せる
+    notes: 最上位で捕まえ、ログへ `unexpected` を書いて何も出力せず終了コード 0 で終える。`session_id`・`session_env` が足されないため、ツール側が ToolError で利用者に見せる
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -86,5 +89,8 @@ constraints:
     notes: '`allow` を返すと利用者の許可の確認が飛ぶため（PoC 検証の回 4）。返さなくても `updatedInput` が効くことを PoC 検証の回 1〜3 で確かめた'
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+  - item: 渡す環境変数の範囲
+    constraint: フックのプロセスの環境変数をすべて `session_env` に写す（名前で絞らない）
+    notes: ルールの本文の `!{名前}` は任意の名前を指せ、フックは本文を読まないため、展開に要る名前を前もって絞れない。引数は 127.0.0.1 の常駐サーバーだけに届く。stdio のときも MCP サーバーは同じ環境変数を受け取っていた
 identifier: session_id_injection
 test_file: tests/integration/plugin/test_session_id_injection.py

@@ -23,7 +23,7 @@ flows:
         participant ST as 記録ファイル
         participant HS as 既読の履歴
 
-        CC->>T: locations + session_id
+        CC->>T: locations + session_id + session_env
         T->>RULE: 読む
         T->>ST: 場所を追記する
         T->>HS: 読み方 read_rules の行を追記する
@@ -55,7 +55,7 @@ flows:
         participant RULE as ルールの本文
         participant ST as 記録ファイル
 
-        CC->>T: paths + session_id
+        CC->>T: paths + session_id + session_env
         T->>IDX: 当たるエントリを選ぶ
         T->>RULE: 読む
         T->>ST: 場所を追記する
@@ -82,7 +82,7 @@ flows:
         participant W as ルールの配信元
         participant ST as 記録ファイル
 
-        CC->>T: locations（URL）+ session_id
+        CC->>T: locations（URL）+ session_id + session_env
         T->>W: GET（待ち 1 秒）
         W-->>T: 200 + 本文
         T->>ST: URL を追記する
@@ -113,7 +113,7 @@ flows:
         participant RULE as ルールの本文
         participant ST as 記録ファイル
 
-        CC->>T: locations（3 件）+ session_id
+        CC->>T: locations（3 件）+ session_id + session_env
         T->>RULE: 読む
         T->>T: 40,000 字に収まる分だけ pages に載せる
         T->>ST: 載せた 2 件の場所を追記する
@@ -143,7 +143,7 @@ flows:
         participant RULE as ルールの本文
         participant W as ルールの配信元
 
-        CC->>T: locations（3 件）+ session_id
+        CC->>T: locations（3 件）+ session_id + session_env
         T->>RULE: 読む（無い）
         T->>W: GET（1 件目）
         W-->>T: 404
@@ -157,12 +157,12 @@ flows:
       - 記録ファイルが作られていない
     test: test_error_when_location_unreadable
   - name: 異常系（引数が足りない・ToolError）
-    summary: session_id が無い呼び出しと、引く対象が無い呼び出しをエラーにする
+    summary: session_id か session_env が無い呼び出しと、引く対象が無い呼び出しをエラーにする
     setup:
       - name: Mock
         description: なし
       - name: 入力
-        description: '`locations` だけを渡す呼び出しと、`session_id` だけを渡す呼び出しの 2 つ'
+        description: '`locations` と `session_env` だけを渡す呼び出し、`locations` と `session_id` だけを渡す呼び出し、`session_id` と `session_env` だけを渡す呼び出しの 3 つ'
         notes: パラメータ化して同じテストで確かめる
     flow: |-
       ```mermaid
@@ -194,7 +194,7 @@ flows:
         participant T as read_rules
         participant IDX as 索引
 
-        CC->>T: locations（2 件）+ session_id
+        CC->>T: locations（2 件）+ session_id + session_env
         T->>IDX: 索引のルールの場所と照合する（一致しない）
         T-->>CC: failures（2 件・索引に載っていない場所）
       ```
@@ -225,7 +225,7 @@ flows:
         participant RULE as ルールの本文
         participant ST as 記録ファイル
 
-        CC->>T: locations + session_id
+        CC->>T: locations + session_id + session_env
         T->>RULE: 読む
         T->>ST: 追記する（書けない）
         T-->>CC: ToolError（記録フォルダの場所と理由）
@@ -238,14 +238,15 @@ flows:
     summary: 設定された名前を展開し、未設定の名前を残して本文の先頭に注釈を足す
     setup:
       - name: Mock
-        description: なし（MCP サーバーを子プロセスとして起動し、stdio でツールを呼ぶ）
+        description: なし（MCP サーバーを子プロセスとしてテスト用のポートで起動し、HTTP でツールを呼ぶ）
       - name: ルールの本文
         description: '`!{SET_NAME}`・`!{EMPTY_NAME}`・`!{UNSET_NAME}` を 1 つずつ含み、`!{UNSET_NAME}` を 2 回書いたローカルの Markdown'
         notes: 空白を挟む `!{ SET_NAME }` のように名前の形から外れた書き方も 1 つ置き、置き換えないことを見る
       - name: 索引
         description: そのルールの場所を持つエントリを 1 つ持つ
       - name: 環境変数
-        description: '`SET_NAME=value-1` と `EMPTY_NAME=`（空）を渡して MCP サーバーを起動する。`UNSET_NAME` は渡さない'
+        description: '`session_env` に `SET_NAME=value-1` と `EMPTY_NAME=`（空）を入れて渡す。`UNSET_NAME` は入れない'
+        notes: MCP サーバーを起動する環境には `SET_NAME=server-value` を置き、サーバーの環境の値で展開しないことを見る
       - name: 入力
         description: '`locations` にそのルールの場所'
     flow: |-
@@ -270,6 +271,7 @@ flows:
       - '`!{ SET_NAME }` がそのまま残っている'
       - '`pages[0].body` の 1 行目が `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: UNSET_NAME`'
       - 既読の記録にルールの場所が 1 行ある
+      - '`pages[0].body` に `server-value` が載っていない'
     test: test_normal_when_body_has_variables
   - name: 正常系（既読の履歴に書けない）
     summary: 既読の履歴に書けないときも本文を返して既読にし、書けなかった場所と理由を応答に載せる
@@ -294,7 +296,7 @@ flows:
         participant ST as 記録ファイル
         participant HS as 既読の履歴
 
-        CC->>T: locations + session_id
+        CC->>T: locations + session_id + session_env
         T->>RULE: 読む
         T->>ST: 場所を追記する
         T->>HS: 追記する（書けない）
@@ -335,12 +337,20 @@ request:
     description: 呼び出し元のセッションの識別子
     constraints: 1〜128 文字の英数字 / `_` / `-`
     notes: インターフェース定義「セッションIDの付与」が足す。ツールの引数の説明に「渡さない。フックが足す」と書く
+  - name: '`session_env`'
+    type: dict[str, str]
+    required: true
+    location: argument
+    description: 呼び出し元のセッションの環境変数（フックのプロセスの環境変数をすべて写したもの）
+    constraints: キーと値が文字列のマップ
+    notes: インターフェース定義「セッションIDの付与」が足す。ツールの引数の説明に「渡さない。フックが足す」と書く。索引の環境変数・`CLAUDE_PROJECT_DIR`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`RULE_INJECT_STATE_DIR`・`RULE_INJECT_LOG_DIR`・本文の `!{名前}` の展開は、すべてこの値で引く
 request_example: |-
   ```json
   {
     "locations": ["/home/user/rules/python.md"],
     "paths": ["/home/user/project/src/app.py"],
-    "session_id": "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
+    "session_id": "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10",
+    "session_env": {"CLAUDE_PROJECT_DIR": "/home/user/project", "RULE_INJECT_INDEXES_USER": "~/.config/rule-inject/rules.yaml"}
   }
   ```
 response:
@@ -380,8 +390,8 @@ exceptions:
   - name: なし（正常終了）
     condition: 一部の場所を取得できなかったときも、`failures` に載せて正常に返す。既読の記録には書けて既読の履歴に書けないときも、本文を返して `history_failures` に載せ、ログへ `write_history` を書く
   - name: ToolError（引数が足りない）
-    condition: '`session_id` が無いか形が外れている、または `locations` と `paths` がどちらも空'
-    notes: '`session_id` が無いのはフックが動いていない設定の誤りとして扱い、本文も返さない'
+    condition: '`session_id` が無いか形が外れている、`session_env` が無い、または `locations` と `paths` がどちらも空'
+    notes: '`session_id`・`session_env` が無いのはフックが動いていない設定の誤りとして扱い、本文も返さない'
   - name: ToolError（既読の記録に書けない）
     condition: '`RULE_INJECT_STATE_DIR` が作れない・書けない（権限・容量）'
     notes: 本文を返しても既読にならず書く操作が止まり続けるため、記録フォルダの場所と理由を文面に載せてエラーにし、ログへ `write_record` を書く
@@ -397,19 +407,25 @@ constraints:
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
   - item: 索引
     constraint: ルール案内と同じ環境変数・同じ既定の置き場所・同じ読み方で読む（`paths` を照合するときと、`locations` を索引に載った場所と照らすときに使う）。`rule` の変数参照もルール案内と同じく展開し、展開できない名前が残ったエントリと、読めない正規表現を持つエントリは読み飛ばす
-    notes: プロジェクトの索引の相対パスは、ルール案内と同じく環境変数 `CLAUDE_PROJECT_DIR` から解く。読み飛ばしたエントリの理由はフックが載せるため、このツールは載せない。その場所を `locations` で渡されたときは「索引に載っていない場所」として `failures` に載る
+    notes: プロジェクトの索引の相対パスは、ルール案内と同じく`session_env` の `CLAUDE_PROJECT_DIR` から解く。索引の環境変数と既定の置き場所も `session_env` で引き、常駐サーバーを起動した環境の値は使わない。読み飛ばしたエントリの理由はフックが載せるため、このツールは載せない。その場所を `locations` で渡されたときは「索引に載っていない場所」として `failures` に載る
   - item: 許す場所
     constraint: 索引に載ったルールの場所（解決後の絶対パスか URL）に一致するものだけを読む。一致しない `locations` は読まずに `failures` に「索引に載っていない場所」として載せる
     notes: Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
   - item: 認可
     constraint: 制限なし（ツールの許可は利用者の Claude Code の設定に従う）
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力（MCP のログに残る）へ出す
-    notes: stdio の MCP サーバーは標準出力が通信に使われるため、標準出力へは書かない
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。ログの置き場所は `session_env` で求める。`session_env` が無いときは常駐サーバーを起動した環境で求める。書けないときは常駐サーバーの標準エラー出力へ出す
+    notes: '`session_env` の値はログに書かない'
   - item: 本文の変数参照
-    constraint: '読んだ本文の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）を MCP サーバーが起動したときの環境変数の値に置き換える。空の値は空文字に置き換える。未設定の名前は `!{名前}` のまま残し、本文の先頭に `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {名前を「、」で並べたもの}` の 1 行を足す（同じ名前は 1 回だけ、本文に出た順）。応答の大きさは展開して注釈を足した後の本文で数える'
-    notes: 値を変えたときはセッションを起こし直す（MCP サーバーは起動時の環境を使う）。置き換えた値の中の `!{…}` は置き換え直さない。既読の記録は展開の前後で変わらないルールの場所で書く
+    constraint: '読んだ本文の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）を `session_env` の値に置き換える。空の値は空文字に置き換える。未設定の名前は `!{名前}` のまま残し、本文の先頭に `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {名前を「、」で並べたもの}` の 1 行を足す（同じ名前は 1 回だけ、本文に出た順）。応答の大きさは展開して注釈を足した後の本文で数える'
+    notes: 値を変えたときはセッションを起こし直す（フックはセッションを起動したときの環境変数を写す）。置き換えた値の中の `!{…}` は置き換え直さない。既読の記録は展開の前後で変わらないルールの場所で書く
   - item: 既読の履歴
     constraint: 既読の記録へ書いた後に、`pages` に載せた場所ごとに `{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl` へ読み方 `read_rules`・ツール名 `mcp__plugin_rule-inject_rule-inject__read_rules` の行を追記する
     notes: 書式は ER 図「既読の記録」。`deferred`・`failures` の場所は残さない
+  - item: 既読の記録の置き場所
+    constraint: 既読の記録と既読の履歴の置き場所（`RULE_INJECT_STATE_DIR`・`XDG_STATE_HOME`）を `session_env` で求める
+    notes: フックと同じ値で求めるため、フックと同じ既読の記録を読み書きする。常駐サーバーを起動した環境の値は使わない
+  - item: 状態
+    constraint: 呼び出しをまたぐ値をモジュール変数に持たない。索引・記録フォルダ・ログフォルダは呼び出しごとに `session_env` から求める
+    notes: 1 つの常駐サーバーを並行する複数のセッションが共有するため
 test_file: tests/integration/plugin/test_read_rules.py
