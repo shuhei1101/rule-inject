@@ -76,9 +76,9 @@ settings:
     type: list[str]
     required: false
     default: なし（パスでは当てない）
-    description: 操作の対象の絶対パスに当てる glob
+    description: 操作の対象の絶対パスに当てる glob か正規表現
     reload: immediate
-    allowed: '`**/` か `*` で始まる glob。`**` はフォルダをまたぐ'
+    allowed: '`**/` か `*` で始まる glob。`**` はフォルダをまたぐ。`re:` で始めると、残りを正規表現として操作の対象の絶対パスに部分一致（`re.search`）で照合する。読めない正規表現を書いたエントリは読み飛ばし、索引の場所・パターン・理由をコンテキストへ載せる'
     visibility: user
     status: planned
   - key: rules[].exclude
@@ -87,9 +87,9 @@ settings:
     type: list[str]
     required: false
     default: なし（外さない）
-    description: '`paths` に当たっても、この glob に当たるパスにはそのエントリを当てない'
+    description: '`paths` に当たっても、このパターンに当たるパスにはそのエントリを当てない'
     reload: immediate
-    allowed: '`paths` と同じ書き方の glob'
+    allowed: '`paths` と同じ書き方（glob か `re:` の正規表現）'
     visibility: user
     status: planned
   - key: rules[].tools
@@ -98,9 +98,20 @@ settings:
     type: list[str]
     required: false
     default: なし（ツール名では当てない）
-    description: MCP のツールの完全名に当てる glob
+    description: MCP のツールの完全名に当てる glob か正規表現
     reload: immediate
-    allowed: '`mcp__` で始まる glob（例 `mcp__*__create_*`）'
+    allowed: '`mcp__` で始まる glob（例 `mcp__*__create_*`）か、`re:` で始まる正規表現（ツールの完全名に部分一致で照合する。例 `re:__create_`）'
+    visibility: user
+    status: planned
+  - key: rules[].args
+    title: 当てる引数
+    file: 索引（*.yaml）
+    type: dict[str, list[str]]
+    required: false
+    default: なし（引数では絞らない）
+    description: '`tools` に当たった MCP のツールの引数に当てるパターン。引数のキー → パターンのリストのマップで、書いた全てのキーの値がどれかのパターンに当たるときだけエントリを当てる'
+    reload: immediate
+    allowed: キーは引数の名前で、オブジェクトの子はドットで結ぶ（例 `filter.kind`）。パターンは glob か `re:` で始まる正規表現（値に部分一致で照合する）。`キー:` の下にパターンのリストを並べたブロックのマップだけを読み、フローのマップ・空の `args`・キーの重複は索引を読めなくする。キーが引数に無いとき・値がオブジェクトのときは当てない。値が配列のとき、およびドット区切りのキーの途中が配列のときは要素ごとに照合し、どれか 1 つが当たれば当てる。文字列以外のスカラーは JSON の表記（`true`・`null`・`1.5`）で照合する
     visibility: user
     status: planned
   - key: rules[].on

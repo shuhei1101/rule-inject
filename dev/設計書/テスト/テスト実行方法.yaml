@@ -66,3 +66,11 @@ layers:
       ```bash
       uv run pytest tests/nfr
       ```
+  - name: lint
+    description: ruff で linter・formatter の check を検査する。
+    prerequisites:
+      - 検査の設定は `pyproject.toml` の `[tool.ruff]` が持つ
+    run_all: |-
+      ```bash
+      (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; exit $rc)
+      ```
