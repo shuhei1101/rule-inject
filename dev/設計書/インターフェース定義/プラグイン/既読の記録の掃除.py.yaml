@@ -17,6 +17,7 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant C as 既読の記録の掃除
@@ -27,6 +28,7 @@ flows:
         ST-->>C: 記録ファイルと最終更新
         C->>ST: 保持期間を過ぎた記録ファイルを消す
         C-->>CC: 終了コード 0
+      ```
     expected:
       - 保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルが無い
       - 保持期間の内側の既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルが残っている

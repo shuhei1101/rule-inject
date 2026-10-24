@@ -15,6 +15,7 @@ flows:
       - name: 入力
         description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as 既読の記録
@@ -27,6 +28,7 @@ flows:
         P->>ST: ルールの場所を追記する
         P->>HS: 読み方 read の行を追記する
         P-->>CC: 終了コード 0
+      ```
     expected:
       - 記録ファイルにルールの場所が 1 行ある
       - '既読の履歴に `method: read`・`tool: Read`・`location` がルールの場所の行が 1 行ある'
@@ -45,6 +47,7 @@ flows:
         description: '`tool_name: Bash`、`tool_input.command` は `cat {ルールの場所の相対パス}`'
         notes: '`cwd` からの相対パスで渡し、絶対パスへ解くことを確かめる'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as 既読の記録
@@ -58,6 +61,7 @@ flows:
         P->>ST: ルールの場所を追記する
         P->>HS: 読み方 bash の行を追記する
         P-->>CC: 終了コード 0
+      ```
     expected:
       - 記録ファイルにルールの場所の絶対パスが 1 行ある
       - '既読の履歴に `method: bash`・`tool: Bash` の行が 1 行ある'
@@ -131,6 +135,7 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: python}`'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as 既読の記録
@@ -143,6 +148,7 @@ flows:
         P->>ST: ルールの場所を追記する
         P->>HS: 読み方 mcp の行を追記する
         P-->>CC: 終了コード 0
+      ```
     expected:
       - 記録ファイルにルールの場所が 1 行ある
       - '既読の履歴に `method: mcp`・`tool: mcp__docs__get_doc`・`location` がルールの場所の行が 1 行ある'
@@ -161,6 +167,7 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: typescript}`'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as 既読の記録
@@ -169,6 +176,7 @@ flows:
         CC->>P: 標準入力（MCP のツール名・引数）
         P->>IDX: read_by に当たるエントリを選ぶ（当たらない）
         P-->>CC: 終了コード 0
+      ```
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -186,6 +194,7 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__plugin_rule-inject_rule-inject__read_rules`'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as 既読の記録
@@ -193,6 +202,7 @@ flows:
         CC->>P: 標準入力（read_rules）
         P->>P: このプラグインのツールなので何もしない
         P-->>CC: 終了コード 0
+      ```
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -213,6 +223,7 @@ flows:
       - name: 入力
         description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant P as 既読の記録
@@ -224,6 +235,7 @@ flows:
         P->>HS: 追記する（書けない）
         P->>P: ログにも書けないため標準エラー出力へ出す
         P-->>CC: additionalContext（既読の履歴に書けなかった場所と理由）<br>終了コード 0
+      ```
     expected:
       - 記録ファイルにルールの場所が 1 行ある
       - '`additionalContext` にルールの場所と、既読の履歴に書けなかった理由が載っている'

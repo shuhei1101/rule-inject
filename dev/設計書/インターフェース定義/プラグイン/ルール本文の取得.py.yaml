@@ -15,6 +15,7 @@ flows:
       - name: 既読の記録
         description: 空の一時フォルダ（`RULE_INJECT_STATE_DIR`）
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant T as read_rules
@@ -27,6 +28,7 @@ flows:
         T->>ST: 場所を追記する
         T->>HS: 読み方 read_rules の行を追記する
         T-->>CC: pages
+      ```
     expected:
       - '`pages` に場所と本文が 1 件載っている'
       - 記録ファイルに場所が 1 行ある
@@ -284,6 +286,7 @@ flows:
       - name: ログのフォルダ
         description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
     flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant T as read_rules
@@ -296,6 +299,7 @@ flows:
         T->>ST: 場所を追記する
         T->>HS: 追記する（書けない）
         T-->>CC: pages + history_failures
+      ```
     expected:
       - '`pages` に場所と本文が 1 件載っている'
       - 記録ファイルに場所が 1 行ある
