@@ -1,0 +1,1 @@
+# MCP サーバーを stdio から HTTP の常駐サーバーに移す（既定のポート 8783・RULE_INJECT_PORT）
