@@ -436,7 +436,7 @@ def test_error_when_rule_variable_unset(
     # 準備
     index = write_index(
         {"rule": '"!{UNSET_DIR}/python.md"', "paths": ["**/*.py"], "on": ["write"]},
-        {"rule": RULE, "paths": ["**/*.md"], "on": ["write"]},
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["read"]},
     )
     # 実行
     completed = run_hook("rule_guide", write_payload(), index=index)
@@ -446,6 +446,7 @@ def test_error_when_rule_variable_unset(
     assert str(index) in output["additionalContext"]
     assert "!{UNSET_DIR}/python.md" in output["additionalContext"]
     assert "UNSET_DIR" in output["additionalContext"]
+    assert RULE in output["additionalContext"]
     logged = read_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_index"
