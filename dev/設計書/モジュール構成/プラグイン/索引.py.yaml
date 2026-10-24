@@ -50,6 +50,11 @@ constants:
     container: features/index/service.py
     summary: パターンを正規表現として読む先頭の文字列
     value: '`re:`'
+  - name: ARG_KEY_SEPARATOR
+    title: 引数のキーの区切り
+    container: features/index/service.py
+    summary: 引数のキーをオブジェクトの子へたどる区切り
+    value: '`.`'
 data_models:
   - name: IndexEntry
     title: 索引のエントリ
