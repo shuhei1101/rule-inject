@@ -477,3 +477,98 @@ def test_error_when_guided_record_unwritable(
     assert len(logged) == 1
     assert logged[0]["operation"] == "write_record"
     assert completed.returncode == 0
+
+
+MCP_SEARCH_ENTRY = {
+    "rule": RULE,
+    "tools": ["mcp__*__search_*"],
+    "args": {"tags": ["re:^python$"], "filter.kind": ["rule"]},
+}
+
+
+def test_normal_when_mcp_args_match(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`args` のパターンに引数の値が当たる MCP のツールの呼び出しを止める（正常系）。"""
+    # 準備
+    index = write_index(MCP_SEARCH_ENTRY)
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"query": "x", "tags": ["go", "python"], "filter": {"kind": "rule"}},
+    )
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert RULE in output["permissionDecisionReason"]
+    assert completed.returncode == 0
+
+
+def test_normal_when_mcp_args_unmatched(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """ツール名に当たっても、`args` のキーが無いか値が当たらなければ案内しない（正常系）。"""
+    # 準備
+    index = write_index(MCP_SEARCH_ENTRY)
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"query": "x", "tags": ["go"]},
+    )
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert completed.returncode == 0
+
+
+def test_normal_when_regex_path(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`re:` で始まる `paths` のパターンに部分一致するパスの Write を止める（正常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": [r"re:/src/[a-z_]+\\.py$"], "on": ["write"]})
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert RULE in output["permissionDecisionReason"]
+    assert completed.returncode == 0
+
+
+def test_error_when_regex_unreadable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """コンパイルできない正規表現を持つエントリを読み飛ばし、止めずに理由を載せる（異常系）。"""
+    # 準備
+    broken_rule = "/r/broken.md"
+    index = write_index(
+        {"rule": broken_rule, "paths": ["re:["], "on": ["write"]},
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["read"]},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert str(index) in output["additionalContext"]
+    assert "re:[" in output["additionalContext"]
+    assert "unterminated character set" in output["additionalContext"]
+    assert RULE in output["additionalContext"]
+    assert broken_rule not in output["additionalContext"]
+    logged = read_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_index"
+    assert completed.returncode == 0
