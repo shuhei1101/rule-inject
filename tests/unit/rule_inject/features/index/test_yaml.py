@@ -67,3 +67,72 @@ def test_parse_index_when_invalid_on() -> None:
     # 実行・検証
     with pytest.raises(ValueError, match="行目"):
         parse_index(text)
+
+
+def test_parse_index_when_args() -> None:
+    """`args` のブロックのマップを読む（正常系）。"""
+    # 準備
+    text = (
+        "rules:\n"
+        "  - rule: ./a.md\n"
+        '    tools: ["mcp__*__search_*"]\n'
+        "    args:\n"
+        '      tags: ["re:^python$"]\n'
+        "      filter.kind:\n"
+        "        - rule\n"
+    )
+    # 実行
+    _, entries = parse_index(text)
+    # 検証
+    assert entries == [
+        {
+            "rule": "./a.md",
+            "tools": ["mcp__*__search_*"],
+            "args": {"tags": ["re:^python$"], "filter.kind": ["rule"]},
+        },
+    ]
+
+
+def test_parse_index_when_args_flow_map() -> None:
+    """`args` のフローのマップを拒む（異常系）。"""
+    # 準備
+    text = "rules:\n  - rule: ./a.md\n    args: {tags: [a]}\n"
+    # 実行・検証
+    with pytest.raises(ValueError, match="3行目"):
+        parse_index(text)
+
+
+def test_parse_index_when_read_by() -> None:
+    """`read_by` のマップのリストを読む（正常系）。"""
+    # 準備
+    text = (
+        "rules:\n"
+        "  - rule: ./a.md\n"
+        "    read_by:\n"
+        "      - tools: [mcp__docs__get_doc]\n"
+        "        args:\n"
+        '          path: ["re:\\\\.md$"]\n'
+        "      - tools:\n"
+        "          - mcp__docs__search\n"
+    )
+    # 実行
+    _, entries = parse_index(text)
+    # 検証
+    assert entries == [
+        {
+            "rule": "./a.md",
+            "read_by": [
+                {"tools": ["mcp__docs__get_doc"], "args": {"path": ["re:\\.md$"]}},
+                {"tools": ["mcp__docs__search"]},
+            ],
+        },
+    ]
+
+
+def test_parse_index_when_read_by_without_tools() -> None:
+    """`tools` の無い `read_by` の要素を拒む（異常系）。"""
+    # 準備
+    text = "rules:\n  - rule: ./a.md\n    read_by:\n      - args:\n          path: [a]\n"
+    # 実行・検証
+    with pytest.raises(ValueError, match="行目"):
+        parse_index(text)

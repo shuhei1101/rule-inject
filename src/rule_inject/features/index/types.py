@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Literal, get_args
 
@@ -16,19 +17,53 @@ DEFAULT_ON: tuple[Operation, ...] = OPERATIONS
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class MatchPattern:
+    """索引に書かれた glob か正規表現のパターン 1 つ（正規表現はコンパイル済み）。"""
+
+    # 索引に書かれたままのパターン（`re:` を含む）
+    source: str
+    # `re:` で始まるパターンの、`re:` を除いてコンパイルした正規表現。glob のときは None
+    regex: re.Pattern[str] | None
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ArgCondition:
+    """エントリの `args` の 1 キーと、その値に当てるパターン。"""
+
+    # 引数のキー。オブジェクトの子はドットで結ぶ（例 `filter.kind`）
+    key: str
+    # どれか 1 つに当たれば、そのキーは当たる
+    patterns: tuple[MatchPattern, ...]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ReadByCondition:
+    """エントリの `read_by` の 1 要素（パターンはコンパイル済み）。"""
+
+    # 当てる MCP のツールの完全名のパターン。どれか 1 つに当たればよい
+    tools: tuple[MatchPattern, ...]
+    # 引数の条件。全てが当たるときだけ要素を当てる（空なら引数では絞らない）
+    args: tuple[ArgCondition, ...]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class IndexEntry:
     """索引の 1 エントリ（場所を解決し、`on` を埋めた後）。"""
 
     # 解決後のルールの場所（絶対パスか URL）
     location: str
-    # 当てるパスの glob
-    paths: tuple[str, ...]
-    # 外すパスの glob
-    exclude: tuple[str, ...]
-    # 当てるツール名の glob
-    tools: tuple[str, ...]
+    # 当てるパスのパターン
+    paths: tuple[MatchPattern, ...]
+    # 外すパスのパターン
+    exclude: tuple[MatchPattern, ...]
+    # 当てるツール名のパターン
+    tools: tuple[MatchPattern, ...]
+    # MCP のツールの引数の条件。全てが当たるときだけエントリを当てる（空なら引数では絞らない）
+    args: tuple[ArgCondition, ...]
     # 止める操作
     on: frozenset[Operation]
+    # そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
+    read_by: tuple[ReadByCondition, ...]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

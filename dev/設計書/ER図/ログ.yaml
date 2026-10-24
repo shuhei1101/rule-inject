@@ -34,7 +34,7 @@ tables:
         title: 失敗した操作
         type: string
         not_null: true
-        description: '`read_index` / `read_record` / `write_record` / `delete_record` / `delete_log` / `unexpected` のいずれか'
+        description: '`read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `unexpected` のいずれか'
       - name: path
         title: 対象のパス
         type: string

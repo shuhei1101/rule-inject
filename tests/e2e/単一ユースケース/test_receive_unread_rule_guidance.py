@@ -271,3 +271,28 @@ def test_error_when_rule_variable_unset(
     transcript = transcript_text(run.session_id)
     assert str(index) in transcript
     assert "E2E_UNSET_RULES_DIR" in transcript
+
+
+def test_error_when_regex_unreadable(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+    transcript_text: Callable[[str], str],
+) -> None:
+    """読めない正規表現を持つエントリを読み飛ばし、Write を止めずに理由が載る（異常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    index = make_index({"rule": str(rule), "paths": ["re:["], "on": ["write"]})
+    configure_index(index)
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
+    # 検証
+    assert run.denied_tools == []
+    assert "hello" in target.read_text(encoding="utf-8")
+    transcript = transcript_text(run.session_id)
+    assert str(index) in transcript
+    assert "re:[" in transcript
+    assert "unterminated character set" in transcript

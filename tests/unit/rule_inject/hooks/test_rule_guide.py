@@ -291,3 +291,31 @@ def test_handle_when_guided_unwritable(
     assert RULE in output["additionalContext"]
     assert str(state_dir / f"{session_id}.guided.txt") in output["additionalContext"]
     assert read_daily_log()[0]["operation"] == "write_record"
+
+
+def test_handle_when_mcp_args(
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """MCP のツールの引数で当てる（正常系）。"""
+    # 準備
+    env = guide_env(
+        index_text(RULE, tools=["mcp__*__search_*"], args={"kind": ["rule"]}, on=["mcp"]),
+    )
+    matched = hook_payload(
+        "PreToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"kind": "rule"},
+    )
+    unmatched = hook_payload(
+        "PreToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"kind": "note"},
+    )
+    # 実行
+    blocked = guide_rules(matched, env)
+    passed = guide_rules(unmatched, env)
+    # 検証
+    assert blocked["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert passed is None

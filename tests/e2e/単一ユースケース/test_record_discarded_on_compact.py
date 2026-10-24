@@ -17,8 +17,9 @@ def test_normal(
     run_claude: Callable[..., Any],
     record_locations: Callable[[str], list[str]],
     guided_locations: Callable[[str], list[str]],
+    record_history: Callable[[str], list[dict[str, Any]]],
 ) -> None:
-    """手動の圧縮で、そのセッションの既読の記録と案内済みの記録が捨てられる（正常シナリオ）。"""
+    """手動の圧縮で、そのセッションの既読の記録と案内済みの記録が捨てられ、既読の履歴は残る（正常シナリオ）。"""
     # 準備
     rule = make_rule("python.md", "# Python の規約\n")
     guided_rule = make_rule("notes.md", "# ノートの規約\n")
@@ -47,3 +48,6 @@ def test_normal(
     # 検証
     assert record_locations(read_run.session_id) == []
     assert guided_locations(read_run.session_id) == []
+    history = record_history(read_run.session_id)
+    assert len(history) == 1
+    assert history[0]["location"] == str(rule)

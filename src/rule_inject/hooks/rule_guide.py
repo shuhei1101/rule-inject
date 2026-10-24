@@ -81,7 +81,7 @@ def _match(payload: Mapping[str, Any], entries: Sequence[IndexEntry]) -> list[Ma
     """操作の対象のパスかツール名に当たるルールを、ルールごとに 1 件へまとめて返す。"""
     tool_name = payload["tool_name"]
     if tool_name.startswith(MCP_TOOL_PREFIX):
-        return match_tool(entries, tool_name)
+        return match_tool(entries, tool_name, payload["tool_input"])
     if tool_name not in TOOL_OPERATIONS:
         return []
     operation = TOOL_OPERATIONS[tool_name]

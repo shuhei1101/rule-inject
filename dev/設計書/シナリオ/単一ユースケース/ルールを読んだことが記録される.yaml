@@ -18,6 +18,7 @@ scenarios:
         participant P as PostToolUse フック
         participant IDX as 索引
         participant ST as 既読の記録
+        participant HS as 既読の履歴
 
         CC->>CC: Bash（cat ルールの場所）を実行する
         CC->>P: Bash の入力と結果
@@ -25,9 +26,11 @@ scenarios:
         P->>IDX: 読んだパスがルールの場所かを引く
         IDX-->>P: ルールの場所
         P->>ST: そのセッションの既読に場所を足す
+        P->>HS: 時刻・読み方・ルールの場所を足す
       ```
     expected:
       - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の履歴に、読み方が `bash` でルールの場所を持つ行がある
     test: test_normal_when_read_by_bash
   - name: 正常シナリオ（Readで読む）
     setup:
@@ -47,18 +50,55 @@ scenarios:
         participant P as PostToolUse フック
         participant IDX as 索引
         participant ST as 既読の記録
+        participant HS as 既読の履歴
 
         CC->>CC: Read（ルールの場所）を実行する
         CC->>P: Read の入力と結果
         P->>IDX: 読んだパスがルールの場所かを引く
         IDX-->>P: ルールの場所
         P->>ST: そのセッションの既読に場所を足す
+        P->>HS: 時刻・読み方・ルールの場所を足す
       ```
     expected:
       - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の履歴に、読み方が `read` でルールの場所を持つ行がある
     test: test_normal_when_read_by_read_tool
-lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読んだ後、`PostToolUse` フックがその場所をそのセッションの既読として記録する。
+  - name: 正常シナリオ（MCPのツールで読む）
+    setup:
+      - name: Mock
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で渡す。ツール `get_doc` は引数 `id` を受け、ルールの本文を返す
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 'そのルールの場所を持ち、`read_by` に `tools: [mcp__docs__get_doc]` と `args: {id: [python]}` を書いたエントリを 1 つ持つ YAML'
+      - name: 操作
+        description: 'プロンプトで、`get_doc` を `id: python` で 1 回呼ぶよう指示する'
+        notes: '`--allowedTools` で `mcp__docs__get_doc` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant DOC as 文書の MCP サーバー
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant HS as 既読の履歴
+
+        CC->>DOC: get_doc（id: python）
+        DOC-->>CC: ルールの本文
+        CC->>P: MCP のツールの名前と入力
+        P->>IDX: ツール名と引数が read_by に当たるエントリを引く
+        IDX-->>P: ルールの場所
+        P->>ST: そのセッションの既読に場所を足す
+        P->>HS: 時刻・読み方・ツール名・ルールの場所を足す
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の履歴に、読み方が `mcp` でツール名 `mcp__docs__get_doc` とルールの場所を持つ行がある
+    test: test_normal_when_read_by_mcp_tool
+lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読むか、エントリの `read_by` に当たる MCP のツールを呼んだ後、`PostToolUse` フックがその場所をそのセッションの既読として記録し、既読の履歴にも残す。
 issue: 2
 primary_actor: Claude Code のセッション
-trigger: Read か Bash のツールが、索引に載ったルールの場所を読み終える
+trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、エントリの `read_by` に当たる MCP のツールの呼び出しが終わる
 test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py

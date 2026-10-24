@@ -1,10 +1,10 @@
 title: "プラグイン / 索引"
-lead: 環境変数が指す索引を標準ライブラリだけで読み、操作の対象のパスかツール名に当たるルールをルールごとにまとめて返す。
+lead: 環境変数が指す索引を標準ライブラリだけで読み、操作の対象のパスかツール名に当たるルールをルールごとにまとめて返す。MCP のツールの呼び出しが `read_by` に当たるルールの場所も返す。
 directory: |-
   ```text
   src/rule_inject/features/index/
-  ├── __init__.py   # 公開 API（load_indexes / match_path / match_tool / rule_locations）
-  ├── types.py      # Operation・IndexEntry・MatchedRule・IndexLoadResult
+  ├── __init__.py   # 公開 API（load_indexes / match_path / match_tool / match_read_by / rule_locations）
+  ├── types.py      # Operation・MatchPattern・ArgCondition・ReadByCondition・IndexEntry・MatchedRule・IndexLoadResult
   ├── _yaml.py      # 索引の YAML の一部だけを読む
   └── service.py    # 索引の読み込みと照合
   ```
@@ -45,6 +45,16 @@ constants:
     container: features/index/service.py
     summary: '`RULE_INJECT_INDEXES_PROJECT` が無いときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス'
     value: '`rules.yaml`'
+  - name: REGEX_PREFIX
+    title: 正規表現のプレフィックス
+    container: features/index/service.py
+    summary: パターンを正規表現として読む先頭の文字列
+    value: '`re:`'
+  - name: ARG_KEY_SEPARATOR
+    title: 引数のキーの区切り
+    container: features/index/service.py
+    summary: 引数のキーをオブジェクトの子へたどる区切り
+    value: '`.`'
 data_models:
   - name: IndexEntry
     title: 索引のエントリ
@@ -57,17 +67,23 @@ data_models:
         type: str
         description: 解決後のルールの場所（絶対パスか URL）
       - name: paths
-        type: tuple[str, ...]
-        description: 当てるパスの glob
+        type: tuple[MatchPattern, ...]
+        description: 当てるパスのパターン
       - name: exclude
-        type: tuple[str, ...]
-        description: 外すパスの glob
+        type: tuple[MatchPattern, ...]
+        description: 外すパスのパターン
       - name: tools
-        type: tuple[str, ...]
-        description: 当てるツール名の glob
+        type: tuple[MatchPattern, ...]
+        description: 当てるツール名のパターン
+      - name: args
+        type: tuple[ArgCondition, ...]
+        description: MCP のツールの引数の条件。全てが当たるときだけエントリを当てる（空なら引数では絞らない）
       - name: on
         type: frozenset[Operation]
         description: 止める操作
+      - name: read_by
+        type: tuple[ReadByCondition, ...]
+        description: そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
   - name: MatchedRule
     title: 当たったルール
     container: features/index/types.py
@@ -120,6 +136,45 @@ data_models:
       - name: rejected
         type: tuple[RejectedLocation, ...]
         description: 読まない場所かパス
+  - name: MatchPattern
+    title: 照合のパターン
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: 索引に書かれた glob か正規表現のパターン 1 つ（正規表現はコンパイル済み）
+    properties:
+      - name: source
+        type: str
+        description: 索引に書かれたままのパターン（`re:` を含む）
+      - name: regex
+        type: re.Pattern[str] | None
+        description: '`re:` で始まるパターンの、`re:` を除いてコンパイルした正規表現。glob のときは None'
+  - name: ArgCondition
+    title: 引数の条件
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: エントリの `args` の 1 キーと、その値に当てるパターン
+    properties:
+      - name: key
+        type: str
+        description: 引数のキー。オブジェクトの子はドットで結ぶ（例 `filter.kind`）
+      - name: patterns
+        type: tuple[MatchPattern, ...]
+        description: どれか 1 つに当たれば、そのキーは当たる
+  - name: ReadByCondition
+    title: 既読にする呼び出しの条件
+    container: features/index/types.py
+    usecase: ルールを読んだことが記録される
+    role: DTO
+    summary: エントリの `read_by` の 1 要素（パターンはコンパイル済み）
+    properties:
+      - name: tools
+        type: tuple[MatchPattern, ...]
+        description: 当てる MCP のツールの完全名のパターン。どれか 1 つに当たればよい
+      - name: args
+        type: tuple[ArgCondition, ...]
+        description: 引数の条件。全てが当たるときだけ要素を当てる（空なら引数では絞らない）
 functions:
   - name: parse_index
     title: 索引の YAML の読み取り
@@ -135,14 +190,16 @@ functions:
         passing: positional
         description: 索引のファイルの中身
     returns:
-      type: tuple[tuple[Operation, ...] | None, list[dict[str, str | list[str]]]]
-      description: '`default_on`（無ければ None）と、`rules` の各エントリのキーと値'
+      type: tuple[tuple[Operation, ...] | None, list[dict[str, str | list[str] | dict[str, list[str]] | list[dict[str, list[str] | dict[str, list[str]]]]]]]
+      description: '`default_on`（無ければ None）と、`rules` の各エントリのキーと値（`args` はキー → パターンのリスト、`read_by` は `tools`・`args` を持つマップのリスト）'
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
       2. 最上位のキーは `default_on` と `rules` だけを許す
-      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `on` だけを許す
+      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` だけを許す
       4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
-      5. 許さないキー・形・`rule` の無いエントリ・`on` の外の値は行番号つきの ValueError にする
+      5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読む。キーは空白を含まない文字列（ドットを含んでよい）
+      6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
+      7. 許さないキー・形（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素を含む）・`rule` の無いエントリ・`on` の外の値は行番号つきの ValueError にする
     exceptions:
       - name: ValueError
         condition: 許さないキー・形・値がある
@@ -181,6 +238,32 @@ functions:
         mock: なし
         expected: ValueError
         exception: 許さないキー・形・値がある
+      - name: test_parse_index_when_args
+        case: 正常
+        summary: '`args` のブロックのマップを読む'
+        condition: '`args:` の下に `tags: ["re:^python$"]`（フロー）と `filter.kind:` + `- rule`（ブロック）を書いたエントリ'
+        mock: なし
+        expected: '`args` が `{"tags": ["re:^python$"], "filter.kind": ["rule"]}`'
+      - name: test_parse_index_when_args_flow_map
+        case: 異常
+        summary: '`args` のフローのマップを拒む'
+        condition: '`args: {tags: [a]}`'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形・値がある
+      - name: test_parse_index_when_read_by
+        case: 正常
+        summary: '`read_by` のマップのリストを読む'
+        condition: '`read_by:` の下に、`tools: [mcp__docs__get_doc]` と `args:` + `path: ["re:\\.md$"]` を持つ要素と、`tools:` + `- mcp__docs__search`（ブロック）だけの要素を書いたエントリ'
+        mock: なし
+        expected: '`read_by` が `[{"tools": ["mcp__docs__get_doc"], "args": {"path": ["re:\\.md$"]}}, {"tools": ["mcp__docs__search"]}]`'
+      - name: test_parse_index_when_read_by_without_tools
+        case: 異常
+        summary: '`tools` の無い `read_by` の要素を拒む'
+        condition: '`read_by:` の下に `args:` だけを持つ要素'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形・値がある
   - name: load_indexes
     title: 索引の読み込み
     container: features/index/service.py
@@ -203,7 +286,8 @@ functions:
       3. 各パスを `resolve_location` で解く（基準は `CLAUDE_PROJECT_DIR`。無ければ相対パスの索引は読めない索引にする）
       4. UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
       5. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に足す。同じ索引のほかのエントリは読む
-      6. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
+      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に足す。同じ索引のほかのエントリは読む
+      7. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
     unit_tests:
       - name: test_load_indexes
         case: 正常
@@ -259,6 +343,18 @@ functions:
         condition: '`rule: "!{UNSET}/a.md"` と通常の `rule` の 2 エントリ。`UNSET` は `env` に無い'
         mock: なし
         expected: '`entries` に通常のエントリだけ。`failures` に 1 件（path が索引、reason に `!{UNSET}/a.md` と `UNSET`）'
+      - name: test_load_indexes_when_regex_unreadable
+        case: 正常
+        summary: 読めない正規表現を持つエントリだけを読み飛ばす
+        condition: '`paths: ["re:["]` のエントリと、`paths: ["re:\\.py$"]`・`args` に `kind: ["rule"]` を持つ通常のエントリの 2 つ'
+        mock: なし
+        expected: '`entries` に通常のエントリだけ（`paths` の `regex` がコンパイル済み、`args` が `ArgCondition` 1 件）。`failures` に 1 件（path が索引、reason に `re:[`）'
+      - name: test_load_indexes_when_read_by
+        case: 正常
+        summary: '`read_by` を `ReadByCondition` にして読む'
+        condition: '`read_by` に `tools: ["re:__get_doc$"]`・`args` に `path: ["*.md"]` の要素を 1 つ持つエントリと、`read_by` の無いエントリ'
+        mock: なし
+        expected: 前者の `read_by` が 1 件（`tools` の `regex` がコンパイル済み、`args` が `ArgCondition` 1 件）、後者の `read_by` が空。`failures` が空
   - name: match_path
     title: パスの照合
     container: features/index/service.py
@@ -286,7 +382,7 @@ functions:
       type: list[MatchedRule]
       description: 当たったルール（索引の順）
     process: |-
-      1. `paths` のどれかに当たり、`exclude` のどれにも当たらないエントリを選ぶ（glob の `**` はフォルダをまたぐ。`_glob_match`）
+      1. `paths` のどれかに当たり、`exclude` のどれにも当たらないエントリを選ぶ（glob は `_glob_match`、正規表現は部分一致。`_match_pattern`）
       2. 同じ `location` を 1 件にまとめ、`operation` がどれかの `on` に入っていれば `blocking` を True にする
     unit_tests:
       - name: test_match_path
@@ -313,6 +409,12 @@ functions:
         condition: '`on: [write]` のエントリ、`read`'
         mock: なし
         expected: 1 件、`blocking` が False
+      - name: test_match_path_when_regex
+        case: 正常
+        summary: '`re:` のパターンに部分一致で当て、正規表現の `exclude` で外す'
+        condition: '`paths: ["re:/src/[a-z_]+\\.py$"]`・`exclude: ["re:/src/_"]`、`/p/src/app.py` と `/p/src/_gen.py`'
+        mock: なし
+        expected: 前者は 1 件、後者は空
   - name: match_tool
     title: ツール名の照合
     container: features/index/service.py
@@ -331,12 +433,18 @@ functions:
         required: true
         passing: positional
         description: MCP のツールの完全名
+      - name: tool_input
+        type: Mapping[str, Any]
+        required: true
+        passing: positional
+        description: MCP のツールの引数（JSON 由来の値のため Any）
     returns:
       type: list[MatchedRule]
       description: 当たったルール。操作の種別は `mcp` として `blocking` を決める
     process: |-
-      1. `tools` のどれかに `fnmatch.fnmatchcase` で当たるエントリを選ぶ
-      2. `match_path` と同じ規則でルールごとにまとめる
+      1. `tools` のどれかに当たるエントリを選ぶ（glob は `fnmatch.fnmatchcase`、正規表現は部分一致。`_match_pattern`）
+      2. `args` を持つエントリは、`_match_args(entry.args, tool_input)` が True のときだけ残す
+      3. `match_path` と同じ規則でルールごとにまとめる
     unit_tests:
       - name: test_match_tool
         case: 正常
@@ -350,6 +458,24 @@ functions:
         condition: '`mcp__github__list_issues`'
         mock: なし
         expected: 空
+      - name: test_match_tool_when_args_match
+        case: 正常
+        summary: 引数の条件が全て当たれば当てる
+        condition: '`tools: ["mcp__*__search_*"]`・`args` に `tags: ["re:^python$"]` と `filter.kind: ["rule"]`、`tool_input` は `{"tags": ["go", "python"], "filter": {"kind": "rule"}}`'
+        mock: なし
+        expected: 1 件
+      - name: test_match_tool_when_args_partly_unmatched
+        case: 正常
+        summary: 引数の条件が 1 つでも当たらなければ当てない
+        condition: '同じエントリ、`tool_input` は `{"tags": ["python"]}`（`filter.kind` が無い）'
+        mock: なし
+        expected: 空
+      - name: test_match_tool_when_regex_tool
+        case: 正常
+        summary: ツール名の正規表現に部分一致で当てる
+        condition: '`tools: ["re:__create_"]`、`mcp__github__create_issue`'
+        mock: なし
+        expected: 1 件
   - name: rule_locations
     title: ルールの場所の一覧
     container: features/index/service.py
@@ -473,6 +599,219 @@ functions:
         condition: '`locations` に `rules/a.md`、`paths` に `src/a.py`'
         mock: なし
         expected: targets は空、rejected に 2 件（相対パスの理由）
+  - name: _compile_pattern
+    title: パターンの読み取り
+    container: features/index/service.py
+    usecase: 共通
+    summary: 索引に書かれたパターンを `MatchPattern` にする
+    kind: 関数
+    scope: internal
+    args:
+      - name: source
+        type: str
+        required: true
+        passing: positional
+        description: 索引に書かれたパターン
+    returns:
+      type: MatchPattern
+      description: '`REGEX_PREFIX` で始まれば残りを `re.compile` したもの、それ以外は `regex` が None のもの'
+    exceptions:
+      - name: re.error
+        condition: '`re:` の後ろが正規表現として読めない'
+        message: '`re` の理由のまま'
+    unit_tests:
+      - name: test_compile_pattern_when_regex
+        case: 正常
+        summary: '`re:` で始まるパターンをコンパイルする'
+        condition: '`re:^a.+b$`'
+        mock: なし
+        expected: '`source` が `re:^a.+b$`、`regex.pattern` が `^a.+b$`'
+      - name: test_compile_pattern_when_glob
+        case: 正常
+        summary: '`re:` で始まらないパターンは glob のまま'
+        condition: '`**/*.py`'
+        mock: なし
+        expected: '`regex` が None'
+      - name: test_compile_pattern_when_invalid_regex
+        case: 異常
+        summary: 読めない正規表現を拒む
+        condition: '`re:[`'
+        mock: なし
+        expected: re.error
+        exception: '`re:` の後ろが正規表現として読めない'
+  - name: _match_pattern
+    title: パターンの照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: 値に `MatchPattern` を当てる。正規表現は部分一致、glob は渡した glob の照合で当てる
+    kind: 関数
+    scope: internal
+    args:
+      - name: pattern
+        type: MatchPattern
+        required: true
+        passing: positional
+        description: パターン
+      - name: value
+        type: str
+        required: true
+        passing: positional
+        description: 照合する値（絶対パス・ツール名・引数の値）
+      - name: glob_match
+        type: Callable[[str, str], bool]
+        required: true
+        passing: keyword
+        description: glob のときの照合（パスは `_glob_match`、ツール名と引数の値は `fnmatch.fnmatchcase` を引数の順をそろえて渡す）
+    returns:
+      type: bool
+      description: 当たるか
+    unit_tests:
+      - name: test_match_pattern_when_regex_partial
+        case: 正常
+        summary: 正規表現は部分一致で当たる
+        condition: '`re:src/` と `/p/src/a.py`'
+        mock: なし
+        expected: 'True'
+      - name: test_match_pattern_when_regex_anchored
+        case: 正常
+        summary: アンカーで全体一致にできる
+        condition: '`re:^python$` と `python3`'
+        mock: なし
+        expected: 'False'
+  - name: _argument_values
+    title: 引数の値の取り出し
+    container: features/index/service.py
+    usecase: 共通
+    summary: ドット区切りのキーが指す引数の値を、照合する文字列の並びにする
+    kind: 関数
+    scope: internal
+    args:
+      - name: tool_input
+        type: Mapping[str, Any]
+        required: true
+        passing: positional
+        description: MCP のツールの引数
+      - name: key
+        type: str
+        required: true
+        passing: positional
+        description: ドットで結んだ引数のキー
+    returns:
+      type: list[str]
+      description: 照合する値。キーが無ければ空
+    process: |-
+      1. キーをドットで分け、先頭から順にたどる。たどる途中の値が配列なら要素ごとにたどり、オブジェクトでない値や無いキーは捨てる
+      2. たどり着いた値が配列なら要素ごとに取り出す
+      3. 文字列はそのまま、文字列以外のスカラー（数・真偽・`null`）は `json.dumps` の表記にし、オブジェクトと配列の中の配列は捨てる
+    unit_tests:
+      - name: test_argument_values_when_nested_array
+        case: 正常
+        summary: 途中の配列を要素ごとにたどる
+        condition: '`{"filters": [{"tag": "a"}, {"tag": "b"}, {"x": 1}]}` と `filters.tag`'
+        mock: なし
+        expected: '`["a", "b"]`'
+      - name: test_argument_values_when_scalars
+        case: 正常
+        summary: 文字列以外のスカラーを JSON の表記にする
+        condition: '`{"v": [true, null, 1.5, "s", {"k": 1}]}` と `v`'
+        mock: なし
+        expected: '`["true", "null", "1.5", "s"]`（オブジェクトは捨てる）'
+      - name: test_argument_values_when_missing
+        case: 正常
+        summary: 無いキーは空
+        condition: '`{"a": "x"}` と `a.b`'
+        mock: なし
+        expected: 空
+  - name: match_read_by
+    title: 既読にする呼び出しの照合
+    container: features/index/service.py
+    usecase: ルールを読んだことが記録される
+    summary: MCP のツールの呼び出しが `read_by` に当たるエントリのルールの場所を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: tool_name
+        type: str
+        required: true
+        passing: positional
+        description: MCP のツールの完全名
+      - name: tool_input
+        type: Mapping[str, Any]
+        required: true
+        passing: positional
+        description: MCP のツールの引数（JSON 由来の値のため Any）
+    returns:
+      type: list[str]
+      description: 当たったルールの場所（索引の順。重なりを落とす）
+    process: |-
+      1. エントリごとに `read_by` の要素を見て、`tools` のどれかにツール名が当たり（glob は `fnmatch.fnmatchcase`、正規表現は部分一致。`_match_pattern`）、`_match_args(condition.args, tool_input)` が True の要素が 1 つでもあれば、そのエントリの `location` を取る
+      2. エントリの `tools`・`args`（案内の当て方）は見ない
+      3. 同じ `location` を 1 件にまとめる（並びは保つ）
+    unit_tests:
+      - name: test_match_read_by
+        case: 正常
+        summary: '`read_by` のツール名と引数に当てる'
+        condition: '`read_by` に `tools: ["mcp__docs__get_doc"]`・`args` に `path: ["re:\\.md$"]` のエントリ、`mcp__docs__get_doc` と `{"path": "a.md"}`'
+        mock: なし
+        expected: そのエントリの場所 1 件
+      - name: test_match_read_by_when_args_unmatched
+        case: 正常
+        summary: 引数が当たらなければ当てない
+        condition: '同じエントリ、`{"path": "a.txt"}`'
+        mock: なし
+        expected: 空
+      - name: test_match_read_by_when_any_condition
+        case: 正常
+        summary: 要素のどれか 1 つに当たれば当てる
+        condition: '`read_by` に `tools: ["mcp__a__x"]` の要素と `tools: ["mcp__b__*"]` の要素を持つエントリ、`mcp__b__get` と `{}`'
+        mock: なし
+        expected: そのエントリの場所 1 件
+      - name: test_match_read_by_when_guide_only
+        case: 正常
+        summary: 案内の `tools` に当たるだけでは当てない
+        condition: '`tools: ["mcp__*"]` を持ち `read_by` の無いエントリ、`mcp__docs__get_doc` と `{}`'
+        mock: なし
+        expected: 空
+      - name: test_match_read_by_when_duplicate
+        case: 正常
+        summary: 同じルールのエントリを 1 件にまとめる
+        condition: 同じ `location` でどちらも `read_by` に当たる 2 エントリ
+        mock: なし
+        expected: 場所 1 件
+  - name: _match_args
+    title: 引数の条件の照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: 引数の条件が全て当たるかを返す（`match_tool` と `match_read_by` が共有する）
+    kind: 関数
+    scope: internal
+    args:
+      - name: conditions
+        type: Sequence[ArgCondition]
+        required: true
+        passing: positional
+        description: 引数の条件
+      - name: tool_input
+        type: Mapping[str, Any]
+        required: true
+        passing: positional
+        description: MCP のツールの引数
+    returns:
+      type: bool
+      description: 全ての条件が当たれば True（条件が空なら True）
+    process: 1. 全ての `ArgCondition` について、`_argument_values(tool_input, key)` の値のどれかが `patterns` のどれかに当たるかを確かめる（値の glob は `fnmatch.fnmatchcase`）。値が 1 つも無ければ当てない
+    unit_tests:
+      - name: test_match_args_when_empty
+        case: 正常
+        summary: 条件が空なら当たる
+        condition: '`conditions` が空、`tool_input` が `{}`'
+        mock: なし
+        expected: 'True'
 test_files:
   - tests/unit/rule_inject/features/index/test_yaml.py
   - tests/unit/rule_inject/features/index/test_service.py

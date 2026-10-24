@@ -1,4 +1,4 @@
-"""索引・既読の記録・ログの読み書きの例外。"""
+"""索引・既読の記録・既読の履歴・ログの読み書きの例外。"""
 
 from __future__ import annotations
 
@@ -23,6 +23,10 @@ class RecordReadError(RuleInjectError):
 
 class RecordWriteError(RuleInjectError):
     """記録フォルダが作れない・記録ファイルに追記できない。"""
+
+
+class HistoryWriteError(RuleInjectError):
+    """記録フォルダが作れない・既読の履歴ファイルに追記できない。"""
 
 
 class RecordDeleteError(RuleInjectError):

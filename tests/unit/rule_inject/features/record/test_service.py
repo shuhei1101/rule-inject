@@ -4,19 +4,28 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from rule_inject.features.record import service
 from rule_inject.features.record.service import (
+    append_history,
     append_record,
     delete_record,
     is_valid_session_id,
     read_record,
     record_exists,
 )
-from rule_inject.shared.errors import RecordDeleteError, RecordReadError, RecordWriteError
+from rule_inject.features.record.types import ReadMethod
+from rule_inject.shared.errors import (
+    HistoryWriteError,
+    RecordDeleteError,
+    RecordReadError,
+    RecordWriteError,
+)
 
 
 def test_is_valid_session_id(session_id: str) -> None:
@@ -297,6 +306,29 @@ def test_sweep_records_when_guided(
     assert result == ()
 
 
+def test_sweep_records_when_history(
+    state_dir: Path,
+    session_id: str,
+    now: Callable[[], float],
+    write_aged_record: Callable[..., Path],
+) -> None:
+    """保持期間を過ぎた既読の履歴ファイルも消す（正常系）。"""
+    # 準備
+    suffix = ".history.jsonl"
+    expired = write_aged_record("expired-session", 31, base=now(), suffix=suffix)
+    within = write_aged_record("within-session", 29, base=now(), suffix=suffix)
+    kept = write_aged_record(session_id, 31, base=now(), suffix=suffix)
+    invalid_name = write_aged_record("a b", 31, base=now(), suffix=suffix)
+    # 実行
+    result = service.sweep_records(state_dir, session_id, now=now, retention_days=30)
+    # 検証
+    assert not expired.exists()
+    assert within.exists()
+    assert kept.exists()
+    assert invalid_name.exists()
+    assert result == ()
+
+
 def test_read_guided(
     state_dir: Path,
     session_id: str,
@@ -403,3 +435,62 @@ def test_delete_guided_when_undeletable(
     with pytest.raises(RecordDeleteError) as excinfo:
         service.delete_guided(state_dir, session_id)
     assert excinfo.value.path == str(guided_file)
+
+
+def test_append_history(
+    state_dir: Path,
+    session_id: str,
+    read_history: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """場所ごとに JSON を 1 行ずつ追記する（正常系）。"""
+
+    def fixed_now() -> datetime:
+        """固定した現在の時刻を返す。"""
+        return datetime(2026, 10, 24, 9, 30, 0, 500_000, tzinfo=UTC)
+
+    # 実行
+    append_history(
+        state_dir,
+        session_id,
+        ["/r/a.md", "/r/b.md"],
+        method=ReadMethod.MCP,
+        tool="mcp__docs__get_doc",
+        now=fixed_now,
+    )
+    # 検証
+    assert read_history() == [
+        {
+            "time": "2026-10-24T09:30:00Z",
+            "session_id": session_id,
+            "method": "mcp",
+            "tool": "mcp__docs__get_doc",
+            "location": "/r/a.md",
+        },
+        {
+            "time": "2026-10-24T09:30:00Z",
+            "session_id": session_id,
+            "method": "mcp",
+            "tool": "mcp__docs__get_doc",
+            "location": "/r/b.md",
+        },
+    ]
+    assert not (state_dir / f"{session_id}.txt").exists()
+
+
+def test_append_history_when_empty(state_dir: Path, session_id: str) -> None:
+    """空なら書かない（正常系）。"""
+    # 実行
+    append_history(state_dir, session_id, [], method=ReadMethod.READ, tool="Read")
+    # 検証
+    assert not state_dir.exists()
+
+
+def test_append_history_when_unwritable(state_dir: Path, session_id: str) -> None:
+    """書けないとき HistoryWriteError にする（異常系）。"""
+    # 準備
+    history = state_dir / f"{session_id}.history.jsonl"
+    history.mkdir(parents=True)
+    # 実行・検証
+    with pytest.raises(HistoryWriteError) as excinfo:
+        append_history(state_dir, session_id, ["/r/a.md"], method=ReadMethod.READ, tool="Read")
+    assert excinfo.value.path == str(history)

@@ -42,7 +42,7 @@ settings:
     type: str
     required: false
     default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
-    description: セッションごとの既読の記録ファイルを置くフォルダ
+    description: セッションごとの既読の記録ファイルと既読の履歴ファイルを置くフォルダ
     env_var: RULE_INJECT_STATE_DIR
     reload: restart
     allowed: 絶対パスか `~` で始まるパス
@@ -65,7 +65,7 @@ settings:
     type: str
     required: true
     description: ルールの本文の場所
-    missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる。設定されていない環境変数の `!{名前}` が残ったときも同じ
+    missing: その索引を読まず、索引が読めないときと同じく索引の場所と理由をコンテキストへ載せる。設定されていない環境変数の `!{名前}` が残ったときは、そのエントリだけを読み飛ばし、理由をコンテキストへ載せる
     reload: immediate
     allowed: '`https://` で始まる URL、絶対パス、`~` で始まるパス、索引ファイルのフォルダからの相対パス。`http://` の URL は書けるが、本文は取得しない（平文で取得したルールを案内に使わないため）。`!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）を書くと、フックと MCP サーバーが受け取った環境変数の値に置き換えてから場所を解く'
     visibility: user
@@ -76,9 +76,9 @@ settings:
     type: list[str]
     required: false
     default: なし（パスでは当てない）
-    description: 操作の対象の絶対パスに当てる glob
+    description: 操作の対象の絶対パスに当てる glob か正規表現
     reload: immediate
-    allowed: '`**/` か `*` で始まる glob。`**` はフォルダをまたぐ'
+    allowed: '`**/` か `*` で始まる glob。`**` はフォルダをまたぐ。`re:` で始めると、残りを正規表現として操作の対象の絶対パスに部分一致（`re.search`）で照合する。読めない正規表現を書いたエントリは読み飛ばし、索引の場所・パターン・理由をコンテキストへ載せる'
     visibility: user
     status: planned
   - key: rules[].exclude
@@ -87,9 +87,9 @@ settings:
     type: list[str]
     required: false
     default: なし（外さない）
-    description: '`paths` に当たっても、この glob に当たるパスにはそのエントリを当てない'
+    description: '`paths` に当たっても、このパターンに当たるパスにはそのエントリを当てない'
     reload: immediate
-    allowed: '`paths` と同じ書き方の glob'
+    allowed: '`paths` と同じ書き方（glob か `re:` の正規表現）'
     visibility: user
     status: planned
   - key: rules[].tools
@@ -98,9 +98,20 @@ settings:
     type: list[str]
     required: false
     default: なし（ツール名では当てない）
-    description: MCP のツールの完全名に当てる glob
+    description: MCP のツールの完全名に当てる glob か正規表現
     reload: immediate
-    allowed: '`mcp__` で始まる glob（例 `mcp__*__create_*`）'
+    allowed: '`mcp__` で始まる glob（例 `mcp__*__create_*`）か、`re:` で始まる正規表現（ツールの完全名に部分一致で照合する。例 `re:__create_`）'
+    visibility: user
+    status: planned
+  - key: rules[].args
+    title: 当てる引数
+    file: 索引（*.yaml）
+    type: dict[str, list[str]]
+    required: false
+    default: なし（引数では絞らない）
+    description: '`tools` に当たった MCP のツールの引数に当てるパターン。引数のキー → パターンのリストのマップで、書いた全てのキーの値がどれかのパターンに当たるときだけエントリを当てる'
+    reload: immediate
+    allowed: キーは引数の名前で、オブジェクトの子はドットで結ぶ（例 `filter.kind`）。パターンは glob か `re:` で始まる正規表現（値に部分一致で照合する）。`キー:` の下にパターンのリストを並べたブロックのマップだけを読み、フローのマップ・空の `args`・キーの重複は索引を読めなくする。キーが引数に無いとき・値がオブジェクトのときは当てない。値が配列のとき、およびドット区切りのキーの途中が配列のときは要素ごとに照合し、どれか 1 つが当たれば当てる。文字列以外のスカラーは JSON の表記（`true`・`null`・`1.5`）で照合する
     visibility: user
     status: planned
   - key: rules[].on
@@ -119,7 +130,7 @@ settings:
     file: ~/.claude/settings.json
     type: int
     default: '30'
-    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイルを、セッションの開始時に消す
+    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイルと既読の履歴ファイルを、セッションの開始時に消す
     env_var: RULE_INJECT_RECORD_RETENTION_DAYS
     reload: restart
     allowed: 1 以上の整数。それ以外の値は既定値で扱う
@@ -145,5 +156,38 @@ settings:
     env_var: RULE_INJECT_LOG_RETENTION_DAYS
     reload: restart
     allowed: 1 以上の整数。それ以外の値は既定値で扱う
+    status: planned
+    visibility: user
+  - key: rules[].read_by
+    title: 既読にする呼び出し
+    file: 索引（*.yaml）
+    type: list[object]
+    required: false
+    default: なし（MCP のツールの呼び出しでは既読にしない）
+    description: そのエントリのルールを既読にする MCP のツールの呼び出し。要素のどれか 1 つに当たった呼び出しが終わった後に、そのルールをそのセッションの既読にする。案内の当て方の `tools`・`args` に当たっただけでは既読にしない
+    reload: immediate
+    allowed: 要素は `tools`（必須）と `args`（任意）を持つマップ。このプラグイン自身のツール（`mcp__plugin_rule-inject_rule-inject__*`）は書いても当てない（`read_rules` が既読にする）
+    status: planned
+    visibility: user
+  - key: rules[].read_by[].tools
+    title: 既読にするツール名
+    file: 索引（*.yaml）
+    type: list[str]
+    required: true
+    description: 既読にする MCP のツールの完全名に当てる glob か正規表現
+    missing: その索引を読まず、索引が読めないときと同じく索引の場所と理由をコンテキストへ載せる
+    reload: immediate
+    allowed: '`rules[].tools` と同じ書き方（`mcp__` で始まる glob か `re:` で始まる正規表現）'
+    status: planned
+    visibility: user
+  - key: rules[].read_by[].args
+    title: 既読にする引数
+    file: 索引（*.yaml）
+    type: dict[str, list[str]]
+    required: false
+    default: なし（引数では絞らない）
+    description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。書いた全てのキーの値がどれかのパターンに当たるときだけ既読にする
+    reload: immediate
+    allowed: '`rules[].args` と同じ書き方と照合の規則'
     status: planned
     visibility: user

@@ -3,18 +3,23 @@
 from __future__ import annotations
 
 import fnmatch
+import json
 import os
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from rule_inject.features.index._yaml import parse_index
 from rule_inject.features.index.types import (
     DEFAULT_ON,
+    ArgCondition,
     IndexEntry,
     IndexLoadResult,
     MatchedRule,
+    MatchPattern,
     Operation,
+    ReadByCondition,
     RejectedLocation,
     SelectedLocations,
 )
@@ -34,6 +39,10 @@ PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
 INDEX_SEPARATOR = ","
 NAME_SEPARATOR = "、"
 HOME_MARK = "~"
+# 先頭がこの文字列のパターンは、残りを正規表現として読む
+REGEX_PREFIX = "re:"
+# 引数のキーをオブジェクトの子へたどる区切り
+ARG_KEY_SEPARATOR = "."
 NOT_IN_INDEX_REASON = "索引に載っていない場所"
 RELATIVE_LOCATION_REASON = "相対パスは読まない。絶対パス・~・https:// の URL で渡す"
 RELATIVE_PATH_REASON = "相対パスは照合しない。絶対パスで渡す"
@@ -72,6 +81,55 @@ def _index_paths(env: Mapping[str, str]) -> list[str]:
     return paths
 
 
+def _compile_pattern(source: str) -> MatchPattern:
+    """索引に書かれたパターンを `MatchPattern` にする。`re:` で始まれば残りを正規表現にコンパイルする。"""
+    if source.startswith(REGEX_PREFIX):
+        return MatchPattern(source=source, regex=re.compile(source[len(REGEX_PREFIX) :]))
+    return MatchPattern(source=source, regex=None)
+
+
+def _compile_patterns(sources: Sequence[str]) -> tuple[MatchPattern, ...]:
+    """パターンの並びを `MatchPattern` の並びにする。読めない正規表現は、書かれたパターンと理由を持つ IndexReadError にする。"""
+    patterns: list[MatchPattern] = []
+    for source in sources:
+        try:
+            patterns.append(_compile_pattern(source))
+        except re.error as exc:
+            raise IndexReadError(
+                path="", reason=f"パターン {source} の正規表現を読めない: {exc}"
+            ) from exc
+    return tuple(patterns)
+
+
+def _compile_arg_conditions(raw_args: Mapping[str, Sequence[str]]) -> tuple[ArgCondition, ...]:
+    """キーごとのパターンのリストを `ArgCondition` の並びにする。"""
+    return tuple(
+        ArgCondition(key=key, patterns=_compile_patterns(sources))
+        for key, sources in raw_args.items()
+    )
+
+
+def _build_entry(
+    raw: Mapping[str, Any], location: str, fallback_on: frozenset[Operation]
+) -> IndexEntry:
+    """読み取ったエントリのキーと値から、パターンをコンパイルした IndexEntry を作る。"""
+    return IndexEntry(
+        location=location,
+        paths=_compile_patterns(raw.get("paths", ())),
+        exclude=_compile_patterns(raw.get("exclude", ())),
+        tools=_compile_patterns(raw.get("tools", ())),
+        args=_compile_arg_conditions(raw.get("args", {})),
+        on=frozenset(raw["on"]) if "on" in raw else fallback_on,
+        read_by=tuple(
+            ReadByCondition(
+                tools=_compile_patterns(item["tools"]),
+                args=_compile_arg_conditions(item.get("args", {})),
+            )
+            for item in raw.get("read_by", ())
+        ),
+    )
+
+
 def _load_index(
     index_path: str, project_dir: str | None, env: Mapping[str, str]
 ) -> tuple[tuple[IndexEntry, ...], tuple[IndexReadError, ...]]:
@@ -102,16 +160,14 @@ def _load_index(
                 )
             )
             continue
-        # 展開した `rule` を索引のフォルダから解き、`on` が無ければ索引の既定で埋める
-        entries.append(
-            IndexEntry(
-                location=resolve_location(expansion.text, resolved.parent),
-                paths=tuple(raw.get("paths", ())),
-                exclude=tuple(raw.get("exclude", ())),
-                tools=tuple(raw.get("tools", ())),
-                on=frozenset(raw["on"]) if "on" in raw else fallback_on,
+        # 展開した `rule` を索引のフォルダから解き、`on` が無ければ索引の既定で埋める。
+        # 読めない正規表現を持つエントリは読み飛ばして理由を残す
+        try:
+            entries.append(
+                _build_entry(raw, resolve_location(expansion.text, resolved.parent), fallback_on)
             )
-        )
+        except IndexReadError as exc:
+            skipped.append(IndexReadError(path=str(resolved), reason=exc.reason))
     return tuple(entries), tuple(skipped)
 
 
@@ -189,25 +245,109 @@ def _merge(entries: Sequence[IndexEntry], operation: Operation) -> list[MatchedR
     ]
 
 
+def _fnmatch_glob(pattern: str, value: str) -> bool:
+    """ツール名と引数の値に glob を当てる（`fnmatch` の引数の順をパターン・値にそろえる）。"""
+    return fnmatch.fnmatchcase(value, pattern)
+
+
+def _match_pattern(
+    pattern: MatchPattern, value: str, *, glob_match: Callable[[str, str], bool]
+) -> bool:
+    """値にパターンを当てる。正規表現は部分一致、glob は渡された照合で当てる。"""
+    if pattern.regex is not None:
+        return pattern.regex.search(value) is not None
+    return glob_match(pattern.source, value)
+
+
+def _expand_arrays(nodes: Sequence[Any]) -> list[Any]:
+    """配列は要素に開き、それ以外の値はそのまま並べる（配列の中の配列は開かない）。"""
+    expanded: list[Any] = []
+    for node in nodes:
+        if isinstance(node, list):
+            expanded.extend(node)
+        else:
+            expanded.append(node)
+    return expanded
+
+
+def _argument_values(tool_input: Mapping[str, Any], key: str) -> list[str]:
+    """ドット区切りのキーが指す引数の値を、照合する文字列の並びにする。キーが無ければ空。"""
+    nodes: list[Any] = [tool_input]
+    # 先頭から順にたどる。途中の配列は要素ごとにたどり、オブジェクトでない値と無いキーは捨てる
+    for part in key.split(ARG_KEY_SEPARATOR):
+        nodes = [
+            node[part]
+            for node in _expand_arrays(nodes)
+            if isinstance(node, Mapping) and part in node
+        ]
+    values: list[str] = []
+    for node in _expand_arrays(nodes):
+        # 文字列はそのまま、文字列以外のスカラーは JSON の表記にし、オブジェクトと配列は捨てる
+        if isinstance(node, str):
+            values.append(node)
+        elif not isinstance(node, Mapping | list):
+            values.append(json.dumps(node))
+    return values
+
+
+def _match_args(conditions: Sequence[ArgCondition], tool_input: Mapping[str, Any]) -> bool:
+    """全てのキーについて、値のどれかがパターンのどれかに当たるか。値が 1 つも無いキーは当たらない。"""
+    return all(
+        any(
+            _match_pattern(pattern, value, glob_match=_fnmatch_glob)
+            for value in _argument_values(tool_input, condition.key)
+            for pattern in condition.patterns
+        )
+        for condition in conditions
+    )
+
+
 def match_path(entries: Sequence[IndexEntry], path: str, operation: Operation) -> list[MatchedRule]:
     """対象のパスに当たるエントリをルールごとに 1 件へまとめる。"""
     matched = [
         entry
         for entry in entries
-        if any(_glob_match(pattern, path) for pattern in entry.paths)
-        and not any(_glob_match(pattern, path) for pattern in entry.exclude)
+        if any(_match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.paths)
+        and not any(
+            _match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.exclude
+        )
     ]
     return _merge(matched, operation)
 
 
-def match_tool(entries: Sequence[IndexEntry], tool_name: str) -> list[MatchedRule]:
-    """MCP のツール名に当たるエントリをルールごとに 1 件へまとめる。"""
+def match_tool(
+    entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
+) -> list[MatchedRule]:
+    """MCP のツール名と引数に当たるエントリをルールごとに 1 件へまとめる。"""
     matched = [
         entry
         for entry in entries
-        if any(fnmatch.fnmatchcase(tool_name, pattern) for pattern in entry.tools)
+        if any(
+            _match_pattern(pattern, tool_name, glob_match=_fnmatch_glob) for pattern in entry.tools
+        )
+        and _match_args(entry.args, tool_input)
     ]
     return _merge(matched, "mcp")
+
+
+def match_read_by(
+    entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
+) -> list[str]:
+    """MCP のツールの呼び出しが `read_by` に当たるエントリのルールの場所を、索引の順に重なりを落として返す。"""
+    # 案内用の tools・args は見ず、read_by の要素のどれか 1 つに当たるエントリだけを選ぶ
+    locations = [
+        entry.location
+        for entry in entries
+        if any(
+            any(
+                _match_pattern(pattern, tool_name, glob_match=_fnmatch_glob)
+                for pattern in condition.tools
+            )
+            and _match_args(condition.args, tool_input)
+            for condition in entry.read_by
+        )
+    ]
+    return list(dict.fromkeys(locations))
 
 
 def rule_locations(entries: Sequence[IndexEntry]) -> frozenset[str]:

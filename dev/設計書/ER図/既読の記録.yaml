@@ -1,5 +1,5 @@
 title: "ER 図: 既読の記録"
-lead: フックと MCP サーバーが共有する、セッションごとの既読のルールの場所と、フックが止めずに案内したルールの場所。
+lead: フックと MCP サーバーが共有する、セッションごとの既読のルールの場所、フックが止めずに案内したルールの場所、既読にした履歴。
 tables:
   - name: '{RULE_INJECT_STATE_DIR}/{session_id}.txt'
     title: 既読の記録
@@ -35,4 +35,44 @@ tables:
         type: string
         not_null: true
         description: 解決後の絶対パスか URL。改行を含まない
+    status: planned
+  - name: '{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl'
+    title: 既読の履歴
+    datastore: JSON Lines（UTF-8、1 行 = 1 回の既読）
+    summary: そのセッションでいつ・どの読み方でどのルールを既読にしたか。関連する文書の推薦などほかの仕組みが読む
+    scale: 1 セッション ~10,000 行
+    growth: 既読の記録へ書くたびに、同じ場所の行を 1 行ずつ追記する。同じ場所を何度読んでもそのたびに残す
+    retention: 最終更新から非機能要件「既読の記録の保持期間」まで。圧縮では消さない
+    deletion: 保持期間を過ぎたファイルを、セッションの開始時にファイルごと物理削除する
+    access: このプラグインは追記（O_APPEND）だけで読まない。ほかの仕組みが全行読む
+    description: 既読の記録と同じく、フック（Read・Bash・MCP のツール）と MCP サーバー（`read_rules`）が別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。1 行は改行を含まない JSON のオブジェクト。
+    columns:
+      - name: time
+        title: 時刻
+        type: string
+        not_null: true
+        description: 既読にした時刻（UTC の ISO 8601、秒まで）
+        example: '2026-10-24T09:30:00Z'
+      - name: session_id
+        title: セッション
+        type: string
+        not_null: true
+        description: 既読にしたセッションの識別子。ファイル名の `session_id` と同じ
+      - name: method
+        title: 読み方
+        type: string
+        not_null: true
+        description: 既読にした読み方
+        enum_values: "'read'（Read）/ 'bash'（Bash の読むコマンド）/ 'read_rules'（read_rules）/ 'mcp'（read_by に当たった MCP のツール）"
+      - name: tool
+        title: ツール名
+        type: string
+        not_null: true
+        description: 既読にしたツールの名前（`Read`・`Bash`・MCP のツールの完全名）
+        example: mcp__docs__get_doc
+      - name: location
+        title: ルールの場所
+        type: string
+        not_null: true
+        description: 既読にしたルールの場所。既読の記録に書いた値と同じ
     status: planned

@@ -346,6 +346,35 @@ scenarios:
       - 対象のファイルに中身が書かれている
       - セッションの記録（transcript）に、読み飛ばした索引の場所と展開できない名前が載っている
     test: test_error_when_rule_variable_unset
+  - name: 異常シナリオ（索引に読めない正規表現がある）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: 索引
+        description: '`paths` に正規表現として読めないパターン（例 `re:[`）を書き、書く操作を必須とするエントリを 1 つ持つ YAML'
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant FS as 対象のファイル
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 読む
+        IDX-->>H: エントリ（`paths` に読めない正規表現）
+        H->>H: 正規表現を読めないエントリを読み飛ばす
+        H-->>CC: 操作を止めず、読み飛ばした索引の場所・パターン・理由をコンテキストへ載せる
+        CC->>FS: 書く
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 対象のファイルに中身が書かれている
+      - セッションの記録（transcript）に、読み飛ばした索引の場所・読めなかったパターン・理由が載っている
+    test: test_error_when_regex_unreadable
 lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
 issue: 2
 primary_actor: Claude Code のセッション
@@ -360,6 +389,8 @@ notes:
     - 同じルールに複数のエントリが当たったとき、案内と止めるかの判定をルールごとに 1 つへまとめる
     - エントリの当てる範囲から外すパスの glob
     - 当てるツール名で MCP のツールの呼び出しに当たる案内
+    - MCP のツールの引数のキーと値のパターン（`args`）で当たる案内と、値が配列のときの要素ごとの照合・オブジェクトの子のドット区切りのキー・引数にキーが無いときに当てないこと
+    - `paths`・`exclude`・`tools`・`args` のパターンを `re:` で始めて正規表現として当てること（部分一致）と、`re:` で始めないパターンを今の glob のまま当てること
     - ルールの場所が URL のときの本文の取得と、取得に失敗したときの扱い（単一ユースケース「ルールの本文を取得する」の異常シナリオと同じ結末）
     - ユーザーの既定の置き場所の索引と、既定の置き場所にファイルが無いとき（`CLAUDE_PROJECT_DIR` が無いときを含む）に理由を載せずに読まないこと
     - 案内済みの記録が読めない・書けないときの扱い
