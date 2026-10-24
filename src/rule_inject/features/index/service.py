@@ -19,6 +19,7 @@ from rule_inject.features.index.types import (
     MatchedRule,
     MatchPattern,
     Operation,
+    ReadByCondition,
     RejectedLocation,
     SelectedLocations,
 )
@@ -100,21 +101,32 @@ def _compile_patterns(sources: Sequence[str]) -> tuple[MatchPattern, ...]:
     return tuple(patterns)
 
 
+def _compile_arg_conditions(raw_args: Mapping[str, Sequence[str]]) -> tuple[ArgCondition, ...]:
+    """キーごとのパターンのリストを `ArgCondition` の並びにする。"""
+    return tuple(
+        ArgCondition(key=key, patterns=_compile_patterns(sources))
+        for key, sources in raw_args.items()
+    )
+
+
 def _build_entry(
     raw: Mapping[str, Any], location: str, fallback_on: frozenset[Operation]
 ) -> IndexEntry:
     """読み取ったエントリのキーと値から、パターンをコンパイルした IndexEntry を作る。"""
-    raw_args: Mapping[str, Sequence[str]] = raw.get("args", {})
     return IndexEntry(
         location=location,
         paths=_compile_patterns(raw.get("paths", ())),
         exclude=_compile_patterns(raw.get("exclude", ())),
         tools=_compile_patterns(raw.get("tools", ())),
-        args=tuple(
-            ArgCondition(key=key, patterns=_compile_patterns(sources))
-            for key, sources in raw_args.items()
-        ),
+        args=_compile_arg_conditions(raw.get("args", {})),
         on=frozenset(raw["on"]) if "on" in raw else fallback_on,
+        read_by=tuple(
+            ReadByCondition(
+                tools=_compile_patterns(item["tools"]),
+                args=_compile_arg_conditions(item.get("args", {})),
+            )
+            for item in raw.get("read_by", ())
+        ),
     )
 
 
@@ -316,6 +328,26 @@ def match_tool(
         and _match_args(entry.args, tool_input)
     ]
     return _merge(matched, "mcp")
+
+
+def match_read_by(
+    entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
+) -> list[str]:
+    """MCP のツールの呼び出しが `read_by` に当たるエントリのルールの場所を、索引の順に重なりを落として返す。"""
+    # 案内用の tools・args は見ず、read_by の要素のどれか 1 つに当たるエントリだけを選ぶ
+    locations = [
+        entry.location
+        for entry in entries
+        if any(
+            any(
+                _match_pattern(pattern, tool_name, glob_match=_fnmatch_glob)
+                for pattern in condition.tools
+            )
+            and _match_args(condition.args, tool_input)
+            for condition in entry.read_by
+        )
+    ]
+    return list(dict.fromkeys(locations))
 
 
 def rule_locations(entries: Sequence[IndexEntry]) -> frozenset[str]:

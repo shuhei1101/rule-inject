@@ -41,6 +41,7 @@ class LogOperation(StrEnum):
     READ_INDEX = "read_index"
     READ_RECORD = "read_record"
     WRITE_RECORD = "write_record"
+    WRITE_HISTORY = "write_history"
     DELETE_RECORD = "delete_record"
     UNEXPECTED = "unexpected"
     DELETE_LOG = "delete_log"
