@@ -1,0 +1,14 @@
+常駐サーバーの起動:
+  説明: rule-inject のプラグインを入れている端末で、master へ入ったバージョンの MCP サーバーを `127.0.0.1` のポート 8783（`RULE_INJECT_PORT` があればその値）で常駐させる。プラグインの `.mcp.json` が HTTP の接続先に変わり、起動していないと各セッションの `read_rules` が使えなくなる
+  タグ: [常駐サーバー, 起動]
+  実行者: tester
+  時期: master へ入った後
+  回数: 1 回限り
+  可逆: true
+  疎通確認: null
+  実行: null
+  確認: null
+  切り戻し: null
+  失敗時: 起動し直しを 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: ポート 8783（`RULE_INJECT_PORT` があればその値）を `127.0.0.1` で待ち受けるプロセスが `python -m rule_inject.server` で、新しく起動した Claude Code のセッションの `/mcp` で `rule-inject` が接続済みになっている
+  状態: "-"
