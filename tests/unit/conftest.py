@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -104,6 +105,7 @@ def index_text() -> Callable[..., str]:
         paths: Sequence[str] = (),
         exclude: Sequence[str] = (),
         tools: Sequence[str] = (),
+        args: Mapping[str, Sequence[str]] | None = None,
         on: Sequence[str] | None = None,
         default_on: Sequence[str] | None = None,
     ) -> str:
@@ -118,6 +120,12 @@ def index_text() -> Callable[..., str]:
             if values:
                 lines.append(f"    {key}:")
                 lines.extend(f'      - "{value}"' for value in values)
+        # 引数の条件は、キーごとにパターンのリストを並べたブロックのマップで書く
+        if args:
+            lines.append("    args:")
+            for arg_key, patterns in args.items():
+                lines.append(f"      {arg_key}:")
+                lines.extend(f'        - "{pattern}"' for pattern in patterns)
         if on is not None:
             lines.append(f"    on: [{', '.join(on)}]")
         return "\n".join(lines) + "\n"
@@ -135,16 +143,28 @@ def make_entry() -> Callable[..., Any]:
         paths: Sequence[str] = (),
         exclude: Sequence[str] = (),
         tools: Sequence[str] = (),
+        args: Mapping[str, Sequence[str]] | None = None,
         on: Sequence[str] = ("read", "write", "mcp"),
     ) -> Any:
         """解決後の場所と当てる条件から IndexEntry を作る。"""
-        from rule_inject.features.index.types import IndexEntry
+        from rule_inject.features.index.service import REGEX_PREFIX
+        from rule_inject.features.index.types import ArgCondition, IndexEntry, MatchPattern
+
+        def _pattern(source: str) -> MatchPattern:
+            """`re:` で始まるパターンはコンパイルし、それ以外は glob のまま MatchPattern にする。"""
+            is_regex = source.startswith(REGEX_PREFIX)
+            regex = re.compile(source.removeprefix(REGEX_PREFIX)) if is_regex else None
+            return MatchPattern(source=source, regex=regex)
 
         return IndexEntry(
             location=location,
-            paths=tuple(paths),
-            exclude=tuple(exclude),
-            tools=tuple(tools),
+            paths=tuple(_pattern(source) for source in paths),
+            exclude=tuple(_pattern(source) for source in exclude),
+            tools=tuple(_pattern(source) for source in tools),
+            args=tuple(
+                ArgCondition(key=key, patterns=tuple(_pattern(source) for source in sources))
+                for key, sources in (args or {}).items()
+            ),
             on=frozenset(on),
         )
 
