@@ -27,9 +27,11 @@ class FetchFailure:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ReadRulesResult:
-    """返す本文・次に回す場所・取得できなかった場所。"""
+    """返す本文・次に回す場所・取得できなかった場所・既読の履歴に書けなかった場所。"""
 
     pages: list[RulePage] = field(default_factory=list)
     # 上限に収まらず返さなかった場所
     deferred: list[str] = field(default_factory=list)
     failures: list[FetchFailure] = field(default_factory=list)
+    # 本文を返したが既読の履歴に書けなかった場所と理由
+    history_failures: list[FetchFailure] = field(default_factory=list)

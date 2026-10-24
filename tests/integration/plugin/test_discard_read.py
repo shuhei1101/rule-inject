@@ -13,6 +13,7 @@ def test_normal(
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[..., Path],
     write_guided: Callable[..., Path],
+    write_history: Callable[..., Path],
 ) -> None:
     """そのセッションの既読の記録ファイルと案内済みの記録ファイルだけを消す（正常系）。"""
     # 準備
@@ -20,12 +21,15 @@ def test_normal(
     other = write_record(["/r/b.md"], "other-session")
     target_guided = write_guided(["/r/c.md"])
     other_guided = write_guided(["/r/d.md"], "other-session")
+    target_history = write_history()
+    history_text = target_history.read_text(encoding="utf-8")
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
     completed = run_hook("discard_read", payload)
     # 検証
     assert not target.exists()
     assert not target_guided.exists()
+    assert target_history.read_text(encoding="utf-8") == history_text
     assert other.exists()
     assert other_guided.exists()
     assert completed.returncode == 0

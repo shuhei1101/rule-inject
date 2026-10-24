@@ -68,7 +68,7 @@ data_models:
     container: features/fetch/types.py
     usecase: ルールの本文を取得する
     role: DTO
-    summary: 返す本文・次に回す場所・取得できなかった場所
+    summary: 返す本文・次に回す場所・取得できなかった場所・既読の履歴に書けなかった場所
     properties:
       - name: pages
         type: list[RulePage]
@@ -79,6 +79,10 @@ data_models:
       - name: failures
         type: list[FetchFailure]
         description: 取得できなかった場所
+      - name: history_failures
+        type: list[FetchFailure]
+        default: '`[]`'
+        description: 本文を返したが既読の履歴に書けなかった場所と理由
 function_types:
   - name: FetchUrlFn
     title: URL の取得の関数型
@@ -170,7 +174,7 @@ functions:
     title: 応答の JSON 化
     container: features/fetch/service.py
     usecase: ルールの本文を取得する
-    summary: ReadRulesResult を応答の JSON 文字列にする（字数の数え方と実際の応答を揃える）
+    summary: ReadRulesResult を応答の JSON 文字列にする（`history_failures` は空なら出さない）（字数の数え方と実際の応答を揃える）
     kind: 関数
     scope: public
     args:
@@ -189,6 +193,12 @@ functions:
         condition: pages 1 件・deferred 1 件・failures 1 件
         mock: なし
         expected: pages・deferred・failures を持ち、日本語がエスケープされていない
+      - name: test_render_result_when_history_failures
+        case: 正常
+        summary: 履歴に書けなかった場所があるときだけ history_failures を出す
+        condition: pages 1 件・history_failures 1 件
+        mock: なし
+        expected: '`history_failures[].location` と `.reason` を持つ。history_failures が空の呼び出しではキーが無い'
   - name: collect_pages
     title: 本文の収集
     container: features/fetch/service.py

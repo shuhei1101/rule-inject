@@ -21,15 +21,19 @@ flows:
         participant T as read_rules
         participant RULE as ルールの本文
         participant ST as 記録ファイル
+        participant HS as 既読の履歴
 
         CC->>T: locations + session_id
         T->>RULE: 読む
         T->>ST: 場所を追記する
+        T->>HS: 読み方 read_rules の行を追記する
         T-->>CC: pages
       ```
     expected:
       - '`pages` に場所と本文が 1 件載っている'
       - 記録ファイルに場所が 1 行ある
+      - '既読の履歴に `method: read_rules`・`tool: mcp__plugin_rule-inject_rule-inject__read_rules`・`location` がその場所の行が 1 行ある'
+      - 応答に `history_failures` が無い
     test: test_normal
   - name: 正常系（対象のパスで引く）
     summary: 対象のパスに当たるルールだけの本文を返す
@@ -119,6 +123,7 @@ flows:
       - 応答の JSON が 40,000 字以内
       - '`deferred` に 3 件目の場所が載っている'
       - 記録ファイルに 3 件目の場所が無い
+      - 既読の履歴に 3 件目の場所の行が無い
       - '`tools/list` の `read_rules` の `_meta["anthropic/maxResultSizeChars"]` が `40000`'
     test: test_normal_when_over_limit
   - name: 異常系（場所から本文を取れない・failures）
@@ -266,10 +271,45 @@ flows:
       - '`pages[0].body` の 1 行目が `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: UNSET_NAME`'
       - 既読の記録にルールの場所が 1 行ある
     test: test_normal_when_body_has_variables
-lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録する。
+  - name: 正常系（既読の履歴に書けない）
+    summary: 既読の履歴に書けないときも本文を返して既読にし、書けなかった場所と理由を応答に載せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: ルールの本文
+        description: 一時フォルダに置いた Markdown 1 件
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の履歴
+        description: 記録フォルダに `{session_id}.history.jsonl` という名前のフォルダを置く
+        notes: 既読の記録ファイルは書け、既読の履歴だけが開けない状態にする
+      - name: ログのフォルダ
+        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant T as read_rules
+        participant RULE as ルールの本文
+        participant ST as 記録ファイル
+        participant HS as 既読の履歴
+
+        CC->>T: locations + session_id
+        T->>RULE: 読む
+        T->>ST: 場所を追記する
+        T->>HS: 追記する（書けない）
+        T-->>CC: pages + history_failures
+      ```
+    expected:
+      - '`pages` に場所と本文が 1 件載っている'
+      - 記録ファイルに場所が 1 行ある
+      - '`history_failures` にその場所と理由が載っている'
+      - '標準エラー出力に `operation: write_history` の 1 行がある'
+    test: test_normal_when_history_unwritable
+lead: ルールの場所か、これから触るファイルのパスを受け、当たるルールの本文を返して、返した場所をそのセッションの既読として記録し、既読の履歴へ残す。
 identifier: read_rules
 idempotent: true
-side_effects: そのセッションの既読の記録ファイルへ、本文を返した場所を 1 行ずつ追記する。URL の場所は HTTPS で取得し、`http://` の URL は取得せずに `failures` に載せる
+side_effects: そのセッションの既読の記録ファイルへ、本文を返した場所を 1 行ずつ追記し、既読の履歴ファイルへ読み方 `read_rules` の行を 1 行ずつ追記する。URL の場所は HTTPS で取得し、`http://` の URL は取得せずに `failures` に載せる
 exclusivity: 追記（O_APPEND）だけで書くため、フックと同時に書いても行が混ざらない
 request:
   - name: '`locations`'
@@ -321,6 +361,13 @@ response:
     type: str
     description: 取得できなかった理由（無い・HTTP の応答コード・待ち時間の超過・1 件で応答の上限を超える など）
     notes: 既読にしない
+  - name: '`history_failures[].location`'
+    type: str
+    description: 既読にはしたが、既読の履歴に書けなかった場所
+    notes: 既読の履歴に書けなかったときだけ載せる。`pages` には本文が載り、既読にもなっている
+  - name: '`history_failures[].reason`'
+    type: str
+    description: 既読の履歴に書けなかった理由（履歴ファイルの場所と OS のエラー）
 response_example: |-
   ```json
   {
@@ -331,7 +378,7 @@ response_example: |-
   ```
 exceptions:
   - name: なし（正常終了）
-    condition: 一部の場所を取得できなかったときも、`failures` に載せて正常に返す
+    condition: 一部の場所を取得できなかったときも、`failures` に載せて正常に返す。既読の記録には書けて既読の履歴に書けないときも、本文を返して `history_failures` に載せ、ログへ `write_history` を書く
   - name: ToolError（引数が足りない）
     condition: '`session_id` が無いか形が外れている、または `locations` と `paths` がどちらも空'
     notes: '`session_id` が無いのはフックが動いていない設定の誤りとして扱い、本文も返さない'
@@ -362,4 +409,7 @@ constraints:
   - item: 本文の変数参照
     constraint: '読んだ本文の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）を MCP サーバーが起動したときの環境変数の値に置き換える。空の値は空文字に置き換える。未設定の名前は `!{名前}` のまま残し、本文の先頭に `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {名前を「、」で並べたもの}` の 1 行を足す（同じ名前は 1 回だけ、本文に出た順）。応答の大きさは展開して注釈を足した後の本文で数える'
     notes: 値を変えたときはセッションを起こし直す（MCP サーバーは起動時の環境を使う）。置き換えた値の中の `!{…}` は置き換え直さない。既読の記録は展開の前後で変わらないルールの場所で書く
+  - item: 既読の履歴
+    constraint: 既読の記録へ書いた後に、`pages` に載せた場所ごとに `{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl` へ読み方 `read_rules`・ツール名 `mcp__plugin_rule-inject_rule-inject__read_rules` の行を追記する
+    notes: 書式は ER 図「既読の記録」。`deferred`・`failures` の場所は残さない
 test_file: tests/integration/plugin/test_read_rules.py

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
@@ -23,8 +24,13 @@ from rule_inject.features.fetch import (
 from rule_inject.features.index import load_indexes
 from rule_inject.features.index.service import select_locations
 from rule_inject.features.index.types import IndexEntry
-from rule_inject.features.record import append_record, is_valid_session_id
-from rule_inject.shared.errors import RecordWriteError, describe
+from rule_inject.features.record import (
+    ReadMethod,
+    append_history,
+    append_record,
+    is_valid_session_id,
+)
+from rule_inject.shared.errors import HistoryWriteError, RecordWriteError, describe
 from rule_inject.shared.logger import Component, LogOperation, write_log
 from rule_inject.shared.paths import log_dir, state_dir
 
@@ -36,6 +42,8 @@ PATHS_DESCRIPTION = (
     "触るファイルの絶対パスを渡す。まだ無いパスでもよい。ルールの場所は locations へ"
 )
 SESSION_ID_DESCRIPTION = "渡さない。フックが足す"
+# 既読の履歴の `tool` に入れる、このツールの完全名
+READ_RULES_TOOL_NAME = "mcp__plugin_rule-inject_rule-inject__read_rules"
 # 環境変数を渡されないときの、変数参照を 1 つも展開しない環境変数
 NO_ENV: Mapping[str, str] = MappingProxyType({})
 
@@ -51,11 +59,12 @@ def read_rules(
     *,
     entries: Sequence[IndexEntry],
     state_dir: Path,
+    log_dir: Path,
     fetch: FetchUrlFn = fetch_url,
     limit: int = MAX_RESULT_CHARS,
     env: Mapping[str, str] = NO_ENV,
 ) -> ReadRulesResult:
-    """索引で読む場所を選び、変数参照を展開した本文を上限に収めて集め、返した場所を既読にする。"""
+    """索引で読む場所を選び、変数参照を展開した本文を上限に収めて集め、返した場所を既読にして既読の履歴へ書く。"""
     # 引数が足りなければ、何も読まずにエラーにする
     if session_id is None or not is_valid_session_id(session_id):
         raise ToolArgumentError("session_id が無いか、形が外れています（フックが足す値です）")
@@ -67,8 +76,21 @@ def read_rules(
         FetchFailure(location=item.location, reason=item.reason) for item in selected.rejected
     ]
     result = collect_pages(selected.targets, failures=rejected, fetch=fetch, limit=limit, env=env)
-    # 返した本文の場所だけを既読にする
-    append_record(state_dir, session_id, [page.location for page in result.pages])
+    # 返した本文の場所だけを既読にし、既読の履歴へ書く
+    returned = [page.location for page in result.pages]
+    append_record(state_dir, session_id, returned)
+    try:
+        append_history(
+            state_dir, session_id, returned, method=ReadMethod.READ_RULES, tool=READ_RULES_TOOL_NAME
+        )
+    except HistoryWriteError as exc:
+        # 履歴にだけ書けないときは、既読にしたまま本文を返し、書けなかった場所と理由を知らせる
+        _log_failure(log_dir, LogOperation.WRITE_HISTORY, session_id, exc.path, exc.reason)
+        history_failures = [
+            FetchFailure(location=location, reason=f"{exc.path}: {exc.reason}")
+            for location in returned
+        ]
+        return dataclasses.replace(result, history_failures=history_failures)
     return result
 
 
@@ -106,6 +128,7 @@ def build_server(env: Mapping[str, str], fetch: FetchUrlFn = fetch_url) -> MCPSe
                 session_id,
                 entries=loaded.entries,
                 state_dir=folder,
+                log_dir=log_folder,
                 fetch=fetch,
                 env=env,
             )

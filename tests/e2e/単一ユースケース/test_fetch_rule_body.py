@@ -40,6 +40,7 @@ def test_normal(
     configure_index: Callable[[Path | str], None],
     run_claude: Callable[..., Any],
     record_locations: Callable[[str], list[str]],
+    record_history: Callable[[str], list[dict[str, Any]]],
     marker: Callable[[str], str],
 ) -> None:
     """ルールの場所を渡して、本文を受け取り、既読になる（正常シナリオ）。"""
@@ -56,6 +57,10 @@ def test_normal(
     # 検証
     assert body_marker in _tool_results(run)
     assert record_locations(run.session_id) == [str(rule)]
+    history = record_history(run.session_id)
+    assert len(history) == 1
+    assert history[0]["method"] == "read_rules"
+    assert history[0]["location"] == str(rule)
 
 
 def test_normal_when_by_target_path(

@@ -118,7 +118,7 @@ def index_text() -> Callable[..., str]:
     """エントリの dict を並べた索引の YAML の文字列を返す factory。"""
 
     def _text(*entries: Mapping[str, Any], default_on: Sequence[str] | None = None) -> str:
-        """各エントリの rule・paths・exclude・tools・args・on から索引の文字列を組み立てる。"""
+        """各エントリの rule・paths・exclude・tools・args・on・read_by から索引の文字列を組み立てる。"""
         lines: list[str] = []
         # 索引の既定の止める操作
         if default_on is not None:
@@ -139,6 +139,17 @@ def index_text() -> Callable[..., str]:
                     lines.extend(f'        - "{pattern}"' for pattern in patterns)
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
+            # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで書く
+            if entry.get("read_by"):
+                lines.append("    read_by:")
+                for condition in entry["read_by"]:
+                    lines.append("      - tools:")
+                    lines.extend(f'          - "{pattern}"' for pattern in condition["tools"])
+                    if condition.get("args"):
+                        lines.append("        args:")
+                        for arg_key, patterns in condition["args"].items():
+                            lines.append(f"          {arg_key}:")
+                            lines.extend(f'            - "{pattern}"' for pattern in patterns)
         return "\n".join(lines) + "\n"
 
     return _text
@@ -184,6 +195,40 @@ def write_guided(state_dir: Path, session_id: str) -> Callable[..., Path]:
         return path
 
     return _write
+
+
+@pytest.fixture
+def write_history(state_dir: Path, session_id: str) -> Callable[..., Path]:
+    """既読の履歴ファイルを、1 行の JSON を書いて置く factory。"""
+
+    def _write(name: str | None = None) -> Path:
+        """name（無ければこのセッション）の既読の履歴ファイルに 1 行の JSON を書く。"""
+        target = name or session_id
+        path = state_dir / f"{target}.history.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        row = {
+            "time": "2026-10-24T09:30:00Z",
+            "session_id": target,
+            "method": "read",
+            "tool": "Read",
+            "location": "/r/a.md",
+        }
+        path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+        return path
+
+    return _write
+
+
+@pytest.fixture
+def read_history(state_dir: Path, session_id: str) -> Callable[[], list[dict[str, Any]]]:
+    """このセッションの既読の履歴ファイル（JSON Lines）を読み、1 行ごとの dict を返す。"""
+
+    def _read() -> list[dict[str, Any]]:
+        """{session_id}.history.jsonl の各行を JSON として読む。"""
+        text = (state_dir / f"{session_id}.history.jsonl").read_text(encoding="utf-8")
+        return [json.loads(line) for line in text.splitlines()]
+
+    return _read
 
 
 @pytest.fixture

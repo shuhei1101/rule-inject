@@ -57,24 +57,35 @@ def test_build_server_when_error(hook_env: dict[str, str]) -> None:
 
 def test_read_rules(
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
     rule_file: Callable[..., Path],
     make_entry: Callable[..., Any],
     read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """場所で引いて既読にする（正常系）。"""
     # 準備
     rule = rule_file("python.md", "# Python の規約\n")
     entries = [make_entry(str(rule))]
     # 実行
-    result = read_rules([str(rule)], [], session_id, entries=entries, state_dir=state_dir)
+    result = read_rules(
+        [str(rule)], [], session_id, entries=entries, state_dir=state_dir, log_dir=log_folder
+    )
     # 検証
     assert result.pages == [RulePage(location=str(rule), body="# Python の規約\n")]
     assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    history = read_history()
+    assert len(history) == 1
+    assert history[0]["method"] == "read_rules"
+    assert history[0]["tool"] == "mcp__plugin_rule-inject_rule-inject__read_rules"
+    assert history[0]["location"] == str(rule)
+    assert result.history_failures == []
 
 
 def test_read_rules_when_rejected(
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
     rule_file: Callable[..., Path],
     make_entry: Callable[..., Any],
@@ -87,7 +98,12 @@ def test_read_rules_when_rejected(
     entries = [make_entry(str(listed))]
     # 実行
     result = read_rules(
-        [str(unlisted), str(listed)], [], session_id, entries=entries, state_dir=state_dir
+        [str(unlisted), str(listed)],
+        [],
+        session_id,
+        entries=entries,
+        state_dir=state_dir,
+        log_dir=log_folder,
     )
     # 検証
     assert len(result.failures) == 1
@@ -98,10 +114,12 @@ def test_read_rules_when_rejected(
 
 def test_read_rules_when_deferred(
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
     rule_file: Callable[..., Path],
     make_entry: Callable[..., Any],
     read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """次に回した場所は既読にしない（正常系）。"""
     # 準備
@@ -121,15 +139,20 @@ def test_read_rules_when_deferred(
         session_id,
         entries=entries,
         state_dir=state_dir,
+        log_dir=log_folder,
         limit=limit,
     )
     # 検証
     assert result.deferred == [str(second)]
     assert read_lines(state_dir / f"{session_id}.txt") == [str(first)]
+    history = read_history()
+    assert len(history) == 1
+    assert history[0]["location"] == str(first)
 
 
 def test_read_rules_when_no_session_id(
     state_dir: Path,
+    log_folder: Path,
     rule_file: Callable[..., Path],
     make_entry: Callable[..., Any],
 ) -> None:
@@ -139,18 +162,19 @@ def test_read_rules_when_no_session_id(
     entries = [make_entry(str(rule))]
     # 実行・検証
     with pytest.raises(ToolArgumentError, match="session_id"):
-        read_rules([str(rule)], [], None, entries=entries, state_dir=state_dir)
+        read_rules([str(rule)], [], None, entries=entries, state_dir=state_dir, log_dir=log_folder)
 
 
-def test_read_rules_when_no_target(state_dir: Path, session_id: str) -> None:
+def test_read_rules_when_no_target(state_dir: Path, log_folder: Path, session_id: str) -> None:
     """引く対象が無ければ ToolArgumentError にする（異常系）。"""
     # 実行・検証
     with pytest.raises(ToolArgumentError, match="locations"):
-        read_rules([], [], session_id, entries=[], state_dir=state_dir)
+        read_rules([], [], session_id, entries=[], state_dir=state_dir, log_dir=log_folder)
 
 
 def test_read_rules_when_record_unwritable(
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
     rule_file: Callable[..., Path],
     make_entry: Callable[..., Any],
@@ -164,4 +188,34 @@ def test_read_rules_when_record_unwritable(
     unwritable(state_dir, 0o555)
     # 実行・検証
     with pytest.raises(RecordWriteError):
-        read_rules([str(rule)], [], session_id, entries=entries, state_dir=state_dir)
+        read_rules(
+            [str(rule)], [], session_id, entries=entries, state_dir=state_dir, log_dir=log_folder
+        )
+
+
+def test_read_rules_when_history_unwritable(
+    state_dir: Path,
+    log_folder: Path,
+    session_id: str,
+    rule_file: Callable[..., Path],
+    make_entry: Callable[..., Any],
+    read_lines: Callable[[Path], list[str]],
+    read_daily_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """履歴に書けなくても本文を返し、history_failures に載せる（正常系）。"""
+    # 準備
+    rule = rule_file("python.md", "# Python の規約\n")
+    entries = [make_entry(str(rule))]
+    (state_dir / f"{session_id}.history.jsonl").mkdir(parents=True)
+    # 実行
+    result = read_rules(
+        [str(rule)], [], session_id, entries=entries, state_dir=state_dir, log_dir=log_folder
+    )
+    # 検証
+    assert result.pages == [RulePage(location=str(rule), body="# Python の規約\n")]
+    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert [failure.location for failure in result.history_failures] == [str(rule)]
+    assert "IsADirectoryError" in result.history_failures[0].reason
+    log = read_daily_log()
+    assert len(log) == 1
+    assert log[0]["operation"] == "write_history"

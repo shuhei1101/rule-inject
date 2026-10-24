@@ -20,6 +20,7 @@ scenarios:
         participant MCP as MCP サーバー
         participant RULE as ルールの本文
         participant ST as 既読の記録
+        participant HS as 既読の履歴
 
         CC->>H: MCP のツール（ルールの場所）
         H-->>CC: 元の引数に session_id を足した引数
@@ -27,11 +28,13 @@ scenarios:
         MCP->>RULE: 本文を読む
         RULE-->>MCP: 本文
         MCP->>ST: そのセッションの既読に場所を足す
+        MCP->>HS: 時刻・読み方・ルールの場所を足す
         MCP-->>CC: 本文
       ```
     expected:
       - ツールの応答にルールの本文が載っている
       - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の履歴に、読み方が `read_rules` でルールの場所を持つ行がある
     test: test_normal
   - name: 正常シナリオ（対象のパスで引く）
     setup:

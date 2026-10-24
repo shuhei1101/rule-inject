@@ -108,6 +108,7 @@ def index_text() -> Callable[..., str]:
         args: Mapping[str, Sequence[str]] | None = None,
         on: Sequence[str] | None = None,
         default_on: Sequence[str] | None = None,
+        read_by: Sequence[Mapping[str, Any]] = (),
     ) -> str:
         """rule と当てる条件から索引の文字列を組み立てる。"""
         lines: list[str] = []
@@ -128,6 +129,17 @@ def index_text() -> Callable[..., str]:
                 lines.extend(f'        - "{pattern}"' for pattern in patterns)
         if on is not None:
             lines.append(f"    on: [{', '.join(on)}]")
+        # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで書く
+        if read_by:
+            lines.append("    read_by:")
+            for condition in read_by:
+                lines.append("      - tools:")
+                lines.extend(f'          - "{pattern}"' for pattern in condition["tools"])
+                if condition.get("args"):
+                    lines.append("        args:")
+                    for arg_key, patterns in condition["args"].items():
+                        lines.append(f"          {arg_key}:")
+                        lines.extend(f'            - "{pattern}"' for pattern in patterns)
         return "\n".join(lines) + "\n"
 
     return _text
@@ -145,10 +157,16 @@ def make_entry() -> Callable[..., Any]:
         tools: Sequence[str] = (),
         args: Mapping[str, Sequence[str]] | None = None,
         on: Sequence[str] = ("read", "write", "mcp"),
+        read_by: Sequence[Mapping[str, Any]] = (),
     ) -> Any:
         """解決後の場所と当てる条件から IndexEntry を作る。"""
         from rule_inject.features.index.service import REGEX_PREFIX
-        from rule_inject.features.index.types import ArgCondition, IndexEntry, MatchPattern
+        from rule_inject.features.index.types import (
+            ArgCondition,
+            IndexEntry,
+            MatchPattern,
+            ReadByCondition,
+        )
 
         def _pattern(source: str) -> MatchPattern:
             """`re:` で始まるパターンはコンパイルし、それ以外は glob のまま MatchPattern にする。"""
@@ -156,16 +174,27 @@ def make_entry() -> Callable[..., Any]:
             regex = re.compile(source.removeprefix(REGEX_PREFIX)) if is_regex else None
             return MatchPattern(source=source, regex=regex)
 
+        def _arg_conditions(conditions: Mapping[str, Sequence[str]] | None) -> tuple[Any, ...]:
+            """キーごとのパターンのリストから ArgCondition の並びを作る。"""
+            return tuple(
+                ArgCondition(key=key, patterns=tuple(_pattern(source) for source in sources))
+                for key, sources in (conditions or {}).items()
+            )
+
         return IndexEntry(
             location=location,
             paths=tuple(_pattern(source) for source in paths),
             exclude=tuple(_pattern(source) for source in exclude),
             tools=tuple(_pattern(source) for source in tools),
-            args=tuple(
-                ArgCondition(key=key, patterns=tuple(_pattern(source) for source in sources))
-                for key, sources in (args or {}).items()
-            ),
+            args=_arg_conditions(args),
             on=frozenset(on),
+            read_by=tuple(
+                ReadByCondition(
+                    tools=tuple(_pattern(source) for source in condition["tools"]),
+                    args=_arg_conditions(condition.get("args")),
+                )
+                for condition in read_by
+            ),
         )
 
     return _make
@@ -244,6 +273,18 @@ def read_lines() -> Callable[[Path], list[str]]:
     def _read(path: Path) -> list[str]:
         """path の行を返す。"""
         return path.read_text(encoding="utf-8").splitlines()
+
+    return _read
+
+
+@pytest.fixture
+def read_history(state_dir: Path, session_id: str) -> Callable[[], list[dict[str, Any]]]:
+    """このセッションの既読の履歴ファイル（JSON Lines）を読み、1 行ごとの dict を返す。"""
+
+    def _read() -> list[dict[str, Any]]:
+        """{session_id}.history.jsonl の各行を JSON として読む。"""
+        text = (state_dir / f"{session_id}.history.jsonl").read_text(encoding="utf-8")
+        return [json.loads(line) for line in text.splitlines()]
 
     return _read
 

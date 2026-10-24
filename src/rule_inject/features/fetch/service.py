@@ -29,8 +29,11 @@ NO_ENV: Mapping[str, str] = MappingProxyType({})
 
 
 def render_result(result: ReadRulesResult) -> str:
-    """ReadRulesResult を、日本語をエスケープしない応答の JSON 文字列にする。"""
-    return json.dumps(dataclasses.asdict(result), ensure_ascii=False)
+    """ReadRulesResult を、日本語をエスケープしない応答の JSON 文字列にする。履歴に書けなかった場所が無ければ history_failures は出さない。"""
+    payload = dataclasses.asdict(result)
+    if not result.history_failures:
+        del payload["history_failures"]
+    return json.dumps(payload, ensure_ascii=False)
 
 
 def _read_body(location: str, fetch: FetchUrlFn) -> str:

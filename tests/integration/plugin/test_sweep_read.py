@@ -14,10 +14,11 @@ def test_normal(
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[..., Path],
     write_guided: Callable[..., Path],
+    write_history: Callable[..., Path],
     set_age_days: Callable[[Path, int], Path],
     state_dir: Path,
 ) -> None:
-    """保持期間を過ぎた既読の記録ファイルと案内済みの記録ファイルだけを消す（正常系）。"""
+    """保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルだけを消す（正常系）。"""
     # 準備
     expired = set_age_days(write_record(["/r/a.md"], "expired-session"), 31)
     within = set_age_days(write_record(["/r/b.md"], "within-session"), 29)
@@ -29,6 +30,11 @@ def test_normal(
     not_guided = state_dir / "a b.guided.txt"
     not_guided.write_text("メモ\n", encoding="utf-8")
     set_age_days(not_guided, 31)
+    expired_history = set_age_days(write_history("expired-session"), 31)
+    within_history = set_age_days(write_history("within-session"), 29)
+    not_history = state_dir / "a b.history.jsonl"
+    not_history.write_text("メモ\n", encoding="utf-8")
+    set_age_days(not_history, 31)
     payload = hook_payload("SessionStart", source="startup")
     # 実行
     completed = run_hook("sweep_read", payload)
@@ -39,6 +45,9 @@ def test_normal(
     assert within_guided.exists()
     assert not_record.exists()
     assert not_guided.exists()
+    assert not expired_history.exists()
+    assert within_history.exists()
+    assert not_history.exists()
     assert completed.stdout == ""
     assert completed.returncode == 0
 

@@ -76,6 +76,7 @@ def test_normal(
     state_dir: Path,
     session_id: str,
     read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """ローカルの場所の本文を返して既読にする（正常系）。"""
     # 準備
@@ -86,6 +87,12 @@ def test_normal(
     # 検証
     assert _payload(result)["pages"] == [{"location": str(rule), "body": "# Python の規約\n"}]
     assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    history = read_history()
+    assert len(history) == 1
+    assert history[0]["method"] == "read_rules"
+    assert history[0]["tool"] == "mcp__plugin_rule-inject_rule-inject__read_rules"
+    assert history[0]["location"] == str(rule)
+    assert "history_failures" not in _payload(result)
 
 
 def test_normal_when_by_target_path(
@@ -137,6 +144,7 @@ def test_normal_when_over_limit(
     state_dir: Path,
     session_id: str,
     read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
 ) -> None:
     """収まらない本文を deferred に回し、既読にしない（正常系）。"""
     # 準備
@@ -158,6 +166,10 @@ def test_normal_when_over_limit(
     assert len(result.content[0].text) <= MAX_RESULT_CHARS
     assert _payload(result)["deferred"] == [str(third)]
     assert read_lines(state_dir / f"{session_id}.txt") == [str(first), str(second)]
+    history = read_history()
+    assert len(history) == 2
+    assert history[0]["location"] == str(first)
+    assert history[1]["location"] == str(second)
     assert tools[0].meta["anthropic/maxResultSizeChars"] == MAX_RESULT_CHARS
 
 
@@ -310,3 +322,32 @@ def test_normal_when_body_has_variables(
         "> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: UNSET_NAME"
     )
     assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+
+
+def test_normal_when_history_unwritable(
+    server_env: Callable[..., Mapping[str, str]],
+    call_read_rules: Callable[..., Any],
+    rule_file: Callable[..., Path],
+    state_dir: Path,
+    log_folder: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+    unwritable: Callable[[Path, int], Path],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """既読の履歴に書けないときも本文を返して既読にし、書けなかった場所と理由を応答に載せる（正常系）。"""
+    # 準備
+    rule = rule_file("python.md", "# Python の規約\n")
+    env = server_env({"rule": str(rule)})
+    (state_dir / f"{session_id}.history.jsonl").mkdir(parents=True)
+    log_folder.mkdir()
+    unwritable(log_folder, 0o555)
+    # 実行
+    result = call_read_rules(env, {"locations": [str(rule)], "session_id": session_id})
+    # 検証
+    payload = _payload(result)
+    assert payload["pages"] == [{"location": str(rule), "body": "# Python の規約\n"}]
+    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert payload["history_failures"][0]["location"] == str(rule)
+    assert "IsADirectoryError" in payload["history_failures"][0]["reason"]
+    assert '"operation": "write_history"' in capsys.readouterr().err

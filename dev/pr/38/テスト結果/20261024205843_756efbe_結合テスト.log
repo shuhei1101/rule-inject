@@ -1,0 +1,18 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-plugin-record-read-by-mcp-tool
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 68 items
+
+tests/integration/plugin/test_discard_read.py ...                        [  4%]
+tests/integration/plugin/test_read_rules.py ...........                  [ 20%]
+tests/integration/plugin/test_record_read.py ........                    [ 32%]
+tests/integration/plugin/test_rule_guide.py .......................      [ 66%]
+tests/integration/plugin/test_search_guide.py ..........                 [ 80%]
+tests/integration/plugin/test_session_id_injection.py ..                 [ 83%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 97%]
+tests/integration/plugin/test_work_rules.py ..                           [100%]
+
+======================== 68 passed in 127.61s (0:02:07) ========================

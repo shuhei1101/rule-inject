@@ -27,11 +27,11 @@
 
     "PostToolUse": [
       {
-        "matcher": "Read|Bash",
+        "matcher": "Read|Bash|mcp__.*",
         "hooks": [
           {
             "type": "command",
-            "_description": "Read か Bash で読んだルールの場所を既読として記録する",
+            "_description": "Read か Bash で読んだルールの場所と、read_by に当たった MCP のツールの呼び出しのルールの場所を既読として記録し、既読の履歴へ残す",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" record_read",
             "timeout": 1
           }

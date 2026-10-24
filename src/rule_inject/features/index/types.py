@@ -37,6 +37,16 @@ class ArgCondition:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class ReadByCondition:
+    """エントリの `read_by` の 1 要素（パターンはコンパイル済み）。"""
+
+    # 当てる MCP のツールの完全名のパターン。どれか 1 つに当たればよい
+    tools: tuple[MatchPattern, ...]
+    # 引数の条件。全てが当たるときだけ要素を当てる（空なら引数では絞らない）
+    args: tuple[ArgCondition, ...]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class IndexEntry:
     """索引の 1 エントリ（場所を解決し、`on` を埋めた後）。"""
 
@@ -52,6 +62,8 @@ class IndexEntry:
     args: tuple[ArgCondition, ...]
     # 止める操作
     on: frozenset[Operation]
+    # そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
+    read_by: tuple[ReadByCondition, ...]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
