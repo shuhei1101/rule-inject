@@ -12,6 +12,8 @@ flows:
         description: 対象のセッションと別のセッションの記録ファイルを 1 つずつ置く
       - name: 案内済みの記録
         description: 対象のセッションと別のセッションの `{session_id}.guided.txt` を 1 つずつ置く
+      - name: 既読の履歴
+        description: 対象のセッションの `{session_id}.history.jsonl` を 1 行の中身で置く
       - name: 入力
         description: '`session_id` は対象のセッション、`trigger: manual`'
     flow: |-
@@ -29,6 +31,7 @@ flows:
     expected:
       - 対象のセッションの記録ファイルが無い
       - 対象のセッションの案内済みの記録ファイルが無い
+      - 対象のセッションの既読の履歴ファイルが中身ごと残っている
       - 別のセッションの記録ファイルと案内済みの記録ファイルが残っている
       - 終了コードが `0`
     test: test_normal
@@ -83,9 +86,9 @@ flows:
       - 記録ファイルが残っている（圧縮の後の作業の決まりの注入が知らせる）
       - 終了コードが `0`
     test: test_error_when_record_undeletable
-lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルと案内済みの記録ファイルを消す。
+lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルと案内済みの記録ファイルを消す。既読の履歴ファイルは消さない。
 idempotent: true
-side_effects: そのセッションの既読の記録ファイル（`{session_id}.txt`）と案内済みの記録ファイル（`{session_id}.guided.txt`）を消す。片方を消せなくてももう片方は消す
+side_effects: そのセッションの既読の記録ファイル（`{session_id}.txt`）と案内済みの記録ファイル（`{session_id}.guided.txt`）を消す。片方を消せなくてももう片方は消す。既読の履歴ファイル（`{session_id}.history.jsonl`）は消さない
 request:
   - name: '`session_id`'
     type: str

@@ -42,7 +42,7 @@ settings:
     type: str
     required: false
     default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
-    description: セッションごとの既読の記録ファイルを置くフォルダ
+    description: セッションごとの既読の記録ファイルと既読の履歴ファイルを置くフォルダ
     env_var: RULE_INJECT_STATE_DIR
     reload: restart
     allowed: 絶対パスか `~` で始まるパス
@@ -130,7 +130,7 @@ settings:
     file: ~/.claude/settings.json
     type: int
     default: '30'
-    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイルを、セッションの開始時に消す
+    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイルと既読の履歴ファイルを、セッションの開始時に消す
     env_var: RULE_INJECT_RECORD_RETENTION_DAYS
     reload: restart
     allowed: 1 以上の整数。それ以外の値は既定値で扱う
@@ -156,5 +156,38 @@ settings:
     env_var: RULE_INJECT_LOG_RETENTION_DAYS
     reload: restart
     allowed: 1 以上の整数。それ以外の値は既定値で扱う
+    status: planned
+    visibility: user
+  - key: rules[].read_by
+    title: 既読にする呼び出し
+    file: 索引（*.yaml）
+    type: list[object]
+    required: false
+    default: なし（MCP のツールの呼び出しでは既読にしない）
+    description: そのエントリのルールを既読にする MCP のツールの呼び出し。要素のどれか 1 つに当たった呼び出しが終わった後に、そのルールをそのセッションの既読にする。案内の当て方の `tools`・`args` に当たっただけでは既読にしない
+    reload: immediate
+    allowed: 要素は `tools`（必須）と `args`（任意）を持つマップ。このプラグイン自身のツール（`mcp__plugin_rule-inject_rule-inject__*`）は書いても当てない（`read_rules` が既読にする）
+    status: planned
+    visibility: user
+  - key: rules[].read_by[].tools
+    title: 既読にするツール名
+    file: 索引（*.yaml）
+    type: list[str]
+    required: true
+    description: 既読にする MCP のツールの完全名に当てる glob か正規表現
+    missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる
+    reload: immediate
+    allowed: '`rules[].tools` と同じ書き方（`mcp__` で始まる glob か `re:` で始まる正規表現）'
+    status: planned
+    visibility: user
+  - key: rules[].read_by[].args
+    title: 既読にする引数
+    file: 索引（*.yaml）
+    type: dict[str, list[str]]
+    required: false
+    default: なし（引数では絞らない）
+    description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。書いた全てのキーの値がどれかのパターンに当たるときだけ既読にする
+    reload: immediate
+    allowed: '`rules[].args` と同じ書き方と照合の規則'
     status: planned
     visibility: user
