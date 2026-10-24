@@ -175,7 +175,7 @@ settings:
     type: list[str]
     required: true
     description: 既読にする MCP のツールの完全名に当てる glob か正規表現
-    missing: そのエントリを読み飛ばし、索引が読めないときと同じく理由をコンテキストへ載せる
+    missing: その索引を読まず、索引が読めないときと同じく索引の場所と理由をコンテキストへ載せる
     reload: immediate
     allowed: '`rules[].tools` と同じ書き方（`mcp__` で始まる glob か `re:` で始まる正規表現）'
     status: planned
