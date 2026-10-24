@@ -108,7 +108,7 @@ scenarios:
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
         description: 設定した環境変数の `!{名前}` と、設定していない環境変数の `!{名前}` を 1 つずつ含むローカルのルールの Markdown
-        notes: 設定する環境変数の値は、応答に出たかで展開したことを見分ける文字列にする。環境変数は Claude Code のセッションにだけ渡し、常駐の MCP サーバーを起動した環境には置かない
+        notes: 設定する環境変数の値は、応答に出たかで展開したことを見分ける文字列にする。環境変数は Claude Code のセッションにだけ渡し、常駐の MCP サーバーを起動した環境には置かない。両方の名前を `RULE_INJECT_EXPAND_VARS` に列挙する
       - name: 索引
         description: ルールの場所を持つエントリを 1 つ持つ YAML
       - name: 操作

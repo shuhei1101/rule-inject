@@ -11,7 +11,8 @@ flows:
       - name: 入力
         description: '`tool_input` に `locations` と `paths` を持ち、`session_id` と `session_env` を持たない'
       - name: 環境変数
-        description: フックの子プロセスに `CLAUDE_PROJECT_DIR` と `RULE_INJECT_INDEXES_USER` を渡す
+        description: フックの子プロセスに `CLAUDE_PROJECT_DIR` と `RULE_INJECT_INDEXES_USER` と `GH_TOKEN` を渡す
+        notes: '`RULE_INJECT_EXPAND_VARS` は渡さない'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -27,6 +28,7 @@ flows:
       - '`updatedInput.session_id` が入力の `session_id` と同じ'
       - '`permissionDecision` が無い'
       - '`updatedInput.session_env` に子プロセスへ渡した `CLAUDE_PROJECT_DIR` と `RULE_INJECT_INDEXES_USER` が同じ値で載っている'
+      - '`updatedInput.session_env` に `GH_TOKEN` が無い'
     test: test_normal
   - name: 正常系（モデルがsession_idを渡した）
     summary: モデルが渡した session_id をフックの入力の値で上書きする
@@ -48,6 +50,27 @@ flows:
     expected:
       - '`updatedInput.session_id` が入力の `session_id` と同じで、`model-supplied` でない'
     test: test_normal_when_model_supplied_session_id
+  - name: 正常系（列挙した名前を渡す）
+    summary: RULE_INJECT_EXPAND_VARS に列挙した名前を session_env に足す
+    setup:
+      - name: Mock
+        description: なし
+      - name: 環境変数
+        description: フックの子プロセスに `RULE_INJECT_EXPAND_VARS=RULES_DIR`・`RULES_DIR=/r`・`OTHER=x` を渡す
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as セッションIDの付与
+
+        CC->>H: 標準入力（session_id・tool_input）
+        H->>H: 列挙した名前を session_env に写す
+        H-->>CC: updatedInput<br>終了コード 0
+      ```
+    expected:
+      - '`updatedInput.session_env.RULES_DIR` が `/r`'
+      - '`updatedInput.session_env` に `OTHER` が無い'
+    test: test_normal_when_expand_vars_listed
 lead: このプラグインの MCP のツールが呼ばれる直前に、元の引数をすべて写して `session_id` と `session_env`（セッションの環境変数）を足した `updatedInput` を返す。許可の判定（`permissionDecision`）は返さない。
 idempotent: true
 side_effects: なし
@@ -72,7 +95,7 @@ response:
     description: フックの種類
   - name: '`hookSpecificOutput.updatedInput`'
     type: dict[str, Any]
-    description: '`tool_input` をすべて写し、`session_id` をフックの入力の値にし、`session_env` をフックのプロセスの環境変数をすべて写したマップにした引数'
+    description: '`tool_input` をすべて写し、`session_id` をフックの入力の値にし、`session_env` をフックのプロセスの環境変数のうち制約「渡す環境変数の範囲」に当たる名前だけを写したマップにした引数'
     notes: '`updatedInput` は引数を丸ごと置き換えるため、元の引数を落とさない'
 exceptions:
   - name: なし（正常終了）
@@ -90,7 +113,7 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
   - item: 渡す環境変数の範囲
-    constraint: フックのプロセスの環境変数をすべて `session_env` に写す（名前で絞らない）
-    notes: ルールの本文の `!{名前}` は任意の名前を指せ、フックは本文を読まないため、展開に要る名前を前もって絞れない。引数は 127.0.0.1 の常駐サーバーだけに届く。stdio のときも MCP サーバーは同じ環境変数を受け取っていた
+    constraint: フックのプロセスの環境変数のうち、`RULE_INJECT_` で始まる名前・`XDG_` で始まる名前・`CLAUDE_PROJECT_DIR`・`HOME` と、`RULE_INJECT_EXPAND_VARS`（カンマ区切り）に列挙した名前だけを `session_env` に写す
+    notes: 引数は待ち受けのポートにいるプロセスへ HTTP で届き、ポートを別のプロセスが先に取っていればそのプロセスに届く。`updatedInput` が後続のフック・許可の確認の画面・OpenTelemetry に出るかも確かめていない。秘密の値を載せないよう名前で絞る。索引の `rule` と本文の `!{名前}` に使う名前は利用者が `RULE_INJECT_EXPAND_VARS` に列挙する
 identifier: session_id_injection
 test_file: tests/integration/plugin/test_session_id_injection.py

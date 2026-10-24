@@ -341,7 +341,7 @@ request:
     type: dict[str, str]
     required: true
     location: argument
-    description: 呼び出し元のセッションの環境変数（フックのプロセスの環境変数をすべて写したもの）
+    description: 呼び出し元のセッションの環境変数（フックのプロセスの環境変数のうち、インターフェース定義「セッションIDの付与」の制約「渡す環境変数の範囲」に当たる名前だけ）
     constraints: キーと値が文字列のマップ
     notes: インターフェース定義「セッションIDの付与」が足す。ツールの引数の説明に「渡さない。フックが足す」と書く。索引の環境変数・`CLAUDE_PROJECT_DIR`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`RULE_INJECT_STATE_DIR`・`RULE_INJECT_LOG_DIR`・本文の `!{名前}` の展開は、すべてこの値で引く
 request_example: |-

@@ -205,3 +205,16 @@ settings:
     reason: Claude Code の設定と常駐サーバーを起動する環境の両方に同じ値を置く。既定値は knowledge『MCP サーバー作成ルール』の既定のポートの台帳
     status: planned
     visibility: user
+  - key: RULE_INJECT_EXPAND_VARS
+    title: 常駐サーバーへ渡す環境変数
+    file: ~/.claude/settings.json
+    type: str
+    required: false
+    default: 空
+    description: 索引の `rule` とルールの本文の `!{名前}` に使う環境変数の名前。フックが `session_env` に写す名前に加わる（`RULE_INJECT_` で始まる名前・`XDG_` で始まる名前・`CLAUDE_PROJECT_DIR`・`HOME` は列挙しなくても渡る）
+    env_var: RULE_INJECT_EXPAND_VARS
+    reload: restart
+    allowed: 環境変数の名前（`[A-Za-z_][A-Za-z0-9_]*`）のカンマ区切り
+    reason: 常駐サーバーへの引数に秘密の値を載せないため、渡す名前を絞る
+    status: planned
+    visibility: user
