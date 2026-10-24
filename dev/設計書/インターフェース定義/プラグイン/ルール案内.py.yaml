@@ -552,7 +552,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`tools: ["mcp__*__search_*"]`・`args: {tags: ["re:^python$"], filter.kind: ["rule"]}` のエントリを 1 つ持つ'
+        description: '`tools: ["mcp__*__search_*"]` と、`args` に `tags: ["re:^python$"]` と `filter.kind: ["rule"]` をブロックのマップで書いたエントリを 1 つ持つ'
         notes: '`on` を書かない（`default_on` の既定で `mcp` を含む）'
       - name: 既読の記録
         description: 空
