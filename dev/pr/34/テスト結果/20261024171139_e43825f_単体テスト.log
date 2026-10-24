@@ -1,0 +1,34 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-index-match-tool-arguments
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 198 items
+
+tests/unit/hooks/test_run.py ...                                         [  1%]
+tests/unit/rule_inject/features/command/test_service.py ..............   [  8%]
+tests/unit/rule_inject/features/fetch/test_client.py ....                [ 10%]
+tests/unit/rule_inject/features/fetch/test_service.py ...........        [ 16%]
+tests/unit/rule_inject/features/guidance/test_service.py ........        [ 20%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 29%]
+.....................                                                    [ 39%]
+tests/unit/rule_inject/features/index/test_yaml.py .......               [ 43%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 52%]
+............                                                             [ 58%]
+tests/unit/rule_inject/hooks/test_discard_read.py ...                    [ 59%]
+tests/unit/rule_inject/hooks/test_record_read.py ....                    [ 61%]
+tests/unit/rule_inject/hooks/test_rule_guide.py ............             [ 67%]
+tests/unit/rule_inject/hooks/test_runner.py ...                          [ 69%]
+tests/unit/rule_inject/hooks/test_search_guide.py .....                  [ 71%]
+tests/unit/rule_inject/hooks/test_session_id_injection.py ..             [ 72%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 76%]
+tests/unit/rule_inject/hooks/test_work_rules.py ..                       [ 77%]
+tests/unit/rule_inject/server/test_app.py ........                       [ 81%]
+tests/unit/rule_inject/server/test_main.py .                             [ 82%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 89%]
+tests/unit/rule_inject/shared/test_paths.py .........                    [ 93%]
+tests/unit/rule_inject/shared/test_settings.py .......                   [ 97%]
+tests/unit/rule_inject/shared/test_variables.py .....                    [100%]
+
+============================= 198 passed in 15.45s =============================
