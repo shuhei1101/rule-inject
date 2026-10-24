@@ -46,7 +46,7 @@ constants:
     summary: '`RULE_INJECT_INDEXES_PROJECT` が無いときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス'
     value: '`rules.yaml`'
   - name: REGEX_PREFIX
-    title: 正規表現の印
+    title: 正規表現のプレフィックス
     container: features/index/service.py
     summary: パターンを正規表現として読む先頭の文字列
     value: '`re:`'
@@ -661,7 +661,7 @@ functions:
     process: |-
       1. キーをドットで分け、先頭から順にたどる。たどる途中の値が配列なら要素ごとにたどり、オブジェクトでない値や無いキーは捨てる
       2. たどり着いた値が配列なら要素ごとに取り出す
-      3. 文字列はそのまま、文字列以外のスカラー（数・真偽・`null`）は `json.dumps` の表記にし、オブジェクトは捨てる
+      3. 文字列はそのまま、文字列以外のスカラー（数・真偽・`null`）は `json.dumps` の表記にし、オブジェクトと配列の中の配列は捨てる
     unit_tests:
       - name: test_argument_values_when_nested_array
         case: 正常
