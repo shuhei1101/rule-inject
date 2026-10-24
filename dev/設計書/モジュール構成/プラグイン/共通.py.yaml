@@ -6,7 +6,7 @@ directory: |-
   ├── __init__.py
   └── shared/
       ├── __init__.py
-      ├── errors.py     # 索引・既読の記録・ログの例外
+      ├── errors.py     # 索引・既読の記録・既読の履歴・ログの例外
       ├── paths.py      # 記録フォルダ・ログのフォルダとルールの場所の解決
       ├── settings.py   # 保持の日数の環境変数の読み取り
       ├── variables.py  # `!{名前}` を環境変数の値へ展開する
@@ -62,6 +62,13 @@ classes:
     summary: 消す対象のログのファイルはあるが消せない
     kind: クラス
     inherits: RuleInjectError
+  - name: HistoryWriteError
+    title: 既読の履歴に書けない
+    container: shared/errors.py
+    usecase: ルールを読んだことが記録される
+    summary: 記録フォルダが作れない・既読の履歴ファイルに追記できない
+    kind: クラス
+    inherits: RuleInjectError
 enums:
   - name: LogOperation
     title: 失敗した操作
@@ -87,6 +94,9 @@ enums:
       - value: delete_log
         title: ログの削除
         description: 保持日数を過ぎたログのファイルか変更前のログを消せない
+      - value: write_history
+        title: 既読の履歴の追記
+        description: 既読の履歴に書けない
   - name: Component
     title: 出した元
     container: shared/logger.py
