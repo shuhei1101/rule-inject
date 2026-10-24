@@ -641,8 +641,8 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`paths: ["re:["]`・`on: [write]` のエントリと、`paths: ["**/*.md"]`・`on: [write]` の通常のエントリを 1 つずつ持つ'
-        notes: 通常のエントリは別の glob にし、読み飛ばしが他のエントリに及ばないことを見る
+        description: '`paths: ["re:["]`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` の通常のエントリを 1 つずつ持つ'
+        notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -662,6 +662,7 @@ flows:
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所・`re:[`・コンパイルできない理由が載っている'
+      - '`additionalContext` に通常のエントリのルールの場所が載っている'
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_regex_unreadable
