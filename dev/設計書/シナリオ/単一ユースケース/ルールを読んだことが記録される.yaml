@@ -30,7 +30,7 @@ scenarios:
       ```
     expected:
       - そのセッションの既読の記録に、ルールの場所が載っている
-      - そのセッションの既読の履歴に、読み方が `Bash` でルールの場所を持つ行がある
+      - そのセッションの既読の履歴に、読み方が `bash` でルールの場所を持つ行がある
     test: test_normal_when_read_by_bash
   - name: 正常シナリオ（Readで読む）
     setup:
@@ -61,7 +61,7 @@ scenarios:
       ```
     expected:
       - そのセッションの既読の記録に、ルールの場所が載っている
-      - そのセッションの既読の履歴に、読み方が `Read` でルールの場所を持つ行がある
+      - そのセッションの既読の履歴に、読み方が `read` でルールの場所を持つ行がある
     test: test_normal_when_read_by_read_tool
   - name: 正常シナリオ（MCPのツールで読む）
     setup:
