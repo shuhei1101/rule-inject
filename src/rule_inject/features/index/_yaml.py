@@ -7,9 +7,10 @@ from dataclasses import dataclass
 from rule_inject.features.index.types import OPERATIONS, Operation
 
 TOP_KEYS = ("default_on", "rules")
-ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "on")
-# 値がリストのエントリのキー（`rule` だけが文字列）
+ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on")
+# 値がリストのエントリのキー（`rule` だけが文字列、`args` はキーごとのリストのマップ）
 LIST_ENTRY_KEYS = ("paths", "exclude", "tools", "on")
+ARGS_KEY = "args"
 LIST_ITEM_MARK = "- "
 QUOTE_CHARS = "\"'"
 # 開き引用符と閉じ引用符で最低でも 2 字になる
@@ -17,7 +18,7 @@ MIN_QUOTED_LENGTH = 2
 # 引用符なしの値の先頭に置けない、YAML では別の意味になる文字
 RESERVED_HEADS = "{|>&!%@`*"
 
-type Value = str | list[str]
+type Value = str | list[str] | dict[str, list[str]]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -161,6 +162,33 @@ def _read_value(
     return items, position
 
 
+def _read_args(
+    lines: list[_Line], line: _Line, next_position: int, rest: str, key_indent: int
+) -> tuple[dict[str, list[str]], int]:
+    """`args` の続く行に並ぶ `キー: リスト` のブロックのマップを読み、次に読む行の位置を返す。"""
+    # 同じ行に値がある（フローのマップなど）形は読まない
+    if rest.strip():
+        raise _error(line.number, "args は続く行に `キー:` とパターンのリストを並べてください")
+    if next_position >= len(lines) or lines[next_position].indent <= key_indent:
+        raise _error(line.number, "args の値がありません")
+    # 続く行の最初のキーの桁に、残りのキーが揃う
+    arg_indent = lines[next_position].indent
+    args: dict[str, list[str]] = {}
+    position = next_position
+    while position < len(lines) and lines[position].indent > key_indent:
+        arg_line = lines[position]
+        if arg_line.indent != arg_indent:
+            raise _error(arg_line.number, "args のキーは同じ桁に揃えてください")
+        arg_key, arg_rest = _split_key(arg_line)
+        if arg_key in args:
+            raise _error(arg_line.number, f"args のキーが重複しています: {arg_key}")
+        value, position = _read_value(lines, arg_line, position + 1, arg_key, arg_rest, arg_indent)
+        if not isinstance(value, list):
+            raise _error(arg_line.number, f"args の {arg_key} はリストで書いてください")
+        args[arg_key] = value
+    return args, position
+
+
 def _read_entry(lines: list[_Line], position: int) -> tuple[dict[str, Value], int]:
     """`- ` で始まるエントリ 1 つを読み、次に読む行の位置を返す。"""
     first = lines[position]
@@ -176,7 +204,11 @@ def _read_entry(lines: list[_Line], position: int) -> tuple[dict[str, Value], in
             raise _error(current.number, f"許さないキーです: {key}")
         if key in entry:
             raise _error(current.number, f"キーが重複しています: {key}")
-        entry[key], position = _read_value(lines, current, position + 1, key, rest, key_indent)
+        # args はキーごとのパターンのリストを並べたマップ、それ以外は文字列かリスト
+        if key == ARGS_KEY:
+            entry[key], position = _read_args(lines, current, position + 1, rest, key_indent)
+        else:
+            entry[key], position = _read_value(lines, current, position + 1, key, rest, key_indent)
         # 次の行が同じ桁のキーなら、同じエントリの続き
         if position >= len(lines) or lines[position].indent != key_indent:
             return entry, position
