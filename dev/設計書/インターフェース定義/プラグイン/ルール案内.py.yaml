@@ -546,6 +546,125 @@ flows:
       - 'ログに `operation: write_record` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_guided_record_unwritable
+  - name: 正常系（MCPのツールの引数に当たる）
+    summary: '`args` のパターンに引数の値が当たる MCP のツールの呼び出しを止める'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`tools: ["mcp__*__search_*"]`・`args: {tags: ["re:^python$"], filter.kind: ["rule"]}` のエントリを 1 つ持つ'
+        notes: '`on` を書かない（`default_on` の既定で `mcp` を含む）'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{query: "x", tags: ["go", "python"], filter: {kind: "rule"}}`'
+        notes: 配列の 2 つ目の要素とオブジェクトの子で当たる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（MCP のツール名・引数）
+        H->>IDX: 読む
+        H->>H: ツール名と引数に当たるエントリを選ぶ
+        H->>ST: 既読を読む（未読）
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` にルールの場所が載っている'
+    test: test_normal_when_mcp_args_match
+  - name: 正常系（MCPのツールの引数に当たらない）
+    summary: ツール名に当たっても、`args` のキーが無いか値が当たらなければ案内しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 引数に当たるフローと同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{query: "x", tags: ["go"]}`'
+        notes: '`tags` の値が当たらず、`filter.kind` のキーが無い'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（MCP のツール名・引数）
+        H->>IDX: 読む
+        H->>H: 引数が当たらないためエントリを外す
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_mcp_args_unmatched
+  - name: 正常系（正規表現のパスに当たる）
+    summary: '`re:` で始まる `paths` のパターンに部分一致するパスの Write を止める'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["re:/src/[a-z_]+\\.py$"]`・`on: [write]` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Write`、`tool_input.file_path` は `{一時フォルダ}/src/app.py`'
+        notes: パスの先頭はパターンに無く、部分一致で当たる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: 正規表現に部分一致するエントリを選ぶ
+        H->>ST: 既読を読む（未読）
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` にルールの場所が載っている'
+    test: test_normal_when_regex_path
+  - name: 異常系（読めない正規表現・止めずに理由を載せる）
+    summary: コンパイルできない正規表現を持つエントリを読み飛ばし、理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["re:["]`・`on: [write]` のエントリと、`paths: ["**/*.md"]`・`on: [write]` の通常のエントリを 1 つずつ持つ'
+        notes: 通常のエントリは別の glob にし、読み飛ばしが他のエントリに及ばないことを見る
+      - name: 入力
+        description: '`tool_name: Write`、`.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant LOG as ログ
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: 正規表現をコンパイルできないエントリを読み飛ばす
+        H->>LOG: read_index を追記する
+        H-->>CC: additionalContext（索引の場所・パターン・理由）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に索引の場所・`re:[`・コンパイルできない理由が載っている'
+      - 'ログに `operation: read_index` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_regex_unreadable
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
 idempotent: false
 side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -591,6 +710,12 @@ request:
     default: なし（パスでは照合しない）
     description: Grep で検索するファイルかフォルダのパス
     notes: Grep のとき届く。ファイルを指すときだけ照合する（フォルダは中のどのファイルを読むかが実行前に決まらないため照合しない）
+  - name: tool_input.*
+    type: Any
+    required: false
+    default: なし（引数では照合しない）
+    description: MCP のツールの引数
+    notes: '`mcp__*` のとき、エントリの `args` と照合する。オブジェクトの子はドットで結んだキーで指す'
 request_example: |-
   ```json
   {
@@ -675,5 +800,12 @@ constraints:
   - item: 案内済みの記録
     constraint: 止めない案内（`additionalContext`）に載せたルールの場所を `{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に載せない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
     notes: 書式は ER 図「既読の記録」の案内済みの記録。止める案内は読むまで毎回出す。案内文の長さに収まらず載せなかった場所は記録しない
+  - item: 引数の照合
+    constraint: '`tools` に当たったエントリのうち `args` を持つものは、書いた全てのキーの値がどれかのパターンに当たるときだけ当てる。キーが引数に無いとき・値がオブジェクトのときは当てない。値が配列のとき、およびドット区切りのキーの途中が配列のときは要素ごとにたどり、どれか 1 つが当たれば当てる。文字列以外のスカラーは JSON の表記（`true`・`null`・`1.5`）で文字列にして照合する'
+    notes: '`args` は MCP のツールの呼び出しにだけ当てる'
+  - item: パターンの正規表現
+    constraint: '`paths`・`exclude`・`tools`・`args` のパターンのうち `re:` で始まるものは、残りを正規表現として部分一致（`re.search`）で照合する。それ以外は glob のまま照合する。正規表現は索引を読むときにコンパイルし、コンパイルできないパターンを持つエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・パターン・理由を載せ、ログへ `read_index` を書く'
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    notes: 読み飛ばしは、そのエントリだけに及ぶ
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py
