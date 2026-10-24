@@ -158,6 +158,23 @@ def test_render_result() -> None:
     assert "日本語の本文" in text
 
 
+def test_render_result_when_history_failures() -> None:
+    """履歴に書けなかった場所があるときだけ history_failures を出す（正常系）。"""
+    # 準備
+    pages = [RulePage(location="/r/a.md", body="本文")]
+    failed = FetchFailure(location="/r/a.md", reason="IsADirectoryError: 履歴ファイル")
+    with_failures = ReadRulesResult(pages=pages, history_failures=[failed])
+    without_failures = ReadRulesResult(pages=pages)
+    # 実行
+    text = render_result(with_failures)
+    text_without = render_result(without_failures)
+    # 検証
+    assert json.loads(text)["history_failures"] == [
+        {"location": "/r/a.md", "reason": "IsADirectoryError: 履歴ファイル"}
+    ]
+    assert "history_failures" not in json.loads(text_without)
+
+
 def test_collect_pages_when_body_has_variables(rule_file: Callable[..., Path]) -> None:
     """展開した本文を返し、展開後の字数で上限を数える（正常系）。"""
     # 準備
