@@ -492,8 +492,8 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`rule: "!{UNSET_DIR}/python.md"`・`on: [write]` のエントリと、`on: [write]` の通常のエントリを 1 つずつ持つ'
-        notes: '`UNSET_DIR` を渡さない。通常のエントリは別の glob（`**/*.md`）にし、読み飛ばしが他のエントリに及ばないことを見る'
+        description: '`rule: "!{UNSET_DIR}/python.md"`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` の通常のエントリを 1 つずつ持つ'
+        notes: '`UNSET_DIR` を渡さない。通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る'
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -513,6 +513,7 @@ flows:
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所・エントリの `rule`・`UNSET_DIR` が載っている'
+      - '`additionalContext` に通常のエントリのルールの場所が載っている'
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_rule_variable_unset
