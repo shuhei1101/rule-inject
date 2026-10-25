@@ -36,7 +36,7 @@ MCP サーバーは `.mcp.json` の `uv run ... python -m rule_inject.server` �
 - [x] ~~画面設計~~（画面を持たない）
 - [x] モジュール構成設計
 - [x] ドキュメント修正（要件.md の `## 更新ドキュメント`）
-- [ ] 単体テスト作成
+- [x] 単体テスト作成
 - [ ] 実装（[shuhei1101/alias-inject#11](https://github.com/shuhei1101/alias-inject/issues/11) が閉じてから）
 - [ ] 結合テスト作成
 - [ ] E2E テスト作成
