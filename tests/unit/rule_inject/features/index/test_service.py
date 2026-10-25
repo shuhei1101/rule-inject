@@ -259,10 +259,7 @@ def test_load_indexes_when_rule_is_url(
     """`rule` が URL のエントリだけを読み飛ばす（正常系）。"""
     # 準備
     index = make_index(
-        "rules:\n"
-        "  - rule: https://example.com/a.md\n"
-        '  - rule: "!{BASE}/b.md"\n'
-        "  - rule: /r/ok.md\n"
+        'rules:\n  - rule: https://example.com/a.md\n  - rule: "!{BASE}/b.md"\n  - rule: /r/ok.md\n'
     )
     env = {"RULE_INJECT_INDEXES_PROJECT": str(index), "BASE": "http://example.com"}
     # 実行
