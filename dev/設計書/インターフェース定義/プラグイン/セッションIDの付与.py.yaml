@@ -37,25 +37,29 @@ flows:
       - '`updatedInput` を JSON にした文字列に `gh-secret` が無い'
     test: test_normal
   - name: 正常系（モデルがsession_idを渡した）
-    summary: モデルが渡した session_id をフックの入力の値で上書きする
+    test: test_normal_when_model_supplied_session_id
+    summary: モデルが渡した session_id・resolved_locations・rejected・state_dir・log_dir をフックが求めた値で上書きする
     setup:
       - name: Mock
         description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
       - name: 入力
-        description: '`tool_input.session_id` に `model-supplied` を持つ'
+        description: '`tool_input` に `session_id=model-supplied`・`resolved_locations=["/etc/passwd"]`・`rejected=[]`・`state_dir=/tmp/model`・`log_dir=/tmp/model` を持ち、`locations` を持たない'
     flow: |-
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as セッションIDの付与
 
-        CC->>H: 標準入力（tool_input.session_id = model-supplied）
-        H->>H: session_id をフックの入力の値で上書きする
+        CC->>H: 標準入力（tool_input にモデルが渡した値）
+        H->>H: session_id・resolved_locations・rejected・state_dir・log_dir をフックが求めた値で上書きする
         H-->>CC: updatedInput<br>終了コード 0
       ```
     expected:
       - '`updatedInput.session_id` が入力の `session_id` と同じで、`model-supplied` でない'
-    test: test_normal_when_model_supplied_session_id
+      - '`updatedInput.resolved_locations` が空で、`/etc/passwd` を含まない'
+      - '`updatedInput.state_dir` が `RULE_INJECT_STATE_DIR` の値、`updatedInput.log_dir` が `RULE_INJECT_LOG_DIR` の値で、`/tmp/model` でない'
   - name: 正常系（対象のパスで引く）
     summary: paths に当たるエントリのルールの場所だけを resolved_locations に載せる
     setup:

@@ -384,7 +384,7 @@ constraints:
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[URLのルールの取得の待ち時間]
   - item: 許す場所
     constraint: '`resolved_locations` の場所だけを読む。`locations`・`paths` は読む場所に使わない。`rejected` は読まずにそのまま `failures` に載せる'
-    notes: 索引との照合はインターフェース定義「セッションIDの付与」が行う。フックがモデルの渡した値を上書きするため、モデルは `resolved_locations` を指定できない。Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
+    notes: 索引との照合はインターフェース定義「セッションIDの付与」が行う。フックが動いた呼び出しでは、モデルの渡した `resolved_locations` をフックが上書きする。フックがタイムアウトか想定外の例外で何も返さなかった呼び出しでは、モデルが渡した `resolved_locations` がそのまま届き、索引に無い場所を読める（サーバーは索引を持たず、本物の値と見分けられない）。Read の拒否ルールや WebFetch の許可を、このツールで迂回させない
   - item: 認可
     constraint: 制限なし（ツールの許可は利用者の Claude Code の設定に従う）
   - item: ログ
