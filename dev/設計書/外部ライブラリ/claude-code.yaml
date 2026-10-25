@@ -29,18 +29,12 @@ catalogs:
       - name: hooks/hooks.json
         kind: ファイル
         purpose: フックの出来事・matcher・コマンド・timeout
-      - name: .mcp.json
-        kind: ファイル
-        purpose: 同梱の MCP サーバーの起動コマンド
       - name: CLAUDE_PLUGIN_ROOT
         kind: 環境変数
-        purpose: フックと `.mcp.json` の中でプラグインの場所を指す
+        purpose: フックの中でプラグインの場所を指す
       - name: .claude-plugin/marketplace.json
         kind: ファイル
         purpose: リポジトリを marketplace として載せ、`/plugin marketplace add` と `/plugin install` で入れられるようにする
-      - name: CLAUDE_PLUGIN_DATA
-        kind: 環境変数
-        purpose: 版をまたいで残るプラグインのデータの場所。`.mcp.json` で MCP サーバーの仮想環境（`UV_PROJECT_ENVIRONMENT`）を指す
   - name: セッションの記録
     version: 2.1.296
     entries:
@@ -57,4 +51,4 @@ docs_url: https://code.claude.com/docs/en/hooks
 verification:
   state: 未確認
   date: '2026-09-29'
-  detail: PoC 検証（#4）と設計の段で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装のフックは、入力の JSON を標準入力へ渡す単体テストで確かめ、`claude plugin validate` でプラグインと marketplace のマニフェストを通した。実際の Claude Code に本実装のフックと MCP サーバーを動かさせる確認は API の利用（課金）が要り、E2E テストの実行を担う tester が行うため、この工程では動かせない
+  detail: PoC 検証（#4）と設計の段で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装のフックは、入力の JSON を標準入力へ渡す単体テストで確かめ、`claude plugin validate` でプラグインと marketplace のマニフェストを通した。実際の Claude Code に本実装のフックを動かさせる確認は API の利用（課金）が要り、E2E テストの実行を担う tester が行うため、この工程では動かせない

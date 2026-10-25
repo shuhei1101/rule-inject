@@ -31,26 +31,6 @@ requirements:
     unit: 字
     rationale: 止めずに案内する additionalContext は外部の上限そのまま。止める案内の permissionDecisionReason には実行基盤の上限が無いが、コンテキストを消費する量として同じ 10,000 字を自分で決めた上限にし、2 つの案内で処置を揃える
     overflow: 案内文を出力する前に字数を数える。超えるときは、止めるルールを先に並べてルールの場所を 10,000 字に収まるところまで載せ、載せきれなかった件数を末尾に添える。載せきれなかったルールは未読のまま残るので、載せた分を読んで操作をやり直したときに案内される（単一ユースケース「未読のルールの案内を受ける」の正常シナリオ（案内が長い））
-  - name: MCPのツールの応答の大きさ
-    english_name: mcp_output_size
-    category: 性能
-    external_constraint: MCP のツールの出力は既定で 25,000 トークンまで（10,000 トークンを超えると警告）。超えるとファイルへ退避され、会話にはファイルのパスだけが載る。ツールごとに `anthropic/maxResultSizeChars` で最大 500,000 字まで上げられる（テキストの応答。`MAX_MCP_OUTPUT_TOKENS` とは別に効く）
-    source_kind: 実行基盤の制限
-    source: https://code.claude.com/docs/en/mcp
-    value: 40,000
-    rationale: '`read_rules` に `anthropic/maxResultSizeChars` を付け、退避の判定と手元で数える単位を字数に揃える（トークンの見積もりを使わない）。値は、どのルールも 1 回で返せ、かつ 1 回の取得でコンテキストを使いすぎない量として、実際の索引の最大の本文に安全率 20% を足して切り上げた。展開の形はインターフェース定義「ルール本文の取得」'
-    unit: 字
-    breakdown:
-      - part: 最大の本文
-        value: 32,010 字
-        notes: 参考の実装の利用者の索引（229 件）のルールの本文の最大（p50 985 字、p95 5,928 字、2026-09-29）
-      - part: 安全率
-        value: 6,402 字
-        notes: 20%。応答の JSON の括弧・キー・エスケープを含む
-      - part: 合計
-        value: 38,412 字
-        notes: 切り上げて 40,000 字。外部の上限（500,000 字）の内側
-    overflow: 返す前に応答の字数を数える。収まらない本文は返さず、次の呼び出しで取得する場所として応答に並べ、既読にしない。本文 1 件だけで収まらないときは、取得できなかった場所として理由を添えて返す
   - name: 対応 OS
     english_name: supported_os
     category: 動作環境
@@ -59,30 +39,10 @@ requirements:
     source: https://github.com/shuhei1101/rule-inject/issues/2
     value: Linux / WSL
     rationale: Issue の構成方針のとおり。PoC 検証と設計の段の実測は WSL（Linux 6.6）で行った。macOS・Windows（WSL なし）は要件のスコープ外
-  - name: URLのルールの取得の待ち時間
-    english_name: rule_fetch_timeout
-    category: 性能
-    external_constraint: 制限なし
-    source_kind: 制限なし
-    value: '1'
-    unit: 秒
-    rationale: 規約『資源の値の決め方』の「下流を待つタイムアウト」に従い、代表として GitHub の raw のファイルを測った p99.9 に余裕 50% を足し、秒に切り上げた。実測は 100 回のため、非機能要件テストで 1,000 回に増やして測り直す
-    measurement: 代表の URL を 1,000 回取得して p99.9 を求める
-    overflow: 待ち時間を超えた場所は取得できなかった場所として理由を添えて返し、既読にしない。再試行はしない（呼び出し元がやり直す）
-    breakdown:
-      - part: 実測 p99.9
-        value: 323 ms
-        notes: '`https://raw.githubusercontent.com/shuhei1101/rule-inject/master/README.md` を 100 回取得（p50 18 ms、2026-09-29、WSL）'
-      - part: 余裕
-        value: 162 ms
-        notes: 実測 p99.9 の 50%
-      - part: 合計
-        value: 485 ms
-        notes: 秒に切り上げて 1 秒
   - name: フックのPythonの版
     english_name: hook_python_version
     category: 動作環境
-    external_constraint: フックは利用者の端末の `python3`（OS が持つ版）で動く。MCP サーバーの `uv run` と違い、版を固定する仕組みが無い
+    external_constraint: フックは利用者の端末の `python3`（OS が持つ版）で動き、版を固定する仕組みが無い
     source_kind: 実行基盤の制限
     value: 3.12 以上
     rationale: PoC 検証と設計の段で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
@@ -158,4 +118,4 @@ requirements:
         condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
         measurement: 食い違う版を置いた一時フォルダの 4 つのファイルを検査へ渡す
         expected: 検査が fail し、失敗の文に 4 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
-lead: Claude Code のフックと MCP の制約から逆算した、rule-inject が守る値。
+lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。

@@ -21,7 +21,7 @@ catalogs:
         purpose: stdio でサーバーを動かす
 lead: Model Context Protocol の公式の Python SDK。MCP のサーバーとクライアントを書くためのクラスを持つ。
 purl: pkg:pypi/mcp
-dependency_scope: 必須
+dependency_scope: 開発のみ
 adoption: 採用
 upstream: modelcontextprotocol/python-sdk
 license: MIT（商用利用可）
@@ -33,4 +33,9 @@ verification:
 selection:
   candidates: 公式の Python SDK（`mcp`）だけを候補にした。
   decision: Issue の構成方針（MCP サーバーは Python の uv のプロジェクト）に合う公式の実装で、stdio のサーバーを数行で書ける。
-  consequences: 2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使わない。メジャー版で API が変わるので `<3` で固定する。
+  consequences: |-
+    2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使わない。メジャー版で API が変わるので `<3` で固定する。
+
+    プラグインの MCP サーバーを廃止し（#44）、プラグインの依存から外した。E2E テストの `read_by` のシナリオで立てる文書の MCP サーバーだけが使う。
+used_in:
+  - tests/e2e/conftest.py
