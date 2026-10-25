@@ -6,7 +6,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 DOCS_TOOL = "mcp__docs__get_doc"
 
 
@@ -24,7 +23,7 @@ def test_normal_when_read_by_bash(
     configure_index(make_index({"rule": str(rule)}))
     prompt = f"Bash の cat で {rule} を読んでください。他のことはしないでください。"
     # 実行
-    run = run_claude(prompt, allow=["Bash"], deny=["Read", READ_RULES_TOOL])
+    run = run_claude(prompt, allow=["Bash"], deny=["Read"])
     # 検証
     assert record_locations(run.session_id) == [str(rule)]
     history = record_history(run.session_id)
@@ -47,7 +46,7 @@ def test_normal_when_read_by_read_tool(
     configure_index(make_index({"rule": str(rule)}))
     prompt = f"Read で {rule} を読んでください。他のことはしないでください。"
     # 実行
-    run = run_claude(prompt, allow=["Read"], deny=["Bash", READ_RULES_TOOL])
+    run = run_claude(prompt, allow=["Read"], deny=["Bash"])
     # 検証
     assert record_locations(run.session_id) == [str(rule)]
     history = record_history(run.session_id)
@@ -82,7 +81,7 @@ def test_normal_when_read_by_mcp_tool(
     run = run_claude(
         prompt,
         allow=[DOCS_TOOL],
-        deny=["Read", "Bash", READ_RULES_TOOL],
+        deny=["Read", "Bash"],
         mcp_config=docs_mcp_config(body),
     )
     # 検証
