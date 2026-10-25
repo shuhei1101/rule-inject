@@ -39,4 +39,4 @@ MCP サーバーは `.mcp.json` の `uv run ... python -m rule_inject.server` �
 - [x] 単体テスト作成
 - [x] 実装
 - [x] 結合テスト作成
-- [ ] E2E テスト作成
+- [x] E2E テスト作成
