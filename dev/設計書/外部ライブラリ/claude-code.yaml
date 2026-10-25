@@ -13,7 +13,7 @@ catalogs:
         purpose: ツールを呼ぶ直前に、案内（`permissionDecision` / `permissionDecisionReason` / `additionalContext`）と引数の置き換え（`updatedInput`）を返す
       - name: PostToolUse
         kind: フック
-        purpose: ツールを呼んだ後に、読んだ場所を既読として記録する
+        purpose: ツールを呼んだ後に、読んだ場所を既読として記録し、`read_rules` の結果を `updatedMCPToolOutput` で置き換える
       - name: PreCompact
         kind: フック
         purpose: 圧縮の前に既読の記録を捨てる

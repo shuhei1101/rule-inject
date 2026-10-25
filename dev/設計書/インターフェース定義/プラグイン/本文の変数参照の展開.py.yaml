@@ -1,0 +1,123 @@
+title: "本文の変数参照の展開"
+entry:
+  kind: trigger
+  value: '`PostToolUse` フック（matcher `mcp__plugin_rule-inject_rule-inject__read_rules`、timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: 設定された名前を展開し、未設定の名前を残して本文の先頭に注釈を足す
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 入力
+        description: '`tool_response` の `text` に、`!{SET_NAME}`・`!{EMPTY_NAME}`・`!{UNSET_NAME}` を 1 つずつ含み `!{UNSET_NAME}` を 2 回書いた本文を `pages[0].body` に持つ `read_rules` の応答'
+        notes: 空白を挟む `!{ SET_NAME }` も 1 つ置き、置き換えないことを見る
+      - name: 環境変数
+        description: フックの子プロセスに `SET_NAME=value-1` と `EMPTY_NAME=`（空）を渡す。`UNSET_NAME` は渡さない
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as 本文の変数参照の展開
+
+        CC->>H: 標準入力（tool_name・tool_response）
+        H->>H: pages[].body の設定された名前を値に置き換え、未設定の名前を残して先頭に注釈を足す
+        H-->>CC: updatedMCPToolOutput<br>終了コード 0
+      ```
+    expected:
+      - '`updatedMCPToolOutput` の `text` の `pages[0].body` に `value-1` が載り、`!{SET_NAME}` が残っていない'
+      - '`!{EMPTY_NAME}` が空文字になっている'
+      - '`!{UNSET_NAME}` が 2 箇所ともそのまま残っている'
+      - '`!{ SET_NAME }` がそのまま残っている'
+      - '`pages[0].body` の 1 行目が `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: UNSET_NAME`'
+      - '`pages[0].location` が入力と同じ'
+    test: test_normal
+  - name: 正常系（変数参照が無い）
+    summary: 展開する名前が無いときは何も出力しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: '`pages[0].body` に `!{名前}` を含まない `read_rules` の応答'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as 本文の変数参照の展開
+
+        CC->>H: 標準入力（tool_response）
+        H-->>CC: 出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 終了コードが 0
+    test: test_normal_when_no_variables
+  - name: 異常系（結果が読めない・Exception）
+    summary: 結果の text が JSON として読めないときは何も出力せずログを書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: '`tool_response` の `text` が JSON でない文字列'
+      - name: 環境変数
+        description: '`RULE_INJECT_LOG_DIR` に一時フォルダ'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as 本文の変数参照の展開
+        participant LOG as ログ
+
+        CC->>H: 標準入力（読めない tool_response）
+        H->>LOG: unexpected を 1 行書く
+        H-->>CC: 出力なし<br>終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - 終了コードが 0
+      - ログに `unexpected` の行が 1 行ある
+    test: test_error_when_response_unreadable
+lead: '`read_rules` が返した本文の `!{名前}` を、フックのプロセスの環境変数（セッションの環境変数）で展開し、`updatedMCPToolOutput` でモデルへ渡す結果を置き換える。'
+identifier: variable_expansion
+idempotent: true
+side_effects: なし
+request:
+  - name: '`tool_name`'
+    type: str
+    required: true
+    description: 呼ばれた MCP のツールの完全名
+    constraints: '`mcp__plugin_rule-inject_rule-inject__read_rules`'
+  - name: '`tool_response`'
+    type: list[dict[str, Any]]
+    required: true
+    description: 'ツールの結果。MCP の `content` の配列で、`type: text` の要素の `text` が `read_rules` の応答の JSON'
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['PostToolUse']
+    description: フックの種類
+  - name: '`hookSpecificOutput.updatedMCPToolOutput`'
+    type: list[dict[str, Any]]
+    description: '`tool_response` と同じ形で、`text` の JSON の `pages[].body` だけを制約「展開の規則」で展開したもの'
+    notes: 展開する `!{名前}` が 1 つも無いときは何も出力しない
+exceptions:
+  - name: なし（正常終了）
+    condition: 終了コード 0 で終える
+  - name: Exception（想定外の例外）
+    condition: '`tool_response` が想定の形でないなど、展開した結果を作れない'
+    notes: 最上位で捕まえ、ログへ `unexpected` を書いて何も出力せず終了コード 0 で終える。展開していない本文がそのままモデルへ届く
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+  - item: 展開の規則
+    constraint: '本文の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックのプロセスの環境変数の値に置き換える。空の値は空文字に置き換える。未設定の名前は `!{名前}` のまま残し、本文の先頭に `> 注釈: 次の変数参照は、環境変数が設定されていないため展開していない: {名前を「、」で並べたもの}` の 1 行を足す（同じ名前は 1 回だけ、本文に出た順）'
+    notes: 置き換えた値の中の `!{…}` は置き換え直さない。`pages[].body` 以外（`location`・`failures`）は変えない
+  - item: 応答の大きさ
+    constraint: 制限なし（展開で増えた分は「ルール本文の取得」の応答の大きさに数えない）
+    notes: 置き換えた結果に Claude Code の結果の上限がかかるかは確かめていない
+  - item: 許可の判定
+    constraint: 返さない
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+    notes: 環境変数の値はログに書かない
+notes:
+  PoC: '`updatedMCPToolOutput` で置き換えた結果がモデルへ届くこと、フックがシェルの環境変数・プロジェクトの `.claude/settings.json` の `env`・`CLAUDE_PROJECT_DIR` を読めることを、Claude Code 2.1.310 の `claude -p` で確かめた（[PR #44 の PoC](https://github.com/shuhei1101/rule-inject/pull/44#discussion_r4369300871)）'
