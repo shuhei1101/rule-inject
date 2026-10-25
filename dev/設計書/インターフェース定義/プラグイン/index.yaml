@@ -2,10 +2,6 @@ summary: フックと MCP のツールの入出力と処理フロー
 items:
   - page: ルール案内.py.yaml
     summary: 操作の対象に当たる未読のルールを、止めて、または止めずに案内する（PreToolUse）
-  - page: セッションIDの付与.py.yaml
-    summary: この MCP のツールの引数へ session_id を足す（PreToolUse）
-  - page: ルール本文の取得.py.yaml
-    summary: ルールの場所か対象のパスから本文を返し、既読として記録する（MCP のツール read_rules）
   - page: 既読の記録.py.yaml
     summary: Read か Bash で読んだルールの場所を既読として記録する（PostToolUse）
   - page: 既読の記録の破棄.py.yaml

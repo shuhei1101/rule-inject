@@ -182,32 +182,6 @@ flows:
       - 既読の履歴ファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_read_by_not_matched
-  - name: 正常系（このプラグインのツール）
-    summary: このプラグイン自身の MCP のツールの呼び出しは、`read_by` に当たっても記録しない
-    setup:
-      - name: Mock
-        description: なし
-      - name: 索引
-        description: '`read_by` の `tools` に `mcp__plugin_rule-inject_rule-inject__*` を書いたエントリを 1 つ持つ'
-      - name: 既読の記録
-        description: 空の一時フォルダ
-      - name: 入力
-        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__read_rules`'
-    flow: |-
-      ```mermaid
-      sequenceDiagram
-        participant CC as Claude Code
-        participant P as 既読の記録
-
-        CC->>P: 標準入力（read_rules）
-        P->>P: このプラグインのツールなので何もしない
-        P-->>CC: 終了コード 0
-      ```
-    expected:
-      - 記録ファイルが作られていない
-      - 既読の履歴ファイルが作られていない
-      - 終了コードが `0`
-    test: test_normal_when_own_tool
   - name: 異常系（既読の履歴に書けない・理由を載せる）
     summary: 既読の履歴に書けないとき、既読にはしたうえで書けなかった理由を載せる
     setup:
@@ -245,7 +219,7 @@ flows:
 lead: Read か Bash の読むコマンドで読んだパスのうち索引に載ったルールの場所と、索引の `read_by` に当たった MCP のツールの呼び出しのエントリのルールの場所を、そのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルへルールの場所を 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
-exclusivity: 追記（O_APPEND）だけで書くため、MCP サーバーと同時に書いても行が混ざらない
+exclusivity: 追記（O_APPEND）だけで書くため、ほかのフックと同時に書いても行が混ざらない
 request:
   - name: '`session_id`'
     type: str
@@ -261,7 +235,6 @@ request:
     type: str
     required: true
     description: 実行されたツール。`Read`・`Bash`・MCP のツールの完全名（`mcp__` で始まる）のどれか
-    notes: このプラグイン自身のツール（`mcp__plugin_rule-inject_rule-inject__` で始まる名前）は何もせずに終える（`read_rules` の処理が既読にする）
   - name: '`tool_input.file_path`'
     type: str
     required: false

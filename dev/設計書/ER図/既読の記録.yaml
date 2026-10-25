@@ -1,5 +1,5 @@
 title: "ER 図: 既読の記録"
-lead: フックと MCP サーバーが共有する、セッションごとの既読のルールの場所、フックが止めずに案内したルールの場所、既読にした履歴。
+lead: フックが共有する、セッションごとの既読のルールの場所、フックが止めずに案内したルールの場所、既読にした履歴。
 tables:
   - name: '{RULE_INJECT_STATE_DIR}/{session_id}.txt'
     title: 既読の記録
@@ -11,13 +11,13 @@ tables:
     retention: そのセッションの次の圧縮まで。圧縮せずに終わったセッションのファイルは、最終更新から非機能要件「既読の記録の保持期間」まで
     deletion: 圧縮の前にファイルごと物理削除する。保持期間を過ぎたファイルは、セッションの開始時にファイルごと物理削除する
     access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
-    description: フック（標準ライブラリだけの Python）と MCP サーバーが別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。
+    description: 複数のフックが別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。
     columns:
       - name: location
         title: ルールの場所
         type: string
         not_null: true
-        description: 解決後の絶対パスか URL。改行を含まない
+        description: 解決後の絶対パス。改行を含まない
   - name: '{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt'
     title: 案内済みの記録
     datastore: テキストファイル（UTF-8、1 行 = 1 場所）
@@ -34,7 +34,7 @@ tables:
         title: ルールの場所
         type: string
         not_null: true
-        description: 解決後の絶対パスか URL。改行を含まない
+        description: 解決後の絶対パス。改行を含まない
     status: planned
   - name: '{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl'
     title: 既読の履歴
@@ -45,7 +45,7 @@ tables:
     retention: 最終更新から非機能要件「既読の記録の保持期間」まで。圧縮では消さない
     deletion: 保持期間を過ぎたファイルを、セッションの開始時にファイルごと物理削除する
     access: このプラグインは追記（O_APPEND）だけで読まない。ほかの仕組みが全行読む
-    description: 既読の記録と同じく、フック（Read・Bash・MCP のツール）と MCP サーバー（`read_rules`）が別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。1 行は改行を含まない JSON のオブジェクト。
+    description: 既読の記録と同じく、フック（Read・Bash・MCP のツール）が別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。1 行は改行を含まない JSON のオブジェクト。
     columns:
       - name: time
         title: 時刻
@@ -63,7 +63,7 @@ tables:
         type: string
         not_null: true
         description: 既読にした読み方
-        enum_values: "'read'（Read）/ 'bash'（Bash の読むコマンド）/ 'read_rules'（read_rules）/ 'mcp'（read_by に当たった MCP のツール）"
+        enum_values: "'read'（Read）/ 'bash'（Bash の読むコマンド）/ 'mcp'（read_by に当たった MCP のツール）"
       - name: tool
         title: ツール名
         type: string

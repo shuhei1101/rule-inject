@@ -32,7 +32,7 @@ flows:
       ```
     expected:
       - '`permissionDecision` が `deny`'
-      - '`permissionDecisionReason` にルールの場所と `read_rules` が載っている'
+      - '`permissionDecisionReason` にルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている'
       - 終了コードが `0`
     test: test_normal_when_blocked
   - name: 正常系（既読のため案内しない）
@@ -239,31 +239,6 @@ flows:
       - 止めるルールが止めないルールより前に並んでいる
       - 載せきれなかったルールの件数が末尾に載っている
     test: test_normal_when_guidance_too_long
-  - name: 正常系（本文を取得するツール）
-    summary: このプラグインの MCP のツールには、当たるエントリがあっても案内しない
-    setup:
-      - name: Mock
-        description: なし
-      - name: 索引
-        description: '`tools: ["mcp__*"]` のエントリを 1 つ持つ'
-      - name: 既読の記録
-        description: 空
-      - name: 入力
-        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__read_rules`'
-    flow: |-
-      ```mermaid
-      sequenceDiagram
-        participant CC as Claude Code
-        participant H as ルール案内
-
-        CC->>H: 標準入力（read_rules）
-        H->>H: 対象外のツールとして照合しない
-        H-->>CC: 標準出力なし<br>終了コード 0
-      ```
-    expected:
-      - 標準出力が空
-      - 終了コードが `0`
-    test: test_normal_when_own_tool
   - name: 異常系（索引が読めない・止めずに理由を載せる）
     summary: 索引が無いか書式に合わないとき、操作を止めずに理由を載せる
     setup:
@@ -667,6 +642,35 @@ flows:
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_regex_unreadable
+  - name: 異常系（URLのルール・止めずに理由を載せる）
+    summary: '`rule` が URL のエントリを読み飛ばし、理由を載せる'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`rule: https://example.com/python.md`・`paths: ["**/*.py"]`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` の通常のエントリを 1 つずつ持つ'
+        notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る
+      - name: 入力
+        description: '`tool_name: Write`、`.py` のパス'
+    flow: |
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant LOG as ログ
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: rule が URL のエントリを読み飛ばす
+        H->>LOG: read_index を追記する
+        H-->>CC: additionalContext（索引の場所・rule・理由）<br>終了コード 0
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に索引の場所・`https://example.com/python.md`・Read で読めない旨が載っている'
+      - '`additionalContext` に通常のエントリのルールの場所が載っている'
+      - 'ログに `operation: read_index` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_rule_is_url
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
 idempotent: false
 side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -739,7 +743,7 @@ response:
     notes: 操作の種別が `on` に当たる未読のルールが 1 件でもあるときだけ載せる
   - name: '`hookSpecificOutput.permissionDecisionReason`'
     type: str
-    description: 止める案内。未読のルールの場所と、本文の読み方（MCP のツール `read_rules`）と、読んだ後に同じ操作をやり直すこと
+    description: 止める案内。未読のルールの場所と、本文の読み方（Read）と、読んだ後に同じ操作をやり直すこと
     constraints: 10,000 字以内
     notes: '`permissionDecision` を載せたときだけ載せる。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
@@ -753,7 +757,7 @@ response_example: |-
     "hookSpecificOutput": {
       "hookEventName": "PreToolUse",
       "permissionDecision": "deny",
-      "permissionDecisionReason": "操作の対象に当たる未読のルールがあります。read_rules で本文を取得してから、同じ操作をやり直してください。\n- /home/user/rules/python.md"
+      "permissionDecisionReason": "操作の対象に当たる未読のルールがあります。下の場所を Read で読んでから、同じ操作をやり直してください。\n- /home/user/rules/python.md"
     }
   }
   ```
@@ -784,13 +788,10 @@ constraints:
     constraint: '環境変数 `RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` のカンマ区切りのパスを順に読み、全てのエントリを合わせて当てる。環境変数が無いときは既定の置き場所（ユーザー: `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`、プロジェクト: `${CLAUDE_PROJECT_DIR}/rules.yaml`）を読み、既定のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。環境変数が空の文字列のときは、その索引を読まない'
     notes: 書式は設定の設計書。標準ライブラリだけで読む。プロジェクトの索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の文字列を既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
-    constraint: 同じルールの場所（解決後の絶対パスか URL）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
+    constraint: 同じルールの場所（解決後の絶対パス）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
   - item: 読むコマンド
     constraint: '`cat` / `head` / `tail` / `less` / `more` / `grep` / `rg` / `sed` / `awk` / `wc` / `bat`。`&&` / `||` / `;` / `|` で区切った各コマンドの、`-` で始まらない引数をパスとして扱う'
     notes: 引数がパターンのコマンド（`grep` の最初の引数など）もパスとして照合する。実在しないパスは捨てる
-  - item: 対象外のツール
-    constraint: このプラグインの MCP のツール（`mcp__plugin_rule-inject_rule-inject__*`）には案内しない
-    notes: ルールを読むためのツールが止められて読めなくなるのを防ぐ
   - item: 認可
     constraint: 制限なし
   - item: ログ
@@ -798,7 +799,6 @@ constraints:
     notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
   - item: ルールの場所の変数参照
     constraint: エントリの `rule` の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックが受け取った環境変数の値に置き換えてから場所を解く。空の値は空文字に置き換える。未設定の名前が残ったエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・展開できない名前を載せ、ログへ `read_index` を書く
-    notes: 置き換えの規則はインターフェース定義「ルール本文の取得」の本文の展開と同じ
   - item: 案内済みの記録
     constraint: 止めない案内（`additionalContext`）に載せたルールの場所を `{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に載せない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
     notes: 書式は ER 図「既読の記録」の案内済みの記録。止める案内は読むまで毎回出す。案内文の長さに収まらず載せなかった場所は記録しない
@@ -808,6 +808,9 @@ constraints:
   - item: パターンの正規表現
     constraint: '`paths`・`exclude`・`tools`・`args` のパターンのうち `re:` で始まるものは、残りを正規表現として部分一致（`re.search`）で照合する。それ以外は glob のまま照合する。正規表現は索引を読むときにコンパイルし、コンパイルできないパターンを持つエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・パターン・理由を載せ、ログへ `read_index` を書く'
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    notes: 読み飛ばしは、そのエントリだけに及ぶ
+  - item: URL のルール
+    constraint: 変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・Read で読めない旨を載せ、ログへ `read_index` を書く
     notes: 読み飛ばしは、そのエントリだけに及ぶ
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py
