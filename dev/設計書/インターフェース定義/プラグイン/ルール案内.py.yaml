@@ -652,7 +652,8 @@ flows:
         notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as ルール案内
@@ -664,6 +665,7 @@ flows:
         H->>H: rule が URL のエントリを読み飛ばす
         H->>LOG: read_index を追記する
         H-->>CC: additionalContext（索引の場所・rule・理由）<br>終了コード 0
+      ```
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所・`https://example.com/python.md`・Read で読めない旨が載っている'
