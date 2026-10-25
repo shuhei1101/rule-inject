@@ -22,7 +22,6 @@ from rule_inject.features.index.service import (
     _glob_match,
     _match_args,
     _match_pattern,
-    select_locations,
 )
 from rule_inject.features.index.types import MatchedRule, MatchPattern
 
@@ -254,6 +253,28 @@ def test_load_indexes_when_read_by(
     assert not result.failures
 
 
+def test_load_indexes_when_rule_is_url(
+    make_index: Callable[..., Path],
+) -> None:
+    """`rule` が URL のエントリだけを読み飛ばす（正常系）。"""
+    # 準備
+    index = make_index(
+        "rules:\n"
+        "  - rule: https://example.com/a.md\n"
+        '  - rule: "!{BASE}/b.md"\n'
+        "  - rule: /r/ok.md\n"
+    )
+    env = {"RULE_INJECT_INDEXES_PROJECT": str(index), "BASE": "http://example.com"}
+    # 実行
+    result = load_indexes(env)
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/ok.md"]
+    assert len(result.failures) == 2
+    assert all(failure.path == str(index) for failure in result.failures)
+    assert "https://example.com/a.md" in result.failures[0].reason
+    assert "http://example.com/b.md" in result.failures[1].reason
+
+
 def test_match_path(make_entry: Callable[..., Any]) -> None:
     """当たるエントリを選ぶ（正常系）。"""
     # 準備
@@ -476,57 +497,6 @@ def test_rule_locations(make_entry: Callable[..., Any]) -> None:
     result = rule_locations(entries)
     # 検証
     assert result == frozenset({"/r/a.md", "/r/b.md"})
-
-
-def test_select_locations(make_entry: Callable[..., Any]) -> None:
-    """索引に載った場所を選ぶ（正常系）。"""
-    # 準備
-    entries = [make_entry("/r/a.md"), make_entry("https://example.com/b.md")]
-    # 実行
-    result = select_locations(entries, ["/r/a.md", "https://example.com/b.md"], [])
-    # 検証
-    assert result.targets == ("/r/a.md", "https://example.com/b.md")
-    assert result.rejected == ()
-
-
-def test_select_locations_when_by_path(make_entry: Callable[..., Any]) -> None:
-    """対象のパスで引く（正常系）。"""
-    # 準備
-    entries = [
-        make_entry("/r/py.md", paths=["**/*.py"]),
-        make_entry("/r/ts.md", paths=["**/*.ts"]),
-    ]
-    # 実行
-    result = select_locations(entries, ["/r/py.md"], ["/p/src/a.py"])
-    # 検証
-    assert result.targets == ("/r/py.md",)
-    assert result.rejected == ()
-
-
-def test_select_locations_when_not_in_index(make_entry: Callable[..., Any]) -> None:
-    """索引に無い場所は読まない（正常系）。"""
-    # 準備
-    entries = [make_entry("/r/listed.md")]
-    # 実行
-    result = select_locations(entries, ["/r/unlisted.md", "https://example.com/x.md"], [])
-    # 検証
-    assert result.targets == ()
-    assert len(result.rejected) == 2
-    assert "索引に載っていない場所" in result.rejected[0].reason
-    assert "索引に載っていない場所" in result.rejected[1].reason
-
-
-def test_select_locations_when_relative(make_entry: Callable[..., Any]) -> None:
-    """相対パスは解かない（正常系）。"""
-    # 準備
-    entries = [make_entry("/r/a.md", paths=["**/*.py"])]
-    # 実行
-    result = select_locations(entries, ["rules/a.md"], ["src/a.py"])
-    # 検証
-    assert result.targets == ()
-    assert len(result.rejected) == 2
-    assert "相対パス" in result.rejected[0].reason
-    assert "相対パス" in result.rejected[1].reason
 
 
 @pytest.mark.parametrize("path", ["/a/b/c.py", "/c.py"])

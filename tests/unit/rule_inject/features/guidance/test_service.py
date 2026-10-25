@@ -44,6 +44,10 @@ def test_build_guidance_when_blocking() -> None:
     result = build_guidance(rules)
     # 検証
     assert result.text.startswith(BLOCKING_HEADER)
+    assert BLOCKING_HEADER == (
+        "操作の対象に当たる未読のルールがあります。"
+        "下の場所を Read で読んでから、同じ操作をやり直してください。"
+    )
     assert result.text.index("/r/write.md") < result.text.index("/r/read.md")
 
 
@@ -55,6 +59,11 @@ def test_build_guidance_when_not_blocking() -> None:
     result = build_guidance(rules)
     # 検証
     assert result.text.startswith(NON_BLOCKING_HEADER)
+    assert NON_BLOCKING_HEADER == (
+        "操作の対象に当たる未読のルールがあります。"
+        "必要に応じて下の場所を Read で読んでください。"
+        "この案内はルールごとにセッションで 1 回だけ出ます。"
+    )
     assert "やり直してください" not in result.text
 
 
@@ -98,6 +107,11 @@ def test_build_search_guidance() -> None:
     result = service.build_search_guidance(["/r/a.md", "/r/b.md"])
     # 検証
     assert result.text.startswith(service.SEARCH_HEADER)
+    assert service.SEARCH_HEADER == (
+        "検索で当たったファイルに未読のルールがあります（読むかは任意です）。"
+        "読む場合は下の場所を Read で読んでください。"
+        "この案内はルールごとにセッションで 1 回だけ出ます。"
+    )
     assert "- /r/a.md" in result.text
     assert "- /r/b.md" in result.text
     assert "やり直してください" not in result.text

@@ -37,14 +37,6 @@ def test_state_dir_when_no_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
     assert result == tmp_path / ".local" / "state" / "rule-inject"
 
 
-def test_resolve_location_when_url() -> None:
-    """URL は変えない（正常系）。"""
-    # 実行
-    result = paths.resolve_location("https://example.com/a.md", Path("/p"))
-    # 検証
-    assert result == "https://example.com/a.md"
-
-
 def test_resolve_location_when_relative() -> None:
     """相対パスを基準から解く（正常系）。"""
     # 実行

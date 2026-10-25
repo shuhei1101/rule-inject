@@ -11,7 +11,6 @@ import pytest
 from rule_inject.hooks.rule_guide import guide_rules
 
 RULE = "/r/python.md"
-OWN_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 
 
 @pytest.fixture
@@ -48,7 +47,7 @@ def test_handle_when_blocked(
     output = result["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
-    assert "read_rules" in output["permissionDecisionReason"]
+    assert "Read で読んでから" in output["permissionDecisionReason"]
 
 
 def test_handle_when_already_read(
@@ -128,25 +127,6 @@ def test_handle_when_grep_folder(
         "PreToolUse",
         tool_name="Grep",
         tool_input={"pattern": "foo", "path": str(tmp_path)},
-    )
-    # 実行
-    result = guide_rules(payload, env)
-    # 検証
-    assert result is None
-
-
-def test_handle_when_own_tool(
-    guide_env: Callable[[str], dict[str, str]],
-    index_text: Callable[..., str],
-    hook_payload: Callable[..., dict[str, Any]],
-) -> None:
-    """このプラグインのツールは対象外にする（正常系）。"""
-    # 準備
-    env = guide_env(index_text(RULE, tools=["mcp__*"]))
-    payload = hook_payload(
-        "PreToolUse",
-        tool_name=OWN_TOOL,
-        tool_input={"locations": [RULE], "session_id": "s"},
     )
     # 実行
     result = guide_rules(payload, env)
