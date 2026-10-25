@@ -1,7 +1,7 @@
 summary: フックの Python のモジュール
 items:
   - page: フック.py.yaml
-    summary: Claude Code が呼ぶ フックの入口と共通の実行処理
+    summary: Claude Code が呼ぶフックの入口と共通の実行処理
   - page: 索引.py.yaml
     summary: 索引の YAML の読み取りとパス・ツール名の照合
   - page: 既読の記録.py.yaml
