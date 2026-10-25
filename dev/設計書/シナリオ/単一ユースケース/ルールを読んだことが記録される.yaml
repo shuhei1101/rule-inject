@@ -10,7 +10,7 @@ scenarios:
         description: そのルールの場所を持つエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、ルールの本文のファイルを Bash の `cat` で読むよう指示する
-        notes: '`--allowedTools` で Bash を許可し、Read と MCP のツールを `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -42,7 +42,7 @@ scenarios:
         description: そのルールの場所を持つエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、ルールの本文のファイルを Read で読むよう指示する
-        notes: Bash と MCP のツールを `--disallowedTools` で外して読み方を 1 つに定める
+        notes: Bash を `--disallowedTools` で外して読み方を 1 つに定める
     flow: |-
       ```mermaid
       sequenceDiagram
