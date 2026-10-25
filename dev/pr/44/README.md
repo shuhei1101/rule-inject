@@ -10,7 +10,7 @@ MCP サーバーと MCP のツール `read_rules` を廃止し、セッション
 [Issue #36](https://github.com/shuhei1101/rule-inject/issues/36) の困りごと。
 MCP サーバーは `.mcp.json` の `uv run ... python -m rule_inject.server` で stdio で起動しており、セッションごとにサーバーのプロセスが立ち、依存解決も毎回走る。
 はじめは HTTP の常駐サーバーに移す方針（knowledge の D-60・D-61）で進めたが、サーバーが担うのは `read_rules` の 1 ツールだけで、既読はフックで付けられ、規約を辿る役は開発ドキュメントサーバーの MCP が持つため、MCP サーバーごと廃止すると決めた（[確認ログ](./確認ログ.md)）。
-本文の `!{名前}` の展開は alias-inject へ移す（[shuhei1101/alias-inject#11](https://github.com/shuhei1101/alias-inject/issues/11)）。この PR の実装は、その Issue が閉じてから行う。
+本文の `!{名前}` の展開は alias-inject へ移す（[shuhei1101/alias-inject#11](https://github.com/shuhei1101/alias-inject/issues/11)）。この PR のマージは、その Issue が閉じてから行う。
 
 ## 計画書
 
@@ -37,6 +37,6 @@ MCP サーバーは `.mcp.json` の `uv run ... python -m rule_inject.server` �
 - [x] モジュール構成設計
 - [x] ドキュメント修正（要件.md の `## 更新ドキュメント`）
 - [x] 単体テスト作成
-- [ ] 実装（[shuhei1101/alias-inject#11](https://github.com/shuhei1101/alias-inject/issues/11) が閉じてから）
+- [ ] 実装
 - [ ] 結合テスト作成
 - [ ] E2E テスト作成
