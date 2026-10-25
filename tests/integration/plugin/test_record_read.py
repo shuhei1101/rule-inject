@@ -195,36 +195,35 @@ def test_normal_when_read_by_not_matched(
     assert completed.returncode == 0
 
 
-def test_normal_when_own_tool(
+def test_normal_when_rule_is_url(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     hook_payload: Callable[..., dict[str, Any]],
-    rule_file: Callable[..., Path],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
 ) -> None:
-    """このプラグイン自身の MCP のツールの呼び出しは、`read_by` に当たっても記録しない（正常系）。"""
+    """`read_by` に当たっても、`rule` が URL のエントリは記録しない（正常系）。"""
     # 準備
-    rule = rule_file("python.md")
     index = make_index(
         index_text(
             {
-                "rule": str(rule),
-                "read_by": [{"tools": ["mcp__plugin_rule-inject_rule-inject__*"]}],
+                "rule": "https://example.com/python.md",
+                "read_by": [{"tools": ["mcp__docs__get_doc"], "args": {"id": ["python"]}}],
             }
         )
     )
     payload = hook_payload(
-        "PostToolUse",
-        tool_name="mcp__plugin_rule-inject_rule-inject__read_rules",
-        tool_input={"locations": [str(rule)]},
+        "PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "python"}
     )
     # 実行
     completed = run_hook("record_read", payload, index=index)
     # 検証
     assert not (state_dir / f"{session_id}.txt").exists()
     assert not (state_dir / f"{session_id}.history.jsonl").exists()
+    assert completed.stdout == ""
+    assert not log_folder.exists()
     assert completed.returncode == 0
 
 

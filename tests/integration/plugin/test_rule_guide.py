@@ -12,7 +12,6 @@ from typing import Any
 import pytest
 
 RULE = "/r/python.md"
-OWN_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 
 
 @pytest.fixture
@@ -59,7 +58,7 @@ def test_normal_when_blocked(
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
-    assert "read_rules" in output["permissionDecisionReason"]
+    assert "Read で読んでから" in output["permissionDecisionReason"]
     assert completed.returncode == 0
 
 
@@ -220,24 +219,6 @@ def test_normal_when_guidance_too_long(
     assert len(reason) <= 10000
     assert reason.index("/rules/write/") < reason.index("/rules/read/")
     assert re.search(r"ほか \d+ 件のルール", reason)
-
-
-def test_normal_when_own_tool(
-    run_hook: Callable[..., subprocess.CompletedProcess[str]],
-    write_index: Callable[..., Path],
-    hook_payload: Callable[..., dict[str, Any]],
-) -> None:
-    """このプラグインの MCP のツールには、当たるエントリがあっても案内しない（正常系）。"""
-    # 準備
-    index = write_index({"rule": RULE, "tools": ["mcp__*"]})
-    payload = hook_payload(
-        "PreToolUse", tool_name=OWN_TOOL, tool_input={"locations": [RULE], "session_id": "s"}
-    )
-    # 実行
-    completed = run_hook("rule_guide", payload, index=index)
-    # 検証
-    assert completed.stdout == ""
-    assert completed.returncode == 0
 
 
 def test_error_when_index_unreadable(
@@ -569,6 +550,34 @@ def test_error_when_regex_unreadable(
     assert "unterminated character set" in output["additionalContext"]
     assert RULE in output["additionalContext"]
     assert broken_rule not in output["additionalContext"]
+    logged = read_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_index"
+    assert completed.returncode == 0
+
+
+def test_error_when_rule_is_url(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """`rule` が URL のエントリを読み飛ばし、止めずに理由を載せる（異常系）。"""
+    # 準備
+    url_rule = "https://example.com/python.md"
+    index = write_index(
+        {"rule": url_rule, "paths": ["**/*.py"], "on": ["write"]},
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["read"]},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert str(index) in output["additionalContext"]
+    assert url_rule in output["additionalContext"]
+    assert "Read で読めない" in output["additionalContext"]
+    assert RULE in output["additionalContext"]
     logged = read_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_index"
