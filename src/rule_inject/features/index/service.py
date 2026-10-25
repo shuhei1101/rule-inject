@@ -20,11 +20,9 @@ from rule_inject.features.index.types import (
     MatchPattern,
     Operation,
     ReadByCondition,
-    RejectedLocation,
-    SelectedLocations,
 )
 from rule_inject.shared.errors import IndexReadError, describe
-from rule_inject.shared.paths import URL_SCHEMES, resolve_location
+from rule_inject.shared.paths import resolve_location
 from rule_inject.shared.variables import expand_variables
 
 # 読む順に並べた、索引を指す環境変数の名前
@@ -38,14 +36,12 @@ DEFAULT_CONFIG_HOME = "~/.config"
 PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
 INDEX_SEPARATOR = ","
 NAME_SEPARATOR = "、"
-HOME_MARK = "~"
 # 先頭がこの文字列のパターンは、残りを正規表現として読む
 REGEX_PREFIX = "re:"
 # 引数のキーをオブジェクトの子へたどる区切り
 ARG_KEY_SEPARATOR = "."
-NOT_IN_INDEX_REASON = "索引に載っていない場所"
-RELATIVE_LOCATION_REASON = "相対パスは読まない。絶対パス・~・https:// の URL で渡す"
-RELATIVE_PATH_REASON = "相対パスは照合しない。絶対パスで渡す"
+# Read で読めないため読み飛ばす `rule` の頭
+URL_SCHEMES = ("http://", "https://")
 
 
 def _default_index_path(name: str, env: Mapping[str, str]) -> str | None:
@@ -157,6 +153,15 @@ def _load_index(
                 IndexReadError(
                     path=str(resolved),
                     reason=f"rule {written_rule} の変数参照を展開できない: {names}",
+                )
+            )
+            continue
+        # URL の `rule` は Read で読めないため、読み飛ばして理由を残す
+        if expansion.text.startswith(URL_SCHEMES):
+            skipped.append(
+                IndexReadError(
+                    path=str(resolved),
+                    reason=f"rule {expansion.text} は URL のため Read で読めない",
                 )
             )
             continue
@@ -353,36 +358,3 @@ def match_read_by(
 def rule_locations(entries: Sequence[IndexEntry]) -> frozenset[str]:
     """索引に載ったルールの場所の集合を返す。"""
     return frozenset(entry.location for entry in entries)
-
-
-def _is_absolute_location(location: str) -> bool:
-    """場所が、絶対パス・`~` で始まるパス・URL のどれかかを返す。"""
-    return location.startswith((*URL_SCHEMES, HOME_MARK)) or os.path.isabs(location)
-
-
-def select_locations(
-    entries: Sequence[IndexEntry], locations: Sequence[str], paths: Sequence[str]
-) -> SelectedLocations:
-    """`read_rules` に渡された場所とパスから、索引に載ったルールの場所だけを選ぶ。"""
-    listed = rule_locations(entries)
-    targets: list[str] = []
-    rejected: list[RejectedLocation] = []
-    # 場所で引く: 相対パスは解かず、索引に載ったルールの場所だけを読む
-    for location in locations:
-        if not _is_absolute_location(location):
-            rejected.append(RejectedLocation(location=location, reason=RELATIVE_LOCATION_REASON))
-            continue
-        resolved = resolve_location(location, Path(os.sep))
-        if resolved in listed:
-            targets.append(resolved)
-        else:
-            rejected.append(RejectedLocation(location=resolved, reason=NOT_IN_INDEX_REASON))
-    # 対象のパスで引く: 絶対パスだけを、読む操作として当たるルールの場所へ引く
-    for path in paths:
-        if not os.path.isabs(path):
-            rejected.append(RejectedLocation(location=path, reason=RELATIVE_PATH_REASON))
-            continue
-        resolved = resolve_location(path, Path(os.sep))
-        targets.extend(rule.location for rule in match_path(entries, resolved, "read"))
-    # 重なりは 1 つにする（並びは保つ）
-    return SelectedLocations(targets=tuple(dict.fromkeys(targets)), rejected=tuple(rejected))

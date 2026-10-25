@@ -10,7 +10,6 @@ from rule_inject.hooks.discard_read import discard_read
 from rule_inject.hooks.record_read import record_read
 from rule_inject.hooks.rule_guide import guide_rules
 from rule_inject.hooks.search_guide import search_guide
-from rule_inject.hooks.session_id_injection import inject_session_id
 from rule_inject.hooks.sweep_read import sweep_read
 from rule_inject.hooks.work_rules import work_rules
 from rule_inject.shared.logger import Component
@@ -37,7 +36,6 @@ def _silent(message: str, log_path: Path) -> None:
 # run.py の引数の名前 → 出した元・処理・想定外の例外の知らせ方
 HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
     "rule_guide": (Component.RULE_GUIDE, guide_rules, _notice_of("PreToolUse", "ルールの案内")),
-    "session_id_injection": (Component.SESSION_ID_INJECTION, inject_session_id, _silent),
     "record_read": (Component.RECORD_READ, record_read, _notice_of("PostToolUse", "既読の記録")),
     "search_guide": (
         Component.SEARCH_GUIDE,

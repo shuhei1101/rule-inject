@@ -3,12 +3,11 @@ name = "rule-inject"
 version = "0.2.2"
 description = "ファイルに当たるルールを案内する Claude Code プラグイン"
 requires-python = ">=3.12"
-dependencies = [
-    "mcp>=2.2,<3",
-]
+dependencies = []
 
 [dependency-groups]
 dev = [
+    "mcp>=2.2,<3",
     "pytest>=8.0",
     "ruff>=0.5",
 ]
