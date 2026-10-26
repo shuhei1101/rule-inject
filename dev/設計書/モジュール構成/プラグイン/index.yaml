@@ -12,3 +12,5 @@ items:
     summary: 止める案内・止めない案内・失敗の知らせ・作業の決まりの文面
   - page: 共通.py.yaml
     summary: 記録フォルダ・場所の解決・ログ・例外
+  - page: MCPの結果の文書.py.yaml
+    summary: MCP のツールの結果から文書の場所と範囲を取り出す
