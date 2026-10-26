@@ -37,7 +37,7 @@ SECONDS_PER_DAY = 86_400
 HOOK_CONTEXT_ATTACHMENT_TYPE = "hook_additional_context"
 # 文書の MCP サーバーが `get_doc` で返す本文を渡す環境変数
 DOCS_BODY_ENV = "E2E_DOCS_BODY"
-# 文書の MCP サーバー（`docs`）のスクリプト。`get_doc` が `id` に関わらず決めた本文を返す
+# 文書の MCP サーバー（`docs`）のスクリプト。`get_doc` と `search_docs` が引数に関わらず決めた本文を返す
 DOCS_SERVER_SCRIPT = f'''"""E2E テストが使う、文書を返す stdio の MCP サーバー。"""
 
 from __future__ import annotations
@@ -52,6 +52,12 @@ server = MCPServer("docs")
 @server.tool(name="get_doc")
 def get_doc(id: str) -> str:
     """id の文書の本文を返す。"""
+    return os.environ["{DOCS_BODY_ENV}"]
+
+
+@server.tool(name="search_docs")
+def search_docs(query: str = "") -> str:
+    """検索した文書の本文を返す。"""
     return os.environ["{DOCS_BODY_ENV}"]
 
 
@@ -371,7 +377,7 @@ def guidance_count() -> Callable[[str, str], int]:
 
 @pytest.fixture
 def record_locations(state_dir: Path) -> Callable[[str], list[str]]:
-    """そのセッションの既読の記録の場所を返す（記録ファイルが無ければ空）。"""
+    """そのセッションの既読の記録の行（`{場所}\\t{ハッシュ}`）を返す（記録ファイルが無ければ空）。"""
 
     def _read(session_id: str) -> list[str]:
         """記録ファイルの行を返す。"""
@@ -409,10 +415,10 @@ def record_history(state_dir: Path) -> Callable[[str], list[dict[str, Any]]]:
 
 @pytest.fixture
 def docs_mcp_config(tmp_path: Path) -> Callable[[str], Path]:
-    """`get_doc` が決めた本文を返す stdio の MCP サーバー `docs` を置き、`--mcp-config` に渡す設定のファイルを返す factory。"""
+    """`get_doc` と `search_docs` が決めた本文を返す stdio の MCP サーバー `docs` を置き、`--mcp-config` に渡す設定のファイルを返す factory。"""
 
     def _make(body: str) -> Path:
-        """body を返す `get_doc`（引数 `id`）を持つサーバーのスクリプトと設定を tmp_path の下に書く。"""
+        """body を返す `get_doc`（引数 `id`）と `search_docs`（引数 `query`）を持つサーバーのスクリプトと設定を tmp_path の下に書く。"""
         script = tmp_path / "docs_server.py"
         script.write_text(DOCS_SERVER_SCRIPT, encoding="utf-8")
         config = tmp_path / "docs_mcp.json"
