@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from rule_inject.features.record.types import ReadMethod
+from rule_inject.features.record.types import ReadEntry, ReadMethod
 from rule_inject.shared.errors import (
     HistoryWriteError,
     RecordDeleteError,
@@ -27,6 +28,10 @@ RECORD_SUFFIX = ".txt"
 GUIDED_SUFFIX = ".guided.txt"
 # 既読の履歴ファイルは `{session_id}{HISTORY_SUFFIX}`
 HISTORY_SUFFIX = ".history.jsonl"
+# 本文のハッシュは `{HASH_PREFIX}{SHA-256 の 16 進数}`
+HASH_PREFIX = "sha256:"
+# 既読の記録の 1 行で、場所と本文のハッシュを区切る文字
+FIELD_SEPARATOR = "\t"
 # 他のプロセスと同時に追記しても行が混ざらないよう、追記専用で開くときのフラグ
 APPEND_FLAGS = os.O_WRONLY | os.O_APPEND | os.O_CREAT
 RECORD_FILE_MODE = 0o600
@@ -102,9 +107,15 @@ def _delete_file(path: Path) -> None:
         raise RecordDeleteError(path=str(path), reason=describe(exc)) from exc
 
 
-def read_record(state_dir: Path, session_id: str) -> frozenset[str]:
-    """そのセッションの既読の場所の集合を返す（ファイルが無ければ空）。"""
-    return _read_lines(_record_path(state_dir, session_id))
+def read_record(state_dir: Path, session_id: str) -> frozenset[ReadEntry]:
+    """そのセッションの既読の行の集合を返す（ファイルが無ければ空）。"""
+    entries: set[ReadEntry] = set()
+    for line in _read_lines(_record_path(state_dir, session_id)):
+        location, separator, file_hash = line.partition(FIELD_SEPARATOR)
+        # 場所かハッシュを持たない行は読み飛ばす
+        if separator and location and file_hash.startswith(HASH_PREFIX):
+            entries.add(ReadEntry(location=location, hash=file_hash))
+    return frozenset(entries)
 
 
 def read_guided(state_dir: Path, session_id: str) -> frozenset[str]:
@@ -112,9 +123,10 @@ def read_guided(state_dir: Path, session_id: str) -> frozenset[str]:
     return _read_lines(_record_path(state_dir, session_id, GUIDED_SUFFIX))
 
 
-def append_record(state_dir: Path, session_id: str, locations: Sequence[str]) -> None:
-    """場所を 1 行ずつ記録ファイルへ追記する。"""
-    _append_lines(state_dir, _record_path(state_dir, session_id), locations)
+def append_record(state_dir: Path, session_id: str, entries: Sequence[ReadEntry]) -> None:
+    """既読の行を `{場所}{FIELD_SEPARATOR}{ハッシュ}` の 1 行ずつ記録ファイルへ追記する。"""
+    lines = [f"{entry.location}{FIELD_SEPARATOR}{entry.hash}" for entry in entries]
+    _append_lines(state_dir, _record_path(state_dir, session_id), lines)
 
 
 def append_guided(state_dir: Path, session_id: str, locations: Sequence[str]) -> None:
@@ -215,3 +227,28 @@ def sweep_records(
             # 消せないものは集め、残りの掃除を続ける
             failures.append(RecordDeleteError(path=entry.path, reason=describe(exc)))
     return tuple(failures)
+
+
+def hash_locations(locations: Sequence[str]) -> tuple[ReadEntry, ...]:
+    """場所ごとに今のルールのファイルの本文のハッシュを取り、既読の行にして返す（読めない場所は含めない）。"""
+    entries: list[ReadEntry] = []
+    for location in locations:
+        try:
+            body = Path(location).read_bytes()
+        except OSError:
+            # 無い・フォルダ・権限が無い場所は、ハッシュを取れないため既読にしない
+            continue
+        digest = hashlib.sha256(body).hexdigest()
+        entries.append(ReadEntry(location=location, hash=f"{HASH_PREFIX}{digest}"))
+    return tuple(entries)
+
+
+def current_read_locations(
+    entries: frozenset[ReadEntry], locations: Iterable[str]
+) -> frozenset[str]:
+    """当たったルールの場所のうち、既読の行に場所と今の本文のハッシュの組があるものを返す。"""
+    recorded = {entry.location for entry in entries}
+    # 既読の行に場所が無いものは、ハッシュを取らずに未読とする
+    candidates = [location for location in dict.fromkeys(locations) if location in recorded]
+    current = hash_locations(candidates)
+    return frozenset(entry.location for entry in current if entry in entries)
