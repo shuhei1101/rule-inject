@@ -121,3 +121,5 @@ functions:
         condition: '`None` と `1`'
         mock: なし
         expected: どちらも空
+test_files:
+  - tests/unit/rule_inject/features/document/test_service.py
