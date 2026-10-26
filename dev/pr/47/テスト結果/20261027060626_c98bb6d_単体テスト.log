@@ -1,0 +1,30 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-record-full-read-and-hash
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 208 items
+
+tests/unit/hooks/test_run.py ...                                         [  1%]
+tests/unit/rule_inject/features/command/test_service.py ..............   [  8%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [ 12%]
+tests/unit/rule_inject/features/guidance/test_service.py ........        [ 16%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 25%]
+.........................                                                [ 37%]
+tests/unit/rule_inject/features/index/test_yaml.py .........             [ 41%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 50%]
+.......................                                                  [ 61%]
+tests/unit/rule_inject/hooks/test_discard_read.py ...                    [ 62%]
+tests/unit/rule_inject/hooks/test_record_read.py .............           [ 68%]
+tests/unit/rule_inject/hooks/test_rule_guide.py ............             [ 74%]
+tests/unit/rule_inject/hooks/test_runner.py ...                          [ 75%]
+tests/unit/rule_inject/hooks/test_search_guide.py ......                 [ 78%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 82%]
+tests/unit/rule_inject/hooks/test_work_rules.py ..                       [ 83%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 90%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 94%]
+tests/unit/rule_inject/shared/test_settings.py .......                   [ 97%]
+tests/unit/rule_inject/shared/test_variables.py .....                    [100%]
+
+============================= 208 passed in 3.39s ==============================

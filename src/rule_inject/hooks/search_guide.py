@@ -17,6 +17,7 @@ from rule_inject.features.guidance import (
 from rule_inject.features.index import load_indexes, match_path
 from rule_inject.features.record import (
     append_guided,
+    current_read_locations,
     is_valid_session_id,
     read_guided,
     read_record,
@@ -120,11 +121,16 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
             for rule in match_path(loaded.entries, path, "read")
         )
     )
-    # 既読と案内済みを除く。読めない記録は空として扱い、理由を知らせる
+    # 既読と案内済みを除く（読んだ後に本文が変わったルールは既読にしない）。読めない記録は空として扱い、理由を知らせる
     excluded: set[str] = set()
     if matched:
+
+        def read_current(directory: Path, session: str) -> frozenset[str]:
+            """既読の記録のうち、今の本文のハッシュの組がある場所を返す。"""
+            return current_read_locations(read_record(directory, session), matched)
+
         for read, summary in (
-            (read_record, "既読の記録を読めませんでした。"),
+            (read_current, "既読の記録を読めませんでした。"),
             (read_guided, "案内済みの記録を読めませんでした。"),
         ):
             try:

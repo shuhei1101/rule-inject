@@ -178,7 +178,7 @@ functions:
     process: |-
       1. `load_indexes` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
       2. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）
-      3. 当たったルールから `read_record` の既読を除く。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
+      3. 当たったルールから、`read_record` の既読の行で `current_read_locations` が返す場所を除く（本文が変わったルールは未読のまま残る）。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
       4. 止めるルールがあれば deny と `build_guidance` を返す（案内済みにはしない）
       5. 止めるルールが無ければ、`read_guided` の案内済みを除く。読めなければ未案内として扱い、ログ（`read_record`）と知らせの文に回す
       6. 残ったルールを `build_guidance` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
@@ -193,7 +193,7 @@ functions:
       - name: test_handle_when_already_read
         case: 正常
         summary: 既読なら何も出さない
-        condition: 記録に場所がある
+        condition: 記録に場所と今のハッシュの行がある
         mock: なし
         expected: None
       - name: test_handle_when_not_blocking
@@ -250,11 +250,17 @@ functions:
         condition: '`tools: ["mcp__*__search_*"]`・`args` に `kind: ["rule"]`・`on: [mcp]` のエントリ。`tool_input` が `{"kind": "rule"}` の呼び出しと `{"kind": "note"}` の呼び出し'
         mock: なし（索引と記録フォルダは一時ファイル）
         expected: 前者は deny、後者は None
+      - name: test_handle_when_rule_changed
+        case: 正常
+        summary: 読んだ後に変わったルールを案内する
+        condition: '`on: [write]` のエントリと Write。記録に場所と書き換える前のハッシュの行があり、ルールの中身を書き換える'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: permissionDecision が deny、理由に場所
   - name: record_read
     title: 既読の記録の処理
     container: hooks/record_read.py
     usecase: ルールを読んだことが記録される
-    summary: Read か Bash で読んだルールの場所と、`read_by` に当たった MCP のツールの呼び出しのルールの場所を既読にして既読の履歴へ書き、書けなければ理由を返す
+    summary: Read か Bash で全体を読んだルールの場所と、MCP のツールの結果に載った全文のルールの文書の場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）を、本文のハッシュと一緒に既読にして既読の履歴へ書き、書けなければ理由を返す
     kind: フック
     scope: public
     inherits: HookHandler
@@ -273,24 +279,29 @@ functions:
       type: dict[str, Any] | None
       description: 既読の記録か既読の履歴に書けなかったときだけ additionalContext
     process: |-
-      1. 既読にする場所を決める。Read は `file_path`、Bash は `extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの、`mcp__` で始まるツールは `match_read_by(entries, tool_name, tool_input)`。`load_indexes` の `failures`（URL のために読み飛ばしたエントリを含む）は知らせず、ログにも書かない
-      2. 場所が無ければ None を返す
-      3. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と additionalContext にして返す（履歴へは書かない）
-      4. `append_history(state_dir, session_id, locations, method=..., tool=tool_name)` で既読の履歴へ書く。method は Read が `ReadMethod.READ`、Bash が `ReadMethod.BASH`、MCP のツールが `ReadMethod.MCP`
-      5. HistoryWriteError はログ（`write_history`）と、場所と理由を載せた additionalContext にして返す（既読の記録はそのまま残す）
+      1. 既読にする場所を決める。`load_indexes` の `failures`（URL のために読み飛ばしたエントリを含む）は知らせず、ログにも書かない
+         - Read の場合、`tool_response.file` の `startLine` が 1 で `numLines` が `totalLines` と同じときだけ（3 つとも bool でない整数のときだけ）、`file_path` のうち `rule_locations` にあるもの
+         - Bash の場合、`extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの
+         - `mcp__` で始まるツールで、`extract_documents(tool_response)` が 1 件以上返す場合、`scope` が `DocumentScope.FULL` で `path` が `http://`・`https://` で始まらない文書の `path` を `resolve_location(path, cwd)` で解いたうち `rule_locations` にあるもの（`read_by` は照合しない）
+         - `mcp__` で始まるツールで、文書が 0 件の場合、`match_read_by(entries, tool_name, tool_input)`
+      2. 場所の重なりを除き、`hash_locations` で本文のハッシュを付ける。読めずハッシュを取れない場所は記録しない（知らせない。ログにも書かない）
+      3. 行が無ければ None を返す
+      4. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と additionalContext にして返す（履歴へは書かない）
+      5. `append_history(state_dir, session_id, locations, method=..., tool=tool_name)` で、記録した行の場所を既読の履歴へ書く。method は Read が `ReadMethod.READ`、Bash が `ReadMethod.BASH`、MCP のツールが `ReadMethod.MCP`
+      6. HistoryWriteError はログ（`write_history`）と、場所と理由を載せた additionalContext にして返す（既読の記録はそのまま残す）
     unit_tests:
       - name: test_record_read_when_read_tool
         case: 正常
         summary: Read で読んだルールを記録する
-        condition: Read、ルールの場所
+        condition: Read、ルールの場所、`tool_response.file` が `startLine` 1・`numLines` と `totalLines` が同じ
         mock: なし
-        expected: 記録ファイルに場所、履歴ファイルに `method` が `read`・`tool` が `Read` の 1 行、戻り値 None
+        expected: 記録ファイルに場所とルールの中身の `sha256:` のハッシュの 1 行、履歴ファイルに `method` が `read`・`tool` が `Read` の 1 行、戻り値 None
       - name: test_record_read_when_bash
         case: 正常
         summary: cat で読んだルールを記録する
         condition: '`cat {相対パス}`'
         mock: なし
-        expected: 記録ファイルに絶対パス、履歴ファイルに `method` が `bash`・`tool` が `Bash` の 1 行
+        expected: 記録ファイルに絶対パスとハッシュの 1 行、履歴ファイルに `method` が `bash`・`tool` が `Bash` の 1 行
       - name: test_record_read_when_not_rule
         case: 正常
         summary: ルールでないパスは記録しない
@@ -325,6 +336,36 @@ functions:
         case: 正常
         summary: '`rule` が URL のエントリは `read_by` に当たっても記録せず、知らせもしない'
         condition: '`rule: https://example.com/a.md`・`read_by` に `tools: ["mcp__docs__get_doc"]` を持つエントリだけ、`tool_name` が `mcp__docs__get_doc`'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルもログのファイルも無い、戻り値 None
+      - name: test_record_read_when_read_partially
+        case: 正常
+        summary: Read で一部だけを読んだときは記録しない
+        condition: Read、ルールの場所、`tool_response.file` が `startLine` 5・`numLines` 7・`totalLines` 11。別に `tool_response` に `file` が無い呼び出しと、`startLine` が文字列 `"1"` の呼び出し
+        mock: なし
+        expected: どの呼び出しでも記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_mcp_document
+        case: 正常
+        summary: MCP のツールの結果の全文の文書だけを記録する
+        condition: ルール A・B のエントリ。`tool_response` が、A の `scope="full"` と B の `scope="summary"` の閉じた `<document>` を持つ文字列。A の `path` は `cwd` からの相対パス
+        mock: なし
+        expected: 記録ファイルに A の絶対パスとハッシュの 1 行だけ、履歴ファイルに `method` が `mcp` の 1 行、戻り値 None
+      - name: test_record_read_when_mcp_document_without_read_by
+        case: 正常
+        summary: 書式に従う文書がある結果には `read_by` を当てない
+        condition: '`read_by` に `tools: ["mcp__docs__get_doc"]` を持つルール A のエントリ、`tool_name` が `mcp__docs__get_doc`、`tool_response` が索引に無い文書の `{"path": "other.md", "scope": "full"}`'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_mcp_document_is_url
+        case: 正常
+        summary: '`path` が URL の文書は記録しない'
+        condition: '`tool_response` が `{"path": "https://example.com/a.md", "scope": "full"}` だけ'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_rule_unreadable
+        case: 正常
+        summary: ハッシュを取れないルールは記録しない
+        condition: ファイルが無いルールのエントリ。`read_by` に当たる MCP のツールの呼び出し
         mock: なし
         expected: 記録ファイルも履歴ファイルもログのファイルも無い、戻り値 None
   - name: discard_read
@@ -551,7 +592,7 @@ functions:
       3. `extract_result_paths(lines, base)` で照合するパスを拾う。無ければ None
       4. `load_indexes` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
       5. パスごとに `match_path(entries, path, "read")` で当て、ルールの場所ごとに 1 件へまとめる（出た順）
-      6. `read_record` の既読と `read_guided` の案内済みを除く。読めない記録は空として扱い、ログ（`read_record`）と知らせの文に回す
+      6. `read_record` の既読の行で `current_read_locations` が返す場所と、`read_guided` の案内済みを除く。読めない記録は空として扱い、ログ（`read_record`）と知らせの文に回す
       7. 残った場所があれば `build_search_guidance(locations, unchecked=...)` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
       8. 案内と知らせを `hookSpecificOutput.additionalContext`（`hookEventName: PostToolUse`）にする。どちらも無ければ None
     unit_tests:
@@ -570,7 +611,7 @@ functions:
       - name: test_search_guide_when_read_or_guided
         case: 正常
         summary: 既読と案内済みを除く
-        condition: 2 つのルールのうち 1 つが既読、1 つが案内済み
+        condition: 2 つのルールのうち 1 つが既読（記録に場所と今のハッシュの行）、1 つが案内済み
         mock: なし
         expected: None
       - name: test_search_guide_when_invalid_session_id
@@ -585,6 +626,12 @@ functions:
         condition: 書き込み権限の無い記録フォルダ
         mock: なし
         expected: additionalContext に場所と記録ファイルの理由、ログに `write_record`
+      - name: test_search_guide_when_rule_changed
+        case: 正常
+        summary: 読んだ後に変わったルールを案内する
+        condition: '`**/*.py` のエントリ、`tool_response.filenames` に実在する `.py`。記録に場所と書き換える前のハッシュの行があり、ルールの中身を書き換える'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: additionalContext に場所が載る
 notes:
   hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`

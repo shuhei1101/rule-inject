@@ -171,13 +171,13 @@ def rule_file(tmp_path: Path) -> Callable[..., Path]:
 
 @pytest.fixture
 def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], Path]:
-    """既読の記録ファイルを、場所を 1 行ずつ書いて置く factory。"""
+    """既読の記録ファイルを、行を 1 行ずつ書いて置く factory（既読の行は `{場所}\\t{ハッシュ}`）。"""
 
-    def _write(locations: Sequence[str], name: str | None = None) -> Path:
-        """locations を 1 行ずつ、name（無ければこのセッション）の記録ファイルに書く。"""
+    def _write(lines: Sequence[str], name: str | None = None) -> Path:
+        """lines を 1 行ずつ、name（無ければこのセッション）の記録ファイルに書く。"""
         path = state_dir / f"{name or session_id}.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
+        path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
         return path
 
     return _write

@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from rule_inject.features.record import service
+from rule_inject.features.record import types as record_types
 from rule_inject.features.record.service import (
     append_history,
     append_record,
@@ -26,6 +27,12 @@ from rule_inject.shared.errors import (
     RecordReadError,
     RecordWriteError,
 )
+
+HASH_A = "sha256:aaaa"
+HASH_B = "sha256:bbbb"
+HASH_TEST = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+HASH_EMPTY = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+HASH_CHANGED = "sha256:d67e2e944994496c8d8ec76eed0cf9f09679448d584b532bebf941852a37f5ed"
 
 
 def test_is_valid_session_id(session_id: str) -> None:
@@ -60,11 +67,43 @@ def test_read_record(
 ) -> None:
     """行を集合で返す（正常系）。"""
     # 準備
-    write_record(["/r/a.md", "/r/a.md", "/r/b.md"])
+    write_record(
+        [
+            f"/r/a.md\t{HASH_A}",
+            f"/r/a.md\t{HASH_A}",
+            f"/r/a.md\t{HASH_B}",
+        ]
+    )
     # 実行
     result = read_record(state_dir, session_id)
     # 検証
-    assert result == frozenset({"/r/a.md", "/r/b.md"})
+    assert result == frozenset(
+        {
+            record_types.ReadEntry(location="/r/a.md", hash=HASH_A),
+            record_types.ReadEntry(location="/r/a.md", hash=HASH_B),
+        }
+    )
+
+
+def test_read_record_when_without_hash(
+    state_dir: Path,
+    session_id: str,
+    write_record: Callable[[Sequence[str]], Path],
+) -> None:
+    """ハッシュを持たない行は読み飛ばす（正常系）。"""
+    # 準備
+    write_record(
+        [
+            "/r/a.md",
+            f"\t{HASH_A}",
+            "/r/b.md\tmd5:cccc",
+            f"/r/c.md\t{HASH_A}",
+        ]
+    )
+    # 実行
+    result = read_record(state_dir, session_id)
+    # 検証
+    assert result == frozenset({record_types.ReadEntry(location="/r/c.md", hash=HASH_A)})
 
 
 def test_read_record_when_missing(state_dir: Path, session_id: str) -> None:
@@ -97,14 +136,28 @@ def test_append_record(
 ) -> None:
     """フォルダを作って追記する（正常系）。"""
     # 実行
-    append_record(state_dir, session_id, ["/r/a.md", "/r/b.md"])
-    append_record(state_dir, session_id, ["/r/c.md", "/r/d.md"])
+    append_record(
+        state_dir,
+        session_id,
+        [
+            record_types.ReadEntry(location="/r/a.md", hash=HASH_A),
+            record_types.ReadEntry(location="/r/b.md", hash=HASH_B),
+        ],
+    )
+    append_record(
+        state_dir,
+        session_id,
+        [
+            record_types.ReadEntry(location="/r/c.md", hash=HASH_A),
+            record_types.ReadEntry(location="/r/d.md", hash=HASH_B),
+        ],
+    )
     # 検証
     assert read_lines(state_dir / f"{session_id}.txt") == [
-        "/r/a.md",
-        "/r/b.md",
-        "/r/c.md",
-        "/r/d.md",
+        f"/r/a.md\t{HASH_A}",
+        f"/r/b.md\t{HASH_B}",
+        f"/r/c.md\t{HASH_A}",
+        f"/r/d.md\t{HASH_B}",
     ]
 
 
@@ -127,7 +180,11 @@ def test_append_record_when_unwritable(
     unwritable(state_dir, 0o555)
     # 実行・検証
     with pytest.raises(RecordWriteError) as excinfo:
-        append_record(state_dir, session_id, ["/r/a.md"])
+        append_record(
+            state_dir,
+            session_id,
+            [record_types.ReadEntry(location="/r/a.md", hash=HASH_A)],
+        )
     assert excinfo.value.path in {str(state_dir), str(state_dir / f"{session_id}.txt")}
 
 
@@ -337,7 +394,7 @@ def test_read_guided(
 ) -> None:
     """案内済みの記録を集合で返す（正常系）。"""
     # 準備
-    write_record(["/r/a.md"])
+    write_record([f"/r/a.md\t{HASH_A}"])
     write_guided(["/r/b.md", "/r/b.md"])
     # 実行
     result = service.read_guided(state_dir, session_id)
@@ -494,3 +551,94 @@ def test_append_history_when_unwritable(state_dir: Path, session_id: str) -> Non
     with pytest.raises(HistoryWriteError) as excinfo:
         append_history(state_dir, session_id, ["/r/a.md"], method=ReadMethod.READ, tool="Read")
     assert excinfo.value.path == str(history)
+
+
+def test_hash_locations(tmp_path: Path) -> None:
+    """場所ごとに本文のハッシュを付ける（正常系）。"""
+    # 準備
+    with_body = tmp_path / "with_body.md"
+    with_body.write_text("test", encoding="utf-8")
+    empty = tmp_path / "empty.md"
+    empty.write_text("", encoding="utf-8")
+    # 実行
+    result = service.hash_locations([str(with_body), str(empty)])
+    # 検証
+    assert result == (
+        record_types.ReadEntry(location=str(with_body), hash=HASH_TEST),
+        record_types.ReadEntry(location=str(empty), hash=HASH_EMPTY),
+    )
+
+
+def test_hash_locations_when_unreadable(
+    tmp_path: Path,
+    unwritable: Callable[[Path, int], Path],
+) -> None:
+    """読めない場所は含めない（正常系）。"""
+    # 準備
+    missing = tmp_path / "missing.md"
+    folder = tmp_path / "folder.md"
+    folder.mkdir()
+    no_permission = tmp_path / "no_permission.md"
+    no_permission.write_text("test", encoding="utf-8")
+    unwritable(no_permission, 0o000)
+    readable = tmp_path / "readable.md"
+    readable.write_text("test", encoding="utf-8")
+    # 実行
+    result = service.hash_locations([str(missing), str(folder), str(no_permission), str(readable)])
+    # 検証
+    assert result == (record_types.ReadEntry(location=str(readable), hash=HASH_TEST),)
+
+
+def test_current_read_locations(tmp_path: Path) -> None:
+    """今の本文のハッシュの組がある場所を既読にする（正常系）。"""
+    # 準備
+    read_rule = tmp_path / "read.md"
+    read_rule.write_text("test", encoding="utf-8")
+    other_rule = tmp_path / "other.md"
+    other_rule.write_text("test", encoding="utf-8")
+    entries = frozenset({record_types.ReadEntry(location=str(read_rule), hash=HASH_TEST)})
+    # 実行
+    result = service.current_read_locations(entries, [str(read_rule), str(other_rule)])
+    # 検証
+    assert result == frozenset({str(read_rule)})
+
+
+def test_current_read_locations_when_changed(tmp_path: Path) -> None:
+    """本文が変わった場所は未読にする（正常系）。"""
+    # 準備
+    rule = tmp_path / "rule.md"
+    rule.write_text("test", encoding="utf-8")
+    entries = frozenset({record_types.ReadEntry(location=str(rule), hash=HASH_TEST)})
+    rule.write_text("changed", encoding="utf-8")
+    # 実行
+    result = service.current_read_locations(entries, [str(rule)])
+    # 検証
+    assert result == frozenset()
+
+
+def test_current_read_locations_when_reread(tmp_path: Path) -> None:
+    """読み直した新しいハッシュの行があれば既読にする（正常系）。"""
+    # 準備
+    rule = tmp_path / "rule.md"
+    rule.write_text("changed", encoding="utf-8")
+    entries = frozenset(
+        {
+            record_types.ReadEntry(location=str(rule), hash=HASH_TEST),
+            record_types.ReadEntry(location=str(rule), hash=HASH_CHANGED),
+        }
+    )
+    # 実行
+    result = service.current_read_locations(entries, [str(rule)])
+    # 検証
+    assert result == frozenset({str(rule)})
+
+
+def test_current_read_locations_when_unreadable(tmp_path: Path) -> None:
+    """今のハッシュを取れない場所は未読にする（正常系）。"""
+    # 準備
+    rule = tmp_path / "rule.md"
+    entries = frozenset({record_types.ReadEntry(location=str(rule), hash=HASH_TEST)})
+    # 実行
+    result = service.current_read_locations(entries, [str(rule)])
+    # 検証
+    assert result == frozenset()

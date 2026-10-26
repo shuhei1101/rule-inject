@@ -19,6 +19,7 @@ from rule_inject.features.index import load_indexes, match_path, match_tool
 from rule_inject.features.index.types import IndexEntry, MatchedRule, Operation
 from rule_inject.features.record import (
     append_guided,
+    current_read_locations,
     is_valid_session_id,
     read_guided,
     read_record,
@@ -128,12 +129,14 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if loaded.failures:
         notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
     matched = _match(payload, loaded.entries)
-    # そのセッションで読んだルールを除く。記録が読めなければ止めずに理由を知らせる
+    # そのセッションで読んだルールを除く（読んだ後に本文が変わったルールは未読のまま残す）。記録が読めなければ止めずに理由を知らせる
     already_read: frozenset[str] = frozenset()
     record_failed = False
     if valid_session and matched:
         try:
-            already_read = read_record(folder, session_id)
+            already_read = current_read_locations(
+                read_record(folder, session_id), [rule.location for rule in matched]
+            )
         except RecordReadError as exc:
             record_failed = True
             _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)

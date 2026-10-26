@@ -25,11 +25,12 @@ scenarios:
         P->>P: コマンドから読んだパスを取り出す
         P->>IDX: 読んだパスがルールの場所かを引く
         IDX-->>P: ルールの場所
-        P->>ST: そのセッションの既読に場所を足す
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: そのセッションの既読に場所とハッシュを足す
         P->>HS: 時刻・読み方・ルールの場所を足す
       ```
     expected:
-      - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の記録に、ルールの場所と、読んだ時点のルールの本文のハッシュが載っている
       - そのセッションの既読の履歴に、読み方が `bash` でルールの場所を持つ行がある
     test: test_normal_when_read_by_bash
   - name: 正常シナリオ（Readで読む）
@@ -54,20 +55,22 @@ scenarios:
 
         CC->>CC: Read（ルールの場所）を実行する
         CC->>P: Read の入力と結果
+        P->>P: 結果の読んだ範囲がファイルの先頭から末尾までかを見る
         P->>IDX: 読んだパスがルールの場所かを引く
         IDX-->>P: ルールの場所
-        P->>ST: そのセッションの既読に場所を足す
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: そのセッションの既読に場所とハッシュを足す
         P->>HS: 時刻・読み方・ルールの場所を足す
       ```
     expected:
-      - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の記録に、ルールの場所と、読んだ時点のルールの本文のハッシュが載っている
       - そのセッションの既読の履歴に、読み方が `read` でルールの場所を持つ行がある
     test: test_normal_when_read_by_read_tool
   - name: 正常シナリオ（MCPのツールで読む）
     setup:
       - name: Mock
         description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
-        notes: MCP サーバーは `--mcp-config` で渡す。ツール `get_doc` は引数 `id` を受け、ルールの本文を返す
+        notes: MCP サーバーは `--mcp-config` で渡す。ツール `get_doc` は引数 `id` を受け、ルールの本文を `<document>` で包まずに返す
       - name: ルールの本文
         description: ローカルに置いたルールの Markdown
       - name: 索引
@@ -87,18 +90,111 @@ scenarios:
 
         CC->>DOC: get_doc（id: python）
         DOC-->>CC: ルールの本文
-        CC->>P: MCP のツールの名前と入力
+        CC->>P: MCP のツールの名前・入力と結果
+        P->>P: 結果から文書の場所と範囲を取り出す（書式に従う文書が無い）
         P->>IDX: ツール名と引数が read_by に当たるエントリを引く
         IDX-->>P: ルールの場所
-        P->>ST: そのセッションの既読に場所を足す
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: そのセッションの既読に場所とハッシュを足す
         P->>HS: 時刻・読み方・ツール名・ルールの場所を足す
       ```
     expected:
-      - そのセッションの既読の記録に、ルールの場所が載っている
+      - そのセッションの既読の記録に、ルールの場所と、読んだ時点のルールの本文のハッシュが載っている
       - そのセッションの既読の履歴に、読み方が `mcp` でツール名 `mcp__docs__get_doc` とルールの場所を持つ行がある
     test: test_normal_when_read_by_mcp_tool
-lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読むか、エントリの `read_by` に当たる MCP のツールを呼んだ後、`PostToolUse` フックがその場所をそのセッションの既読として記録し、既読の履歴にも残す。
+  - name: 正常シナリオ（文書のMCPの結果で読む）
+    setup:
+      - name: Mock
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で渡す。ツール `search_docs` は、ルールの本文を `<document path="{ルールの場所}" scope="full">` で包んで返す
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: そのルールの場所を持ち、`read_by` を持たないエントリを 1 つ持つ YAML
+      - name: 操作
+        description: プロンプトで、`search_docs` を 1 回呼ぶよう指示する
+        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant DOC as 文書の MCP サーバー
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant HS as 既読の履歴
+
+        CC->>DOC: search_docs
+        DOC-->>CC: document（ルールの場所・scope full）で包んだ本文
+        CC->>P: MCP のツールの名前・入力と結果
+        P->>P: 結果から文書の場所と範囲を取り出す
+        P->>IDX: 範囲が full の文書の場所がルールの場所かを引く
+        IDX-->>P: ルールの場所
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: そのセッションの既読に場所とハッシュを足す
+        P->>HS: 時刻・読み方・ツール名・ルールの場所を足す
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所と、読んだ時点のルールの本文のハッシュが載っている
+      - そのセッションの既読の履歴に、読み方が `mcp` でツール名 `mcp__docs__search_docs` とルールの場所を持つ行がある
+    test: test_normal_when_read_by_mcp_result
+  - name: 正常シナリオ（一部だけ読む）
+    setup:
+      - name: Mock
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いた、10 行以上あるルールの Markdown
+      - name: 索引
+        description: そのルールの場所を持つエントリを 1 つ持つ YAML
+      - name: 操作
+        description: プロンプトで、ルールの本文のファイルを Read で `offset` 3・`limit` 2 を指定して読むよう指示する
+        notes: Bash を `--disallowedTools` で外して読み方を 1 つに定める
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant ST as 既読の記録
+
+        CC->>CC: Read（ルールの場所・offset 3・limit 2）を実行する
+        CC->>P: Read の入力と結果
+        P->>P: 結果の読んだ範囲がファイルの先頭から末尾までかを見る
+        P-->>CC: 一部だけのため何も記録しない
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所が載っていない
+      - そのセッションの既読の履歴に、ルールの場所を持つ行が無い
+    test: test_normal_when_read_partially
+  - name: 正常シナリオ（文書のMCPの結果が全文でない）
+    setup:
+      - name: Mock
+        description: 文書の MCP の結果で読むシナリオと同じ。ツール `search_docs` は、ルールの説明だけを `<document path="{ルールの場所}" scope="summary">` で包んで返す
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 文書の MCP の結果で読むシナリオと同じエントリを 1 つ持つ YAML
+      - name: 操作
+        description: 文書の MCP の結果で読むシナリオと同じ（`search_docs` を 1 回呼ぶ）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant DOC as 文書の MCP サーバー
+        participant P as PostToolUse フック
+        participant ST as 既読の記録
+
+        CC->>DOC: search_docs
+        DOC-->>CC: document（ルールの場所・scope summary）で包んだ説明
+        CC->>P: MCP のツールの名前・入力と結果
+        P->>P: 結果から文書の場所と範囲を取り出す
+        P-->>CC: 範囲が full でないため何も記録しない
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所が載っていない
+      - そのセッションの既読の履歴に、ルールの場所を持つ行が無い
+    test: test_normal_when_mcp_result_not_full
+lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読むか、MCP のツールでルールの文書を受け取った後、`PostToolUse` フックがその場所をそのセッションの既読として記録し、既読の履歴にも残す。
 issue: 2
 primary_actor: Claude Code のセッション
-trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、エントリの `read_by` に当たる MCP のツールの呼び出しが終わる
+trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、MCP のツールの呼び出しが終わる
 test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py
