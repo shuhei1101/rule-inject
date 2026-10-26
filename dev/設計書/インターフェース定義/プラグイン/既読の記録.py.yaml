@@ -13,7 +13,7 @@ flows:
       - name: 既読の記録
         description: 空の一時フォルダ
       - name: 入力
-        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
+        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所、`tool_response.file` は `startLine: 1`・`numLines` と `totalLines` がルールのファイルの行数'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -23,14 +23,16 @@ flows:
         participant ST as 記録ファイル
         participant HS as 既読の履歴
 
-        CC->>P: 標準入力（Read・ルールの場所）
+        CC->>P: 標準入力（Read・ルールの場所・読んだ範囲）
+        P->>P: 読んだ範囲がファイル全体かを見る（全体）
         P->>IDX: 読む
-        P->>ST: ルールの場所を追記する
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: ルールの場所とハッシュを追記する
         P->>HS: 読み方 read の行を追記する
         P-->>CC: 終了コード 0
       ```
     expected:
-      - 記録ファイルにルールの場所が 1 行ある
+      - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: read`・`tool: Read`・`location` がルールの場所の行が 1 行ある'
       - 終了コードが `0`
     test: test_normal_when_read_by_read_tool
@@ -58,12 +60,13 @@ flows:
         CC->>P: 標準入力（Bash・コマンド）
         P->>P: 読むコマンドの引数からパスを取り出す
         P->>IDX: 読む
-        P->>ST: ルールの場所を追記する
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: ルールの場所とハッシュを追記する
         P->>HS: 読み方 bash の行を追記する
         P-->>CC: 終了コード 0
       ```
     expected:
-      - 記録ファイルにルールの場所の絶対パスが 1 行ある
+      - 記録ファイルに、ルールの場所の絶対パスとルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: bash`・`tool: Bash` の行が 1 行ある'
     test: test_normal_when_read_by_bash
   - name: 正常系（ルールの場所でない）
@@ -104,7 +107,7 @@ flows:
       - name: ログのフォルダ
         description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
-        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
+        description: 'Read で読むフローと同じ（`tool_name: Read`、ルールの場所、全体を読んだ `tool_response.file`）'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -133,7 +136,7 @@ flows:
       - name: 既読の記録
         description: 空の一時フォルダ
       - name: 入力
-        description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: python}`'
+        description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: python}`、`tool_response` は `<document>` も `path`・`scope` も持たない文字列 `{"result": "{ルールの本文}"}`'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -143,14 +146,16 @@ flows:
         participant ST as 記録ファイル
         participant HS as 既読の履歴
 
-        CC->>P: 標準入力（MCP のツール名・引数）
+        CC->>P: 標準入力（MCP のツール名・引数・結果）
+        P->>P: 結果から文書を取り出す（書式に従う文書が無い）
         P->>IDX: read_by のツール名と引数に当たるエントリを選ぶ
-        P->>ST: ルールの場所を追記する
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: ルールの場所とハッシュを追記する
         P->>HS: 読み方 mcp の行を追記する
         P-->>CC: 終了コード 0
       ```
     expected:
-      - 記録ファイルにルールの場所が 1 行ある
+      - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: mcp`・`tool: mcp__docs__get_doc`・`location` がルールの場所の行が 1 行ある'
       - 標準出力が空
       - 終了コードが `0`
@@ -195,7 +200,7 @@ flows:
       - name: ログのフォルダ
         description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
-        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所'
+        description: 'Read で読むフローと同じ（`tool_name: Read`、ルールの場所、全体を読んだ `tool_response.file`）'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -246,9 +251,130 @@ flows:
       - ログのファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_rule_is_url
-lead: Read か Bash の読むコマンドで読んだパスのうち索引に載ったルールの場所と、索引の `read_by` に当たった MCP のツールの呼び出しのエントリのルールの場所を、そのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
+  - name: 正常系（Readで一部だけ読む）
+    summary: Read で一部だけを読んだときは記録しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` はルールの場所、`tool_response.file` は `startLine: 5`・`numLines: 7`・`totalLines: 11`'
+        notes: 末尾まで届いても先頭を読んでいない範囲にし、`startLine` も判定に使うことを確かめる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+
+        CC->>P: 標準入力（Read・ルールの場所・読んだ範囲）
+        P->>P: 読んだ範囲がファイル全体かを見る（一部）
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが作られていない
+      - 既読の履歴ファイルが作られていない
+      - 終了コードが `0`
+    test: test_normal_when_read_partially
+  - name: 正常系（MCPの結果の文書で読む）
+    summary: MCP のツールの結果に載った `scope` が `full` のルールの文書の場所を記録する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 2 つのルールの場所を持つエントリを 1 つずつ持ち、どちらも `read_by` を持たない
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: mcp__docs__search_docs`、`tool_response` は 1 つ目のルールを `<document path="{1 つ目の場所}" scope="full">…</document>`、2 つ目のルールを `scope="summary"` で包んだ markdown を `result` に持つ JSON の文字列'
+        notes: 属性の `"` が JSON の中で `\"` になった形で渡し、JSON として読んでから探すことを確かめる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+        participant ST as 記録ファイル
+        participant HS as 既読の履歴
+
+        CC->>P: 標準入力（MCP のツール名・引数・結果）
+        P->>P: 結果を JSON として読み、文字列の値から文書を取り出す
+        P->>IDX: 読む
+        P->>P: scope が full でルールの場所に当たる文書を選ぶ
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: ルールの場所とハッシュを追記する
+        P->>HS: 読み方 mcp の行を追記する
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルに、1 つ目のルールの場所とそのファイルの SHA-256 の行だけがある
+      - '既読の履歴に `method: mcp`・`tool: mcp__docs__search_docs`・`location` が 1 つ目のルールの場所の行が 1 行だけある'
+      - 終了コードが `0`
+    test: test_normal_when_read_by_mcp_document
+  - name: 正常系（MCPの結果のjsonの項目で読む）
+    summary: MCP のツールの結果の、`path`・`scope` を持つ項目の場所を記録する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールの場所を持つエントリを 1 つ持つ
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: mcp__docs__search_docs`、`tool_response` は `{"items": [{"path": "{ルールの場所}", "scope": "full", "body": "…"}]}` の文字列'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+        participant ST as 記録ファイル
+
+        CC->>P: 標準入力（MCP のツール名・引数・結果）
+        P->>P: 結果を JSON として読み、path と scope を持つ項目を取り出す
+        P->>IDX: 読む
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: ルールの場所とハッシュを追記する
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
+      - 終了コードが `0`
+    test: test_normal_when_read_by_mcp_json_item
+  - name: 正常系（MCPの結果の文書が閉じていない）
+    summary: 閉じタグの無い `<document>` は書式に従う文書として数えず、`read_by` で照合する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 'ルールの場所と、`read_by`（`tools: [mcp__docs__get_doc]`）を持つエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: mcp__docs__search_docs`、`tool_response` は `<document path="{ルールの場所}" scope="full">` で始まり `</document>` の無い文字列'
+        notes: ツール名を `read_by` に当てず、どちらの照合でも記録されないことを確かめる
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（MCP のツール名・引数・結果）
+        P->>P: 結果から文書を取り出す（閉じタグが無く、書式に従う文書が無い）
+        P->>IDX: read_by に当たるエントリを選ぶ（当たらない）
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが作られていない
+      - 既読の履歴ファイルが作られていない
+      - 終了コードが `0`
+    test: test_normal_when_mcp_document_unclosed
+lead: Read か Bash の読むコマンドで全体を読んだパスのうち索引に載ったルールの場所と、MCP のツールの結果に載ったルールの文書の場所（書式に従う文書が無いときは索引の `read_by` に当たったエントリのルールの場所）を、本文のハッシュと一緒にそのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
 idempotent: true
-side_effects: そのセッションの既読の記録ファイルへルールの場所を 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
+side_effects: そのセッションの既読の記録ファイルへルールの場所と本文のハッシュを 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
 exclusivity: 追記（O_APPEND）だけで書くため、ほかのフックと同時に書いても行が混ざらない
 request:
   - name: '`session_id`'
@@ -282,6 +408,18 @@ request:
     default: なし（`read_by` の `args` を書いたエントリには当てない）
     description: MCP のツールに渡された引数
     notes: '`tool_name` が MCP のツールのときだけ使う。`read_by` の `args` を、ルール案内の `args` と同じ規則（ドット区切りのキー・配列は要素ごと・文字列以外のスカラーは JSON の表記）で照合する'
+  - name: '`tool_response.file`'
+    type: dict[str, Any]
+    required: false
+    default: なし（記録しない）
+    description: Read で読んだ範囲。`startLine`（読み始めた行）・`numLines`（読んだ行数）・`totalLines`（ファイル全体の行数）を使う
+    notes: '`tool_name` が Read のときだけ使う。3 つのどれかが無いか整数でないときは、全体を読んだと判定せず記録しない'
+  - name: '`tool_response`'
+    type: str | dict[str, Any] | list[Any]
+    required: false
+    default: なし（書式に従う文書が無いものとして扱う）
+    description: MCP のツールの結果
+    notes: '`tool_name` が MCP のツールのときだけ使う。文字列は JSON として読み、読めないときはそのままテキストとして扱う'
 exceptions:
   - name: なし（正常終了）
     condition: 記録できたとき・記録する場所が無いときは、標準出力に何も出さず終了コード 0 で終える
@@ -302,7 +440,7 @@ constraints:
     constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 1 場所）'
     notes: 書式は ER 図「既読の記録」
   - item: 記録する場所
-    constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。MCP のツールは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない
+    constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。Read は全体を読んだときだけ（制約「Read の全体の判定」）。MCP のツールは、結果に書式に従う文書が 1 つでもあれば、`scope` が `full` の文書の場所のうち索引に載ったルールの場所と同じものだけ（制約「MCP の結果の文書」）。書式に従う文書が無いときは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない
     notes: 同じ索引を読むルール案内が、URL のエントリを読み飛ばした理由を案内とログに載せる
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
@@ -310,6 +448,15 @@ constraints:
   - item: 既読の履歴の置き場所
     constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl`（1 行 = 1 回の既読の JSON）'
     notes: 書式は ER 図「既読の記録」。既読の記録へ書いた後に書く。読み方は Read が `read`、Bash が `bash`、MCP のツールが `mcp`
+  - item: Read の全体の判定
+    constraint: '`tool_response.file.startLine` が 1 で、`numLines` が `totalLines` と同じときだけ全体を読んだと判定する'
+    notes: 'PoC（PR ドキュメント #47 の `## PoC 結果`）で、`offset`・`limit` の指定・ファイルの長さ・長い行によらず、この値で判定できることを確かめた'
+  - item: MCP の結果の文書
+    constraint: 結果の中の全ての文字列の値から、閉じタグ `</document>` までそろった `<document path="..." scope="...">` を取り出し、あわせて結果の中の全てのオブジェクトのうち文字列の `path` と `scope` を持つものを取り出す。`path` は Read・Bash と同じ規則（`~` の展開・`cwd` から解く・`..` を畳む。シンボリックリンクは辿らない）で解く。`scope` が `full` 以外の文書・`path` が `http://` か `https://` で始まる文書は記録しない
+    notes: 書式の正本は `docs/リファレンス/MCPの結果の書式.md`。閉じタグの無い `<document>` は書式に従う文書として数えない。JSON として読めない文字列は、そのままテキストとして `<document>` を探す
+  - item: 本文のハッシュ
+    constraint: 記録する時点のルールのファイルの中身（バイト列）の SHA-256 を `sha256:{16 進数}` の形で場所と一緒に書く。ファイルを読めずハッシュを取れない場所は記録しない
+    notes: 書式は ER 図「既読の記録」。ルール案内・検索結果の案内が同じ方法で今のハッシュを取って比べる
 identifier: record_read
 response:
   - name: '`hookSpecificOutput.hookEventName`'

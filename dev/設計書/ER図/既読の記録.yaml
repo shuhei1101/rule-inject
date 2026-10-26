@@ -3,11 +3,11 @@ lead: フックが共有する、セッションごとの既読のルールの�
 tables:
   - name: '{RULE_INJECT_STATE_DIR}/{session_id}.txt'
     title: 既読の記録
-    datastore: テキストファイル（UTF-8、1 行 = 1 場所）
-    summary: そのセッションで本文を読んだルールの場所
-    primary_key: location
+    datastore: テキストファイル（UTF-8、1 行 = 1 場所とハッシュをタブで区切った組）
+    summary: そのセッションで本文を読んだルールの場所と、読んだ時点の本文のハッシュ
+    primary_key: (location, hash)
     scale: 1 セッション ~1,000 行
-    growth: ルールを読むたびに 1 行ずつ追記する。同じ場所が重なっても消さず、読む側が集合として扱う
+    growth: ルールを読むたびに 1 行ずつ追記する。同じ場所とハッシュの組が重なっても消さず、読む側が集合として扱う。本文が変わった後に読み直したときは、古い行を残したまま新しいハッシュの行を追記する
     retention: そのセッションの次の圧縮まで。圧縮せずに終わったセッションのファイルは、最終更新から非機能要件「既読の記録の保持期間」まで
     deletion: 圧縮の前にファイルごと物理削除する。保持期間を過ぎたファイルは、セッションの開始時にファイルごと物理削除する
     access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
@@ -17,7 +17,13 @@ tables:
         title: ルールの場所
         type: string
         not_null: true
-        description: 解決後の絶対パス。改行を含まない
+        description: 解決後の絶対パス。改行とタブを含まない
+      - name: hash
+        title: 本文のハッシュ
+        type: string
+        not_null: true
+        description: 既読にした時点のルールのファイルの中身（バイト列）の SHA-256。案内する側が今のハッシュと比べ、違えば未読として扱う。ハッシュを持たない行（この列を足す前の書式）は既読として扱わない
+        example: sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
   - name: '{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt'
     title: 案内済みの記録
     datastore: テキストファイル（UTF-8、1 行 = 1 場所）
@@ -63,7 +69,7 @@ tables:
         type: string
         not_null: true
         description: 既読にした読み方
-        enum_values: "'read'（Read）/ 'bash'（Bash の読むコマンド）/ 'mcp'（read_by に当たった MCP のツール）"
+        enum_values: "'read'（Read）/ 'bash'（Bash の読むコマンド）/ 'mcp'（MCP のツールの結果に載った文書か、read_by に当たった MCP のツール）"
       - name: tool
         title: ツール名
         type: string
