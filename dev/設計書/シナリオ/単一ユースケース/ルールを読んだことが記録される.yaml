@@ -90,10 +90,12 @@ scenarios:
 
         CC->>DOC: get_doc（id: python）
         DOC-->>CC: ルールの本文
-        CC->>P: MCP のツールの名前と入力
+        CC->>P: MCP のツールの名前・入力と結果
+        P->>P: 結果から文書の場所と範囲を取り出す（書式に従う文書が無い）
         P->>IDX: ツール名と引数が read_by に当たるエントリを引く
         IDX-->>P: ルールの場所
-        P->>ST: そのセッションの既読に場所を足す
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: そのセッションの既読に場所とハッシュを足す
         P->>HS: 時刻・読み方・ツール名・ルールの場所を足す
       ```
     expected:
@@ -191,7 +193,7 @@ scenarios:
       - そのセッションの既読の記録に、ルールの場所が載っていない
       - そのセッションの既読の履歴に、ルールの場所を持つ行が無い
     test: test_normal_when_mcp_result_not_full
-lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを全て読むか、文書の MCP のツールの結果に `scope` が `full` のルールの文書が載るか、エントリの `read_by` に当たる MCP のツールを呼んだ後、`PostToolUse` フックがその場所と本文のハッシュをそのセッションの既読として記録し、既読の履歴にも残す。ファイルの一部だけを読んだときと、全文でない文書は既読にしない。
+lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読むか、MCP のツールでルールの文書を受け取った後、`PostToolUse` フックがその場所をそのセッションの既読として記録し、既読の履歴にも残す。
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、MCP のツールの呼び出しが終わる
