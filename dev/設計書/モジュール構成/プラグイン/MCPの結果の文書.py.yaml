@@ -38,11 +38,11 @@ enums:
         title: 説明だけ
         description: 文書の説明だけを載せた
 constants:
-  - name: DOCUMENT_PATTERN
+  - name: TAG_PATTERN
     title: 文書のタグ
     container: features/document/service.py
-    summary: 閉じタグまでそろった `<document>` の範囲と、開きタグの属性の部分（`re.DOTALL`、最短一致。本文の途中に別の `<document` の開きタグを含むものは閉じた文書として数えない）
-    value: '`<document\b([^>]*)>(?:(?!<document\b).)*?</document>`'
+    summary: '`<document>` の開きタグ（属性の部分を取る）か閉じタグ'
+    value: '`<document\b([^>]*)>|</document>`'
   - name: ATTRIBUTE_PATTERN
     title: タグの属性
     container: features/document/service.py
@@ -69,7 +69,7 @@ functions:
       1. 値を深さ優先でたどる
          - オブジェクトの場合、文字列の `path` と `scope` を両方持てば文書にし、続けて全ての値をたどる
          - 配列の場合、要素を順にたどる
-         - 文字列の場合、JSON として読み、オブジェクトか配列になればそれをたどる。読めないか、それ以外の値になれば、文字列のまま `DOCUMENT_PATTERN` に当たる範囲を探し、開きタグの `ATTRIBUTE_PATTERN` に `path` と `scope` を両方持つものを文書にする
+         - 文字列の場合、JSON として読み、オブジェクトか配列になればそれをたどる。読めないか、それ以外の値になれば、文字列のまま `TAG_PATTERN` に当たるタグを先頭から順に読み、開きタグを積み、閉じタグで直近の開きタグと組にする（組む開きタグが無い閉じタグは読み飛ばす）。組のうち別の組の内側に無いものを開きタグの順に取り、開きタグの `ATTRIBUTE_PATTERN` に `path` と `scope` を両方持つものを文書にする
          - それ以外の値は文書にしない
       2. 見つけた順に返す
     unit_tests:
@@ -121,5 +121,11 @@ functions:
         condition: '`None` と `1`'
         mock: なし
         expected: どちらも空
+      - name: test_extract_documents_when_nested
+        case: 正常
+        summary: 本文に入れ子で載った `<document>` は数えず、外側の文書を取り出す
+        condition: 閉じた `<document path="a.md" scope="full">` の本文に、閉じた `<document path="b.md" scope="full">…</document>` を含む文字列
+        mock: なし
+        expected: '`a.md` の 1 件'
 test_files:
   - tests/unit/rule_inject/features/document/test_service.py
