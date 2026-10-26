@@ -13,6 +13,8 @@ from rule_inject.hooks.search_guide import search_guide
 
 RULE = "/r/python.md"
 OTHER_RULE = "/r/other.md"
+# 本文が `test` のルールの本文のハッシュ
+HASH_TEST = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
 
 
 @pytest.fixture
@@ -90,19 +92,21 @@ def test_search_guide_when_read_or_guided(
     python_file: Path,
     guide_env: Callable[[str], dict[str, str]],
     hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
     write_record: Callable[[Sequence[str]], Path],
     write_guided: Callable[[Sequence[str]], Path],
 ) -> None:
     """既読と案内済みを除く（正常系）。"""
     # 準備
+    read_rule = rule_file("python.md", "test")
     env = guide_env(
         "rules:\n"
-        f"  - rule: {RULE}\n"
+        f"  - rule: {read_rule}\n"
         '    paths:\n      - "**/*.py"\n'
         f"  - rule: {OTHER_RULE}\n"
         '    paths:\n      - "**/*.py"\n'
     )
-    write_record([RULE])
+    write_record([f"{read_rule}\t{HASH_TEST}"])
     write_guided([OTHER_RULE])
     payload = hook_payload(
         "PostToolUse",
@@ -168,3 +172,29 @@ def test_search_guide_when_guided_unwritable(
     log_entry = read_daily_log()[0]
     assert log_entry["component"] == "search_guide"
     assert log_entry["operation"] == "write_record"
+
+
+def test_search_guide_when_rule_changed(
+    python_file: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    write_record: Callable[[Sequence[str]], Path],
+) -> None:
+    """読んだ後に変わったルールを案内する（正常系）。"""
+    # 準備
+    rule = rule_file("python.md", "test")
+    env = guide_env(index_text(str(rule), paths=["**/*.py"]))
+    write_record([f"{rule}\t{HASH_TEST}"])
+    rule.write_text("changed", encoding="utf-8")
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Grep",
+        tool_input={"pattern": "print", "path": str(python_file.parent)},
+        tool_response={"mode": "files_with_matches", "filenames": [python_file.name]},
+    )
+    # 実行
+    result = search_guide(payload, env)
+    # 検証
+    assert str(rule) in result["hookSpecificOutput"]["additionalContext"]
