@@ -6,8 +6,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
-
 
 def test_normal(
     e2e_project: Path,
@@ -29,11 +27,8 @@ def test_normal(
             {"rule": str(guided_rule), "paths": ["**/*.txt"], "on": ["write"]},
         )
     )
-    read_prompt = (
-        f"MCP のツール read_rules を 1 回だけ呼んでください。locations に {rule} を渡し、"
-        "session_id は渡さないでください。"
-    )
-    read_run = run_claude(read_prompt, allow=[READ_RULES_TOOL])
+    read_prompt = f"Read で {rule} を読んでください。他のことはしないでください。"
+    read_run = run_claude(read_prompt, allow=["Read"])
     target = e2e_project / "notes.txt"
     target.write_text("notes\n", encoding="utf-8")
     guided_run = run_claude(

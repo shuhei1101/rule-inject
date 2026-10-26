@@ -182,32 +182,6 @@ flows:
       - 既読の履歴ファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_read_by_not_matched
-  - name: 正常系（このプラグインのツール）
-    summary: このプラグイン自身の MCP のツールの呼び出しは、`read_by` に当たっても記録しない
-    setup:
-      - name: Mock
-        description: なし
-      - name: 索引
-        description: '`read_by` の `tools` に `mcp__plugin_rule-inject_rule-inject__*` を書いたエントリを 1 つ持つ'
-      - name: 既読の記録
-        description: 空の一時フォルダ
-      - name: 入力
-        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__read_rules`'
-    flow: |-
-      ```mermaid
-      sequenceDiagram
-        participant CC as Claude Code
-        participant P as 既読の記録
-
-        CC->>P: 標準入力（read_rules）
-        P->>P: このプラグインのツールなので何もしない
-        P-->>CC: 終了コード 0
-      ```
-    expected:
-      - 記録ファイルが作られていない
-      - 既読の履歴ファイルが作られていない
-      - 終了コードが `0`
-    test: test_normal_when_own_tool
   - name: 異常系（既読の履歴に書けない・理由を載せる）
     summary: 既読の履歴に書けないとき、既読にはしたうえで書けなかった理由を載せる
     setup:
@@ -242,10 +216,40 @@ flows:
       - '標準エラー出力に `operation: write_history` の 1 行がある'
       - 終了コードが `0`
     test: test_error_when_history_unwritable
+  - name: 正常系（URLのルール）
+    summary: '`read_by` に当たっても、`rule` が URL のエントリは記録しない'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`rule: https://example.com/python.md`・`read_by`（`tools: [mcp__docs__get_doc]`・`args: {id: [python]}`）を持つエントリだけ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: python}`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（MCP のツール名・引数）
+        P->>IDX: 読む
+        P->>P: rule が URL のエントリを読み飛ばす
+        P-->>CC: 終了コード 0
+      ```
+    expected:
+      - 記録ファイルが作られていない
+      - 既読の履歴ファイルが作られていない
+      - 標準出力に `additionalContext` が無い
+      - ログのファイルが作られていない
+      - 終了コードが `0`
+    test: test_normal_when_rule_is_url
 lead: Read か Bash の読むコマンドで読んだパスのうち索引に載ったルールの場所と、索引の `read_by` に当たった MCP のツールの呼び出しのエントリのルールの場所を、そのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルへルールの場所を 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
-exclusivity: 追記（O_APPEND）だけで書くため、MCP サーバーと同時に書いても行が混ざらない
+exclusivity: 追記（O_APPEND）だけで書くため、ほかのフックと同時に書いても行が混ざらない
 request:
   - name: '`session_id`'
     type: str
@@ -261,7 +265,6 @@ request:
     type: str
     required: true
     description: 実行されたツール。`Read`・`Bash`・MCP のツールの完全名（`mcp__` で始まる）のどれか
-    notes: このプラグイン自身のツール（`mcp__plugin_rule-inject_rule-inject__` で始まる名前）は何もせずに終える（`read_rules` の処理が既読にする）
   - name: '`tool_input.file_path`'
     type: str
     required: false
@@ -299,7 +302,8 @@ constraints:
     constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 1 場所）'
     notes: 書式は ER 図「既読の記録」
   - item: 記録する場所
-    constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。MCP のツールは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない
+    constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。MCP のツールは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない
+    notes: 同じ索引を読むルール案内が、URL のエントリを読み飛ばした理由を案内とログに載せる
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
     notes: 記録にもログにも書けないときも `additionalContext` で理由が見える

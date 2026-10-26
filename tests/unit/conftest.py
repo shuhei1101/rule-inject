@@ -53,7 +53,7 @@ def log_folder(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def hook_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
-    """フックと MCP サーバーに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
+    """フックに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
     return {
         "RULE_INJECT_STATE_DIR": str(state_dir),
         "RULE_INJECT_LOG_DIR": str(log_folder),

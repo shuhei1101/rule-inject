@@ -169,31 +169,32 @@ def test_record_read_when_read_by_not_matched(
     assert not (state_dir / f"{session_id}.history.jsonl").exists()
 
 
-def test_record_read_when_own_tool(
+def test_record_read_when_rule_is_url(
     hook_env: dict[str, str],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
-    rule_file: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
     state_dir: Path,
+    log_folder: Path,
     session_id: str,
 ) -> None:
-    """自分のツールは何もしない（正常系）。"""
+    """`rule` が URL のエントリは `read_by` に当たっても記録せず、知らせもしない（正常系）。"""
     # 準備
-    rule = rule_file("python.md")
-    index = make_index(index_text(str(rule), read_by=[{"tools": ["mcp__*"]}]))
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
-    payload = hook_payload(
-        "PostToolUse",
-        tool_name="mcp__plugin_rule-inject_rule-inject__read_rules",
-        tool_input={"locations": [str(rule)]},
+    index = make_index(
+        index_text(
+            "https://example.com/a.md",
+            read_by=[{"tools": ["mcp__docs__get_doc"]}],
+        )
     )
+    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    payload = hook_payload("PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "a"})
     # 実行
     result = record_read(payload, env)
     # 検証
     assert result is None
     assert not (state_dir / f"{session_id}.txt").exists()
     assert not (state_dir / f"{session_id}.history.jsonl").exists()
+    assert not log_folder.exists()
 
 
 def test_record_read_when_history_unwritable(

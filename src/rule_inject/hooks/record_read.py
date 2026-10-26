@@ -17,7 +17,7 @@ from rule_inject.features.record import (
     append_record,
     is_valid_session_id,
 )
-from rule_inject.hooks.rule_guide import MCP_TOOL_PREFIX, OWN_TOOL_PREFIX
+from rule_inject.hooks.rule_guide import MCP_TOOL_PREFIX
 from rule_inject.shared.errors import HistoryWriteError, RecordWriteError, RuleInjectError
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
 from rule_inject.shared.paths import log_dir, resolve_location, state_dir
@@ -58,10 +58,7 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     session_id = payload.get("session_id")
     if not is_valid_session_id(session_id):
         return None
-    # このプラグイン自身のツールは、`read_rules` が既読と履歴を書く
     tool_name = payload["tool_name"]
-    if tool_name.startswith(OWN_TOOL_PREFIX):
-        return None
     locations, method = _locations_and_method(payload, load_indexes(env).entries)
     if not locations:
         return None

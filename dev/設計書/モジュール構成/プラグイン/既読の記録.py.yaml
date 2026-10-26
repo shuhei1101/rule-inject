@@ -536,9 +536,6 @@ enums:
       - value: bash
         title: Bash
         description: Bash の読むコマンドで読んだ
-      - value: read_rules
-        title: read_rules
-        description: '`read_rules` が本文を返した'
       - value: mcp
         title: MCP のツール
         description: '`read_by` に当たった MCP のツールを呼んだ'

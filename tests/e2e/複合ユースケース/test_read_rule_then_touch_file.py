@@ -8,15 +8,14 @@ from typing import Any
 
 import pytest
 
-READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 WRITE_THEN_READ_PROMPT = (
     "Write で {target} に「hello」と書いてください。"
-    "止められたら、案内に従って MCP のツール read_rules でルールの本文を取得し、"
-    "同じ書き込みをやり直してください。read_rules には session_id を渡さないでください。"
+    "止められたら、案内に従って Read でルールの本文を読み、"
+    "同じ書き込みをやり直してください。"
 )
 WRITE_THEN_CAT_PROMPT = (
     "Write で {target} に「hello」と書いてください。"
-    "止められたら、案内に従って、ルールの本文を MCP のツールではなく Bash の cat で読み、"
+    "止められたら、案内に従って、ルールの本文を Read ではなく Bash の cat で読み、"
     "同じ書き込みをやり直してください。"
 )
 
@@ -47,12 +46,13 @@ def test_normal(
     # 実行
     run = run_claude(
         WRITE_THEN_READ_PROMPT.format(target=target),
-        allow=["Write", "Edit", READ_RULES_TOOL],
+        allow=["Write", "Edit", "Read"],
         max_turns=8,
     )
     # 検証
     assert run.denied_tools[0] == "Write"
     assert str(rule) in run.denial_reasons[0]
+    assert "Read で読んでから" in run.denial_reasons[0]
     assert body_marker in "\n".join(run.tool_results.values())
     assert "hello" in target.read_text(encoding="utf-8")
 
@@ -70,7 +70,7 @@ def test_normal_when_read_by_bash(
     run = run_claude(
         WRITE_THEN_CAT_PROMPT.format(target=target),
         allow=["Write", "Edit", "Bash"],
-        deny=[READ_RULES_TOOL],
+        deny=["Read"],
         max_turns=8,
     )
     # 検証
@@ -90,7 +90,7 @@ def test_normal_when_after_compact(
     first_target = e2e_project / "first.txt"
     first_run = run_claude(
         WRITE_THEN_READ_PROMPT.format(target=first_target),
-        allow=["Write", "Edit", READ_RULES_TOOL],
+        allow=["Write", "Edit", "Read"],
         max_turns=8,
     )
     run_claude("/compact", resume=first_run.session_id, max_turns=None)
@@ -98,7 +98,7 @@ def test_normal_when_after_compact(
     # 実行
     run = run_claude(
         WRITE_THEN_READ_PROMPT.format(target=second_target),
-        allow=["Write", "Edit", READ_RULES_TOOL],
+        allow=["Write", "Edit", "Read"],
         resume=first_run.session_id,
         max_turns=8,
     )

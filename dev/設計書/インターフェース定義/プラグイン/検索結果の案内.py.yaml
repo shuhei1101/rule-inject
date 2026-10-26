@@ -338,7 +338,7 @@ response:
     notes: 案内か知らせがあるときだけ出力する。無いときは標準出力に何も出さない
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 検索で当たったファイルに未読のルールがあること・読むかは任意であること・読み方（MCP のツール `read_rules`）・この案内はルールごとにセッションで 1 回だけ出ることと、ルールの場所。索引・記録が読めないか書けないときはその場所と理由
+    description: 検索で当たったファイルに未読のルールがあること・読むかは任意であること・読み方（Read）・この案内はルールごとにセッションで 1 回だけ出ることと、ルールの場所。索引・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 「やり直してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
 response_example: |-
@@ -346,7 +346,7 @@ response_example: |-
   {
     "hookSpecificOutput": {
       "hookEventName": "PostToolUse",
-      "additionalContext": "検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は read_rules に場所を渡して本文を取得してください。この案内はルールごとにセッションで 1 回だけ出ます。\n- /home/user/rules/python.md"
+      "additionalContext": "検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。\n- /home/user/rules/python.md"
     }
   }
   ```

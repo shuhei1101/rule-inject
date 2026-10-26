@@ -30,9 +30,6 @@ CLAUDE_BIN_ENV = "E2E_CLAUDE_BIN"
 CLAUDE_MODEL_ENV = "E2E_CLAUDE_MODEL"
 CLAUDE_TIMEOUT_SEC = 900
 DEFAULT_MAX_TURNS = 5
-# MCP サーバーの起動の待ち時間（ミリ秒）。入れた直後の最初の起動は uv が依存を取得する分だけ遅い
-MCP_TIMEOUT_MS = "60000"
-READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 # git が管理しているファイルと、管理外で .gitignore にも載らないファイルを、パスを NUL 区切りで返す
 GIT_LIST_FILES = ("git", "ls-files", "-co", "--exclude-standard", "-z")
 SECONDS_PER_DAY = 86_400
@@ -305,7 +302,6 @@ def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
         env = {
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }
-        env.setdefault("MCP_TIMEOUT", MCP_TIMEOUT_MS)
         completed = subprocess.run(
             command,
             cwd=e2e_project,

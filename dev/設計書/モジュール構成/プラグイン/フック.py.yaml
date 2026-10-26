@@ -6,13 +6,12 @@ directory: |-
   ├── plugin.json                 # プラグインの名前（rule-inject）と版
   └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
-  ├── hooks.json                  # 7 つのフックの matcher・timeout（1 秒）・コマンド
+  ├── hooks.json                  # 6 つのフックの matcher・timeout（1 秒）・コマンド
   └── run.py                      # src/ を sys.path に足して引数のフックを動かす
   src/rule_inject/hooks/
   ├── __init__.py
   ├── _runner.py                  # 標準入出力・想定外の例外・ログの共通処理
   ├── rule_guide.py               # ルール案内（PreToolUse）
-  ├── session_id_injection.py     # セッションIDの付与（PreToolUse）
   ├── record_read.py              # 既読の記録（PostToolUse）
   ├── search_guide.py             # 検索結果の案内（PostToolUse）
   ├── discard_read.py             # 既読の記録の破棄（PreCompact）
@@ -20,11 +19,6 @@ directory: |-
   └── work_rules.py               # 作業の決まりの注入（SessionStart）
   ```
 constants:
-  - name: OWN_TOOL_PREFIX
-    title: このプラグインの MCP のツール名の頭
-    container: hooks/rule_guide.py
-    summary: ルール案内が対象外にするツール名の頭
-    value: '`mcp__plugin_rule-inject_rule-inject__`'
   - name: TOOL_OPERATIONS
     title: ツールと操作の種別
     container: hooks/rule_guide.py
@@ -49,8 +43,6 @@ constants:
     entries:
       - key: rule_guide
         value: '`("rule_guide", guide_rules, 止めずに additionalContext で知らせる)`'
-      - key: session_id_injection
-        value: '`("session_id_injection", inject_session_id, 出力しない)`'
       - key: record_read
         value: '`("record_read", record_read, additionalContext で知らせる)`'
       - key: discard_read
@@ -88,7 +80,6 @@ function_types:
       description: 出力する JSON
     implementations:
       - target: guide_rules
-      - target: inject_session_id
       - target: record_read
       - target: discard_read
       - target: work_rules
@@ -185,14 +176,13 @@ functions:
       type: dict[str, Any] | None
       description: '止める案内（permissionDecision: deny）・止めない案内（additionalContext）・なし'
     process: |-
-      1. `tool_name` が `OWN_TOOL_PREFIX` で始まれば None
-      2. `load_indexes` で索引を読む。読めない索引と展開できずに読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
-      3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）
-      4. 当たったルールから `read_record` の既読を除く。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
-      5. 止めるルールがあれば deny と `build_guidance` を返す（案内済みにはしない）
-      6. 止めるルールが無ければ、`read_guided` の案内済みを除く。読めなければ未案内として扱い、ログ（`read_record`）と知らせの文に回す
-      7. 残ったルールを `build_guidance` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
-      8. 案内と知らせを additionalContext にする（どちらも無ければ None）
+      1. `load_indexes` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
+      2. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）
+      3. 当たったルールから `read_record` の既読を除く。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
+      4. 止めるルールがあれば deny と `build_guidance` を返す（案内済みにはしない）
+      5. 止めるルールが無ければ、`read_guided` の案内済みを除く。読めなければ未案内として扱い、ログ（`read_record`）と知らせの文に回す
+      6. 残ったルールを `build_guidance` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
+      7. 案内と知らせを additionalContext にする（どちらも無ければ None）
     unit_tests:
       - name: test_handle_when_blocked
         case: 正常
@@ -222,12 +212,6 @@ functions:
         case: 正常
         summary: Grep がフォルダを指すときは照合しない
         condition: Grep の `path` がフォルダ
-        mock: なし
-        expected: None
-      - name: test_handle_when_own_tool
-        case: 正常
-        summary: このプラグインのツールは対象外
-        condition: '`mcp__plugin_rule-inject_rule-inject__read_rules`、`tools: ["mcp__*"]`'
         mock: なし
         expected: None
       - name: test_handle_when_index_unreadable
@@ -266,41 +250,6 @@ functions:
         condition: '`tools: ["mcp__*__search_*"]`・`args` に `kind: ["rule"]`・`on: [mcp]` のエントリ。`tool_input` が `{"kind": "rule"}` の呼び出しと `{"kind": "note"}` の呼び出し'
         mock: なし（索引と記録フォルダは一時ファイル）
         expected: 前者は deny、後者は None
-  - name: inject_session_id
-    title: セッションIDの付与の処理
-    container: hooks/session_id_injection.py
-    usecase: ルールの本文を取得する
-    summary: tool_input を写して session_id を上書きした updatedInput を返す
-    kind: フック
-    scope: public
-    inherits: HookHandler
-    args:
-      - name: payload
-        type: dict[str, Any]
-        required: true
-        passing: positional
-        description: PreToolUse の入力
-      - name: env
-        type: Mapping[str, str]
-        required: true
-        passing: positional
-        description: 環境変数（使わない）
-    returns:
-      type: dict[str, Any]
-      description: '`hookSpecificOutput.updatedInput`（permissionDecision は載せない）'
-    unit_tests:
-      - name: test_inject_session_id
-        case: 正常
-        summary: 元の引数を写して足す
-        condition: '`tool_input` に locations と paths'
-        mock: なし
-        expected: updatedInput に元の引数と入力の session_id、permissionDecision が無い
-      - name: test_inject_session_id_when_model_supplied
-        case: 正常
-        summary: モデルの値を上書きする
-        condition: '`tool_input.session_id` が `model-supplied`'
-        mock: なし
-        expected: updatedInput.session_id が入力の session_id
   - name: record_read
     title: 既読の記録の処理
     container: hooks/record_read.py
@@ -324,12 +273,11 @@ functions:
       type: dict[str, Any] | None
       description: 既読の記録か既読の履歴に書けなかったときだけ additionalContext
     process: |-
-      1. `tool_name` が `OWN_TOOL_PREFIX` で始まるなら None を返す（`read_rules` は自分で既読と履歴を書く）
-      2. 既読にする場所を決める。Read は `file_path`、Bash は `extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの、`mcp__` で始まるツールは `match_read_by(entries, tool_name, tool_input)`
-      3. 場所が無ければ None を返す
-      4. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と additionalContext にして返す（履歴へは書かない）
-      5. `append_history(state_dir, session_id, locations, method=..., tool=tool_name)` で既読の履歴へ書く。method は Read が `ReadMethod.READ`、Bash が `ReadMethod.BASH`、MCP のツールが `ReadMethod.MCP`
-      6. HistoryWriteError はログ（`write_history`）と、場所と理由を載せた additionalContext にして返す（既読の記録はそのまま残す）
+      1. 既読にする場所を決める。Read は `file_path`、Bash は `extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの、`mcp__` で始まるツールは `match_read_by(entries, tool_name, tool_input)`。`load_indexes` の `failures`（URL のために読み飛ばしたエントリを含む）は知らせず、ログにも書かない
+      2. 場所が無ければ None を返す
+      3. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と additionalContext にして返す（履歴へは書かない）
+      4. `append_history(state_dir, session_id, locations, method=..., tool=tool_name)` で既読の履歴へ書く。method は Read が `ReadMethod.READ`、Bash が `ReadMethod.BASH`、MCP のツールが `ReadMethod.MCP`
+      5. HistoryWriteError はログ（`write_history`）と、場所と理由を載せた additionalContext にして返す（既読の記録はそのまま残す）
     unit_tests:
       - name: test_record_read_when_read_tool
         case: 正常
@@ -367,18 +315,18 @@ functions:
         condition: '`tools: ["mcp__*"]` を持ち `read_by` の無いエントリ、`tool_name` が `mcp__docs__get_doc`'
         mock: なし
         expected: 記録ファイルも履歴ファイルも無い、戻り値 None
-      - name: test_record_read_when_own_tool
-        case: 正常
-        summary: 自分のツールは何もしない
-        condition: '`read_by` に `tools: ["mcp__*"]` を持つエントリ、`tool_name` が `mcp__plugin_rule-inject_rule-inject__read_rules`'
-        mock: なし
-        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
       - name: test_record_read_when_history_unwritable
         case: 正常
         summary: 履歴に書けないとき既読を残して理由を返す
         condition: Read、ルールの場所、記録フォルダに `{id}.history.jsonl` という名前のフォルダを置く
         mock: なし
         expected: 記録ファイルに場所、additionalContext に場所と理由、ログに `write_history` の行
+      - name: test_record_read_when_rule_is_url
+        case: 正常
+        summary: '`rule` が URL のエントリは `read_by` に当たっても記録せず、知らせもしない'
+        condition: '`rule: https://example.com/a.md`・`read_by` に `tools: ["mcp__docs__get_doc"]` を持つエントリだけ、`tool_name` が `mcp__docs__get_doc`'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルもログのファイルも無い、戻り値 None
   - name: discard_read
     title: 既読の記録の破棄の処理
     container: hooks/discard_read.py
@@ -638,13 +586,11 @@ functions:
         mock: なし
         expected: additionalContext に場所と記録ファイルの理由、ログに `write_record`
 notes:
-  hooks.json: '7 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、セッションIDの付与が `mcp__plugin_rule-inject_rule-inject__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
-  標準ライブラリだけで動かす: '`rule_inject.hooks` とそこから呼ぶ `rule_inject.features.*`・`rule_inject.shared` は `mcp` を import しない。`mcp` を import するのは `rule_inject.server` だけ'
+  hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
   Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
 test_files:
   - tests/unit/rule_inject/hooks/test_runner.py
   - tests/unit/rule_inject/hooks/test_rule_guide.py
-  - tests/unit/rule_inject/hooks/test_session_id_injection.py
   - tests/unit/rule_inject/hooks/test_record_read.py
   - tests/unit/rule_inject/hooks/test_search_guide.py
   - tests/unit/rule_inject/hooks/test_discard_read.py

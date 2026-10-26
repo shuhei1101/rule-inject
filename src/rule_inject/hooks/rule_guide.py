@@ -27,8 +27,6 @@ from rule_inject.shared.errors import RecordReadError, RecordWriteError
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
 from rule_inject.shared.paths import log_dir, resolve_location, state_dir
 
-# このプラグインの MCP のツール名の頭（ルールを読むためのツールが止められないよう対象外にする）
-OWN_TOOL_PREFIX = "mcp__plugin_rule-inject_rule-inject__"
 MCP_TOOL_PREFIX = "mcp__"
 # ツール名から操作の種別への対応
 TOOL_OPERATIONS: dict[str, Operation] = {
@@ -110,8 +108,6 @@ def _log_record_failure(
 
 def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る。"""
-    if payload["tool_name"].startswith(OWN_TOOL_PREFIX):
-        return None
     folder = state_dir(env)
     log_folder = log_dir(env)
     log_path = log_file_path(log_folder, datetime.now(UTC).date())
