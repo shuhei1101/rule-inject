@@ -1,0 +1,1 @@
+# PoC: Read と MCP のツールの PostToolUse の tool_response の構造
