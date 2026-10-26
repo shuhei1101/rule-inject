@@ -376,6 +376,43 @@ scenarios:
       - 対象のファイルに中身が書かれている
       - セッションの記録（transcript）に、読み飛ばした索引の場所・読めなかったパターン・理由が載っている
     test: test_error_when_regex_unreadable
+  - name: 正常シナリオ（読んだ後に変わったルールを案内する）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML
+      - name: 既読の記録
+        description: そのセッションでルールの場所が既読になっている
+        notes: 前の実行でルールの本文を Read で読んだセッションを `--resume {session_id}` で続ける
+      - name: ルールの書き換え
+        description: 続ける前に、テストがルールの本文に 1 行を足す
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所（書く操作が必須）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 既読（読んだ時点の本文のハッシュ）
+        H->>H: 今のルールの本文のハッシュと比べる
+        H-->>CC: ハッシュが違うため未読として操作を止め、ルールの場所と読み方を案内する
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Write が載っている'
+      - 止めた理由の文面に、ルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている
+      - 対象のファイルが作られていない
+    test: test_normal_when_rule_changed_after_read
 lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
 issue: 2
 primary_actor: Claude Code のセッション
