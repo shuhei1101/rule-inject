@@ -353,8 +353,8 @@ functions:
       type: frozenset[str]
       description: 案内済みの場所。ファイルが無ければ空
     process: |-
-      1. `{state_dir}/{session_id}{GUIDED_SUFFIX}` を `read_record` と同じ規則で読む（空行を除いた行の集合。無ければ空）
-      2. `read_record` と共通の内部の関数で読み、ファイル名の末尾だけを変える
+      1. `{state_dir}/{session_id}{GUIDED_SUFFIX}` を UTF-8 で読み、空行を除いた行の集合にする（無ければ空）
+      2. ファイルを読んで空行を除く部分だけを `read_record` と共通の内部の関数で行う。場所とハッシュに分ける処理は `read_record` だけが持つ
     exceptions:
       - name: RecordReadError
         condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
@@ -362,7 +362,7 @@ functions:
       - name: test_read_guided
         case: 正常
         summary: 案内済みの記録を集合で返す
-        condition: 同じセッションの `{id}.txt`（場所 A）と `{id}.guided.txt`（場所 B が 2 行）
+        condition: 同じセッションの `{id}.txt`（場所 A とハッシュの行）と `{id}.guided.txt`（場所 B が 2 行）
         mock: なし
         expected: B だけの 1 件の集合（既読の記録を読まない）
       - name: test_read_guided_when_missing
