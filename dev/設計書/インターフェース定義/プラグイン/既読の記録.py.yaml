@@ -437,7 +437,7 @@ constraints:
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
   - item: 記録の置き場所
-    constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 1 場所）'
+    constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 場所とハッシュの組）'
     notes: 書式は ER 図「既読の記録」
   - item: 記録する場所
     constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。Read は全体を読んだときだけ（制約「Read の全体の判定」）。MCP のツールは、結果に書式に従う文書が 1 つでもあれば、`scope` が `full` の文書の場所のうち索引に載ったルールの場所と同じものだけ（制約「MCP の結果の文書」）。書式に従う文書が無いときは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない
