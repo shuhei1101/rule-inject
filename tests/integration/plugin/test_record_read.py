@@ -10,6 +10,11 @@ from typing import Any
 
 import pytest
 
+# 本文が `# 規約\n`（1 行）のルールの本文のハッシュ
+HASH_RULE = "sha256:2bd9e5f1266128992c621bc85f433d4ab35c1307ec01c91c7e1efef9068d0fa8"
+# 1 行のルールを先頭から最後まで読んだ Read の結果
+WHOLE_READ = {"file": {"startLine": 1, "numLines": 1, "totalLines": 1}}
+
 
 @pytest.fixture
 def rule_index(
@@ -35,11 +40,16 @@ def test_normal_when_read_by_read_tool(
     """Read で読んだルールの場所を記録する（正常系）。"""
     # 準備
     index, rule = rule_index
-    payload = hook_payload("PostToolUse", tool_name="Read", tool_input={"file_path": str(rule)})
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=WHOLE_READ,
+    )
     # 実行
     completed = run_hook("record_read", payload, index=index)
     # 検証
-    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_RULE}"]
     history = read_history()
     assert len(history) == 1
     assert history[0]["method"] == "read"
@@ -70,7 +80,7 @@ def test_normal_when_read_by_bash(
     # 実行
     run_hook("record_read", payload, index=index)
     # 検証
-    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_RULE}"]
     history = read_history()
     assert len(history) == 1
     assert history[0]["method"] == "bash"
@@ -90,7 +100,12 @@ def test_normal_when_not_rule(
     index, _ = rule_index
     other = tmp_path / "other.md"
     other.write_text("# other\n", encoding="utf-8")
-    payload = hook_payload("PostToolUse", tool_name="Read", tool_input={"file_path": str(other)})
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(other)},
+        tool_response=WHOLE_READ,
+    )
     # 実行
     run_hook("record_read", payload, index=index)
     # 検証
@@ -113,7 +128,12 @@ def test_error_when_record_unwritable(
     unwritable(state_dir, 0o555)
     log_folder.mkdir()
     unwritable(log_folder, 0o555)
-    payload = hook_payload("PostToolUse", tool_name="Read", tool_input={"file_path": str(rule)})
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=WHOLE_READ,
+    )
     # 実行
     completed = run_hook("record_read", payload, index=index)
     # 検証
@@ -147,12 +167,15 @@ def test_normal_when_read_by_mcp_tool(
         )
     )
     payload = hook_payload(
-        "PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "python"}
+        "PostToolUse",
+        tool_name="mcp__docs__get_doc",
+        tool_input={"id": "python"},
+        tool_response=json.dumps({"result": "# 規約\n"}),
     )
     # 実行
     completed = run_hook("record_read", payload, index=index)
     # 検証
-    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_RULE}"]
     history = read_history()
     assert len(history) == 1
     assert history[0]["method"] == "mcp"
@@ -243,13 +266,141 @@ def test_error_when_history_unwritable(
     (state_dir / f"{session_id}.history.jsonl").mkdir(parents=True)
     log_folder.mkdir()
     unwritable(log_folder, 0o555)
-    payload = hook_payload("PostToolUse", tool_name="Read", tool_input={"file_path": str(rule)})
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=WHOLE_READ,
+    )
     # 実行
     completed = run_hook("record_read", payload, index=index)
     # 検証
-    assert read_lines(state_dir / f"{session_id}.txt") == [str(rule)]
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_RULE}"]
     context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
     assert str(rule) in context
     assert "IsADirectoryError" in context
     assert '"operation": "write_history"' in completed.stderr
+    assert completed.returncode == 0
+
+
+def test_normal_when_read_partially(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_index: tuple[Path, Path],
+    state_dir: Path,
+    session_id: str,
+) -> None:
+    """Read で一部だけを読んだときは記録しない（正常系）。"""
+    # 準備
+    index, rule = rule_index
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response={"file": {"startLine": 5, "numLines": 7, "totalLines": 11}},
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert not (state_dir / f"{session_id}.history.jsonl").exists()
+    assert completed.returncode == 0
+
+
+def test_normal_when_read_by_mcp_document(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """MCP のツールの結果に載った `scope` が `full` のルールの文書の場所を記録する（正常系）。"""
+    # 準備
+    full_rule = rule_file("python.md")
+    summary_rule = rule_file("markdown.md")
+    index = make_index(
+        index_text(
+            {"rule": str(full_rule), "paths": ["**/*.py"]},
+            {"rule": str(summary_rule), "paths": ["**/*.md"]},
+        )
+    )
+    # 属性の `"` が JSON の中で `\"` になった形で渡す
+    markdown = (
+        f'<document path="{full_rule}" scope="full"># 規約</document>\n'
+        f'<document path="{summary_rule}" scope="summary">説明</document>'
+    )
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"query": "規約"},
+        tool_response=json.dumps({"result": markdown}),
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{full_rule}\t{HASH_RULE}"]
+    history = read_history()
+    assert len(history) == 1
+    assert history[0]["method"] == "mcp"
+    assert history[0]["tool"] == "mcp__docs__search_docs"
+    assert history[0]["location"] == str(full_rule)
+    assert completed.returncode == 0
+
+
+def test_normal_when_read_by_mcp_json_item(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_index: tuple[Path, Path],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """MCP のツールの結果の、`path`・`scope` を持つ項目の場所を記録する（正常系）。"""
+    # 準備
+    index, rule = rule_index
+    response = {"items": [{"path": str(rule), "scope": "full", "body": "# 規約"}]}
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"query": "規約"},
+        tool_response=json.dumps(response),
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_RULE}"]
+    assert completed.returncode == 0
+
+
+def test_normal_when_mcp_document_unclosed(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    state_dir: Path,
+    session_id: str,
+) -> None:
+    """閉じタグの無い `<document>` は書式に従う文書として数えず、`read_by` で照合する（正常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    index = make_index(
+        index_text({"rule": str(rule), "read_by": [{"tools": ["mcp__docs__get_doc"]}]})
+    )
+    # ツール名を `read_by` に当てず、どちらの照合でも記録されないことを確かめる
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"query": "規約"},
+        tool_response=f'<document path="{rule}" scope="full"># 規約',
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert not (state_dir / f"{session_id}.history.jsonl").exists()
     assert completed.returncode == 0

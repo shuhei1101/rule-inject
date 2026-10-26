@@ -13,6 +13,8 @@ import pytest
 
 RULE = "/r/python.md"
 OTHER_RULE = "/r/markdown.md"
+# 本文が `# 規約\n` のルールの本文のハッシュ
+HASH_RULE = "sha256:2bd9e5f1266128992c621bc85f433d4ab35c1307ec01c91c7e1efef9068d0fa8"
 
 
 @pytest.fixture
@@ -197,7 +199,8 @@ def test_normal_when_read_or_guided(
     state_dir: Path,
     session_id: str,
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
-    two_rule_index: Path,
+    write_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
     src_files: Path,
     search_payload: Callable[..., dict[str, Any]],
     write_record: Callable[..., Path],
@@ -206,11 +209,16 @@ def test_normal_when_read_or_guided(
 ) -> None:
     """既読のルールと案内済みのルールは案内しない（正常系）。"""
     # 準備
-    write_record([RULE])
+    rule = rule_file("python.md")
+    index = write_index(
+        {"rule": str(rule), "paths": ["**/*.py"], "on": ["write"]},
+        {"rule": OTHER_RULE, "paths": ["**/*.md"], "on": ["write"]},
+    )
+    write_record([f"{rule}\t{HASH_RULE}"])
     write_guided([OTHER_RULE])
     payload = search_payload("Glob", {"filenames": ["src/app.py", "src/doc.md"], "numFiles": 2})
     # 実行
-    completed = run_hook("search_guide", payload, index=two_rule_index)
+    completed = run_hook("search_guide", payload, index=index)
     # 検証
     assert completed.stdout == ""
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [OTHER_RULE]
@@ -285,4 +293,32 @@ def test_error_when_guided_record_unwritable(
     logged = read_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "write_record"
+    assert completed.returncode == 0
+
+
+def test_normal_when_rule_changed_after_read(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    src_files: Path,
+    search_payload: Callable[..., dict[str, Any]],
+    write_record: Callable[..., Path],
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """読んだ後に変わったルールを未読として案内する（正常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    index = write_index({"rule": str(rule), "paths": ["**/*.py"], "on": ["write"]})
+    write_record([f"{rule}\t{HASH_RULE}"])
+    # 記録を作った後に、ルールのファイルへ 1 行を追記する
+    rule.write_text("# 規約\n追記\n", encoding="utf-8")
+    payload = search_payload("Glob", {"filenames": ["src/app.py"], "numFiles": 1})
+    # 実行
+    completed = run_hook("search_guide", payload, index=index)
+    # 検証
+    context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert str(rule) in context
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [str(rule)]
     assert completed.returncode == 0

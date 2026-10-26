@@ -12,6 +12,8 @@ from typing import Any
 import pytest
 
 RULE = "/r/python.md"
+# 本文が `# 規約\n` のルールの本文のハッシュ
+HASH_RULE = "sha256:2bd9e5f1266128992c621bc85f433d4ab35c1307ec01c91c7e1efef9068d0fa8"
 
 
 @pytest.fixture
@@ -66,12 +68,14 @@ def test_normal_when_already_read(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
     write_record: Callable[..., Path],
 ) -> None:
     """当たるルールが既読なら何も出さない（正常系）。"""
     # 準備
-    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
-    write_record([RULE])
+    rule = rule_file("python.md")
+    index = write_index({"rule": str(rule), "paths": ["**/*.py"], "on": ["write"]})
+    write_record([f"{rule}\t{HASH_RULE}"])
     # 実行
     completed = run_hook("rule_guide", write_payload(), index=index)
     # 検証
@@ -581,4 +585,27 @@ def test_error_when_rule_is_url(
     logged = read_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_index"
+    assert completed.returncode == 0
+
+
+def test_normal_when_rule_changed_after_read(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    write_record: Callable[..., Path],
+) -> None:
+    """読んだ後に変わったルールを未読として止めて案内する（正常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    index = write_index({"rule": str(rule), "paths": ["**/*.py"], "on": ["write"]})
+    write_record([f"{rule}\t{HASH_RULE}"])
+    # 記録を作った後に、ルールのファイルへ 1 行を追記する
+    rule.write_text("# 規約\n追記\n", encoding="utf-8")
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert str(rule) in output["permissionDecisionReason"]
     assert completed.returncode == 0
