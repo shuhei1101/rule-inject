@@ -34,6 +34,20 @@ def test_extract_documents_when_unclosed() -> None:
     assert result == (ResultDocument(path="b.md", scope="full"),)
 
 
+def test_extract_documents_when_nested() -> None:
+    """本文に入れ子で載った `<document>` は数えず、外側の文書を取り出す（正常系）。"""
+    # 準備
+    response = (
+        '<document path="a.md" scope="full">'
+        '例: <document path="b.md" scope="full">本文 B</document>'
+        "</document>"
+    )
+    # 実行
+    result = extract_documents(response)
+    # 検証
+    assert result == (ResultDocument(path="a.md", scope="full"),)
+
+
 def test_extract_documents_when_json_items() -> None:
     """どの深さのオブジェクトの `path`・`scope` も取り出す（正常系）。"""
     # 準備
