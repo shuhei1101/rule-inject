@@ -41,8 +41,8 @@ constants:
   - name: DOCUMENT_PATTERN
     title: 文書のタグ
     container: features/document/service.py
-    summary: 閉じタグまでそろった `<document>` の範囲と、開きタグの属性の部分（`re.DOTALL`、最短一致）
-    value: '`<document\b([^>]*)>.*?</document>`'
+    summary: 閉じタグまでそろった `<document>` の範囲と、開きタグの属性の部分（`re.DOTALL`、最短一致。本文の途中に別の `<document` の開きタグを含むものは閉じた文書として数えない）
+    value: '`<document\b([^>]*)>(?:(?!<document\b).)*?</document>`'
   - name: ATTRIBUTE_PATTERN
     title: タグの属性
     container: features/document/service.py
