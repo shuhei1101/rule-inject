@@ -722,7 +722,7 @@ functions:
       description: 書いたログのファイルの場所（その日の `log_file_path`）
     process: |-
       1. `write_log(default_log_dir(env), component, operation="read_settings", ...)` で、設定ファイルの場所と理由を書く
-      2. `log_file_path(default_log_dir(env))` を返す
+      2. `log_file_path(default_log_dir(env), 今日（UTC）)` を返す
     unit_tests:
       - name: test_log_settings_failure
         case: 正常
