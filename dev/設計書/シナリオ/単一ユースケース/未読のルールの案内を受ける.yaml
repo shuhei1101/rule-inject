@@ -480,6 +480,7 @@ scenarios:
       - '`claude -p` の結果の `permission_denials` が空'
       - 対象のファイルに中身が書かれている
       - この実行のセッションの記録（transcript）に、ルールの場所を載せた案内の文面が無い
+      - この実行のセッションの記録（transcript）に、読めなかった索引の場所と理由が載っていない
     test: test_normal_when_entry_disabled
 lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
 issue: 2
