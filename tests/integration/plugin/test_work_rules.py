@@ -44,3 +44,28 @@ def test_normal_when_record_left_after_compact(
     assert str(record_file) in context
     assert str(log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
     assert completed.returncode == 0
+
+
+def test_error_when_settings_unreadable(
+    tmp_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """圧縮の後に設定ファイルが読めないとき、作業の決まりに続けて理由を載せる（異常系）。"""
+    # 準備
+    missing = tmp_path / "config" / "missing.yaml"
+    payload = hook_payload("SessionStart", source="compact")
+    # 実行
+    completed = run_hook(
+        "work_rules", payload, no_config=True, extra_env={"RULE_INJECT_CONFIG": str(missing)}
+    )
+    # 検証
+    context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "空の内容で作り" in context
+    assert str(missing) in context
+    assert "FileNotFoundError" in context
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
+    assert completed.returncode == 0

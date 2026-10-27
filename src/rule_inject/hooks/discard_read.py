@@ -6,9 +6,10 @@ from collections.abc import Mapping
 from typing import Any
 
 from rule_inject.features.record import delete_guided, delete_record, is_valid_session_id
-from rule_inject.shared.errors import RecordDeleteError
+from rule_inject.hooks._runner import log_settings_failure
+from rule_inject.shared.errors import RecordDeleteError, SettingsReadError
 from rule_inject.shared.logger import Component, LogOperation, write_log
-from rule_inject.shared.paths import log_dir, state_dir
+from rule_inject.shared.settings import load_settings
 
 
 def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
@@ -17,15 +18,20 @@ def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
     # 形が外れた session_id では何も消さない
     if not is_valid_session_id(session_id):
         return
-    folder = state_dir(env)
+    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書いて何も消さない
+    try:
+        settings = load_settings(env)
+    except SettingsReadError as exc:
+        log_settings_failure(Component.DISCARD_READ, exc, env, session_id)
+        return
     # 片方が消せなくても、もう片方を消す
     for delete in (delete_record, delete_guided):
         try:
-            delete(folder, session_id)
+            delete(settings.state_dir, session_id)
         except RecordDeleteError as exc:
             # 消し残りは、圧縮の後の作業の決まりの注入が見つけて知らせる
             write_log(
-                log_dir(env),
+                settings.log_dir,
                 component=Component.DISCARD_READ,
                 operation=LogOperation.DELETE_RECORD,
                 reason=exc.reason,

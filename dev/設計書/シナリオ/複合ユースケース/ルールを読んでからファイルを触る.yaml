@@ -9,7 +9,7 @@ scenarios:
         description: ローカルに置いたルールの Markdown
       - name: 索引
         description: ルールの場所と、当てるパスの glob（対象のファイルに当たる）・書く操作を必須とするエントリを 1 つ持つ YAML
-        notes: プロジェクト用の環境変数で指す。対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに当たる要素で指す。対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける'
       - name: 書く操作の許可
         description: '`--allowedTools` で Write と Edit を許可する'
         notes: Claude Code は作業の決まりに従い、対象のファイルを Write で空で作ってから Edit で中身を書くことがある
@@ -187,7 +187,7 @@ stakeholders:
 trigger: Claude Code が、索引のエントリに当たるファイルを書こうとする
 preconditions:
   - プラグインが Claude Code に読み込まれている
-  - 索引を指す環境変数が設定され、対象のファイルに当たるエントリ（書く操作が必須）が 1 つある
+  - 設定ファイルで指した場所に索引が置かれ、対象のファイルに当たるエントリ（書く操作が必須）が 1 つある
 success_guarantee: 索引が読め、フックが時間内に終わる限り、対象のファイルは当たるルールの本文を読んだ後にだけ書かれる。
-minimal_guarantee: 索引が読め、フックが時間内に終わる限り、ルールを読むまで対象のファイルは書かれない。索引が読めないときは、読めなかった索引の場所と理由がコンテキストに載る。
+minimal_guarantee: 設定ファイルと索引が読め、フックが時間内に終わる限り、ルールを読むまで対象のファイルは書かれない。索引か設定ファイルが読めないときは、読めなかった場所と理由がコンテキストに載る。
 test_file: tests/e2e/複合ユースケース/test_read_rule_then_touch_file.py

@@ -69,7 +69,7 @@ flows:
       - name: Mock
         description: なし
       - name: 既読の記録
-        description: '`RULE_INJECT_STATE_DIR` がまだ無いフォルダを指す'
+        description: '設定ファイルの `global.state_dir` がまだ無いフォルダを指す'
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -94,7 +94,7 @@ flows:
       - name: 既読の記録
         description: 保持期間を過ぎた別のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
       - name: ログのフォルダ
-        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+        description: '設定ファイルの `global.log_dir` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
         notes: 今日のログのファイルも作れないため、標準エラー出力へ出る経路に定まる
       - name: 入力
         description: '`source: startup`'
@@ -122,8 +122,8 @@ flows:
       - name: Mock
         description: なし（今日の日付は実行時の UTC から求める）
       - name: ログ
-        description: '`RULE_INJECT_LOG_DIR` のフォルダに、日付が今日・2 日前・3 日前の `{yyyymmdd}_rule-inject.log` と、名前が形に合わないファイル（`notes.txt`）を置く'
-        notes: '`RULE_INJECT_LOG_RETENTION_DAYS` は置かず、既定の 3 日で動かす。2 日前が残り 3 日前が消えることで境界を確かめる'
+        description: '設定ファイルの `global.log_dir` のフォルダに、日付が今日・2 日前・3 日前の `{yyyymmdd}_rule-inject.log` と、名前が形に合わないファイル（`notes.txt`）を置く'
+        notes: '設定ファイルに `global.log_retention_days` を置かず、既定の 3 日で動かす。2 日前が残り 3 日前が消えることで境界を確かめる'
       - name: 入力
         description: '`source: startup`'
     flow: |-
@@ -146,13 +146,13 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_old_logs
-  - name: 正常系（保持の値を環境変数で変える）
-    summary: 環境変数で指した保持の値で、記録ファイルとログのファイルを消す
+  - name: 正常系（保持の値を設定ファイルで変える）
+    summary: 設定ファイルの保持の値で、記録ファイルとログのファイルを消す
     setup:
       - name: Mock
         description: なし
-      - name: 環境変数
-        description: '`RULE_INJECT_RECORD_RETENTION_DAYS=1`・`RULE_INJECT_LOG_RETENTION_DAYS=1`'
+      - name: 設定ファイル
+        description: '`global.record_retention_days: 1`・`global.log_retention_days: 1`'
       - name: 既読の記録
         description: 別のセッションの記録ファイルを 1 つ置き、最終更新を 2 日前にする
       - name: ログ
@@ -168,7 +168,7 @@ flows:
         participant LG as ログのフォルダ
 
         CC->>C: 標準入力（session_id・source）
-        C->>C: 環境変数から保持の値を読む
+        C->>C: 設定ファイルから保持の値を読む
         C->>ST: 1 日を過ぎた記録ファイルを消す
         C->>LG: 日付が 1 日以上前のログのファイルを消す
         C-->>CC: 終了コード 0
@@ -178,7 +178,7 @@ flows:
       - 1 日前のログのファイルが無い
       - 今日のログのファイルが残っている
       - 終了コードが `0`
-    test: test_normal_when_retention_env
+    test: test_normal_when_retention_configured
   - name: 異常系（ログを消せない・ログにも書けない）
     summary: 保持日数を過ぎたログのファイルを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く
     setup:
@@ -233,35 +233,40 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_legacy_log
-  - name: 正常系（保持の値が不正）
-    summary: 環境変数の保持の値が 1 以上の整数でないときは、既定の値で掃除する
+  - name: 異常系（設定ファイルが読めない・何も消さない）
+    summary: 設定ファイルの保持の値が 1 以上の整数でないとき、既定の値でも掃除せず、ログに書く
     setup:
       - name: Mock
         description: なし
-      - name: 環境変数
-        description: '`RULE_INJECT_LOG_RETENTION_DAYS=0`'
+        notes: '-'
+      - name: 設定ファイル
+        description: '`global.log_retention_days: 0`'
         notes: '`abc` など整数でない値も同じ扱い。単体テストで並べて確かめる'
       - name: ログ
-        description: 日付が今日・2 日前・3 日前のログのファイルを置く
+        description: '`XDG_STATE_HOME` の既定のログのフォルダに、日付が 3 日前のログのファイルを置く'
+        notes: 既定の 3 日でも消さないことを見る
       - name: 入力
         description: '`source: startup`'
+        notes: '-'
     flow: |-
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant C as 既読の記録の掃除
+        participant CFG as 設定ファイル
         participant LG as ログのフォルダ
 
         CC->>C: 標準入力（session_id・source）
-        C->>C: 保持の値が不正なので既定の 3 日を使う
-        C->>LG: 日付が 3 日以上前のログのファイルを消す
+        C->>CFG: 読む（許す値の外）
+        C->>LG: 既定のログのフォルダへ read_settings を追記する
         C-->>CC: 終了コード 0
       ```
     expected:
-      - 3 日前のログのファイルが無い
-      - 今日と 2 日前のログのファイルが残っている
+      - 3 日前のログのファイルが残っている
+      - '今日のログのファイルに `operation: read_settings` の行が 1 行ある'
+      - 標準出力が空
       - 終了コードが `0`
-    test: test_normal_when_invalid_setting
+    test: test_error_when_settings_unreadable
 lead: セッションの開始時に、最終更新から非機能要件「既読の記録の保持期間」を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルと、日付が非機能要件「ログの保持日数」を過ぎたログのファイルを消す。始まったセッション自身の記録ファイルと、記録ファイルでもログのファイルでもないファイルは消さない。
 identifier: sweep_read
 idempotent: true
@@ -291,20 +296,25 @@ exceptions:
   - name: OSError（ログを消せない）
     condition: 保持日数を過ぎたログのファイルか、記録フォルダに残った変更前のログ（`rule-inject.log`）はあるが消せない（権限など）
     notes: フックの中で捕まえ、ログへ `delete_log` を書き、残りのファイルの掃除を続けて終了コード 0 で終える（セッションの開始は止めない）。消せなかったファイルは次のセッションの開始でまた消す
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    notes: フックの中で捕まえ、既定値で動かさず何も消さない。既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える。標準出力には何も出さない（設定ファイルの場所と理由は、操作の前にルール案内が載せる）
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
   - item: 保持期間
-    constraint: 最終更新から 30 日（`RULE_INJECT_RECORD_RETENTION_DAYS` で変えられる）を過ぎた記録ファイルを消す
+    constraint: 最終更新から 30 日（設定ファイルの `global.record_retention_days` で変えられる）を過ぎた記録ファイルを消す
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[既読の記録の保持期間]
   - item: 消す対象
     constraint: 記録フォルダの直下で、名前が `{session_id}.txt`・`{session_id}.guided.txt`・`{session_id}.history.jsonl`（`session_id` の形）に合う通常のファイルと変更前のログ（`rule-inject.log`）、ログのフォルダの直下で、名前が `{yyyymmdd}_rule-inject.log` に合う通常のファイルだけ。それ以外のファイル・サブフォルダ・シンボリックリンクは消さない。案内済みの記録ファイルと既読の履歴ファイルは、既読の記録ファイルと別に自分の最終更新で保持期間を比べる
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
   - item: ログの保持日数
-    constraint: ファイル名の日付が今日（UTC）から 3 日（`RULE_INJECT_LOG_RETENTION_DAYS` で変えられる）以上前のログのファイルを消す。中身は読まない
+    constraint: ファイル名の日付が今日（UTC）から 3 日（設定ファイルの `global.log_retention_days` で変えられる）以上前のログのファイルを消す。中身は読まない
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[ログの保持日数]
+  - item: 設定ファイル
+    constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.state_dir`・`global.log_dir`・`global.record_retention_days`・`global.log_retention_days`
 notes:
   作業の決まりの注入との分担: 同じ `SessionStart` で動く作業の決まりの注入とは別のフックにする。注入は標準出力へ additionalContext を返し、掃除は何も返さない。始まったセッション自身の記録ファイルを消さないため、注入の圧縮の後の消し残りの確認とぶつからない
   ログの掃除を同じフックに載せた理由: ログの掃除も同じ `SessionStart` の契機と保持の値の読み方を使うため、別のフックに分けずこのフックに載せた（名前は `sweep_read` のまま）

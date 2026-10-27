@@ -1,7 +1,7 @@
 title: "ER 図: 既読の記録"
 lead: フックが共有する、セッションごとの既読のルールの場所、フックが止めずに案内したルールの場所、既読にした履歴。
 tables:
-  - name: '{RULE_INJECT_STATE_DIR}/{session_id}.txt'
+  - name: '{state_dir}/{session_id}.txt'
     title: 既読の記録
     datastore: テキストファイル（UTF-8、1 行 = 1 場所とハッシュをタブで区切った組）
     summary: そのセッションで本文を読んだルールの場所と、読んだ時点の本文のハッシュ
@@ -11,7 +11,9 @@ tables:
     retention: そのセッションの次の圧縮まで。圧縮せずに終わったセッションのファイルは、最終更新から非機能要件「既読の記録の保持期間」まで
     deletion: 圧縮の前にファイルごと物理削除する。保持期間を過ぎたファイルは、セッションの開始時にファイルごと物理削除する
     access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
-    description: 複数のフックが別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。
+    description: |-
+      `{state_dir}` は設定『プラグイン』の `global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）。
+      複数のフックが別のプロセスで同時に書くため、行の追記だけで完結する形にする。フォルダが無ければ書く側が作る。
     columns:
       - name: location
         title: ルールの場所
@@ -24,7 +26,7 @@ tables:
         not_null: true
         description: 既読にした時点のルールのファイルの中身（バイト列）の SHA-256。案内する側が今のハッシュと比べ、違えば未読として扱う。ハッシュを持たない行（この列を足す前の書式）は既読として扱わない
         example: sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
-  - name: '{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt'
+  - name: '{state_dir}/{session_id}.guided.txt'
     title: 案内済みの記録
     datastore: テキストファイル（UTF-8、1 行 = 1 場所）
     summary: そのセッションで止めずに案内したルールの場所
@@ -42,7 +44,7 @@ tables:
         not_null: true
         description: 解決後の絶対パス。改行を含まない
     status: planned
-  - name: '{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl'
+  - name: '{state_dir}/{session_id}.history.jsonl'
     title: 既読の履歴
     datastore: JSON Lines（UTF-8、1 行 = 1 回の既読）
     summary: そのセッションでいつ・どの読み方でどのルールを既読にしたか。関連する文書の推薦などほかの仕組みが読む

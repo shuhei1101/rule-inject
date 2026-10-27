@@ -49,6 +49,36 @@ flows:
       - '`additionalContext` に記録を消せなかったことと記録ファイル・ログの場所が載っている'
       - 終了コードが `0`
     test: test_normal_when_record_left_after_compact
+  - name: 異常系（設定ファイルが読めない・理由を載せる）
+    summary: 圧縮の後に設定ファイルが読めないとき、作業の決まりに続けて理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 設定ファイル
+        description: '`RULE_INJECT_CONFIG` が実在しないパスを指す'
+      - name: ログ
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+      - name: 入力
+        description: '`hook_event_name: SessionStart`、`source: compact`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as 作業の決まりの注入
+        participant CFG as 設定ファイル
+        participant LOG as ログ
+
+        CC->>S: 標準入力（SessionStart・compact）
+        S->>CFG: 読む（無い）
+        S->>LOG: 既定のログのフォルダへ read_settings を追記する
+        S-->>CC: additionalContext（作業の決まりと、設定ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` に空で作ってから書く決まりが載っている'
+      - '`additionalContext` に設定ファイルの場所と理由が載っている'
+      - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_settings_unreadable
 lead: セッションの開始時に、新しいファイルは空で作ってから中身を書くという作業の決まりを `additionalContext` で載せる。圧縮の後に始まったときは、消し残った既読の記録があればそのことも載せる。
 idempotent: true
 side_effects: なし（既読の記録ファイルの有無を見るだけ）
@@ -58,7 +88,7 @@ response:
     description: フックの種類
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: '新しいファイルは Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書く、という決まり。`source: compact` で記録ファイルが残っているときは、「圧縮の前に既読の記録を消せず、読んだことになっているルールが案内されないこと」と記録ファイル・ログの場所を続ける'
+    description: '新しいファイルは Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書く、という決まり。`source: compact` で記録ファイルが残っているときは、「圧縮の前に既読の記録を消せず、読んだことになっているルールが案内されないこと」と記録ファイル・ログの場所を続ける。`source: compact` で設定ファイルが読めないときは、設定ファイルの場所と理由を続ける'
     constraints: 10,000 字以内
 exceptions:
   - name: なし（正常終了）
@@ -66,6 +96,9 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 固定の文面を返すだけのため通常は起きない
     notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`source: compact` で、`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    notes: フックの中で捕まえ、消し残りを確かめず、作業の決まりに続けて設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -74,6 +107,8 @@ constraints:
     constraint: 特定の開発基盤や作者の環境を思わせる語を含めない
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+  - item: 設定ファイル
+    constraint: '`source: compact` のときだけ、ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.state_dir`・`global.log_dir`'
 identifier: work_rules
 request:
   - name: '`session_id`'

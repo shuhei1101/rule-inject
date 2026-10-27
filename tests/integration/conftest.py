@@ -40,32 +40,101 @@ def log_folder(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def base_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
-    """このプラグインの環境変数を外し、記録フォルダ・ログのフォルダ・プロジェクトの直下・索引の無い設定フォルダだけを足した環境変数。"""
+def xdg_state_home(tmp_path: Path) -> Path:
+    """既定の記録フォルダとログのフォルダの元になる `XDG_STATE_HOME`（まだ作らない）。"""
+    return tmp_path / "xdg_state"
+
+
+@pytest.fixture
+def default_state_folder(xdg_state_home: Path) -> Path:
+    """`XDG_STATE_HOME` の下の既定の記録フォルダ。"""
+    return xdg_state_home / "rule-inject"
+
+
+@pytest.fixture
+def default_log_folder(default_state_folder: Path) -> Path:
+    """`XDG_STATE_HOME` の下の既定のログのフォルダ。"""
+    return default_state_folder / "logs"
+
+
+@pytest.fixture
+def config_path(tmp_path: Path) -> Path:
+    """`RULE_INJECT_CONFIG` が指す設定ファイルの場所（まだ作らない）。"""
+    return tmp_path / "config" / "settings.yaml"
+
+
+@pytest.fixture
+def settings_text(state_dir: Path, log_folder: Path) -> Callable[..., str]:
+    """記録フォルダとログのフォルダに global の値を重ねた設定ファイルの YAML の文字列を返す factory。"""
+
+    def _text(**global_values: Any) -> str:
+        """global の値（リストはブロックのリスト、空のリストは `[]`）を並べた設定ファイルの文字列を返す。"""
+        values: dict[str, Any] = {"state_dir": str(state_dir), "log_dir": str(log_folder)}
+        values.update(global_values)
+        lines = ["global:"]
+        for key, value in values.items():
+            if isinstance(value, (list, tuple)):
+                lines.append(f"  {key}: []" if not value else f"  {key}:")
+                lines.extend(f'    - "{item}"' for item in value)
+            else:
+                lines.append(f'  {key}: "{value}"')
+        return "\n".join(lines) + "\n"
+
+    return _text
+
+
+@pytest.fixture
+def base_env(tmp_path: Path, xdg_state_home: Path) -> dict[str, str]:
+    """このプラグインの環境変数を外し、プロジェクトの直下・索引の無い設定フォルダ・状態フォルダだけを足した環境変数。"""
     env = {name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")}
-    env["RULE_INJECT_STATE_DIR"] = str(state_dir)
-    env["RULE_INJECT_LOG_DIR"] = str(log_folder)
     env["CLAUDE_PROJECT_DIR"] = str(tmp_path)
     # 既定の索引が実際の設定フォルダの索引を読まないよう、索引の無い一時フォルダを指す
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
+    # 既定の記録フォルダとログのフォルダが実際の状態フォルダを使わないよう、一時フォルダを指す
+    env["XDG_STATE_HOME"] = str(xdg_state_home)
     return env
 
 
 @pytest.fixture
-def run_hook(base_env: dict[str, str]) -> Callable[..., subprocess.CompletedProcess[str]]:
+def run_hook(
+    base_env: dict[str, str], config_path: Path, settings_text: Callable[..., str]
+) -> Callable[..., subprocess.CompletedProcess[str]]:
     """フックを子プロセスとして起動し、標準入力へ JSON を渡して結果を返す factory。"""
 
     def _run(
         name: str,
         payload: dict[str, Any],
         *,
-        index: Path | str | None = None,
+        index: Path | str | Sequence[Path | str] | None = None,
+        global_values: Mapping[str, Any] | None = None,
+        config_text: str | None = None,
+        no_config: bool = False,
+        project_dir: Path | None = None,
         extra_env: Mapping[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        """hooks/run.py に name を渡して起動する。index があればプロジェクト用の索引として指し、extra_env を環境変数に足す。"""
+        """hooks/run.py に name を渡して起動する。
+
+        設定ファイルは、config_text があればその文字列で、無ければ記録フォルダとログのフォルダに
+        index（`global.indexes`）と global_values を重ねた文字列で書き、`RULE_INJECT_CONFIG` で指す。
+        no_config なら設定ファイルを渡さない。project_dir は `CLAUDE_PROJECT_DIR` を差し替え、extra_env を環境変数に足す。
+        """
         env = {**base_env, **(extra_env or {})}
-        if index is not None:
-            env["RULE_INJECT_INDEXES_PROJECT"] = str(index)
+        if project_dir is not None:
+            env["CLAUDE_PROJECT_DIR"] = str(project_dir)
+        if not no_config:
+            values: dict[str, Any] = dict(global_values or {})
+            if index is not None:
+                values["indexes"] = (
+                    [str(index)]
+                    if isinstance(index, (str, Path))
+                    else [str(item) for item in index]
+                )
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.write_text(
+                config_text if config_text is not None else settings_text(**values),
+                encoding="utf-8",
+            )
+            env["RULE_INJECT_CONFIG"] = str(config_path)
         return subprocess.run(
             [sys.executable, str(HOOK_RUN), name],
             input=json.dumps(payload),
@@ -264,6 +333,21 @@ def read_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
         texts = [
             path.read_text(encoding="utf-8")
             for path in sorted(log_folder.glob("*_rule-inject.log"))
+        ]
+        return [json.loads(line) for text in texts for line in text.splitlines()]
+
+    return _read
+
+
+@pytest.fixture
+def read_default_log(default_log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
+    """既定のログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
+
+    def _read() -> list[dict[str, Any]]:
+        """既定のログのフォルダの {yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
+        texts = [
+            path.read_text(encoding="utf-8")
+            for path in sorted(default_log_folder.glob("*_rule-inject.log"))
         ]
         return [json.loads(line) for text in texts for line in text.splitlines()]
 
