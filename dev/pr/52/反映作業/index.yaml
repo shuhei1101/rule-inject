@@ -1,5 +1,5 @@
 利用者の設定ファイルへの移行:
-  説明: 利用者の `~/.claude/settings.json` の `env` にある `RULE_INJECT_INDEXES_USER` などの値を `~/.config/rule-inject/settings.yaml` の `global`・`projects` へ写し、`env` を `RULE_INJECT_CONFIG` だけにする。書き換える前の `settings.json` をバックアップし、切り戻しはバックアップを戻す
+  説明: 利用者の設定フォルダ（`~/.claude/` と、`CLAUDE_CONFIG_DIR` で切り替える `~/.claude-*/`）の `settings.json` のうち、`env` に `RULE_INJECT_` で始まるキーを持つもの全てについて、その値を `~/.config/rule-inject/settings.yaml` の `global`・`projects` の対応するキーへ写し、`env` を `RULE_INJECT_CONFIG` だけにする。書き換える前の各 `settings.json` をバックアップし、切り戻しはバックアップを戻す
   タグ: [設定の移行]
   実行者: tester
   時期: master へ入った後
@@ -10,5 +10,5 @@
   確認: null
   切り戻し: null
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
-  確認方法: "`~/.claude/settings.json` の `env` に `RULE_INJECT_` で始まるキーが `RULE_INJECT_CONFIG` だけあり、その値が指す `settings.yaml` の索引の並びが、移行前の `RULE_INJECT_INDEXES_USER` の値と同じ並びになっている"
+  確認方法: "`~/.claude*/settings.json` の全てで、`env` に `RULE_INJECT_` で始まるキーが `RULE_INJECT_CONFIG` 以外に無く、移行前に持っていた 6 個の環境変数の値が、`RULE_INJECT_CONFIG` が指す `settings.yaml` の対応するキーに入っている"
   状態: "-"
