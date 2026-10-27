@@ -1,6 +1,6 @@
 [project]
 name = "rule-inject"
-version = "0.2.2"
+version = "0.2.3"
 description = "ファイルに当たるルールを案内する Claude Code プラグイン"
 requires-python = ">=3.12"
 dependencies = []
