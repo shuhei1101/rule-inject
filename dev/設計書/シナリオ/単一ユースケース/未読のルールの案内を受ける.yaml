@@ -426,7 +426,8 @@ scenarios:
       - name: 操作
         description: プロンプトで、対象のファイルを Write で書くよう指示する
         notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
@@ -438,6 +439,7 @@ scenarios:
         CF-->>H: 読めない
         H-->>CC: 操作を止めず、読めなかった設定ファイルの場所と理由をコンテキストへ載せる
         CC->>FS: 書く
+      ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - 対象のファイルに中身が書かれている
