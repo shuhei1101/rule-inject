@@ -198,3 +198,8 @@ issue: 2
 primary_actor: Claude Code のセッション
 trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、MCP のツールの呼び出しが終わる
 test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py
+notes:
+  結合テストで確かめる要望: |-
+    次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
+
+    - 無効のエントリだけが指すルールを Read・Bash・そのエントリの `read_by` に当たる MCP のツールで読んでも、既読にしないこと
