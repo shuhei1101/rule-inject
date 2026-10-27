@@ -409,6 +409,58 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
+  - name: 正常系（無効のエントリのルールをReadで読む）
+    summary: '`enabled: false` のエントリだけが指すルールを Read で全体読んでも記録しない'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 'ルールの場所を持ち `enabled: false` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` はそのルールの場所、`tool_response.file` は全体を読んだ結果'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（Read・ルールの場所）
+        P->>IDX: 読む（無効のエントリを外すため当たらない）
+        P-->>CC: 終了コード 0
+    expected:
+      - 記録ファイルが作られていない
+      - 既読の履歴ファイルが作られていない
+      - 終了コードが `0`
+    test: test_normal_when_entry_disabled
+  - name: 正常系（無効のエントリのread_byに当たる）
+    summary: '`enabled: false` のエントリの `read_by` に当たる MCP のツールの呼び出しでは記録しない'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '正常系（MCPのツールで読む）と同じエントリに `enabled: false` を付けたものを 1 つ持つ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: 正常系（MCPのツールで読む）と同じ
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（MCP のツール名・引数・結果）
+        P->>P: 結果から文書を取り出す（書式に従う文書が無い）
+        P->>IDX: read_by に当たるエントリを選ぶ（無効のエントリを外すため当たらない）
+        P-->>CC: 終了コード 0
+    expected:
+      - 記録ファイルが作られていない
+      - 既読の履歴ファイルが作られていない
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_read_by_entry_disabled
 lead: Read か Bash の読むコマンドで全体を読んだパスのうち索引に載ったルールの場所と、MCP のツールの結果に載ったルールの文書の場所（書式に従う文書が無いときは索引の `read_by` に当たったエントリのルールの場所）を、本文のハッシュと一緒にそのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルへルールの場所と本文のハッシュを 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
@@ -480,7 +532,7 @@ constraints:
     constraint: '`{state_dir}/{session_id}.txt`（1 行 = 場所とハッシュの組）'
     notes: 書式は ER 図「既読の記録」
   - item: 記録する場所
-    constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。Read は全体を読んだときだけ（制約「Read の全体の判定」）。MCP のツールは、結果に書式に従う文書が 1 つでもあれば、`scope` が `full` の文書の場所のうち索引に載ったルールの場所と同じものだけ（制約「MCP の結果の文書」）。書式に従う文書が無いときは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない
+    constraint: 'Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。Read は全体を読んだときだけ（制約「Read の全体の判定」）。MCP のツールは、結果に書式に従う文書が 1 つでもあれば、`scope` が `full` の文書の場所のうち索引に載ったルールの場所と同じものだけ（制約「MCP の結果の文書」）。書式に従う文書が無いときは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。`enabled: false` のエントリは、ルールの場所も `read_by` も照合に使わない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない'
     notes: 同じ索引を読むルール案内が、URL のエントリを読み飛ばした理由を案内とログに載せる
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。書けないときは標準エラー出力へ出す

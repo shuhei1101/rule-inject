@@ -822,6 +822,91 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
+  - name: 正常系（無効のエントリに当たる）
+    summary: '`enabled: false` のエントリにだけ当たる MCP のツールの呼び出しでは、止めずに何も出さない'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`tools: ["mcp__*__create_*"]`・`enabled: false` のエントリを 1 つ持ち、`on` を書かない'
+        notes: '`enabled` を外すと `default_on` の既定で止めるエントリ'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: mcp__github__create_issue`'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（MCP のツール名）
+        H->>IDX: 読む（無効のエントリを外す）
+        H->>H: ツール名に当たるエントリが無い
+        H-->>CC: 標準出力なし<br>終了コード 0
+    expected:
+      - 標準出力が空
+      - 案内済みの記録にルールの場所の行が無い
+      - 終了コードが `0`
+    test: test_normal_when_entry_disabled
+  - name: 正常系（同じルールの有効なエントリで案内する）
+    summary: 同じルールの場所を指す無効のエントリと有効のエントリがあるとき、有効のエントリだけで案内する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '同じルールを指す 2 つのエントリ（`paths: ["**/*.py"]`・`on: [write]`・`enabled: false` と、`paths: ["**/*.py"]`・`on: [read]`）'
+        notes: 無効のエントリを照合に使うと Write を止める組み合わせ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Write`、`.py` のパス'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む（無効のエントリを外す）
+        H->>H: 有効のエントリだけが当たる（Write は on に無い）
+        H->>ST: 既読を読む（未読）
+        H->>GD: 案内済みを読む（未案内）
+        H->>GD: ルールの場所を追記する
+        H-->>CC: additionalContext（案内）<br>終了コード 0
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` にルールの場所が 1 回だけ載り、「やり直してください」を含まない'
+      - 終了コードが `0`
+    test: test_normal_when_disabled_and_enabled_entries
+  - name: 異常系（enabledが真偽値でない・止めずに理由を載せる）
+    summary: '`enabled` が `true` / `false` 以外の索引は読めない索引として扱い、操作を止めずに場所と理由を載せる'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`enabled: "no"` のエントリを 1 つ持つ'
+        notes: 文字列の `"no"` は真偽値として読まない
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Write`、`.py` のパス'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む（enabled の値が許さない値で読めない）
+        H-->>CC: additionalContext（読めなかった索引の場所と理由）<br>終了コード 0
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に索引の場所と、`enabled` の値が許さない値である理由が載っている'
+      - 終了コードが `0`
+    test: test_error_when_enabled_not_boolean
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
 idempotent: false
 side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -939,7 +1024,7 @@ constraints:
     constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を載せて残りの件数を添える
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
   - item: 索引
-    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に追加したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
+    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に追加したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。`enabled: false` のエントリは照合に使わない。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
     notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
     constraint: 同じルールの場所（解決後の絶対パス）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
