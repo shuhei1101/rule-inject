@@ -418,7 +418,7 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: 設定ファイル
-        description: '`RULE_INJECT_CONFIG` で、YAML として読めないファイルを指す'
+        description: '`RULE_INJECT_CONFIG` で、設定ファイルとして読めないファイル（YAML として崩れたもの・許さないキーを持つもの 等）を指す'
         notes: 実在しないパスを指す場合も同じ結末になる
       - name: 索引
         description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML を、プロジェクトの直下の `rules.yaml` に置く
