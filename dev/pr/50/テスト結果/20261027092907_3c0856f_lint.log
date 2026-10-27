@@ -1,0 +1,4 @@
+$ (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; exit $rc)
+All checks passed!
+157 files already formatted
+exit=0
