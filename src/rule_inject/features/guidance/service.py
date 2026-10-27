@@ -12,11 +12,11 @@ from rule_inject.shared.errors import RuleInjectError
 GUIDANCE_LIMIT = 10000
 BLOCKING_HEADER = (
     "操作の対象に当たる未読のルールがあります。"
-    "read_rules に下の場所を渡して本文を取得してから、同じ操作をやり直してください。"
+    "下の場所を Read で読んでから、同じ操作をやり直してください。"
 )
 NON_BLOCKING_HEADER = (
     "操作の対象に当たる未読のルールがあります。"
-    "必要に応じて read_rules に下の場所を渡して本文を読んでください。"
+    "必要に応じて下の場所を Read で読んでください。"
     "この案内はルールごとにセッションで 1 回だけ出ます。"
 )
 WORK_RULES = (
@@ -25,7 +25,7 @@ WORK_RULES = (
 )
 SEARCH_HEADER = (
     "検索で当たったファイルに未読のルールがあります（読むかは任意です）。"
-    "読む場合は read_rules に下の場所を渡して本文を取得してください。"
+    "読む場合は下の場所を Read で読んでください。"
     "この案内はルールごとにセッションで 1 回だけ出ます。"
 )
 

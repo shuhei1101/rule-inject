@@ -11,7 +11,8 @@ import pytest
 from rule_inject.hooks.rule_guide import guide_rules
 
 RULE = "/r/python.md"
-OWN_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
+# 本文が `test` のルールの本文のハッシュ
+HASH_TEST = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
 
 
 @pytest.fixture
@@ -48,7 +49,7 @@ def test_handle_when_blocked(
     output = result["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
-    assert "read_rules" in output["permissionDecisionReason"]
+    assert "Read で読んでから" in output["permissionDecisionReason"]
 
 
 def test_handle_when_already_read(
@@ -56,12 +57,14 @@ def test_handle_when_already_read(
     guide_env: Callable[[str], dict[str, str]],
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
     """既読なら何も出さない（正常系）。"""
     # 準備
-    env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
-    write_record([RULE])
+    rule = rule_file("python.md", "test")
+    env = guide_env(index_text(str(rule), paths=["**/*.py"], on=["write"]))
+    write_record([f"{rule}\t{HASH_TEST}"])
     payload = hook_payload(
         "PreToolUse",
         tool_name="Write",
@@ -135,25 +138,6 @@ def test_handle_when_grep_folder(
     assert result is None
 
 
-def test_handle_when_own_tool(
-    guide_env: Callable[[str], dict[str, str]],
-    index_text: Callable[..., str],
-    hook_payload: Callable[..., dict[str, Any]],
-) -> None:
-    """このプラグインのツールは対象外にする（正常系）。"""
-    # 準備
-    env = guide_env(index_text(RULE, tools=["mcp__*"]))
-    payload = hook_payload(
-        "PreToolUse",
-        tool_name=OWN_TOOL,
-        tool_input={"locations": [RULE], "session_id": "s"},
-    )
-    # 実行
-    result = guide_rules(payload, env)
-    # 検証
-    assert result is None
-
-
 def test_handle_when_index_unreadable(
     tmp_path: Path,
     hook_env: dict[str, str],
@@ -193,7 +177,7 @@ def test_handle_when_record_unreadable(
     """記録が読めないとき止めずに理由を載せる（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
-    record_file = unwritable(write_record([RULE]), 0o000)
+    record_file = unwritable(write_record([f"{RULE}\t{HASH_TEST}"]), 0o000)
     payload = hook_payload(
         "PreToolUse",
         tool_name="Write",
@@ -319,3 +303,30 @@ def test_handle_when_mcp_args(
     # 検証
     assert blocked["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert passed is None
+
+
+def test_handle_when_rule_changed(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    write_record: Callable[[Sequence[str]], Path],
+) -> None:
+    """読んだ後に変わったルールを案内する（正常系）。"""
+    # 準備
+    rule = rule_file("python.md", "test")
+    env = guide_env(index_text(str(rule), paths=["**/*.py"], on=["write"]))
+    write_record([f"{rule}\t{HASH_TEST}"])
+    rule.write_text("changed", encoding="utf-8")
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Write",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py"), "content": ""},
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    output = result["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert str(rule) in output["permissionDecisionReason"]

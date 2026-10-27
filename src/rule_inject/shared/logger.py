@@ -26,11 +26,9 @@ class Component(StrEnum):
     """ログの `component` の値（インターフェース定義の識別子）。"""
 
     RULE_GUIDE = "rule_guide"
-    SESSION_ID_INJECTION = "session_id_injection"
     RECORD_READ = "record_read"
     DISCARD_READ = "discard_read"
     WORK_RULES = "work_rules"
-    READ_RULES = "read_rules"
     SWEEP_READ = "sweep_read"
     SEARCH_GUIDE = "search_guide"
 

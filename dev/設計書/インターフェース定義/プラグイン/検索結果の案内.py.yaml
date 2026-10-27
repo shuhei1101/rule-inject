@@ -168,7 +168,7 @@ flows:
       - name: 索引
         description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
       - name: 既読の記録
-        description: '`.py` のルールの場所がある'
+        description: '`.py` のルールの場所と、今のルールのファイルの SHA-256 の行がある'
       - name: 案内済みの記録
         description: '`.md` のルールの場所がある'
       - name: 入力
@@ -275,6 +275,40 @@ flows:
       - 'ログに `operation: write_record` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_guided_record_unwritable
+  - name: 正常系（読んだ後に変わったルールを案内する）
+    summary: 既読の記録のハッシュが今の本文と違うルールを未読として案内する
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`**/*.py` に当たるエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: '`.py` のルールの場所と、書き換える前のルールのファイルの SHA-256 の行だけがある'
+        notes: 記録を作った後に、テストがルールのファイルに 1 行を追記する
+      - name: 案内済みの記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Glob`、`filenames` に実在する `.py`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>P: 標準入力（Glob・filenames）
+        P->>ST: 既読を読む
+        P->>P: ルールの今のハッシュを取り、記録のハッシュと比べる（違うため未読）
+        P->>GD: 案内済みを読む（未案内）
+        P->>GD: 案内に載せた場所を追記する
+        P-->>CC: additionalContext（案内）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` に `.py` のルールの場所が載っている'
+      - 案内済みの記録に `.py` のルールの場所が 1 行ある
+      - 終了コードが `0`
+    test: test_normal_when_rule_changed_after_read
 lead: Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）の結果に出た実在するファイルに当たるルールのうち、そのセッションで未読で未案内のものを、読むかは任意と伝えて案内する。操作はもう終わっているため止めない。
 identifier: search_guide
 idempotent: false
@@ -338,7 +372,7 @@ response:
     notes: 案内か知らせがあるときだけ出力する。無いときは標準出力に何も出さない
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 検索で当たったファイルに未読のルールがあること・読むかは任意であること・読み方（MCP のツール `read_rules`）・この案内はルールごとにセッションで 1 回だけ出ることと、ルールの場所。索引・記録が読めないか書けないときはその場所と理由
+    description: 検索で当たったファイルに未読のルールがあること・読むかは任意であること・読み方（Read）・この案内はルールごとにセッションで 1 回だけ出ることと、ルールの場所。索引・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 「やり直してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
 response_example: |-
@@ -346,7 +380,7 @@ response_example: |-
   {
     "hookSpecificOutput": {
       "hookEventName": "PostToolUse",
-      "additionalContext": "検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は read_rules に場所を渡して本文を取得してください。この案内はルールごとにセッションで 1 回だけ出ます。\n- /home/user/rules/python.md"
+      "additionalContext": "検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。\n- /home/user/rules/python.md"
     }
   }
   ```
@@ -387,4 +421,7 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
     notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+  - item: 既読の判定
+    constraint: ルール案内の制約「既読の判定」と同じ。既読の記録のハッシュが今のルールのファイルの SHA-256 と違うルールは未読として案内する
+    notes: 案内済みの記録に載った場所は、本文が変わっても案内から除く
 test_file: tests/integration/plugin/test_search_guide.py

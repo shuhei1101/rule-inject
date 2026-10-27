@@ -1,5 +1,5 @@
 title: "ER 図: ログ"
-lead: フックと MCP サーバーが、失敗した操作を後から追えるように書き出すログ。
+lead: フックが、失敗した操作を後から追えるように書き出すログ。
 tables:
   - name: '{RULE_INJECT_LOG_DIR}/{yyyymmdd}_rule-inject.log'
     title: ログ
@@ -11,7 +11,7 @@ tables:
     deletion: ファイルごとの物理削除。利用者が手で消してもよい
     access: 追記（O_APPEND）だけで書く。プラグインは読まない
     description: |-
-      フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（フックは Claude Code のデバッグのログ、MCP サーバーは MCP のログに残る）。
+      フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（Claude Code のデバッグのログに残る）。
 
       `{RULE_INJECT_LOG_DIR}` は設定『プラグイン』の `RULE_INJECT_LOG_DIR`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。`{yyyymmdd}` は `time` の UTC の日付。
     columns:
@@ -24,7 +24,7 @@ tables:
         title: 出した元
         type: string
         not_null: true
-        description: インターフェース定義の識別子（`rule_guide` / `session_id_injection` / `read_rules` / `record_read` / `discard_read` / `work_rules` / `sweep_read`）
+        description: インターフェース定義の識別子（`rule_guide` / `record_read` / `discard_read` / `work_rules` / `sweep_read`）
       - name: session_id
         title: セッション
         type: string

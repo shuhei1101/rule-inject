@@ -1,4 +1,4 @@
 summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
 items:
   - page: プラグイン/
-    summary: フックと MCP サーバーの Python のモジュール
+    summary: フックの Python のモジュール

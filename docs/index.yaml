@@ -6,4 +6,4 @@ items:
   - page: 使い方/
     summary: セットアップと日々の操作
   - page: リファレンス/
-    summary: 環境変数・索引の書式・MCP ツール
+    summary: 環境変数・索引の書式

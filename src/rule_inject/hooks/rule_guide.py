@@ -19,6 +19,7 @@ from rule_inject.features.index import load_indexes, match_path, match_tool
 from rule_inject.features.index.types import IndexEntry, MatchedRule, Operation
 from rule_inject.features.record import (
     append_guided,
+    current_read_locations,
     is_valid_session_id,
     read_guided,
     read_record,
@@ -27,8 +28,6 @@ from rule_inject.shared.errors import RecordReadError, RecordWriteError
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
 from rule_inject.shared.paths import log_dir, resolve_location, state_dir
 
-# このプラグインの MCP のツール名の頭（ルールを読むためのツールが止められないよう対象外にする）
-OWN_TOOL_PREFIX = "mcp__plugin_rule-inject_rule-inject__"
 MCP_TOOL_PREFIX = "mcp__"
 # ツール名から操作の種別への対応
 TOOL_OPERATIONS: dict[str, Operation] = {
@@ -110,8 +109,6 @@ def _log_record_failure(
 
 def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る。"""
-    if payload["tool_name"].startswith(OWN_TOOL_PREFIX):
-        return None
     folder = state_dir(env)
     log_folder = log_dir(env)
     log_path = log_file_path(log_folder, datetime.now(UTC).date())
@@ -132,12 +129,14 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if loaded.failures:
         notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
     matched = _match(payload, loaded.entries)
-    # そのセッションで読んだルールを除く。記録が読めなければ止めずに理由を知らせる
+    # そのセッションで読んだルールを除く（読んだ後に本文が変わったルールは未読のまま残す）。記録が読めなければ止めずに理由を知らせる
     already_read: frozenset[str] = frozenset()
     record_failed = False
     if valid_session and matched:
         try:
-            already_read = read_record(folder, session_id)
+            already_read = current_read_locations(
+                read_record(folder, session_id), [rule.location for rule in matched]
+            )
         except RecordReadError as exc:
             record_failed = True
             _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)

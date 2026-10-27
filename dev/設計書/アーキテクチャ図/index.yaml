@@ -1,4 +1,4 @@
-summary: システム全体構成（Claude Code・フック・MCP サーバー・索引の関係）
+summary: システム全体構成（Claude Code・フック・索引の関係）
 items:
   - page: アーキテクチャ図.yaml
-    summary: システム全体構成（Claude Code・フック・MCP サーバー・索引の関係）
+    summary: システム全体構成（Claude Code・フック・索引の関係）

@@ -6,7 +6,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
+# 本文が `# Python の規約\n` のルールの本文のハッシュ
+HASH_PYTHON = "sha256:fc8f016b31191b896de55402848023f8c7a6ade80fee926650636f53fe9f58a2"
 
 
 def test_normal(
@@ -29,11 +30,8 @@ def test_normal(
             {"rule": str(guided_rule), "paths": ["**/*.txt"], "on": ["write"]},
         )
     )
-    read_prompt = (
-        f"MCP のツール read_rules を 1 回だけ呼んでください。locations に {rule} を渡し、"
-        "session_id は渡さないでください。"
-    )
-    read_run = run_claude(read_prompt, allow=[READ_RULES_TOOL])
+    read_prompt = f"Read で {rule} を読んでください。他のことはしないでください。"
+    read_run = run_claude(read_prompt, allow=["Read"])
     target = e2e_project / "notes.txt"
     target.write_text("notes\n", encoding="utf-8")
     guided_run = run_claude(
@@ -41,7 +39,7 @@ def test_normal(
         allow=["Read"],
         resume=read_run.session_id,
     )
-    assert record_locations(read_run.session_id) == [str(rule)]
+    assert record_locations(read_run.session_id) == [f"{rule}\t{HASH_PYTHON}"]
     assert guided_locations(guided_run.session_id) == [str(guided_rule)]
     # 実行
     run_claude("/compact", resume=read_run.session_id, max_turns=None)

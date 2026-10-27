@@ -11,17 +11,6 @@
             "timeout": 1
           }
         ]
-      },
-      {
-        "matcher": "mcp__plugin_rule-inject_rule-inject__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "_description": "このプラグインの MCP のツールの引数へ session_id を足す",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" session_id_injection",
-            "timeout": 1
-          }
-        ]
       }
     ],
 

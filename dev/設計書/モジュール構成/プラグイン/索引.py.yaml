@@ -55,6 +55,11 @@ constants:
     container: features/index/service.py
     summary: 引数のキーをオブジェクトの子へたどる区切り
     value: '`.`'
+  - name: URL_SCHEMES
+    title: URL の頭
+    container: features/index/service.py
+    summary: Read で読めないため読み飛ばす `rule` の頭
+    value: '`("http://", "https://")`'
 data_models:
   - name: IndexEntry
     title: 索引のエントリ
@@ -65,7 +70,7 @@ data_models:
     properties:
       - name: location
         type: str
-        description: 解決後のルールの場所（絶対パスか URL）
+        description: 解決後のルールの場所（絶対パス）
       - name: paths
         type: tuple[MatchPattern, ...]
         description: 当てるパスのパターン
@@ -110,32 +115,6 @@ data_models:
       - name: failures
         type: tuple[IndexReadError, ...]
         description: 読めなかった索引ごとの例外
-  - name: RejectedLocation
-    title: 読まない場所
-    container: features/index/types.py
-    usecase: ルールの本文を取得する
-    role: DTO
-    summary: '`read_rules` で読まないと決めた場所かパスと、その理由'
-    properties:
-      - name: location
-        type: str
-        description: 渡された場所かパス（解けたものは解決後）
-      - name: reason
-        type: str
-        description: 理由
-  - name: SelectedLocations
-    title: 読む場所の選び出しの結果
-    container: features/index/types.py
-    usecase: ルールの本文を取得する
-    role: DTO
-    summary: 本文を読む場所と、読まない場所
-    properties:
-      - name: targets
-        type: tuple[str, ...]
-        description: 本文を読むルールの場所（解決後。重なりを落とし、並びを保つ）
-      - name: rejected
-        type: tuple[RejectedLocation, ...]
-        description: 読まない場所かパス
   - name: MatchPattern
     title: 照合のパターン
     container: features/index/types.py
@@ -286,8 +265,9 @@ functions:
       3. 各パスを `resolve_location` で解く（基準は `CLAUDE_PROJECT_DIR`。無ければ相対パスの索引は読めない索引にする）
       4. UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
       5. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に足す。同じ索引のほかのエントリは読む
-      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に足す。同じ索引のほかのエントリは読む
-      7. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
+      6. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {展開した rule} は URL のため Read で読めない`）を `failures` に足す。同じ索引のほかのエントリは読む
+      7. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に足す。同じ索引のほかのエントリは読む
+      8. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
     unit_tests:
       - name: test_load_indexes
         case: 正常
@@ -355,6 +335,12 @@ functions:
         condition: '`read_by` に `tools: ["re:__get_doc$"]`・`args` に `path: ["*.md"]` の要素を 1 つ持つエントリと、`read_by` の無いエントリ'
         mock: なし
         expected: 前者の `read_by` が 1 件（`tools` の `regex` がコンパイル済み、`args` が `ArgCondition` 1 件）、後者の `read_by` が空。`failures` が空
+      - name: test_load_indexes_when_rule_is_url
+        case: 正常
+        summary: '`rule` が URL のエントリだけを読み飛ばす'
+        condition: '`rule: https://example.com/a.md`・`rule: "!{BASE}/b.md"`（`env` に `BASE=http://example.com`）・通常の `rule` の 3 エントリ'
+        mock: なし
+        expected: '`entries` に通常のエントリだけ。`failures` に 2 件（path が索引、reason に `https://example.com/a.md` と `http://example.com/b.md`）'
   - name: match_path
     title: パスの照合
     container: features/index/service.py
@@ -480,7 +466,7 @@ functions:
     title: ルールの場所の一覧
     container: features/index/service.py
     usecase: 共通
-    summary: 索引に載ったルールの場所の集合を返す（既読の記録と `read_rules` の許す場所の判定に使う）
+    summary: 索引に載ったルールの場所の集合を返す（既読の記録の判定に使う）
     kind: 関数
     scope: public
     args:
@@ -543,62 +529,6 @@ functions:
         condition: '`**/*.{ts,tsx}` と `/a/b.tsx`、`/a/b.js`'
         mock: なし
         expected: True と False
-  - name: select_locations
-    title: 読む場所の選び出し
-    container: features/index/service.py
-    usecase: ルールの本文を取得する
-    summary: '`read_rules` に渡された場所とパスから、索引に載ったルールの場所だけを選ぶ'
-    kind: 関数
-    scope: public
-    args:
-      - name: entries
-        type: Sequence[IndexEntry]
-        required: true
-        passing: positional
-        description: 索引のエントリ
-      - name: locations
-        type: Sequence[str]
-        required: true
-        passing: positional
-        description: 読みたいルールの場所
-      - name: paths
-        type: Sequence[str]
-        required: true
-        passing: positional
-        description: 触るファイルのパス
-    returns:
-      type: SelectedLocations
-      description: 読む場所と読まない場所
-    process: |-
-      1. `locations` のうち、絶対パス・`~` で始まるパス・URL のどれでもないものは、解かずに `相対パスは読まない。絶対パス・~・https:// の URL で渡す` として rejected へ
-      2. 残りの `locations` を `resolve_location` で解き、`rule_locations(entries)` に無いものは `索引に載っていない場所` として rejected へ。あるものを targets へ
-      3. `paths` のうち絶対パスでないものは `相対パスは照合しない。絶対パスで渡す` として rejected へ。絶対パスは `match_path(entries, path, "read")` の場所を targets へ足す
-      4. targets の重なりを落とす（並びは保つ）
-    unit_tests:
-      - name: test_select_locations
-        case: 正常
-        summary: 索引に載った場所を選ぶ
-        condition: 索引に載った絶対パス 1 件と URL 1 件
-        mock: なし
-        expected: targets に 2 件、rejected は空
-      - name: test_select_locations_when_by_path
-        case: 正常
-        summary: 対象のパスで引く
-        condition: '`**/*.py` と `**/*.ts` のエントリ、`paths` に `.py` の絶対パス、`locations` に同じルールの場所'
-        mock: なし
-        expected: targets に `.py` のルールだけが 1 件（重なりを落とす）
-      - name: test_select_locations_when_not_in_index
-        case: 正常
-        summary: 索引に無い場所は読まない
-        condition: 索引に無い絶対パスと URL
-        mock: なし
-        expected: targets は空、rejected に 2 件（`索引に載っていない場所`）
-      - name: test_select_locations_when_relative
-        case: 正常
-        summary: 相対パスは解かない
-        condition: '`locations` に `rules/a.md`、`paths` に `src/a.py`'
-        mock: なし
-        expected: targets は空、rejected に 2 件（相対パスの理由）
   - name: _compile_pattern
     title: パターンの読み取り
     container: features/index/service.py

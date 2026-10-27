@@ -4,8 +4,8 @@ directory: |-
   ```text
   src/rule_inject/features/record/
   ├── __init__.py   # 公開 API
-  ├── types.py      # ReadMethod
-  └── service.py    # 記録ファイルの読み・追記・削除・掃除と、既読の履歴の追記
+  ├── types.py      # ReadMethod・ReadEntry
+  └── service.py    # 記録ファイルの読み・追記・削除・掃除と、既読の履歴の追記と、本文のハッシュ
   ```
 constants:
   - name: SESSION_ID_PATTERN
@@ -23,6 +23,16 @@ constants:
     container: features/record/service.py
     summary: 既読の履歴ファイルは `{session_id}{HISTORY_SUFFIX}`
     value: '`.history.jsonl`'
+  - name: HASH_PREFIX
+    title: 本文のハッシュの頭
+    container: features/record/service.py
+    summary: 本文のハッシュは `{HASH_PREFIX}{SHA-256 の 16 進数}`
+    value: '`sha256:`'
+  - name: FIELD_SEPARATOR
+    title: 既読の行の区切り
+    container: features/record/service.py
+    summary: 既読の記録の 1 行で、場所と本文のハッシュを区切る文字
+    value: '`\t`'
 functions:
   - name: is_valid_session_id
     title: セッションの識別子の判定
@@ -57,7 +67,7 @@ functions:
     title: 既読の読み込み
     container: features/record/service.py
     usecase: 共通
-    summary: そのセッションの既読の場所の集合を返す
+    summary: そのセッションの既読の行の集合を返す
     kind: 関数
     scope: public
     args:
@@ -72,11 +82,13 @@ functions:
         passing: positional
         description: 形を確かめた session_id
     returns:
-      type: frozenset[str]
-      description: 既読の場所。ファイルが無ければ空
+      type: frozenset[ReadEntry]
+      description: 既読の行。ファイルが無ければ空
     process: |-
       1. `{state_dir}/{session_id}.txt` を UTF-8 で読む
-      2. 空行を除いた行を集合にする（重なりは 1 つになる）
+      2. 空行を除いた行を、最初の `FIELD_SEPARATOR` で場所とハッシュに分ける
+         - `FIELD_SEPARATOR` を含まない行・場所が空の行・ハッシュが `HASH_PREFIX` で始まらない行は読み飛ばす
+      3. 集合にする（重なりは 1 つになる）
     exceptions:
       - name: RecordReadError
         condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
@@ -84,9 +96,9 @@ functions:
       - name: test_read_record
         case: 正常
         summary: 行を集合で返す
-        condition: 同じ場所が 2 行と別の場所が 1 行の記録ファイル
+        condition: 同じ場所とハッシュの行が 2 行と、同じ場所で別のハッシュの行が 1 行の記録ファイル
         mock: なし
-        expected: 2 件の集合
+        expected: 2 件の集合（場所とハッシュが書いた値）
       - name: test_read_record_when_missing
         case: 正常
         summary: ファイルが無ければ空
@@ -100,11 +112,17 @@ functions:
         mock: なし
         expected: RecordReadError（path が記録ファイル）
         exception: ファイルはあるが読めない
+      - name: test_read_record_when_without_hash
+        case: 正常
+        summary: ハッシュを持たない行は読み飛ばす
+        condition: 場所だけの行・`\tsha256:…` のように場所が空の行・`{場所}\tmd5:…` の行と、場所とハッシュの行が 1 行の記録ファイル
+        mock: なし
+        expected: 場所とハッシュの行の 1 件だけの集合
   - name: append_record
     title: 既読の追記
     container: features/record/service.py
     usecase: 共通
-    summary: 場所を 1 行ずつ記録ファイルへ追記する
+    summary: 既読の行を 1 行ずつ記録ファイルへ追記する
     kind: 関数
     scope: public
     side_effects: 記録フォルダを作り、記録ファイルへ追記する
@@ -119,18 +137,19 @@ functions:
         required: true
         passing: positional
         description: 形を確かめた session_id
-      - name: locations
-        type: Sequence[str]
+      - name: entries
+        type: Sequence[ReadEntry]
         required: true
         passing: positional
-        description: 既読にする場所
+        description: 既読にする行
     returns:
       type: None
       description: なし
     process: |-
-      1. `locations` が空なら何もしない
-      2. 記録フォルダを作る（親も含め、あればそのまま）
-      3. 全行を 1 つの文字列にし、`O_APPEND` で開いて 1 回で書く
+      1. `entries` が空なら何もしない
+      2. 行ごとに `{location}{FIELD_SEPARATOR}{hash}` にする
+      3. 記録フォルダを作る（親も含め、あればそのまま）
+      4. 全行を 1 つの文字列にし、`O_APPEND` で開いて 1 回で書く
     exceptions:
       - name: RecordWriteError
         condition: フォルダが作れない・追記できない（OSError）
@@ -138,13 +157,13 @@ functions:
       - name: test_append_record
         case: 正常
         summary: フォルダを作って追記する
-        condition: まだ無い記録フォルダ、2 件の場所を 2 回に分けて追記
+        condition: まだ無い記録フォルダ、2 件の行を 2 回に分けて追記
         mock: なし
-        expected: 記録ファイルに 4 行が追記の順である
+        expected: 記録ファイルに `{場所}\t{ハッシュ}` の 4 行が追記の順である
       - name: test_append_record_when_empty
         case: 正常
         summary: 空なら書かない
-        condition: '`locations` が空'
+        condition: '`entries` が空'
         mock: なし
         expected: 記録ファイルもフォルダも作らない
       - name: test_append_record_when_unwritable
@@ -334,8 +353,8 @@ functions:
       type: frozenset[str]
       description: 案内済みの場所。ファイルが無ければ空
     process: |-
-      1. `{state_dir}/{session_id}{GUIDED_SUFFIX}` を `read_record` と同じ規則で読む（空行を除いた行の集合。無ければ空）
-      2. `read_record` と共通の内部の関数で読み、ファイル名の末尾だけを変える
+      1. `{state_dir}/{session_id}{GUIDED_SUFFIX}` を UTF-8 で読み、空行を除いた行の集合にする（無ければ空）
+      2. ファイルを読んで空行を除く部分だけを `read_record` と共通の内部の関数で行う。場所とハッシュに分ける処理は `read_record` だけが持つ
     exceptions:
       - name: RecordReadError
         condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
@@ -343,7 +362,7 @@ functions:
       - name: test_read_guided
         case: 正常
         summary: 案内済みの記録を集合で返す
-        condition: 同じセッションの `{id}.txt`（場所 A）と `{id}.guided.txt`（場所 B が 2 行）
+        condition: 同じセッションの `{id}.txt`（場所 A とハッシュの行）と `{id}.guided.txt`（場所 B が 2 行）
         mock: なし
         expected: B だけの 1 件の集合（既読の記録を読まない）
       - name: test_read_guided_when_missing
@@ -521,6 +540,89 @@ functions:
         mock: なし
         expected: HistoryWriteError（path が `{id}.history.jsonl`）
         exception: フォルダが作れない・追記できない
+  - name: hash_locations
+    title: 本文のハッシュの付与
+    container: features/record/service.py
+    usecase: ルールを読んだことが記録される
+    summary: 既読にする場所ごとに今のルールのファイルの本文のハッシュを取り、既読の行にして返す
+    kind: 関数
+    scope: public
+    args:
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 既読にする場所（解決後の絶対パス）
+    returns:
+      type: tuple[ReadEntry, ...]
+      description: ハッシュを取れた場所の既読の行（`locations` の順）。読めなかった場所は含まない
+    process: |-
+      1. 場所ごとに、ファイルの中身をバイト列で読み、SHA-256 の 16 進数に `HASH_PREFIX` を付ける（本文のハッシュ）
+         - 読めない場合（OSError。無い・フォルダ・権限が無い）、その場所を読み飛ばす
+      2. ハッシュを取れた場所を `ReadEntry` にして返す
+    unit_tests:
+      - name: test_hash_locations
+        case: 正常
+        summary: 場所ごとに本文のハッシュを付ける
+        condition: 中身が `test` のファイルと、中身が空のファイル
+        mock: なし
+        expected: 2 件。`test` のファイルの `hash` が `sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08`、空のファイルの `hash` が `sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+      - name: test_hash_locations_when_unreadable
+        case: 正常
+        summary: 読めない場所は含めない
+        condition: 無いファイル・フォルダ・読み取り権限の無いファイル（`chmod 000`）と、読めるファイル
+        mock: なし
+        expected: 読めるファイルの 1 件だけ
+  - name: current_read_locations
+    title: 今の本文での既読の判定
+    container: features/record/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: 当たったルールの場所のうち、既読の行に場所と今の本文のハッシュの組があるものを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: frozenset[ReadEntry]
+        required: true
+        passing: positional
+        description: '`read_record` で読んだ既読の行'
+      - name: locations
+        type: Iterable[str]
+        required: true
+        passing: positional
+        description: 当たったルールの場所
+    returns:
+      type: frozenset[str]
+      description: 既読として扱う場所
+    process: |-
+      1. `entries` の場所に無い場所は、ハッシュを取らずに未読とする
+      2. 残りの場所の今の本文のハッシュを `hash_locations` と同じ方法で取る（本文のハッシュの付与）
+      3. 場所と今のハッシュの組が `entries` にある場所を返す。ハッシュを取れない場所は未読とする
+    unit_tests:
+      - name: test_current_read_locations
+        case: 正常
+        summary: 今の本文のハッシュの組がある場所を既読にする
+        condition: 記録に場所 A と A の今のハッシュの行。場所は A と、記録に無い B
+        mock: なし
+        expected: A だけの集合
+      - name: test_current_read_locations_when_changed
+        case: 正常
+        summary: 本文が変わった場所は未読にする
+        condition: 記録に場所 A と書き換える前のハッシュの行。A のファイルの中身を書き換える
+        mock: なし
+        expected: 空の集合
+      - name: test_current_read_locations_when_reread
+        case: 正常
+        summary: 読み直した新しいハッシュの行があれば既読にする
+        condition: 記録に場所 A の書き換える前のハッシュの行と、書き換えた後のハッシュの行
+        mock: なし
+        expected: A だけの集合
+      - name: test_current_read_locations_when_unreadable
+        case: 正常
+        summary: 今のハッシュを取れない場所は未読にする
+        condition: 記録に場所 A の行があり、A のファイルを消す
+        mock: なし
+        expected: 空の集合
 test_files:
   - tests/unit/rule_inject/features/record/test_service.py
 enums:
@@ -536,9 +638,20 @@ enums:
       - value: bash
         title: Bash
         description: Bash の読むコマンドで読んだ
-      - value: read_rules
-        title: read_rules
-        description: '`read_rules` が本文を返した'
       - value: mcp
         title: MCP のツール
-        description: '`read_by` に当たった MCP のツールを呼んだ'
+        description: 'MCP のツールの結果の文書か、`read_by` に当たった MCP のツールの呼び出しで読んだ'
+data_models:
+  - name: ReadEntry
+    title: 既読の行
+    container: features/record/types.py
+    usecase: 共通
+    role: DTO
+    summary: 既読の記録の 1 行（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: location
+        type: str
+        description: ルールの場所（解決後の絶対パス。改行とタブを含まない）
+      - name: hash
+        type: str
+        description: 既読にした時点のルールのファイルの中身の SHA-256（`sha256:{16 進数}`）

@@ -19,12 +19,12 @@ constants:
     title: 止める案内の冒頭
     container: features/guidance/service.py
     summary: 止めるときの案内文の冒頭
-    value: '`操作の対象に当たる未読のルールがあります。read_rules に下の場所を渡して本文を取得してから、同じ操作をやり直してください。`'
+    value: '`操作の対象に当たる未読のルールがあります。下の場所を Read で読んでから、同じ操作をやり直してください。`'
   - name: NON_BLOCKING_HEADER
     title: 止めない案内の冒頭
     container: features/guidance/service.py
     summary: 止めないときの案内文の冒頭（やり直しを促さない）
-    value: '`操作の対象に当たる未読のルールがあります。必要に応じて read_rules に下の場所を渡して本文を読んでください。この案内はルールごとにセッションで 1 回だけ出ます。`'
+    value: '`操作の対象に当たる未読のルールがあります。必要に応じて下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。`'
   - name: WORK_RULES
     title: 作業の決まり
     container: features/guidance/service.py
@@ -34,7 +34,7 @@ constants:
     title: 検索結果の案内の冒頭
     container: features/guidance/service.py
     summary: 検索結果の案内の冒頭（読むかは任意と伝え、やり直しを促さない）
-    value: '`検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は read_rules に下の場所を渡して本文を取得してください。この案内はルールごとにセッションで 1 回だけ出ます。`'
+    value: '`検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。`'
 functions:
   - name: build_guidance
     title: 案内文の組み立て

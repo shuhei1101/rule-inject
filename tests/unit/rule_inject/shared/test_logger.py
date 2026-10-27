@@ -31,7 +31,7 @@ def test_write_log(
     # 実行
     write_log(
         log_folder,
-        component=Component("read_rules"),
+        component=Component("rule_guide"),
         operation=LogOperation("write_record"),
         reason="PermissionError: denied",
         session_id="s1",
@@ -43,7 +43,7 @@ def test_write_log(
     assert len(lines) == 1
     assert json.loads(lines[0]) == {
         "time": "2026-09-29T08:00:00+00:00",
-        "component": "read_rules",
+        "component": "rule_guide",
         "session_id": "s1",
         "operation": "write_record",
         "path": "/p/state",
@@ -63,7 +63,7 @@ def test_write_log_when_unwritable(
     # 実行
     write_log(
         log_folder,
-        component=Component("read_rules"),
+        component=Component("rule_guide"),
         operation=LogOperation("write_record"),
         reason="PermissionError: denied",
         now=_fixed_now,
@@ -81,14 +81,14 @@ def test_write_log_when_date_changes(
     # 実行
     write_log(
         log_folder,
-        component=Component("read_rules"),
+        component=Component("rule_guide"),
         operation=LogOperation("write_record"),
         reason="PermissionError: denied",
         now=lambda: datetime(2026, 9, 29, 23, 59, 59, tzinfo=UTC),
     )
     write_log(
         log_folder,
-        component=Component("read_rules"),
+        component=Component("rule_guide"),
         operation=LogOperation("write_record"),
         reason="PermissionError: denied",
         now=lambda: datetime(2026, 9, 30, 0, 0, 0, tzinfo=UTC),

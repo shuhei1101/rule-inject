@@ -9,9 +9,8 @@ from typing import Any
 
 import pytest
 
-READ_RULES_TOOL = "mcp__plugin_rule-inject_rule-inject__read_rules"
 GUIDANCE_START = "操作の対象に当たる未読のルールがあります"
-NON_BLOCKING_GUIDANCE = "必要に応じて read_rules に下の場所を渡して本文を読んでください"
+NON_BLOCKING_GUIDANCE = "必要に応じて下の場所を Read で読んでください"
 WRITE_PROMPT = "Write で {target} に「hello」と書いてください。他のことはしないでください。"
 RULE_COUNT = 100
 GUIDANCE_LIMIT = 10000
@@ -39,6 +38,7 @@ def test_normal_when_blocked(
     # 検証
     assert "Write" in run.denied_tools
     assert str(rule) in run.denial_reasons[0]
+    assert "Read で読んでから" in run.denial_reasons[0]
     assert not target.exists()
 
 
@@ -53,11 +53,8 @@ def test_normal_when_already_read(
     # 準備
     rule = make_rule("notes.md", "# ノートの規約\n")
     configure_index(make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}))
-    read_prompt = (
-        f"MCP のツール read_rules を 1 回だけ呼んでください。locations に {rule} を渡し、"
-        "session_id は渡さないでください。"
-    )
-    read_run = run_claude(read_prompt, allow=[READ_RULES_TOOL])
+    read_prompt = f"Read で {rule} を読んでください。他のことはしないでください。"
+    read_run = run_claude(read_prompt, allow=["Read"])
     target = e2e_project / "notes.txt"
     # 実行
     run = run_claude(
@@ -68,6 +65,33 @@ def test_normal_when_already_read(
     # 検証
     assert run.denied_tools == []
     assert "hello" in target.read_text(encoding="utf-8")
+
+
+def test_normal_when_rule_changed_after_read(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[[Path | str], None],
+    run_claude: Callable[..., Any],
+) -> None:
+    """読んだ後に本文が変わったルールでは Write が止められ、案内にルールの場所が載る（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    configure_index(make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}))
+    read_prompt = f"Read で {rule} を読んでください。他のことはしないでください。"
+    read_run = run_claude(read_prompt, allow=["Read"])
+    # 続ける前に、ルールの本文へ 1 行を足す
+    rule.write_text("# ノートの規約\n追記した行\n", encoding="utf-8")
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(
+        WRITE_PROMPT.format(target=target), allow=["Write"], resume=read_run.session_id
+    )
+    # 検証
+    assert "Write" in run.denied_tools
+    assert str(rule) in run.denial_reasons[0]
+    assert "Read で読んでから" in run.denial_reasons[0]
+    assert not target.exists()
 
 
 def test_normal_when_not_blocked(

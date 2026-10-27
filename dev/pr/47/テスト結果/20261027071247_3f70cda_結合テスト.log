@@ -1,0 +1,16 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-record-full-read-and-hash
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 61 items
+
+tests/integration/plugin/test_discard_read.py ...                        [  4%]
+tests/integration/plugin/test_record_read.py ............                [ 24%]
+tests/integration/plugin/test_rule_guide.py ........................     [ 63%]
+tests/integration/plugin/test_search_guide.py ...........                [ 81%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 96%]
+tests/integration/plugin/test_work_rules.py ..                           [100%]
+
+============================= 61 passed in 38.95s ==============================

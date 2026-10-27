@@ -81,22 +81,3 @@ class IndexLoadResult:
 
     entries: tuple[IndexEntry, ...]
     failures: tuple[IndexReadError, ...]
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class RejectedLocation:
-    """`read_rules` で読まないと決めた場所かパスと、その理由。"""
-
-    # 渡された場所かパス（解けたものは解決後）
-    location: str
-    reason: str
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class SelectedLocations:
-    """読む場所の選び出しの結果。"""
-
-    # 本文を読むルールの場所（解決後。重なりを落とし、並びを保つ）
-    targets: tuple[str, ...]
-    # 読まない場所かパス
-    rejected: tuple[RejectedLocation, ...]

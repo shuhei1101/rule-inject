@@ -53,7 +53,7 @@ def log_folder(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def hook_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
-    """フックと MCP サーバーに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
+    """フックに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
     return {
         "RULE_INJECT_STATE_DIR": str(state_dir),
         "RULE_INJECT_LOG_DIR": str(log_folder),
@@ -216,13 +216,13 @@ def rule_file(tmp_path: Path) -> Callable[..., Path]:
 
 @pytest.fixture
 def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], Path]:
-    """既読の記録ファイルを、場所を 1 行ずつ書いて置く factory。"""
+    """既読の記録ファイルを、行を 1 行ずつ書いて置く factory（既読の行は `{場所}\\t{ハッシュ}`）。"""
 
-    def _write(locations: Sequence[str]) -> Path:
-        """locations を 1 行ずつ、このセッションの記録ファイルに書く。"""
+    def _write(lines: Sequence[str]) -> Path:
+        """lines を 1 行ずつ、このセッションの記録ファイルに書く。"""
         path = state_dir / f"{session_id}.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
+        path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
         return path
 
     return _write

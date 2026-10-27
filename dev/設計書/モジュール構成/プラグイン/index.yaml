@@ -1,9 +1,7 @@
-summary: フックと MCP サーバーの Python のモジュール
+summary: フックの Python のモジュール
 items:
   - page: フック.py.yaml
-    summary: Claude Code が呼ぶ 5 つのフックの入口と共通の実行処理
-  - page: MCPサーバー.py.yaml
-    summary: read_rules を登録する stdio の MCP サーバーの入口
+    summary: Claude Code が呼ぶフックの入口と共通の実行処理
   - page: 索引.py.yaml
     summary: 索引の YAML の読み取りとパス・ツール名の照合
   - page: 既読の記録.py.yaml
@@ -12,7 +10,7 @@ items:
     summary: Bash のコマンドから読むファイルのパスを取り出す
   - page: 案内.py.yaml
     summary: 止める案内・止めない案内・失敗の知らせ・作業の決まりの文面
-  - page: 本文の取得.py.yaml
-    summary: read_rules の中身（本文の読み込み・上限・既読）
   - page: 共通.py.yaml
     summary: 記録フォルダ・場所の解決・ログ・例外
+  - page: MCPの結果の文書.py.yaml
+    summary: MCP のツールの結果から文書の場所と範囲を取り出す
