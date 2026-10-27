@@ -1,4 +1,9 @@
-"""settings.json の env に旧い RULE_INJECT_* が無く、その値が settings.yaml に入っているかを読むだけで確かめる。"""
+"""settings.json の env に旧い RULE_INJECT_* が無く、その値が settings.yaml に入っているかを読むだけで確かめる。
+
+Usage:
+# リポジトリの直下で移行の結果を読むだけで確かめる
+python3 dev/pr/52/反映作業/利用者の設定ファイルへの移行/確認.py
+"""
 
 from __future__ import annotations
 

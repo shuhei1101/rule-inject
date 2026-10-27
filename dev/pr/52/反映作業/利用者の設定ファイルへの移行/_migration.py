@@ -24,6 +24,7 @@ ENV_TO_KEY = {
 }
 LIST_KEYS = ("indexes",)
 INTEGER_KEYS = ("record_retention_days", "log_retention_days")
+MIN_RETENTION_DAYS = 1
 
 
 class MigrationError(Exception):
@@ -110,15 +111,17 @@ def render_settings(values: dict[str, str]) -> str:
             continue
         value = values[env_key]
         if key in LIST_KEYS:
-            # カンマ区切りの環境変数をブロックのリストにする
+            # カンマ区切りの環境変数をブロックのリストにする（要素が無ければ空のリスト）
+            items = [item.strip() for item in value.split(",") if item.strip()]
+            if not items:
+                lines.append(f"  {key}: []")
+                continue
             lines.append(f"  {key}:")
-            lines.extend(
-                f"    - {_quote(item.strip())}" for item in value.split(",") if item.strip()
-            )
+            lines.extend(f"    - {_quote(item)}" for item in items)
         elif key in INTEGER_KEYS:
-            # 保持日数は整数として書く
-            if not value.strip().isdigit():
-                raise MigrationError(f"{env_key} の値 {value} が整数ではありません")
+            # 保持日数は 1 以上の整数として書く（settings.yaml は 1 未満を誤りとして拒む）
+            if not value.strip().isdigit() or int(value) < MIN_RETENTION_DAYS:
+                raise MigrationError(f"{env_key} の値 {value} が 1 以上の整数ではありません")
             lines.append(f"  {key}: {int(value)}")
         else:
             lines.append(f"  {key}: {_quote(value)}")

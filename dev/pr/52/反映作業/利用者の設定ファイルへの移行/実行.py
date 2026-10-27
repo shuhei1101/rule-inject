@@ -1,7 +1,13 @@
-"""settings.json の env の RULE_INJECT_* を ~/.config/rule-inject/settings.yaml へ移す（--dry-run で計画まで）。"""
+"""settings.json の env の RULE_INJECT_* を ~/.config/rule-inject/settings.yaml へ移す（--dry-run で計画まで）。
+
+Usage:
+# リポジトリの直下で流す（--dry-run で計画まで）
+python3 dev/pr/52/反映作業/利用者の設定ファイルへの移行/実行.py [--dry-run]
+"""
 
 from __future__ import annotations
 
+import argparse
 import difflib
 import json
 import os
@@ -25,7 +31,6 @@ from _migration import (
     settings_files,
 )
 
-DRY_RUN_FLAG = "--dry-run"
 CONFIG_STEP = "settings.yaml の作成"
 
 
@@ -95,9 +100,11 @@ def _apply_target(target: Target, original: str, new_text: str) -> None:
     _write_verified(target.path, new_text, new_text)
 
 
-def main(argv: list[str]) -> int:
+def main() -> int:
     """前提確認 → 計画 → 適用の順に流し、手順ごとの結果を出す。"""
-    dry_run = DRY_RUN_FLAG in argv
+    parser = argparse.ArgumentParser(description="利用者の設定ファイルへの移行")
+    parser.add_argument("--dry-run", action="store_true", help="計画まで進んで止める")
+    dry_run = parser.parse_args().dry_run
 
     # 前提確認
     try:
@@ -153,4 +160,4 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

@@ -1,4 +1,9 @@
-"""実行で退避した settings.json を戻し、作った settings.yaml を消す。"""
+"""実行で退避した settings.json を戻し、作った settings.yaml を消す。
+
+Usage:
+# リポジトリの直下で 1 回だけ流す
+python3 dev/pr/52/反映作業/利用者の設定ファイルへの移行/切り戻し.py
+"""
 
 from __future__ import annotations
 

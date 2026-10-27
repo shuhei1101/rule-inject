@@ -1,4 +1,9 @@
-"""移行が触る settings.json と ~/.config に、読み取りだけでつながるかを確かめる。"""
+"""移行が触る settings.json と ~/.config に、読み取りだけでつながるかを確かめる。
+
+Usage:
+# リポジトリの直下で読み取りだけの疎通確認を流す
+python3 dev/pr/52/反映作業/利用者の設定ファイルへの移行/疎通確認.py
+"""
 
 from __future__ import annotations
 
