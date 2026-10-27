@@ -10,10 +10,10 @@ flows:
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ一時ファイル'
-        notes: '`RULE_INJECT_INDEXES_PROJECT` で指す'
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global.indexes` で指す'
       - name: 既読の記録
         description: 空の一時フォルダ
-        notes: '`RULE_INJECT_STATE_DIR` で指す'
+        notes: '同じ設定ファイルの `global.state_dir` で指す'
       - name: 入力
         description: '`tool_name: Grep`、`tool_response.filenames` に `cwd` からの相対パスで実在する `.py` を 1 つ'
     flow: |-
@@ -223,7 +223,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`RULE_INJECT_INDEXES_PROJECT` が、正常系と同じ索引と、書式に合わないファイルの 2 つを指す'
+        description: '設定ファイルの `global.indexes` が、正常系と同じ索引と、書式に合わないファイルの 2 つを指す'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -309,6 +309,41 @@ flows:
       - 案内済みの記録に `.py` のルールの場所が 1 行ある
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
+  - name: 異常系（設定ファイルが読めない・理由を載せる）
+    summary: 設定ファイルが読めないとき、案内せずに理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+        notes: '-'
+      - name: 設定ファイル
+        description: '`RULE_INJECT_CONFIG` が指すファイルが `global.log_retention_days: 0` を持つ'
+        notes: 許す値の外の値
+      - name: 索引
+        description: '`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` に `paths: ["**/*.py"]` のエントリを 1 つ持つ'
+        notes: 既定値で動かさないことを見る
+      - name: ログ
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+        notes: '-'
+      - name: 入力
+        description: '`tool_name: Grep` で、結果に実在する `.py` のファイルが出る'
+        notes: '-'
+    flow: |
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as 検索結果の案内
+        participant CFG as 設定ファイル
+        participant LOG as ログ
+
+        CC->>S: 標準入力（Grep・結果）
+        S->>CFG: 読む（許す値の外）
+        S->>LOG: 既定のログのフォルダへ read_settings を追記する
+        S-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
+    expected:
+      - '`additionalContext` に設定ファイルの場所と `global.log_retention_days` が載っている'
+      - '`additionalContext` に索引のルールの場所が載っていない'
+      - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_settings_unreadable
 lead: Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）の結果に出た実在するファイルに当たるルールのうち、そのセッションで未読で未案内のものを、読むかは任意と伝えて案内する。操作はもう終わっているため止めない。
 identifier: search_guide
 idempotent: false
@@ -397,6 +432,9 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、`additionalContext` へ「検索結果の案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    notes: ルール案内と同じく、既定値で動かさず索引を読まない。`additionalContext` へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -416,7 +454,7 @@ constraints:
     constraint: 読む操作（`read`）としてエントリに当てる。エントリの `on` によらず止めない
     notes: 索引の読み方・既定の置き場所・`rule` の変数参照の展開はルール案内と同じ
   - item: 案内済みの記録
-    constraint: 既読の場所と、`{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt` に載った場所を案内から除く。案内に載せた場所を同じファイルへ 1 行ずつ追記する
+    constraint: 既読の場所と、`{state_dir}/{session_id}.guided.txt` に載った場所を案内から除く。案内に載せた場所を同じファイルへ 1 行ずつ追記する
     notes: ルール案内と同じ記録を共有する。案内文の長さに収まらず載せなかった場所は記録しない
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
@@ -424,4 +462,7 @@ constraints:
   - item: 既読の判定
     constraint: ルール案内の制約「既読の判定」と同じ。既読の記録のハッシュが今のルールのファイルの SHA-256 と違うルールは未読として案内する
     notes: 案内済みの記録に載った場所は、本文が変わっても案内から除く
+  - item: 設定ファイル
+    constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
+    notes: '-'
 test_file: tests/integration/plugin/test_search_guide.py

@@ -1,54 +1,19 @@
 title: "設定: プラグイン"
-lead: プラグインが読む環境変数と、ルール索引（YAML）のキーの一覧。
+lead: プラグインが読む環境変数・設定ファイルのキーと、ルール索引（YAML）のキーの一覧。
 files:
   - file: ~/.claude/settings.json
-    manages: 全プロジェクトで使う索引を指す環境変数（`env`）
+    manages: 設定ファイルの場所を指す環境変数 `RULE_INJECT_CONFIG`（`env`）
     notes: Claude Code のユーザーの設定。フックは `env` の値を環境変数として受け取る
-  - file: .claude/settings.json
-    manages: そのプロジェクトだけで使う索引を指す環境変数（`env`）
-    notes: Claude Code のプロジェクトの設定（利用者のプロジェクトのリポジトリに置く）
   - file: 索引（*.yaml）
     manages: ルールの場所と、当てるパス・ツール名・操作の種別の紐づけ
-    notes: 利用者が書く。置き場所と名前は自由で、環境変数で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形（マップ・文字列のリスト・文字列）だけを読む
+    notes: 利用者が書く。置き場所と名前は自由で、設定ファイルの `indexes` で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形（マップ・文字列のリスト・文字列）だけを読む
+  - file: ~/.config/rule-inject/settings.yaml
+    manages: 索引の場所・既読の記録とログの置き場所・保持日数（最上位の `global` と `projects`）
+    notes: 利用者が書き、`RULE_INJECT_CONFIG` で指す。`RULE_INJECT_CONFIG` が無いときは読まず、全てのキーを既定値で動かす。フックが標準ライブラリだけで読めるよう、ここに挙げたキーと形（マップ・マップのリスト・文字列のリスト・文字列・整数）だけを読む
+  - file: settings.sample.yaml
+    manages: 設定ファイルのキーの一覧（実値を入れないサンプル）
+    notes: プラグインの直下に置く。フックは読まない
 settings:
-  - key: RULE_INJECT_INDEXES_USER
-    title: ユーザーの索引
-    file: ~/.claude/settings.json
-    type: str
-    required: false
-    default: '`${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`（ファイルが無ければ理由を載せずに読まない）'
-    description: 全プロジェクトで使う索引のパス。カンマ区切りで複数並べられる。空の文字列にすると、既定の置き場所も読まない
-    env_var: RULE_INJECT_INDEXES_USER
-    reload: restart
-    allowed: 絶対パスか `~` で始まるパス
-    visibility: user
-    status: planned
-  - key: RULE_INJECT_INDEXES_PROJECT
-    title: プロジェクトの索引
-    file: .claude/settings.json
-    type: str
-    required: false
-    default: '`${CLAUDE_PROJECT_DIR}/rules.yaml`（ファイルか `CLAUDE_PROJECT_DIR` が無ければ理由を載せずに読まない）'
-    description: そのプロジェクトだけで使う索引のパス。カンマ区切りで複数並べられる。空の文字列にすると、既定の置き場所も読まない
-    env_var: RULE_INJECT_INDEXES_PROJECT
-    reload: restart
-    allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（環境変数 `CLAUDE_PROJECT_DIR`）からの相対パス
-    visibility: user
-    status: planned
-    reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、どのフックにも同じ値で渡る。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない'
-  - key: RULE_INJECT_STATE_DIR
-    title: 既読の記録の置き場所
-    file: ~/.claude/settings.json
-    type: str
-    required: false
-    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
-    description: セッションごとの既読の記録ファイルと既読の履歴ファイルを置くフォルダ
-    env_var: RULE_INJECT_STATE_DIR
-    reload: restart
-    allowed: 絶対パスか `~` で始まるパス
-    visibility: user
-    status: planned
-    reason: 複数のフックが同じ場所を読み書きするため、全てが同じ規則で場所を決める
   - key: default_on
     title: 既定の必須の操作
     file: 索引（*.yaml）
@@ -125,39 +90,6 @@ settings:
     allowed: '`read`（Read・Bash での読み取り）/ `write`（Edit・Write）/ `mcp`（MCP のツールの呼び出し）'
     visibility: user
     status: planned
-  - key: RULE_INJECT_RECORD_RETENTION_DAYS
-    title: 既読の記録の保持日数
-    file: ~/.claude/settings.json
-    type: int
-    default: '30'
-    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイルと既読の履歴ファイルを、セッションの開始時に消す
-    env_var: RULE_INJECT_RECORD_RETENTION_DAYS
-    reload: restart
-    allowed: 1 以上の整数。それ以外の値は既定値で扱う
-    status: planned
-    visibility: user
-  - key: RULE_INJECT_LOG_DIR
-    title: ログの置き場所
-    file: ~/.claude/settings.json
-    type: str
-    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`'
-    description: フックが失敗した操作を書く、日付ごとのログのファイルを置くフォルダ
-    env_var: RULE_INJECT_LOG_DIR
-    reload: restart
-    allowed: 絶対パスか `~` で始まるパス
-    status: planned
-    visibility: user
-  - key: RULE_INJECT_LOG_RETENTION_DAYS
-    title: ログの保持日数
-    file: ~/.claude/settings.json
-    type: int
-    default: '3'
-    description: 日付が今日（UTC）からこの日数以上前のログのファイルを、セッションの開始時に消す
-    env_var: RULE_INJECT_LOG_RETENTION_DAYS
-    reload: restart
-    allowed: 1 以上の整数。それ以外の値は既定値で扱う
-    status: planned
-    visibility: user
   - key: rules[].read_by
     title: 既読にする呼び出し
     file: 索引（*.yaml）
@@ -189,5 +121,98 @@ settings:
     description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。書いた全てのキーの値がどれかのパターンに当たるときだけ既読にする
     reload: immediate
     allowed: '`rules[].args` と同じ書き方と照合の規則'
+    status: planned
+    visibility: user
+  - key: RULE_INJECT_CONFIG
+    title: 設定ファイルの場所
+    file: ~/.claude/settings.json
+    type: str
+    required: false
+    default: なし（設定ファイルを読まず、全てのキーを既定値で動かす）
+    description: 設定ファイル `settings.yaml` のパス。先頭の `~` はホームに展開する
+    missing: 指したファイルが無い・YAML として読めない・知らないキーや許す値の外の値を持つときは、設定ファイルを使わず、各フックが既定のログのフォルダへ `read_settings` を書き、案内を返すフックはファイルの場所と理由を案内に載せる（既定値で動かさない）
+    env_var: RULE_INJECT_CONFIG
+    reload: restart
+    allowed: 絶対パスか `~` で始まるパス
+    reason: プロジェクトスコープの `env` には書かない。プロジェクトごとの違いは設定ファイルの `projects` に書く
+    status: planned
+    visibility: user
+  - key: global.indexes
+    title: ユーザーの索引
+    file: ~/.config/rule-inject/settings.yaml
+    type: list[str]
+    required: false
+    default: '`[${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml]`（ファイルが無ければ理由を載せずに読まない）'
+    description: どのプロジェクトで起動しても読む索引のパスの並び。空の並び `[]` にすると、既定の置き場所も読まない
+    reload: immediate
+    allowed: 絶対パスか `~` で始まるパス。相対パスは設定ファイルの誤りとして扱う
+    status: planned
+    visibility: user
+  - key: global.state_dir
+    title: 既読の記録の置き場所
+    file: ~/.config/rule-inject/settings.yaml
+    type: str
+    required: false
+    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
+    description: セッションごとの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを置くフォルダ
+    reload: immediate
+    allowed: 絶対パスか `~` で始まるパス
+    reason: 複数のフックが同じ場所を読み書きするため、`global` だけに置き、`projects` では変えない
+    status: planned
+    visibility: user
+  - key: global.log_dir
+    title: ログの置き場所
+    file: ~/.config/rule-inject/settings.yaml
+    type: str
+    required: false
+    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`'
+    description: フックが失敗した操作を書く、日付ごとのログのファイルを置くフォルダ。設定ファイルが読めなかったことのログは既定値のフォルダへ書く
+    reload: immediate
+    allowed: 絶対パスか `~` で始まるパス
+    status: planned
+    visibility: user
+  - key: global.record_retention_days
+    title: 既読の記録の保持日数
+    file: ~/.config/rule-inject/settings.yaml
+    type: int
+    required: false
+    default: '30'
+    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを、セッションの開始時に消す
+    reload: immediate
+    allowed: 1 以上の整数。それ以外の値は設定ファイルの誤りとして扱う
+    status: planned
+    visibility: user
+  - key: global.log_retention_days
+    title: ログの保持日数
+    file: ~/.config/rule-inject/settings.yaml
+    type: int
+    required: false
+    default: '3'
+    description: 日付が今日（UTC）からこの日数以上前のログのファイルを、セッションの開始時に消す
+    reload: immediate
+    allowed: 1 以上の整数。それ以外の値は設定ファイルの誤りとして扱う
+    status: planned
+    visibility: user
+  - key: projects[].match
+    title: 当てるプロジェクト
+    file: ~/.config/rule-inject/settings.yaml
+    type: str
+    required: true
+    description: その要素を当てるプロジェクト。絶対パスなら、`CLAUDE_PROJECT_DIR` がそのパスかその配下のときに当てる。それ以外はプロジェクト名として、リポジトリのフォルダ名が一致したときに当てる。`.claude/worktrees/` の下の worktree は本体のパスとフォルダ名で見る
+    missing: 設定ファイルの誤りとして扱う
+    reload: immediate
+    allowed: 絶対パスかプロジェクト名
+    status: planned
+    visibility: user
+  - key: projects[].indexes
+    title: プロジェクトの索引
+    file: ~/.config/rule-inject/settings.yaml
+    type: list[str]
+    required: false
+    default: 当たった要素のどれも持たないとき `[${CLAUDE_PROJECT_DIR}/rules.yaml]`（ファイルか `CLAUDE_PROJECT_DIR` が無ければ理由を載せずに読まない）
+    description: 当たったプロジェクトだけで読む索引のパスの並び。当たった要素の並びを順に `global.indexes` の後ろへ足す。当たった要素が空の並び `[]` を持つと、既定の置き場所も読まない
+    reload: immediate
+    allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（`CLAUDE_PROJECT_DIR`）からの相対パス
+    reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、どのフックにも同じ値で渡る。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない。要素が持てるキーは `match` と `indexes` だけで、他のキーは設定ファイルの誤りとして扱う'
     status: planned
     visibility: user
