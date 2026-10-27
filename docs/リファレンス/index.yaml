@@ -1,7 +1,9 @@
-summary: 環境変数・索引の書式
+summary: 環境変数・設定ファイル・索引の書式
 items:
   - page: 環境変数.md
-    summary: 索引と既読の記録の置き場所を指す環境変数の一覧
+    summary: 設定ファイルを指す環境変数と、索引の変数参照の値
+  - page: 設定ファイル.md
+    summary: 設定ファイルのキーと、global・projects の当て方と重ね方
   - page: 索引の書式.md
     summary: ルール索引の YAML のキー
   - page: MCPの結果の書式.md

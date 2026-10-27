@@ -1,0 +1,21 @@
+# rule-inject の設定ファイルのサンプル
+# ~/.config/rule-inject/settings.yaml にコピーし、~/.claude/settings.json の env の RULE_INJECT_CONFIG でそのパスを指す
+# 値は例。キーを省くと既定値で動く
+global:
+  # どのプロジェクトでも読む索引。絶対パスか ~ で始まるパス（既定: ${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml）
+  indexes:
+    - ~/path/to/rules.yaml
+  # 既読の記録を置くフォルダ（既定: ${XDG_STATE_HOME:-~/.local/state}/rule-inject）
+  state_dir: ~/path/to/state
+  # ログを置くフォルダ（既定: ${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs）
+  log_dir: ~/path/to/logs
+  # 既読の記録を残す日数。1 以上の整数（既定: 30）
+  record_retention_days: 30
+  # ログを残す日数。1 以上の整数（既定: 3）
+  log_retention_days: 3
+projects:
+  # 絶対パスかプロジェクト名。絶対パスは起動したプロジェクトがそのパスかその配下のとき、プロジェクト名はフォルダ名が一致したときに当たる
+  - match: project-name
+    # 当たったプロジェクトだけで読む索引。相対パスはプロジェクトの直下から解く（既定: ${CLAUDE_PROJECT_DIR}/rules.yaml）
+    indexes:
+      - rules/project.yaml
