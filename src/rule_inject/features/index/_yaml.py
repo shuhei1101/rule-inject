@@ -139,6 +139,11 @@ def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int
             entry[key], position = _read_read_by(lines, current, position + 1, rest, key_indent)
         else:
             entry[key], position = read_value(lines, current, position + 1, key, rest, key_indent)
+        # `enabled` は文字列 `true` / `false` だけを許す（リストや他の値は、キーの行番号で拒む）
+        if key == ENABLED_KEY and entry[key] not in ENABLED_VALUES:
+            raise yaml_error(
+                current.number, f"{key} は {' か '.join(ENABLED_VALUES)} で書いてください"
+            )
         # 次の行が同じ桁のキーなら、同じエントリの続き
         if position >= len(lines) or lines[position].indent != key_indent:
             return entry, position
@@ -156,9 +161,6 @@ def _validate_entry(entry: dict[str, Value], number: int) -> None:
             raise yaml_error(number, f"{key} はリストで書いてください")
     if "on" in entry:
         _parse_operations(list(entry["on"]), number)
-    # `enabled` は文字列 `true` / `false` だけを許す（リストや他の値は拒む）
-    if ENABLED_KEY in entry and entry[ENABLED_KEY] not in ENABLED_VALUES:
-        raise yaml_error(number, f"{ENABLED_KEY} は {' か '.join(ENABLED_VALUES)} で書いてください")
 
 
 def parse_index(text: str) -> tuple[tuple[Operation, ...] | None, list[dict[str, Value]]]:
