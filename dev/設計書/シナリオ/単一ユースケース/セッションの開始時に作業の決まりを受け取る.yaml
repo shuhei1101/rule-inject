@@ -5,7 +5,7 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: 操作
-        description: プロンプトで、新しいファイルを作るときの手順を設定から読み取って答えるよう指示する
+        description: プロンプトで、新しいファイルを作るときの手順を設定から読み取って回答するよう指示する
         notes: ツールは呼ばせない（`--max-turns 1`）
     flow: |-
       ```mermaid
