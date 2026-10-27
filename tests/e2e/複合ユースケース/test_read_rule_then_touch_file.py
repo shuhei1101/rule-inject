@@ -155,7 +155,7 @@ def test_normal_when_rule_changed(
         allow=["Write", "Edit", "Read"],
         max_turns=8,
     )
-    # 続ける前に、読み直したことを応答で見分けられる 1 行をルールの本文へ足す
+    # 続ける前に、読み直したことを応答で見分けられる 1 行をルールの本文へ追加する
     changed_marker = marker("RULE-CHANGED")
     rule.write_text(rule.read_text(encoding="utf-8") + f"{changed_marker}\n", encoding="utf-8")
     second_target = e2e_project / "second.txt"

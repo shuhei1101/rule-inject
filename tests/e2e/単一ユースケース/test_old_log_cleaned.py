@@ -14,7 +14,7 @@ def test_normal(
     write_dated_log: Callable[[date], Path],
     run_claude: Callable[..., Any],
 ) -> None:
-    """セッションの開始で、日付が保持日数以上前のログのファイルだけが消える（正常シナリオ）。"""
+    """セッションの開始で、日付が保持日数以上前のログのファイルだけが削除される（正常シナリオ）。"""
     # 準備
     configure_index(make_index())
     today = datetime.now(UTC).date()
