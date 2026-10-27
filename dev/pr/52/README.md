@@ -1,0 +1,1 @@
+# 利用者ごとの設定を環境変数から ~/.config/rule-inject/settings.yaml（global・projects）へ移す
