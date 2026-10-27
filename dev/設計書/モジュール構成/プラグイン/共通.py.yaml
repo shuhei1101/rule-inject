@@ -12,7 +12,7 @@ directory: |-
       ├── _settings_yaml.py  # 設定ファイルの YAML の一部だけを読む
       ├── yaml_lines.py      # 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り
       ├── variables.py       # `!{名前}` を環境変数の値へ展開する
-      └── logger.py          # 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを消す
+      └── logger.py          # 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを削除する
   ```
 classes:
   - name: RuleInjectError
@@ -51,17 +51,17 @@ classes:
     kind: クラス
     inherits: RuleInjectError
   - name: RecordDeleteError
-    title: 既読の記録を消せない
+    title: 既読の記録を削除できない
     container: shared/errors.py
     usecase: 共通
-    summary: 記録ファイルはあるが消せない
+    summary: 記録ファイルはあるが削除できない
     kind: クラス
     inherits: RuleInjectError
   - name: LogDeleteError
-    title: ログを消せない
+    title: ログを削除できない
     container: shared/errors.py
     usecase: 古いログが掃除される
-    summary: 消す対象のログのファイルはあるが消せない
+    summary: 削除する対象のログのファイルはあるが削除できない
     kind: クラス
     inherits: RuleInjectError
   - name: HistoryWriteError
@@ -96,13 +96,13 @@ enums:
         description: 記録に書けない
       - value: delete_record
         title: 既読の削除
-        description: 記録ファイルを消せない
+        description: 記録ファイルを削除できない
       - value: unexpected
         title: 想定外
         description: 上のどれにも当たらない例外
       - value: delete_log
         title: ログの削除
-        description: 保持日数を過ぎたログのファイルか変更前のログを消せない
+        description: 保持日数を過ぎたログのファイルか変更前のログを削除できない
       - value: write_history
         title: 既読の履歴の追記
         description: 既読の履歴に書けない
@@ -165,7 +165,7 @@ constants:
     summary: 設定ファイルに `global.log_retention_days` が無いときのログの保持日数
     value: '`3`'
   - name: VARIABLE_PATTERN
-    title: 変数参照の形
+    title: 変数参照の形式
     container: shared/variables.py
     summary: '`!{名前}` の正規表現。名前をグループで取る'
     value: '`!\{([A-Za-z_][A-Za-z0-9_]*)\}`'
@@ -194,7 +194,7 @@ functions:
     title: 場所の解決
     container: shared/paths.py
     usecase: 共通
-    summary: ルールの場所や対象のパスを、照合・記録に使う正規の形へ揃える
+    summary: ルールの場所や対象のパスを、照合・記録に使う正規の形式へ揃える
     kind: 関数
     scope: public
     args:
@@ -231,7 +231,7 @@ functions:
     title: ログの書き出し
     container: shared/logger.py
     usecase: 共通
-    summary: 失敗した操作を ER 図「ログ」の形で 1 行追記する
+    summary: 失敗した操作を ER 図「ログ」の形式で 1 行追記する
     kind: 関数
     scope: public
     side_effects: その時刻の日付のログのファイルに 1 行追記する。書けないときは標準エラー出力へ 1 行出す
@@ -336,10 +336,10 @@ functions:
     title: ログの掃除
     container: shared/logger.py
     usecase: 古いログが掃除される
-    summary: 日付が保持日数以上前のログのファイルを消し、消せなかったものを返す
+    summary: 日付が保持日数以上前のログのファイルを削除し、削除できなかったものを返す
     kind: 関数
     scope: public
-    side_effects: ログのファイルを消す
+    side_effects: ログのファイルを削除する
     args:
       - name: log_folder
         type: Path
@@ -359,27 +359,27 @@ functions:
         description: 今日の日付の取得
     returns:
       type: tuple[LogDeleteError, ...]
-      description: 消せなかったログのファイルごとの失敗。全て消せたか消すものが無ければ空
+      description: 削除できなかったログのファイルごとの失敗。全て削除できたか削除するものが無ければ空
     process: |-
       1. `os.scandir(log_folder)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
-      2. `retention_days` が `today()` から `date.min` までの日数より大きければ、消すものが無いとして空を返す（日付の引き算が暇を超えないようにする）
+      2. `retention_days` が `today()` から `date.min` までの日数より大きければ、削除するものが無いとして空を返す（日付の引き算が暇を超えないようにする）
       3. 名前が `{8 桁の数字}{LOG_FILE_SUFFIX}` で、数字が `%Y%m%d` として読め、シンボリックリンクを辿らずに通常のファイルの項目だけを対象にする
-      4. 日付が `today() - retention_days 日` 以前のものを消す。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
-      5. 消せないもの（その他の OSError）は LogDeleteError にして集め、残りの掃除を続ける
+      4. 日付が `today() - retention_days 日` 以前のものを削除する。削除する前に無くなっていたもの（FileNotFoundError）は削除した状態と同じとして扱う
+      5. 削除できないもの（その他の OSError）は LogDeleteError にして集め、残りの掃除を続ける
     exceptions:
       - name: OSError
         condition: ログのフォルダはあるが列挙できない（FileNotFoundError 以外）。捕まえずに送出し、フックの最上位が `unexpected` として扱う
     unit_tests:
       - name: test_sweep_logs
         case: 正常
-        summary: 日付が保持日数以上前のファイルだけを消す
+        summary: 日付が保持日数以上前のファイルだけを削除する
         condition: '`today` を 2026-09-29 に固定、`retention_days` が 3、20260929・20260927・20260926 のログのファイル'
         mock: '`today`'
         expected: 20260926 のファイルが無く、他は残る。戻り値は空
       - name: test_sweep_logs_when_not_log
         case: 正常
-        summary: ログのファイルでないものは消さない
-        condition: '`today` を固定、形に合わない `notes.txt`・`2026_rule-inject.log`・`20261399_rule-inject.log`、名前が古い日付の形に合うサブフォルダとシンボリックリンク'
+        summary: ログのファイルでないものは削除しない
+        condition: '`today` を固定、形式に合わない `notes.txt`・`2026_rule-inject.log`・`20261399_rule-inject.log`、名前が古い日付の形式に合うサブフォルダとシンボリックリンク'
         mock: '`today`'
         expected: どれも残る
       - name: test_sweep_logs_when_missing
@@ -390,13 +390,13 @@ functions:
         expected: 戻り値が空で、フォルダを作らない
       - name: test_sweep_logs_when_undeletable
         case: 異常
-        summary: 消せないログのファイルを返す
+        summary: 削除できないログのファイルを返す
         condition: 保持日数を過ぎたログのファイルを置き、ログのフォルダを書き込み権限なし（`chmod 555`）
         mock: '`today`'
         expected: LogDeleteError が 1 件（path がそのファイル）で、ファイルが残る
       - name: test_sweep_logs_when_retention_too_long
         case: 正常
-        summary: 暦の範囲を超えるほど大きい保持日数なら何も消さない
+        summary: 暦の範囲を超えるほど大きい保持日数なら何も削除しない
         condition: '`today` を 2026-09-29 に固定、`retention_days` が 999999、日付が 2020-01-01 のログのファイル'
         mock: '`today`'
         expected: 例外を送出せず、ファイルが残り、戻り値は空
@@ -404,10 +404,10 @@ functions:
     title: 変更前のログの削除
     container: shared/logger.py
     usecase: 古いログが掃除される
-    summary: 記録フォルダに残った変更前のログを消し、消せなければ失敗を返す
+    summary: 記録フォルダに残った変更前のログを削除し、削除できなければ失敗を返す
     kind: 関数
     scope: public
-    side_effects: '`{state_folder}/{LEGACY_LOG_FILE_NAME}` を消す'
+    side_effects: '`{state_folder}/{LEGACY_LOG_FILE_NAME}` を削除する'
     args:
       - name: state_folder
         type: Path
@@ -416,15 +416,15 @@ functions:
         description: 記録フォルダ
     returns:
       type: LogDeleteError | None
-      description: 消せなかったときの失敗。消せたか無かったときは None
+      description: 削除できなかったときの失敗。削除できたか無かったときは None
     process: |-
       1. `{state_folder}/{LEGACY_LOG_FILE_NAME}` をシンボリックリンクを辿らずに調べ、通常のファイルでなければ（無いときも）None を返す
-      2. 消す。消す前に無くなっていたもの（FileNotFoundError）は None を返す
-      3. 消せない（その他の OSError）ときは LogDeleteError を返す
+      2. 削除する。削除する前に無くなっていたもの（FileNotFoundError）は None を返す
+      3. 削除できない（その他の OSError）ときは LogDeleteError を返す
     unit_tests:
       - name: test_delete_legacy_log
         case: 正常
-        summary: 変更前のログを消す
+        summary: 変更前のログを削除する
         condition: 記録フォルダに `rule-inject.log`
         mock: なし
         expected: ファイルが無く、None
@@ -436,7 +436,7 @@ functions:
         expected: None。フォルダは残る
       - name: test_delete_legacy_log_when_undeletable
         case: 異常
-        summary: 消せないとき失敗を返す
+        summary: 削除できないとき失敗を返す
         condition: '`rule-inject.log` を置き、記録フォルダを書き込み権限なし（`chmod 555`）'
         mock: なし
         expected: LogDeleteError（path がそのファイル）で、ファイルが残る
@@ -486,7 +486,7 @@ functions:
         expected: '`text` がそのまま、`unresolved` が `("B", "A")`'
       - name: test_expand_variables_when_not_name
         case: 正常
-        summary: 名前の形に合わないものは置き換えない
+        summary: 名前の形式に合わないものは置き換えない
         condition: '`!{ X }`・`!{1X}`・`{X}`・`$X`、`env` に `X=1`'
         mock: なし
         expected: '`text` がそのまま、`unresolved` が空'
@@ -591,7 +591,7 @@ functions:
         condition: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
         message: path は設定ファイルの場所、reason は `describe(exc)`
       - name: SettingsReadError
-        condition: '`parse_settings` が ValueError を送出する（YAML の書式・知らないキー・許さない形）'
+        condition: '`parse_settings` が ValueError を送出する（YAML の書式・知らないキー・許さない形式）'
         message: path は設定ファイルの場所、reason は `describe(exc)`（行番号を含む）
       - name: SettingsReadError
         condition: 3 の値の誤り
@@ -729,7 +729,7 @@ functions:
     title: 設定ファイルの YAML の読み取り
     container: shared/_settings_yaml.py
     usecase: 共通
-    summary: 設定ファイルの YAML のうち設定の設計書に挙げたキーと形だけを読む
+    summary: 設定ファイルの YAML のうち設定の設計書に挙げたキーと形式だけを読む
     kind: 関数
     scope: public
     args:
@@ -747,10 +747,10 @@ functions:
       3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`（文字列）だけを許す
       4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
       5. 文字列は引用符あり・なしを読む。リストは空の `[]` を許す
-      6. 許さないキー・形（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする
+      6. 許さないキー・形式（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする
     exceptions:
       - name: ValueError
-        condition: 許さないキー・形がある
+        condition: 許さないキー・形式がある
         message: '`{行番号}行目: {理由}`'
     unit_tests:
       - name: test_parse_settings
@@ -777,21 +777,21 @@ functions:
         condition: 最上位の `foo:`・`global` の `index:`・`projects` の要素の `state_dir:`（パラメータ展開）
         mock: なし
         expected: 行番号つきの ValueError
-        exception: 許さないキー・形がある
+        exception: 許さないキー・形式がある
       - name: test_parse_settings_when_flow_map
         case: 異常
         summary: フローのマップを拒む
         condition: '`global: {state_dir: /s}`'
         mock: なし
         expected: 行番号つきの ValueError
-        exception: 許さないキー・形がある
+        exception: 許さないキー・形式がある
       - name: test_parse_settings_when_duplicate_key
         case: 異常
         summary: キーの重複を拒む
         condition: '`global` に `log_dir:` が 2 つ'
         mock: なし
         expected: 行番号つきの ValueError
-        exception: 許さないキー・形がある
+        exception: 許さないキー・形式がある
 test_files:
   - tests/unit/rule_inject/shared/test_paths.py
   - tests/unit/rule_inject/shared/test_logger.py

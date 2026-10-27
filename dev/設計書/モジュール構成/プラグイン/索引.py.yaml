@@ -144,7 +144,7 @@ functions:
     title: 索引の YAML の読み取り
     container: features/index/_yaml.py
     usecase: 共通
-    summary: 索引の YAML のうち設定の設計書に挙げたキーと形だけを読む
+    summary: 索引の YAML のうち設定の設計書に挙げたキーと形式だけを読む
     kind: 関数
     scope: public
     args:
@@ -163,10 +163,10 @@ functions:
       4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
       5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読む。キーは空白を含まない文字列（ドットを含んでよい）
       6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
-      7. 許さないキー・形（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素を含む）・`rule` の無いエントリ・`on` の外の値は行番号つきの ValueError にする
+      7. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素を含む）・`rule` の無いエントリ・`on` の外の値は行番号つきの ValueError にする
     exceptions:
       - name: ValueError
-        condition: 許さないキー・形・値がある
+        condition: 許さないキー・形式・値がある
         message: '`{行番号}行目: {理由}`'
     unit_tests:
       - name: test_parse_index
@@ -187,21 +187,21 @@ functions:
         condition: エントリに `foo:` がある
         mock: なし
         expected: 行番号つきの ValueError
-        exception: 許さないキー・形・値がある
+        exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_rule_missing
         case: 異常
         summary: '`rule` の無いエントリを拒む'
         condition: '`paths` だけのエントリ'
         mock: なし
         expected: ValueError
-        exception: 許さないキー・形・値がある
+        exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_invalid_on
         case: 異常
         summary: '`on` の外の値を拒む'
         condition: '`on: [delete]`'
         mock: なし
         expected: ValueError
-        exception: 許さないキー・形・値がある
+        exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_args
         case: 正常
         summary: '`args` のブロックのマップを読む'
@@ -214,7 +214,7 @@ functions:
         condition: '`args: {tags: [a]}`'
         mock: なし
         expected: 行番号つきの ValueError
-        exception: 許さないキー・形・値がある
+        exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_read_by
         case: 正常
         summary: '`read_by` のマップのリストを読む'
@@ -227,7 +227,7 @@ functions:
         condition: '`read_by:` の下に `args:` だけを持つ要素'
         mock: なし
         expected: 行番号つきの ValueError
-        exception: 許さないキー・形・値がある
+        exception: 許さないキー・形式・値がある
   - name: load_indexes
     title: 索引の読み込み
     container: features/index/service.py
@@ -251,9 +251,9 @@ functions:
       description: 読めたエントリと読めなかった索引
     process: |-
       1. `index_paths` を渡された順に読む。UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
-      2. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に足す。同じ索引のほかのエントリは読む
-      3. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {展開した rule} は URL のため Read で読めない`）を `failures` に足す。同じ索引のほかのエントリは読む
-      4. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に足す。同じ索引のほかのエントリは読む
+      2. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に追加する。同じ索引のほかのエントリは読む
+      3. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {展開した rule} は URL のため Read で読めない`）を `failures` に追加する。同じ索引のほかのエントリは読む
+      4. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に追加する。同じ索引のほかのエントリは読む
       5. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
     unit_tests:
       - name: test_load_indexes
@@ -478,7 +478,7 @@ functions:
     process: |-
       1. glob を正規表現へ読み替える（`**/` → 0 個以上のフォルダ、`*` → `/` を含まない文字列、`?` → `/` 以外の 1 字、`{a,b}` → 選択）
       2. パス全体に当てる
-    reason: フックの Python の最低の版（3.12）には `PurePath.full_match` が無く、`fnmatch` は `*` が `/` もまたぐため
+    reason: フックの Python の最低のバージョン（3.12）には `PurePath.full_match` が無く、`fnmatch` は `*` が `/` もまたぐため
     unit_tests:
       - name: test_glob_match_when_double_star
         case: 正常

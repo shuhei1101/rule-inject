@@ -9,9 +9,9 @@ directory: |-
   ```
 constants:
   - name: SESSION_ID_PATTERN
-    title: セッションの識別子の形
+    title: セッションの識別子の形式
     container: features/record/service.py
-    summary: 記録ファイル名に使える session_id の形
+    summary: 記録ファイル名に使える session_id の形式
     value: '`^[A-Za-z0-9_-]{1,128}$`'
   - name: GUIDED_SUFFIX
     title: 案内済みの記録ファイルの名前の末尾
@@ -38,7 +38,7 @@ functions:
     title: セッションの識別子の判定
     container: features/record/service.py
     usecase: 共通
-    summary: session_id が記録ファイル名に使える形かを返す
+    summary: session_id が記録ファイル名に使える形式かを返す
     kind: 関数
     scope: public
     args:
@@ -59,7 +59,7 @@ functions:
         expected: 'True'
       - name: test_is_valid_session_id_when_invalid
         case: 正常
-        summary: 形が外れた値を拒む
+        summary: 形式が外れた値を拒む
         condition: '`../x`、空文字、129 文字、None'
         mock: なし
         expected: すべて False
@@ -80,7 +80,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
     returns:
       type: frozenset[ReadEntry]
       description: 既読の行。ファイルが無ければ空
@@ -136,7 +136,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
       - name: entries
         type: Sequence[ReadEntry]
         required: true
@@ -177,10 +177,10 @@ functions:
     title: 既読の削除
     container: features/record/service.py
     usecase: 共通
-    summary: そのセッションの記録ファイルを消す
+    summary: そのセッションの記録ファイルを削除する
     kind: 関数
     scope: public
-    side_effects: 記録ファイルを消す
+    side_effects: 記録ファイルを削除する
     args:
       - name: state_dir
         type: Path
@@ -191,17 +191,17 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
     returns:
       type: None
       description: なし（ファイルが無ければ何もしない）
     exceptions:
       - name: RecordDeleteError
-        condition: ファイルはあるが消せない（FileNotFoundError 以外の OSError）
+        condition: ファイルはあるが削除できない（FileNotFoundError 以外の OSError）
     unit_tests:
       - name: test_delete_record
         case: 正常
-        summary: 対象のセッションだけを消す
+        summary: 対象のセッションだけを削除する
         condition: 2 セッション分の記録ファイル
         mock: なし
         expected: 対象のファイルが無く、別のファイルが残る
@@ -213,16 +213,16 @@ functions:
         expected: 例外を送出しない
       - name: test_delete_record_when_undeletable
         case: 異常
-        summary: 消せない
+        summary: 削除できない
         condition: 記録フォルダを書き込み権限なし（`chmod 555`）
         mock: なし
         expected: RecordDeleteError
-        exception: ファイルはあるが消せない
+        exception: ファイルはあるが削除できない
   - name: record_exists
     title: 記録の有無
     container: features/record/service.py
     usecase: 共通
-    summary: そのセッションの記録ファイルがあるかを返す（圧縮の後の消し残りの確認に使う）
+    summary: そのセッションの記録ファイルがあるかを返す（圧縮の後の削除できずに残った記録の確認に使う）
     kind: 関数
     scope: public
     args:
@@ -235,7 +235,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
     returns:
       type: bool
       description: あれば True
@@ -250,10 +250,10 @@ functions:
     title: 既読の掃除
     container: features/record/service.py
     usecase: 終わったセッションの既読の記録が掃除される
-    summary: 保持期間を過ぎた別のセッションの既読の記録ファイルと案内済みの記録ファイルと既読の履歴ファイルを消し、消せなかったものを返す
+    summary: 保持期間を過ぎた別のセッションの既読の記録ファイルと案内済みの記録ファイルと既読の履歴ファイルを削除し、削除できなかったものを返す
     kind: 関数
     scope: public
-    side_effects: 記録ファイルを消す
+    side_effects: 記録ファイルを削除する
     args:
       - name: state_dir
         type: Path
@@ -264,7 +264,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 消さないセッション（始まったセッション）の、形を確かめた session_id
+        description: 削除しないセッション（始まったセッション）の、形式を確かめた session_id
       - name: now
         type: Callable[[], float]
         required: false
@@ -278,32 +278,32 @@ functions:
         description: 保持日数（1 以上。呼び出し元が `read_retention_days` で読む）
     returns:
       type: tuple[RecordDeleteError, ...]
-      description: 消せなかった記録ファイルごとの失敗。全て消せたか消すものが無ければ空
+      description: 削除できなかった記録ファイルごとの失敗。全て削除できたか削除するものが無ければ空
     process: |-
       1. `os.scandir(state_dir)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
-      2. 名前が `{session_id}{GUIDED_SUFFIX}`・`{session_id}{HISTORY_SUFFIX}`・`{session_id}{RECORD_SUFFIX}` の形（末尾を `GUIDED_SUFFIX`・`HISTORY_SUFFIX` から先に外し、残りが `is_valid_session_id` に合う）で、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
-      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを消す。既読の記録・案内済みの記録・既読の履歴は、それぞれ自分の最終更新で比べる。消す前に無くなっていたもの（FileNotFoundError）は消した状態と同じとして扱う
-      4. 消せないもの（その他の OSError）は RecordDeleteError にして集め、残りの掃除を続ける
+      2. 名前が `{session_id}{GUIDED_SUFFIX}`・`{session_id}{HISTORY_SUFFIX}`・`{session_id}{RECORD_SUFFIX}` の形式（末尾を `GUIDED_SUFFIX`・`HISTORY_SUFFIX` から先に外し、残りが `is_valid_session_id` に合う）で、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
+      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを削除する。既読の記録・案内済みの記録・既読の履歴は、それぞれ自分の最終更新で比べる。削除する前に無くなっていたもの（FileNotFoundError）は削除した状態と同じとして扱う
+      4. 削除できないもの（その他の OSError）は RecordDeleteError にして集め、残りの掃除を続ける
     exceptions:
       - name: OSError
         condition: 記録フォルダはあるが列挙できない（FileNotFoundError 以外）。捕まえずに送出し、フックの最上位が `unexpected` として扱う
     unit_tests:
       - name: test_sweep_records
         case: 正常
-        summary: 保持期間を過ぎた記録ファイルだけを消す
+        summary: 保持期間を過ぎた記録ファイルだけを削除する
         condition: '`retention_days` が 30、最終更新が 31 日前と 29 日前の記録ファイル、`now` を固定'
         mock: '`now`'
         expected: 31 日前のファイルが無く 29 日前のファイルが残る。戻り値は空
       - name: test_sweep_records_when_kept_session
         case: 正常
-        summary: 始まったセッションの記録は消さない
+        summary: 始まったセッションの記録は削除しない
         condition: '`keep_session_id` の記録ファイルの最終更新が 31 日前'
         mock: '`now`'
         expected: そのファイルが残る
       - name: test_sweep_records_when_not_record
         case: 正常
-        summary: 記録ファイルでないものは消さない
-        condition: 最終更新が 31 日前の `rule-inject.log`、名前が session_id の形に合わない `a b.txt`、`.txt` で終わるサブフォルダ、`.txt` で終わるシンボリックリンク
+        summary: 記録ファイルでないものは削除しない
+        condition: 最終更新が 31 日前の `rule-inject.log`、名前が session_id の形式式に合わない `a b.txt`、`.txt` で終わるサブフォルダ、`.txt` で終わるシンボリックリンク
         mock: '`now`'
         expected: どれも残る
       - name: test_sweep_records_when_missing
@@ -314,21 +314,21 @@ functions:
         expected: 戻り値が空で、フォルダを作らない
       - name: test_sweep_records_when_undeletable
         case: 異常
-        summary: 消せない記録ファイルを返す
+        summary: 削除できない記録ファイルを返す
         condition: 最終更新が 31 日前の記録ファイルを置き、記録フォルダを書き込み権限なし（`chmod 555`）
         mock: '`now`'
         expected: RecordDeleteError が 1 件（path がその記録ファイル）で、ファイルが残る
-        exception: 消せない記録ファイルを払い出さずに返す
+        exception: 削除できない記録ファイルを払い出さずに返す
       - name: test_sweep_records_when_guided
         case: 正常
-        summary: 保持期間を過ぎた案内済みの記録ファイルも消す
-        condition: 最終更新が 31 日前と 29 日前の `{id}.guided.txt`、`keep_session_id` の 31 日前の `{id}.guided.txt`、名前が形に合わない 31 日前の `a b.guided.txt`
+        summary: 保持期間を過ぎた案内済みの記録ファイルも削除する
+        condition: 最終更新が 31 日前と 29 日前の `{id}.guided.txt`、`keep_session_id` の 31 日前の `{id}.guided.txt`、名前が形式に合わない 31 日前の `a b.guided.txt`
         mock: '`now`'
         expected: 31 日前の別のセッションの `.guided.txt` だけが無く、残りは残る
       - name: test_sweep_records_when_history
         case: 正常
-        summary: 保持期間を過ぎた既読の履歴ファイルも消す
-        condition: 最終更新が 31 日前と 29 日前の `{id}.history.jsonl`、`keep_session_id` の 31 日前の `{id}.history.jsonl`、名前が形に合わない 31 日前の `a b.history.jsonl`
+        summary: 保持期間を過ぎた既読の履歴ファイルも削除する
+        condition: 最終更新が 31 日前と 29 日前の `{id}.history.jsonl`、`keep_session_id` の 31 日前の `{id}.history.jsonl`、名前が形式に合わない 31 日前の `a b.history.jsonl`
         mock: '`now`'
         expected: 31 日前の別のセッションの `.history.jsonl` だけが無く、残りは残る
   - name: read_guided
@@ -348,7 +348,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
     returns:
       type: frozenset[str]
       description: 案内済みの場所。ファイルが無ければ空
@@ -396,7 +396,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
       - name: locations
         type: Sequence[str]
         required: true
@@ -427,10 +427,10 @@ functions:
     title: 案内済みの削除
     container: features/record/service.py
     usecase: 圧縮で既読の記録が捨てられる
-    summary: そのセッションの案内済みの記録ファイルを消す（ファイルが無ければ何もしない）
+    summary: そのセッションの案内済みの記録ファイルを削除する（ファイルが無ければ何もしない）
     kind: 関数
     scope: public
-    side_effects: 案内済みの記録ファイルを消す
+    side_effects: 案内済みの記録ファイルを削除する
     args:
       - name: state_dir
         type: Path
@@ -441,18 +441,18 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
     returns:
       type: None
       description: なし
-    process: 1. `delete_record` と共通の内部の関数で `{state_dir}/{session_id}{GUIDED_SUFFIX}` を消す。無ければ（FileNotFoundError）何もしない
+    process: 1. `delete_record` と共通の内部の関数で `{state_dir}/{session_id}{GUIDED_SUFFIX}` を削除する。無ければ（FileNotFoundError）何もしない
     exceptions:
       - name: RecordDeleteError
-        condition: ファイルはあるが消せない（FileNotFoundError 以外の OSError）
+        condition: ファイルはあるが削除できない（FileNotFoundError 以外の OSError）
     unit_tests:
       - name: test_delete_guided
         case: 正常
-        summary: 案内済みの記録ファイルだけを消す
+        summary: 案内済みの記録ファイルだけを削除する
         condition: 同じセッションの `{id}.txt` と `{id}.guided.txt`
         mock: なし
         expected: '`{id}.guided.txt` が無く `{id}.txt` が残る'
@@ -464,11 +464,11 @@ functions:
         expected: 例外を送出しない
       - name: test_delete_guided_when_undeletable
         case: 異常
-        summary: 消せない
+        summary: 削除できない
         condition: 案内済みの記録ファイルを置き、記録フォルダを書き込み権限なし（`chmod 555`）
         mock: なし
         expected: RecordDeleteError（path が `{id}.guided.txt`）
-        exception: ファイルはあるが消せない
+        exception: ファイルはあるが削除できない
   - name: append_history
     title: 既読の履歴の追記
     container: features/record/service.py
@@ -487,7 +487,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: 形を確かめた session_id
+        description: 形式を確かめた session_id
       - name: locations
         type: Sequence[str]
         required: true
@@ -620,7 +620,7 @@ functions:
       - name: test_current_read_locations_when_unreadable
         case: 正常
         summary: 今のハッシュを取れない場所は未読にする
-        condition: 記録に場所 A の行があり、A のファイルを消す
+        condition: 記録に場所 A の行があり、A のファイルを削除する
         mock: なし
         expected: 空の集合
 test_files:
