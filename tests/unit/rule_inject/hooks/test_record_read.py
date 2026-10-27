@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.record_read import record_read
 
 # 本文が `test` のルールの本文のハッシュ
@@ -30,7 +32,7 @@ def _read_response(start_line: Any, num_lines: Any, total_lines: Any) -> dict[st
 
 @pytest.fixture
 def rule_env(
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     rule_file: Callable[..., Path],
@@ -38,7 +40,7 @@ def rule_env(
     """ルールのファイル 1 つ（本文は `test`）を載せた索引を指す環境変数と、そのルールのパスを返す。"""
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), paths=["**/*.py"]))
-    return {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}, rule
+    return settings_env(indexes=[str(index)]), rule
 
 
 def test_record_read_when_read_tool(
@@ -150,7 +152,7 @@ def test_record_read_when_unwritable(
 
 
 def test_record_read_when_mcp_tool(
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     rule_file: Callable[..., Path],
@@ -164,7 +166,7 @@ def test_record_read_when_mcp_tool(
     # 準備
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), read_by=[{"tools": ["mcp__docs__get_doc"]}]))
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    env = settings_env(indexes=[str(index)])
     payload = hook_payload("PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "a"})
     # 実行
     result = record_read(payload, env)
@@ -179,7 +181,7 @@ def test_record_read_when_mcp_tool(
 
 
 def test_record_read_when_read_by_not_matched(
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     rule_file: Callable[..., Path],
@@ -191,7 +193,7 @@ def test_record_read_when_read_by_not_matched(
     # 準備
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), tools=["mcp__*"]))
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    env = settings_env(indexes=[str(index)])
     payload = hook_payload("PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "a"})
     # 実行
     result = record_read(payload, env)
@@ -202,7 +204,7 @@ def test_record_read_when_read_by_not_matched(
 
 
 def test_record_read_when_rule_is_url(
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
@@ -218,7 +220,7 @@ def test_record_read_when_rule_is_url(
             read_by=[{"tools": ["mcp__docs__get_doc"]}],
         )
     )
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    env = settings_env(indexes=[str(index)])
     payload = hook_payload("PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "a"})
     # 実行
     result = record_read(payload, env)
@@ -297,7 +299,7 @@ def test_record_read_when_read_partially(
 
 def test_record_read_when_mcp_document(
     tmp_path: Path,
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     rule_file: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
@@ -317,7 +319,7 @@ def test_record_read_when_mcp_document(
         f"  - rule: {rule_b}\n"
         '    paths:\n      - "**/*.py"\n'
     )
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    env = settings_env(indexes=[str(index)])
     payload = hook_payload(
         "PostToolUse",
         tool_name="mcp__docs__get_doc",
@@ -340,7 +342,7 @@ def test_record_read_when_mcp_document(
 
 
 def test_record_read_when_mcp_document_without_read_by(
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     rule_file: Callable[..., Path],
@@ -352,7 +354,7 @@ def test_record_read_when_mcp_document_without_read_by(
     # 準備
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), read_by=[{"tools": ["mcp__docs__get_doc"]}]))
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    env = settings_env(indexes=[str(index)])
     payload = hook_payload(
         "PostToolUse",
         tool_name="mcp__docs__get_doc",
@@ -392,7 +394,7 @@ def test_record_read_when_mcp_document_is_url(
 
 def test_record_read_when_rule_unreadable(
     tmp_path: Path,
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
@@ -404,7 +406,7 @@ def test_record_read_when_rule_unreadable(
     # 準備
     missing = tmp_path / "rules" / "missing.md"
     index = make_index(index_text(str(missing), read_by=[{"tools": ["mcp__docs__get_doc"]}]))
-    env = {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(index)}
+    env = settings_env(indexes=[str(index)])
     payload = hook_payload("PostToolUse", tool_name="mcp__docs__get_doc", tool_input={"id": "a"})
     # 実行
     result = record_read(payload, env)
@@ -413,3 +415,37 @@ def test_record_read_when_rule_unreadable(
     assert not (state_dir / f"{session_id}.txt").exists()
     assert not (state_dir / f"{session_id}.history.jsonl").exists()
     assert not log_folder.exists()
+
+
+def test_record_read_when_settings_unreadable(
+    xdg_state_home: Path,
+    session_id: str,
+    rule_file: Callable[..., Path],
+    unreadable_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    default_log_folder: Path,
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """設定ファイルが読めないときは記録せずに知らせる（正常系）。"""
+    # 準備
+    rule = rule_file("python.md", "test")
+    env = unreadable_env("missing")
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=_read_response(1, 3, 3),
+    )
+    # 実行
+    result = record_read(payload, env)
+    # 検証
+    context = result["hookSpecificOutput"]["additionalContext"]
+    assert SETTINGS_FAILURE_SUMMARY in context
+    assert env["RULE_INJECT_CONFIG"] in context
+    assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
+    state_folder = xdg_state_home / "rule-inject"
+    assert not (state_folder / f"{session_id}.txt").exists()
+    assert not (state_folder / f"{session_id}.history.jsonl").exists()
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"

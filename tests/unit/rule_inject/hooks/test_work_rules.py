@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from rule_inject.features.guidance.service import WORK_RULES
+from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.work_rules import work_rules
 
 
@@ -43,3 +44,42 @@ def test_work_rules_when_record_left_after_compact(
     assert WORK_RULES in context
     assert str(record_file) in context
     assert str(log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
+
+
+def test_work_rules_when_settings_unreadable_after_compact(
+    unreadable_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    default_log_folder: Path,
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """圧縮の後に設定ファイルが読めなければ作業の決まりに理由を続ける（正常系）。"""
+    # 準備
+    env = unreadable_env("missing")
+    payload = hook_payload("SessionStart", source="compact")
+    # 実行
+    result = work_rules(payload, env)
+    # 検証
+    context = result["hookSpecificOutput"]["additionalContext"]
+    assert context.startswith(f"{WORK_RULES}\n\n")
+    assert SETTINGS_FAILURE_SUMMARY in context
+    assert env["RULE_INJECT_CONFIG"] in context
+    assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
+
+
+def test_work_rules_when_settings_unreadable_at_startup(
+    unreadable_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    default_log_folder: Path,
+) -> None:
+    """圧縮の後でなければ設定ファイルを読まない（正常系）。"""
+    # 準備
+    env = unreadable_env("missing")
+    payload = hook_payload("SessionStart", source="startup")
+    # 実行
+    result = work_rules(payload, env)
+    # 検証
+    assert result["hookSpecificOutput"]["additionalContext"] == WORK_RULES
+    assert not default_log_folder.exists()

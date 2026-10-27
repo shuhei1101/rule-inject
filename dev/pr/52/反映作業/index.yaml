@@ -1,0 +1,14 @@
+利用者の設定ファイルへの移行:
+  説明: 利用者の設定フォルダ（`~/.claude/` と、`CLAUDE_CONFIG_DIR` で切り替える `~/.claude-*/`）の `settings.json` のうち、`env` に `RULE_INJECT_` で始まるキーを持つもの全てについて、その値を `~/.config/rule-inject/settings.yaml` の `global` の対応するキーへ写し、`env` を `RULE_INJECT_CONFIG` だけにする。書き換える前の各 `settings.json` をバックアップし、切り戻しはバックアップを戻す。この PR を含む release を master へ入れるのは、[shuhei1101/ai-monitor#3040](https://github.com/shuhei1101/ai-monitor/issues/3040)（ai-monitor がエージェントへ渡す索引を設定ファイルの指定へ移す）が ai-monitor の master へ入るのと同じ時期にし、先に入っていなければ release のマージを待つ
+  タグ: [設定の移行]
+  実行者: tester
+  時期: master へ入った後
+  回数: 1 回限り
+  可逆: true
+  疎通確認: 利用者の設定ファイルへの移行/疎通確認.py
+  実行: 利用者の設定ファイルへの移行/実行.py
+  確認: 利用者の設定ファイルへの移行/確認.py
+  切り戻し: 利用者の設定ファイルへの移行/切り戻し.py
+  失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: "`~/.claude*/settings.json` の全てで、`env` に `RULE_INJECT_` で始まるキーが `RULE_INJECT_CONFIG` 以外に無く、移行前に持っていた環境変数の値が、`RULE_INJECT_CONFIG` が指す `settings.yaml` の対応するキーに入っている"
+  状態: "-"

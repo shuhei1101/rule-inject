@@ -18,15 +18,11 @@ MIN_PYTHON = (3, 12)
 NOTICE_EVENTS = ("PreToolUse", "PostToolUse", "SessionStart")
 # 版が足りなくても知らせを返さないフック
 SILENT_HOOK = "sweep_read"
-LOG_DIR_ENV = "RULE_INJECT_LOG_DIR"
 LOG_FILE_SUFFIX = "_rule-inject.log"
 
 
 def _log_dir() -> Path:
-    """ログのフォルダを環境変数から決める（パッケージを使わない、古い版でも読める書き方）。"""
-    configured = os.environ.get(LOG_DIR_ENV)
-    if configured:
-        return Path(configured).expanduser()
+    """既定のログのフォルダを決める（設定ファイルは読まない。パッケージを使わない、古い版でも読める書き方）。"""
     state_home = os.environ.get("XDG_STATE_HOME") or "~/.local/state"
     return Path(state_home).expanduser() / "rule-inject" / "logs"
 
