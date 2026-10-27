@@ -157,7 +157,7 @@ settings:
     description: セッションごとの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを置くフォルダ
     reload: immediate
     allowed: 絶対パスか `~` で始まるパス
-    reason: 揃除は起動したプロジェクトの記録フォルダしか見ないため、`projects` で分けると開かないプロジェクトの記録が残る。そのため `global` だけに置く
+    reason: 掃除は起動したプロジェクトの記録フォルダしか見ないため、`projects` で分けると開かないプロジェクトの記録が残る。そのため `global` だけに置く
     status: planned
     visibility: user
   - key: global.log_dir
@@ -171,7 +171,7 @@ settings:
     allowed: 絶対パスか `~` で始まるパス
     status: planned
     visibility: user
-    reason: 揃除は起動したプロジェクトのログのフォルダしか見ないため、`projects` で分けると開かないプロジェクトのログが残る。そのため `global` だけに置く
+    reason: 掃除は起動したプロジェクトのログのフォルダしか見ないため、`projects` で分けると開かないプロジェクトのログが残る。そのため `global` だけに置く
   - key: global.record_retention_days
     title: 既読の記録の保持日数
     file: ~/.config/rule-inject/settings.yaml
