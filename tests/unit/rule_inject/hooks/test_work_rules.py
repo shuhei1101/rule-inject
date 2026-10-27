@@ -33,7 +33,7 @@ def test_work_rules_when_record_left_after_compact(
     log_folder: Path,
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """圧縮の後の消し残りを知らせる（正常系）。"""
+    """圧縮の後の削除できずに残った記録を知らせる（正常系）。"""
     # 準備
     record_file = write_record(["/r/a.md"])
     payload = hook_payload("SessionStart", source="compact")

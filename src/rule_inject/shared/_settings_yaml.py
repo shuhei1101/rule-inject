@@ -1,4 +1,4 @@
-"""設定ファイルの YAML のうち、設定の設計書に挙げたキーと形だけを標準ライブラリで読む。"""
+"""設定ファイルの YAML のうち、設定の設計書に挙げたキーと形式だけを標準ライブラリで読む。"""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def _check_value_type(
     list_keys: tuple[str, ...],
     owner: str,
 ) -> None:
-    """キーの値がリストか文字列かの形を確かめる。"""
+    """キーの値がリストか文字列かの形式を確かめる。"""
     if key in list_keys and not isinstance(value, list):
         raise yaml_error(line.number, f"{owner}の {key} はリストで書いてください")
     if key not in list_keys and isinstance(value, list):
@@ -41,7 +41,7 @@ def _check_value_type(
 
 def _read_global(lines: list[Line], line: Line, next_position: int, rest: str) -> tuple[Table, int]:
     """`global` の続く行に並ぶ `キー: 値` のブロックのマップを読み、次に読む行の位置を返す。"""
-    # 同じ行に値がある（フローのマップなど）形は読まない
+    # 同じ行に値がある（フローのマップなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "global は続く行に `キー: 値` を並べてください")
     if next_position >= len(lines) or lines[next_position].indent <= line.indent:
@@ -95,7 +95,7 @@ def _read_projects(
     """`projects` の空のリストか、続く行に並ぶ `- ` で始まる要素のブロックのリストを読む。"""
     if rest.strip() == EMPTY_LIST:
         return [], next_position
-    # 同じ行に値がある（フローのリストなど）形は読まない
+    # 同じ行に値がある（フローのリストなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "projects は続く行に `- ` で始まる要素を並べてください")
     projects: list[Table] = []

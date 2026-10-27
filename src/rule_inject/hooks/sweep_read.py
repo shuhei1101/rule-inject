@@ -1,4 +1,4 @@
-"""既読の記録の掃除（SessionStart）。保持期間を過ぎた記録ファイルと古いログを消す。"""
+"""既読の記録の掃除（SessionStart）。保持期間を過ぎた記録ファイルと古いログを削除する。"""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def _log_failure(
     session_id: str,
     failure: RuleInjectError,
 ) -> None:
-    """消せなかった失敗をログへ書く（セッションの開始は止めない）。"""
+    """削除できなかった失敗をログへ書く（セッションの開始は止めない）。"""
     write_log(
         log_folder,
         component=Component.SWEEP_READ,
@@ -37,12 +37,12 @@ def _log_failure(
 
 
 def sweep_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
-    """保持期間を過ぎた記録ファイル・変更前のログ・保持日数を過ぎたログを消し、失敗をログへ書く。"""
+    """保持期間を過ぎた記録ファイル・変更前のログ・保持日数を過ぎたログを削除し、失敗をログへ書く。"""
     session_id = payload.get("session_id")
-    # 形が外れた session_id では、始まったセッションを見分けられないため何も消さない
+    # 形式が外れた session_id では、始まったセッションを見分けられないため何も削除しない
     if not is_valid_session_id(session_id):
         return
-    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書いて何も消さない
+    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書いて何も削除しない
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
@@ -50,15 +50,15 @@ def sweep_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
         return
     state_folder = settings.state_dir
     log_folder = settings.log_dir
-    # 保持期間を過ぎた別のセッションの記録ファイルを消す
+    # 保持期間を過ぎた別のセッションの記録ファイルを削除する
     for record_failure in sweep_records(
         state_folder, session_id, retention_days=settings.record_retention_days
     ):
         _log_failure(log_folder, LogOperation.DELETE_RECORD, session_id, record_failure)
-    # 記録フォルダに残った変更前のログを消す
+    # 記録フォルダに残った変更前のログを削除する
     legacy_failure = delete_legacy_log(state_folder)
     if legacy_failure is not None:
         _log_failure(log_folder, LogOperation.DELETE_LOG, session_id, legacy_failure)
-    # 日付が保持日数以上前のログのファイルを消す
+    # 日付が保持日数以上前のログのファイルを削除する
     for log_failure in sweep_logs(log_folder, settings.log_retention_days):
         _log_failure(log_folder, LogOperation.DELETE_LOG, session_id, log_failure)

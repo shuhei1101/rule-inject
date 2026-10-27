@@ -34,7 +34,7 @@ selection:
   candidates: 公式の Python SDK（`mcp`）だけを候補にした。
   decision: Issue の構成方針（MCP サーバーは Python の uv のプロジェクト）に合う公式の実装で、stdio のサーバーを数行で書ける。
   consequences: |-
-    2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使わない。メジャー版で API が変わるので `<3` で固定する。
+    2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使わない。メジャーバージョンで API が変わるので `<3` で固定する。
 
     プラグインの MCP サーバーを廃止し（#44）、プラグインの依存から外した。E2E テストの `read_by` のシナリオで立てる文書の MCP サーバーだけが使う。
 used_in:

@@ -710,8 +710,8 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
-  - name: 正常系（当たったプロジェクトの索引を足す）
-    summary: '`match` が当たった `projects` の要素の索引だけを、並びの順に足して案内する'
+  - name: 正常系（当たったプロジェクトの索引を追加する）
+    summary: '`match` が当たった `projects` の要素の索引だけを、並びの順に追加して案内する'
     setup:
       - name: Mock
         description: なし
@@ -831,7 +831,7 @@ request:
     required: true
     description: 呼び出し元のセッションの識別子
     constraints: 1〜128 文字の英数字 / `_` / `-`
-    notes: 既読の記録のファイル名に使う。形が外れた値は既読なしとして扱う
+    notes: 既読の記録のファイル名に使う。形式が外れた値は既読なしとして扱う
   - name: '`cwd`'
     type: str
     required: true
@@ -939,7 +939,7 @@ constraints:
     constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を載せて残りの件数を添える
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
   - item: 索引
-    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に足したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
+    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に追加したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
     notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
     constraint: 同じルールの場所（解決後の絶対パス）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
@@ -949,7 +949,7 @@ constraints:
   - item: 認可
     constraint: 制限なし
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。標準出力には JSON 以外を出さない
     notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
   - item: ルールの場所の変数参照
     constraint: エントリの `rule` の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックが受け取った環境変数の値に置き換えてから場所を解く。空の値は空文字に置き換える。未設定の名前が残ったエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・展開できない名前を載せ、ログへ `read_index` を書く

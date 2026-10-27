@@ -85,7 +85,7 @@ def settings_text(state_dir: Path, log_folder: Path) -> Callable[..., str]:
 
 @pytest.fixture
 def base_env(tmp_path: Path, xdg_state_home: Path) -> dict[str, str]:
-    """このプラグインの環境変数を外し、プロジェクトの直下・索引の無い設定フォルダ・状態フォルダだけを足した環境変数。"""
+    """このプラグインの環境変数を外し、プロジェクトの直下・索引の無い設定フォルダ・状態フォルダだけを追加した環境変数。"""
     env = {name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")}
     env["CLAUDE_PROJECT_DIR"] = str(tmp_path)
     # 既定の索引が実際の設定フォルダの索引を読まないよう、索引の無い一時フォルダを指す
@@ -116,7 +116,7 @@ def run_hook(
 
         設定ファイルは、config_text があればその文字列で、無ければ記録フォルダとログのフォルダに
         index（`global.indexes`）と global_values を重ねた文字列で書き、`RULE_INJECT_CONFIG` で指す。
-        no_config なら設定ファイルを渡さない。project_dir は `CLAUDE_PROJECT_DIR` を差し替え、extra_env を環境変数に足す。
+        no_config なら設定ファイルを渡さない。project_dir は `CLAUDE_PROJECT_DIR` を差し替え、extra_env を環境変数に追加する。
         """
         env = {**base_env, **(extra_env or {})}
         if project_dir is not None:
@@ -163,7 +163,7 @@ def unwritable() -> Iterator[Callable[[Path, int], Path]]:
         return path
 
     yield _apply
-    # 後始末で消せるよう、権限を戻す
+    # 後始末で削除できるよう、権限を戻す
     for path, original in reversed(changed):
         path.chmod(original)
 
@@ -195,7 +195,7 @@ def index_text() -> Callable[..., str]:
         lines.append("rules:")
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
-            # 書かれた条件だけをエントリに足す
+            # 書かれた条件だけをエントリに追加する
             for key in ("paths", "exclude", "tools"):
                 if entry.get(key):
                     lines.append(f"    {key}:")

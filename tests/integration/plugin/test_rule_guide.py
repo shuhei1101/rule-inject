@@ -401,7 +401,7 @@ def test_normal_when_projects_matched(
     index_text: Callable[..., str],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`match` が当たった `projects` の要素の索引だけを、並びの順に足して案内する（正常系）。"""
+    """`match` が当たった `projects` の要素の索引だけを、並びの順に追加して案内する（正常系）。"""
     # 準備
     entry = {"paths": ["**/*.py"], "on": ["write"]}
     make_index(index_text({"rule": "/r/a.md", **entry}), "rules/a.yaml")

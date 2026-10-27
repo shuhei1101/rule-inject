@@ -53,7 +53,7 @@ def test_is_valid_session_id(session_id: str) -> None:
     ],
 )
 def test_is_valid_session_id_when_invalid(value: object) -> None:
-    """形が外れた値を拒む（正常系）。"""
+    """形式が外れた値を拒む（正常系）。"""
     # 実行
     result = is_valid_session_id(value)
     # 検証
@@ -193,7 +193,7 @@ def test_delete_record(
     session_id: str,
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """対象のセッションだけを消す（正常系）。"""
+    """対象のセッションだけを削除する（正常系）。"""
     # 準備
     target = write_record(["/r/a.md"])
     other = state_dir / "other-session.txt"
@@ -219,7 +219,7 @@ def test_delete_record_when_undeletable(
     write_record: Callable[[Sequence[str]], Path],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """消せない記録ファイルを RecordDeleteError にする（異常系）。"""
+    """削除できない記録ファイルを RecordDeleteError にする（異常系）。"""
     # 準備
     write_record(["/r/a.md"])
     unwritable(state_dir, 0o555)
@@ -250,7 +250,7 @@ def test_sweep_records(
     now: Callable[[], float],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """保持期間を過ぎた記録ファイルだけを消す（正常系）。"""
+    """保持期間を過ぎた記録ファイルだけを削除する（正常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31, base=now())
     within = write_aged_record("within-session", 29, base=now())
@@ -268,7 +268,7 @@ def test_sweep_records_when_kept_session(
     now: Callable[[], float],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """始まったセッションの記録は消さない（正常系）。"""
+    """始まったセッションの記録は削除しない（正常系）。"""
     # 準備
     kept = write_aged_record(session_id, 31, base=now())
     # 実行
@@ -283,7 +283,7 @@ def test_sweep_records_when_not_record(
     session_id: str,
     now: Callable[[], float],
 ) -> None:
-    """記録ファイルでないものは消さない（正常系）。"""
+    """記録ファイルでないものは削除しない（正常系）。"""
     # 準備
     state_dir.mkdir()
     # 固定した now の 31 日前
@@ -298,7 +298,7 @@ def test_sweep_records_when_not_record(
     link_target.write_text("/r/a.md\n", encoding="utf-8")
     link = state_dir / "link.txt"
     link.symlink_to(link_target)
-    # 名前を除いて、消す対象の全ての条件を満たすよう最終更新を戻す
+    # 名前を除いて、削除する対象の全ての条件を満たすよう最終更新を戻す
     for path in (log_file, invalid_name, folder, link_target):
         os.utime(path, (old, old))
     # 実行
@@ -327,7 +327,7 @@ def test_sweep_records_when_undeletable(
     write_aged_record: Callable[..., Path],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """消せない記録ファイルを返す（異常系）。"""
+    """削除できない記録ファイルを返す（異常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31, base=now())
     unwritable(state_dir, 0o555)
@@ -346,7 +346,7 @@ def test_sweep_records_when_guided(
     now: Callable[[], float],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """保持期間を過ぎた案内済みの記録ファイルも消す（正常系）。"""
+    """保持期間を過ぎた案内済みの記録ファイルも削除する（正常系）。"""
     # 準備
     suffix = ".guided.txt"
     expired = write_aged_record("expired-session", 31, base=now(), suffix=suffix)
@@ -369,7 +369,7 @@ def test_sweep_records_when_history(
     now: Callable[[], float],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """保持期間を過ぎた既読の履歴ファイルも消す（正常系）。"""
+    """保持期間を過ぎた既読の履歴ファイルも削除する（正常系）。"""
     # 準備
     suffix = ".history.jsonl"
     expired = write_aged_record("expired-session", 31, base=now(), suffix=suffix)
@@ -459,7 +459,7 @@ def test_delete_guided(
     write_record: Callable[[Sequence[str]], Path],
     write_guided: Callable[[Sequence[str]], Path],
 ) -> None:
-    """案内済みの記録ファイルだけを消す（正常系）。"""
+    """案内済みの記録ファイルだけを削除する（正常系）。"""
     # 準備
     record_file = write_record(["/r/a.md"])
     guided_file = write_guided(["/r/b.md"])
@@ -484,7 +484,7 @@ def test_delete_guided_when_undeletable(
     write_guided: Callable[[Sequence[str]], Path],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """消せない案内済みの記録ファイルを RecordDeleteError にする（異常系）。"""
+    """削除できない案内済みの記録ファイルを RecordDeleteError にする（異常系）。"""
     # 準備
     guided_file = write_guided(["/r/b.md"])
     unwritable(state_dir, 0o555)

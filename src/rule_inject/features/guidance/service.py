@@ -52,14 +52,14 @@ def _assemble(
     omitted_line: Callable[[int], str],
     trailer: Sequence[str],
 ) -> Guidance:
-    """冒頭の後に場所を 1 行ずつ、末尾の行を足しても上限に収まるところまで載せる。"""
+    """冒頭の後に場所を 1 行ずつ、末尾の行を追加しても上限に収まるところまで載せる。"""
     lines = [header]
     used = len(header) + sum(len(line) + 1 for line in trailer)
     shown: list[str] = []
     for index, location in enumerate(locations):
         line = f"- {location}"
         remaining = len(locations) - (index + 1)
-        # 次の 1 行と、残りがあるときの件数の行を足しても上限に収まるかを見る
+        # 次の 1 行と、残りがあるときの件数の行を追加しても上限に収まるかを見る
         tail = len(omitted_line(remaining)) + 1 if remaining else 0
         if used + len(line) + 1 + tail > limit:
             break

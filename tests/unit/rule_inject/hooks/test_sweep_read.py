@@ -18,7 +18,7 @@ def test_sweep_read(
     hook_payload: Callable[..., dict[str, Any]],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """保持期間を過ぎた記録を消す（正常系）。"""
+    """保持期間を過ぎた記録を削除する（正常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31)
     payload = hook_payload("SessionStart", source="startup")
@@ -34,7 +34,7 @@ def test_sweep_read_when_invalid_session_id(
     hook_payload: Callable[..., dict[str, Any]],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """session_id の形が外れていれば何も消さない（正常系）。"""
+    """session_id の形式が外れていれば何も削除しない（正常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31)
     payload = hook_payload("SessionStart", source="startup", session_id="../x")
@@ -54,7 +54,7 @@ def test_sweep_read_when_undeletable(
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """消せず、ログにも書けないとき標準エラー出力に書く（正常系）。"""
+    """削除できず、ログにも書けないとき標準エラー出力に書く（正常系）。"""
     # 準備
     write_aged_record("expired-session", 31)
     unwritable(state_dir, 0o555)
@@ -75,7 +75,7 @@ def test_sweep_read_when_old_logs(
     hook_payload: Callable[..., dict[str, Any]],
     write_dated_log: Callable[[date], Path],
 ) -> None:
-    """保持日数を過ぎたログのファイルを消す（正常系）。"""
+    """保持日数を過ぎたログのファイルを削除する（正常系）。"""
     # 準備
     today = datetime.now(UTC).date()
     today_log = write_dated_log(today)
@@ -95,7 +95,7 @@ def test_sweep_read_when_retention_configured(
     write_aged_record: Callable[..., Path],
     write_dated_log: Callable[[date], Path],
 ) -> None:
-    """設定ファイルの保持の日数で、記録ファイルとログのファイルを消す（正常系）。"""
+    """設定ファイルの保持の日数で、記録ファイルとログのファイルを削除する（正常系）。"""
     # 準備
     env = settings_env(record_retention_days=1, log_retention_days=1)
     expired_record = write_aged_record("expired-session", 2)
@@ -117,7 +117,7 @@ def test_sweep_read_when_legacy_log(
     hook_payload: Callable[..., dict[str, Any]],
     state_dir: Path,
 ) -> None:
-    """変更前のログを消す（正常系）。"""
+    """変更前のログを削除する（正常系）。"""
     # 準備
     state_dir.mkdir()
     legacy_log = state_dir / "rule-inject.log"
@@ -135,7 +135,7 @@ def test_sweep_read_when_settings_unreadable(
     hook_payload: Callable[..., dict[str, Any]],
     default_log_folder: Path,
 ) -> None:
-    """設定ファイルが読めないときはログに書くだけで何も消さない（正常系）。"""
+    """設定ファイルが読めないときはログに書くだけで何も削除しない（正常系）。"""
     # 準備
     env = unreadable_env("retention_zero")
     today = datetime.now(UTC).date()
@@ -159,7 +159,7 @@ def test_sweep_read_when_guided(
     hook_payload: Callable[..., dict[str, Any]],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """保持期間を過ぎた案内済みの記録も消す（正常系）。"""
+    """保持期間を過ぎた案内済みの記録も削除する（正常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31, suffix=".guided.txt")
     payload = hook_payload("SessionStart", source="startup")

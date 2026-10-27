@@ -16,7 +16,7 @@ def test_discard_read(
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """記録を消す（正常系）。"""
+    """記録を削除する（正常系）。"""
     # 準備
     record_file = write_record(["/r/a.md"])
     payload = hook_payload("PreCompact", trigger="manual")
@@ -36,7 +36,7 @@ def test_discard_read_when_undeletable(
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """消せないときログに書く（正常系）。"""
+    """削除できないときログに書く（正常系）。"""
     # 準備
     write_record(["/r/a.md"])
     unwritable(state_dir, 0o555)
@@ -56,7 +56,7 @@ def test_discard_read_when_guided(
     write_record: Callable[[Sequence[str]], Path],
     write_guided: Callable[[Sequence[str]], Path],
 ) -> None:
-    """案内済みの記録も消す（正常系）。"""
+    """案内済みの記録も削除する（正常系）。"""
     # 準備
     record_file = write_record(["/r/a.md"])
     guided_file = write_guided(["/r/b.md"])
@@ -76,7 +76,7 @@ def test_discard_read_when_settings_unreadable(
     hook_payload: Callable[..., dict[str, Any]],
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないときはログに書くだけで何も消さない（正常系）。"""
+    """設定ファイルが読めないときはログに書くだけで何も削除しない（正常系）。"""
     # 準備
     env = unreadable_env("unknown_key")
     record_file = xdg_state_home / "rule-inject" / f"{session_id}.txt"

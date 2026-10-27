@@ -3,11 +3,11 @@ lead: Claude Code が呼ぶフックの入口。標準入力の JSON を読み�
 directory: |-
   ```text
   .claude-plugin/
-  ├── plugin.json                 # プラグインの名前（rule-inject）と版
+  ├── plugin.json                 # プラグインの名前（rule-inject）とバージョン
   └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
   ├── hooks.json                  # 6 つのフックの matcher・timeout（1 秒）・コマンド
-  └── run.py                      # src/ を sys.path に足して引数のフックを動かす
+  └── run.py                      # src/ を sys.path に追加して引数のフックを動かす
   src/rule_inject/hooks/
   ├── __init__.py
   ├── _runner.py                  # 標準入出力・想定外の例外・ログ・設定ファイルの誤りのログの共通処理
@@ -54,12 +54,12 @@ constants:
       - key: search_guide
         value: '`("search_guide", search_guide, additionalContext で知らせる)`'
   - name: MIN_PYTHON
-    title: フックの Python の最低の版
+    title: フックの Python の最低のバージョン
     container: hooks/run.py（プラグインの直下）
     summary: これより古い `python3` ではパッケージを import しない
     value: '`(3, 12)`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[フックのPythonの版]
+      - dev/設計書/非機能要件/非機能要件#requirements[フックのPythonのバージョン]
   - name: SETTINGS_FAILURE_SUMMARY
     title: 設定ファイルの失敗の知らせの冒頭
     container: hooks/_runner.py
@@ -397,7 +397,7 @@ functions:
     title: 既読の記録の破棄の処理
     container: hooks/discard_read.py
     usecase: 圧縮で既読の記録が捨てられる
-    summary: そのセッションの既読の記録ファイルと案内済みの記録ファイルを消す
+    summary: そのセッションの既読の記録ファイルと案内済みの記録ファイルを削除する
     kind: フック
     scope: public
     inherits: HookHandler
@@ -416,31 +416,31 @@ functions:
       type: None
       description: 常に出力しない
     process: |-
-      1. session_id の形が外れていれば何もしない
-      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も消さない）
+      1. session_id の形式が外れていれば何もしない
+      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も削除しない）
       3. `delete_record` と `delete_guided` を `settings.state_dir` で順に呼ぶ。片方が RecordDeleteError でももう片方を呼び、それぞれ `settings.log_dir` のログ（`delete_record`）へ書く
     unit_tests:
       - name: test_discard_read
         case: 正常
-        summary: 記録を消す
+        summary: 記録を削除する
         condition: 記録ファイルがある
         mock: なし
         expected: 記録ファイルが無い、None
       - name: test_discard_read_when_undeletable
         case: 正常
-        summary: 消せないときログに書く
+        summary: 削除できないときログに書く
         condition: 書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（設定ファイルの `global.log_dir`）
         mock: なし
         expected: None、標準エラー出力に `delete_record`
       - name: test_discard_read_when_guided
         case: 正常
-        summary: 案内済みの記録も消す
+        summary: 案内済みの記録も削除する
         condition: そのセッションの `{id}.txt` と `{id}.guided.txt`
         mock: なし
         expected: どちらも無い、None
       - name: test_discard_read_when_settings_unreadable
         case: 正常
-        summary: 設定ファイルが読めないときはログに書くだけで何も消さない
+        summary: 設定ファイルが読めないときはログに書くだけで何も削除しない
         condition: '`RULE_INJECT_CONFIG` が知らないキーを持つ設定ファイルを指す。`XDG_STATE_HOME` は一時フォルダで、その下の `rule-inject` にそのセッションの記録ファイルがある'
         mock: なし
         expected: 記録ファイルが残る。`{XDG_STATE_HOME}/rule-inject/logs` のログに `read_settings` が 1 行、None
@@ -448,7 +448,7 @@ functions:
     title: 作業の決まりの注入の処理
     container: hooks/work_rules.py
     usecase: セッションの開始時に作業の決まりを受け取る
-    summary: 作業の決まりを返し、圧縮の後に記録が残っていれば消せなかったことも返す
+    summary: 作業の決まりを返し、圧縮の後に記録が残っていれば削除できなかったことも返す
     kind: フック
     scope: public
     inherits: HookHandler
@@ -465,7 +465,7 @@ functions:
         description: 環境変数
     returns:
       type: dict[str, Any]
-      description: additionalContext に `WORK_RULES`（と消し残りの知らせ）
+      description: additionalContext に `WORK_RULES`（と削除できずに残った記録の知らせ）
     unit_tests:
       - name: test_work_rules
         case: 正常
@@ -475,7 +475,7 @@ functions:
         expected: additionalContext が `WORK_RULES`
       - name: test_work_rules_when_record_left_after_compact
         case: 正常
-        summary: 圧縮の後の消し残りを知らせる
+        summary: 圧縮の後の削除できずに残った記録を知らせる
         condition: '`source: compact` で記録ファイルがある'
         mock: なし
         expected: additionalContext に `WORK_RULES` と記録ファイル・ログの場所
@@ -492,14 +492,14 @@ functions:
         mock: なし
         expected: additionalContext が `WORK_RULES` だけ。ログのファイルが無い
     process: |-
-      1. `source` が `compact` でないか、session_id の形が外れていれば、設定ファイルを読まずに `WORK_RULES` だけを返す
+      1. `source` が `compact` でないか、session_id の形式が外れていれば、設定ファイルを読まずに `WORK_RULES` だけを返す
       2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`WORK_RULES` の後に空行を挟んで `build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を続けて返す
       3. `record_exists(settings.state_dir, session_id)` が真なら、`WORK_RULES` の後に `LEFTOVER_NOTICE`（記録ファイルと `settings.log_dir` の場所）を続けて返す。偽なら `WORK_RULES` だけを返す
   - name: sweep_read
     title: 既読の記録の掃除の処理
     container: hooks/sweep_read.py
     usecase: 終わったセッションの既読の記録が掃除される
-    summary: 保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル、変更前のログ、保持日数を過ぎたログのファイルを消し、失敗をログへ書く
+    summary: 保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル、変更前のログ、保持日数を過ぎたログのファイルを削除し、失敗をログへ書く
     kind: フック
     scope: public
     inherits: HookHandler
@@ -518,8 +518,8 @@ functions:
       type: None
       description: 常に出力しない
     process: |-
-      1. session_id の形が外れていれば何もしない
-      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も消さない）
+      1. session_id の形式が外れていれば何もしない
+      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も削除しない）
       3. 失敗は全て `write_log(settings.log_dir, component=sweep_read, ...)` で書く
       4. `sweep_records(settings.state_dir, session_id, retention_days=settings.record_retention_days)` を呼び、返った RecordDeleteError ごとにログ（`delete_record`）へ書く
       5. `delete_legacy_log(settings.state_dir)` を呼び、LogDeleteError が返ればログ（`delete_log`）へ書く
@@ -527,49 +527,49 @@ functions:
     unit_tests:
       - name: test_sweep_read
         case: 正常
-        summary: 保持期間を過ぎた記録を消す
+        summary: 保持期間を過ぎた記録を削除する
         condition: 最終更新が 31 日前の別のセッションの記録ファイル
         mock: なし（最終更新は `os.utime` で戻す）
         expected: 記録ファイルが無い、None
       - name: test_sweep_read_when_invalid_session_id
         case: 正常
-        summary: session_id の形が外れていれば何も消さない
+        summary: session_id の形式が外れていれば何も削除しない
         condition: '`session_id` が `../x`、最終更新が 31 日前の記録ファイル'
         mock: なし
         expected: 記録ファイルが残る、None
       - name: test_sweep_read_when_undeletable
         case: 正常
-        summary: 消せず、ログにも書けないとき標準エラー出力に書く
+        summary: 削除できず、ログにも書けないとき標準エラー出力に書く
         condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（設定ファイルの `global.log_dir`）
         mock: なし
         expected: 'None、標準エラー出力に `component: sweep_read`・`operation: delete_record`'
       - name: test_sweep_read_when_old_logs
         case: 正常
-        summary: 保持日数を過ぎたログのファイルを消す
+        summary: 保持日数を過ぎたログのファイルを削除する
         condition: '設定ファイルの `global.log_dir` に日付が今日と 3 日前（UTC）のログのファイル'
         mock: なし
         expected: 3 日前のファイルが無く、今日のファイルが残る、None
       - name: test_sweep_read_when_legacy_log
         case: 正常
-        summary: 変更前のログを消す
+        summary: 変更前のログを削除する
         condition: 記録フォルダに最終更新が今の `rule-inject.log`
         mock: なし
         expected: '`rule-inject.log` が無い、None'
       - name: test_sweep_read_when_guided
         case: 正常
-        summary: 保持期間を過ぎた案内済みの記録も消す
+        summary: 保持期間を過ぎた案内済みの記録も削除する
         condition: 最終更新が 31 日前の別のセッションの `{id}.guided.txt`
         mock: なし（最終更新は `os.utime` で戻す）
         expected: '`{id}.guided.txt` が無い、None'
       - name: test_sweep_read_when_settings_unreadable
         case: 正常
-        summary: 設定ファイルが読めないときはログに書くだけで何も消さない
+        summary: 設定ファイルが読めないときはログに書くだけで何も削除しない
         condition: '設定ファイルが `global.log_retention_days: 0` を持つ。`XDG_STATE_HOME` は一時フォルダで、その下の `rule-inject/logs` に日付が 3 日前（UTC）のログのファイル'
         mock: なし
         expected: 3 日前のファイルが残る。今日のログのファイルに `read_settings` が 1 行、None
       - name: test_sweep_read_when_retention_configured
         case: 正常
-        summary: 設定ファイルの保持の日数で、記録ファイルとログのファイルを消す
+        summary: 設定ファイルの保持の日数で、記録ファイルとログのファイルを削除する
         condition: '設定ファイルが `global.record_retention_days: 1`・`global.log_retention_days: 1` を持つ。最終更新が 2 日前の別のセッションの記録ファイル、日付が今日と 1 日前（UTC）のログのファイル'
         mock: なし
         expected: 記録ファイルと 1 日前のログのファイルが無く、今日のログのファイルが残る、None
@@ -577,7 +577,7 @@ functions:
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
     usecase: 共通
-    summary: '`src/` を sys.path に足し、引数で指したフックを `run_hook` で動かす'
+    summary: '`src/` を sys.path に追加し、引数で指したフックを `run_hook` で動かす'
     kind: 関数
     scope: public
     args:
@@ -590,8 +590,8 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart なら版が足りないことを additionalContext で返し（`sweep_read` は同じ SessionStart の `work_rules` が知らせるため返さない）、既定のログのフォルダ（`XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`。設定ファイルは読まない）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書いて 0 を返す（この分岐は古い版でも読める書き方にするため、`default_log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
-      2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に足す
+      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart ならバージョンが足りないことを additionalContext で返し（`sweep_read` は同じ SessionStart の `work_rules` が知らせるため返さない）、既定のログのフォルダ（`XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`。設定ファイルは読まない）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書いて 0 を返す（この分岐は古いバージョンでも読める書き方にするため、`default_log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
+      2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に追加する
       3. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
     unit_tests:
       - name: test_main
@@ -602,13 +602,13 @@ functions:
         expected: 終了コード 0、標準出力に additionalContext
       - name: test_main_when_python_too_old
         case: 正常
-        summary: 版が足りないとき知らせて終える
+        summary: バージョンが足りないとき知らせて終える
         condition: '`sys.version_info` を (3, 11) に差し替え、`XDG_STATE_HOME` をテスト用のフォルダにして、PreToolUse の JSON を渡す'
         mock: '`sys.version_info`'
-        expected: 戻り値 0、標準出力の additionalContext に必要な版と動いた版、`rule_inject` を import していない
+        expected: 戻り値 0、標準出力の additionalContext に必要なバージョンと動いたバージョン、`rule_inject` を import していない
       - name: test_main_when_python_too_old_and_sweep_read
         case: 正常
-        summary: 掃除のフックは版が足りなくても知らせを重ねない
+        summary: 掃除のフックはバージョンが足りなくても知らせを重ねない
         condition: '`sys.version_info` を (3, 11) に差し替え、`sweep_read` に SessionStart の JSON を渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力が空、既定のログのフォルダ（`{XDG_STATE_HOME}/rule-inject/logs`）の今日の日付のファイルに 1 行。記録フォルダに `rule-inject.log` を作らない
@@ -636,7 +636,7 @@ functions:
       type: dict[str, Any] | None
       description: additionalContext（案内と知らせ）か、無ければ None
     process: |-
-      1. session_id の形が外れていれば None
+      1. session_id の形式が外れていれば None
       2. 結果の行と基準を決める。Grep・Glob は `tool_response.filenames` と `tool_response.content` の各行、基準は `cwd`。Bash は `search_output_base(command, cwd)` が None なら None、あれば `tool_response.stdout` の各行とその基準
       3. `extract_result_paths(lines, base)` で照合するパスを拾う。無ければ None
       4. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
@@ -666,7 +666,7 @@ functions:
         expected: None
       - name: test_search_guide_when_invalid_session_id
         case: 正常
-        summary: session_id の形が外れていれば案内しない
+        summary: session_id の形式が外れていれば案内しない
         condition: '`session_id` が `../x`'
         mock: なし
         expected: None
@@ -767,7 +767,7 @@ functions:
       2. `build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログのファイルの場所)` を返す
 notes:
   hooks.json: '6 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入と既読の記録の掃除の 2 つのコマンドを並べる'
-  Python の版: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
+  Python のバージョン: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
 test_files:
   - tests/unit/rule_inject/hooks/test_runner.py
   - tests/unit/rule_inject/hooks/test_rule_guide.py

@@ -98,7 +98,7 @@ flows:
         description: 空
       - name: 入力
         description: '`tool_name: Bash`、`tool_input.command: find src -type f | head`、`stdout` に `.py` のパスの行と `{.md のパス}:3:needle` の行'
-        notes: 1 本のテストで 2 つの出力の形を拾えることを見る
+        notes: 1 本のテストで 2 つの出力の形式を拾えることを見る
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -357,7 +357,7 @@ request:
     required: true
     description: 呼び出し元のセッションの識別子
     constraints: 1〜128 文字の英数字 / `_` / `-`
-    notes: 形が外れた値のときは何も出さない（案内済みを記録できず、毎回同じ案内が出るため）
+    notes: 形式が外れた値のときは何も出さない（案内済みを記録できず、毎回同じ案内が出るため）
   - name: '`cwd`'
     type: str
     required: true
@@ -459,7 +459,7 @@ constraints:
     constraint: 既読の場所と、`{state_dir}/{session_id}.guided.txt` に載った場所を案内から除く。案内に載せた場所を同じファイルへ 1 行ずつ追記する
     notes: ルール案内と同じ記録を共有する。案内文の長さに収まらず載せなかった場所は記録しない
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。標準出力には JSON 以外を出さない
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。標準出力には JSON 以外を出さない
     notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
   - item: 既読の判定
     constraint: ルール案内の制約「既読の判定」と同じ。既読の記録のハッシュが今のルールのファイルの SHA-256 と違うルールは未読として案内する

@@ -19,13 +19,13 @@ catalogs:
         purpose: 圧縮の前に既読の記録を捨てる
       - name: SessionStart
         kind: フック
-        purpose: セッションの開始時に作業の決まりを載せ、保持期間を過ぎた既読の記録を消す
+        purpose: セッションの開始時に作業の決まりを載せ、保持期間を過ぎた既読の記録を削除する
   - name: プラグインのファイル
     version: 2.1.284
     entries:
       - name: .claude-plugin/plugin.json
         kind: ファイル
-        purpose: プラグインの名前と版
+        purpose: プラグインの名前とバージョン
       - name: hooks/hooks.json
         kind: ファイル
         purpose: フックの出来事・matcher・コマンド・timeout
@@ -41,7 +41,7 @@ catalogs:
       - name: attachment.type が hook_additional_context の行
         kind: 記録の行
         purpose: フックが返した案内の文面を載せる、セッションの記録（`.jsonl`）の行。案内の回数はこの行の数で数える
-        description: '`type` が `attachment`、`attachment.type` が `hook_additional_context`。`attachment.content` は文字列の配列で、行の直下の `rendered[].content` に `<system-reminder>` で包んだ写しを持つ。'
+        description: '`type` が `attachment`、`attachment.type` が `hook_additional_context`。`attachment.content` は文字列の配列で、行の直下の `rendered[].content` に `<system-reminder>` で包んだコピーを持つ。'
 lead: Anthropic の AI コーディングエージェントの CLI（`claude`）。プラグインが持つフックと MCP サーバーを読み込み、出来事ごとに呼ぶ。
 dependency_scope: 必須
 adoption: 採用
@@ -51,4 +51,4 @@ docs_url: https://code.claude.com/docs/en/hooks
 verification:
   state: 未確認
   date: '2026-09-29'
-  detail: PoC 検証（#4）と設計の段で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装のフックは、入力の JSON を標準入力へ渡す単体テストで確かめ、`claude plugin validate` でプラグインと marketplace のマニフェストを通した。実際の Claude Code に本実装のフックを動かさせる確認は API の利用（課金）が要り、E2E テストの実行を担う tester が行うため、この工程では動かせない
+  detail: PoC 検証（#4）と設計の工程で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装のフックは、入力の JSON を標準入力へ渡す単体テストで確かめ、`claude plugin validate` でプラグインと marketplace のマニフェストを通した。実際の Claude Code に本実装のフックを動かさせる確認は API の利用（課金）が要り、E2E テストの実行を担う tester が行うため、この工程では動かせない

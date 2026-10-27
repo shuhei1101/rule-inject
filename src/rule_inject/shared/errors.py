@@ -34,11 +34,11 @@ class HistoryWriteError(RuleInjectError):
 
 
 class RecordDeleteError(RuleInjectError):
-    """記録ファイルはあるが消せない。"""
+    """記録ファイルはあるが削除できない。"""
 
 
 class LogDeleteError(RuleInjectError):
-    """消す対象のログのファイルはあるが消せない。"""
+    """削除する対象のログのファイルはあるが削除できない。"""
 
 
 def describe(exc: BaseException) -> str:

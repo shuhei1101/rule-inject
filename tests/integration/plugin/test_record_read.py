@@ -328,7 +328,7 @@ def test_normal_when_read_by_mcp_document(
             {"rule": str(summary_rule), "paths": ["**/*.md"]},
         )
     )
-    # 属性の `"` が JSON の中で `\"` になった形で渡す
+    # 属性の `"` が JSON の中で `\"` になった形式で渡す
     markdown = (
         f'<document path="{full_rule}" scope="full"># 規約</document>\n'
         f'<document path="{summary_rule}" scope="summary">説明</document>'

@@ -19,7 +19,7 @@ def test_normal(
     set_age_days: Callable[[Path, int], Path],
     state_dir: Path,
 ) -> None:
-    """保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルだけを消す（正常系）。"""
+    """保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルだけを削除する（正常系）。"""
     # 準備
     expired = set_age_days(write_record(["/r/a.md"], "expired-session"), 31)
     within = set_age_days(write_record(["/r/b.md"], "within-session"), 29)
@@ -59,7 +59,7 @@ def test_normal_when_own_record_old(
     write_record: Callable[..., Path],
     set_age_days: Callable[[Path, int], Path],
 ) -> None:
-    """始まったセッション自身の記録ファイルは、保持期間を過ぎていても消さない（正常系）。"""
+    """始まったセッション自身の記録ファイルは、保持期間を過ぎていても削除しない（正常系）。"""
     # 準備
     own = set_age_days(write_record(["/r/a.md"]), 31)
     other = set_age_days(write_record(["/r/b.md"], "other-session"), 31)
@@ -96,7 +96,7 @@ def test_error_when_record_undeletable(
     log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """記録を消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く（異常系）。"""
+    """記録を削除できず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く（異常系）。"""
     # 準備
     expired = set_age_days(write_record(["/r/a.md"], "expired-session"), 31)
     unwritable(state_dir, 0o555)
@@ -119,7 +119,7 @@ def test_normal_when_old_logs(
     write_dated_log: Callable[[date], Path],
     log_folder: Path,
 ) -> None:
-    """日付が保持日数以上前のログのファイルだけを消す（正常系）。"""
+    """日付が保持日数以上前のログのファイルだけを削除する（正常系）。"""
     # 準備
     today = datetime.now(UTC).date()
     today_log = write_dated_log(today)
@@ -146,7 +146,7 @@ def test_normal_when_retention_configured(
     set_age_days: Callable[[Path, int], Path],
     write_dated_log: Callable[[date], Path],
 ) -> None:
-    """設定ファイルの保持の値で、記録ファイルとログのファイルを消す（正常系）。"""
+    """設定ファイルの保持の値で、記録ファイルとログのファイルを削除する（正常系）。"""
     # 準備
     expired_record = set_age_days(write_record(["/r/a.md"], "expired-session"), 2)
     today = datetime.now(UTC).date()
@@ -170,7 +170,7 @@ def test_error_when_log_undeletable(
     log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """ログを消せず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く（異常系）。"""
+    """ログを削除できず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く（異常系）。"""
     # 準備
     expired_log = write_dated_log(datetime.now(UTC).date() - timedelta(days=3))
     unwritable(log_folder, 0o555)
@@ -190,7 +190,7 @@ def test_normal_when_legacy_log(
     hook_payload: Callable[..., dict[str, Any]],
     state_dir: Path,
 ) -> None:
-    """記録フォルダに残った変更前のログを、最終更新によらず消す（正常系）。"""
+    """記録フォルダに残った変更前のログを、最終更新によらず削除する（正常系）。"""
     # 準備
     state_dir.mkdir()
     legacy_log = state_dir / "rule-inject.log"

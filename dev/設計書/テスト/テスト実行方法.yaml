@@ -11,7 +11,7 @@ layers:
       uv run pytest tests/integration
       ```
   - name: E2E テスト
-    description: 実の Claude Code（`claude -p --plugin-dir {Linux 側の一時フォルダへ写したプラグインのフォルダ} --setting-sources project`）を起動して、シナリオごとに確かめる。pytest で実行し、`--run-e2e` を付けたときだけ動く（付けなければ全て skip する）。
+    description: 実の Claude Code（`claude -p --plugin-dir {Linux 側の一時フォルダへコピーしたプラグインのフォルダ} --setting-sources project`）を起動して、シナリオごとに確かめる。pytest で実行し、`--run-e2e` を付けたときだけ動く（付けなければ全て skip する）。
     prerequisites:
       - '`claude`（Claude Code の CLI）が PATH にあり、ログイン済みであること。`claude -p` を起動するたびに費用がかかる'
       - Python 3.12 と uv（pytest と、`read_by` のシナリオで立てる文書の MCP サーバーの依存を入れる）

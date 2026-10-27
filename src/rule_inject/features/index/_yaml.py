@@ -1,4 +1,4 @@
-"""索引の YAML のうち、設定の設計書に挙げたキーと形だけを標準ライブラリで読む。"""
+"""索引の YAML のうち、設定の設計書に挙げたキーと形式だけを標準ライブラリで読む。"""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def _read_args(
     lines: list[Line], line: Line, next_position: int, rest: str, key_indent: int
 ) -> tuple[dict[str, list[str]], int]:
     """`args` の続く行に並ぶ `キー: リスト` のブロックのマップを読み、次に読む行の位置を返す。"""
-    # 同じ行に値がある（フローのマップなど）形は読まない
+    # 同じ行に値がある（フローのマップなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "args は続く行に `キー:` とパターンのリストを並べてください")
     if next_position >= len(lines) or lines[next_position].indent <= key_indent:
@@ -97,7 +97,7 @@ def _read_read_by(
     lines: list[Line], line: Line, next_position: int, rest: str, key_indent: int
 ) -> tuple[list[ReadByItem], int]:
     """`read_by` の続く行に並ぶ `- ` で始まる要素のブロックのリストを読み、次に読む行の位置を返す。"""
-    # 同じ行に値がある（フローのリストなど）形は読まない
+    # 同じ行に値がある（フローのリストなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "read_by は続く行に `- ` で始まるマップを並べてください")
     items: list[ReadByItem] = []
@@ -143,7 +143,7 @@ def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int
 
 
 def _validate_entry(entry: dict[str, Value], number: int) -> None:
-    """エントリの `rule` の有無と各キーの値の形を確かめる。"""
+    """エントリの `rule` の有無と各キーの値の形式を確かめる。"""
     if "rule" not in entry:
         raise yaml_error(number, "エントリに rule がありません")
     if not isinstance(entry["rule"], str):

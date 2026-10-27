@@ -16,7 +16,7 @@ def test_normal(
     write_aged_record: Callable[..., Path],
     run_claude: Callable[..., Any],
 ) -> None:
-    """セッションの開始で、保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルだけが消える（正常シナリオ）。"""
+    """セッションの開始で、保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルだけが削除される（正常シナリオ）。"""
     # 準備
     configure_index(make_index())
     expired = write_aged_record("expired-session", 31)

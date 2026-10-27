@@ -128,7 +128,7 @@ def test_search_guide_when_invalid_session_id(
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """session_id の形が外れていれば案内しない（正常系）。"""
+    """session_id の形式が外れていれば案内しない（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"]))
     payload = hook_payload(

@@ -23,7 +23,7 @@ constants:
   - name: NON_BLOCKING_HEADER
     title: 止めない案内の冒頭
     container: features/guidance/service.py
-    summary: 止めないときの案内文の冒頭（やり直しを促さない）
+    summary: 止めないときの案内文の冒頭（再試行を促さない）
     value: '`操作の対象に当たる未読のルールがあります。必要に応じて下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。`'
   - name: WORK_RULES
     title: 作業の決まり
@@ -33,7 +33,7 @@ constants:
   - name: SEARCH_HEADER
     title: 検索結果の案内の冒頭
     container: features/guidance/service.py
-    summary: 検索結果の案内の冒頭（読むかは任意と伝え、やり直しを促さない）
+    summary: 検索結果の案内の冒頭（読むかは任意と伝え、再試行を促さない）
     value: '`検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。`'
 functions:
   - name: build_guidance
@@ -60,8 +60,8 @@ functions:
       description: 止めるルールがあれば `BLOCKING_HEADER`、無ければ `NON_BLOCKING_HEADER` で始まる案内文と、載せた場所
     process: |-
       1. 止めるルールを先に、元の順を保って並べる
-      2. 冒頭の後に `- {場所}` を 1 行ずつ足し、末尾に残りの件数の行を足しても `limit` を超えないところまで載せる
-      3. 載せきれなかったときは `ほか {N} 件のルールは、上のルールを読んで操作をやり直したときに案内します。` を末尾に足す
+      2. 冒頭の後に `- {場所}` を 1 行ずつ追加し、末尾に残りの件数の行を追加しても `limit` を超えないところまで載せる
+      3. 載せきれなかったときは `ほか {N} 件のルールは、上のルールを読んで操作をやり直したときに案内します。` を末尾に追加する
     unit_tests:
       - name: test_build_guidance_when_blocking
         case: 正常
@@ -155,9 +155,9 @@ functions:
       type: Guidance
       description: '`SEARCH_HEADER` で始まる案内文と、載せた場所'
     process: |-
-      1. 冒頭の後に `- {場所}` を 1 行ずつ、末尾の行を足しても `limit` を超えないところまで載せる
-      2. 載せきれなかったときは `ほか {N} 件のルールは、次に当たったときに案内します。` を末尾に足す
-      3. `unchecked` が 1 以上なら `検索結果のうち {unchecked} 件は照合していません。` を末尾に足す
+      1. 冒頭の後に `- {場所}` を 1 行ずつ、末尾の行を追加しても `limit` を超えないところまで載せる
+      2. 載せきれなかったときは `ほか {N} 件のルールは、次に当たったときに案内します。` を末尾に追加する
+      3. `unchecked` が 1 以上なら `検索結果のうち {unchecked} 件は照合していません。` を末尾に追加する
     unit_tests:
       - name: test_build_search_guidance
         case: 正常

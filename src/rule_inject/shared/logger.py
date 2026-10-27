@@ -1,4 +1,4 @@
-"""失敗した操作を日付ごとのログ（JSON Lines）へ書き、古いログを消す。"""
+"""失敗した操作を日付ごとのログ（JSON Lines）へ書き、古いログを削除する。"""
 
 from __future__ import annotations
 
@@ -116,14 +116,14 @@ def sweep_logs(
     *,
     today: Callable[[], date] = _utc_today,
 ) -> tuple[LogDeleteError, ...]:
-    """日付が保持日数以上前のログのファイルを消し、消せなかったものを返す。"""
+    """日付が保持日数以上前のログのファイルを削除し、削除できなかったものを返す。"""
     try:
         entries = list(os.scandir(log_folder))
     except FileNotFoundError:
         # ログのフォルダがまだ無ければ掃除するものが無い（フォルダは作らない）
         return ()
     current = today()
-    # 暦の範囲を超えるほど大きい保持日数は、消すものが無いとして日付の引き算をしない
+    # 暦の範囲を超えるほど大きい保持日数は、削除するものが無いとして日付の引き算をしない
     if retention_days > (current - date.min).days:
         return ()
     # この日付以前のログのファイルが、保持日数を過ぎたもの
@@ -142,19 +142,19 @@ def sweep_logs(
         try:
             os.unlink(entry.path)
         except FileNotFoundError:
-            # 別のセッションが先に消していれば、消した状態と同じ
+            # 別のセッションが先に削除していれば、削除した状態と同じ
             continue
         except OSError as exc:
-            # 消せないものは集め、残りの掃除を続ける
+            # 削除できないものは集め、残りの掃除を続ける
             failures.append(LogDeleteError(path=entry.path, reason=describe(exc)))
     return tuple(failures)
 
 
 def delete_legacy_log(state_folder: Path) -> LogDeleteError | None:
-    """記録フォルダに残った変更前のログを消し、消せなければ失敗を返す。"""
+    """記録フォルダに残った変更前のログを削除し、削除できなければ失敗を返す。"""
     legacy_log = state_folder / LEGACY_LOG_FILE_NAME
     try:
-        # シンボリックリンクを辿らずに調べ、通常のファイルだけを消す
+        # シンボリックリンクを辿らずに調べ、通常のファイルだけを削除する
         is_regular = stat.S_ISREG(legacy_log.lstat().st_mode)
     except FileNotFoundError:
         return None
@@ -163,7 +163,7 @@ def delete_legacy_log(state_folder: Path) -> LogDeleteError | None:
     try:
         legacy_log.unlink()
     except FileNotFoundError:
-        # 別のセッションが先に消していれば、消した状態と同じ
+        # 別のセッションが先に削除していれば、削除した状態と同じ
         return None
     except OSError as exc:
         return LogDeleteError(path=str(legacy_log), reason=describe(exc))

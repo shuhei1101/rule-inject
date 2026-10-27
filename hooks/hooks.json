@@ -63,7 +63,7 @@
           },
           {
             "type": "command",
-            "_description": "保持期間を過ぎた別のセッションの既読の記録を消す",
+            "_description": "保持期間を過ぎた別のセッションの既読の記録を削除する",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" sweep_read",
             "timeout": 1
           }

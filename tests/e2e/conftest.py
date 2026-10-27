@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
-    """費用のかかる E2E テストを実行する `--run-e2e` を足す。"""
+    """費用のかかる E2E テストを実行する `--run-e2e` を追加する。"""
     parser.addoption(
         E2E_OPTION,
         action="store_true",
@@ -249,7 +249,7 @@ def configure_index(
     """設定ファイルに記録フォルダ・ログのフォルダと、起動したプロジェクトに当たる `projects` の要素の索引を書き、`RULE_INJECT_CONFIG` でその設定ファイルを指す。"""
 
     def _configure(index: Path | str, *, extra_env: Mapping[str, str] | None = None) -> None:
-        """index を起動したプロジェクトに当たる `projects` の要素の `indexes` に書き、extra_env を `env` に足す。"""
+        """index を起動したプロジェクトに当たる `projects` の要素の `indexes` に書き、extra_env を `env` に追加する。"""
         lines = [
             "global:",
             f'  state_dir: "{state_dir}"',
@@ -269,7 +269,7 @@ def configure_index(
 
 @pytest.fixture(scope="session")
 def plugin_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """プラグインのファイルを Linux 側の一時フォルダへ写し、そのフォルダを返す（実行ごとに 1 回）。"""
+    """プラグインのファイルを Linux 側の一時フォルダへコピーし、そのフォルダを返す（実行ごとに 1 回）。"""
     destination = tmp_path_factory.mktemp("plugin")
     listed = subprocess.run(
         GIT_LIST_FILES,
@@ -280,7 +280,7 @@ def plugin_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     # 日本語のパスを含むため、クォートされない NUL 区切りの出力を分ける
     for relative in filter(None, listed.split("\0")):
         source = PROJECT_ROOT / relative
-        # フォルダの行と、作業ツリーから消えているファイルは写さない
+        # フォルダの行と、作業ツリーから削除されたファイルはコピーしない
         if not source.is_file():
             continue
         target = destination / relative
@@ -386,7 +386,7 @@ def guidance_count() -> Callable[[str, str], int]:
         count = 0
         for line in _transcript_lines(session_id):
             attachment = json.loads(line).get("attachment")
-            # 案内の行（attachment.type が hook_additional_context）だけを数える。`rendered[].content` の写しは見ない
+            # 案内の行（attachment.type が hook_additional_context）だけを数える。`rendered[].content` のコピーは見ない
             if not isinstance(attachment, dict):
                 continue
             if attachment.get("type") != HOOK_CONTEXT_ATTACHMENT_TYPE:
@@ -495,7 +495,7 @@ def marker() -> Callable[[str], str]:
     """応答に出たかで見分ける、実行ごとに一意の文字列を作る。"""
 
     def _make(prefix: str) -> str:
-        """prefix に一意の文字列を足して返す。"""
+        """prefix に一意の文字列を追加して返す。"""
         return f"{prefix}-{uuid4().hex[:8]}"
 
     return _make
@@ -524,7 +524,7 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
         lines = ["rules:"]
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
-            # 書かれた条件だけをエントリに足す
+            # 書かれた条件だけをエントリに追加する
             if entry.get("paths"):
                 lines.append("    paths:")
                 lines.extend(f'      - "{value}"' for value in entry["paths"])

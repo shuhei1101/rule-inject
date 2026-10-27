@@ -80,7 +80,7 @@ def test_normal_when_rule_changed_after_read(
     configure_index(make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}))
     read_prompt = f"Read で {rule} を読んでください。他のことはしないでください。"
     read_run = run_claude(read_prompt, allow=["Read"])
-    # 続ける前に、ルールの本文へ 1 行を足す
+    # 続ける前に、ルールの本文へ 1 行を追加する
     rule.write_text("# ノートの規約\n追記した行\n", encoding="utf-8")
     target = e2e_project / "notes.txt"
     # 実行

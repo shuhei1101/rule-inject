@@ -6,10 +6,10 @@ files:
     notes: Claude Code のユーザーの設定。フックは `env` の値を環境変数として受け取る
   - file: 索引（*.yaml）
     manages: ルールの場所と、当てるパス・ツール名・操作の種別の紐づけ
-    notes: 利用者が書く。置き場所と名前は自由で、設定ファイルの `indexes` で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形（マップ・文字列のリスト・文字列）だけを読む
+    notes: 利用者が書く。置き場所と名前は自由で、設定ファイルの `indexes` で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形式（マップ・文字列のリスト・文字列）だけを読む
   - file: ~/.config/rule-inject/settings.yaml
     manages: 索引の場所・既読の記録とログの置き場所・保持日数（最上位の `global` と `projects`）
-    notes: 利用者が書き、`RULE_INJECT_CONFIG` で指す。`RULE_INJECT_CONFIG` が無いときは読まず、全てのキーを既定値で動かす。フックが標準ライブラリだけで読めるよう、ここに挙げたキーと形（マップ・マップのリスト・文字列のリスト・文字列・整数）だけを読む
+    notes: 利用者が書き、`RULE_INJECT_CONFIG` で指す。`RULE_INJECT_CONFIG` が無いときは読まず、全てのキーを既定値で動かす。フックが標準ライブラリだけで読めるよう、ここに挙げたキーと形式（マップ・マップのリスト・文字列のリスト・文字列・整数）だけを読む
   - file: settings.sample.yaml
     manages: 設定ファイルのキーの一覧（実値を入れないサンプル）
     notes: プラグインの直下に置く。フックは読まない
@@ -178,24 +178,24 @@ settings:
     type: int
     required: false
     default: '30'
-    description: 最後に書き足してからこの日数を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを、セッションの開始時に消す
+    description: 最後に追記してからこの日数を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを、セッションの開始時に削除する
     reload: immediate
     allowed: 1 以上の整数。それ以外の値は設定ファイルの誤りとして扱う
     status: planned
     visibility: user
-    reason: 記録フォルダは全てのプロジェクトで共通のため、`projects` で分けると他のプロジェクトの記録を消す日数が起動したプロジェクトの値で決まる。そのため `global` だけに置く
+    reason: 記録フォルダは全てのプロジェクトで共通のため、`projects` で分けると他のプロジェクトの記録を削除する日数が起動したプロジェクトの値で決まる。そのため `global` だけに置く
   - key: global.log_retention_days
     title: ログの保持日数
     file: ~/.config/rule-inject/settings.yaml
     type: int
     required: false
     default: '3'
-    description: 日付が今日（UTC）からこの日数以上前のログのファイルを、セッションの開始時に消す
+    description: 日付が今日（UTC）からこの日数以上前のログのファイルを、セッションの開始時に削除する
     reload: immediate
     allowed: 1 以上の整数。それ以外の値は設定ファイルの誤りとして扱う
     status: planned
     visibility: user
-    reason: ログのフォルダは全てのプロジェクトで共通のため、`projects` で分けると他のプロジェクトのログを消す日数が起動したプロジェクトの値で決まる。そのため `global` だけに置く
+    reason: ログのフォルダは全てのプロジェクトで共通のため、`projects` で分けると他のプロジェクトのログを削除する日数が起動したプロジェクトの値で決まる。そのため `global` だけに置く
   - key: projects[].match
     title: 当てるプロジェクト
     file: ~/.config/rule-inject/settings.yaml
@@ -213,7 +213,7 @@ settings:
     type: list[str]
     required: false
     default: 当たった要素のどれも持たないとき `[${CLAUDE_PROJECT_DIR}/rules.yaml]`（ファイルか `CLAUDE_PROJECT_DIR` が無ければ理由を載せずに読まない）
-    description: 当たったプロジェクトだけで読む索引のパスの並び。当たった要素の並びを順に `global.indexes` の後ろへ足す。当たった要素が空の並び `[]` を持つと、既定の置き場所も読まない
+    description: 当たったプロジェクトだけで読む索引のパスの並び。当たった要素の並びを順に `global.indexes` の後ろへ追加する。当たった要素が空の並び `[]` を持つと、既定の置き場所も読まない
     reload: immediate
     allowed: 絶対パス・`~` で始まるパス・プロジェクトの直下（`CLAUDE_PROJECT_DIR`）からの相対パス
     reason: '`CLAUDE_PROJECT_DIR` はセッションを始めたプロジェクトの直下で、どのフックにも同じ値で渡る。フックの入力の `cwd` は Claude が `cd` した先へ動くため基準に使わない。要素が持てるキーは `match` と `indexes` だけで、他のキーは設定ファイルの誤りとして扱う'
