@@ -303,7 +303,7 @@ functions:
       - name: test_sweep_records_when_not_record
         case: 正常
         summary: 記録ファイルでないものは削除しない
-        condition: 最終更新が 31 日前の `rule-inject.log`、名前が session_id の形式式に合わない `a b.txt`、`.txt` で終わるサブフォルダ、`.txt` で終わるシンボリックリンク
+        condition: 最終更新が 31 日前の `rule-inject.log`、名前が session_id の形式に合わない `a b.txt`、`.txt` で終わるサブフォルダ、`.txt` で終わるシンボリックリンク
         mock: '`now`'
         expected: どれも残る
       - name: test_sweep_records_when_missing

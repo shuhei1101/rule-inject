@@ -416,7 +416,7 @@ functions:
       type: None
       description: 常に出力しない
     process: |-
-      1. session_id の形式式が外れていれば何もしない
+      1. session_id の形式が外れていれば何もしない
       2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も削除しない）
       3. `delete_record` と `delete_guided` を `settings.state_dir` で順に呼ぶ。片方が RecordDeleteError でももう片方を呼び、それぞれ `settings.log_dir` のログ（`delete_record`）へ書く
     unit_tests:
@@ -492,7 +492,7 @@ functions:
         mock: なし
         expected: additionalContext が `WORK_RULES` だけ。ログのファイルが無い
     process: |-
-      1. `source` が `compact` でないか、session_id の形式式が外れていれば、設定ファイルを読まずに `WORK_RULES` だけを返す
+      1. `source` が `compact` でないか、session_id の形式が外れていれば、設定ファイルを読まずに `WORK_RULES` だけを返す
       2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`WORK_RULES` の後に空行を挟んで `build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を続けて返す
       3. `record_exists(settings.state_dir, session_id)` が真なら、`WORK_RULES` の後に `LEFTOVER_NOTICE`（記録ファイルと `settings.log_dir` の場所）を続けて返す。偽なら `WORK_RULES` だけを返す
   - name: sweep_read
@@ -518,7 +518,7 @@ functions:
       type: None
       description: 常に出力しない
     process: |-
-      1. session_id の形式式が外れていれば何もしない
+      1. session_id の形式が外れていれば何もしない
       2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も削除しない）
       3. 失敗は全て `write_log(settings.log_dir, component=sweep_read, ...)` で書く
       4. `sweep_records(settings.state_dir, session_id, retention_days=settings.record_retention_days)` を呼び、返った RecordDeleteError ごとにログ（`delete_record`）へ書く
@@ -533,7 +533,7 @@ functions:
         expected: 記録ファイルが無い、None
       - name: test_sweep_read_when_invalid_session_id
         case: 正常
-        summary: session_id の形式式が外れていれば何も削除しない
+        summary: session_id の形式が外れていれば何も削除しない
         condition: '`session_id` が `../x`、最終更新が 31 日前の記録ファイル'
         mock: なし
         expected: 記録ファイルが残る、None
@@ -636,7 +636,7 @@ functions:
       type: dict[str, Any] | None
       description: additionalContext（案内と知らせ）か、無ければ None
     process: |-
-      1. session_id の形式式が外れていれば None
+      1. session_id の形式が外れていれば None
       2. 結果の行と基準を決める。Grep・Glob は `tool_response.filenames` と `tool_response.content` の各行、基準は `cwd`。Bash は `search_output_base(command, cwd)` が None なら None、あれば `tool_response.stdout` の各行とその基準
       3. `extract_result_paths(lines, base)` で照合するパスを拾う。無ければ None
       4. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
@@ -666,7 +666,7 @@ functions:
         expected: None
       - name: test_search_guide_when_invalid_session_id
         case: 正常
-        summary: session_id の形式式が外れていれば案内しない
+        summary: session_id の形式が外れていれば案内しない
         condition: '`session_id` が `../x`'
         mock: なし
         expected: None
