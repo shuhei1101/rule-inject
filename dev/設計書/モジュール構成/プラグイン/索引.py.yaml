@@ -159,11 +159,11 @@ functions:
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
       2. 最上位のキーは `default_on` と `rules` だけを許す
-      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` だけを許す
+      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` / `enabled` だけを許す
       4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
       5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読む。キーは空白を含まない文字列（ドットを含んでよい）
       6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
-      7. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素を含む）・`rule` の無いエントリ・`on` の外の値は行番号つきの ValueError にする
+      7. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返す
     exceptions:
       - name: ValueError
         condition: 許さないキー・形式・値がある
@@ -228,6 +228,19 @@ functions:
         mock: なし
         expected: 行番号つきの ValueError
         exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_enabled
+        case: 正常
+        summary: '`enabled` を読む'
+        condition: '`enabled: false` のエントリと `enabled: true` のエントリと `enabled` を書かないエントリの 3 つ'
+        mock: なし
+        expected: 1 つ目の `enabled` が `"false"`、2 つ目が `"true"`、3 つ目は `enabled` のキーを持たない
+      - name: test_parse_index_when_invalid_enabled
+        case: 異常
+        summary: '`enabled` の `true` / `false` 以外の値を拒む'
+        condition: '`enabled: no` か `enabled: [false]` を持つエントリ（2 通りをパラメータ化）'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形式・値がある
   - name: load_indexes
     title: 索引の読み込み
     container: features/index/service.py
@@ -251,10 +264,11 @@ functions:
       description: 読めたエントリと読めなかった索引
     process: |-
       1. `index_paths` を渡された順に読む。UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
-      2. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に追加する。同じ索引のほかのエントリは読む
-      3. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {展開した rule} は URL のため Read で読めない`）を `failures` に追加する。同じ索引のほかのエントリは読む
-      4. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に追加する。同じ索引のほかのエントリは読む
-      5. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
+      2. `enabled` が `false` のエントリは、以降の展開・解決・コンパイルをせずに外す（`entries` にも `failures` にも入れない）。無効のエントリは照合に使わないため、展開できない変数参照・URL・読めない正規表現を持っていても理由を載せない
+      3. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に追加する。同じ索引のほかのエントリは読む
+      4. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {展開した rule} は URL のため Read で読めない`）を `failures` に追加する。同じ索引のほかのエントリは読む
+      5. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に追加する。同じ索引のほかのエントリは読む
+      6. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
     unit_tests:
       - name: test_load_indexes
         case: 正常
@@ -310,6 +324,12 @@ functions:
         condition: '`index_paths` に `[]`'
         mock: なし
         expected: '`entries` も `failures` も空'
+      - name: test_load_indexes_when_entry_disabled
+        case: 正常
+        summary: '`enabled: false` のエントリを外す'
+        condition: '`enabled: false` の通常のエントリ、`enabled: false` で `rule: "!{UNSET}/a.md"`（`UNSET` は `env` に無い）のエントリ、`enabled: true` のエントリ、`enabled` を書かないエントリの 4 つ'
+        mock: なし
+        expected: '`entries` に後ろの 2 エントリだけ。`failures` が空'
   - name: match_path
     title: パスの照合
     container: features/index/service.py

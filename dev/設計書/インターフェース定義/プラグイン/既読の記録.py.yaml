@@ -461,6 +461,32 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_read_by_entry_disabled
+  - name: 正常系（無効のエントリのルールをBashで読む）
+    summary: '`enabled: false` のエントリだけが指すルールを Bash の読むコマンドで読んでも記録しない'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 'ルールの場所を持ち `enabled: false` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '正常系（Bashで読む）と同じ（`tool_name: Bash`、`tool_input.command` は `cat {ルールの場所の相対パス}`）'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 既読の記録
+        participant IDX as 索引
+
+        CC->>P: 標準入力（Bash・コマンド）
+        P->>P: 読むコマンドの引数からパスを取り出す
+        P->>IDX: 読む（無効のエントリを外すため当たらない）
+        P-->>CC: 終了コード 0
+    expected:
+      - 記録ファイルが作られていない
+      - 既読の履歴ファイルが作られていない
+      - 終了コードが `0`
+    test: test_normal_when_bash_entry_disabled
 lead: Read か Bash の読むコマンドで全体を読んだパスのうち索引に載ったルールの場所と、MCP のツールの結果に載ったルールの文書の場所（書式に従う文書が無いときは索引の `read_by` に当たったエントリのルールの場所）を、本文のハッシュと一緒にそのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルへルールの場所と本文のハッシュを 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
