@@ -60,7 +60,7 @@ functions:
       1. 語に分ける前にコマンドの文字列を先頭から走査し、引用符の状態を追う（二重引用符の中の `\"` / `\\` はエスケープとして読み、一重引用符の中の `\` は文字どおり）。引用符の外の行継続（`\` + 改行）は空白に置き換える。引用符の外で、先頭か空白・区切りの記号の直後にある `#` から行末まではコメントとして捨てる（改行は残す）。引用符の中の `*` / `?` / `[` と、引用符の外で `\` の直後にある `*` / `?` / `[`（`\` ごと）は、`glob.escape` の形（`[*]` / `[?]` / `[[]`）に置き換える
       2. `shlex`（`posix=True`、`punctuation_chars` は `();<>|&` と改行、`whitespace` は空白・タブ・CR、`whitespace_split=True`）で語に分ける。引用符が閉じていないなどで分けられなければ空を返す
       3. `&&` / `||` / `;` / `|` / 改行など記号だけの語で区切る。`<<` の次の語（先頭の `-` を外す）をヒアドキュメントの終わりの語とし、次の改行から、その語だけの区切りまでの語を捨てる
-      4. 区切ったコマンドを順に見る。`cd {フォルダ}` は以降の基準を動かす
+      4. 区切ったコマンドを順に見る。`cd {フォルダ}` は以降の基準を動かす。フォルダが `*` / `?` / `[` を含むときは手順 7 と同じく `glob.glob` で解き、当たったフォルダが 1 つのときだけそれを基準にする（それ以外は基準を動かさない）
       5. `for {変数} in {語の並び}` の区切りは、変数と語の並びをループの積み重ねに積む。`while` / `until` の区切りも、変数を持たないループとして積む。`do` で始まる区切りは `do` を外した残りをコマンドとして見る。`done` だけの区切りで積み重ねの最後を降ろす
       6. 先頭の語のベース名が `commands` にあれば、`-` で始まらない引数を読む対象にする。引数が積み重ねのいずれかの変数の `$変数` / `${変数}` なら、その語の並びを引数の代わりに読む対象にする
       7. 読む対象の語のうち `*` / `?` / `[` を含むものは、基準から解いたパターンを `glob.glob`（`recursive=False`）に当て、当たったものを名前の順に並べる。含まない語は基準から解く
@@ -162,6 +162,12 @@ functions:
         condition: '`cat "[x].md" \*.md`、`[x].md`・`*.md`・`x.md`・`a.md` が実在'
         mock: なし
         expected: '`[x].md`・`*.md` の絶対パスの 2 件'
+      - name: test_extract_read_paths_when_cd_literal_glob
+        case: 正常
+        summary: 引用符で包んだ・エスケープした glob の文字を含むフォルダへ移る cd の後の読むコマンドを解く
+        condition: '`cd "dir[1]" && cat r.md` と `cd dir\[1\] && cat r.md` の 2 つ、`dir[1]/r.md` が実在、`READ_COMMANDS`'
+        mock: なし
+        expected: どちらも `{cwd}/dir[1]/r.md` の 1 件
   - name: search_output_base
     title: 検索の出力の基準
     container: features/command/service.py
@@ -186,7 +192,7 @@ functions:
     process: |-
       1. `extract_read_paths` と同じ規則で語に分け、記号だけの語でコマンドごとに区切る（ヒアドキュメントの本文の語も同じく捨てる）。分けられなければ None
       2. `cd {フォルダ}` を除いた最初のコマンドの先頭の語のベース名が `SEARCH_COMMANDS` に無ければ None（名前の部分一致にしない）
-      3. 基準は `cwd` をそれまでの `cd` で動かしたフォルダにする。`ls` で、`-` で始まらない引数が 1 つだけでそれが実在するフォルダなら、そのフォルダを基準にする
+      3. 基準は `cwd` をそれまでの `cd` で動かしたフォルダにする。`ls` で、`-` で始まらない引数が 1 つだけでそれが実在するフォルダなら、そのフォルダを基準にする。`cd` と `ls` の引数が `*` / `?` / `[` を含むときは `extract_read_paths` の手順 4 と同じく `glob.glob` で解き、当たったフォルダが 1 つのときだけそれを使う
     unit_tests:
       - name: test_search_output_base
         case: 正常
@@ -230,6 +236,12 @@ functions:
         condition: '`cd my\ dir && grep -rl foo .`'
         mock: なし
         expected: '`{cwd}/my dir`'
+      - name: test_search_output_base_when_literal_glob
+        case: 正常
+        summary: 引用符で包んだ glob の文字を含む cd と ls のフォルダを基準にする
+        condition: '`cd "dir[1]" && ls` と `ls "dir[1]"` の 2 つ、`dir[1]` が実在'
+        mock: なし
+        expected: どちらも `{cwd}/dir[1]`
   - name: extract_result_paths
     title: 結果の行からのパスの拾い出し
     container: features/command/service.py
