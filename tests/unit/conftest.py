@@ -52,13 +52,91 @@ def log_folder(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def hook_env(state_dir: Path, log_folder: Path, tmp_path: Path) -> dict[str, str]:
-    """フックに渡す環境変数（記録フォルダ・ログのフォルダ・プロジェクトの直下だけ）。"""
-    return {
-        "RULE_INJECT_STATE_DIR": str(state_dir),
-        "RULE_INJECT_LOG_DIR": str(log_folder),
-        "CLAUDE_PROJECT_DIR": str(tmp_path),
+def make_settings(tmp_path: Path) -> Callable[..., Path]:
+    """設定ファイルの YAML を書き、そのパスを返す factory。"""
+
+    def _make(text: str, name: str = "settings.yaml") -> Path:
+        """text を tmp_path/config の下の name に書く。"""
+        path = tmp_path / "config" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    return _make
+
+
+@pytest.fixture
+def settings_env(
+    make_settings: Callable[..., Path],
+    state_dir: Path,
+    log_folder: Path,
+    tmp_path: Path,
+) -> Callable[..., dict[str, str]]:
+    """設定ファイルを書いて `RULE_INJECT_CONFIG` で指した、フックに渡す環境変数を返す factory。"""
+
+    def _make(**global_values: Any) -> dict[str, str]:
+        """記録フォルダとログのフォルダに global の値を重ねた設定ファイルを書く。"""
+        values: dict[str, Any] = {"state_dir": str(state_dir), "log_dir": str(log_folder)}
+        values.update(global_values)
+        lines = ["global:"]
+        for key, value in values.items():
+            # リストは空なら `[]`、あればブロックのリストにする
+            if isinstance(value, (list, tuple)):
+                lines.append(f"  {key}: []" if not value else f"  {key}:")
+                lines.extend(f'    - "{item}"' for item in value)
+            else:
+                lines.append(f'  {key}: "{value}"')
+        config = make_settings("\n".join(lines) + "\n")
+        return {"RULE_INJECT_CONFIG": str(config), "CLAUDE_PROJECT_DIR": str(tmp_path)}
+
+    return _make
+
+
+@pytest.fixture
+def hook_env(settings_env: Callable[..., dict[str, str]]) -> dict[str, str]:
+    """フックに渡す環境変数（記録フォルダ・ログのフォルダを設定ファイルで指し、プロジェクトの直下を持つ）。"""
+    return settings_env()
+
+
+@pytest.fixture
+def xdg_state_home(tmp_path: Path) -> Path:
+    """設定ファイルが読めないときのログの置き場所の元になる `XDG_STATE_HOME`（まだ作らない）。"""
+    return tmp_path / "xdg_state"
+
+
+@pytest.fixture
+def default_log_folder(xdg_state_home: Path) -> Path:
+    """`XDG_STATE_HOME` の下の既定のログのフォルダ。"""
+    return xdg_state_home / "rule-inject" / "logs"
+
+
+@pytest.fixture
+def unreadable_env(
+    tmp_path: Path,
+    make_settings: Callable[..., Path],
+    xdg_state_home: Path,
+) -> Callable[[str], dict[str, str]]:
+    """読めない設定ファイルを `RULE_INJECT_CONFIG` で指した環境変数を返す factory（種類は missing・unknown_key・broken・retention_zero）。"""
+    texts = {
+        "unknown_key": "global:\n  index:\n    - /a.yaml\n",
+        "broken": "global: {state_dir: /s}\n",
+        "retention_zero": "global:\n  log_retention_days: 0\n",
     }
+
+    def _make(kind: str) -> dict[str, str]:
+        """kind の設定ファイルを置き（missing は置かず）、`XDG_STATE_HOME` と共に環境変数にする。"""
+        config = (
+            tmp_path / "config" / "missing.yaml"
+            if kind == "missing"
+            else make_settings(texts[kind])
+        )
+        return {
+            "RULE_INJECT_CONFIG": str(config),
+            "XDG_STATE_HOME": str(xdg_state_home),
+            "CLAUDE_PROJECT_DIR": str(tmp_path),
+        }
+
+    return _make
 
 
 @pytest.fixture
@@ -290,16 +368,43 @@ def read_history(state_dir: Path, session_id: str) -> Callable[[], list[dict[str
 
 
 @pytest.fixture
-def read_daily_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
-    """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
+def read_logs_in() -> Callable[[Path], list[dict[str, Any]]]:
+    """フォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す関数。"""
 
-    def _read() -> list[dict[str, Any]]:
-        """{yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
+    def _read(folder: Path) -> list[dict[str, Any]]:
+        """folder の {yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
         texts = [
-            path.read_text(encoding="utf-8")
-            for path in sorted(log_folder.glob("*_rule-inject.log"))
+            path.read_text(encoding="utf-8") for path in sorted(folder.glob("*_rule-inject.log"))
         ]
         return [json.loads(line) for text in texts for line in text.splitlines()]
+
+    return _read
+
+
+@pytest.fixture
+def read_daily_log(
+    log_folder: Path,
+    read_logs_in: Callable[[Path], list[dict[str, Any]]],
+) -> Callable[[], list[dict[str, Any]]]:
+    """ログのフォルダの日付ごとのログを読み、1 行ごとの dict を返す関数。"""
+
+    def _read() -> list[dict[str, Any]]:
+        """ログのフォルダの {yyyymmdd}_rule-inject.log の各行を読む。"""
+        return read_logs_in(log_folder)
+
+    return _read
+
+
+@pytest.fixture
+def read_default_log(
+    default_log_folder: Path,
+    read_logs_in: Callable[[Path], list[dict[str, Any]]],
+) -> Callable[[], list[dict[str, Any]]]:
+    """既定のログのフォルダの日付ごとのログを読み、1 行ごとの dict を返す関数。"""
+
+    def _read() -> list[dict[str, Any]]:
+        """既定のログのフォルダの {yyyymmdd}_rule-inject.log の各行を読む。"""
+        return read_logs_in(default_log_folder)
 
     return _read
 
