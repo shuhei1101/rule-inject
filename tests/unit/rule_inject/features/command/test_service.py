@@ -232,6 +232,24 @@ def test_extract_read_paths_when_escaped_glob(tmp_path: Path) -> None:
     assert result == [str(tmp_path / "[x].md"), str(tmp_path / "*.md")]
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        pytest.param('cd "dir[1]" && cat r.md', id="quoted"),
+        pytest.param(r"cd dir\[1\] && cat r.md", id="escaped"),
+    ],
+)
+def test_extract_read_paths_when_cd_literal_glob(tmp_path: Path, command: str) -> None:
+    """引用符で包んだ・エスケープした glob の文字を含むフォルダへ移る cd の後の読むコマンドを解く（正常系）。"""
+    # 準備
+    (tmp_path / "dir[1]").mkdir()
+    (tmp_path / "dir[1]" / "r.md").write_text("# r\n", encoding="utf-8")
+    # 実行
+    result = extract_read_paths(command, tmp_path, READ_COMMANDS)
+    # 検証
+    assert result == [str(tmp_path / "dir[1]" / "r.md")]
+
+
 def test_search_output_base(tmp_path: Path) -> None:
     """検索のコマンドの基準を返す（正常系）。"""
     # 実行
@@ -302,6 +320,23 @@ def test_search_output_base_when_escaped_cd(tmp_path: Path) -> None:
     result = service.search_output_base(r"cd my\ dir && grep -rl foo .", tmp_path)
     # 検証
     assert result == tmp_path / "my dir"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        pytest.param('cd "dir[1]" && ls', id="cd"),
+        pytest.param('ls "dir[1]"', id="ls"),
+    ],
+)
+def test_search_output_base_when_literal_glob(tmp_path: Path, command: str) -> None:
+    """引用符で包んだ glob の文字を含む cd と ls のフォルダを基準にする（正常系）。"""
+    # 準備
+    (tmp_path / "dir[1]").mkdir()
+    # 実行
+    result = service.search_output_base(command, tmp_path)
+    # 検証
+    assert result == tmp_path / "dir[1]"
 
 
 def test_extract_result_paths(tmp_path: Path) -> None:
