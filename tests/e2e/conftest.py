@@ -520,7 +520,7 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
     """エントリの dict を並べた索引の YAML を置き、そのパスを返す factory。"""
 
     def _make(*entries: Mapping[str, Any], to: str = "index.yaml") -> Path:
-        """各エントリの rule・paths・on・read_by から索引を組み立て、tmp_path の下の to に書く。"""
+        """各エントリの rule・paths・on・enabled・read_by から索引を組み立て、tmp_path の下の to に書く。"""
         lines = ["rules:"]
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
@@ -530,6 +530,9 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
                 lines.extend(f'      - "{value}"' for value in entry["paths"])
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
+            # 無効のエントリは `enabled: false` で書く
+            if entry.get("enabled") is not None:
+                lines.append(f"    enabled: {str(entry['enabled']).lower()}")
             # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで書く
             if entry.get("read_by"):
                 lines.append("    read_by:")

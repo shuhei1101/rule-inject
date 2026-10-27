@@ -347,3 +347,30 @@ def test_error_when_regex_unreadable(
     assert str(index) in transcript
     assert "re:[" in transcript
     assert "unterminated character set" in transcript
+
+
+def test_normal_when_entry_disabled(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[[Path | str], None],
+    run_claude: Callable[..., Any],
+    transcript_text: Callable[[str], str],
+) -> None:
+    """`enabled: false` のエントリに当たる Write では案内せず、そのまま書ける（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    configure_index(
+        make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"], "enabled": False})
+    )
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
+    # 検証
+    assert run.denied_tools == []
+    assert "hello" in target.read_text(encoding="utf-8")
+    transcript = transcript_text(run.session_id)
+    assert GUIDANCE_START not in transcript
+    assert NON_BLOCKING_GUIDANCE not in transcript
+    assert str(rule) not in transcript
+    assert "索引を読めませんでした" not in transcript

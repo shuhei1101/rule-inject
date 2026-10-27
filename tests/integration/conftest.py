@@ -187,7 +187,7 @@ def index_text() -> Callable[..., str]:
     """エントリの dict を並べた索引の YAML の文字列を返す factory。"""
 
     def _text(*entries: Mapping[str, Any], default_on: Sequence[str] | None = None) -> str:
-        """各エントリの rule・paths・exclude・tools・args・on・read_by から索引の文字列を組み立てる。"""
+        """各エントリの rule・paths・exclude・tools・args・on・read_by・enabled から索引の文字列を組み立てる。"""
         lines: list[str] = []
         # 索引の既定の止める操作
         if default_on is not None:
@@ -208,6 +208,12 @@ def index_text() -> Callable[..., str]:
                     lines.extend(f'        - "{pattern}"' for pattern in patterns)
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
+            # 有効・無効は、真偽値なら `true` / `false`、文字列ならそのままの表記で書く
+            if "enabled" in entry:
+                enabled = entry["enabled"]
+                lines.append(
+                    f"    enabled: {str(enabled).lower() if isinstance(enabled, bool) else enabled}"
+                )
             # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで書く
             if entry.get("read_by"):
                 lines.append("    read_by:")

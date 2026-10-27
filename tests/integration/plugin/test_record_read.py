@@ -441,3 +441,94 @@ def test_error_when_settings_unreadable(
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_settings"
     assert completed.returncode == 0
+
+
+def test_normal_when_entry_disabled(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    state_dir: Path,
+    session_id: str,
+) -> None:
+    """`enabled: false` のエントリだけが指すルールを Read で全体読んでも記録しない（正常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    index = make_index(index_text({"rule": str(rule), "paths": ["**/*.py"], "enabled": False}))
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=WHOLE_READ,
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert not (state_dir / f"{session_id}.history.jsonl").exists()
+    assert completed.returncode == 0
+
+
+def test_normal_when_read_by_entry_disabled(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    state_dir: Path,
+    session_id: str,
+) -> None:
+    """`enabled: false` のエントリの `read_by` に当たる MCP のツールの呼び出しでは記録しない（正常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    index = make_index(
+        index_text(
+            {
+                "rule": str(rule),
+                "read_by": [{"tools": ["mcp__docs__get_doc"], "args": {"id": ["python"]}}],
+                "enabled": False,
+            }
+        )
+    )
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__get_doc",
+        tool_input={"id": "python"},
+        tool_response=json.dumps({"result": "# 規約\n"}),
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert not (state_dir / f"{session_id}.history.jsonl").exists()
+    assert completed.stdout == ""
+    assert completed.returncode == 0
+
+
+def test_normal_when_bash_entry_disabled(
+    tmp_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    state_dir: Path,
+    session_id: str,
+) -> None:
+    """`enabled: false` のエントリだけが指すルールを Bash の読むコマンドで読んでも記録しない（正常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    index = make_index(index_text({"rule": str(rule), "paths": ["**/*.py"], "enabled": False}))
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Bash",
+        tool_input={"command": "cat rules/python.md"},
+        cwd=tmp_path,
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert not (state_dir / f"{session_id}.history.jsonl").exists()
+    assert completed.returncode == 0

@@ -699,3 +699,67 @@ def test_normal_when_rule_changed_after_read(
     assert output["permissionDecision"] == "deny"
     assert str(rule) in output["permissionDecisionReason"]
     assert completed.returncode == 0
+
+
+def test_normal_when_entry_disabled(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`enabled: false` のエントリにだけ当たる MCP のツールの呼び出しでは、止めずに何も出さない（正常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "tools": ["mcp__*__create_*"], "enabled": False})
+    payload = hook_payload("PreToolUse", tool_name="mcp__github__create_issue", tool_input={})
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert not (state_dir / f"{session_id}.guided.txt").exists()
+    assert completed.returncode == 0
+
+
+def test_normal_when_disabled_and_enabled_entries(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """同じルールを指す無効のエントリと有効のエントリがあるとき、有効のエントリだけで案内する（正常系）。"""
+    # 準備
+    index = write_index(
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "enabled": False},
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["read"]},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert output["additionalContext"].count(RULE) == 1
+    assert "やり直してください" not in output["additionalContext"]
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
+    assert completed.returncode == 0
+
+
+def test_error_when_enabled_not_boolean(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`enabled` が `true` / `false` 以外の索引は、操作を止めずに場所と理由を載せる（異常系）。"""
+    # 準備
+    index = write_index(
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "enabled": '"no"'},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert str(index) in output["additionalContext"]
+    assert "enabled" in output["additionalContext"]
+    assert completed.returncode == 0

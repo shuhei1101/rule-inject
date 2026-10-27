@@ -445,6 +445,43 @@ scenarios:
       - 対象のファイルに中身が書かれている
       - セッションの記録（transcript）に、読めなかった設定ファイルの場所と理由が載っている
     test: test_error_when_settings_unreadable
+  - name: 正常シナリオ（無効のエントリに当たる）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+        notes: '-'
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+        notes: '-'
+      - name: 索引
+        description: '止めて案内するシナリオと同じエントリに `enabled: false` を書いた YAML'
+        notes: 同じルールの場所を指すエントリは、ほかに持たない
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+        notes: '-'
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス。`--allowedTools` で Write と Edit を許可する（Claude Code は作業の決まりに従い、Write で空で作ってから Edit で中身を書くことがある）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant FS as 対象のファイル
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: 当たるエントリなし（無効のエントリは照合に使わない）
+        H-->>CC: 何も返さない
+        CC->>FS: 書く
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 対象のファイルに中身が書かれている
+      - この実行のセッションの記録（transcript）に、ルールの場所を載せた案内の文面が無い
+      - この実行のセッションの記録（transcript）に、読めなかった索引の場所と理由が載っていない
+    test: test_normal_when_entry_disabled
 lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
 issue: 2
 primary_actor: Claude Code のセッション
@@ -467,4 +504,6 @@ notes:
     - 設定ファイルに知らないキーがあるときに、読めない設定ファイルと同じく理由を載せること
     - 案内済みの記録が読めない・書けないときの扱い
     - 止める案内に載せたルールを、案内済みにしないこと（読むまで止め続ける）
+    - 無効のエントリに MCP のツールの呼び出しが当たっても案内しないことと、同じルールの場所を指す有効なエントリがあればそのエントリで案内すること
+    - `enabled` が `true` / `false` 以外のとき、読めない索引と同じく索引の場所と理由を載せること
 test_file: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py

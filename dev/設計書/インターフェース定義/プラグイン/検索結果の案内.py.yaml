@@ -346,6 +346,33 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
+  - name: 正常系（無効のエントリに当たる）
+    summary: '検索の結果に出たファイルが `enabled: false` のエントリにだけ当たるとき、案内せず案内済みにもしない'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`enabled: false` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空の一時フォルダ
+      - name: 入力
+        description: '正常系と同じ（`tool_name: Grep`、`tool_response.filenames` に実在する `.py` を 1 つ）'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as 検索結果の案内
+        participant IDX as 索引
+
+        CC->>P: 標準入力（Grep・結果）
+        P->>P: filenames から実在するファイルの絶対パスを拾う
+        P->>IDX: 読む（無効のエントリを外す）
+        P->>P: 当たるエントリが無い
+        P-->>CC: 標準出力なし<br>終了コード 0
+    expected:
+      - 標準出力が空
+      - 案内済みの記録にルールの場所の行が無い
+      - 終了コードが `0`
+    test: test_normal_when_entry_disabled
 lead: Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）の結果に出た実在するファイルに当たるルールのうち、そのセッションで未読で未案内のものを、読むかは任意と伝えて案内する。操作はもう終わっているため止めない。
 identifier: search_guide
 idempotent: false
