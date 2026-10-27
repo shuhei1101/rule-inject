@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from collections.abc import Callable, Sequence
 from datetime import UTC, date, datetime, timedelta
@@ -138,26 +139,23 @@ def test_normal_when_old_logs(
     assert completed.returncode == 0
 
 
-def test_normal_when_retention_env(
+def test_normal_when_retention_configured(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[..., Path],
     set_age_days: Callable[[Path, int], Path],
     write_dated_log: Callable[[date], Path],
 ) -> None:
-    """環境変数で指した保持の値で、記録ファイルとログのファイルを消す（正常系）。"""
+    """設定ファイルの保持の値で、記録ファイルとログのファイルを消す（正常系）。"""
     # 準備
     expired_record = set_age_days(write_record(["/r/a.md"], "expired-session"), 2)
     today = datetime.now(UTC).date()
     today_log = write_dated_log(today)
     expired_log = write_dated_log(today - timedelta(days=1))
     payload = hook_payload("SessionStart", source="startup")
-    extra_env = {
-        "RULE_INJECT_RECORD_RETENTION_DAYS": "1",
-        "RULE_INJECT_LOG_RETENTION_DAYS": "1",
-    }
+    global_values = {"record_retention_days": 1, "log_retention_days": 1}
     # 実行
-    completed = run_hook("sweep_read", payload, extra_env=extra_env)
+    completed = run_hook("sweep_read", payload, global_values=global_values)
     # 検証
     assert not expired_record.exists()
     assert not expired_log.exists()
@@ -206,22 +204,26 @@ def test_normal_when_legacy_log(
     assert completed.returncode == 0
 
 
-def test_normal_when_invalid_setting(
+def test_error_when_settings_unreadable(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     hook_payload: Callable[..., dict[str, Any]],
-    write_dated_log: Callable[[date], Path],
+    default_log_folder: Path,
+    read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """環境変数の保持の値が 1 以上の整数でないときは、既定の値で掃除する（正常系）。"""
+    """設定ファイルの保持の値が 1 以上の整数でないとき、既定の値でも掃除せず、ログに書く（異常系）。"""
     # 準備
     today = datetime.now(UTC).date()
-    today_log = write_dated_log(today)
-    within_log = write_dated_log(today - timedelta(days=2))
-    expired_log = write_dated_log(today - timedelta(days=3))
+    default_log_folder.mkdir(parents=True)
+    expired_log = default_log_folder / f"{today - timedelta(days=3):%Y%m%d}_rule-inject.log"
+    expired_log.write_text("{}\n", encoding="utf-8")
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    completed = run_hook("sweep_read", payload, extra_env={"RULE_INJECT_LOG_RETENTION_DAYS": "0"})
+    completed = run_hook("sweep_read", payload, global_values={"log_retention_days": 0})
     # 検証
-    assert not expired_log.exists()
-    assert within_log.exists()
-    assert today_log.exists()
+    assert expired_log.exists()
+    today_log = default_log_folder / f"{today:%Y%m%d}_rule-inject.log"
+    logged = [json.loads(line) for line in read_lines(today_log)]
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
+    assert completed.stdout == ""
     assert completed.returncode == 0

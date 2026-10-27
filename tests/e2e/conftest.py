@@ -221,18 +221,22 @@ def e2e_project(tmp_path: Path) -> Path:
 def configure_index(
     e2e_project: Path, tmp_path: Path, state_dir: Path, log_folder: Path
 ) -> Callable[..., None]:
-    """プロジェクトの設定の `env` に、索引・記録フォルダ・ログのフォルダ・索引の無い設定フォルダを書く。"""
+    """設定ファイルに索引・記録フォルダ・ログのフォルダを書き、プロジェクトの設定の `env` で `RULE_INJECT_CONFIG` と索引の無い設定フォルダを指す。"""
 
     def _configure(index: Path | str | None, *, extra_env: Mapping[str, str] | None = None) -> None:
-        """index をプロジェクト用の索引として指し（None なら指さず既定の置き場所に任せ）、extra_env を足す。"""
+        """index を設定ファイルの `global.indexes` に書き（None なら書かず既定の置き場所に任せ）、extra_env を `env` に足す。"""
+        lines = ["global:", f'  state_dir: "{state_dir}"', f'  log_dir: "{log_folder}"']
+        if index is not None:
+            lines += ["  indexes:", f'    - "{index}"']
+        config = tmp_path / "config" / "settings.yaml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        # 利用者の設定（~/.claude）は読み込ませないため、`env` はプロジェクトの設定に書く
         env = {
-            "RULE_INJECT_STATE_DIR": str(state_dir),
-            "RULE_INJECT_LOG_DIR": str(log_folder),
+            "RULE_INJECT_CONFIG": str(config),
             # ユーザーの既定の索引が実際の設定フォルダの索引を読まないよう、索引の無いフォルダを指す
             "XDG_CONFIG_HOME": str(tmp_path / "config"),
         }
-        if index is not None:
-            env["RULE_INJECT_INDEXES_PROJECT"] = str(index)
         env.update(extra_env or {})
         (e2e_project / ".claude" / "settings.json").write_text(
             json.dumps({"env": env}, ensure_ascii=False, indent=2), encoding="utf-8"

@@ -258,7 +258,7 @@ def test_error_when_index_unreadable(
     broken = make_index("rules:\n  - foo: bar\n", "broken.yaml")
     payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
     # 実行
-    completed = run_hook("search_guide", payload, index=f"{two_rule_index},{broken}")
+    completed = run_hook("search_guide", payload, index=[two_rule_index, broken])
     # 検証
     context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
     assert RULE in context
@@ -321,4 +321,31 @@ def test_normal_when_rule_changed_after_read(
     context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
     assert str(rule) in context
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [str(rule)]
+    assert completed.returncode == 0
+
+
+def test_error_when_settings_unreadable(
+    config_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    src_files: Path,
+    search_payload: Callable[..., dict[str, Any]],
+    settings_text: Callable[..., str],
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """設定ファイルが読めないとき、案内せずに理由を載せる（異常系）。"""
+    # 準備
+    make_index(index_text({"rule": RULE, "paths": ["**/*.py"]}), "rules.yaml")
+    payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
+    # 実行
+    completed = run_hook("search_guide", payload, config_text=settings_text(log_retention_days=0))
+    # 検証
+    context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert str(config_path) in context
+    assert "global.log_retention_days" in context
+    assert RULE not in context
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
     assert completed.returncode == 0
