@@ -680,7 +680,7 @@ functions:
         condition: '`RULE_INJECT_CONFIG` が UTF-8 でないバイト列（`b"\xff\xfe"`）のファイルを指す'
         mock: なし
         expected: SettingsReadError（path が設定ファイルの場所）
-        exception: SettingsReadError
+        exception: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
   - name: _matches_project
     title: プロジェクトの当て方
     container: shared/settings.py
