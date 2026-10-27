@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from rule_inject.features.index._yaml import parse_index
+from rule_inject.features.index._yaml import ENABLED_KEY, parse_index
 from rule_inject.features.index.types import (
     DEFAULT_ON,
     ArgCondition,
@@ -31,6 +31,8 @@ REGEX_PREFIX = "re:"
 ARG_KEY_SEPARATOR = "."
 # Read で読めないため読み飛ばす `rule` の頭
 URL_SCHEMES = ("http://", "https://")
+# エントリを照合に使わない `enabled` の値
+DISABLED_VALUE = "false"
 
 
 def _compile_pattern(source: str) -> MatchPattern:
@@ -95,6 +97,9 @@ def _load_index(
     entries: list[IndexEntry] = []
     skipped: list[IndexReadError] = []
     for raw in raw_entries:
+        # 無効のエントリは照合に使わないため、展開・解決・コンパイルの前に外して理由も残さない
+        if raw.get(ENABLED_KEY) == DISABLED_VALUE:
+            continue
         # `rule` の変数参照を展開する。展開できない名前が残ったエントリは読み飛ばして理由を残す
         written_rule = str(raw["rule"])
         expansion = expand_variables(written_rule, env)

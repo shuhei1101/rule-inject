@@ -13,9 +13,12 @@ from rule_inject.shared.yaml_lines import (
 )
 
 TOP_KEYS = ("default_on", "rules")
-ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on", "read_by")
-# 値がリストのエントリのキー（`rule` だけが文字列、`args` はキーごとのリストのマップ、`read_by` はマップのリスト）
+ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "enabled")
+# 値がリストのエントリのキー（`rule` と `enabled` が文字列、`args` はキーごとのリストのマップ、`read_by` はマップのリスト）
 LIST_ENTRY_KEYS = ("paths", "exclude", "tools", "on")
+ENABLED_KEY = "enabled"
+# `enabled` に書ける値
+ENABLED_VALUES = ("true", "false")
 ARGS_KEY = "args"
 READ_BY_KEY = "read_by"
 # `read_by` の要素のキー（`tools` は必須）
@@ -153,6 +156,9 @@ def _validate_entry(entry: dict[str, Value], number: int) -> None:
             raise yaml_error(number, f"{key} はリストで書いてください")
     if "on" in entry:
         _parse_operations(list(entry["on"]), number)
+    # `enabled` は文字列 `true` / `false` だけを許す（リストや他の値は拒む）
+    if ENABLED_KEY in entry and entry[ENABLED_KEY] not in ENABLED_VALUES:
+        raise yaml_error(number, f"{ENABLED_KEY} は {' か '.join(ENABLED_VALUES)} で書いてください")
 
 
 def parse_index(text: str) -> tuple[tuple[Operation, ...] | None, list[dict[str, Value]]]:
