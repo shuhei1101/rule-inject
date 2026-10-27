@@ -1,0 +1,45 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-docs-word-choice
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 260 items
+
+tests/unit/hooks/test_run.py ...                                         [  1%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  7%]
+................                                                         [ 13%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [ 17%]
+tests/unit/rule_inject/features/guidance/test_service.py ........        [ 20%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 27%]
+......................                                                   [ 35%]
+tests/unit/rule_inject/features/index/test_yaml.py .........             [ 39%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 45%]
+.......................                                                  [ 54%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 56%]
+tests/unit/rule_inject/hooks/test_record_read.py ..............          [ 61%]
+tests/unit/rule_inject/hooks/test_rule_guide.py .............            [ 66%]
+tests/unit/rule_inject/hooks/test_runner.py .....                        [ 68%]
+tests/unit/rule_inject/hooks/test_search_guide.py .......                [ 71%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 74%]
+tests/unit/rule_inject/hooks/test_work_rules.py ....                     [ 75%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 81%]
+tests/unit/rule_inject/shared/test_paths.py ......                       [ 83%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 93%]
+.....                                                                    [ 95%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ........             [ 98%]
+tests/unit/rule_inject/shared/test_variables.py .....                    [100%]
+
+============================= 260 passed in 3.71s ==============================
+
+$ uv run pytest tests/nfr
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-docs-word-choice
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 2 items
+
+tests/nfr/test_version_consistency.py ..                                 [100%]
+
+============================== 2 passed in 0.21s ===============================
