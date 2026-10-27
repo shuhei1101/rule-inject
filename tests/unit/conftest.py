@@ -154,7 +154,7 @@ def unwritable() -> Iterator[Callable[[Path, int], Path]]:
         return path
 
     yield _apply
-    # 後始末で消せるよう、権限を戻す
+    # 後始末で削除できるよう、権限を戻す
     for path, original in reversed(changed):
         path.chmod(original)
 
@@ -194,7 +194,7 @@ def index_text() -> Callable[..., str]:
         if default_on is not None:
             lines.append(f"default_on: [{', '.join(default_on)}]")
         lines.extend(["rules:", f"  - rule: {rule}"])
-        # 書かれた条件だけをエントリに足す
+        # 書かれた条件だけをエントリに追加する
         for key, values in (("paths", paths), ("exclude", exclude), ("tools", tools)):
             if values:
                 lines.append(f"    {key}:")

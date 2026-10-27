@@ -33,7 +33,7 @@ def test_expand_variables_when_unset() -> None:
 
 
 def test_expand_variables_when_not_name() -> None:
-    """名前の形に合わないものは置き換えない（正常系）。"""
+    """名前の形式に合わないものは置き換えない（正常系）。"""
     # 実行
     result = expand_variables("!{ X } !{1X} {X} $X", {"X": "1"})
     # 検証

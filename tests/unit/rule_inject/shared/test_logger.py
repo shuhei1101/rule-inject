@@ -110,7 +110,7 @@ def test_sweep_logs(
     log_folder: Path,
     write_dated_log: Callable[[date], Path],
 ) -> None:
-    """日付が保持日数以上前のファイルだけを消す（正常系）。"""
+    """日付が保持日数以上前のファイルだけを削除する（正常系）。"""
     # 準備
     today_file = write_dated_log(date(2026, 9, 29))
     within_file = write_dated_log(date(2026, 9, 27))
@@ -128,7 +128,7 @@ def test_sweep_logs_when_retention_too_long(
     log_folder: Path,
     write_dated_log: Callable[[date], Path],
 ) -> None:
-    """暦の範囲を超えるほど大きい保持日数なら何も消さない（正常系）。"""
+    """暦の範囲を超えるほど大きい保持日数なら何も削除しない（正常系）。"""
     # 準備
     old_file = write_dated_log(date(2020, 1, 1))
     # 実行
@@ -142,7 +142,7 @@ def test_sweep_logs_when_not_log(
     tmp_path: Path,
     log_folder: Path,
 ) -> None:
-    """ログのファイルでないものは消さない（正常系）。"""
+    """ログのファイルでないものは削除しない（正常系）。"""
     # 準備
     log_folder.mkdir()
     notes = log_folder / "notes.txt"
@@ -183,7 +183,7 @@ def test_sweep_logs_when_undeletable(
     write_dated_log: Callable[[date], Path],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """消せないログのファイルを返す（異常系）。"""
+    """削除できないログのファイルを返す（異常系）。"""
     # 準備
     expired_file = write_dated_log(date(2026, 9, 26))
     unwritable(log_folder, 0o555)
@@ -197,7 +197,7 @@ def test_sweep_logs_when_undeletable(
 
 
 def test_delete_legacy_log(state_dir: Path) -> None:
-    """変更前のログを消す（正常系）。"""
+    """変更前のログを削除する（正常系）。"""
     # 準備
     state_dir.mkdir()
     legacy_log = state_dir / "rule-inject.log"
@@ -250,7 +250,7 @@ def test_delete_legacy_log_when_undeletable(
     state_dir: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """消せないとき失敗を返す（異常系）。"""
+    """削除できないとき失敗を返す（異常系）。"""
     # 準備
     state_dir.mkdir()
     legacy_log = state_dir / "rule-inject.log"

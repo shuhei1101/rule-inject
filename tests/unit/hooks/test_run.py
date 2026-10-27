@@ -80,7 +80,7 @@ def test_main_when_python_too_old(
     imported_rule_inject_modules: Callable[[], list[str]],
     without_rule_inject: None,
 ) -> None:
-    """版が足りないとき知らせて終える（正常系）。"""
+    """バージョンが足りないとき知らせて終える（正常系）。"""
     # 準備
     monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
     payload = hook_payload("PreToolUse", tool_name="Write", tool_input={"file_path": "/p/a.py"})
@@ -106,7 +106,7 @@ def test_main_when_python_too_old_and_sweep_read(
     read_lines: Callable[[Path], list[str]],
     without_rule_inject: None,
 ) -> None:
-    """掃除のフックは版が足りなくても知らせを重ねない（正常系）。"""
+    """掃除のフックはバージョンが足りなくても知らせを重ねない（正常系）。"""
     # 準備
     monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
     payload = hook_payload("SessionStart", source="startup")
