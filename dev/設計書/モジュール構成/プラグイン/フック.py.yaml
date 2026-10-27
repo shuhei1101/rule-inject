@@ -59,7 +59,7 @@ constants:
     summary: これより古い `python3` ではパッケージを import しない
     value: '`(3, 12)`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[フックのPythonの版]
+      - dev/設計書/非機能要件/非機能要件#requirements[フックのPythonのバージョン]
   - name: SETTINGS_FAILURE_SUMMARY
     title: 設定ファイルの失敗の知らせの冒頭
     container: hooks/_runner.py

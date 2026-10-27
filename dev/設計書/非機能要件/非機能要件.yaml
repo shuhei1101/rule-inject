@@ -8,7 +8,7 @@ requirements:
     source: https://code.claude.com/docs/en/hooks
     value: '1'
     unit: 秒
-    rationale: 外部の上限（600 秒）は、操作のたびに走るフックを待つ値として長すぎる。規約『資源の値の決め方』の「下流を待つタイムアウト」に従い、実測の p99.9 に余裕 50% を足して、`hooks.json` の `timeout`（秒）に切り上げた。実測は参考の実装のもので、本実装の非機能要件テストで測り直す。正規表現は索引を読むときにエントリごとに 1 回だけコンパイルし、照合のたびにはコンパイルしない。コンパイルと照合を含めたフックの実行全体を、非機能要件テストで `args` を持つエントリ 231 件（実測の索引と同じ件数）と、照合する引数の値 100,000 字の条件で測る
+    rationale: 外部の上限（600 秒）は、操作のたびに走るフックを待つ値として長すぎる。規約『資源の値の決め方』の「下流を待つタイムアウト」に従い、実測の p99.9 に余裕 50% を加算して、`hooks.json` の `timeout`（秒）に切り上げた。実測は参考の実装のもので、本実装の非機能要件テストで測り直す。正規表現は索引を読むときにエントリごとに 1 回だけコンパイルし、照合のたびにはコンパイルしない。コンパイルと照合を含めたフックの実行全体を、非機能要件テストで `args` を持つエントリ 231 件（実測の索引と同じ件数）と、照合する引数の値 100,000 字の条件で測る
     breakdown:
       - part: 実測 p99.9
         value: 409 ms
@@ -38,16 +38,16 @@ requirements:
     source_kind: ユーザー要望
     source: https://github.com/shuhei1101/rule-inject/issues/2
     value: Linux / WSL
-    rationale: Issue の構成方針のとおり。PoC 検証と設計の段の実測は WSL（Linux 6.6）で行った。macOS・Windows（WSL なし）は要件のスコープ外
-  - name: フックのPythonの版
+    rationale: Issue の構成方針のとおり。PoC 検証と設計の工程の実測は WSL（Linux 6.6）で行った。macOS・Windows（WSL なし）は要件のスコープ外
+  - name: フックのPythonのバージョン
     english_name: hook_python_version
     category: 動作環境
-    external_constraint: フックは利用者の端末の `python3`（OS が持つ版）で動き、版を固定する仕組みが無い
+    external_constraint: フックは利用者の端末の `python3`（OS が持つバージョン）で動き、バージョンを固定する仕組みが無い
     source_kind: 実行基盤の制限
     value: 3.12 以上
-    rationale: PoC 検証と設計の段で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
-    measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動き、後者は版が足りない知らせが出ることを確かめる
-    overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冒頭で版を確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` の版」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
+    rationale: PoC 検証と設計の工程で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
+    measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動き、後者はバージョンが足りない知らせが出ることを確かめる
+    overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冒頭でバージョンを確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` のバージョン」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
   - name: 既読の記録の保持期間
     english_name: record_retention
     category: 保守性
@@ -56,8 +56,8 @@ requirements:
     source: https://code.claude.com/docs/en/sessions
     value: '30'
     unit: 日
-    rationale: 再開できるセッションの記録を消すと、文脈に残っているルールがまた案内される。会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を残す。最終更新はルールを読んだ最後の時刻のため、読み足さないまま 30 日を超えて続いたセッションでは、消えた後にルールがまた案内される（読めば既読に戻る）。`cleanupPeriodDays` を変えた利用者は 設定ファイルの `global.record_retention_days` で合わせられる（設定『プラグイン』）
-    overflow: 最終更新から 30 日を過ぎた記録ファイルを、次に始まったセッションの `SessionStart` で消す（単一ユースケース「終わったセッションの既読の記録が掃除される」）
+    rationale: 再開できるセッションの記録を削除すると、文脈に残っているルールがまた案内される。会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を残す。最終更新はルールを読んだ最後の時刻のため、ルールを追加で読まないまま 30 日を超えて続いたセッションでは、削除された後にルールがまた案内される（読めば既読に戻る）。`cleanupPeriodDays` を変えた利用者は 設定ファイルの `global.record_retention_days` で合わせられる（設定『プラグイン』）
+    overflow: 最終更新から 30 日を過ぎた記録ファイルを、次に始まったセッションの `SessionStart` で削除する（単一ユースケース「終わったセッションの既読の記録が掃除される」）
   - name: ログの保持日数
     english_name: log_retention
     category: 保守性
@@ -67,7 +67,7 @@ requirements:
     value: '3'
     unit: 日
     rationale: 利用者の回答で既定を 3 日にした。失敗の原因を追うのに要るのは直近の失敗で、失敗が続いても 1 日のファイルは数 MB に収まる。長く残したい利用者は 設定ファイルの `global.log_retention_days` で変える（設定『プラグイン』）
-    overflow: 日付が今日（UTC）から保持日数以上前のログのファイルを、次に始まったセッションの `SessionStart` で消す（単一ユースケース「古いログが掃除される」）
+    overflow: 日付が今日（UTC）から保持日数以上前のログのファイルを、次に始まったセッションの `SessionStart` で削除する（単一ユースケース「古いログが掃除される」）
   - name: 検索結果から照合するパスの数
     english_name: search_result_paths
     category: 性能
@@ -96,26 +96,26 @@ requirements:
         value: 100 件
         notes: 309 ÷ 2.55 = 121 を、測定のばらつきを見込んで 100 に切り下げた
     status: planned
-  - name: 版の一致
+  - name: バージョンの一致
     english_name: version_consistency
     category: 保守性
-    external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はその版に固定される（値が変わらない間、marketplace から入れた利用者へ新しい版は届かない）'
+    external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はそのバージョンに固定される（値が変わらない間、marketplace から入れた利用者へ新しいバージョンは届かない）'
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/plugins-reference
     value: 4 つの値が全て一致
     rationale: '`.claude-plugin/plugin.json` の `version` が `version.ini`（先頭の `v` を除く）とずれると、版上げが利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いはテストで検知する'
-    measurement: '`version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（`rule-inject` のパッケージ）の 4 つから版を取り出して比べる。食い違うときは 4 つの値を並べて fail する'
+    measurement: '`version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（`rule-inject` のパッケージ）の 4 つからバージョンを取り出して比べる。食い違うときは 4 つの値を並べて fail する'
     test_file: tests/nfr/test_version_consistency.py
     overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`plugin.json`・`uv.lock` の 4 つの値を並べて知らせる
     tests:
       - name: test_version_consistency_when_all_match
-        summary: 4 つの版が一致するとき、検査が通る
+        summary: 4 つのバージョンが一致するとき、検査が通る
         condition: リポジトリの直下の `version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（値は固定しない）
-        measurement: 実物の 4 つのファイルから版を取り出し、`version.ini` は先頭の `v` を除いて比べる
+        measurement: 実物の 4 つのファイルからバージョンを取り出し、`version.ini` は先頭の `v` を除いて比べる
         expected: 検査が通る（fail しない）
       - name: test_version_consistency_when_mismatch
-        summary: 版が 1 つでも食い違うとき、検査が 4 つの値を並べて fail する
+        summary: バージョンが 1 つでも食い違うとき、検査が 4 つの値を並べて fail する
         condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
-        measurement: 食い違う版を置いた一時フォルダの 4 つのファイルを検査へ渡す
+        measurement: 食い違うバージョンを置いた一時フォルダの 4 つのファイルを検査へ渡す
         expected: 検査が fail し、失敗の文に 4 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。
