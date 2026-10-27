@@ -588,7 +588,7 @@ functions:
       7. `Settings` を返す
     exceptions:
       - name: SettingsReadError
-        condition: 設定ファイルが無い・読めない（OSError）
+        condition: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
         message: path は設定ファイルの場所、reason は `describe(exc)`
       - name: SettingsReadError
         condition: '`parse_settings` が ValueError を送出する（YAML の書式・知らないキー・許さない形）'
@@ -674,6 +674,13 @@ functions:
         mock: なし
         expected: SettingsReadError（reason に `projects[0].match`）
         exception: 3 の値の誤り
+      - name: test_load_settings_when_not_utf8
+        case: 異常
+        summary: UTF-8 として読めない設定ファイル
+        condition: '`RULE_INJECT_CONFIG` が UTF-8 でないバイト列（`b"\xff\xfe"`）のファイルを指す'
+        mock: なし
+        expected: SettingsReadError（path が設定ファイルの場所）
+        exception: SettingsReadError
   - name: _matches_project
     title: プロジェクトの当て方
     container: shared/settings.py
