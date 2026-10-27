@@ -1,4 +1,4 @@
-"""索引・既読の記録・既読の履歴・ログの読み書きの例外。"""
+"""設定ファイル・索引・既読の記録・既読の履歴・ログの読み書きの例外。"""
 
 from __future__ import annotations
 
@@ -11,6 +11,10 @@ class RuleInjectError(Exception):
         super().__init__(f"{path}: {reason}")
         self.path = path
         self.reason = reason
+
+
+class SettingsReadError(RuleInjectError):
+    """設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。"""
 
 
 class IndexReadError(RuleInjectError):

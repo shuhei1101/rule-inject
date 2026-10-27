@@ -24,9 +24,11 @@ from rule_inject.features.record import (
     read_guided,
     read_record,
 )
-from rule_inject.shared.errors import RecordReadError, RecordWriteError
+from rule_inject.hooks._runner import settings_failure_notice
+from rule_inject.shared.errors import RecordReadError, RecordWriteError, SettingsReadError
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
-from rule_inject.shared.paths import log_dir, resolve_location, state_dir
+from rule_inject.shared.paths import resolve_location
+from rule_inject.shared.settings import load_settings
 
 MCP_TOOL_PREFIX = "mcp__"
 # ツール名から操作の種別への対応
@@ -109,14 +111,22 @@ def _log_record_failure(
 
 def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る。"""
-    folder = state_dir(env)
-    log_folder = log_dir(env)
-    log_path = log_file_path(log_folder, datetime.now(UTC).date())
     session_id = payload.get("session_id")
     valid_session = is_valid_session_id(session_id)
+    # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに止めない知らせだけを返す
+    try:
+        settings = load_settings(env)
+    except SettingsReadError as exc:
+        notice = settings_failure_notice(
+            Component.RULE_GUIDE, exc, env, session_id if valid_session else None
+        )
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": notice}}
+    folder = settings.state_dir
+    log_folder = settings.log_dir
+    log_path = log_file_path(log_folder, datetime.now(UTC).date())
     notices: list[str] = []
     # 読めない索引と読み飛ばしたエントリは、ログと知らせの文に回して、読めたエントリでの案内は続ける
-    loaded = load_indexes(env)
+    loaded = load_indexes(settings.indexes, env)
     for failure in loaded.failures:
         write_log(
             log_folder,

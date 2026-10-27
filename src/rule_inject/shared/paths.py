@@ -1,4 +1,4 @@
-"""記録フォルダ・ログのフォルダとルールの場所の解決。"""
+"""既定の記録フォルダ・ログのフォルダとルールの場所の解決。"""
 
 from __future__ import annotations
 
@@ -7,33 +7,22 @@ from collections.abc import Mapping
 from pathlib import Path
 
 STATE_DIR_NAME = "rule-inject"
-STATE_DIR_ENV = "RULE_INJECT_STATE_DIR"
 # 既定のログのフォルダの最後の名前（既定の記録フォルダの下）
 LOG_DIR_NAME = "logs"
-LOG_DIR_ENV = "RULE_INJECT_LOG_DIR"
 DEFAULT_STATE_HOME = "~/.local/state"
 
 
-def state_dir(env: Mapping[str, str]) -> Path:
-    """環境変数から既読の記録とログを置くフォルダを決める（作らない）。"""
-    # 記録フォルダを直接指す環境変数があればそれを使う
-    configured = env.get(STATE_DIR_ENV)
-    if configured:
-        return Path(configured).expanduser()
-    # 無ければ XDG の状態フォルダの下の既定の名前にする
+def default_state_dir(env: Mapping[str, str]) -> Path:
+    """設定ファイルに `global.state_dir` が無いときの記録フォルダを決める（作らない）。"""
+    # XDG の状態フォルダ（無いか空なら ~/.local/state）の下の既定の名前にする
     state_home = env.get("XDG_STATE_HOME") or DEFAULT_STATE_HOME
     return Path(state_home).expanduser() / STATE_DIR_NAME
 
 
-def log_dir(env: Mapping[str, str]) -> Path:
-    """環境変数からログを置くフォルダを決める（作らない）。"""
-    # ログのフォルダを直接指す環境変数があればそれを使う
-    configured = env.get(LOG_DIR_ENV)
-    if configured:
-        return Path(configured).expanduser()
-    # 無ければ XDG の状態フォルダの下の既定の名前にする（記録フォルダの環境変数には従わない）
-    state_home = env.get("XDG_STATE_HOME") or DEFAULT_STATE_HOME
-    return Path(state_home).expanduser() / STATE_DIR_NAME / LOG_DIR_NAME
+def default_log_dir(env: Mapping[str, str]) -> Path:
+    """設定ファイルに `global.log_dir` が無いとき・設定ファイルが読めないときのログのフォルダを決める（作らない）。"""
+    # 設定ファイルの `global.state_dir` には従わず、既定の記録フォルダの下にする
+    return default_state_dir(env) / LOG_DIR_NAME
 
 
 def resolve_location(location: str, base: Path) -> str:

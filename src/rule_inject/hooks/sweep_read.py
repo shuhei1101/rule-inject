@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from rule_inject.features.record import is_valid_session_id, sweep_records
-from rule_inject.shared.errors import RuleInjectError
+from rule_inject.hooks._runner import log_settings_failure
+from rule_inject.shared.errors import RuleInjectError, SettingsReadError
 from rule_inject.shared.logger import (
     Component,
     LogOperation,
@@ -15,14 +16,7 @@ from rule_inject.shared.logger import (
     sweep_logs,
     write_log,
 )
-from rule_inject.shared.paths import log_dir, state_dir
-from rule_inject.shared.settings import (
-    DEFAULT_LOG_RETENTION_DAYS,
-    DEFAULT_RECORD_RETENTION_DAYS,
-    LOG_RETENTION_DAYS_ENV,
-    RECORD_RETENTION_DAYS_ENV,
-    read_retention_days,
-)
+from rule_inject.shared.settings import load_settings
 
 
 def _log_failure(
@@ -48,17 +42,23 @@ def sweep_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
     # 形が外れた session_id では、始まったセッションを見分けられないため何も消さない
     if not is_valid_session_id(session_id):
         return
-    state_folder = state_dir(env)
-    log_folder = log_dir(env)
+    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書いて何も消さない
+    try:
+        settings = load_settings(env)
+    except SettingsReadError as exc:
+        log_settings_failure(Component.SWEEP_READ, exc, env, session_id)
+        return
+    state_folder = settings.state_dir
+    log_folder = settings.log_dir
     # 保持期間を過ぎた別のセッションの記録ファイルを消す
-    record_days = read_retention_days(env, RECORD_RETENTION_DAYS_ENV, DEFAULT_RECORD_RETENTION_DAYS)
-    for record_failure in sweep_records(state_folder, session_id, retention_days=record_days):
+    for record_failure in sweep_records(
+        state_folder, session_id, retention_days=settings.record_retention_days
+    ):
         _log_failure(log_folder, LogOperation.DELETE_RECORD, session_id, record_failure)
     # 記録フォルダに残った変更前のログを消す
     legacy_failure = delete_legacy_log(state_folder)
     if legacy_failure is not None:
         _log_failure(log_folder, LogOperation.DELETE_LOG, session_id, legacy_failure)
     # 日付が保持日数以上前のログのファイルを消す
-    log_days = read_retention_days(env, LOG_RETENTION_DAYS_ENV, DEFAULT_LOG_RETENTION_DAYS)
-    for log_failure in sweep_logs(log_folder, log_days):
+    for log_failure in sweep_logs(log_folder, settings.log_retention_days):
         _log_failure(log_folder, LogOperation.DELETE_LOG, session_id, log_failure)
