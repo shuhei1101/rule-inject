@@ -62,7 +62,7 @@ class ResultPaths:
 
 
 def _protect_literals(command: str) -> str:
-    """行継続とコメントを除き、引用符の中と `\\` の直後の glob の文字を文字どおりに扱う形にする。"""
+    """行継続とコメントを除き、引用符の中と `\\` の直後の glob の文字を文字どおりに扱うようにする。"""
     protected: list[str] = []
     quote = ""
     index = 0

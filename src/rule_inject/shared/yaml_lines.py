@@ -98,7 +98,7 @@ def _split_flow_items(body: str, number: int) -> list[str]:
 
 
 def parse_flow_list(text: str, number: int) -> list[str]:
-    """`[a, b]` の形のリストを読む。"""
+    """`[a, b]` の形式のリストを読む。"""
     if not text.endswith("]"):
         raise yaml_error(number, "リストが `]` で閉じていません")
     body = text[1:-1]
@@ -124,7 +124,7 @@ def split_key(line: Line) -> tuple[str, str]:
     """`key: value` の行をキーと値に分ける。"""
     key, separator, rest = line.text.partition(":")
     if not separator or not key.strip() or " " in key.strip():
-        raise yaml_error(line.number, "`キー: 値` の形で書いてください")
+        raise yaml_error(line.number, "`キー: 値` の形式で書いてください")
     return key.strip(), rest
 
 

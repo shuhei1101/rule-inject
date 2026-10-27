@@ -21,7 +21,7 @@ from rule_inject.shared.errors import (
     describe,
 )
 
-# 記録ファイル名に使える session_id の形
+# 記録ファイル名に使える session_id の形式
 SESSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 RECORD_SUFFIX = ".txt"
 # 案内済みの記録ファイルは `{session_id}{GUIDED_SUFFIX}`
@@ -51,7 +51,7 @@ def _record_path(state_dir: Path, session_id: str, suffix: str = RECORD_SUFFIX) 
 
 
 def is_valid_session_id(session_id: object) -> bool:
-    """session_id が記録ファイル名に使える形かを返す。"""
+    """session_id が記録ファイル名に使える形式かを返す。"""
     return isinstance(session_id, str) and SESSION_ID_PATTERN.fullmatch(session_id) is not None
 
 
@@ -97,11 +97,11 @@ def _append_lines(
 
 
 def _delete_file(path: Path) -> None:
-    """記録ファイルを消す（ファイルが無ければ何もしない）。"""
+    """記録ファイルを削除する（ファイルが無ければ何もしない）。"""
     try:
         path.unlink()
     except FileNotFoundError:
-        # 消す記録が無ければ、消した状態と同じ
+        # 削除する記録が無ければ、削除した状態と同じ
         return
     except OSError as exc:
         raise RecordDeleteError(path=str(path), reason=describe(exc)) from exc
@@ -167,12 +167,12 @@ def append_history(
 
 
 def delete_record(state_dir: Path, session_id: str) -> None:
-    """そのセッションの記録ファイルを消す（ファイルが無ければ何もしない）。"""
+    """そのセッションの記録ファイルを削除する（ファイルが無ければ何もしない）。"""
     _delete_file(_record_path(state_dir, session_id))
 
 
 def delete_guided(state_dir: Path, session_id: str) -> None:
-    """そのセッションの案内済みの記録ファイルを消す（ファイルが無ければ何もしない）。"""
+    """そのセッションの案内済みの記録ファイルを削除する（ファイルが無ければ何もしない）。"""
     _delete_file(_record_path(state_dir, session_id, GUIDED_SUFFIX))
 
 
@@ -198,7 +198,7 @@ def sweep_records(
     now: Callable[[], float] = time.time,
     retention_days: int,
 ) -> tuple[RecordDeleteError, ...]:
-    """保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを消し、消せなかったものを返す。"""
+    """保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを削除し、削除できなかったものを返す。"""
     try:
         entries = list(os.scandir(state_dir))
     except FileNotFoundError:
@@ -221,10 +221,10 @@ def sweep_records(
             if expired:
                 os.unlink(entry.path)
         except FileNotFoundError:
-            # 別のセッションが先に消していれば、消した状態と同じ
+            # 別のセッションが先に削除していれば、削除した状態と同じ
             continue
         except OSError as exc:
-            # 消せないものは集め、残りの掃除を続ける
+            # 削除できないものは集め、残りの掃除を続ける
             failures.append(RecordDeleteError(path=entry.path, reason=describe(exc)))
     return tuple(failures)
 

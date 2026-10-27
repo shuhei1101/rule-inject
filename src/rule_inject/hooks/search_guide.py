@@ -27,7 +27,7 @@ from rule_inject.shared.errors import RecordReadError, RecordWriteError, Setting
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
 from rule_inject.shared.settings import load_settings
 
-# 結果を Grep・Glob の形（ファイル名の一覧と一致した行）で受けるツール
+# 結果を Grep・Glob の形式（ファイル名の一覧と一致した行）で受けるツール
 SEARCH_TOOLS = ("Grep", "Glob")
 BASH_TOOL = "Bash"
 NOTICE_SEPARATOR = "\n\n"
@@ -87,7 +87,7 @@ def _build(locations: Sequence[str], unchecked: int, notices: Sequence[str]) -> 
 def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """検索の結果に出たファイルに当たる未読・未案内のルールを案内する PostToolUse の出力を作る。"""
     session_id = payload.get("session_id")
-    # 案内済みを記録できないと毎回同じ案内が出るため、形が外れた session_id では何も出さない
+    # 案内済みを記録できないと毎回同じ案内が出るため、形式が外れた session_id では何も出さない
     if not is_valid_session_id(session_id):
         return None
     result_lines = _result_lines(payload)

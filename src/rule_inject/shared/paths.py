@@ -26,7 +26,7 @@ def default_log_dir(env: Mapping[str, str]) -> Path:
 
 
 def resolve_location(location: str, base: Path) -> str:
-    """ルールの場所や対象のパスを、照合・記録に使う正規の形へ揃える。"""
+    """ルールの場所や対象のパスを、照合・記録に使う正規の形式へ揃える。"""
     # `~` を展開し、相対パスは基準から解く
     expanded = os.path.expanduser(location)
     joined = expanded if os.path.isabs(expanded) else os.path.join(base, expanded)

@@ -43,7 +43,7 @@ def _documents_in_text(text: str) -> list[ResultDocument]:
 
 
 def _collect(value: Any, found: list[ResultDocument]) -> None:
-    """値を深さ優先でたどり、見つけた文書を found へ足す。"""
+    """値を深さ優先でたどり、見つけた文書を found へ追加する。"""
     if isinstance(value, Mapping):
         # 文字列の path と scope を両方持つオブジェクトは文書にし、続けて全ての値をたどる
         path = value.get("path")
