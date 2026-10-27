@@ -103,7 +103,7 @@ requirements:
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/plugins-reference
     value: 4 つの値が全て一致
-    rationale: '`.claude-plugin/plugin.json` の `version` が `version.ini`（先頭の `v` を除く）とずれると、版上げが利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いはテストで検知する'
+    rationale: '`.claude-plugin/plugin.json` の `version` が `version.ini`（先頭の `v` を除く）とずれると、バージョンの更新が利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いはテストで検知する'
     measurement: '`version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（`rule-inject` のパッケージ）の 4 つからバージョンを取り出して比べる。食い違うときは 4 つの値を並べて fail する'
     test_file: tests/nfr/test_version_consistency.py
     overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`plugin.json`・`uv.lock` の 4 つの値を並べて知らせる
