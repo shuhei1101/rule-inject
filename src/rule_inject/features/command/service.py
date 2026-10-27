@@ -174,10 +174,19 @@ def _resolve(argument: str, base: str) -> str:
     return os.path.normpath(os.path.join(base, expanded))
 
 
+def _resolve_folder(argument: str, base: str) -> str | None:
+    """フォルダの引数を絶対パスにする。glob の文字を含むときは、当たったフォルダが 1 つのときだけ返す。"""
+    paths = _expand_word(argument, base)
+    if GLOB_CHARS.isdisjoint(argument):
+        return paths[0]
+    folders = [path for path in paths if os.path.isdir(path)]
+    return folders[0] if len(folders) == 1 else None
+
+
 def _moved_base(segment: list[str], base: str) -> str:
     """`cd {フォルダ}` の区切りで動かした後の基準を返す。"""
     if len(segment) > 1 and not segment[1].startswith(OPTION_PREFIX):
-        return _resolve(segment[1], base)
+        return _resolve_folder(segment[1], base) or base
     return base
 
 
@@ -272,8 +281,8 @@ def search_output_base(command: str, cwd: Path) -> Path | None:
                 argument for argument in segment[1:] if not argument.startswith(OPTION_PREFIX)
             ]
             if len(arguments) == 1:
-                folder = _resolve(arguments[0], base)
-                if os.path.isdir(folder):
+                folder = _resolve_folder(arguments[0], base)
+                if folder is not None and os.path.isdir(folder):
                     base = folder
         return Path(base)
     return None
