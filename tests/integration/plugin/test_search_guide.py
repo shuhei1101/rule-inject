@@ -349,3 +349,23 @@ def test_error_when_settings_unreadable(
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_settings"
     assert completed.returncode == 0
+
+
+def test_normal_when_entry_disabled(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    src_files: Path,
+    search_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """検索の結果に出たファイルが `enabled: false` のエントリにだけ当たるとき、案内せず案内済みにもしない（正常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "enabled": False})
+    payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
+    # 実行
+    completed = run_hook("search_guide", payload, index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert not (state_dir / f"{session_id}.guided.txt").exists()
+    assert completed.returncode == 0
