@@ -1,5 +1,5 @@
 利用者の設定ファイルへの移行:
-  説明: 利用者の設定フォルダ（`~/.claude/` と、`CLAUDE_CONFIG_DIR` で切り替える `~/.claude-*/`）の `settings.json` のうち、`env` に `RULE_INJECT_` で始まるキーを持つもの全てについて、その値を `~/.config/rule-inject/settings.yaml` の `global`・`projects` の対応するキーへ写し、`env` を `RULE_INJECT_CONFIG` だけにする。書き換える前の各 `settings.json` をバックアップし、切り戻しはバックアップを戻す
+  説明: 利用者の設定フォルダ（`~/.claude/` と、`CLAUDE_CONFIG_DIR` で切り替える `~/.claude-*/`）の `settings.json` のうち、`env` に `RULE_INJECT_` で始まるキーを持つもの全てについて、その値を `~/.config/rule-inject/settings.yaml` の `global`・`projects` の対応するキーへ写し、`env` を `RULE_INJECT_CONFIG` だけにする。書き換える前の各 `settings.json` をバックアップし、切り戻しはバックアップを戻す。この PR を含む release を master へ入れるのは、[shuhei1101/ai-monitor#3040](https://github.com/shuhei1101/ai-monitor/issues/3040)（ai-monitor がエージェントへ渡す索引を設定ファイルの指定へ移す）が ai-monitor の master へ入るのと同じ時期にし、先に入っていなければ release のマージを待つ
   タグ: [設定の移行]
   実行者: tester
   時期: master へ入った後
