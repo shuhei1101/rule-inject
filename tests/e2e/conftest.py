@@ -218,29 +218,51 @@ def e2e_project(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def configure_index(
-    e2e_project: Path, tmp_path: Path, state_dir: Path, log_folder: Path
-) -> Callable[..., None]:
-    """設定ファイルに索引・記録フォルダ・ログのフォルダを書き、プロジェクトの設定の `env` で `RULE_INJECT_CONFIG` と索引の無い設定フォルダを指す。"""
+def configure_env(e2e_project: Path, tmp_path: Path) -> Callable[..., None]:
+    """プロジェクトの設定の `env` に、索引の無い設定フォルダと空の状態フォルダを指す環境変数と、渡した環境変数を書く。"""
 
-    def _configure(index: Path | str | None, *, extra_env: Mapping[str, str] | None = None) -> None:
-        """index を設定ファイルの `global.indexes` に書き（None なら書かず既定の置き場所に任せ）、extra_env を `env` に足す。"""
-        lines = ["global:", f'  state_dir: "{state_dir}"', f'  log_dir: "{log_folder}"']
-        if index is not None:
-            lines += ["  indexes:", f'    - "{index}"']
+    def _configure(env: Mapping[str, str] | None = None) -> None:
+        """env を `XDG_CONFIG_HOME` と `XDG_STATE_HOME` の隔離に重ねて、プロジェクトの設定の `env` に書く。"""
+        # 利用者の設定（~/.claude）は読み込ませないため、`env` はプロジェクトの設定に書く
+        merged = {
+            # ユーザーの既定の索引が実際の設定フォルダの索引を読まないよう、索引の無いフォルダを指す
+            "XDG_CONFIG_HOME": str(tmp_path / "config"),
+            # 既定のログのフォルダが実際の状態フォルダに書かれないよう、空のフォルダを指す
+            "XDG_STATE_HOME": str(tmp_path / "xdg_state"),
+        }
+        merged.update(env or {})
+        (e2e_project / ".claude" / "settings.json").write_text(
+            json.dumps({"env": merged}, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    return _configure
+
+
+@pytest.fixture
+def configure_index(
+    e2e_project: Path,
+    tmp_path: Path,
+    state_dir: Path,
+    log_folder: Path,
+    configure_env: Callable[..., None],
+) -> Callable[..., None]:
+    """設定ファイルに記録フォルダ・ログのフォルダと、起動したプロジェクトに当たる `projects` の要素の索引を書き、`RULE_INJECT_CONFIG` でその設定ファイルを指す。"""
+
+    def _configure(index: Path | str, *, extra_env: Mapping[str, str] | None = None) -> None:
+        """index を起動したプロジェクトに当たる `projects` の要素の `indexes` に書き、extra_env を `env` に足す。"""
+        lines = [
+            "global:",
+            f'  state_dir: "{state_dir}"',
+            f'  log_dir: "{log_folder}"',
+            "projects:",
+            f'  - match: "{e2e_project}"',
+            "    indexes:",
+            f'      - "{index}"',
+        ]
         config = tmp_path / "config" / "settings.yaml"
         config.parent.mkdir(parents=True, exist_ok=True)
         config.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        # 利用者の設定（~/.claude）は読み込ませないため、`env` はプロジェクトの設定に書く
-        env = {
-            "RULE_INJECT_CONFIG": str(config),
-            # ユーザーの既定の索引が実際の設定フォルダの索引を読まないよう、索引の無いフォルダを指す
-            "XDG_CONFIG_HOME": str(tmp_path / "config"),
-        }
-        env.update(extra_env or {})
-        (e2e_project / ".claude" / "settings.json").write_text(
-            json.dumps({"env": env}, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        configure_env({"RULE_INJECT_CONFIG": str(config), **(extra_env or {})})
 
     return _configure
 

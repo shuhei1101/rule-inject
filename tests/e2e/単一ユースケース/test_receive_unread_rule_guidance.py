@@ -201,6 +201,33 @@ def test_error_when_index_unreadable(
     assert "許さないキー" in transcript
 
 
+def test_error_when_settings_unreadable(
+    tmp_path: Path,
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_env: Callable[..., None],
+    run_claude: Callable[..., Any],
+    transcript_text: Callable[[str], str],
+) -> None:
+    """設定ファイルが読めないとき、Write を止めずに、読めなかった設定ファイルの場所と理由が載る（異常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}, to="project/rules.yaml")
+    broken = tmp_path / "broken_settings.yaml"
+    broken.write_text("unknown: value\n", encoding="utf-8")
+    configure_env({"RULE_INJECT_CONFIG": str(broken)})
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write", "Edit"])
+    # 検証
+    assert run.denied_tools == []
+    assert "hello" in target.read_text(encoding="utf-8")
+    transcript = transcript_text(run.session_id)
+    assert str(broken) in transcript
+    assert "許さないキー" in transcript
+
+
 def test_normal_when_already_guided(
     e2e_project: Path,
     make_rule: Callable[..., Path],
@@ -233,14 +260,14 @@ def test_normal_when_default_index(
     e2e_project: Path,
     make_rule: Callable[..., Path],
     make_index: Callable[..., Path],
-    configure_index: Callable[..., None],
+    configure_env: Callable[..., None],
     run_claude: Callable[..., Any],
 ) -> None:
-    """索引の環境変数が無いとき、プロジェクトの直下の `rules.yaml` で Write が止められる（正常シナリオ）。"""
+    """設定ファイルが無いとき、プロジェクトの直下の `rules.yaml` で Write が止められる（正常シナリオ）。"""
     # 準備
     rule = make_rule("notes.md", "# ノートの規約\n")
     make_index({"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"]}, to="project/rules.yaml")
-    configure_index(None)
+    configure_env()
     target = e2e_project / "notes.txt"
     # 実行
     run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
