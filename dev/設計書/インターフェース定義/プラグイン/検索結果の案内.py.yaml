@@ -327,7 +327,8 @@ flows:
       - name: 入力
         description: '`tool_name: Grep` で、結果に実在する `.py` のファイルが出る'
         notes: '-'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant S as 検索結果の案内
@@ -338,6 +339,7 @@ flows:
         S->>CFG: 読む（許す値の外）
         S->>LOG: 既定のログのフォルダへ read_settings を追記する
         S-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
+      ```
     expected:
       - '`additionalContext` に設定ファイルの場所と `global.log_retention_days` が載っている'
       - '`additionalContext` に索引のルールの場所が載っていない'

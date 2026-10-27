@@ -60,7 +60,8 @@ flows:
         description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
       - name: 入力
         description: '`hook_event_name: SessionStart`、`source: compact`'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant S as 作業の決まりの注入
@@ -71,6 +72,7 @@ flows:
         S->>CFG: 読む（無い）
         S->>LOG: 既定のログのフォルダへ read_settings を追記する
         S-->>CC: additionalContext（作業の決まりと、設定ファイルの場所と理由）<br>終了コード 0
+      ```
     expected:
       - '`additionalContext` に空で作ってから書く決まりが載っている'
       - '`additionalContext` に設定ファイルの場所と理由が載っている'

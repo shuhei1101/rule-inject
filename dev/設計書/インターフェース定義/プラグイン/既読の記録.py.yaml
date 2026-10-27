@@ -390,7 +390,8 @@ flows:
       - name: 入力
         description: '`tool_name: Read` でルールのファイル全体を読んだ結果'
         notes: '-'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant R as 既読の記録
@@ -401,6 +402,7 @@ flows:
         R->>CFG: 読む（無い）
         R->>LOG: 既定のログのフォルダへ read_settings を追記する
         R-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
+      ```
     expected:
       - '`additionalContext` に設定ファイルの場所と理由が載っている'
       - 既定の記録フォルダに既読の記録ファイルが無い

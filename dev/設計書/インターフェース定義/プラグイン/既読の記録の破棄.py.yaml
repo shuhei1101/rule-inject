@@ -97,7 +97,8 @@ flows:
         description: '`XDG_STATE_HOME` の既定の記録フォルダに、そのセッションの記録ファイルを置く'
       - name: 入力
         description: '`trigger: auto`'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant D as 既読の記録の破棄
@@ -108,6 +109,7 @@ flows:
         D->>CFG: 読む（読めない）
         D->>LOG: 既定のログのフォルダへ read_settings を追記する
         D-->>CC: 終了コード 0
+      ```
     expected:
       - 既定の記録フォルダの記録ファイルが残っている
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'

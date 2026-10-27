@@ -248,7 +248,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
         notes: '-'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant C as 既読の記録の掃除
@@ -259,6 +260,7 @@ flows:
         C->>CFG: 読む（許す値の外）
         C->>LG: 既定のログのフォルダへ read_settings を追記する
         C-->>CC: 終了コード 0
+      ```
     expected:
       - 3 日前のログのファイルが残っている
       - '今日のログのファイルに `operation: read_settings` の行が 1 行ある'

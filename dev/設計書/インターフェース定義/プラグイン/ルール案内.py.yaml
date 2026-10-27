@@ -728,7 +728,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ
         notes: '-'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as ルール案内
@@ -740,6 +741,7 @@ flows:
         H->>H: match が当たる要素（1 つ目・2 つ目）を選び、<br>相対パスを CLAUDE_PROJECT_DIR から解く
         H->>IDX: 索引 a・索引 b を順に読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` に索引 a と索引 b のルールの場所が載っている'
@@ -764,7 +766,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ
         notes: '-'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as ルール案内
@@ -776,6 +779,7 @@ flows:
         H->>H: worktree のため本体のフォルダ名で match と比べる
         H->>IDX: 読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -798,7 +802,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ
         notes: '-'
-    flow: |
+    flow: |-
+      ```mermaid
       sequenceDiagram
         participant CC as Claude Code
         participant H as ルール案内
@@ -809,6 +814,7 @@ flows:
         H->>CFG: 読む（知らないキー）
         H->>LOG: 既定のログのフォルダへ read_settings を追記する
         H-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
+      ```
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に設定ファイルの場所と知らないキー `index` が載っている'
