@@ -136,3 +136,40 @@ def test_parse_index_when_read_by_without_tools() -> None:
     # 実行・検証
     with pytest.raises(ValueError, match="行目"):
         parse_index(text)
+
+
+def test_parse_index_when_enabled() -> None:
+    """`enabled` を読む（正常系）。"""
+    # 準備
+    text = (
+        "rules:\n"
+        "  - rule: ./a.md\n"
+        "    enabled: false\n"
+        "  - rule: ./b.md\n"
+        "    enabled: true\n"
+        "  - rule: ./c.md\n"
+    )
+    # 実行
+    _, entries = parse_index(text)
+    # 検証
+    assert entries == [
+        {"rule": "./a.md", "enabled": "false"},
+        {"rule": "./b.md", "enabled": "true"},
+        {"rule": "./c.md"},
+    ]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("no", id="not_boolean"),
+        pytest.param("[false]", id="list"),
+    ],
+)
+def test_parse_index_when_invalid_enabled(value: str) -> None:
+    """`enabled` の `true` / `false` 以外の値を拒む（異常系）。"""
+    # 準備
+    text = f"rules:\n  - rule: ./a.md\n    enabled: {value}\n"
+    # 実行・検証
+    with pytest.raises(ValueError, match="3行目"):
+        parse_index(text)

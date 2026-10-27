@@ -194,6 +194,28 @@ def test_load_indexes_when_empty() -> None:
     assert not result.failures
 
 
+def test_load_indexes_when_entry_disabled(
+    make_index: Callable[..., Path],
+) -> None:
+    """`enabled: false` のエントリを外す（正常系）。"""
+    # 準備
+    index = make_index(
+        "rules:\n"
+        "  - rule: /r/off.md\n"
+        "    enabled: false\n"
+        '  - rule: "!{UNSET}/a.md"\n'
+        "    enabled: false\n"
+        "  - rule: /r/on.md\n"
+        "    enabled: true\n"
+        "  - rule: /r/default.md\n"
+    )
+    # 実行
+    result = load_indexes([str(index)], {})
+    # 検証
+    assert [entry.location for entry in result.entries] == ["/r/on.md", "/r/default.md"]
+    assert not result.failures
+
+
 def test_match_path(make_entry: Callable[..., Any]) -> None:
     """当たるエントリを選ぶ（正常系）。"""
     # 準備
