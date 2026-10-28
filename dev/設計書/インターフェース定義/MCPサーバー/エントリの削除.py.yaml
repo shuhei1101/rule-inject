@@ -7,7 +7,7 @@ flows:
     summary: 位置で指したエントリを削除し、他のエントリとコメントを残す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
@@ -40,7 +40,7 @@ flows:
     summary: '`dry_run` で差分だけを返す'
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -69,7 +69,7 @@ flows:
     summary: 他のエントリにもとから問題が残っていても削除する
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -98,7 +98,7 @@ flows:
     summary: 相対パスの `project_dir` をエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
         description: '`project_dir` に相対パスを渡す'
     flow: |-
@@ -117,7 +117,7 @@ flows:
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
       - name: 索引
@@ -143,7 +143,7 @@ flows:
     summary: 設定ファイルで読まないファイルからの削除を断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 対象のファイル
@@ -171,7 +171,7 @@ flows:
     summary: YAML として読めない索引からの削除を断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -197,7 +197,7 @@ flows:
     summary: エントリの数以上の位置の削除を断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -225,7 +225,7 @@ flows:
     summary: 一覧を取った後に書き換えられたエントリの削除を断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -253,7 +253,7 @@ flows:
     summary: フックが読めない索引からの削除を断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -388,3 +388,4 @@ constraints:
     notes: 書き込める範囲は制約「書き込める索引」で絞る。削除を別のツールにし、利用者が Claude Code の許可の設定で削除だけを止められるようにする
 refs:
   - dev/設計書/シナリオ/単一ユースケース/索引のエントリを編集する#
+test_file: tests/integration/server/test_delete_index_entry.py

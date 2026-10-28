@@ -7,7 +7,7 @@ flows:
     summary: 末尾にエントリを追加し、他の行を変えない
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
@@ -44,7 +44,7 @@ flows:
     summary: 位置で指したエントリのキーだけを書き換える
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -75,7 +75,7 @@ flows:
     summary: '`enabled: false` を書き、照合に使われなくする'
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -104,7 +104,7 @@ flows:
     summary: '`dry_run` でチェックと差分だけを返す'
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -133,7 +133,7 @@ flows:
     summary: 他のエントリにもとから問題が残っていても、新しい問題を生まない書き込みは通す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -162,7 +162,7 @@ flows:
     summary: '`position` だけを渡し `expected_rev` を渡さない呼び出しをエラーにする'
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
         description: '`position: 0` と `entry` を渡し、`expected_rev` を渡さない'
     flow: |-
@@ -181,7 +181,7 @@ flows:
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
       - name: 索引
@@ -207,7 +207,7 @@ flows:
     summary: 設定ファイルで読まないファイルへの書き込みを断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 対象のファイル
@@ -235,7 +235,7 @@ flows:
     summary: YAML として読めない索引への書き込みを断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -261,7 +261,7 @@ flows:
     summary: エントリの数以上の位置への書き込みを断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -289,7 +289,7 @@ flows:
     summary: 一覧を取った後に書き換えられたエントリへの書き込みを断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -317,7 +317,7 @@ flows:
     summary: Schema に違反するエントリの新規作成を断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -346,7 +346,7 @@ flows:
     summary: フックが読めない索引の、位置で指した書き換えを断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -374,7 +374,7 @@ flows:
     summary: 対象のエントリの外の行が変わる書き込みを断る
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -552,3 +552,4 @@ constraints:
     notes: 書き込める範囲は制約「書き込める索引」で絞る
 refs:
   - dev/設計書/シナリオ/単一ユースケース/索引のエントリを編集する#
+test_file: tests/integration/server/test_write_index_entry.py

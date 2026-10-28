@@ -7,7 +7,7 @@ flows:
     summary: 問題の無い索引で `problem_count` が 0
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
@@ -40,7 +40,7 @@ flows:
     summary: フックは読めるが Schema に違反するエントリの場所と理由を返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 違反が無いフローと同じ
       - name: 索引
@@ -67,7 +67,7 @@ flows:
     summary: フックが読めない索引は理由だけを返し、Schema には照らさない
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 違反が無いフローと同じ
       - name: 索引
@@ -92,7 +92,7 @@ flows:
     summary: ルールの場所にファイルが無いエントリを返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 違反が無いフローと同じ
       - name: 索引
@@ -121,7 +121,7 @@ flows:
     summary: 相対パスの `project_dir` をエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
         description: '`project_dir` に相対パスを渡す'
     flow: |-
@@ -140,7 +140,7 @@ flows:
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
     flow: |-
@@ -267,3 +267,4 @@ constraints:
     constraint: 制限なし
 refs:
   - dev/設計書/シナリオ/単一ユースケース/索引をチェックする#
+test_file: tests/integration/server/test_check_indexes.py

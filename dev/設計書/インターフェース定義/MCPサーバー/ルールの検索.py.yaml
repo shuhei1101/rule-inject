@@ -7,7 +7,7 @@ flows:
     summary: パスに当たる 2 つのルールを、止めるかとともに返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
@@ -40,7 +40,7 @@ flows:
     summary: ツール名と引数に当たるルールを返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: ファイルのパスで検索するフローと同じ
       - name: 索引
@@ -71,7 +71,7 @@ flows:
     summary: 無効のエントリだけが当たるときは空で返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: ファイルのパスで検索するフローと同じ
       - name: 索引
@@ -97,7 +97,7 @@ flows:
     summary: 引数の組み合わせの誤りをエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
         description: '`project_dir` に加え、`path`・`operation` と `tool_name` を渡す'
     flow: |-
@@ -116,7 +116,7 @@ flows:
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
       - name: 引数
@@ -266,3 +266,4 @@ constraints:
 refs:
   - dev/設計書/シナリオ/単一ユースケース/操作に当たるルールを検索する#
   - dev/設計書/インターフェース定義/プラグイン/ルール案内.py#
+test_file: tests/integration/server/test_search_rules.py

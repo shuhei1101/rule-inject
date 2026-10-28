@@ -7,7 +7,7 @@ flows:
     summary: ユーザーの索引とプロジェクトの索引のエントリを、フックが読む順に返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global.indexes` にユーザーの索引、`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
         notes: '`RULE_INJECT_CONFIG` で指す'
@@ -38,7 +38,7 @@ flows:
     summary: 読めない索引・読み飛ばしたエントリ・無効のエントリを分けて返す
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系の `projects[].indexes` に無い索引の場所を 1 つ追加する
       - name: 索引
@@ -68,7 +68,7 @@ flows:
     summary: '`limit` を超えた分を `next_cursor` で続けて取る'
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 引数
@@ -96,7 +96,7 @@ flows:
     summary: 相対パスの `project_dir` をエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
         description: '`project_dir` に相対パスを渡す'
     flow: |-
@@ -115,7 +115,7 @@ flows:
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
     flow: |-
@@ -318,3 +318,4 @@ constraints:
     constraint: 制限なし
 refs:
   - dev/設計書/シナリオ/単一ユースケース/効いているルールの一覧を見る#
+test_file: tests/integration/server/test_list_rules.py
