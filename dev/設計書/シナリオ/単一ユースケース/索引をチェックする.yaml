@@ -160,6 +160,52 @@ scenarios:
       - ユーザー全体の索引のエントリは、`paths` の当たらないエントリに載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_paths_unmatched
+  - name: 正常シナリオ（ユーザー全体の索引も確かめる）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+        notes: '-'
+      - name: 設定ファイル
+        description: paths がどのファイルにも当たらないシナリオと同じ
+        notes: '-'
+      - name: プロジェクトのファイル
+        description: paths がどのファイルにも当たらないシナリオと同じ
+        notes: '-'
+      - name: 索引
+        description: paths がどのファイルにも当たらないシナリオと同じ
+        notes: '-'
+      - name: ユーザー全体の索引
+        description: paths がどのファイルにも当たらないシナリオと同じ
+        notes: '-'
+      - name: ツールの引数
+        description: ユーザー全体の索引も確かめる引数をオンにする
+        notes: '-'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant SC as 索引の JSON Schema
+        participant PJ as プロジェクトのファイル
+
+        CL->>SV: チェック（プロジェクトの直下・ユーザー全体の索引も確かめる）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所（ユーザー全体・プロジェクト）
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>SC: 索引を照らす
+        SC-->>SV: 違反なし
+        SV->>PJ: プロジェクトの直下からファイルを辿る
+        PJ-->>SV: ファイルの絶対パス
+        SV->>SV: 全ての索引の効いているエントリの paths と exclude を各パスに当てる
+        SV-->>CL: paths の当たらないエントリ（プロジェクトの索引・ユーザー全体の索引を分けて）
+    expected:
+      - 応答のプロジェクトの索引の `paths` の当たらないエントリに、プロジェクトの索引の当たらないエントリだけが載っている
+      - 応答に、ユーザー全体の索引の当たらないエントリが、索引の場所・エントリの位置・解決したルールの場所つきで分けて載っている
+      - '`problem_count` にユーザー全体の索引の当たらないエントリが数えられていない'
+      - 索引のファイルが書き換わっていない
+    test: test_normal_when_global_included
 lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション
