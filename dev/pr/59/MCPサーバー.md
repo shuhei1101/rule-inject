@@ -87,3 +87,15 @@ diff の見どころは `poc/roundtrip.py`（書き戻しと `load_indexes`）�
 | `tests/unit/rule_inject/server/test_format.py` | 全実行 | 新規 | ✅ | 4 テスト pass |
 | `tests/unit/rule_inject/server/test_main.py` | 全実行 | 新規 | ✅ | 2 テスト pass |
 | `tests/unit/rule_inject/server/test_tools.py` | 全実行 | 新規 | ✅ | 14 テスト pass<br>`tests/unit` 全体 345 テストの実行は `テスト結果/20261028211628_f977d10_単体テスト.log` |
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_server_start.py` | 全実行 | 新規 | ✅ | 5 テスト pass |
+| `tests/integration/server/test_list_rules.py` | 全実行 | 新規 | ✅ | 5 テスト pass |
+| `tests/integration/server/test_search_rules.py` | 全実行 | 新規 | ✅ | 5 テスト pass |
+| `tests/integration/server/test_check_indexes.py` | 全実行 | 新規 | ✅ | 6 テスト pass |
+| `tests/integration/server/test_write_index_entry.py` | 全実行 | 新規 | ✅ | 14 テスト pass |
+| `tests/integration/server/test_delete_index_entry.py` | 全実行 | 新規 | ✅ | 11 テスト pass（パラメータ展開を含む） |
+| `tests/integration/plugin/` | 全実行 | 実行のみ | ✅ | 75 テスト pass<br>`tests/integration` 全体 121 テストの実行は `テスト結果/20261028214050_ecc68f3_結合テスト.log`<br>lint は `テスト結果/20261028214050_ecc68f3_lint.log` |
