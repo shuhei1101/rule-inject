@@ -80,10 +80,10 @@ diff の見どころは `poc/roundtrip.py`（書き戻しと `load_indexes`）�
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
 | --- | --- | --- | --- | --- |
 | `tests/unit/rule_inject/features/index/check/test_service.py` | 全実行 | 新規 | ✅ | 11 テスト pass |
-| `tests/unit/rule_inject/features/index/edit/test_service.py` | 全実行 | 新規 | ❌ | 既存 21 テスト pass<br>書式の維持の設計の修正で追加した 9 テストは Red（字下げ・改行・対象の外の行の変化を確かめる処理が未実装） |
+| `tests/unit/rule_inject/features/index/edit/test_service.py` | 全実行 | 新規 | ✅ | 30 テスト pass |
 | `tests/unit/rule_inject/features/index/edit/test_types.py` | 全実行 | 新規 | ✅ | 1 テスト pass |
 | `tests/unit/rule_inject/features/index/edit/test_yaml.py` | 全実行 | 新規 | ✅ | 2 テスト pass |
 | `tests/unit/rule_inject/server/test_app.py` | 全実行 | 新規 | ✅ | 1 テスト pass |
 | `tests/unit/rule_inject/server/test_format.py` | 全実行 | 新規 | ✅ | 4 テスト pass |
 | `tests/unit/rule_inject/server/test_main.py` | 全実行 | 新規 | ✅ | 2 テスト pass |
-| `tests/unit/rule_inject/server/test_tools.py` | 全実行 | 新規 | ✅ | 14 テスト pass<br>`tests/unit` 全体 336 テストの実行は `テスト結果/20261028203504_b413ca8_単体テスト.log` |
+| `tests/unit/rule_inject/server/test_tools.py` | 全実行 | 新規 | ✅ | 14 テスト pass<br>`tests/unit` 全体 345 テストの実行は `テスト結果/20261028211628_f977d10_単体テスト.log` |
