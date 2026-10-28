@@ -1,0 +1,110 @@
+title: "MCPサーバーを常駐させる"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから起動のコマンドを子プロセスで実行する
+      - name: 設定ファイル
+        description: 待ち受けのポートのキーに空いているポートを書いた設定ファイル
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: Claude Code の設定
+        description: 一時フォルダを `CLAUDE_CONFIG_DIR` にし、`claude mcp add --transport http -s user` でサーバーの接続先（`http://127.0.0.1:{ポート}/mcp`）を登録する
+        notes: 利用者の設定（`~/.claude`）を書き換えない。`claude mcp list` は API を呼ばない
+    flow: |-
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant CC as Claude Code
+
+        U->>SV: 起動のコマンドを実行する
+        SV->>CF: 待ち受けのポートを読む
+        CF-->>SV: ポート
+        SV->>SV: 127.0.0.1 のポートで待ち受ける
+        U->>CC: claude mcp list
+        CC->>SV: 接続する
+        SV-->>CC: 応答する
+        CC-->>U: 接続できたことを表示する
+    expected:
+      - '`127.0.0.1` の設定ファイルのポートだけで待ち受けている'
+      - '`claude mcp list` の出力で、登録したサーバーが接続できた状態になっている'
+    test: test_normal
+  - name: 正常シナリオ（止める）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: 起動したサーバー
+        description: 起動のコマンドで待ち受けているサーバー
+        notes: 待ち受けを確かめてから止める
+    flow: |-
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as MCP サーバー
+
+        U->>SV: SIGTERM を送る
+        SV->>SV: 待ち受けを閉じる
+        SV-->>U: 終了コード 0 で終わる
+    expected:
+      - プロセスが終了コード 0 で終わっている
+      - 設定ファイルのポートで待ち受けていない
+    test: test_normal_when_stopped
+  - name: 異常シナリオ（ポートが使われている）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: ポートの使用
+        description: テストが設定ファイルのポートを先に待ち受けておく
+    flow: |-
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンドを実行する
+        SV->>CF: 待ち受けのポートを読む
+        CF-->>SV: ポート
+        SV->>SV: 待ち受けに失敗する
+        SV-->>U: 標準エラーに理由を書き、0 以外の終了コードで終わる
+    expected:
+      - プロセスが 0 以外の終了コードで終わっている
+      - 標準エラーに、ポートの番号と使われている旨が載っている
+    test: test_error_when_port_in_use
+  - name: 異常シナリオ（設定ファイルが読めない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: 知らないキーを持つ設定ファイル
+        notes: フックが設定ファイルの誤りとして扱う書き方にする
+    flow: |-
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンドを実行する
+        SV->>CF: 設定ファイルを読む
+        CF-->>SV: 読めない（知らないキー）
+        SV-->>U: 標準エラーに設定ファイルの場所と理由を書き、0 以外の終了コードで終わる
+    expected:
+      - プロセスが 0 以外の終了コードで終わり、待ち受けていない
+      - 標準エラーに、設定ファイルの場所と読めない理由が載っている
+    test: test_error_when_settings_unreadable
+lead: 利用者がローカルのクローンから起動のコマンドで MCP サーバーを前面で動かし、Claude Code に HTTP の MCP サーバーとして登録して接続する。止めるときは Ctrl+C か SIGTERM で終わらせる。
+issue: 58
+primary_actor: 利用者
+stakeholders:
+  - name: 利用者
+    interest: 1 つのサーバーを常駐させれば、どのセッションからも同じツールを使え、セッションごとにプロセスが立たないこと
+  - name: Claude Code のセッション
+    interest: サーバーが止まっていても、フックの案内と既読の記録が今どおり動くこと
+trigger: 利用者が、ローカルのクローンで起動のコマンドを実行する
+preconditions:
+  - ローカルのクローンでサーバーの依存（`mcp`・`jsonschema`・`ruamel.yaml`）を導入している
+  - 起動の側の環境変数 `RULE_INJECT_CONFIG` が、フックと同じ設定ファイルを指している
+success_guarantee: サーバーは `127.0.0.1` の、設定ファイルで指したポートだけで待ち受け、`claude mcp add --transport http -s user` で登録した Claude Code から接続できる。
+minimal_guarantee: 起動できないときは待ち受けずに終了し、標準エラーに理由を書く。サーバーの起動と停止は、フックの案内と既読の記録に影響しない。

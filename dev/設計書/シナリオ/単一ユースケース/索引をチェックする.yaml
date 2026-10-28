@@ -1,0 +1,130 @@
+title: "索引をチェックする"
+scenarios:
+  - name: 正常シナリオ（違反が無い）
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: クライアントが Claude Code の代わりにツールを呼ぶ
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文がある YAML
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>SC: 索引を照らす
+        SC-->>SV: 違反なし
+        SV->>FS: 各エントリのルールの場所を確かめる
+        FS-->>SV: ある
+        SV-->>CL: 索引ごとに違反なし
+    expected:
+      - 応答に、チェックした索引の場所と、読んだ設定ファイルの場所が載っている
+      - 応答のどの索引にも、違反とファイルが無いエントリが無い
+    test: test_normal_when_no_violation
+  - name: 正常シナリオ（Schemaに違反する）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いシナリオと同じ
+      - name: 索引
+        description: フックは読めるが、索引の書式の値の範囲を外れるエントリを 1 つ持つ YAML
+        notes: '例: `on` に操作の種別に無い値を書く。Schema とフックの読み取りが受け付ける範囲は、モジュール構成で揃える'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant SC as 索引の JSON Schema
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>SC: 索引を照らす
+        SC-->>SV: 違反
+        SV-->>CL: 違反（索引の場所・索引の中の場所・理由）
+    expected:
+      - 応答の違反に、索引の場所と、索引の中の場所（例 `rules[0].on[0]`）と理由が載っている
+    test: test_normal_when_schema_violated
+  - name: 正常シナリオ（フックが読めない）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いシナリオと同じ
+      - name: 索引
+        description: フックの読み取りが受け付けない書式（2 行にまたがるフロー形式のリスト）を含む YAML
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めない（行と理由）
+        SV-->>CL: フックが読めない理由（Schema には照らさない）
+    expected:
+      - 応答に、その索引をフックが読めないことと、行の番号を含む理由が載っている
+      - その索引には Schema の違反が載っていない
+    test: test_normal_when_unreadable_by_hook
+  - name: 正常シナリオ（ルールの場所にファイルが無い）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いシナリオと同じ
+      - name: 索引
+        description: '`rule` の場所にファイルが無いエントリを 1 つ持つ YAML'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>SC: 索引を照らす
+        SC-->>SV: 違反なし
+        SV->>FS: 各エントリのルールの場所を確かめる
+        FS-->>SV: 無い場所が 1 つ
+        SV-->>CL: ファイルが無いエントリ
+    expected:
+      - 応答のファイルが無いエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
+    test: test_normal_when_rule_file_missing
+lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
+issue: 58
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: 手で書いた索引の誤りを、案内が出なくなってからではなく、書いた直後に場所つきで知れること
+trigger: Claude Code がチェックのツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読む
+success_guarantee: 索引ごとに、まずフックと同じ読み取りで読み、読めたときだけ JSON Schema に照らす。違反は索引の場所・索引の中の場所・理由を持つ。
+minimal_guarantee: 索引とサーバーの状態を書き換えない。

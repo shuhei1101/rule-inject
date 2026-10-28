@@ -1,0 +1,114 @@
+title: "操作に当たるルールを検索する"
+scenarios:
+  - name: 正常シナリオ（ファイルのパスで検索する）
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: クライアントが Claude Code の代わりにツールを呼ぶ
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: 対象のパスに当たり書く操作を止めるエントリと、同じパスに当たり読む操作だけを止めるエントリを 1 つずつ持つ YAML
+        notes: ルールの場所は別々にする
+      - name: 引数
+        description: プロジェクトの直下・対象のパス・書く操作を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 検索（プロジェクトの直下・対象のパス・書く操作）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: 索引を読み、対象のパスに当たるエントリを引く
+        IDX-->>SV: エントリ 2 つ
+        SV-->>CL: ルールの場所ごとの止めるか
+    expected:
+      - 応答に 2 つのルールの場所が載っている
+      - 書く操作を止めるエントリのルールは止める、読む操作だけを止めるエントリのルールは止めないと載っている
+    test: test_normal_when_searched_by_path
+  - name: 正常シナリオ（MCPのツールの呼び出しで検索する）
+    setup:
+      - name: Mock
+        description: ファイルのパスで検索するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: ファイルのパスで検索するシナリオと同じ
+      - name: 索引
+        description: '`tools` にツール名の glob、`args` に引数の値のパターンを持つエントリを 1 つ持つ YAML'
+      - name: 引数
+        description: プロジェクトの直下・エントリに当たるツール名・パターンに当たる引数を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 検索（プロジェクトの直下・ツール名・引数）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: 索引を読み、ツール名と引数に当たるエントリを引く
+        IDX-->>SV: エントリ
+        SV-->>CL: ルールの場所と止めるか
+    expected:
+      - 応答に、エントリのルールの場所と、MCP のツールの操作を止めるかが載っている
+    test: test_normal_when_searched_by_tool
+  - name: 正常シナリオ（当たるルールが無い）
+    setup:
+      - name: Mock
+        description: ファイルのパスで検索するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: ファイルのパスで検索するシナリオと同じ
+      - name: 索引
+        description: '対象のパスに当たるエントリを `enabled: false` で 1 つだけ持つ YAML'
+      - name: 引数
+        description: プロジェクトの直下・対象のパス・書く操作を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 検索（プロジェクトの直下・対象のパス・書く操作）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: 索引を読み、対象のパスに当たるエントリを引く
+        IDX-->>SV: 当たるエントリが無い（無効のエントリは照合に使わない）
+        SV-->>CL: 空の結果
+    expected:
+      - 応答の当たるルールが空
+    test: test_normal_when_no_rule_matched
+  - name: 異常シナリオ（パスとツール名の両方を渡す）
+    setup:
+      - name: Mock
+        description: ファイルのパスで検索するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: ファイルのパスで検索するシナリオと同じ
+      - name: 引数
+        description: プロジェクトの直下に加え、対象のパスとツール名の両方を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+
+        CL->>SV: 検索（対象のパスとツール名の両方）
+        SV-->>CL: ツールのエラー（どちらか 1 つを渡す旨）
+    expected:
+      - ツールの結果がエラーで、ファイルのパスかツール名のどちらか 1 つを渡す旨が載っている
+    test: test_error_when_both_path_and_tool
+lead: Claude Code が常駐の MCP サーバーの検索のツールに、プロジェクトの直下と、ファイルのパスと操作の種別か MCP のツールの呼び出し（ツール名と引数）を渡し、当たるルールと、未読のときに操作を止めるかを受け取る。
+issue: 58
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: 索引を直した後、実際に操作する前に、どのルールがどう当たるかを確かめられること
+trigger: Claude Code が検索のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読む
+success_guarantee: フックの `PreToolUse` と同じ索引・同じ照合で、当たるルールと止めるかを返す。既読の記録は見ず、未読とみなした結果を返す。
+minimal_guarantee: 索引・既読の記録・サーバーの状態を書き換えない。
