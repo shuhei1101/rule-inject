@@ -8,3 +8,5 @@ items:
     summary: ルール索引の YAML のキー
   - page: MCPの結果の書式.md
     summary: 文書を返す MCP のツールが、結果に文書の場所と範囲を載せる書式
+  - page: MCPツール.md
+    summary: 常駐の MCP サーバーが持つツールの引数と応答
