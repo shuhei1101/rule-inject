@@ -14,6 +14,7 @@ from typing import Any
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.error import YAMLError
+from ruamel.yaml.util import load_yaml_guess_indent
 
 from rule_inject.features.index import entry_revs
 from rule_inject.features.index.edit._yaml import round_trip_yaml, to_yaml_value
@@ -24,18 +25,49 @@ RULES_KEY = "rules"
 COMMENT_MARK = "#"
 # 新規作成するエントリにキーを書く順（ここに無いキーは渡された順で後ろに置く）
 ENTRY_KEY_ORDER = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "enabled")
+# 改行
+LF = "\n"
+CRLF = "\r\n"
+# `YAML.indent()` が受け付ける字下げの下限（マップの字下げと、リストの字下げ - 記号の字下げ）
+MIN_MAPPING_INDENT = 1
+MIN_SEQUENCE_ITEM_WIDTH = 2
 # 差分に添える前後の行数
 DIFF_CONTEXT_LINES = 3
 # 一覧を取り直してから呼び直してもらうための案内
 RELIST_HINT = "list_rules を取り直してから呼び直してください"
 
 
-def _read_text(index_path: str) -> str:
-    """索引を UTF-8 で読む。読めなければ IndexEditError を送出する。"""
+def _read_text(index_path: str) -> tuple[str, str]:
+    """索引を UTF-8 で改行を変えずに読み、最初の改行が `\\r\\n` ならそれを控えて全て `\\n` にそろえる。内容と控えた改行を返す。"""
     try:
-        return Path(index_path).read_text(encoding="utf-8")
+        text = Path(index_path).read_bytes().decode("utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         raise IndexEditError(path=index_path, reason=describe(exc)) from exc
+    first_break = text.find("\n")
+    if first_break > 0 and text[first_break - 1] == "\r":
+        return text.replace(CRLF, LF), CRLF
+    return text, LF
+
+
+def _index_yaml(index_path: str, text: str) -> YAML:
+    """索引の字下げを推定し、それに合わせた round-trip の `YAML` を作る。推定できなければ既定の字下げにする。"""
+    try:
+        _, indent, sequence_indent = load_yaml_guess_indent(text)
+    except YAMLError as exc:
+        raise IndexEditError(
+            path=index_path, reason=f"YAML として読めない: {describe(exc)}"
+        ) from exc
+    # マップとリストの字下げが推定でき、`indent()` が受け付ける範囲のときだけ使う
+    if (
+        indent is None
+        or sequence_indent is None
+        or indent - sequence_indent < MIN_MAPPING_INDENT
+        or indent < sequence_indent + MIN_SEQUENCE_ITEM_WIDTH
+    ):
+        return round_trip_yaml()
+    return round_trip_yaml(
+        mapping=indent - sequence_indent, sequence=indent, offset=sequence_indent
+    )
 
 
 def _load(yaml: YAML, index_path: str, text: str) -> CommentedMap:
@@ -137,6 +169,51 @@ def _new_entry(entry: Mapping[str, Any]) -> CommentedMap:
     return mapping
 
 
+def _outside_lines(lines: Sequence[str], line_range: tuple[int, int] | None) -> list[str]:
+    """対象の範囲（始まりと終わり。終わりを含む）の行を除いた行の並びを返す。範囲が無ければ全ての行を返す。"""
+    if line_range is None:
+        return list(lines)
+    begin, end = line_range
+    return [*lines[:begin], *lines[end + 1 :]]
+
+
+def _check_layout(
+    index_path: str,
+    before_lines: Sequence[str],
+    before_range: tuple[int, int] | None,
+    after_lines: Sequence[str],
+    after_range: tuple[int, int],
+) -> None:
+    """書く前と書いた後で、対象のエントリの外の行が変わらないことを確かめる。変われば IndexEditError を送出する。"""
+    before_outside = _outside_lines(before_lines, before_range)
+    after_outside = _outside_lines(after_lines, after_range)
+    if before_outside == after_outside:
+        return
+    # 最初に違った行を、書く前の内容での行の番号（`parse_index` と同じ 1 始まり）にして知らせる
+    first_diff = next(
+        (
+            number
+            for number, (before, after) in enumerate(
+                zip(before_outside, after_outside, strict=False)
+            )
+            if before != after
+        ),
+        min(len(before_outside), len(after_outside)),
+    )
+    skipped = (
+        before_range[1] - before_range[0] + 1
+        if before_range is not None and first_diff >= before_range[0]
+        else 0
+    )
+    raise IndexEditError(
+        path=index_path,
+        reason=(
+            "索引の書式を保って書けない"
+            f"（対象のエントリの外の {first_diff + skipped + 1}行目が変わる）。索引を手で直してください"
+        ),
+    )
+
+
 def write_entry(
     index_path: str,
     entry: Mapping[str, Any],
@@ -151,14 +228,25 @@ def write_entry(
     """エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。新しい問題が出るときは書き込まない。"""
     # 同じ索引への書き込み・削除は 1 つずつ行う
     with locks.lock_for(index_path):
-        before = _read_text(index_path)
-        yaml = round_trip_yaml()
+        before, newline = _read_text(index_path)
+        yaml = _index_yaml(index_path, before)
         data = _load(yaml, index_path, before)
+        # 書式を保てたかの確認に使う、書く前の内容の行の範囲は、書き換える前に求める
+        before_data = _load(round_trip_yaml(), index_path, before)
+        before_lines = before.splitlines()
         rules = _entries(index_path, data)
+        # `rules` が無いか、値が空（None）か空のフロー形式のリストのときは、ブロックのリストを作る
+        rules_created = position is None and (
+            data.get(RULES_KEY) is None or (isinstance(rules, CommentedSeq) and not rules)
+        )
+        before_range: tuple[int, int] | None = None
         if position is None:
-            # `rules` が無いか値が空なら、ブロックのリストを作る。空のフロー形式のリストはブロックにする
-            if RULES_KEY not in data or data[RULES_KEY] is None:
+            if rules_created:
                 data[RULES_KEY] = rules
+                # 書く前の内容に `rules` のキーの行があれば、その行も対象の範囲に含める
+                if RULES_KEY in before_data:
+                    key_line = before_data.lc.key(RULES_KEY)[0]
+                    before_range = (key_line, key_line)
             rules.fa.set_block_style()
             written_position = len(rules)
             rules.append(_new_entry(entry))
@@ -171,7 +259,19 @@ def write_entry(
                 target[key] = to_yaml_value(key, value)
             for key in remove_keys:
                 target.pop(key, None)
+            before_range = _entry_line_range(before_lines, before_data, position)
         after = _dump(yaml, data)
+        # 書式を保てたかを確かめる。書いたエントリの外の行が変わるときは書き込まない
+        after_lines = after.splitlines()
+        after_data = _load(round_trip_yaml(), index_path, after)
+        after_range = _entry_line_range(after_lines, after_data, written_position)
+        if rules_created:
+            after_range = (after_data.lc.key(RULES_KEY)[0], after_range[1])
+        elif position is None:
+            # 新規作成したエントリは、直前のコメントを含めない（前のエントリの後ろのコメントは、書く前から外の行）
+            entry_start = after_data[RULES_KEY].lc.item(written_position)[0]
+            after_range = (entry_start, after_range[1])
+        _check_layout(index_path, before_lines, before_range, after_lines, after_range)
         # 書いた後の索引がフックの読み取りで読めないときは、バージョンを持たせない（チェックが理由を返す）
         try:
             rev: str | None = entry_revs(after)[written_position]
@@ -185,7 +285,7 @@ def write_entry(
             )
         diff = _unified_diff(index_path, before, after)
         if not dry_run:
-            _replace_file(index_path, after)
+            _replace_file(index_path, after.replace(LF, newline))
         return EditResult(
             index=index_path,
             position=written_position,
@@ -239,7 +339,7 @@ def delete_entry(
 ) -> EditResult:
     """位置で指したエントリを、そのエントリに付いたコメントとともに削除する。"""
     with locks.lock_for(index_path):
-        before = _read_text(index_path)
+        before, newline = _read_text(index_path)
         data = _load(round_trip_yaml(), index_path, before)
         rules = _entries(index_path, data)
         _check_target(index_path, before, rules, position, expected_rev)
@@ -250,7 +350,7 @@ def delete_entry(
         after = "".join(lines[:begin] + lines[end + 1 :])
         diff = _unified_diff(index_path, before, after)
         if not dry_run:
-            _replace_file(index_path, after)
+            _replace_file(index_path, after.replace(LF, newline))
         return EditResult(
             index=index_path,
             position=position,

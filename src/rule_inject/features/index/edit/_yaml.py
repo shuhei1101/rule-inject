@@ -21,11 +21,16 @@ READ_BY_KEY = "read_by"
 READ_BY_TOOLS_KEY = "tools"
 
 
-def round_trip_yaml() -> YAML:
+def round_trip_yaml(
+    *,
+    mapping: int = MAPPING_INDENT,
+    sequence: int = SEQUENCE_INDENT,
+    offset: int = SEQUENCE_OFFSET,
+) -> YAML:
     """フックの読み取りが受け付ける書式で書き戻す `YAML` を作る（スレッドをまたいで共有しないため、呼ぶたびに作る）。"""
     yaml = YAML()
     yaml.width = YAML_WIDTH
-    yaml.indent(mapping=MAPPING_INDENT, sequence=SEQUENCE_INDENT, offset=SEQUENCE_OFFSET)
+    yaml.indent(mapping=mapping, sequence=sequence, offset=offset)
     yaml.preserve_quotes = True
     return yaml
 
