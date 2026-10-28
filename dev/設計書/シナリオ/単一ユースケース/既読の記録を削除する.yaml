@@ -86,3 +86,4 @@ preconditions:
   - フックとサーバーが同じ設定ファイルを読む
 success_guarantee: そのセッションの既読の記録と案内済みの記録を、圧縮の前と同じくファイルごと削除する。既読の履歴は残す。
 minimal_guarantee: ほかのセッションの記録ファイルと、記録フォルダの外のファイルは削除しない。
+test_file: tests/e2e/単一ユースケース/test_delete_read_records.py

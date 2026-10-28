@@ -57,3 +57,4 @@ preconditions:
   - フックとサーバーが同じ設定ファイルを読み、設定ファイルで指した場所に索引が置かれている
 success_guarantee: 削除のツールが既読の記録を削除した後の最初のフックの呼び出しで、読んだはずのルールが未読として案内される。
 minimal_guarantee: 既読の履歴とほかのセッションの既読の記録は削除されない。
+test_file: tests/e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
