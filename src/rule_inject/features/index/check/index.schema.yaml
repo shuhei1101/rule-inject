@@ -1,0 +1,95 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: ルール索引
+description: |-
+  rule-inject の索引（rules.yaml）のキーと値の範囲。
+  フックの読み取り（parse_index）が受け付ける範囲の内側だけを通す。
+type: object
+additionalProperties: false
+properties:
+  default_on:
+    $ref: '#/$defs/operations'
+    title: 既定の止める操作
+    description: エントリが `on` を書かないときの、操作を止める操作の種別。
+  rules:
+    type:
+    - array
+    - 'null'
+    title: エントリ
+    description: ルールごとのエントリ。値を書かない（null）か空のリストは、エントリが無い索引として読む。
+    items:
+      $ref: '#/$defs/entry'
+$defs:
+  operations:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      enum:
+      - read
+      - write
+      - mcp
+  patterns:
+    type: array
+    minItems: 1
+    items:
+      type: string
+      minLength: 1
+  arguments:
+    type: object
+    minProperties: 1
+    additionalProperties:
+      $ref: '#/$defs/patterns'
+  entry:
+    type: object
+    required:
+    - rule
+    additionalProperties: false
+    properties:
+      rule:
+        type: string
+        minLength: 1
+        title: ルールの場所
+        description: ルールの本文の場所。
+      paths:
+        $ref: '#/$defs/patterns'
+        title: 当てるパス
+        description: 操作の対象の絶対パスに当てる glob か正規表現。
+      exclude:
+        $ref: '#/$defs/patterns'
+        title: 外すパス
+        description: '`paths` に当たっても、このパターンに当たるパスには当てない。'
+      tools:
+        $ref: '#/$defs/patterns'
+        title: 当てるツール名
+        description: MCP のツールの完全名に当てる glob か正規表現。
+      args:
+        $ref: '#/$defs/arguments'
+        title: 当てる引数
+        description: '`tools` に当たった MCP のツールの引数に当てるパターン（引数のキー → パターンのリスト）。'
+      'on':
+        $ref: '#/$defs/operations'
+        title: 止める操作
+        description: 未読のときに操作を止める操作の種別。
+      read_by:
+        type: array
+        minItems: 1
+        title: 既読にする呼び出し
+        description: そのルールを既読にする MCP のツールの呼び出し。
+        items:
+          type: object
+          required:
+          - tools
+          additionalProperties: false
+          properties:
+            tools:
+              $ref: '#/$defs/patterns'
+              title: 既読にするツール名
+              description: 既読にする MCP のツールの完全名に当てる glob か正規表現。
+            args:
+              $ref: '#/$defs/arguments'
+              title: 既読にする引数
+              description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。
+      enabled:
+        type: boolean
+        title: 有効
+        description: エントリを照合に使うか。`false` のエントリは案内にも既読にも使わない。

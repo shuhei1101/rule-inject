@@ -6,13 +6,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
+import signal
+import socket
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -20,6 +23,9 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from mcp import ClientSession
+from mcp.client.streamable_http import streamable_http_client
+from mcp.types import CallToolResult
 
 E2E_OPTION = "--run-e2e"
 E2E_DIR = Path(__file__).resolve().parent
@@ -35,6 +41,16 @@ GIT_LIST_FILES = ("git", "ls-files", "-co", "--exclude-standard", "-z")
 SECONDS_PER_DAY = 86_400
 # セッションの記録で、フックが返した案内の文面を載せる行の `attachment.type`
 HOOK_CONTEXT_ATTACHMENT_TYPE = "hook_additional_context"
+# 常駐の MCP サーバーの待ち受けのアドレスと、接続・起動・停止の待ち時間
+SERVER_HOST = "127.0.0.1"
+SERVER_START_TIMEOUT_SEC = 60
+SERVER_STOP_TIMEOUT_SEC = 20
+SERVER_CALL_TIMEOUT_SEC = 60
+SERVER_POLL_INTERVAL_SEC = 0.1
+# 常駐の MCP サーバーを `claude` へ登録・渡すときの名前
+MCP_SERVER_NAME = "rule-inject"
+# `/proc/net/tcp` の状態が LISTEN のときの値
+LISTEN_STATE = "0A"
 # 文書の MCP サーバーが `get_doc` で返す本文を渡す環境変数
 DOCS_BODY_ENV = "E2E_DOCS_BODY"
 # 文書の MCP サーバー（`docs`）のスクリプト。`get_doc` と `search_docs` が引数に関わらず決めた本文を返す
@@ -550,3 +566,265 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
         return path
 
     return _make
+
+
+@dataclass
+class ResidentServer:
+    """起動した常駐の MCP サーバーの子プロセスと、接続先・呼び出しの手段。"""
+
+    port: int
+    process: subprocess.Popen[bytes]
+    stderr_path: Path
+
+    @property
+    def url(self) -> str:
+        """MCP のエンドポイント。"""
+        return f"http://{SERVER_HOST}:{self.port}/mcp"
+
+    def stderr_text(self) -> str:
+        """子プロセスの標準エラーを読む。"""
+        return self.stderr_path.read_text(encoding="utf-8")
+
+    def call(self, name: str, **arguments: Any) -> CallToolResult:
+        """MCP の Python SDK のクライアント（Streamable HTTP）でツールを 1 回呼ぶ。"""
+
+        async def _call() -> CallToolResult:
+            """接続して初期化してから、ツールを呼ぶ。"""
+            async with (
+                streamable_http_client(self.url) as (read, write),
+                ClientSession(read, write) as session,
+            ):
+                await session.initialize()
+                return await session.call_tool(name, arguments)
+
+        return asyncio.run(asyncio.wait_for(_call(), SERVER_CALL_TIMEOUT_SEC))
+
+
+def _port_is_listening(port: int) -> bool:
+    """127.0.0.1 のポートへ接続できるか。"""
+    try:
+        with socket.create_connection((SERVER_HOST, port), timeout=0.5):
+            return True
+    except OSError:
+        return False
+
+
+def _listening_addresses(port: int) -> set[str]:
+    """ポートで待ち受けているソケットのアドレス（IPv4 は 16 進、IPv6 は `v6:` を付けた 16 進）を返す。"""
+    addresses: set[str] = set()
+    for table, prefix in (("/proc/net/tcp", ""), ("/proc/net/tcp6", "v6:")):
+        for line in Path(table).read_text(encoding="utf-8").splitlines()[1:]:
+            fields = line.split()
+            address, local_port = fields[1].rsplit(":", 1)
+            if fields[3] == LISTEN_STATE and int(local_port, 16) == port:
+                addresses.add(prefix + address)
+    return addresses
+
+
+def _stop_server(server: ResidentServer) -> None:
+    """動いているサーバーを SIGTERM で止める。止まらなければ強制終了する。"""
+    if server.process.poll() is not None:
+        return
+    server.process.send_signal(signal.SIGTERM)
+    try:
+        server.process.wait(timeout=SERVER_STOP_TIMEOUT_SEC)
+    except subprocess.TimeoutExpired:
+        server.process.kill()
+        server.process.wait()
+
+
+@pytest.fixture
+def free_port() -> Callable[[], int]:
+    """空いているポートを 1 つ返す関数。"""
+
+    def _free() -> int:
+        """ポート 0 で待ち受けて、割り当てられたポートを返す（すぐ閉じる）。"""
+        with socket.create_server((SERVER_HOST, 0)) as probe:
+            return int(probe.getsockname()[1])
+
+    return _free
+
+
+@pytest.fixture
+def port_is_listening() -> Callable[[int], bool]:
+    """127.0.0.1 のポートへ接続できるかを返す関数。"""
+    return _port_is_listening
+
+
+@pytest.fixture
+def addresses_listening() -> Callable[[int], set[str]]:
+    """ポートで待ち受けているソケットのアドレスを返す関数。"""
+    return _listening_addresses
+
+
+@pytest.fixture
+def server_config_path(tmp_path: Path) -> Path:
+    """フックとサーバーが読む設定ファイルの場所（`RULE_INJECT_CONFIG` が指す）。"""
+    return tmp_path / "config" / "settings.yaml"
+
+
+@pytest.fixture
+def write_server_config(
+    e2e_project: Path,
+    state_dir: Path,
+    log_folder: Path,
+    server_config_path: Path,
+    configure_env: Callable[..., None],
+) -> Callable[..., Path]:
+    """待ち受けのポート・`global.indexes`・起動したプロジェクトに当たる `projects` の要素の索引を書いた設定ファイルを置き、`RULE_INJECT_CONFIG` でそれを指す。"""
+
+    def _write(
+        port: int,
+        *,
+        project_indexes: Sequence[Path] = (),
+        global_indexes: Sequence[Path] = (),
+    ) -> Path:
+        """設定ファイルを書き、プロジェクトの設定の `env` にそのパスを置く。"""
+        lines = [
+            "global:",
+            f'  state_dir: "{state_dir}"',
+            f'  log_dir: "{log_folder}"',
+            f"  server_port: {port}",
+        ]
+        if global_indexes:
+            lines.append("  indexes:")
+            lines.extend(f'    - "{index}"' for index in global_indexes)
+        if project_indexes:
+            lines.extend(["projects:", f'  - match: "{e2e_project}"', "    indexes:"])
+            lines.extend(f'      - "{index}"' for index in project_indexes)
+        server_config_path.parent.mkdir(parents=True, exist_ok=True)
+        server_config_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        configure_env({"RULE_INJECT_CONFIG": str(server_config_path)})
+        return server_config_path
+
+    return _write
+
+
+@pytest.fixture
+def resident_server(
+    tmp_path: Path, server_config_path: Path
+) -> Iterator[Callable[..., ResidentServer]]:
+    """ローカルのクローンから `python -m rule_inject.server` を子プロセスとして起動する factory。終わったら止める。"""
+    started: list[ResidentServer] = []
+
+    def _start(port: int, *, wait_ready: bool = True) -> ResidentServer:
+        """設定ファイルを指して起動する。wait_ready なら待ち受けるまで待つ。"""
+        env = {
+            name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
+        }
+        env["RULE_INJECT_CONFIG"] = str(server_config_path)
+        env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
+        env["XDG_STATE_HOME"] = str(tmp_path / "xdg_state")
+        stderr_path = tmp_path / f"server-{len(started)}.stderr"
+        with stderr_path.open("wb") as stderr_file:
+            process = subprocess.Popen(
+                [sys.executable, "-m", "rule_inject.server"],
+                cwd=PROJECT_ROOT,
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=stderr_file,
+            )
+        server = ResidentServer(port=port, process=process, stderr_path=stderr_path)
+        started.append(server)
+        if wait_ready:
+            deadline = time.monotonic() + SERVER_START_TIMEOUT_SEC
+            while not _port_is_listening(port):
+                if process.poll() is not None or time.monotonic() > deadline:
+                    pytest.fail(f"サーバーが待ち受けなかった: {server.stderr_text()}")
+                time.sleep(SERVER_POLL_INTERVAL_SEC)
+        return server
+
+    yield _start
+    for server in started:
+        _stop_server(server)
+
+
+@pytest.fixture
+def stop_server() -> Callable[[ResidentServer], None]:
+    """サーバーを SIGTERM で止めて終わりを待つ関数。"""
+    return _stop_server
+
+
+@pytest.fixture
+def serve(
+    e2e_project: Path,
+    free_port: Callable[[], int],
+    write_server_config: Callable[..., Path],
+    resident_server: Callable[..., ResidentServer],
+) -> Callable[..., ResidentServer]:
+    """空いているポートを設定ファイルに書き、常駐の MCP サーバーを起動する factory。"""
+
+    def _serve(*project_indexes: Path, global_indexes: Sequence[Path] = ()) -> ResidentServer:
+        """project_indexes を起動したプロジェクトに当たる要素の索引に、global_indexes を `global.indexes` に置いて起動する。"""
+        port = free_port()
+        write_server_config(port, project_indexes=project_indexes, global_indexes=global_indexes)
+        return resident_server(port)
+
+    return _serve
+
+
+@pytest.fixture
+def server_mcp_config(tmp_path: Path) -> Callable[[ResidentServer], Path]:
+    """常駐の MCP サーバーを HTTP の接続先として `--mcp-config` に渡す設定のファイルを置く関数。"""
+
+    def _make(server: ResidentServer) -> Path:
+        """`claude -p --mcp-config` に渡す JSON を書いて、そのパスを返す。"""
+        config = tmp_path / "resident_mcp.json"
+        body = {"mcpServers": {MCP_SERVER_NAME: {"type": "http", "url": server.url}}}
+        config.write_text(json.dumps(body), encoding="utf-8")
+        return config
+
+    return _make
+
+
+@pytest.fixture
+def run_claude_cli(
+    e2e_project: Path, tmp_path: Path
+) -> Callable[..., subprocess.CompletedProcess[str]]:
+    """利用者の設定（`~/.claude`）を使わず、一時フォルダを `CLAUDE_CONFIG_DIR` にして `claude` の CLI のコマンドを 1 回実行する関数。"""
+
+    def _run(*args: str) -> subprocess.CompletedProcess[str]:
+        """`claude {args}` を実行して結果を返す（API は呼ばない `mcp add` と `mcp list` に使う）。"""
+        binary = os.environ.get(CLAUDE_BIN_ENV) or shutil.which("claude")
+        if binary is None:
+            pytest.skip("claude が PATH に無い")
+        env = {
+            name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
+        }
+        env["CLAUDE_CONFIG_DIR"] = str(tmp_path / "claude_config")
+        return subprocess.run(
+            [binary, *args],
+            cwd=e2e_project,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=CLAUDE_TIMEOUT_SEC,
+            check=False,
+        )
+
+    return _run
+
+
+@pytest.fixture
+def make_text_file(tmp_path: Path) -> Callable[..., Path]:
+    """書いたとおりの内容のファイル（コメント・引用符つきの索引など）を tmp_path の下へ置く factory。"""
+
+    def _make(name: str, text: str) -> Path:
+        """tmp_path の下の name に text を書いて返す。"""
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    return _make
+
+
+@pytest.fixture
+def tool_text() -> Callable[[CallToolResult], str]:
+    """ツールの結果の text をつなげて返す関数。"""
+
+    def _text(result: CallToolResult) -> str:
+        """結果の content の text をつなげる。"""
+        return "\n".join(getattr(content, "text", "") for content in result.content)
+
+    return _text

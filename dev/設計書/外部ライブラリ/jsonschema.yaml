@@ -1,0 +1,40 @@
+title: "jsonschema"
+kind: "ライブラリ"
+version:
+  current: 4.26.0
+  latest: 4.26.0
+  checked_on: '2026-10-28'
+  source: PoC の仮想環境（`uv run --with jsonschema`）
+catalogs:
+  - name: API
+    version: 4.26.0
+    entries:
+      - name: Draft202012Validator
+        kind: クラス
+        purpose: Draft 2020-12 の Schema で値を検証する
+      - name: Draft202012Validator.iter_errors
+        kind: メソッド
+        purpose: 値の違反をすべて返す
+        params:
+          - name: instance
+            type: '`object`'
+            required: true
+            description: 検証する値
+        returns:
+          - name: '-'
+            type: '`Iterator[ValidationError]`'
+            description: 違反ごとの `ValidationError`。`absolute_path` が値の中の場所、`validator` が違反したキーワード、`message` が理由
+lead: JSON Schema で Python の値を検証し、違反を場所と理由つきで返すライブラリ。
+purl: pkg:pypi/jsonschema
+upstream: python-jsonschema/jsonschema
+verification:
+  state: 済
+  date: '2026-10-28'
+  detail: PoC 検証（#60）で 4.26.0 の `Draft202012Validator.iter_errors` を ruamel.yaml で読んだ索引に当て、型違反・許さないキー・必須キーの欠けの 3 種類を、`absolute_path`（例 `['rules', 0, 'paths']`）と `message` つきで返すことを確かめた
+license: MIT（商用利用可）
+official_url: https://github.com/python-jsonschema/jsonschema
+docs_url: https://python-jsonschema.readthedocs.io/
+dependency_scope: 任意
+adoption: 採用
+used_in:
+  - src/rule_inject/features/index/check/service.py

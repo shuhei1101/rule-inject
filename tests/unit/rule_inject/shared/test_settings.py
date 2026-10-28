@@ -325,3 +325,81 @@ def test_matches_project_when_worktree(match: str, expected: bool) -> None:
     result = _matches_project(match, "/w/repo/.claude/worktrees/feat")
     # 検証
     assert result is expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("1023", id="below_range"),
+        pytest.param("65536", id="above_range"),
+        pytest.param("abc", id="not_number"),
+    ],
+)
+def test_load_settings_when_invalid_server_port(
+    make_settings: Callable[..., Path],
+    value: str,
+) -> None:
+    """範囲の外のポートを拒む（異常系）。"""
+    # 準備
+    config = make_settings(f"global:\n  server_port: {value}\n")
+    env = {"RULE_INJECT_CONFIG": str(config)}
+    # 実行・検証
+    with pytest.raises(SettingsReadError) as raised:
+        load_settings(env)
+    assert "global.server_port" in raised.value.reason
+    assert value in raised.value.reason
+
+
+@pytest.mark.parametrize(
+    ("global_text", "expected"),
+    [
+        pytest.param("global:\n  server_port: 9000\n", 9000, id="from_config"),
+        pytest.param("global:\n  log_retention_days: 5\n", 8783, id="default"),
+    ],
+)
+def test_load_settings_when_server_port(
+    make_settings: Callable[..., Path],
+    global_text: str,
+    expected: int,
+) -> None:
+    """ポートを設定ファイルから読み、無ければ既定にする（正常系）。"""
+    # 準備
+    config = make_settings(global_text)
+    env = {"RULE_INJECT_CONFIG": str(config)}
+    # 実行
+    settings = load_settings(env)
+    # 検証
+    assert settings.server_port == expected
+
+
+@pytest.mark.parametrize(
+    "global_text",
+    [
+        pytest.param("global:\n  server_port: 9000\n", id="config_has_port"),
+        pytest.param(None, id="no_config"),
+    ],
+)
+def test_load_settings_when_port_env(
+    make_settings: Callable[..., Path],
+    global_text: str | None,
+) -> None:
+    """環境変数のポートが設定ファイルより優先する（正常系）。"""
+    # 準備
+    env = {"RULE_INJECT_PORT": "9100"}
+    if global_text is not None:
+        env["RULE_INJECT_CONFIG"] = str(make_settings(global_text))
+    # 実行
+    settings = load_settings(env)
+    # 検証
+    assert settings.server_port == 9100
+
+
+def test_load_settings_when_invalid_port_env() -> None:
+    """許す範囲の外の環境変数のポートを拒む（異常系）。"""
+    # 準備
+    env = {"RULE_INJECT_PORT": "80"}
+    # 実行・検証
+    with pytest.raises(SettingsReadError) as raised:
+        load_settings(env)
+    assert raised.value.path == "RULE_INJECT_PORT"
+    assert "80" in raised.value.reason

@@ -5,9 +5,18 @@ description = "ファイルに当たるルールを案内する Claude Code プ�
 requires-python = ">=3.12"
 dependencies = []
 
+[project.optional-dependencies]
+server = [
+    "mcp>=2.2,<3",
+    "jsonschema>=4.26,<5",
+    "ruamel.yaml>=0.19,<0.20",
+]
+
 [dependency-groups]
 dev = [
     "mcp>=2.2,<3",
+    "jsonschema>=4.26,<5",
+    "ruamel.yaml>=0.19,<0.20",
     "pytest>=8.0",
     "ruff>=0.5",
 ]

@@ -1,0 +1,40 @@
+title: "ruamel.yaml"
+kind: "ライブラリ"
+version:
+  current: 0.19.1
+  latest: 0.19.1
+  checked_on: '2026-10-28'
+  source: PoC の仮想環境（`uv run --with ruamel.yaml`）
+catalogs:
+  - name: API
+    version: 0.19.1
+    entries:
+      - name: YAML
+        kind: クラス
+        purpose: round-trip（既定の `typ="rt"`）で YAML を読み書きする
+        description: フックの `parse_index` が読める書式で書き戻すには、既定（`width` 80・字下げ 2/2/0・`preserve_quotes` 無効）を替えて、`width = 4096`・`indent(mapping=2, sequence=4, offset=2)`・`preserve_quotes = True` を設定する。`width` が 80 のままだと長いフロー形式のリストが複数行に折り返され、`parse_index` が読めない
+      - name: YAML.load
+        kind: メソッド
+        purpose: 文字列かストリームから読み、コメントと書式を持つ `CommentedMap` / `CommentedSeq` を返す
+      - name: YAML.dump
+        kind: メソッド
+        purpose: 読んだときのコメント・引用符・フロー形式を残して書き出す
+      - name: CommentedSeq.fa.set_flow_style
+        kind: メソッド
+        purpose: 新しく作ったリストをフロー形式（`[a, b]`）で書き出すようにする
+        description: 読んだ既存のリストはフロー形式を保つが、新しく追加するエントリのリストはこれを呼ばないとブロック形式になる
+lead: コメント・引用符・フロー形式を残したまま YAML を読み書きする（round-trip）ライブラリ。
+purl: pkg:pypi/ruamel.yaml
+verification:
+  state: 済
+  date: '2026-10-28'
+  detail: PoC 検証（#60）で 0.19.1 を使い、コメント・引用符・`  - rule:` の字下げを持つ索引の 1 行のフロー形式の `paths` に 80 字を超える値を追加し、空白入りの長い `rule` を持つエントリを追加して書き戻した。リストは 1 行のままで、差分は追加した行だけだった。書き戻した索引をフックの `load_indexes` が読み飛ばし 0 件・読めない索引 0 件で読み、追加した値が照合で当たることを確かめた
+license: MIT（商用利用可）
+official_url: https://sourceforge.net/projects/ruamel-yaml/
+docs_url: https://yaml.dev/doc/ruamel.yaml/
+dependency_scope: 任意
+adoption: 採用
+used_in:
+  - src/rule_inject/features/index/edit/_yaml.py
+  - src/rule_inject/features/index/edit/service.py
+  - src/rule_inject/features/index/check/service.py

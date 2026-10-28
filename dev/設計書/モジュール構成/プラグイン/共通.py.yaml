@@ -6,7 +6,7 @@ directory: |-
   ├── __init__.py
   └── shared/
       ├── __init__.py
-      ├── errors.py          # 設定ファイル・索引・既読の記録・既読の履歴・ログの例外
+      ├── errors.py          # 設定ファイル・索引の読み取りと編集・既読の記録・既読の履歴・ログの例外
       ├── paths.py           # 既定の記録フォルダ・ログのフォルダとルールの場所の解決
       ├── settings.py        # 設定ファイルの読み取りと `projects` の当て方
       ├── _settings_yaml.py  # 設定ファイルの YAML の一部だけを読む
@@ -76,6 +76,13 @@ classes:
     container: shared/errors.py
     usecase: 共通
     summary: 設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。`path` は設定ファイルの場所
+    kind: クラス
+    inherits: RuleInjectError
+  - name: IndexEditError
+    title: 索引を編集できない
+    container: shared/errors.py
+    usecase: 索引のエントリを編集する
+    summary: 索引が YAML として読めない・エントリの位置が無い・バージョンが合わない・書いた後の索引がチェックに通らない。`path` は索引の場所、`reason` はツールの結果にそのまま載せる文言
     kind: クラス
     inherits: RuleInjectError
 enums:
@@ -189,6 +196,16 @@ constants:
     container: shared/settings.py
     summary: '`projects[].match` を当てるとき、この下を本体のリポジトリとして見るフォルダの、リポジトリの直下からのパス'
     value: '`.claude/worktrees`'
+  - name: DEFAULT_SERVER_PORT
+    title: MCPサーバーのポートの既定
+    container: shared/settings.py
+    summary: 設定ファイルに `global.server_port` が無いときのポート
+    value: '`8783`'
+  - name: PORT_ENV
+    title: ポートを上書きする環境変数
+    container: shared/settings.py
+    summary: '`global.server_port` をその起動だけ上書きする環境変数の名前'
+    value: '`"RULE_INJECT_PORT"`'
 functions:
   - name: resolve_location
     title: 場所の解決
@@ -578,13 +595,14 @@ functions:
       3. 値を確かめる
          - `global.indexes`・`global.state_dir`・`global.log_dir` の値は、`~` を展開して絶対パスでなければ誤り
          - `global.record_retention_days`・`global.log_retention_days` は 10 進の整数として読み、1 以上でなければ誤り
+         - `global.server_port` は 10 進の整数として読み、1024〜65535 でなければ誤り
          - `projects` の要素が `match` を持たなければ誤り
       4. `CLAUDE_PROJECT_DIR` があれば、`_matches_project(match, CLAUDE_PROJECT_DIR)` が真の `projects` の要素を並びの順に集める（無ければどの要素も当てない）
       5. 索引の並びを作る
          - `global.indexes` があればその値（`~` を展開）を並べる。無ければ `{XDG_CONFIG_HOME か ~/.config}/{USER_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる
          - 続けて、当たった要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
          - 当たった要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
-      6. `state_dir`・`log_dir` は `global` の値（`~` を展開）か、無ければ `default_state_dir(env)`・`default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`
+      6. `state_dir`・`log_dir` は `global` の値（`~` を展開）か、無ければ `default_state_dir(env)`・`default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（3 の `global.server_port` と同じ規則で確かめる）、無ければ `global` の値、それも無ければ `DEFAULT_SERVER_PORT`
       7. `Settings` を返す
     exceptions:
       - name: SettingsReadError
@@ -594,8 +612,8 @@ functions:
         condition: '`parse_settings` が ValueError を送出する（YAML の書式・知らないキー・許さない形式）'
         message: path は設定ファイルの場所、reason は `describe(exc)`（行番号を含む）
       - name: SettingsReadError
-        condition: 3 の値の誤り
-        message: 'path は設定ファイルの場所、reason は `{キー}: {書かれた値} は {許す値}ではない`（例 `global.log_retention_days: 0 は 1 以上の整数ではない`）'
+        condition: 3 の値の誤り、6 の `PORT_ENV` の値の誤り
+        message: 'path は設定ファイルの場所（`PORT_ENV` の誤りは `RULE_INJECT_PORT`）、reason は `{キー}: {書かれた値} は {許す値}ではない`（例 `global.log_retention_days: 0 は 1 以上の整数ではない`・`RULE_INJECT_PORT: 80 は 1024〜65535 の整数ではない`）'
     unit_tests:
       - name: test_load_settings
         case: 正常
@@ -681,6 +699,32 @@ functions:
         mock: なし
         expected: SettingsReadError（path が設定ファイルの場所）
         exception: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
+      - name: test_load_settings_when_invalid_server_port
+        case: 異常
+        summary: 範囲の外のポートを拒む
+        condition: '`global.server_port` が `1023`・`65536`・`abc`（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason に `global.server_port` と値）
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_server_port
+        case: 正常
+        summary: ポートを設定ファイルから読み、無ければ既定にする
+        condition: '`global.server_port: 9000` の設定ファイルと、`server_port` を書かない設定ファイル（パラメータ展開）'
+        mock: なし
+        expected: '`server_port` が 9000 と 8783'
+      - name: test_load_settings_when_port_env
+        case: 正常
+        summary: 環境変数のポートが設定ファイルより優先する
+        condition: '`global.server_port: 9000` の設定ファイルと `RULE_INJECT_PORT=9100`、設定ファイル無しと `RULE_INJECT_PORT=9100`（パラメータ展開）'
+        mock: なし
+        expected: どちらも `server_port` が 9100
+      - name: test_load_settings_when_invalid_port_env
+        case: 異常
+        summary: 許す範囲の外の環境変数のポートを拒む
+        condition: '`RULE_INJECT_PORT=80`'
+        mock: なし
+        expected: SettingsReadError（path が `RULE_INJECT_PORT`）
+        exception: 3 の値の誤り、6 の `PORT_ENV` の値の誤り
   - name: _matches_project
     title: プロジェクトの当て方
     container: shared/settings.py
@@ -744,7 +788,7 @@ functions:
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす（`yaml_lines` の行の読み取り）
       2. 最上位のキーは `global` と `projects` だけを許す
-      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`（文字列）だけを許す
+      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`server_port`（文字列）だけを許す
       4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
       5. 文字列は引用符あり・なしを読む。リストは空の `[]` を許す
       6. 許さないキー・形式（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする
@@ -834,3 +878,6 @@ data_models:
       - name: log_retention_days
         type: int
         description: ログの保持日数（1 以上）
+      - name: server_port
+        type: int
+        description: MCP サーバーが待ち受けるポート（1024〜65535）。フックは使わない

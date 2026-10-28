@@ -1,0 +1,89 @@
+title: "効いているルールの一覧を見る"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: クライアントが Claude Code の代わりにツールを呼ぶ
+      - name: 設定ファイル
+        description: '`global.indexes` にユーザーの索引を 1 つ、`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を 1 つ持つ'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: ユーザーの索引とプロジェクトの索引に、それぞれ有効なエントリを 1 つずつ持つ YAML
+        notes: ルールの本文はローカルに置いた Markdown
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 一覧（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: ユーザーの索引・プロジェクトの索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: エントリ
+        SV-->>CL: 読んだ設定ファイルの場所・索引ごとのエントリ
+    expected:
+      - 応答に、サーバーが読んだ設定ファイルの場所が載っている
+      - 応答に、ユーザーの索引とプロジェクトの索引の場所が、フックが読む順に載っている
+      - 索引ごとに、エントリのルールの場所（展開・解決した後）と、当てるパス・止める操作の種別が載っている
+    test: test_normal
+  - name: 正常シナリオ（読めない索引と除いたエントリがある）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオの設定ファイルの `projects[].indexes` に、無い索引の場所を 1 つ追加する
+      - name: 索引
+        description: 'プロジェクトの索引に、展開できない変数参照（`!{名前}`）を `rule` に持つエントリと、`enabled: false` のエントリを 1 つずつ追加する'
+        notes: 変数参照の名前は起動の側の環境変数に置かない
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 一覧（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所（無い場所を含む）
+        SV->>IDX: 索引を読む
+        IDX-->>SV: エントリ・読めない索引
+        SV-->>CL: 効いているエントリ・読めない索引と理由・読み飛ばしたエントリと理由・無効のエントリ
+    expected:
+      - 応答の読めない索引に、無い索引の場所と理由が載っている
+      - 応答の読み飛ばしたエントリに、変数参照を展開できないエントリと、展開できない名前が載っている
+      - '応答の無効のエントリに、`enabled: false` のエントリが載り、効いているエントリには載っていない'
+    test: test_normal_when_some_entries_excluded
+  - name: 異常シナリオ（プロジェクトの直下が絶対パスでない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: 引数
+        description: プロジェクトの直下に相対パスを渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+
+        CL->>SV: 一覧（相対パス）
+        SV-->>CL: ツールのエラー（絶対パスで渡す旨）
+    expected:
+      - ツールの結果がエラーで、プロジェクトの直下を絶対パスで渡す旨が載っている
+    test: test_error_when_project_dir_not_absolute
+lead: Claude Code が常駐の MCP サーバーの一覧のツールにプロジェクトの直下のパスを渡し、そのプロジェクトで今効いている索引とエントリを受け取る。読めなかった索引・読み飛ばしたエントリ・無効のエントリも理由とともに受け取る。
+issue: 58
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: フックが今どの索引のどのエントリで案内しているかを、索引を開かずに確かめられること
+trigger: Claude Code が一覧のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読む
+success_guarantee: フックが同じプロジェクトで読む索引とエントリを、フックと同じ規則（設定ファイルの `projects[].match`・既定の索引・変数の展開）で返す。
+minimal_guarantee: 索引とサーバーの状態を書き換えない。
+test_file: tests/e2e/単一ユースケース/test_view_effective_rules.py

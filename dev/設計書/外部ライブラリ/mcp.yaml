@@ -12,24 +12,54 @@ catalogs:
     entries:
       - name: MCPServer
         kind: クラス
-        purpose: stdio の MCP サーバーを作る（`mcp.server.mcpserver`）
+        purpose: stdio か Streamable HTTP の MCP サーバーを作る（`mcp.server.mcpserver`）
       - name: MCPServer.tool
         kind: デコレータ
         purpose: 関数をツールとして登録し、引数の型と docstring から入力の Schema と説明を作る
       - name: MCPServer.run
         kind: メソッド
-        purpose: stdio でサーバーを動かす
+        purpose: stdio か Streamable HTTP でサーバーを動かす
+        params:
+          - name: transport
+            type: '`"stdio" | "sse" | "streamable-http"`'
+            required: false
+            default: '`"stdio"`'
+            description: 待ち受けの方式
+          - name: host
+            type: '`str`'
+            required: false
+            default: '`"127.0.0.1"`'
+            description: HTTP で待ち受けるアドレス
+            notes: '`streamable-http` のときだけ使う'
+          - name: port
+            type: '`int`'
+            required: false
+            default: '`8000`'
+            description: HTTP で待ち受けるポート
+            notes: '`streamable-http` のときだけ使う'
+          - name: streamable_http_path
+            type: '`str`'
+            required: false
+            default: '`"/mcp"`'
+            description: MCP の要求を受けるパス
+        params_example: |-
+          ```python
+          from mcp.server import MCPServer
+
+          server = MCPServer("rule-inject")
+          server.run("streamable-http", host="127.0.0.1", port=60808)
+          ```
 lead: Model Context Protocol の公式の Python SDK。MCP のサーバーとクライアントを書くためのクラスを持つ。
 purl: pkg:pypi/mcp
-dependency_scope: 開発のみ
+dependency_scope: 任意
 adoption: 採用
 upstream: modelcontextprotocol/python-sdk
 license: MIT（商用利用可）
 official_url: https://github.com/modelcontextprotocol/python-sdk
 verification:
   state: 済
-  date: '2026-09-29'
-  detail: 本実装で 2.2.0（uv.lock）の `MCPServer.tool`（`name`・`meta`・`Annotated` の `Field` による引数の説明）を、単体テストのインメモリのクライアントと stdio の子プロセスで動かし、ツールの一覧の `_meta`・引数の説明・`ToolError` のエラー応答が想定どおりに返ることを確かめた。Claude Code からの呼び出しは PoC 検証（#4）で確かめた
+  date: '2026-10-28'
+  detail: 本実装で 2.2.0（uv.lock）の `MCPServer.tool`（`name`・`meta`・`Annotated` の `Field` による引数の説明）を、単体テストのインメモリのクライアントと stdio の子プロセスで動かし、ツールの一覧の `_meta`・引数の説明・`ToolError` のエラー応答が想定どおりに返ることを確かめた。Claude Code からの stdio の呼び出しは PoC 検証（#4）で確かめた。Streamable HTTP の待ち受け（`run("streamable-http", host="127.0.0.1", port=...)`）は PoC 検証（#60）で、127.0.0.1 だけで待ち受けること、`claude mcp add --transport http -s user` で登録した Claude Code（2.1.312）の `claude -p` からツールを呼んで `permission_denials` が空で戻り値が返ること、サーバーを止めても `claude -p` が応答することを確かめた
 selection:
   candidates: 公式の Python SDK（`mcp`）だけを候補にした。
   decision: Issue の構成方針（MCP サーバーは Python の uv のプロジェクト）に合う公式の実装で、stdio のサーバーを数行で書ける。
@@ -38,4 +68,7 @@ selection:
 
     プラグインの MCP サーバーを廃止し（#44）、プラグインの依存から外した。E2E テストの `read_by` のシナリオで立てる文書の MCP サーバーだけが使う。
 used_in:
+  - src/rule_inject/server/app.py
+  - src/rule_inject/server/tools.py
+  - src/rule_inject/server/_format.py
   - tests/e2e/conftest.py

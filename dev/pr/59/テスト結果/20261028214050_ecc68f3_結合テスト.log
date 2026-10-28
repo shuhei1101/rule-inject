@@ -1,0 +1,23 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-server-resident-mcp-server
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 121 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  3%]
+tests/integration/plugin/test_record_read.py ................            [ 16%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 39%]
+..                                                                       [ 41%]
+tests/integration/plugin/test_search_guide.py .............              [ 52%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 59%]
+tests/integration/plugin/test_work_rules.py ...                          [ 61%]
+tests/integration/server/test_check_indexes.py ......                    [ 66%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 76%]
+tests/integration/server/test_list_rules.py .....                        [ 80%]
+tests/integration/server/test_search_rules.py .....                      [ 84%]
+tests/integration/server/test_server_start.py .....                      [ 88%]
+tests/integration/server/test_write_index_entry.py ..............        [100%]
+
+======================= 121 passed in 103.39s (0:01:43) ========================

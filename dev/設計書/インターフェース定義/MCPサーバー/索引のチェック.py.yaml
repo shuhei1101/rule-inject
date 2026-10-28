@@ -1,0 +1,270 @@
+title: "索引のチェック"
+entry:
+  kind: mcp_tool
+  value: '`check_indexes`'
+flows:
+  - name: 正常系（違反が無い）
+    summary: 問題の無い索引で `problem_count` が 0
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
+      - name: 索引
+        description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文がある
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant FS as ルールの本文
+
+        C->>IF: project_dir
+        IF->>CF: 読む
+        CF-->>IF: 索引の場所
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めた
+        IF->>IF: JSON Schema に照らす
+        IF->>FS: ルールの場所を確かめる
+        FS-->>IF: ある
+        IF-->>C: problem_count 0
+      ```
+    expected:
+      - '`problem_count` が 0'
+      - '`indexes` に索引の場所が載り、`hook_error` が `None` で `violations`・`missing_rules`・`skipped_entries` が空'
+      - '`config_path` が `RULE_INJECT_CONFIG` の場所'
+    test: test_normal_when_no_violation
+  - name: 正常系（Schemaに違反する）
+    summary: フックは読めるが Schema に違反するエントリの場所と理由を返す
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いフローと同じ
+      - name: 索引
+        description: '1 つ目のエントリが `paths: []` を持つ'
+        notes: フックは読めるが、Schema は要素が 1 つ以上のリストを求める
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant IDX as 索引
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めた
+        IF->>IF: JSON Schema に照らす（違反）
+        IF-->>C: violations
+      ```
+    expected:
+      - '`violations` に `location` が `rules[0].paths` の違反と理由が載っている'
+      - '`hook_error` が `None`'
+    test: test_normal_when_schema_violated
+  - name: 正常系（フックが読めない）
+    summary: フックが読めない索引は理由だけを返し、Schema には照らさない
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いフローと同じ
+      - name: 索引
+        description: 2 行にまたがるフロー形式のリストを含む
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant IDX as 索引
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めない（行と理由）
+        IF-->>C: hook_error
+      ```
+    expected:
+      - '`hook_error` に行の番号を含む理由が載っている'
+      - '`violations`・`missing_rules` が空'
+    test: test_normal_when_unreadable_by_hook
+  - name: 正常系（ルールの場所にファイルが無い）
+    summary: ルールの場所にファイルが無いエントリを返す
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いフローと同じ
+      - name: 索引
+        description: 2 つ目のエントリの `rule` の場所にファイルが無い
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant IDX as 索引
+        participant FS as ルールの本文
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めた
+        IF->>IF: JSON Schema に照らす
+        IF->>FS: ルールの場所を確かめる
+        FS-->>IF: 無い場所が 1 つ
+        IF-->>C: missing_rules
+      ```
+    expected:
+      - '`missing_rules` に `position` が 1 で、解いたルールの場所を持つ行が載っている'
+      - '`problem_count` が 1'
+    test: test_normal_when_rule_file_missing
+  - name: 異常系（絶対パスでない・ToolError）
+    summary: 相対パスの `project_dir` をエラーにする
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 引数
+        description: '`project_dir` に相対パスを渡す'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+
+        C->>IF: project_dir（相対パス）
+        IF-->>C: isError: true（絶対パスで渡す旨）
+      ```
+    expected:
+      - '結果が `isError: true` で、絶対パスで渡す旨が載っている'
+    test: test_error_when_project_dir_not_absolute
+  - name: 異常系（設定ファイルが読めない・ToolError）
+    summary: 呼び出しの時点で読めない設定ファイルをエラーにする
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`global` に知らないキーを持つ設定ファイル'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant CF as 設定ファイル
+
+        C->>IF: project_dir
+        IF->>CF: 読む
+        CF-->>IF: 知らないキー
+        IF-->>C: isError: true（設定ファイルの場所と理由）
+      ```
+    expected:
+      - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
+    test: test_error_when_settings_unreadable
+lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを返す。
+identifier: check_indexes
+idempotent: true
+side_effects: なし（`readOnlyHint`）
+request:
+  - name: project_dir
+    type: str
+    required: true
+    location: argument
+    description: プロジェクトの直下
+    constraints: 絶対パス
+    notes: インターフェース定義「ルールの一覧」の `project_dir` と同じ
+  - name: format
+    type: Literal['markdown', 'json']
+    required: false
+    default: markdown
+    location: argument
+    description: 応答の形式
+    notes: インターフェース定義「ルールの一覧」の `format` と同じ
+response:
+  - name: success
+    type: bool
+    description: チェックを最後まで行えたか
+    notes: 問題が見つかっても `true`。問題の有無は `problem_count` で見る
+  - name: output
+    type: str
+    description: チェックした索引の数と問題の件数の 1 行
+  - name: config_path
+    type: str | None
+    description: サーバーが読んだ設定ファイルの場所
+  - name: problem_count
+    type: int
+    description: 全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` の件数の合計
+  - name: indexes[].index
+    type: str
+    description: チェックした索引の場所
+    notes: フックが読む順
+  - name: indexes[].hook_error
+    type: str | None
+    description: フックがその索引を読めない理由
+    notes: 書式の誤りは行の番号を含む。読めたときは `None`
+  - name: indexes[].violations[].location
+    type: str
+    description: 索引の中の場所
+    example: '`rules[0].paths`'
+  - name: indexes[].violations[].reason
+    type: str
+    description: JSON Schema に違反する理由
+  - name: indexes[].missing_rules[].position
+    type: int
+    description: ルールの場所にファイルが無いエントリの位置
+  - name: indexes[].missing_rules[].rule
+    type: str
+    description: 変数参照を展開し、索引のフォルダから解いたルールの場所
+  - name: indexes[].skipped_entries[].position
+    type: int
+    description: フックが読み飛ばすエントリの位置
+  - name: indexes[].skipped_entries[].reason
+    type: str
+    description: 読み飛ばす理由
+    notes: インターフェース定義「ルールの一覧」の `skipped_entries[].reason` と同じ
+response_example: |-
+  ```json
+  {
+    "success": true,
+    "output": "索引 1 件・問題 1 件",
+    "config_path": "/home/user/.config/rule-inject/settings.yaml",
+    "problem_count": 1,
+    "indexes": [
+      {
+        "index": "/home/user/project/rules.yaml",
+        "hook_error": null,
+        "violations": [{"location": "rules[0].paths", "reason": "[] should be non-empty"}],
+        "missing_rules": [],
+        "skipped_entries": []
+      }
+    ]
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: チェックを最後まで行えた
+    notes: 索引の問題はエラーにせず応答に載せる
+  - name: ToolError（絶対パスでない）
+    condition: '`project_dir` が絶対パスでない'
+    notes: インターフェース定義「ルールの一覧」と同じ
+  - name: ToolError（設定ファイルが読めない）
+    condition: インターフェース定義「ルールの一覧」と同じ
+    notes: 設定ファイルの場所と理由を返す
+error_format: インターフェース定義「ルールの一覧」と同じ
+constraints:
+  - item: チェックの順
+    constraint: 索引ごとに、フックと同じ読み取り（`parse_index`）→ JSON Schema → ルールの場所の実在の順に確かめる。フックが読めない索引は JSON Schema に照らさず、ルールの場所も確かめない
+    notes: フックが読めない索引はどのエントリも案内に効かないため、その理由だけを返す
+  - item: 索引の JSON Schema
+    constraint: 索引のキーと値の範囲を JSON Schema 2020-12 で書いた YAML を `jsonschema` で照らす。違反は全て並べる
+    notes: 'Schema が受け付ける範囲は、フックの読み取りが受け付ける範囲の内側にする（例: `paths: []` はフックが読めるが Schema は要素を 1 つ以上求める）。置き場所はモジュール構成が決める'
+  - item: 索引の中の場所
+    constraint: キーは `.`、リストの要素は `[位置]` で結ぶ（例 `rules[0].read_by[1].tools`）。最上位の違反は `$`
+  - item: ルールの場所の実在
+    constraint: '照合に使うエントリ（`enabled: false` と読み飛ばすエントリを除く）の、解いた場所にファイルがあるかを確かめる'
+    notes: 読み飛ばすエントリは場所を解けないため `skipped_entries` に載せる
+  - item: 読む索引
+    constraint: インターフェース定義「ルールの一覧」の制約「読む索引」「変数参照」と同じ
+    notes: 設定ファイルが指すのに無い索引は `hook_error` に理由を載せる
+  - item: 認可
+    constraint: 制限なし
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/索引をチェックする#
+test_file: tests/integration/server/test_check_indexes.py

@@ -1,0 +1,221 @@
+title: "索引のエントリを編集する"
+scenarios:
+  - name: 正常シナリオ（エントリを新規作成する）
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: クライアントが Claude Code の代わりにツールを呼ぶ
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: コメント・引用符つきの値・1 行のフロー形式の `paths` を持つエントリを 1 つ持つ YAML
+        notes: 編集の前の内容を控え、差分を比べる
+      - name: ルールの本文
+        description: 作成するエントリが指すルールの Markdown を置く
+      - name: 引数
+        description: 索引の場所と、ルールの場所・80 字を超える `paths` の glob・`on` を持つ新しいエントリを渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 編集（索引の場所・新しいエントリ）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: 書式つきの内容
+        SV->>SV: エントリを末尾に追加し、書いた後の索引をチェックする
+        SV->>IDX: 書き込む
+        SV-->>CL: 書き込んだエントリの位置
+    expected:
+      - 索引のファイルの末尾に、渡したエントリが追加されている
+      - 編集の前との差分が追加したエントリの行だけで、新しい `paths` が 1 行のフロー形式のリストになっている
+      - 索引をフックと同じ読み取りで読むと、追加したエントリが読み飛ばされずに読める
+      - 応答に、書き込んだエントリの位置が載っている
+    test: test_normal_when_entry_created
+  - name: 正常シナリオ（エントリを編集する）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 索引
+        description: コメントを持つエントリを 2 つ持つ YAML
+        notes: 編集の前の内容を控え、差分を比べる
+      - name: 引数
+        description: 索引の場所、2 つ目のエントリの位置と、書き換える `paths` の値を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 編集（索引の場所・エントリの位置・書き換えるキーと値）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: 書式つきの内容
+        SV->>SV: 対象のエントリのキーを書き換え、書いた後の索引をチェックする
+        SV->>IDX: 書き込む
+        SV-->>CL: 書き込んだエントリの位置
+    expected:
+      - 2 つ目のエントリの `paths` が渡した値になっている
+      - 編集の前との差分が書き換えた行だけで、1 つ目のエントリとコメントは変わっていない
+    test: test_normal_when_entry_updated
+  - name: 正常シナリオ（エントリを無効にする）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 索引
+        description: '`enabled` を書かないエントリを 1 つ持つ YAML'
+      - name: 引数
+        description: '索引の場所、エントリの位置と、`enabled: false` を渡す'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 編集（索引の場所・エントリの位置・enabled: false）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: 書式つきの内容
+        SV->>SV: 対象のエントリに enabled: false を書き、書いた後の索引をチェックする
+        SV->>IDX: 書き込む
+        SV-->>CL: 書き込んだエントリの位置
+    expected:
+      - '対象のエントリに `enabled: false` が書かれている'
+      - 索引をフックと同じ読み取りで読むと、対象のエントリが照合に使われない
+    test: test_normal_when_entry_disabled
+  - name: 正常シナリオ（エントリを削除する）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 索引
+        description: コメントを持つエントリを 2 つ持つ YAML
+      - name: 引数
+        description: 索引の場所と、1 つ目のエントリの位置を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 削除（索引の場所・エントリの位置）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: 書式つきの内容
+        SV->>SV: 対象のエントリを除き、書いた後の索引をチェックする
+        SV->>IDX: 書き込む
+        SV-->>CL: 削除したエントリのルールの場所
+    expected:
+      - 索引のファイルから 1 つ目のエントリが無くなり、2 つ目のエントリとそのコメントは変わっていない
+      - 応答に、削除したエントリのルールの場所が載っている
+    test: test_normal_when_entry_deleted
+  - name: 異常シナリオ（書いた後の索引がチェックに通らない）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 索引
+        description: エントリを 1 つ持つ YAML
+        notes: 編集の前のバイト列を控える
+      - name: 引数
+        description: '索引の場所と、`paths: []` を持つ新しいエントリを渡す'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 編集（索引の場所・新しいエントリ）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: 書式つきの内容
+        SV->>SV: エントリを追加し、書いた後の索引をチェックする（違反）
+        SV-->>CL: ツールのエラー（違反の場所と理由）
+    expected:
+      - ツールの結果がエラーで、違反の索引の中の場所と理由が載っている
+      - 索引のファイルが編集の前のバイト列のまま
+    test: test_error_when_check_failed
+  - name: 異常シナリオ（設定ファイルで読まないファイル）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 対象のファイル
+        description: 設定ファイルで読まない場所に置いた、索引の書式の YAML
+        notes: 編集の前のバイト列を控える
+      - name: 引数
+        description: 対象のファイルの場所と、書式どおりの新しいエントリを渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+
+        CL->>SV: 編集（対象のファイルの場所・新しいエントリ）
+        SV->>CF: 場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読まない
+        SV-->>CL: ツールのエラー（設定ファイルで読む索引でない旨）
+    expected:
+      - ツールの結果がエラーで、設定ファイルで読む索引でない旨が載っている
+      - 対象のファイルが編集の前のバイト列のまま
+    test: test_error_when_not_configured_index
+  - name: 異常シナリオ（エントリの位置が無い）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 索引
+        description: エントリを 1 つ持つ YAML
+        notes: 編集の前のバイト列を控える
+      - name: 引数
+        description: 索引の場所と、存在しないエントリの位置（エントリの数以上）を渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 編集（索引の場所・存在しないエントリの位置）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: エントリ 1 つ
+        SV-->>CL: ツールのエラー（エントリの位置が無い旨とエントリの数）
+    expected:
+      - ツールの結果がエラーで、エントリの位置が無い旨と索引のエントリの数が載っている
+      - 索引のファイルが編集の前のバイト列のまま
+    test: test_error_when_entry_not_found
+lead: Claude Code が常駐の MCP サーバーの編集のツールで、設定ファイルで読む索引のエントリを新規作成・編集・削除する。書いた後の索引がチェックに通らないときは書き込まない。
+issue: 58
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: ツールで 1 エントリを直しても、索引に手で書いたコメントと書式が残り、フックが読めない索引にならないこと
+trigger: Claude Code が編集のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読む
+success_guarantee: 書き込みで索引に新しい問題（フックが読めない・Schema の違反・ルールの場所にファイルが無い）を生まず、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び）は書き換えない。書き込んだ内容は、サーバーを再起動せずに次のツールの呼び出しと次のフックの呼び出しに効く。
+minimal_guarantee: 書き込まなかったときは、索引のファイルを 1 バイトも変えない。設定ファイルで読まないファイルには書き込まない。
+test_file: tests/e2e/単一ユースケース/test_edit_index_entries.py

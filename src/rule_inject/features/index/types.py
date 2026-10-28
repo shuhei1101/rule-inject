@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, get_args
+from typing import Any, Literal, get_args
 
 from rule_inject.shared.errors import IndexReadError
 
@@ -12,6 +13,9 @@ from rule_inject.shared.errors import IndexReadError
 type Operation = Literal["read", "write", "mcp"]
 
 OPERATIONS: tuple[Operation, ...] = get_args(Operation.__value__)
+# 索引を読んだときのエントリごとの扱い（照合に使う・読み飛ばした・無効）
+type EntryStatus = Literal["effective", "skipped", "disabled"]
+
 # 索引が `default_on` を書かないときの止める操作
 DEFAULT_ON: tuple[Operation, ...] = OPERATIONS
 
@@ -81,3 +85,30 @@ class IndexLoadResult:
 
     entries: tuple[IndexEntry, ...]
     failures: tuple[IndexReadError, ...]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class EntryOutcome:
+    """索引の 1 エントリの位置・書かれた値・バージョンと、照合に使うか。"""
+
+    # 索引の `rules` の中の位置（0 始まり）
+    position: int
+    # `parse_index` が読んだエントリのキーと値（書かれたまま）
+    raw: Mapping[str, Any]
+    # `entry_rev(raw)`
+    rev: str
+    status: EntryStatus
+    # 状態が `effective` のときだけ持つ、場所を解きパターンをコンパイルしたエントリ
+    entry: IndexEntry | None
+    # 状態が `skipped` のときだけ持つ、読み飛ばした理由（フックが案内に載せる文言）
+    reason: str | None
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class IndexContent:
+    """読めた索引 1 つのエントリごとの読み取り結果。"""
+
+    # 索引の場所
+    path: str
+    # `rules` の並びの順のエントリごとの結果
+    outcomes: tuple[EntryOutcome, ...]
