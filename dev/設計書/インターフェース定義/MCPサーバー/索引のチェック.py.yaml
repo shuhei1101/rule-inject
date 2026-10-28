@@ -433,7 +433,7 @@ response:
   - name: unmatched_scan.next_cursor
     type: str | None
     description: 辿る時間の上限で止まったときの続きの位置。`cursor` に渡して呼び直すと続きから辿る
-    notes: 最後まで辿れたときは `None`。中身は辿り終えた最後のファイル・まだ当たっていないエントリ・確かめるエントリの一覧のハッシュ・`project_dir`・`include_global` を持つ不透明な文字列
+    notes: 最後まで辿れたときは `None`。中身は辿り終えた最後のファイル・それまでに辿ったファイルの数・まだ当たっていないエントリ・確かめるエントリの一覧のハッシュ・`project_dir`・`include_global` を持つ不透明な文字列
 response_example: |-
   ```json
   {
