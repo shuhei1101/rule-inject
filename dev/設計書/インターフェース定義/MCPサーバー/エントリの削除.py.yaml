@@ -298,7 +298,7 @@ request_example: |-
 response:
   - name: success
     type: bool
-    description: 削除したか
+    description: 常に `true`（削除できないときは ToolError。`dry_run` のときも同じ）
   - name: output
     type: str
     description: 削除した索引と位置の 1 行
