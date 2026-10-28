@@ -16,7 +16,13 @@ PROJECTS_KEY = "projects"
 TOP_KEYS = (GLOBAL_KEY, PROJECTS_KEY)
 # 値がリストのキーと、文字列のキー
 GLOBAL_LIST_KEYS = ("indexes",)
-GLOBAL_SCALAR_KEYS = ("state_dir", "log_dir", "record_retention_days", "log_retention_days")
+GLOBAL_SCALAR_KEYS = (
+    "state_dir",
+    "log_dir",
+    "record_retention_days",
+    "log_retention_days",
+    "server_port",
+)
 PROJECT_LIST_KEYS = ("indexes",)
 PROJECT_SCALAR_KEYS = ("match",)
 EMPTY_LIST = "[]"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 import re
 from collections.abc import Callable, Mapping, Sequence
@@ -13,6 +14,8 @@ from rule_inject.features.index._yaml import ENABLED_KEY, parse_index
 from rule_inject.features.index.types import (
     DEFAULT_ON,
     ArgCondition,
+    EntryOutcome,
+    IndexContent,
     IndexEntry,
     IndexLoadResult,
     MatchedRule,
@@ -33,6 +36,8 @@ ARG_KEY_SEPARATOR = "."
 URL_SCHEMES = ("http://", "https://")
 # エントリを照合に使わない `enabled` の値
 DISABLED_VALUE = "false"
+# エントリのバージョンに使う SHA-256 の 16 進の先頭の字数
+REV_LENGTH = 12
 
 
 def _compile_pattern(source: str) -> MatchPattern:
@@ -84,52 +89,82 @@ def _build_entry(
     )
 
 
-def _load_index(
-    index_path: str, env: Mapping[str, str]
-) -> tuple[tuple[IndexEntry, ...], tuple[IndexReadError, ...]]:
-    """索引 1 つを読んでエントリにし、展開できずに読み飛ばしたエントリの理由を添える。読めなければ IndexReadError を送出する。"""
-    resolved = Path(index_path)
+def entry_rev(raw: Mapping[str, Any]) -> str:
+    """エントリのキーと値から、書式によらないバージョンを求める。"""
+    # キーの順に並べた JSON の SHA-256 の先頭を使う（コメント・引用符・字下げは入らない）
+    canonical = json.dumps(raw, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:REV_LENGTH]
+
+
+def entry_revs(text: str) -> tuple[str, ...]:
+    """索引の内容から、エントリごとのバージョンを位置の順に返す。読めなければ ValueError を送出する。"""
+    return tuple(entry_rev(raw) for raw in parse_index(text)[1])
+
+
+def _outcome(
+    position: int,
+    raw: Mapping[str, Any],
+    *,
+    index_dir: Path,
+    env: Mapping[str, str],
+    fallback_on: frozenset[Operation],
+) -> EntryOutcome:
+    """エントリ 1 つを、無効・読み飛ばし・有効のどれかにして返す。"""
+    rev = entry_rev(raw)
+    # 無効のエントリは照合に使わないため、展開・解決・コンパイルの前に外して理由も残さない
+    if raw.get(ENABLED_KEY) == DISABLED_VALUE:
+        return EntryOutcome(
+            position=position, raw=raw, rev=rev, status="disabled", entry=None, reason=None
+        )
+
+    def skipped(reason: str) -> EntryOutcome:
+        """読み飛ばしたエントリの結果を、理由つきで作る。"""
+        return EntryOutcome(
+            position=position, raw=raw, rev=rev, status="skipped", entry=None, reason=reason
+        )
+
+    # `rule` の変数参照を展開する。展開できない名前が残ったエントリは読み飛ばして理由を残す
+    written_rule = str(raw["rule"])
+    expansion = expand_variables(written_rule, env)
+    if expansion.unresolved:
+        names = NAME_SEPARATOR.join(expansion.unresolved)
+        return skipped(f"rule {written_rule} の変数参照を展開できない: {names}")
+    # URL の `rule` は Read で読めないため、読み飛ばして理由を残す
+    if expansion.text.startswith(URL_SCHEMES):
+        return skipped(f"rule {expansion.text} は URL のため Read で読めない")
+    # 展開した `rule` を索引のフォルダから解き、`on` が無ければ索引の既定で埋める。
+    # 読めない正規表現を持つエントリは読み飛ばして理由を残す
     try:
-        default_on, raw_entries = parse_index(resolved.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise IndexReadError(path=str(resolved), reason=describe(exc)) from exc
+        entry = _build_entry(raw, resolve_location(expansion.text, index_dir), fallback_on)
+    except IndexReadError as exc:
+        return skipped(exc.reason)
+    return EntryOutcome(
+        position=position, raw=raw, rev=rev, status="effective", entry=entry, reason=None
+    )
+
+
+def read_index_text(index_path: str, text: str, env: Mapping[str, str]) -> IndexContent:
+    """索引の内容を読み、エントリごとの位置・バージョン・照合に使うかを返す。読めなければ IndexReadError を送出する。"""
+    try:
+        default_on, raw_entries = parse_index(text)
+    except ValueError as exc:
+        raise IndexReadError(path=index_path, reason=describe(exc)) from exc
     fallback_on = frozenset(default_on or DEFAULT_ON)
-    entries: list[IndexEntry] = []
-    skipped: list[IndexReadError] = []
-    for raw in raw_entries:
-        # 無効のエントリは照合に使わないため、展開・解決・コンパイルの前に外して理由も残さない
-        if raw.get(ENABLED_KEY) == DISABLED_VALUE:
-            continue
-        # `rule` の変数参照を展開する。展開できない名前が残ったエントリは読み飛ばして理由を残す
-        written_rule = str(raw["rule"])
-        expansion = expand_variables(written_rule, env)
-        if expansion.unresolved:
-            names = NAME_SEPARATOR.join(expansion.unresolved)
-            skipped.append(
-                IndexReadError(
-                    path=str(resolved),
-                    reason=f"rule {written_rule} の変数参照を展開できない: {names}",
-                )
-            )
-            continue
-        # URL の `rule` は Read で読めないため、読み飛ばして理由を残す
-        if expansion.text.startswith(URL_SCHEMES):
-            skipped.append(
-                IndexReadError(
-                    path=str(resolved),
-                    reason=f"rule {expansion.text} は URL のため Read で読めない",
-                )
-            )
-            continue
-        # 展開した `rule` を索引のフォルダから解き、`on` が無ければ索引の既定で埋める。
-        # 読めない正規表現を持つエントリは読み飛ばして理由を残す
-        try:
-            entries.append(
-                _build_entry(raw, resolve_location(expansion.text, resolved.parent), fallback_on)
-            )
-        except IndexReadError as exc:
-            skipped.append(IndexReadError(path=str(resolved), reason=exc.reason))
-    return tuple(entries), tuple(skipped)
+    index_dir = Path(index_path).parent
+    outcomes = tuple(
+        _outcome(position, raw, index_dir=index_dir, env=env, fallback_on=fallback_on)
+        for position, raw in enumerate(raw_entries)
+    )
+    return IndexContent(path=index_path, outcomes=outcomes)
+
+
+def read_index(index_path: str, env: Mapping[str, str]) -> IndexContent:
+    """索引 1 つを読み、エントリごとの位置・バージョン・照合に使うかを返す。読めなければ IndexReadError を送出する。"""
+    try:
+        text = Path(index_path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise IndexReadError(path=index_path, reason=describe(exc)) from exc
+    return read_index_text(index_path, text, env)
 
 
 def load_indexes(index_paths: Sequence[str], env: Mapping[str, str]) -> IndexLoadResult:
@@ -139,12 +174,16 @@ def load_indexes(index_paths: Sequence[str], env: Mapping[str, str]) -> IndexLoa
     for index_path in index_paths:
         # 読めない索引は集めて、次の索引へ進む
         try:
-            loaded, skipped = _load_index(index_path, env)
+            content = read_index(index_path, env)
         except IndexReadError as exc:
             failures.append(exc)
             continue
-        entries.extend(loaded)
-        failures.extend(skipped)
+        # 有効なエントリは照合に使い、読み飛ばしたエントリは理由を残す（無効のエントリはどちらにも入れない）
+        for outcome in content.outcomes:
+            if outcome.status == "effective" and outcome.entry is not None:
+                entries.append(outcome.entry)
+            elif outcome.status == "skipped":
+                failures.append(IndexReadError(path=content.path, reason=outcome.reason or ""))
     return IndexLoadResult(entries=tuple(entries), failures=tuple(failures))
 
 

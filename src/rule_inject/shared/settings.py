@@ -29,6 +29,12 @@ DEFAULT_LOG_RETENTION_DAYS = 3
 # 10 進の整数の書き方（符号は付けてよい）
 INTEGER_PATTERN = re.compile(r"[+-]?[0-9]+")
 MIN_RETENTION_DAYS = 1
+# MCP サーバーの待ち受けのポートの既定と、許す範囲
+DEFAULT_SERVER_PORT = 8783
+MIN_SERVER_PORT = 1024
+MAX_SERVER_PORT = 65535
+# `global.server_port` をその起動だけ上書きする環境変数
+PORT_ENV = "RULE_INJECT_PORT"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -40,6 +46,8 @@ class Settings:
     log_dir: Path
     record_retention_days: int
     log_retention_days: int
+    # MCP サーバーが待ち受けるポート（フックは使わない）
+    server_port: int
 
 
 def _matches_project(match: str, project_dir: str) -> bool:
@@ -77,6 +85,30 @@ def _retention_days(config: str, key: str, written: str | None, default: int) ->
     if not INTEGER_PATTERN.fullmatch(written) or int(written) < MIN_RETENTION_DAYS:
         raise _value_error(config, key, written, "1 以上の整数")
     return int(written)
+
+
+def _server_port(config: str, key: str, written: str) -> int:
+    """ポートを許す範囲の整数として読み、範囲の外なら SettingsReadError を送出する。"""
+    if (
+        not INTEGER_PATTERN.fullmatch(written)
+        or not MIN_SERVER_PORT <= int(written) <= MAX_SERVER_PORT
+    ):
+        raise _value_error(config, key, written, f"{MIN_SERVER_PORT}〜{MAX_SERVER_PORT} の整数")
+    return int(written)
+
+
+def _resolve_server_port(
+    config: str, global_values: Mapping[str, object], env: Mapping[str, str]
+) -> int:
+    """環境変数のポート、無ければ設定ファイルのポート、それも無ければ既定のポートを返す。"""
+    from_env = env.get(PORT_ENV)
+    # 環境変数が空でなければ、設定ファイルより優先する（誤りの場所は環境変数の名前）
+    if from_env:
+        return _server_port(PORT_ENV, PORT_ENV, from_env)
+    written = global_values.get("server_port")
+    if written is None:
+        return DEFAULT_SERVER_PORT
+    return _server_port(config, "global.server_port", str(written))
 
 
 def _read_config(env: Mapping[str, str]) -> tuple[str, dict[str, object]]:
@@ -140,6 +172,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         global_values.get("log_retention_days"),
         DEFAULT_LOG_RETENTION_DAYS,
     )
+    server_port = _resolve_server_port(config, global_values, env)
     # 起動したプロジェクトの直下に当たる要素を、並びの順に集める
     project_dir = env.get(PROJECT_DIR_ENV)
     matched = (
@@ -164,4 +197,5 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         log_dir=log_dir,
         record_retention_days=record_days,
         log_retention_days=log_days,
+        server_port=server_port,
     )

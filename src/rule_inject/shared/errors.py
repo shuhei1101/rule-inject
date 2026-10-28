@@ -21,6 +21,10 @@ class IndexReadError(RuleInjectError):
     """索引が無い・読めない・書式に合わない。"""
 
 
+class IndexEditError(RuleInjectError):
+    """索引を編集できない（読めない・位置が無い・バージョンが合わない・書いた後の索引がチェックに通らない）。"""
+
+
 class RecordReadError(RuleInjectError):
     """記録ファイルはあるが読めない。"""
 
