@@ -7,15 +7,17 @@ import asyncio
 TOOL_NAMES = [
     "check_indexes",
     "delete_index_entry",
+    "delete_read_records",
+    "get_read_records",
     "list_rules",
     "search_rules",
     "write_index_entry",
 ]
-INJECTED_NAMES = {"env", "validator", "locks", "check_change"}
+INJECTED_NAMES = {"env", "validator", "locks", "check_change", "scan_time_limit"}
 
 
 def test_build_server() -> None:
-    """5 つのツールを依存の引数なしで登録する（正常系）。"""
+    """7 つのツールを依存の引数なしで登録する（正常系）。"""
     from rule_inject.server.app import build_server
 
     # 準備
@@ -29,4 +31,4 @@ def test_build_server() -> None:
     }
     assert sorted(tool.name for tool in tools) == TOOL_NAMES
     assert schema_keys.isdisjoint(INJECTED_NAMES)
-    assert destructive == {"delete_index_entry"}
+    assert destructive == {"delete_index_entry", "delete_read_records"}

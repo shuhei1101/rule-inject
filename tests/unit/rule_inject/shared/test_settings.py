@@ -403,3 +403,32 @@ def test_load_settings_when_invalid_port_env() -> None:
         load_settings(env)
     assert raised.value.path == "RULE_INJECT_PORT"
     assert "80" in raised.value.reason
+
+
+@pytest.mark.parametrize(
+    ("projects_block", "relative_index"),
+    [
+        pytest.param(
+            "projects:\n  - match: repo\n    indexes:\n      - rules/a.yaml\n",
+            "rules/a.yaml",
+            id="projects_element",
+        ),
+        pytest.param("", "rules.yaml", id="default_location"),
+    ],
+)
+def test_load_settings_when_project_indexes(
+    project_dir: Path,
+    make_settings: Callable[..., Path],
+    projects_block: str,
+    relative_index: str,
+) -> None:
+    """プロジェクトの索引だけを `project_indexes` に分ける（正常系）。"""
+    # 準備
+    (project_dir / "rules.yaml").write_text("rules: []\n", encoding="utf-8")
+    config = make_settings(f"global:\n  indexes:\n    - /g/rules.yaml\n{projects_block}")
+    env = {"RULE_INJECT_CONFIG": str(config), "CLAUDE_PROJECT_DIR": str(project_dir)}
+    # 実行
+    result = load_settings(env)
+    # 検証
+    assert result.indexes == ("/g/rules.yaml", str(project_dir / relative_index))
+    assert result.project_indexes == (str(project_dir / relative_index),)
