@@ -34,4 +34,17 @@
 
 ## テスト結果
 
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/features/index/check/test_scan.py` | 全実行 | 新規 | ❌ | 7 テスト fail（実装前の Red）<br>`rule_inject.features.index.check.scan` と `ScanCursor` が無い |
+| `tests/unit/rule_inject/server/test_check_tools.py` | 全実行 | 新規 | ❌ | 7 テスト fail（実装前の Red）<br>`rule_inject.server.check_tools` が無い。`test_tools.py` の `test_check_indexes` をここへ移した |
+| `tests/unit/rule_inject/server/test_record_tools.py` | 全実行 | 新規 | ❌ | 6 テスト fail（実装前の Red）<br>`rule_inject.server.record_tools` が無い |
+| [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ❌ | 1 テスト fail（実装前の Red）<br>登録するツールが 5 つで、7 つに足りない |
+| [tests/unit/rule_inject/server/test_tools.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_tools.py) | 全実行 | 変更 | ✅ | `test_check_indexes` を `test_check_tools.py` へ移し、残りが pass<br>`テスト結果/20261029020847_66dffa1_単体テスト.log` |
+| [tests/unit](https://github.com/shuhei1101/rule-inject/tree/develop/tests/unit)（上の 30 件を除く） | 全実行 | 実行のみ | ✅ | 343 テスト pass、30 件を除外<br>`テスト結果/20261029020847_66dffa1_単体テスト.log` |
+
+### 結合
+
 なし
