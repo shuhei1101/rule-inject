@@ -301,16 +301,18 @@ def _match_args(conditions: Sequence[ArgCondition], tool_input: Mapping[str, Any
     )
 
 
+def entry_matches_path(entry: IndexEntry, path: str) -> bool:
+    """エントリ 1 件が対象の絶対パスに当たるかを返す。`paths` のどれかに当たり、`exclude` のどれにも当たらなければ当たる。"""
+    return any(
+        _match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.paths
+    ) and not any(
+        _match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.exclude
+    )
+
+
 def match_path(entries: Sequence[IndexEntry], path: str, operation: Operation) -> list[MatchedRule]:
     """対象のパスに当たるエントリをルールごとに 1 件へまとめる。"""
-    matched = [
-        entry
-        for entry in entries
-        if any(_match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.paths)
-        and not any(
-            _match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.exclude
-        )
-    ]
+    matched = [entry for entry in entries if entry_matches_path(entry, path)]
     return _merge(matched, operation)
 
 

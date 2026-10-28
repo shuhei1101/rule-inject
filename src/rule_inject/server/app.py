@@ -1,4 +1,4 @@
-"""コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 5 つのツールを登録する。"""
+"""コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 7 つのツールを登録する。"""
 
 from collections.abc import Mapping
 from functools import partial
@@ -10,24 +10,28 @@ from pydantic import Field
 
 from rule_inject.features.index.check import check_change, load_validator
 from rule_inject.features.index.edit import IndexLocks
-from rule_inject.server import tools
+from rule_inject.server import check_tools, record_tools, tools
 from rule_inject.server.types import ResponseFormat
 
 # MCPServer の名前
 SERVER_NAME = "rule-inject"
+# `check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）
+UNMATCHED_SCAN_TIME_LIMIT = 30
 LIST_LIMIT_FIELD = Field(ge=1, le=tools.MAX_LIST_LIMIT)
 CURSOR_FIELD = Field(pattern=tools.CURSOR_PATTERN)
 POSITION_FIELD = Field(ge=0)
 
 
-def build_server(env: Mapping[str, str]) -> MCPServer:
-    """依存を作ってツールへ渡し、5 つのツールを登録した `MCPServer` を返す。"""
+def build_server(
+    env: Mapping[str, str], *, scan_time_limit: float = UNMATCHED_SCAN_TIME_LIMIT
+) -> MCPServer:
+    """依存を作ってツールへ渡し、7 つのツールを登録した `MCPServer` を返す。"""
     validator = load_validator()
     locks = IndexLocks()
     check = partial(check_change, env=env, validator=validator)
     server = MCPServer(SERVER_NAME)
 
-    # 依存（env・validator・locks・check_change）を閉じ込め、引数をツールの引数だけにした関数を登録する
+    # 依存（env・validator・locks・check_change・scan_time_limit）を閉じ込め、引数をツールの引数だけにした関数を登録する
     # （partial で渡すと、依存の引数がツールの引数の Schema に残るため）
     def list_rules(
         project_dir: str,
@@ -59,10 +63,21 @@ def build_server(env: Mapping[str, str]) -> MCPServer:
             env=env,
         )
 
-    def check_indexes(project_dir: str, format: ResponseFormat = "markdown") -> CallToolResult:
-        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるかで確かめる。"""
-        return tools.check_indexes(
-            project_dir=project_dir, format=format, env=env, validator=validator
+    def check_indexes(
+        project_dir: str,
+        format: ResponseFormat = "markdown",
+        include_global: bool = False,
+        cursor: str | None = None,
+    ) -> CallToolResult:
+        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも当たらないエントリが無いかで確かめる。include_global でユーザー全体の索引の paths の当たらないエントリも確かめ、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に渡して呼び直す。"""
+        return check_tools.check_indexes(
+            project_dir=project_dir,
+            format=format,
+            include_global=include_global,
+            cursor=cursor,
+            env=env,
+            validator=validator,
+            scan_time_limit=scan_time_limit,
         )
 
     def write_index_entry(
@@ -106,17 +121,33 @@ def build_server(env: Mapping[str, str]) -> MCPServer:
             locks=locks,
         )
 
+    def get_read_records(
+        session_id: str | None = None,
+        limit: Annotated[int, LIST_LIMIT_FIELD] = tools.DEFAULT_LIST_LIMIT,
+        cursor: Annotated[str | None, CURSOR_FIELD] = None,
+        format: ResponseFormat = "markdown",
+    ) -> CallToolResult:
+        """セッションの既読のルールごとに、今の本文が既読にした時点と同じか（current・changed・missing）と、既読の履歴に残る読んだ方法を返す。session_id を省くと、既読の記録のあるセッションの一覧を最終更新の新しい順に返す。"""
+        return record_tools.get_read_records(
+            session_id=session_id, limit=limit, cursor=cursor, format=format, env=env
+        )
+
+    def delete_read_records(session_id: str) -> CallToolResult:
+        """セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返す。削除したルールは、フックの次の呼び出しから未読として案内される。既読の履歴は削除しない。"""
+        return record_tools.delete_read_records(session_id=session_id, env=env)
+
     read_only = ToolAnnotations(read_only_hint=True, open_world_hint=False)
-    for function in (list_rules, search_rules, check_indexes):
+    for function in (list_rules, search_rules, check_indexes, get_read_records):
         server.add_tool(function, annotations=read_only, structured_output=False)
     server.add_tool(
         write_index_entry,
         annotations=ToolAnnotations(destructive_hint=False, open_world_hint=False),
         structured_output=False,
     )
-    server.add_tool(
-        delete_index_entry,
-        annotations=ToolAnnotations(destructive_hint=True, open_world_hint=False),
-        structured_output=False,
-    )
+    for function in (delete_index_entry, delete_read_records):
+        server.add_tool(
+            function,
+            annotations=ToolAnnotations(destructive_hint=True, open_world_hint=False),
+            structured_output=False,
+        )
     return server
