@@ -649,13 +649,14 @@ def test_list_read_entries(
     session_id: str,
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """行の順を保ち、壊れた行を読み飛ばす（正常系）。"""
+    """行の順を保ち、ハッシュを持たない行は空のハッシュで残す（正常系）。"""
     # 準備
     write_record(
         [
             f"/r/b.md\t{HASH_A}",
             f"/r/a.md\t{HASH_A}",
             f"/r/b.md\t{HASH_B}",
+            "",
             "/r/c.md",
         ]
     )
@@ -666,6 +667,7 @@ def test_list_read_entries(
         record_types.ReadEntry(location="/r/b.md", hash=HASH_A),
         record_types.ReadEntry(location="/r/a.md", hash=HASH_A),
         record_types.ReadEntry(location="/r/b.md", hash=HASH_B),
+        record_types.ReadEntry(location="/r/c.md", hash=""),
     )
 
 
@@ -687,11 +689,14 @@ def test_list_rule_states(tmp_path: Path) -> None:
     removed = tmp_path / "removed.md"
     removed.write_text("test", encoding="utf-8")
     removed.unlink()
+    without_hash = tmp_path / "without_hash.md"
+    without_hash.write_text("test", encoding="utf-8")
     entries = (
         record_types.ReadEntry(location=str(current), hash=HASH_A),
         record_types.ReadEntry(location=str(current), hash=HASH_TEST),
         record_types.ReadEntry(location=str(changed), hash=HASH_A),
         record_types.ReadEntry(location=str(removed), hash=HASH_TEST),
+        record_types.ReadEntry(location=str(without_hash), hash=""),
     )
     # 実行
     result = service.list_rule_states(entries)
@@ -700,6 +705,7 @@ def test_list_rule_states(tmp_path: Path) -> None:
         (str(current), "current"),
         (str(changed), "changed"),
         (str(removed), "missing"),
+        (str(without_hash), "changed"),
     )
 
 
