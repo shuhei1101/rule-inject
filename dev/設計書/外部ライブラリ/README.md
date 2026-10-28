@@ -8,3 +8,5 @@
 | --- | --- |
 | [claude-code](./claude-code.yaml) | フックを呼ぶ Claude Code の CLI |
 | [mcp](./mcp.yaml) | E2E テストの文書の MCP サーバーを書く公式の Python SDK |
+| [jsonschema](./jsonschema.yaml) | 索引を JSON Schema で検証するライブラリ |
+| [ruamel-yaml](./ruamel-yaml.yaml) | 索引をコメントと書式を残したまま書き換える YAML ライブラリ |
