@@ -183,9 +183,9 @@ functions:
       - name: test_check_index_text_when_violation
         case: 正常
         summary: JSON Schema への違反を全て並べる
-        condition: '`rules[0].paths: []` と `rules[1]` に知らないキー `foo` を持つ索引（フックは読める）'
+        condition: '`rules[0].paths: []` と `rules[1].on: []` を持つ索引（フックは読める）'
         mock: なし
-        expected: '`violation` が 2 件で、場所が `rules[0].paths` と `rules[1]`、`position` が 0 と 1、`rev` が各エントリのバージョン'
+        expected: '`violation` が 2 件で、場所が `rules[0].paths` と `rules[1].on`、`position` が 0 と 1、`rev` が各エントリのバージョン'
       - name: test_check_index_text_when_missing_rule
         case: 正常
         summary: ルールの場所にファイルが無いエントリを返し、無効のエントリは確かめない
@@ -313,3 +313,5 @@ notes:
     | `rules[].args`・`read_by[].args` | 引数のキー → 1 字以上の文字列を 1 つ以上並べたリストのマップ（キーを 1 つ以上持つ） |
     | `rules[].read_by` | `tools` が必須で、キーは `tools`・`args` だけのマップを 1 つ以上並べたリスト |
     | `rules[].enabled` | 真偽値 |
+test_files:
+  - tests/unit/rule_inject/features/index/check/test_service.py

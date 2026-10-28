@@ -418,3 +418,7 @@ functions:
       - name: IndexEditError
         condition: 一時ファイルを書けない・置き換えられない
         message: path は索引の場所、reason は `describe(exc)`
+test_files:
+  - tests/unit/rule_inject/features/index/edit/test_service.py
+  - tests/unit/rule_inject/features/index/edit/test_types.py
+  - tests/unit/rule_inject/features/index/edit/test_yaml.py

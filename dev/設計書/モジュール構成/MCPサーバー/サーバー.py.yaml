@@ -866,3 +866,8 @@ functions:
         condition: 1 件あたり約 1,000 字のエントリ 100 件
         mock: なし
         expected: 返した応答の text が `MAX_RESPONSE_CHARS` 以下で、件数を 1 件増やすと超える
+test_files:
+  - tests/unit/rule_inject/server/test_main.py
+  - tests/unit/rule_inject/server/test_app.py
+  - tests/unit/rule_inject/server/test_tools.py
+  - tests/unit/rule_inject/server/test_format.py
