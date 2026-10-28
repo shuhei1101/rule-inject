@@ -490,3 +490,4 @@ notes:
     | `rules[].enabled` | 真偽値 |
 test_files:
   - tests/unit/rule_inject/features/index/check/test_service.py
+  - tests/unit/rule_inject/features/index/check/test_scan.py
