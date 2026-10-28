@@ -129,6 +129,35 @@ flows:
       - '`written` が `false` で、`diff` に追加するエントリの行が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_normal_when_dry_run
+  - name: 正常系（もとから問題のある索引のエントリを修正する）
+    summary: 他のエントリにもとから問題が残っていても、新しい問題を生まない書き込みは通す
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するフローと同じ
+      - name: 索引
+        description: '1 つ目が `paths: []`、2 つ目が `rule` の場所にファイルが無いエントリを持つ'
+      - name: 引数
+        description: '`position: 0`、1 つ目のエントリの `expected_rev`、`entry` に空でない `paths`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as write_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev・entry
+        IF->>IDX: round-trip で読む
+        IDX-->>IF: 書式つきの内容
+        IF->>IF: 書く前と書いた後をチェックし、新しい問題が無いことを確かめる
+        IF->>IDX: 一時ファイルを書き、置き換える
+        IF-->>C: position・rev・diff
+      ```
+    expected:
+      - '`written` が `true` で、1 つ目のエントリの `paths` が渡した値'
+      - 2 つ目のエントリが書き込みの前のまま残っている
+    test: test_normal_when_existing_problems_remain
   - name: 異常系（引数の組み合わせが誤り・ToolError）
     summary: '`position` だけを渡し `expected_rev` を渡さない呼び出しをエラーにする'
     setup:
@@ -313,7 +342,7 @@ flows:
       - '結果が `isError: true` で、`rules[1].paths` と違反の理由が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_check_failed
-lead: 設定ファイルで読む索引に、エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。書いた後の索引がチェックに通らないときは書き込まない。
+lead: 設定ファイルで読む索引に、エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。書いた後の索引に新しい問題が出るときは書き込まない。
 identifier: write_index_entry
 idempotent: false
 side_effects: 索引のファイルを書き換える（`dry_run` のときとエラーのときは書き換えない）
@@ -378,7 +407,7 @@ request_example: |-
 response:
   - name: success
     type: bool
-    description: 書き込んだか（`dry_run` のときはチェックに通ったか）
+    description: 書き込んだか（`dry_run` のときは新しい問題が無かったか）
   - name: output
     type: str
     description: 書き込んだ索引と位置の 1 行
@@ -413,7 +442,7 @@ response_example: |-
   ```
 exceptions:
   - name: なし（正常終了）
-    condition: 書いた後の索引がチェックに通り、書き込んだ（`dry_run` のときは書き込まずに返した）
+    condition: 書いた後の索引に新しい問題が無く、書き込んだ（`dry_run` のときは書き込まずに返した）
   - name: ToolError（引数の組み合わせが誤り）
     condition: '`project_dir` が絶対パスでない、`position` を渡して `expected_rev` を渡さない、`position` が無いのに `remove_keys` を渡す、`entry` と `remove_keys` に同じキーがある'
     notes: 'ツールの結果を `isError: true` にし、渡し方を返す'
@@ -433,19 +462,19 @@ exceptions:
     condition: '`expected_rev` が今のエントリのバージョンと違う'
     notes: 今のバージョンと、一覧を取り直してから呼び直す旨を返す
   - name: ToolError（書いた後の索引がチェックに通らない）
-    condition: 書いた後の索引をフックが読めない・JSON Schema に違反する・ルールの場所にファイルが無いエントリがある
-    notes: 書き込まずに、問題ごとの索引の中の場所と理由を返す。対象のエントリ以外にもとからある問題も含める
+    condition: 書いた後の索引をフックが読めない、または書く前の索引に無かった問題（JSON Schema の違反・ルールの場所にファイルが無いエントリ）が出る
+    notes: 書き込まずに、新しく出た問題ごとの索引の中の場所と理由を返す
 error_format: 'インターフェース定義「ルールの一覧」と同じ。チェックに通らないときは、問題を `{索引の中の場所}: {理由}` の行で全て並べる'
 constraints:
   - item: 書き込める索引
     constraint: '`project_dir` を `CLAUDE_PROJECT_DIR` として設定ファイルから決めた読む索引だけ。`~` を展開し、シンボリックリンクを解いた場所で比べる'
     notes: 任意のファイルへの書き込みを防ぐ
   - item: 書き込みの手順
-    constraint: ロックの中で、索引を読む → バージョンを比べる → 変更を当てた後の内容をチェックする → 同じフォルダの一時ファイルに書き、索引と置き換える
+    constraint: ロックの中で、索引を読む → バージョンを比べる → 変更を当てる前と後の内容をチェックする → 同じフォルダの一時ファイルに書き、索引と置き換える
     notes: フックは置き換えの前か後のどちらかの内容だけを読む。書き込まなかったときは索引のファイルを 1 バイトも変えない
   - item: チェック
-    constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書いた後の索引の内容を確かめる
-    notes: 読み飛ばすエントリは問題に数えない
+    constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書く前と書いた後の索引を確かめる。書いた後にフックが読めないか、書く前に無かった問題が出るときだけ断る
+    notes: 問題はエントリのバージョンと理由で照らし合わせる（位置は新規作成・削除でずれるため）。書き換えたエントリの問題は、書く前に同じ理由があっても新しい問題として扱う。もとからある問題は、この書き込みで生じたものではないため書き込みを止めない
   - item: 書式の維持
     constraint: '`ruamel.yaml` の round-trip で読み書きし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び）を変えない。新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリストで書く'
     notes: 設定は PoC の結果（`width` 4096・字下げ mapping 2 / sequence 4 / offset 2・`preserve_quotes`）。フックの読み取りが受け付ける形式だけで書く

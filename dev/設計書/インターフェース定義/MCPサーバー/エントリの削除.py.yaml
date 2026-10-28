@@ -28,7 +28,7 @@ flows:
         CF-->>IF: 読む索引
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
-        IF->>IF: バージョンを比べ、エントリを除いてチェックする
+        IF->>IF: バージョンを比べ、エントリを除く
         IF->>IDX: 一時ファイルを書き、置き換える
         IF-->>C: rule・diff
       ```
@@ -37,7 +37,7 @@ flows:
       - 応答の `rule` が削除したエントリの `rule` で、`written` が `true`
     test: test_normal
   - name: 正常系（書き込まずに確かめる）
-    summary: '`dry_run` でチェックと差分だけを返す'
+    summary: '`dry_run` で差分だけを返す'
     setup:
       - name: Mock
         description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
@@ -58,13 +58,42 @@ flows:
         C->>IF: index・position 0・expected_rev・dry_run: true
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
-        IF->>IF: エントリを除いてチェックする
+        IF->>IF: エントリを除く
         IF-->>C: written: false・diff
       ```
     expected:
       - '`written` が `false` で、`diff` に削除するエントリの行が載っている'
       - 索引のファイルが削除の前のバイト列のまま
     test: test_normal_when_dry_run
+  - name: 正常系（もとから問題のある索引から削除する）
+    summary: 他のエントリにもとから問題が残っていても削除する
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 索引
+        description: '1 つ目が `rule` の場所にファイルが無く、2 つ目が `paths: []` を持つ'
+      - name: 引数
+        description: '`position: 0` と 1 つ目のエントリの `expected_rev`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as delete_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev
+        IF->>IDX: round-trip で読む
+        IDX-->>IF: 書式つきの内容
+        IF->>IF: バージョンを比べ、エントリを除く
+        IF->>IDX: 一時ファイルを書き、置き換える
+        IF-->>C: rule・diff
+      ```
+    expected:
+      - '`written` が `true` で、索引のエントリが `paths: []` を持つ 1 つだけ'
+      - 残ったエントリの行が削除の前のまま
+    test: test_normal_when_existing_problems_remain
   - name: 異常系（絶対パスでない・ToolError）
     summary: 相対パスの `project_dir` をエラーにする
     setup:
@@ -220,36 +249,7 @@ flows:
       - '結果が `isError: true` で、今のバージョンと一覧を取り直す旨が載っている'
       - 索引のファイルがテストが書き換えた後のバイト列のまま
     test: test_error_when_rev_mismatch
-  - name: 異常系（削除した後の索引がチェックに通らない・ToolError）
-    summary: 他のエントリに問題が残る索引からの削除を断る
-    setup:
-      - name: Mock
-        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
-      - name: 設定ファイル
-        description: 正常系と同じ
-      - name: 索引
-        description: 'エントリを 2 つ持ち、2 つ目が `paths: []` を持つ'
-        notes: 削除の前のバイト列を控える
-      - name: 引数
-        description: '`position: 0` と 1 つ目のエントリの `expected_rev`'
-    flow: |-
-      ```mermaid
-      sequenceDiagram
-        participant C as クライアント
-        participant IF as delete_index_entry
-        participant IDX as 索引
-
-        C->>IF: index・position 0・expected_rev
-        IF->>IDX: round-trip で読む
-        IDX-->>IF: 書式つきの内容
-        IF->>IF: エントリを除いてチェックする（違反）
-        IF-->>C: isError: true（違反の場所と理由）
-      ```
-    expected:
-      - '結果が `isError: true` で、`rules[0].paths` と違反の理由が載っている'
-      - 索引のファイルが削除の前のバイト列のまま
-    test: test_error_when_check_failed
-lead: 設定ファイルで読む索引から、位置で指したエントリを削除する。削除した後の索引がチェックに通らないときは書き込まない。
+lead: 設定ファイルで読む索引から、位置で指したエントリを削除する。
 identifier: delete_index_entry
 idempotent: false
 side_effects: 索引のファイルを書き換える（`dry_run` のときとエラーのときは書き換えない）。`destructiveHint`
@@ -285,7 +285,7 @@ request:
     required: false
     default: 'false'
     location: argument
-    description: 書き込まずにチェックと差分だけを返すか
+    description: 書き込まずに差分だけを返すか
 request_example: |-
   ```json
   {
@@ -298,7 +298,7 @@ request_example: |-
 response:
   - name: success
     type: bool
-    description: 削除したか（`dry_run` のときはチェックに通ったか）
+    description: 削除したか
   - name: output
     type: str
     description: 削除した索引と位置の 1 行
@@ -319,7 +319,7 @@ response:
 response_notes: 削除した位置より後ろのエントリは位置が 1 つずつ前へずれる。続けて書き込むときは一覧を取り直す
 exceptions:
   - name: なし（正常終了）
-    condition: 削除した後の索引がチェックに通り、書き込んだ（`dry_run` のときは書き込まずに返した）
+    condition: エントリを除いて書き込んだ（`dry_run` のときは書き込まずに返した）
   - name: ToolError（絶対パスでない）
     condition: '`project_dir` が絶対パスでない'
     notes: インターフェース定義「ルールの一覧」と同じ
@@ -338,17 +338,15 @@ exceptions:
   - name: ToolError（バージョンが合わない）
     condition: '`expected_rev` が今のエントリのバージョンと違う'
     notes: 今のバージョンと、一覧を取り直してから呼び直す旨を返す
-  - name: ToolError（削除した後の索引がチェックに通らない）
-    condition: 削除した後の索引に、他のエントリの問題（フックが読めない・JSON Schema に違反する・ルールの場所にファイルが無い）が残る
-    notes: 書き込まずに、問題ごとの索引の中の場所と理由を返す
 error_format: インターフェース定義「エントリの書き込み」と同じ
 constraints:
   - item: 書き込める索引
     constraint: インターフェース定義「エントリの書き込み」と同じ
   - item: 書き込みの手順
-    constraint: インターフェース定義「エントリの書き込み」と同じ（変更は対象のエントリを除くこと）
+    constraint: インターフェース定義「エントリの書き込み」と同じ（変更は対象のエントリを除くこと。チェックは行わない）
   - item: チェック
-    constraint: インターフェース定義「エントリの書き込み」と同じ
+    constraint: 行わない
+    notes: エントリを除くだけでは、フックが読めなくなることも新しい問題が出ることも無い。もとからある問題で削除を止めない（インターフェース定義「エントリの書き込み」の制約「チェック」）
   - item: 書式の維持
     constraint: 対象のエントリの行と、そのエントリに付いたコメントだけを除き、他の行を変えない
     notes: 次のエントリの直前に置いたコメントは次のエントリに付くものとして残す
