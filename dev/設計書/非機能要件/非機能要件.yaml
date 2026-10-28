@@ -118,4 +118,43 @@ requirements:
         condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
         measurement: 食い違うバージョンを置いた一時フォルダの 4 つのファイルを検査へ渡す
         expected: 検査が fail し、失敗の文に 4 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
+  - name: MCPサーバーの待ち受けのアドレス
+    english_name: server_bind_address
+    category: セキュリティ
+    external_constraint: 制限なし
+    source_kind: ユーザー要望
+    source: https://github.com/shuhei1101/rule-inject/issues/58
+    value: 127.0.0.1
+    rationale: 索引を書き換えるツールを持つため、同じ端末の Claude Code だけから届くようにループバックに限る。認証は持たない
+    measurement: サーバーを起動し、待ち受けているソケットのアドレスが 127.0.0.1 だけであることを確かめる
+    status: planned
+  - name: MCPサーバーの既定のポート
+    english_name: server_default_port
+    category: 動作環境
+    external_constraint: 制限なし
+    source_kind: 制限なし
+    value: '8783'
+    rationale: コーディング規約『MCP』のポートの台帳で rule-inject に割り当てた値。同じ端末で動く他の MCP サーバーとぶつからない。環境変数 `RULE_INJECT_PORT` と設定ファイルの `global.server_port` で変えられる（設定『プラグイン』）
+    overflow: ポートが使われているときは起動せず、ポートと理由を標準エラーへ出して終了コード 1 で終える（インターフェース定義「サーバーの起動」の異常系）
+    status: planned
+  - name: MCPのツールの応答の長さ
+    english_name: tool_result_length
+    category: 性能
+    external_constraint: Claude Code は成功したツールの結果のテキストが 50,000 字を超えるとファイルへ退避する。結果は既定で 25,000 トークンに制限され（`MAX_MCP_OUTPUT_TOKENS`）、10,000 トークンを超えると警告が出る
+    source_kind: 実行基盤の制限
+    source: https://code.claude.com/docs/en/mcp
+    value: 40,000
+    unit: 字
+    rationale: ファイルへの退避（50,000 字）に届かず、結果がそのままコンテキストに載るように余裕 20% を引いた。既定の `limit`（100 件）は、実測の索引でエントリ 1 件の JSON が平均 200 字ほどのため、20,000 字前後でこの値に収まる
+    breakdown:
+      - part: 外部の上限
+        value: 50,000 字
+        notes: これを超えるとファイルへ退避される
+      - part: 余裕
+        value: 10,000 字
+        notes: 上限の 20%
+      - part: 決定値
+        value: 40,000 字
+    overflow: 応答がこの字数を超えるときは、超える手前のエントリで切り、`total` と `next_cursor` を返して続きを取らせる（インターフェース定義「ルールの一覧」の正常系（続きがある））
+    status: planned
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。

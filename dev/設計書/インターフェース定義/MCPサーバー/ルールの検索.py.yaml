@@ -1,0 +1,268 @@
+title: "ルールの検索"
+entry:
+  kind: mcp_tool
+  value: '`search_rules`'
+flows:
+  - name: 正常系（ファイルのパスで検索する）
+    summary: パスに当たる 2 つのルールを、止めるかとともに返す
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` のエントリ'
+        notes: ルールの場所は別々にする
+      - name: 引数
+        description: '`.py` の絶対パスと `operation: write`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as search_rules
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        C->>IF: project_dir・path・operation: write
+        IF->>CF: 読む
+        CF-->>IF: 索引の場所
+        IF->>IDX: 読む
+        IDX-->>IF: エントリ
+        IF->>IF: パスと write で照合する
+        IF-->>C: matched 2 件
+      ```
+    expected:
+      - '`matched` に 2 つのルールの場所が載っている'
+      - '`on: [write]` のルールの `blocking` が `true`、`on: [read]` のルールの `blocking` が `false`'
+      - '`operation` が `write`'
+    test: test_normal_when_searched_by_path
+  - name: 正常系（MCPのツールの呼び出しで検索する）
+    summary: ツール名と引数に当たるルールを返す
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: ファイルのパスで検索するフローと同じ
+      - name: 索引
+        description: '`tools: ["mcp__*__write_*"]`・`args: {doc_path: ["dev/**"]}`・`on: [mcp]` のエントリ'
+      - name: 引数
+        description: パターンに当たる `tool_name` と、`doc_path` が `dev/` で始まる `arguments`
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as search_rules
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        C->>IF: project_dir・tool_name・arguments
+        IF->>CF: 読む
+        CF-->>IF: 索引の場所
+        IF->>IDX: 読む
+        IDX-->>IF: エントリ
+        IF->>IF: ツール名と引数を mcp で照合する
+        IF-->>C: matched 1 件
+      ```
+    expected:
+      - '`matched` にエントリのルールの場所が載り、`blocking` が `true`'
+      - '`operation` が `mcp`'
+    test: test_normal_when_searched_by_tool
+  - name: 正常系（当たるルールが無い）
+    summary: 無効のエントリだけが当たるときは空で返す
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: ファイルのパスで検索するフローと同じ
+      - name: 索引
+        description: '対象のパスに当たる `enabled: false` のエントリだけ'
+      - name: 引数
+        description: ファイルのパスで検索するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as search_rules
+        participant IDX as 索引
+
+        C->>IF: project_dir・path・operation: write
+        IF->>IDX: 読む
+        IDX-->>IF: 無効のエントリだけ
+        IF-->>C: matched 空
+      ```
+    expected:
+      - '`success` が `true` で `matched` が空'
+    test: test_normal_when_no_rule_matched
+  - name: 異常系（パスとツール名の両方を渡す・ToolError）
+    summary: 引数の組み合わせの誤りをエラーにする
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 引数
+        description: '`project_dir` に加え、`path`・`operation` と `tool_name` を渡す'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as search_rules
+
+        C->>IF: path と tool_name の両方
+        IF-->>C: isError: true（どちらか 1 つを渡す旨）
+      ```
+    expected:
+      - '結果が `isError: true` で、`path` か `tool_name` のどちらか 1 つを渡す旨が載っている'
+    test: test_error_when_both_path_and_tool
+  - name: 異常系（設定ファイルが読めない・ToolError）
+    summary: 呼び出しの時点で読めない設定ファイルをエラーにする
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`global` に知らないキーを持つ設定ファイル'
+      - name: 引数
+        description: ファイルのパスで検索するフローと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as search_rules
+        participant CF as 設定ファイル
+
+        C->>IF: project_dir・path・operation
+        IF->>CF: 読む
+        CF-->>IF: 知らないキー
+        IF-->>C: isError: true（設定ファイルの場所と理由）
+      ```
+    expected:
+      - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
+    test: test_error_when_settings_unreadable
+lead: プロジェクトの直下と、ファイルのパスと操作の種別か MCP のツールの呼び出しを受け、フックと同じ照合で当たるルールと、未読のときに操作を止めるかを返す。
+identifier: search_rules
+idempotent: true
+side_effects: なし（`readOnlyHint`。既読の記録も読まない）
+request:
+  - name: project_dir
+    type: str
+    required: true
+    location: argument
+    description: プロジェクトの直下
+    constraints: 絶対パス
+    notes: インターフェース定義「ルールの一覧」の `project_dir` と同じ
+  - name: path
+    type: str
+    required: false
+    default: なし（ツールの呼び出しで検索する）
+    location: argument
+    description: 操作の対象のファイルのパス
+    constraints: 絶対パス。`tool_name` とどちらか 1 つだけ
+    notes: まだ無いパスも受ける
+  - name: operation
+    type: Literal['read', 'write']
+    required: false
+    default: なし（`path` を渡すときは必須）
+    location: argument
+    description: パスへの操作の種別
+    notes: '`read` は Read・Grep・Bash の読み取り、`write` は Edit・Write・NotebookEdit に当たる。ツールの呼び出しのときは `mcp` として照合する'
+  - name: tool_name
+    type: str
+    required: false
+    default: なし（パスで検索する）
+    location: argument
+    description: MCP のツールの完全名
+    constraints: '`mcp__` で始まる。`path` とどちらか 1 つだけ'
+  - name: arguments
+    type: dict[str, Any]
+    required: false
+    default: なし（引数を持たない呼び出しとして照合する）
+    location: argument
+    description: MCP のツールの引数
+    notes: '`tool_name` を渡すときだけ使う。エントリの `args` と照合する'
+  - name: format
+    type: Literal['markdown', 'json']
+    required: false
+    default: markdown
+    location: argument
+    description: 応答の形式
+    notes: インターフェース定義「ルールの一覧」の `format` と同じ
+request_example: |-
+  ```json
+  {
+    "project_dir": "/home/user/project",
+    "tool_name": "mcp__plugin_docs__write_doc",
+    "arguments": {"doc_path": "dev/設計書/設定/プラグイン"},
+    "format": "json"
+  }
+  ```
+response:
+  - name: success
+    type: bool
+    description: 照合できたか
+    notes: 当たるルールが無くても `true`
+  - name: output
+    type: str
+    description: 当たったルールの件数と、止めるルールの件数の 1 行
+  - name: config_path
+    type: str | None
+    description: サーバーが読んだ設定ファイルの場所
+  - name: operation
+    type: Literal['read', 'write', 'mcp']
+    description: 照合に使った操作の種別
+  - name: matched[].rule
+    type: str
+    description: 当たったルールの場所（解いた後）
+    notes: 同じ場所に当たったエントリは 1 件にまとめる
+  - name: matched[].blocking
+    type: bool
+    description: 未読のときに操作を止めるか
+    notes: 当たったエントリのどれか 1 つでも `operation` が `on` に入っていれば `true`
+  - name: matched[].entries[].index
+    type: str
+    description: 当たったエントリを持つ索引の場所
+  - name: matched[].entries[].position
+    type: int
+    description: 索引の `rules` の中の位置
+  - name: unreadable_indexes[]
+    type: list[object]
+    description: 読めない索引の場所と理由
+    notes: インターフェース定義「ルールの一覧」の `unreadable_indexes` と同じ項目
+  - name: skipped_entries[]
+    type: list[object]
+    description: 読み飛ばして照合に使わなかったエントリと理由
+    notes: インターフェース定義「ルールの一覧」の `skipped_entries` と同じ項目
+response_example: |-
+  ```json
+  {
+    "success": true,
+    "output": "当たったルール 2 件・止めるルール 1 件",
+    "config_path": "/home/user/.config/rule-inject/settings.yaml",
+    "operation": "write",
+    "matched": [
+      {"rule": "/home/user/rules/python.md", "blocking": true, "entries": [{"index": "/home/user/project/rules.yaml", "position": 0}]},
+      {"rule": "/home/user/rules/naming.md", "blocking": false, "entries": [{"index": "/home/user/project/rules.yaml", "position": 1}]}
+    ],
+    "unreadable_indexes": [],
+    "skipped_entries": []
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: 照合できた
+    notes: 当たるルールが無いときは `matched` を空で返す
+  - name: ToolError（引数の組み合わせが誤り）
+    condition: '`path` と `tool_name` の両方を渡した、どちらも渡さない、`path` を渡して `operation` を渡さない、`project_dir` か `path` が絶対パスでない'
+    notes: 'ツールの結果を `isError: true` にし、渡し方を返す'
+  - name: ToolError（設定ファイルが読めない）
+    condition: インターフェース定義「ルールの一覧」と同じ
+    notes: 設定ファイルの場所と理由を返す
+error_format: インターフェース定義「ルールの一覧」と同じ
+constraints:
+  - item: 照合
+    constraint: フックの `PreToolUse`（インターフェース定義「ルール案内」）と同じ索引・同じコードで当て、既読の記録を見ずに未読とみなした結果を返す
+    notes: '`enabled: false` のエントリは照合に使わない。パターンの正規表現・引数の照合の規則も「ルール案内」と同じ'
+  - item: 読む索引
+    constraint: インターフェース定義「ルールの一覧」の制約「読む索引」「変数参照」と同じ
+  - item: 認可
+    constraint: 制限なし
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/操作に当たるルールを検索する#
+  - dev/設計書/インターフェース定義/プラグイン/ルール案内.py#

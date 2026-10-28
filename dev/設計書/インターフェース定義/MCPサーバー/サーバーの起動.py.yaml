@@ -1,0 +1,180 @@
+title: "サーバーの起動"
+entry:
+  kind: operation
+  value: '`python -m rule_inject.server`（前面で動くプロセス。ローカルのクローンでサーバーの依存を入れて起動する）'
+flows:
+  - name: 正常系
+    summary: 設定ファイルのポートで待ち受け、MCP のクライアントから接続できる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: '`global.server_port` に空いているポートを書いた設定ファイル'
+        notes: '`RULE_INJECT_CONFIG` で指し、`RULE_INJECT_PORT` は渡さない'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド
+        SV->>CF: 読む
+        CF-->>SV: global.server_port
+        SV->>SV: 127.0.0.1 のポートで待ち受ける
+        U->>SV: MCP の initialize（/mcp）
+        SV-->>U: 応答
+      ```
+    expected:
+      - '`127.0.0.1` の設定ファイルのポートだけで待ち受けている'
+      - '`http://127.0.0.1:{ポート}/mcp` へ MCP のクライアントで接続でき、ツールの一覧に `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry` が並ぶ'
+    test: test_normal
+  - name: 正常系（環境変数でポートを上書きする）
+    summary: '`RULE_INJECT_PORT` のポートで待ち受ける'
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` に設定ファイルと別の空いているポートを渡す'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド（RULE_INJECT_PORT）
+        SV->>CF: 読む
+        CF-->>SV: global.server_port
+        SV->>SV: RULE_INJECT_PORT のポートで待ち受ける
+      ```
+    expected:
+      - '`RULE_INJECT_PORT` のポートで待ち受け、設定ファイルのポートでは待ち受けていない'
+    test: test_normal_when_port_overridden
+  - name: 正常系（止める）
+    summary: SIGTERM で待ち受けを閉じて終わる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 起動したサーバー
+        description: 正常系と同じ設定ファイルで待ち受けているサーバー
+        notes: 待ち受けを確かめてから止める
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+
+        U->>SV: SIGTERM
+        SV->>SV: 待ち受けを閉じる
+        SV-->>U: 標準エラーに終了の処理<br>終了コード 143
+      ```
+    expected:
+      - 終了コードが 143
+      - 標準エラーに `Application shutdown complete.` が出ている
+      - 設定ファイルのポートで待ち受けていない
+    test: test_normal_when_stopped
+  - name: 異常系（ポートが使われている・OSError）
+    summary: 待ち受けに失敗し、理由を書いて終わる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: ポートの使用
+        description: テストが設定ファイルのポートを先に待ち受けておく
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド
+        SV->>CF: 読む
+        CF-->>SV: global.server_port
+        SV->>SV: 待ち受けに失敗する
+        SV-->>U: 標準エラーにポートと理由<br>0 以外の終了コード
+      ```
+    expected:
+      - 終了コードが 0 以外
+      - 標準エラーに、ポートの番号と使われている旨が載っている
+    test: test_error_when_port_in_use
+  - name: 異常系（設定ファイルが読めない・SettingsReadError）
+    summary: 待ち受ける前に設定ファイルの誤りで終わる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: '`global` に知らないキーを持つ設定ファイル'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド
+        SV->>CF: 読む
+        CF-->>SV: 知らないキー
+        SV-->>U: 標準エラーに設定ファイルの場所と理由<br>0 以外の終了コード
+      ```
+    expected:
+      - 終了コードが 0 以外で、どのポートでも待ち受けていない
+      - 標準エラーに、設定ファイルの場所と読めない理由が載っている
+    test: test_error_when_settings_unreadable
+lead: 設定ファイルを読み、`127.0.0.1` のポートで Streamable HTTP の MCP サーバーとして待ち受ける。Ctrl+C か SIGTERM で待ち受けを閉じて終わる。
+identifier: server_start
+idempotent: false
+side_effects: '`127.0.0.1` のポートで待ち受ける。索引・既読の記録・ログには書かない'
+exclusivity: 同じポートで 2 つ目を起動すると、待ち受けに失敗して終わる（1 つだけ常駐させる）
+request:
+  - name: RULE_INJECT_CONFIG
+    type: str
+    required: false
+    default: なし（設定ファイルを読まず、全てのキーを既定値で動かす）
+    description: 設定ファイルの場所（起動の側の環境変数）
+    constraints: 絶対パスか `~` で始まるパス
+    notes: フックと同じ設定ファイルを指す
+  - name: RULE_INJECT_PORT
+    type: str
+    required: false
+    default: なし（設定ファイルの `global.server_port`）
+    description: 待ち受けのポートをその起動だけ上書きする環境変数
+    constraints: 1024〜65535 の整数
+    notes: Claude Code の接続先の `url` の `${RULE_INJECT_PORT:-8783}` と同じ値を渡す
+exceptions:
+  - name: なし（正常終了）
+    condition: Ctrl+C か SIGTERM を受けた
+    notes: 待ち受けを閉じ、標準エラーに終了の処理を書いて終わる。SIGTERM のときの終了コードは 143（シグナルで終わる）
+  - name: OSError（ポートが使われている）
+    condition: 待ち受けのポートを別のプロセスが使っている
+    notes: 待ち受けずに、標準エラーへポートの番号と使われている旨を書き、0 以外の終了コードで終わる
+  - name: SettingsReadError（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ。`RULE_INJECT_PORT` が許す値の外'
+    notes: 待ち受ける前に確かめ、待ち受けずに、標準エラーへ設定ファイルの場所（環境変数のときはその名前）と理由を書き、0 以外の終了コードで終わる
+constraints:
+  - item: 待ち受けのアドレス
+    constraint: '`127.0.0.1` だけ'
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの待ち受けのアドレス]
+    notes: 引数・設定ファイルでは変えられない
+  - item: 待ち受けのポート
+    constraint: '`RULE_INJECT_PORT` があればその値、無ければ設定ファイルの `global.server_port`、それも無ければ既定のポート'
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの既定のポート]
+    notes: 起動時に 1 回だけ読む。変えたときは再起動する
+  - item: MCP のエンドポイント
+    constraint: '`http://127.0.0.1:{ポート}/mcp`'
+    notes: 利用者は `claude mcp add --transport http -s user` でこの URL を登録する
+  - item: 設定ファイルの読み直し
+    constraint: 起動時に読み、待ち受けのポート以外は各ツールの呼び出しのたびに読み直す
+    notes: 索引と設定ファイルを直した結果を、再起動せずに次のツールの呼び出しに効かせる
+  - item: 状態
+    constraint: ツールの呼び出しをまたぐ状態をプロセスに持たない
+    notes: 1 プロセスを複数のセッションが共有するため
+  - item: 認可
+    constraint: 制限なし
+    notes: ループバックだけで待ち受け、同じ端末の利用者だけが呼べる
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/MCPサーバーを常駐させる#

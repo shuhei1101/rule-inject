@@ -8,7 +8,7 @@ files:
     manages: ルールの場所と、当てるパス・ツール名・操作の種別の紐づけ
     notes: 利用者が書く。置き場所と名前は自由で、設定ファイルの `indexes` で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形式（マップ・文字列のリスト・文字列）だけを読む
   - file: ~/.config/rule-inject/settings.yaml
-    manages: 索引の場所・既読の記録とログの置き場所・保持日数（最上位の `global` と `projects`）
+    manages: 索引の場所・既読の記録とログの置き場所・保持日数・MCP サーバーのポート（最上位の `global` と `projects`）
     notes: 利用者が書き、`RULE_INJECT_CONFIG` で指す。`RULE_INJECT_CONFIG` が無いときは読まず、全てのキーを既定値で動かす。フックが標準ライブラリだけで読めるよう、ここに挙げたキーと形式（マップ・マップのリスト・文字列のリスト・文字列・整数）だけを読む
   - file: settings.sample.yaml
     manages: 設定ファイルのキーの一覧（実値を入れないサンプル）
@@ -232,3 +232,18 @@ settings:
     visibility: user
     introduced:
       pr: 57
+  - key: global.server_port
+    title: MCPサーバーのポート
+    file: ~/.config/rule-inject/settings.yaml
+    type: int
+    required: false
+    default: '8783'
+    description: 常駐の MCP サーバーが 127.0.0.1 で待ち受けるポート。フックは使わない
+    env_var: RULE_INJECT_PORT
+    reload: restart
+    allowed: 1024〜65535 の整数。それ以外の値は設定ファイルの誤りとして扱う
+    refs:
+      - dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの既定のポート]
+    status: planned
+    visibility: user
+    reason: サーバーは全てのプロジェクトで 1 つのため `global` だけに置く

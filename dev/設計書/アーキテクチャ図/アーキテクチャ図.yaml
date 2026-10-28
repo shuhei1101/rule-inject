@@ -24,6 +24,9 @@ overview:
       label: ルールの本文（ローカル）
       shape: cylinder
       kind: store
+    - id: SRV
+      label: MCP サーバー
+      kind: system
   edges:
     - from: U
       to: IDX
@@ -40,11 +43,18 @@ overview:
     - from: HOOK
       to: STATE
       label: 読み書き
+    - from: CC
+      to: SRV
+      label: ツールの呼び出し（HTTP）
+    - from: SRV
+      to: IDX
+      label: 照合・書き込み
   subgraphs:
     - id: SYS
       label: rule-inject
       nodes:
         - HOOK
+        - SRV
         - STATE
 repository:
   style: モノレポ
@@ -56,6 +66,14 @@ subsystems:
     role: Claude Code の操作の対象に当たる未読のルールの案内と、既読の記録
     runtime: Python 3（標準ライブラリだけ）
     runs_on: ユーザーの端末（Linux / WSL）
+  - name: MCP サーバー
+    scope: server
+    role: 効いているルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー
+    runtime: Python 3（mcp・jsonschema・ruamel.yaml）
+    runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
+    refs:
+      - dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py#
+    status: planned
 lead: rule-inject のサブシステムと、Claude Code・ルールの置き場所との境界。
 external_systems:
   - name: Claude Code
@@ -67,5 +85,5 @@ external_systems:
     detail: dev/設計書/外部ライブラリ/claude-code#
 constraints: |-
   - フックは Python の標準ライブラリだけで書く
-  - 動かす場所はユーザーの端末（Linux / WSL）で、常駐するサーバーは持たない
+  - 動かす場所はユーザーの端末（Linux / WSL）で、フックは MCP サーバーが動いていなくても案内できる
   - 特定の開発基盤に依存する処理と、特定の開発基盤や作者の環境を思わせる語を持たない
