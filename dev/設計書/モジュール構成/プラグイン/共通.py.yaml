@@ -602,6 +602,7 @@ functions:
          - `global.indexes` があればその値（`~` を展開）を並べる。無ければ `{XDG_CONFIG_HOME か ~/.config}/{USER_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる
          - 続けて、当たった要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
          - 当たった要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
+               - 当たった要素とプロジェクトの既定の置き場所から並べた索引を `project_indexes` にも入れる
       6. `state_dir`・`log_dir` は `global` の値（`~` を展開）か、無ければ `default_state_dir(env)`・`default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（3 の `global.server_port` と同じ規則で確かめる）、無ければ `global` の値、それも無ければ `DEFAULT_SERVER_PORT`
       7. `Settings` を返す
     exceptions:
@@ -725,6 +726,12 @@ functions:
         mock: なし
         expected: SettingsReadError（path が `RULE_INJECT_PORT`）
         exception: 3 の値の誤り、6 の `PORT_ENV` の値の誤り
+      - name: test_load_settings_when_project_indexes
+        case: 正常
+        summary: プロジェクトの索引だけを `project_indexes` に分ける
+        condition: '`global.indexes` に 1 つ、当たる `projects` の要素の `indexes` に 1 つを持つ設定ファイルと、`CLAUDE_PROJECT_DIR`。もう 1 つは `projects` を持たず、`CLAUDE_PROJECT_DIR` の直下に `rules.yaml` を置く（パラメータ展開）'
+        mock: なし
+        expected: '`indexes` は両方を並べ、`project_indexes` は要素の索引（またはプロジェクトの既定の索引）だけ'
   - name: _matches_project
     title: プロジェクトの当て方
     container: shared/settings.py
@@ -881,3 +888,6 @@ data_models:
       - name: server_port
         type: int
         description: MCP サーバーが待ち受けるポート（1024〜65535）。フックは使わない
+      - name: project_indexes
+        type: tuple[str, ...]
+        description: '`indexes` のうち、当たった `projects` の要素の `indexes` とプロジェクトの既定の置き場所から入ったもの（`indexes` と同じ順）。フックは使わない'
