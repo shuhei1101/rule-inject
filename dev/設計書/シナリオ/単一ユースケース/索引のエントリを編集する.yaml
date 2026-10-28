@@ -134,7 +134,7 @@ scenarios:
         description: エントリを 1 つ持つ YAML
         notes: 編集の前のバイト列を控える
       - name: 引数
-        description: 索引の場所と、`on` に操作の種別に無い値を持つ新しいエントリを渡す
+        description: '索引の場所と、`paths: []` を持つ新しいエントリを渡す'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント

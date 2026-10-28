@@ -45,9 +45,10 @@ scenarios:
 
         U->>SV: SIGTERM を送る
         SV->>SV: 待ち受けを閉じる
-        SV-->>U: 終了コード 0 で終わる
+        SV->>SV: 終了の処理を標準エラーに書く
+        SV-->>U: SIGTERM で終わる（終了コード 143）
     expected:
-      - プロセスが終了コード 0 で終わっている
+      - プロセスが SIGTERM で終わり、標準エラーに `Application shutdown complete.` が出ている
       - 設定ファイルのポートで待ち受けていない
     test: test_normal_when_stopped
   - name: 異常シナリオ（ポートが使われている）

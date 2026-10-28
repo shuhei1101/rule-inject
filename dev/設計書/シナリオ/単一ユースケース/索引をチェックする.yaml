@@ -41,7 +41,7 @@ scenarios:
         description: 違反が無いシナリオと同じ
       - name: 索引
         description: フックは読めるが、索引の書式の値の範囲を外れるエントリを 1 つ持つ YAML
-        notes: '例: `on` に操作の種別に無い値を書く。Schema とフックの読み取りが受け付ける範囲は、モジュール構成で揃える'
+        notes: '例: `paths: []`（フックは読めるが、Schema は要素が 1 つ以上のリストを求める）'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -59,7 +59,7 @@ scenarios:
         SC-->>SV: 違反
         SV-->>CL: 違反（索引の場所・索引の中の場所・理由）
     expected:
-      - 応答の違反に、索引の場所と、索引の中の場所（例 `rules[0].on[0]`）と理由が載っている
+      - 応答の違反に、索引の場所と、索引の中の場所（例 `rules[0].paths`）と理由が載っている
     test: test_normal_when_schema_violated
   - name: 正常シナリオ（フックが読めない）
     setup:
