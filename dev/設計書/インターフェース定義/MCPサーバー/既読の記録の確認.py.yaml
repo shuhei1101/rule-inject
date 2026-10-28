@@ -1,0 +1,289 @@
+title: "既読の記録の確認"
+entry:
+  kind: mcp_tool
+  value: get_read_records
+flows:
+  - name: 正常系
+    summary: 既読のルールごとに、今の本文との関係と読んだ方法を返す
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`global.state_dir` でテストの記録フォルダを指す'
+      - name: 既読の記録
+        description: 1 つのセッションに 2 つのルールの場所と今の本文のハッシュの行
+      - name: 既読の履歴
+        description: 片方のルールを `Read` で 1 回、もう片方を `mcp__docs__get_doc` で 2 回既読にした行と、JSON として読めない 1 行
+        notes: 読めない行を読み飛ばすことも確かめる
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_read_records
+        participant CF as 設定ファイル
+        participant ST as 既読の記録
+        participant FS as ルールの本文
+        participant HS as 既読の履歴
+
+        C->>IF: session_id
+        IF->>CF: 読む
+        CF-->>IF: 記録フォルダ
+        IF->>ST: そのセッションの行を読む
+        ST-->>IF: 場所とハッシュ
+        IF->>FS: 今の本文のハッシュを取る
+        FS-->>IF: 同じハッシュ
+        IF->>HS: 全行読む
+        HS-->>IF: 読み方・ツール名・時刻
+        IF-->>C: rules
+    expected:
+      - '`rules` に 2 つのルールの場所が載り、どちらも `state` が `current`'
+      - '`Read` で読んだルールの `reads` が `method: read`・`count: 1`、もう片方が `method: mcp`・`tool: mcp__docs__get_doc`・`count: 2` で、`last_time` が履歴の最後の時刻'
+      - '`state_dir` が設定ファイルで指した記録フォルダ'
+      - 既読の記録と既読の履歴のファイルが書き換わっていない
+    test: test_normal
+  - name: 正常系（既読にした後に本文が変わった）
+    summary: 本文が変わったルールを `changed`、ファイルが無いルールを `missing` で返す
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 既読の記録
+        description: 書き換える前の本文のハッシュを持つルールの行と、ファイルの無い場所の行
+        notes: 記録を置いた後にルールの本文を書き換える
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_read_records
+        participant ST as 既読の記録
+        participant FS as ルールの本文
+
+        C->>IF: session_id
+        IF->>ST: そのセッションの行を読む
+        ST-->>IF: 場所と既読にした時点のハッシュ
+        IF->>FS: 今の本文のハッシュを取る
+        FS-->>IF: 違うハッシュ・ファイルが無い
+        IF-->>C: rules
+    expected:
+      - 書き換えたルールの `state` が `changed`
+      - ファイルの無い場所の `state` が `missing`
+    test: test_normal_when_rule_changed
+  - name: 正常系（セッションを指さない）
+    summary: 既読の記録のあるセッションを最終更新の新しい順に返す
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 記録フォルダ
+        description: 2 つのセッションの既読の記録と、片方の案内済みの記録・既読の履歴
+        notes: 最終更新の時刻をずらして置く。`.guided.txt` をセッションとして数えないことを確かめる
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_read_records
+        participant DIR as 記録フォルダ
+
+        C->>IF: session_id なし
+        IF->>DIR: 既読の記録のファイルを並べる
+        DIR-->>IF: セッションと最終更新の時刻
+        IF-->>C: sessions
+    expected:
+      - '`sessions` に 2 つのセッションが最終更新の新しい順に、`updated_at` と `rule_count` つきで載っている'
+      - '`session_id` が `None` で `rules` が空'
+    test: test_normal_when_session_omitted
+  - name: 正常系（続きがある）
+    summary: '`limit` を超えるルールは `next_cursor` で続きを取らせる'
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 既読の記録
+        description: 3 つのルールの場所の行
+      - name: 引数
+        description: '`limit: 2`、続けて返った `next_cursor`'
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_read_records
+
+        C->>IF: session_id・limit 2
+        IF-->>C: 先頭 2 件・next_cursor
+        C->>IF: session_id・cursor
+        IF-->>C: 残り 1 件・next_cursor None
+    expected:
+      - 1 回目の `rules` が 2 件で `total` が 3、`next_cursor` が `None` でない
+      - 2 回目の `rules` が残りの 1 件で `next_cursor` が `None`
+    test: test_normal_when_more_rules
+  - name: 異常系（セッションの形式が誤っている・ToolError）
+    summary: 記録ファイル名に使えない `session_id` をエラーにする
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 引数
+        description: '`session_id` に `../other` を渡す'
+        notes: 記録フォルダの外を指す値
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_read_records
+
+        C->>IF: session_id（形式が誤っている）
+        IF-->>C: isError: true（形式が誤っている旨）
+    expected:
+      - '結果が `isError: true` で、受けた値と形式が誤っている旨が載っている'
+    test: test_error_when_session_id_invalid
+lead: セッションを受け、そのセッションの既読のルールごとに、今の本文が既読にした時点と同じかと、既読の履歴に残る読んだ方法を返す。セッションを省くと、既読の記録のあるセッションの一覧を返す。
+identifier: get_read_records
+idempotent: true
+side_effects: なし（`readOnlyHint`）
+request:
+  - name: session_id
+    type: str | None
+    required: false
+    default: なし（セッションの一覧を返す）
+    location: argument
+    description: 確かめるセッションの識別子
+    constraints: フックが記録ファイル名に使う形式（`is_valid_session_id`）
+    notes: サーバーは Claude Code のセッションの ID を受け取らないため、引数で指す
+  - name: limit
+    type: int
+    required: false
+    default: '100'
+    location: argument
+    description: 返すルール（セッションを省いたときはセッション）の件数の上限
+    constraints: 1〜500
+    notes: インターフェース定義「ルールの一覧」の `limit` と同じ
+  - name: cursor
+    type: str | None
+    required: false
+    default: なし（先頭から返す）
+    location: argument
+    description: 前の応答の `next_cursor`
+  - name: format
+    type: Literal['markdown', 'json']
+    required: false
+    default: markdown
+    location: argument
+    description: 応答の形式
+    notes: インターフェース定義「ルールの一覧」の `format` と同じ
+request_example: |-
+  ```json
+  {"session_id": "0f6c2a8e-4b1d-4c3a-9e7f-2d5b8a1c6e90", "format": "json"}
+  ```
+response:
+  - name: success
+    type: bool
+    description: 確かめられたか
+    notes: 記録の無いセッションでも `true`
+  - name: output
+    type: str
+    description: ルールまたはセッションの件数の 1 行
+  - name: config_path
+    type: str | None
+    description: サーバーが読んだ設定ファイルの場所
+  - name: state_dir
+    type: str
+    description: 読んだ記録フォルダ
+  - name: session_id
+    type: str | None
+    description: 確かめたセッション
+    notes: セッションを省いたときは `None`
+  - name: rules[].location
+    type: str
+    description: 既読のルールの場所
+    notes: 既読の記録に初めて現れた順。セッションを省いたときは空
+  - name: rules[].state
+    type: Literal['current', 'changed', 'missing']
+    description: 今の本文と既読にした時点の本文の関係
+    notes: '`current` はその場所のどれかの行のハッシュが今の本文のハッシュと同じ（案内では既読）。`changed` はどの行とも違う（案内では未読）。`missing` はその場所にファイルが無い'
+  - name: rules[].reads[].method
+    type: Literal['read', 'bash', 'mcp']
+    description: 既読の履歴に残る読み方
+    notes: 読み方とツール名の組ごとに 1 行。履歴にその場所の行が無ければ空
+  - name: rules[].reads[].tool
+    type: str
+    description: 既読にしたツールの名前
+    example: mcp__docs__get_doc
+  - name: rules[].reads[].last_time
+    type: str
+    description: その読み方とツールで最後に既読にした時刻
+    format: date-time
+  - name: rules[].reads[].count
+    type: int
+    description: その読み方とツールで既読にした回数
+  - name: sessions[].session_id
+    type: str
+    description: 既読の記録のあるセッション
+    notes: 最終更新の新しい順。セッションを指したときは空
+  - name: sessions[].updated_at
+    type: str
+    description: 既読の記録のファイルの最終更新の時刻
+    format: date-time
+  - name: sessions[].rule_count
+    type: int
+    description: 既読のルールの場所の数
+  - name: total
+    type: int
+    description: ルールまたはセッションの総数
+  - name: next_cursor
+    type: str | None
+    description: 続きを取るときに `cursor` へ渡す値
+    notes: 続きが無いときは `None`
+response_example: |-
+  ```json
+  {
+    "success": true,
+    "output": "既読のルール 2 件",
+    "config_path": "/home/user/.config/rule-inject/settings.yaml",
+    "state_dir": "/home/user/.local/state/rule-inject",
+    "session_id": "0f6c2a8e-4b1d-4c3a-9e7f-2d5b8a1c6e90",
+    "rules": [
+      {
+        "location": "/home/user/project/docs/python.md",
+        "state": "current",
+        "reads": [{"method": "read", "tool": "Read", "last_time": "2026-10-24T09:30:00Z", "count": 1}]
+      },
+      {
+        "location": "/home/user/project/docs/api.md",
+        "state": "changed",
+        "reads": [{"method": "mcp", "tool": "mcp__docs__get_doc", "last_time": "2026-10-24T09:31:12Z", "count": 2}]
+      }
+    ],
+    "sessions": [],
+    "total": 2,
+    "next_cursor": null
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: 確かめられた
+    notes: 記録の無いセッションは空の `rules` を返す
+  - name: ToolError（セッションの形式が誤っている）
+    condition: '`session_id` が記録ファイル名に使えない形式'
+    notes: 受けた値と、形式が誤っている旨を返す。ファイルのパスには使わない
+  - name: ToolError（設定ファイルが読めない）
+    condition: 設定ファイルが呼び出しの時点で読めない
+    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返す
+error_format: インターフェース定義「ルールの一覧」と同じ
+constraints:
+  - item: 記録フォルダ
+    constraint: 設定ファイルを `CLAUDE_PROJECT_DIR` 無しでフックと同じ規則で読み、`global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）を使う。呼び出しのたびに読み直す
+    notes: 記録フォルダは `projects[]` の要素で変わらず、記録のファイルはプロジェクトを持たない
+  - item: 既読の判定
+    constraint: フックと同じく、場所ごとに既読の記録のどれかの行のハッシュが今の本文の SHA-256 と同じなら既読とする。ハッシュを持たない行は `changed` として扱う
+    notes: ER 図『既読の記録』の `hash`
+  - item: 既読の履歴の読み出し
+    constraint: そのセッションの `.history.jsonl` を全行読む。JSON として読めない行・キーの欠けた行は読み飛ばす。既読の記録に無い場所の行は返さない
+    notes: フックが別のプロセスで追記している途中の行を失敗にしない。圧縮で既読の記録だけが削除された後の履歴は今の既読ではない
+  - item: セッションの一覧
+    constraint: 記録フォルダの `{session_id}.txt`（`.guided.txt` を除く）のうち、ファイル名が `session_id` の形式に合うものを、最終更新の新しい順に並べる
+    notes: 記録フォルダが無ければ空の一覧
+  - item: 応答の長さ
+    constraint: 応答が 40,000 字を超えるときは、超える手前のルールまたはセッションで切り、`next_cursor` を返す
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPのツールの応答の長さ]
+    notes: 読み方を読み方とツール名の組でまとめるため、履歴の行数が増えても 1 ルールあたりの字数は増えない
+  - item: 認可
+    constraint: 制限なし
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する#
