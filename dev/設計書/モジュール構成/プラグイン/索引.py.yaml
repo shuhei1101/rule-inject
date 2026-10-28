@@ -411,7 +411,7 @@ functions:
       type: list[MatchedRule]
       description: 当たったルール（索引の順）
     process: |-
-      1. `paths` のどれかに当たり、`exclude` のどれにも当たらないエントリを選ぶ（glob は `_glob_match`、正規表現は部分一致。`_match_pattern`）
+      1. `entry_matches_path` が True のエントリを選ぶ（glob は `_glob_match`、正規表現は部分一致。`_match_pattern`）
       2. 同じ `location` を 1 件にまとめ、`operation` がどれかの `on` に入っていれば `blocking` を True にする
     unit_tests:
       - name: test_match_path
@@ -941,6 +941,35 @@ functions:
         mock: なし
         expected: ValueError（行の番号を含む）
         exception: '`parse_index` が ValueError を送出する'
+  - name: entry_matches_path
+    title: エントリ 1 件のパスの照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: エントリ 1 件が対象のパスに当たるかを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: entry
+        type: IndexEntry
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: path
+        type: str
+        required: true
+        passing: positional
+        description: 対象の絶対パス
+    returns:
+      type: bool
+      description: '`paths` のどれかに当たり、`exclude` のどれにも当たらなければ True'
+    process: 1. `paths` のどれかに当たり、`exclude` のどれにも当たらないかを `_match_pattern` で確かめる（`match_path` の選び方と同じ）
+    unit_tests:
+      - name: test_entry_matches_path
+        case: 正常
+        summary: 当たるパスと外すパスを見分ける
+        condition: '`paths: ["**/*.py"]`・`exclude: ["**/tests/**"]` のエントリ、`/p/src/a.py` と `/p/tests/a.py`'
+        mock: なし
+        expected: 前者は True、後者は False
 test_files:
   - tests/unit/rule_inject/features/index/test_yaml.py
   - tests/unit/rule_inject/features/index/test_service.py

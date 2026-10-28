@@ -642,3 +642,145 @@ def test_current_read_locations_when_unreadable(tmp_path: Path) -> None:
     result = service.current_read_locations(entries, [str(rule)])
     # 検証
     assert result == frozenset()
+
+
+def test_list_read_entries(
+    state_dir: Path,
+    session_id: str,
+    write_record: Callable[[Sequence[str]], Path],
+) -> None:
+    """行の順を保ち、ハッシュを持たない行は空のハッシュで残す（正常系）。"""
+    # 準備
+    write_record(
+        [
+            f"/r/b.md\t{HASH_A}",
+            f"/r/a.md\t{HASH_A}",
+            f"/r/b.md\t{HASH_B}",
+            "",
+            "/r/c.md",
+        ]
+    )
+    # 実行
+    result = service.list_read_entries(state_dir, session_id)
+    # 検証
+    assert result == (
+        record_types.ReadEntry(location="/r/b.md", hash=HASH_A),
+        record_types.ReadEntry(location="/r/a.md", hash=HASH_A),
+        record_types.ReadEntry(location="/r/b.md", hash=HASH_B),
+        record_types.ReadEntry(location="/r/c.md", hash=""),
+    )
+
+
+def test_list_read_entries_when_missing(state_dir: Path, session_id: str) -> None:
+    """記録の無いセッションは空を返す（正常系）。"""
+    # 実行
+    result = service.list_read_entries(state_dir, session_id)
+    # 検証
+    assert result == ()
+
+
+def test_list_rule_states(tmp_path: Path) -> None:
+    """場所ごとに既読・本文が変わった・ファイルが無いを返す（正常系）。"""
+    # 準備
+    current = tmp_path / "current.md"
+    current.write_text("test", encoding="utf-8")
+    changed = tmp_path / "changed.md"
+    changed.write_text("test", encoding="utf-8")
+    removed = tmp_path / "removed.md"
+    removed.write_text("test", encoding="utf-8")
+    removed.unlink()
+    without_hash = tmp_path / "without_hash.md"
+    without_hash.write_text("test", encoding="utf-8")
+    entries = (
+        record_types.ReadEntry(location=str(current), hash=HASH_A),
+        record_types.ReadEntry(location=str(current), hash=HASH_TEST),
+        record_types.ReadEntry(location=str(changed), hash=HASH_A),
+        record_types.ReadEntry(location=str(removed), hash=HASH_TEST),
+        record_types.ReadEntry(location=str(without_hash), hash=""),
+    )
+    # 実行
+    result = service.list_rule_states(entries)
+    # 検証
+    assert result == (
+        (str(current), "current"),
+        (str(changed), "changed"),
+        (str(removed), "missing"),
+        (str(without_hash), "changed"),
+    )
+
+
+def test_read_history(state_dir: Path, session_id: str) -> None:
+    """読める行を行の順に返し、壊れた行を読み飛ばす（正常系）。"""
+    # 準備
+    service.append_history(
+        state_dir,
+        session_id,
+        ["/r/a.md"],
+        method=ReadMethod.READ,
+        tool="Read",
+        now=lambda: datetime(2026, 10, 24, 9, 30, 0, tzinfo=UTC),
+    )
+    with (state_dir / f"{session_id}.history.jsonl").open("a", encoding="utf-8") as stream:
+        stream.write("not json\n")
+        stream.write('{"time": "2026-10-24T09:30:10Z", "method": "read", "location": "/r/x.md"}\n')
+        stream.write(
+            '{"time": "2026-10-24T09:30:20Z", "method": "other", "tool": "Read",'
+            ' "location": "/r/y.md"}\n'
+        )
+    service.append_history(
+        state_dir,
+        session_id,
+        ["/r/b.md"],
+        method=ReadMethod.BASH,
+        tool="Bash",
+        now=lambda: datetime(2026, 10, 24, 9, 30, 30, tzinfo=UTC),
+    )
+    # 実行
+    result = service.read_history(state_dir, session_id)
+    # 検証
+    assert result == (
+        record_types.HistoryEntry(
+            time="2026-10-24T09:30:00Z",
+            method=ReadMethod.READ,
+            tool="Read",
+            location="/r/a.md",
+        ),
+        record_types.HistoryEntry(
+            time="2026-10-24T09:30:30Z",
+            method=ReadMethod.BASH,
+            tool="Bash",
+            location="/r/b.md",
+        ),
+    )
+
+
+def test_list_record_sessions(state_dir: Path) -> None:
+    """既読の記録ファイルだけを最終更新の新しい順に返す（正常系）。"""
+    # 準備
+    state_dir.mkdir()
+    newer = state_dir / "a.txt"
+    newer.write_text(f"/r/a.md\t{HASH_A}\n/r/a.md\t{HASH_B}\n/r/b.md\t{HASH_A}\n", encoding="utf-8")
+    older = state_dir / "b.txt"
+    older.write_text(f"/r/a.md\t{HASH_A}\n", encoding="utf-8")
+    (state_dir / "a.guided.txt").write_text("/r/a.md\n", encoding="utf-8")
+    (state_dir / "a.history.jsonl").write_text("{}\n", encoding="utf-8")
+    (state_dir / "bad name.txt").write_text(f"/r/a.md\t{HASH_A}\n", encoding="utf-8")
+    os.utime(newer, (2_000_000_000, 2_000_000_000))
+    os.utime(older, (1_900_000_000, 1_900_000_000))
+    # 実行
+    result = service.list_record_sessions(state_dir)
+    # 検証
+    assert [(session.session_id, session.rule_count) for session in result] == [
+        ("a", 2),
+        ("b", 1),
+    ]
+    assert result[0].updated_at == datetime.fromtimestamp(2_000_000_000, UTC)
+
+
+def test_list_record_sessions_when_missing(state_dir: Path) -> None:
+    """記録フォルダが無ければ空を返す（正常系）。"""
+    # 実行
+    result = service.list_record_sessions(state_dir)
+    # 検証
+    assert result == ()
+    assert not state_dir.exists()

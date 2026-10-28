@@ -11,7 +11,13 @@ from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from rule_inject.features.record.types import ReadEntry, ReadMethod
+from rule_inject.features.record.types import (
+    HistoryEntry,
+    ReadEntry,
+    ReadMethod,
+    ReadState,
+    RecordSession,
+)
 from rule_inject.shared.errors import (
     HistoryWriteError,
     RecordDeleteError,
@@ -55,17 +61,16 @@ def is_valid_session_id(session_id: object) -> bool:
     return isinstance(session_id, str) and SESSION_ID_PATTERN.fullmatch(session_id) is not None
 
 
-def _read_lines(path: Path) -> frozenset[str]:
-    """記録ファイルの場所の集合を返す（ファイルが無ければ空）。"""
+def _read_lines(path: Path) -> tuple[str, ...]:
+    """記録ファイルの空行を除いた行を、行の順に返す（ファイルが無ければ空）。"""
     try:
         text = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         # 記録が無いのは失敗ではなく、まだ何も読んでいない状態
-        return frozenset()
+        return ()
     except OSError as exc:
         raise RecordReadError(path=str(path), reason=describe(exc)) from exc
-    # 空行を除いた行を集合にする（重なりは 1 つになる）
-    return frozenset(line for line in text.splitlines() if line)
+    return tuple(line for line in text.splitlines() if line)
 
 
 def _append_lines(
@@ -107,20 +112,33 @@ def _delete_file(path: Path) -> None:
         raise RecordDeleteError(path=str(path), reason=describe(exc)) from exc
 
 
-def read_record(state_dir: Path, session_id: str) -> frozenset[ReadEntry]:
-    """そのセッションの既読の行の集合を返す（ファイルが無ければ空）。"""
-    entries: set[ReadEntry] = set()
+def list_read_entries(state_dir: Path, session_id: str) -> tuple[ReadEntry, ...]:
+    """そのセッションの既読の行を、記録ファイルの行の順に返す（ファイルが無ければ空）。ハッシュを持たない行は空のハッシュで残す。"""
+    entries: list[ReadEntry] = []
     for line in _read_lines(_record_path(state_dir, session_id)):
-        location, separator, file_hash = line.partition(FIELD_SEPARATOR)
-        # 場所かハッシュを持たない行は読み飛ばす
-        if separator and location and file_hash.startswith(HASH_PREFIX):
-            entries.add(ReadEntry(location=location, hash=file_hash))
-    return frozenset(entries)
+        location, _, file_hash = line.partition(FIELD_SEPARATOR)
+        # 場所が空の行は読み飛ばす
+        if not location:
+            continue
+        # ハッシュを持たない行は、空のハッシュにして残す（確認のツールが changed として返すため）
+        entries.append(
+            ReadEntry(
+                location=location,
+                hash=file_hash if file_hash.startswith(HASH_PREFIX) else "",
+            )
+        )
+    return tuple(entries)
+
+
+def read_record(state_dir: Path, session_id: str) -> frozenset[ReadEntry]:
+    """そのセッションの既読の行の集合を返す（ファイルが無ければ空）。ハッシュを持たない行は既読として扱わない。"""
+    return frozenset(entry for entry in list_read_entries(state_dir, session_id) if entry.hash)
 
 
 def read_guided(state_dir: Path, session_id: str) -> frozenset[str]:
     """そのセッションで止めずに案内した場所の集合を返す（ファイルが無ければ空）。"""
-    return _read_lines(_record_path(state_dir, session_id, GUIDED_SUFFIX))
+    # 重なりは 1 つになる
+    return frozenset(_read_lines(_record_path(state_dir, session_id, GUIDED_SUFFIX)))
 
 
 def append_record(state_dir: Path, session_id: str, entries: Sequence[ReadEntry]) -> None:
@@ -252,3 +270,84 @@ def current_read_locations(
     candidates = [location for location in dict.fromkeys(locations) if location in recorded]
     current = hash_locations(candidates)
     return frozenset(entry.location for entry in current if entry in entries)
+
+
+def list_rule_states(entries: Sequence[ReadEntry]) -> tuple[tuple[str, ReadState], ...]:
+    """既読の行の場所ごとに、今の本文が既読にした時点と同じかを、場所が初めて現れた順に返す。"""
+    locations = tuple(dict.fromkeys(entry.location for entry in entries))
+    current_hashes = {entry.location: entry.hash for entry in hash_locations(locations)}
+    recorded = frozenset(entries)
+    states: list[tuple[str, ReadState]] = []
+    for location in locations:
+        # ハッシュを取れない場所はファイルが無いか読めない
+        if location not in current_hashes:
+            states.append((location, "missing"))
+        # その場所のどれかの行のハッシュが今の本文のハッシュと同じなら既読
+        elif ReadEntry(location=location, hash=current_hashes[location]) in recorded:
+            states.append((location, "current"))
+        else:
+            states.append((location, "changed"))
+    return tuple(states)
+
+
+def _history_entry(line: str) -> HistoryEntry | None:
+    """既読の履歴の 1 行を読む。読めない行・必要な値が文字列でない行・知らない読み方の行は None を返す。"""
+    try:
+        data = json.loads(line)
+    except ValueError:
+        # フックが追記している途中の行は、JSON として読めないことがある
+        return None
+    if not isinstance(data, dict):
+        return None
+    time_value, method, tool, location = (
+        data.get("time"),
+        data.get("method"),
+        data.get("tool"),
+        data.get("location"),
+    )
+    if not all(isinstance(value, str) for value in (time_value, method, tool, location)):
+        return None
+    if method not in {read_method.value for read_method in ReadMethod}:
+        return None
+    return HistoryEntry(time=time_value, method=ReadMethod(method), tool=tool, location=location)
+
+
+def read_history(state_dir: Path, session_id: str) -> tuple[HistoryEntry, ...]:
+    """そのセッションの既読の履歴を全行読み、読めた行を行の順に返す（ファイルが無ければ空）。"""
+    lines = _read_lines(_record_path(state_dir, session_id, HISTORY_SUFFIX))
+    entries = (_history_entry(line) for line in lines)
+    return tuple(entry for entry in entries if entry is not None)
+
+
+def list_record_sessions(state_dir: Path) -> tuple[RecordSession, ...]:
+    """記録フォルダの既読の記録ファイルを持つセッションを、最終更新の新しい順に返す（記録フォルダが無ければ空）。"""
+    try:
+        directory = list(os.scandir(state_dir))
+    except FileNotFoundError:
+        # 記録フォルダがまだ無ければセッションが無い（フォルダは作らない）
+        return ()
+    except OSError as exc:
+        raise RecordReadError(path=str(state_dir), reason=describe(exc)) from exc
+    sessions: list[RecordSession] = []
+    for entry in directory:
+        # 案内済みの記録も `.txt` で終わるため、先に除く
+        if entry.name.endswith(GUIDED_SUFFIX) or not entry.name.endswith(RECORD_SUFFIX):
+            continue
+        session_id = entry.name.removesuffix(RECORD_SUFFIX)
+        # 記録ファイル名に使えない名前と、シンボリックリンク・フォルダは対象にしない
+        if not is_valid_session_id(session_id) or not entry.is_file(follow_symlinks=False):
+            continue
+        try:
+            modified = entry.stat(follow_symlinks=False).st_mtime
+        except FileNotFoundError:
+            # 並べる間に削除されたファイルは飛ばす
+            continue
+        locations = {read.location for read in list_read_entries(state_dir, session_id)}
+        sessions.append(
+            RecordSession(
+                session_id=session_id,
+                updated_at=datetime.fromtimestamp(modified, UTC),
+                rule_count=len(locations),
+            )
+        )
+    return tuple(sorted(sessions, key=lambda session: session.updated_at, reverse=True))

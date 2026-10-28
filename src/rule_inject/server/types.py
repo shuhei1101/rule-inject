@@ -7,6 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, model_serializer
 
 from rule_inject.features.index.types import Operation
+from rule_inject.features.record.types import ReadMethod, ReadState
 
 # 読むツールの `format`
 type ResponseFormat = Literal["markdown", "json"]
@@ -99,10 +100,23 @@ class IndexReport(BaseModel):
     """索引ごとのチェックの結果。"""
 
     index: str
+    # 索引の出所。`global` は `global.indexes`（無ければユーザーの既定の索引）、`project` はプロジェクトの索引
+    origin: Literal["global", "project"]
     hook_error: str | None
     violations: list[dict[str, str]]
     missing_rules: list[dict[str, Any]]
     skipped_entries: list[dict[str, Any]]
+    unmatched_paths: list[dict[str, Any]]
+
+
+class UnmatchedScanReport(BaseModel):
+    """`paths` の当たらないエントリの検出の状態。"""
+
+    completed: bool
+    scanned_files: int
+    # 終えられなかった理由（辿る時間の上限の秒数と `cursor` の使い方）
+    reason: str | None
+    next_cursor: str | None
 
 
 class CheckIndexesResult(BaseModel):
@@ -112,6 +126,7 @@ class CheckIndexesResult(BaseModel):
     output: str
     config_path: str | None
     problem_count: int
+    unmatched_scan: UnmatchedScanReport
     indexes: list[IndexReport]
 
 
@@ -136,3 +151,55 @@ class DeleteEntryResult(BaseModel):
     rule: str
     written: bool
     diff: str
+
+
+class ReadSummary(BaseModel):
+    """読み方とツールの組ごとの既読のまとめ。"""
+
+    method: ReadMethod
+    tool: str
+    # その読み方とツールで最後に既読にした時刻（既読の履歴の `time` のまま）
+    last_time: str
+    count: int
+
+
+class RuleRead(BaseModel):
+    """既読のルール。"""
+
+    location: str
+    state: ReadState
+    reads: list[ReadSummary]
+
+
+class RecordSessionItem(BaseModel):
+    """既読の記録のあるセッション。"""
+
+    session_id: str
+    # 既読の記録のファイルの最終更新の時刻（UTC）
+    updated_at: str
+    rule_count: int
+
+
+class ReadRecordsResult(BaseModel):
+    """既読の記録の確認の応答。"""
+
+    success: bool
+    output: str
+    config_path: str | None
+    state_dir: str
+    session_id: str | None
+    rules: list[RuleRead]
+    sessions: list[RecordSessionItem]
+    total: int
+    next_cursor: str | None
+
+
+class DeleteRecordsResult(BaseModel):
+    """既読の記録の削除の応答。"""
+
+    success: bool
+    output: str
+    config_path: str | None
+    state_dir: str
+    session_id: str
+    locations: list[str]

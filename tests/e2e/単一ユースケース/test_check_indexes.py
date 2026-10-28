@@ -16,6 +16,9 @@ def test_normal_when_no_violation(
 ) -> None:
     """違反の無い索引で、違反とファイルが無いエントリが載らない（正常シナリオ）。"""
     # 準備
+    source = e2e_project / "src" / "app.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("", encoding="utf-8")
     first = make_rule("a.md", "# a\n")
     second = make_rule("b.md", "# b\n")
     index = make_text_file(
@@ -33,6 +36,7 @@ def test_normal_when_no_violation(
     assert report["hook_error"] is None
     assert report["violations"] == []
     assert report["missing_rules"] == []
+    assert report["unmatched_paths"] == []
     assert content["problem_count"] == 0
 
 
@@ -90,3 +94,87 @@ def test_normal_when_rule_file_missing(
     report = result.structured_content["indexes"][0]
     assert report["index"] == str(index)
     assert report["missing_rules"] == [{"position": 0, "rule": str(missing)}]
+
+
+def _unmatched_environment(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+) -> tuple[Path, Path, Path, Path]:
+    """プロジェクトのファイルと、プロジェクトの索引・ユーザー全体の索引を置き、2 つの索引とルールの本文を返す。"""
+    project_rule = make_rule("project.md", "# project\n")
+    global_rule = make_rule("global.md", "# global\n")
+    source = e2e_project / "src" / "app.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("", encoding="utf-8")
+    project_index = make_text_file(
+        "rules.yaml",
+        f'rules:\n  - rule: {project_rule}\n    paths: ["**/*.py"]\n'
+        f'  - rule: {project_rule}\n    paths: ["**/*.rs"]\n',
+    )
+    global_index = make_text_file(
+        "user/rules.yaml", f'rules:\n  - rule: {global_rule}\n    paths: ["**/*.go"]\n'
+    )
+    return project_index, global_index, project_rule, global_rule
+
+
+def test_normal_when_paths_unmatched(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    serve: Callable[..., Any],
+) -> None:
+    """プロジェクトの索引の `paths` の当たらないエントリを受け取り、ユーザー全体の索引の分は受け取らない（正常シナリオ）。"""
+    # 準備
+    project_index, global_index, project_rule, _ = _unmatched_environment(
+        e2e_project, make_text_file, make_rule
+    )
+    before = (project_index.read_text(encoding="utf-8"), global_index.read_text(encoding="utf-8"))
+    server = serve(project_index, global_indexes=[global_index])
+    # 実行
+    result = server.call("check_indexes", project_dir=str(e2e_project), format="json")
+    # 検証
+    reports = {report["origin"]: report for report in result.structured_content["indexes"]}
+    assert reports["project"]["index"] == str(project_index)
+    assert [
+        (entry["position"], entry["rule"]) for entry in reports["project"]["unmatched_paths"]
+    ] == [(1, str(project_rule))]
+    assert reports["global"]["unmatched_paths"] == []
+    assert (
+        project_index.read_text(encoding="utf-8"),
+        global_index.read_text(encoding="utf-8"),
+    ) == before
+
+
+def test_normal_when_global_included(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    serve: Callable[..., Any],
+) -> None:
+    """ユーザー全体の索引の `paths` の当たらないエントリも分けて受け取り、件数には数えない（正常シナリオ）。"""
+    # 準備
+    project_index, global_index, project_rule, global_rule = _unmatched_environment(
+        e2e_project, make_text_file, make_rule
+    )
+    before = (project_index.read_text(encoding="utf-8"), global_index.read_text(encoding="utf-8"))
+    server = serve(project_index, global_indexes=[global_index])
+    # 実行
+    result = server.call(
+        "check_indexes", project_dir=str(e2e_project), include_global=True, format="json"
+    )
+    # 検証
+    content = result.structured_content
+    reports = {report["origin"]: report for report in content["indexes"]}
+    assert [
+        (entry["position"], entry["rule"]) for entry in reports["project"]["unmatched_paths"]
+    ] == [(1, str(project_rule))]
+    assert reports["global"]["index"] == str(global_index)
+    assert [
+        (entry["position"], entry["rule"]) for entry in reports["global"]["unmatched_paths"]
+    ] == [(0, str(global_rule))]
+    assert content["problem_count"] == 1
+    assert (
+        project_index.read_text(encoding="utf-8"),
+        global_index.read_text(encoding="utf-8"),
+    ) == before

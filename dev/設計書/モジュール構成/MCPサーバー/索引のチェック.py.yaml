@@ -1,11 +1,12 @@
 title: "MCP サーバー / 索引のチェック"
-lead: 索引をフックと同じ読み取り・JSON Schema・ルールの場所の実在の順に確かめ、問題を返す。書く前と書いた後の索引を比べ、新しく出た問題だけを返す。`features/index` のサブフィーチャーで、サーバーの依存（`jsonschema`・`ruamel.yaml`）を使うためフックからは読み込まない。
+lead: 索引をフックと同じ読み取り・JSON Schema・ルールの場所の実在の順に確かめ、問題を返す。書く前と書いた後の索引を比べ、新しく出た問題だけを返す。プロジェクトのファイルを辿り、`paths` の当たらないエントリを返す。`features/index` のサブフィーチャーで、サーバーの依存（`jsonschema`・`ruamel.yaml`）を使うためフックからは読み込まない。
 directory: |-
   ```text
   src/rule_inject/features/index/check/
-  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change）
-  ├── types.py            # ProblemKind・IndexProblem・IndexCheck
+  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change / scan_unmatched）
+  ├── types.py            # ProblemKind・IndexProblem・IndexCheck・ScanCursor・UnmatchedScan
   ├── service.py          # 索引のチェックと、書く前と書いた後の問題の比較
+  ├── scan.py             # プロジェクトのファイルを辿り、paths の当たらないエントリを返す
   └── index.schema.yaml   # 索引の JSON Schema（2020-12）
   ```
 enums:
@@ -27,6 +28,9 @@ enums:
       - value: skipped_entry
         title: フックが読み飛ばすエントリ
         description: '`skipped_entries`'
+      - value: unmatched_path
+        title: paths がどのファイルにも当たらない
+        description: '`unmatched_paths`。`check_index_text` は返さず、`scan_unmatched` だけが返す'
 constants:
   - name: INDEX_SCHEMA_FILE
     title: 索引の JSON Schema のファイル名
@@ -38,6 +42,11 @@ constants:
     container: features/index/check/service.py
     summary: 問題が索引全体にかかるときの場所
     value: '`"$"`'
+  - name: SKIPPED_DIR_NAMES
+    title: 辿らないフォルダの名前
+    container: features/index/check/scan.py
+    summary: プロジェクトのファイルを辿るときに中へ入らないフォルダの名前
+    value: '`frozenset({".git"})`'
 data_models:
   - name: IndexProblem
     title: 索引の問題
@@ -54,7 +63,7 @@ data_models:
         description: 索引の中の場所。キーは `.`、リストの要素は `[位置]` で結ぶ（例 `rules[0].read_by[1].tools`）。索引全体にかかるときは `ROOT_LOCATION`
       - name: reason
         type: str
-        description: 理由。`hook_error`・`skipped_entry` はフックが案内に載せる文言、`violation` は `jsonschema` の `message`、`missing_rule` は解いたルールの場所
+        description: 理由。`hook_error`・`skipped_entry` はフックが案内に載せる文言、`violation` は `jsonschema` の `message`、`missing_rule`・`unmatched_path` は解いたルールの場所
       - name: position
         type: int | None
         description: 問題のあるエントリの位置。エントリに属さない問題は `None`
@@ -74,6 +83,44 @@ data_models:
       - name: problems
         type: tuple[IndexProblem, ...]
         description: 見つかった問題。`hook_error` があるときはその 1 件だけ
+  - name: ScanCursor
+    title: 辿る続きの位置
+    container: features/index/check/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: 辿る時間の上限で止まったときの続きの位置（`@dataclass(frozen=True, slots=True, kw_only=True)`）。文字列への変換はサーバーが行う
+    properties:
+      - name: last_file
+        type: str
+        description: 辿り終えた最後のファイルの、`project_dir` からの `/` 区切りのパス
+      - name: scanned_files
+        type: int
+        description: 最初の呼び出しから辿ったファイルの数
+      - name: unmatched
+        type: tuple[tuple[str, int, str], ...]
+        description: まだ当たっていないエントリの索引・位置・`rev`
+      - name: fingerprint
+        type: str
+        description: 確かめるエントリの一覧（索引・位置・`rev`）の SHA-256 の 16 進数
+  - name: UnmatchedScan
+    title: paths の当たらないエントリの検出の結果
+    container: features/index/check/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: 1 回の呼び出しで辿った結果（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: completed
+        type: bool
+        description: 最後まで辿れたか
+      - name: scanned_files
+        type: int
+        description: 最初の呼び出しから辿ったファイルの数
+      - name: checks
+        type: tuple[IndexCheck, ...]
+        description: 索引ごとの `unmatched_path` の問題（渡された索引の順、問題は位置の順）。`completed` が `False` のときはどの索引も空
+      - name: next_cursor
+        type: ScanCursor | None
+        description: 続きの位置。`completed` が `True` のときは `None`
 functions:
   - name: load_validator
     title: JSON Schema の読み込み
@@ -298,6 +345,134 @@ functions:
         condition: '書く前は問題が無く、書いた後は `rules[0].paths: []` の内容'
         mock: なし
         expected: '`rules[0].paths: {jsonschema の message}` の 1 行'
+  - name: scan_unmatched
+    title: paths の当たらないエントリの検出
+    container: features/index/check/scan.py
+    usecase: 索引をチェックする
+    summary: '`project_dir` の下のファイルを辿り、効いているエントリのうち `paths` がどのファイルにも当たらないものを返す。時間の上限を超えたら続きの位置を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: 辿るプロジェクトの絶対パス
+      - name: contents
+        type: Sequence[IndexContent]
+        required: true
+        passing: positional
+        description: 確かめる索引の読み取り結果（呼び出し元が `include_global` で絞った後）
+      - name: cursor
+        type: ScanCursor | None
+        required: true
+        passing: keyword
+        description: 前の呼び出しの続きの位置。`None` なら最初から辿る
+      - name: time_limit
+        type: float
+        required: true
+        passing: keyword
+        description: 1 回の呼び出しで辿る時間の上限（秒）
+      - name: clock
+        type: Callable[[], float]
+        required: false
+        default: time.monotonic
+        passing: keyword
+        description: 経過時間を測る時計（テストで差し替える）
+    returns:
+      type: UnmatchedScan
+      description: 辿った結果
+    process: |-
+      1. 状態が `effective` で `paths` を持つエントリを索引・位置・`rev` の鍵で並べ、`_fingerprint` で一覧の指紋を出す
+      2. `cursor` があり指紋が同じなら、まだ当たっていないエントリを `cursor.unmatched` に絞り、`cursor.last_file` の後から辿る。指紋が違えば `cursor` を使わず最初から辿る
+      3. `_iter_project_files` の順にファイルを取り、2 件目からは取る前に `clock()` の経過が `time_limit` 以上かを見る。超えていたら `completed=False` と、最後に辿ったファイル・辿った数・まだ当たっていないエントリ・指紋の `ScanCursor` を返す
+      4. ファイルの絶対パスに、まだ当たっていないエントリを `entry_matches_path` で当て、当たったものを外す。全て当たったらその場で辿り終える
+      5. 最後まで辿ったら、残ったエントリを索引ごとに `unmatched_path` の `IndexProblem`（場所 `rules[{position}].paths`・理由はルールの場所・位置・`rev`）にし、`contents` の順の `IndexCheck` で返す
+    unit_tests:
+      - name: test_scan_unmatched
+        case: 正常
+        summary: どのファイルにも当たらないエントリを返す
+        condition: '`src/app.py` だけのプロジェクト、`paths: ["**/*.py"]` と `paths: ["**/*.toml"]` のエントリ'
+        mock: なし
+        expected: '`completed` が True、`rules[1].paths` の `unmatched_path` 1 件、`next_cursor` が None'
+      - name: test_scan_unmatched_when_no_paths
+        case: 正常
+        summary: '`paths` を持たないエントリと効いていないエントリは確かめない'
+        condition: '`tools` だけのエントリと `enabled: false` のエントリ'
+        mock: なし
+        expected: 問題が空
+      - name: test_scan_unmatched_when_time_limit
+        case: 正常
+        summary: 時間の上限を超えたら続きの位置を返す
+        condition: '`docs/readme.md` と `src/app.py` のプロジェクト、`time_limit=0`'
+        mock: '`clock` を呼ぶたびに 1 進む時計'
+        expected: '`completed` が False、`scanned_files` が 1、`next_cursor.last_file` が `docs/readme.md`、問題が空'
+      - name: test_scan_unmatched_when_cursor
+        case: 正常
+        summary: 続きの位置から辿り、前に当たったエントリは確かめ直さない
+        condition: '`docs/readme.md` と `src/app.py` のプロジェクトで、`time_limit=0` の 1 回目の呼び出しが返した `next_cursor` を渡し、`time_limit=30`'
+        mock: なし
+        expected: '`completed` が True、`scanned_files` が 2、`src/app.py` だけを辿る'
+      - name: test_scan_unmatched_when_fingerprint_changed
+        case: 正常
+        summary: エントリの一覧が変わっていたら最初から辿る
+        condition: 指紋の違う `ScanCursor` を渡す
+        mock: なし
+        expected: '`scanned_files` が全てのファイルの数'
+  - name: _iter_project_files
+    title: プロジェクトのファイルの列挙
+    container: features/index/check/scan.py
+    usecase: 索引をチェックする
+    summary: '`project_dir` の下のファイルを、パスの部分ごとの名前の順で `/` 区切りの相対パスにして返す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: 辿るプロジェクトの絶対パス
+      - name: after
+        type: str | None
+        required: true
+        passing: positional
+        description: このファイルより後だけを返す。`None` なら最初から
+    returns:
+      type: Iterator[str]
+      description: ファイルの相対パス
+    process: |-
+      1. `os.scandir` でフォルダの中を名前の順に読む。`SKIPPED_DIR_NAMES` のフォルダとフォルダへのシンボリックリンクには入らない。読めないフォルダは飛ばす
+      2. `after` があるときは、`after` の部分の並びより前のフォルダには入らず、`after` 以前のファイルは返さない
+    unit_tests:
+      - name: test_iter_project_files
+        case: 正常
+        summary: 部分ごとの名前の順に返し、`.git` には入らない
+        condition: '`b.txt`・`a/z.txt`・`.git/HEAD` のプロジェクト'
+        mock: なし
+        expected: '`a/z.txt`・`b.txt` の順'
+      - name: test_iter_project_files_when_after
+        case: 正常
+        summary: '`after` より後だけを返す'
+        condition: 同じプロジェクト、`after="a/z.txt"`
+        mock: なし
+        expected: '`b.txt` だけ'
+  - name: _fingerprint
+    title: 確かめるエントリの指紋
+    container: features/index/check/scan.py
+    usecase: 索引をチェックする
+    summary: 確かめるエントリの索引・位置・`rev` の並びを SHA-256 の 16 進数にする
+    kind: 関数
+    scope: internal
+    args:
+      - name: keys
+        type: Sequence[tuple[str, int, str]]
+        required: true
+        passing: positional
+        description: 確かめるエントリの索引・位置・`rev`
+    returns:
+      type: str
+      description: 指紋
+    process: 1. 並びを JSON にして SHA-256 を取る
 notes:
   索引の JSON Schema: |-
     `index.schema.yaml` は JSON Schema 2020-12 を YAML で書き、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを通す。
@@ -315,3 +490,4 @@ notes:
     | `rules[].enabled` | 真偽値 |
 test_files:
   - tests/unit/rule_inject/features/index/check/test_service.py
+  - tests/unit/rule_inject/features/index/check/test_scan.py

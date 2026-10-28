@@ -9,16 +9,29 @@ from rule_inject.features.record.service import (
     delete_record,
     hash_locations,
     is_valid_session_id,
+    list_read_entries,
+    list_record_sessions,
+    list_rule_states,
     read_guided,
+    read_history,
     read_record,
     record_exists,
     sweep_records,
 )
-from rule_inject.features.record.types import ReadEntry, ReadMethod
+from rule_inject.features.record.types import (
+    HistoryEntry,
+    ReadEntry,
+    ReadMethod,
+    ReadState,
+    RecordSession,
+)
 
 __all__ = [
+    "HistoryEntry",
     "ReadEntry",
     "ReadMethod",
+    "ReadState",
+    "RecordSession",
     "append_guided",
     "append_history",
     "append_record",
@@ -27,7 +40,11 @@ __all__ = [
     "delete_record",
     "hash_locations",
     "is_valid_session_id",
+    "list_read_entries",
+    "list_record_sessions",
+    "list_rule_states",
     "read_guided",
+    "read_history",
     "read_record",
     "record_exists",
     "sweep_records",

@@ -112,37 +112,6 @@ def test_search_rules_when_invalid_arguments(
         search_rules(project_dir=str(project_dir), format="json", env={}, **arguments)
 
 
-def test_check_indexes(
-    tmp_path: Path,
-    project_dir: Path,
-    make_index: Callable[..., Path],
-    rule_file: Callable[..., Path],
-    indexes_env: Callable[..., dict[str, str]],
-) -> None:
-    """問題を種類ごとに分け、件数を合計する（正常系）。"""
-    from rule_inject.features.index.check import load_validator
-    from rule_inject.server.tools import check_indexes
-
-    # 準備
-    rule = rule_file()
-    index = make_index(f"rules:\n  - rule: {rule}\n    paths: []\n  - rule: /nonexistent/x.md\n")
-    missing = tmp_path / "missing.yaml"
-    env = indexes_env(index, missing)
-    # 実行
-    result = check_indexes(
-        project_dir=str(project_dir),
-        format="json",
-        env=env,
-        validator=load_validator(),
-    )
-    # 検証
-    content = result.structured_content
-    assert content["problem_count"] == 3
-    assert content["indexes"][1]["hook_error"] is not None
-    assert content["indexes"][1]["violations"] == []
-    assert content["indexes"][1]["missing_rules"] == []
-
-
 @pytest.mark.parametrize(
     "arguments",
     [

@@ -157,4 +157,25 @@ requirements:
         value: 40,000 字
     overflow: 応答がこの字数を超えるときは、超える手前のエントリで切り、`total` と `next_cursor` を返して続きを取らせる（インターフェース定義「ルールの一覧」の正常系（続きがある））
     status: planned
+  - name: プロジェクトのファイルを辿る時間
+    english_name: unmatched_scan_duration
+    category: 性能
+    external_constraint: 未確定（Claude Code が HTTP の MCP のツールの呼び出しを待つ時間の既定値は公開されていない）
+    source_kind: ユーザー要望
+    source: https://github.com/shuhei1101/rule-inject/pull/69#discussion_r4402872638
+    value: '30'
+    unit: 秒
+    rationale: '`check_indexes` が `paths` の当たらないエントリを確かめるために、プロジェクトの直下からファイルを辿り、エントリに当てる 1 回の呼び出しの時間の上限。辿る速さはファイルシステムで大きく変わるため（内訳）、ファイルの数ではなく時間で区切る。待てる時間は利用者の意向で決まる（規約『資源の値の決め方』で導けない）ため、承認確認で決めた。値は、WSL の `/mnt/c` に置いたリポジトリ 1 つ（約 2 万ファイル、実測 14.2 秒）を余裕を持って辿り終えられる長さ'
+    measurement: 1 万・10 万ファイルを置いたプロジェクトで `check_indexes` を呼び、応答までの時間と辿り終えたかを確かめる
+    overflow: 上限を超えたら辿るのをやめ、`paths` の当たらないエントリを返さず、検出を終えられなかったこと・辿ったファイルの数・続きの位置（`next_cursor`）を応答に載せる。`next_cursor` を `cursor` に渡して呼び直すと続きから辿る（インターフェース定義「索引のチェック」の正常系（辿る時間の上限を超える）・正常系（続きから辿る））。途中までに当たらなかったエントリを当たらないとして返すと誤検出になるため
+    breakdown:
+      - part: WSL の /mnt/c を辿る速さ
+        value: 約 600〜1,350 ファイル/秒
+        notes: '`.git` を除いて `os.walk` で辿った実測（rule-inject 4,834 ファイル 8.3 秒、ai-monitor 19,163 ファイル 14.2 秒、2026-10-29）'
+      - part: Linux のファイルシステムを辿る速さ
+        value: 約 78 万ファイル/秒
+        notes: ホームの `.cache` 487,983 ファイル 0.62 秒（同日、ページキャッシュに載った状態）
+    status: planned
+    introduced:
+      pr: 69
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。

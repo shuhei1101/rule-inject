@@ -1,6 +1,7 @@
 """索引の読み込みと、パス・ツール名・既読にする呼び出しの照合。"""
 
 from rule_inject.features.index.service import (
+    entry_matches_path,
     entry_rev,
     entry_revs,
     load_indexes,
@@ -13,6 +14,7 @@ from rule_inject.features.index.service import (
 )
 
 __all__ = [
+    "entry_matches_path",
     "entry_rev",
     "entry_revs",
     "load_indexes",

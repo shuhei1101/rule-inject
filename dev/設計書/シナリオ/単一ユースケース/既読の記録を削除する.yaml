@@ -1,0 +1,89 @@
+title: "既読の記録を削除する"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: クライアントが Claude Code の代わりにツールを呼ぶ
+      - name: 設定ファイル
+        description: '`global.state_dir` でテストの記録フォルダを指す'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 記録
+        description: 削除するセッションの既読の記録・案内済みの記録・既読の履歴と、別のセッションの既読の記録がある
+        notes: ER 図『既読の記録』の書式でテストが置く
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CL->>SV: 削除（セッション）
+        SV->>CF: 記録フォルダを引く
+        CF-->>SV: 記録フォルダ
+        SV->>ST: そのセッションの既読の行を読む
+        ST-->>SV: 既読だったルールの場所
+        SV->>ST: そのセッションの既読の記録を削除する
+        SV->>GD: そのセッションの案内済みの記録を削除する
+        SV-->>CL: 未読に戻したルールの場所
+    expected:
+      - そのセッションの既読の記録と案内済みの記録のファイルが無い
+      - そのセッションの既読の履歴のファイルが残っている
+      - 別のセッションの既読の記録が残っている
+      - 応答に、削除する前に既読だったルールの場所が載っている
+    test: test_normal
+  - name: 正常シナリオ（記録の無いセッション）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: セッション
+        description: 形式は正しいが、記録フォルダに記録ファイルが無いセッション
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant ST as 既読の記録
+
+        CL->>SV: 削除（セッション）
+        SV->>ST: そのセッションの記録を削除する
+        ST-->>SV: 削除するファイルが無い
+        SV-->>CL: 未読に戻したルールが無い
+    expected:
+      - ツールのエラーにならず、応答の未読に戻したルールが空になっている
+    test: test_normal_when_no_record
+  - name: 異常シナリオ（セッションの形式が誤っている）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: セッション
+        description: 記録ファイル名に使えない文字を含む値
+        notes: '例: `../other`'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+
+        CL->>SV: 削除（形式の誤ったセッション）
+        SV-->>CL: ツールのエラー（セッションの形式）
+    expected:
+      - ツールのエラーが返り、受け付けるセッションの形式が載っている
+      - 記録フォルダの内外のどのファイルも削除していない
+    test: test_error_when_session_id_invalid
+lead: Claude Code が常駐の MCP サーバーの削除のツールにセッションを指し、そのセッションの既読の記録と案内済みの記録を削除する。次のフックの呼び出しから、そのセッションのルールは未読として案内される。
+issue: 65
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: ルールを読み直させたいときに、会話を圧縮せずにルールを未読へ戻せること
+trigger: Claude Code が既読の記録の削除のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読む
+success_guarantee: そのセッションの既読の記録と案内済みの記録を、圧縮の前と同じくファイルごと削除する。既読の履歴は残す。
+minimal_guarantee: ほかのセッションの記録ファイルと、記録フォルダの外のファイルは削除しない。
+test_file: tests/e2e/単一ユースケース/test_delete_read_records.py

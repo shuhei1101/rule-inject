@@ -1,0 +1,127 @@
+title: "既読の記録を確認する"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: クライアントが Claude Code の代わりにツールを呼ぶ
+      - name: 設定ファイル
+        description: '`global.state_dir` でテストの記録フォルダを指す'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 既読の記録
+        description: 1 つのセッションの既読の記録に 2 つのルールの場所と今の本文のハッシュがある
+        notes: ER 図『既読の記録』の書式でテストが置く
+      - name: 既読の履歴
+        description: 同じセッションの既読の履歴に、片方のルールを Read、もう片方を MCP のツールで既読にした行がある
+        notes: '`method` が `read` と `mcp`'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant ST as 既読の記録
+        participant HS as 既読の履歴
+        participant FS as ルールの本文
+
+        CL->>SV: 確認（セッション）
+        SV->>CF: 記録フォルダを引く
+        CF-->>SV: 記録フォルダ
+        SV->>ST: そのセッションの既読の行を読む
+        ST-->>SV: 場所とハッシュ
+        SV->>FS: 場所ごとに今の本文のハッシュを取る
+        FS-->>SV: 今のハッシュ
+        SV->>HS: そのセッションの既読の履歴を読む
+        HS-->>SV: 場所ごとの読み方・ツール名・時刻
+        SV-->>CL: 既読のルールと読んだ方法
+    expected:
+      - 応答に、既読の記録の 2 つのルールの場所が載っている
+      - どちらのルールも、今の本文が既読にした時点と同じと載っている
+      - ルールごとに、既読の履歴の読み方（`read` / `mcp`）・ツール名・時刻が載っている
+      - 既読の記録と既読の履歴のファイルが書き換わっていない
+    test: test_normal
+  - name: 正常シナリオ（既読にした後に本文が変わった）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: 既読の記録
+        description: 1 つのルールの場所と、書き換える前の本文のハッシュがある
+        notes: 記録を置いた後にルールの本文を書き換える
+      - name: 既読の履歴
+        description: そのルールを Read で既読にした行がある
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant ST as 既読の記録
+        participant FS as ルールの本文
+
+        CL->>SV: 確認（セッション）
+        SV->>ST: そのセッションの既読の行を読む
+        ST-->>SV: 場所と既読にした時点のハッシュ
+        SV->>FS: 今の本文のハッシュを取る
+        FS-->>SV: 違うハッシュ
+        SV-->>CL: 本文が変わった既読のルール
+    expected:
+      - 応答のそのルールに、今の本文が既読にした時点と違うと載っている
+    test: test_normal_when_rule_changed
+  - name: 正常シナリオ（セッションを指さない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: 既読の記録
+        description: 2 つのセッションの既読の記録がある
+        notes: 最終更新の時刻をずらして置く
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant DIR as 記録フォルダ
+
+        CL->>SV: 確認（セッションなし）
+        SV->>CF: 記録フォルダを引く
+        CF-->>SV: 記録フォルダ
+        SV->>DIR: 既読の記録のファイルを並べる
+        DIR-->>SV: セッションと最終更新の時刻
+        SV-->>CL: セッションの一覧（新しい順）
+    expected:
+      - 応答に、2 つのセッションが最終更新の新しい順に、最終更新の時刻つきで載っている
+      - 応答に既読のルールの一覧が載っていない
+    test: test_normal_when_session_omitted
+  - name: 異常シナリオ（セッションの形式が誤っている）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常シナリオと同じ
+      - name: セッション
+        description: 記録ファイル名に使えない文字を含む値
+        notes: '例: `../other`'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+
+        CL->>SV: 確認（形式の誤ったセッション）
+        SV-->>CL: ツールのエラー（セッションの形式）
+    expected:
+      - ツールのエラーが返り、受け付けるセッションの形式が載っている
+      - 記録フォルダの外のファイルを読んでいない
+    test: test_error_when_session_id_invalid
+lead: Claude Code が常駐の MCP サーバーの確認のツールにセッションを指し、そのセッションの既読のルールと、ルールごとの読んだ方法を受け取る。セッションを指さないときは、記録のあるセッションの一覧を受け取る。
+issue: 65
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: 案内が出ないときに、そのルールが既読になっているかと、どの読み方で既読になったかを知れること
+trigger: Claude Code が既読の記録の確認のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読む
+success_guarantee: 既読のルールごとに、今の本文が既読にした時点と同じかと、既読の履歴に残る読んだ方法を返す。本文が変わったルールは、案内では未読として扱われることが分かる。
+minimal_guarantee: 既読の記録・案内済みの記録・既読の履歴を書き換えない。
+test_file: tests/e2e/単一ユースケース/test_view_read_records.py

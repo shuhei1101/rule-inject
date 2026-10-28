@@ -1,14 +1,16 @@
 title: "MCP サーバー / サーバー"
-lead: 常駐の MCP サーバーの起動の入口、コンポジションルート、ツールの本体と応答の形式。ツールは引数の確かめと `features/index` の呼び出しと応答の組み立てだけを行い、サブフィーチャー同士の組み合わせ（チェックを編集へ注入する）はコンポジションルートが行う。
+lead: 常駐の MCP サーバーの起動の入口、コンポジションルート、ツールの本体と応答の形式。ツールは引数の確かめと `features/index`・`features/record` の呼び出しと応答の組み立てだけを行い、サブフィーチャー同士の組み合わせ（チェックを編集へ注入する）はコンポジションルートが行う。
 directory: |-
   ```text
   src/rule_inject/server/
   ├── __init__.py
-  ├── __main__.py   # 起動の入口（main）
-  ├── app.py        # コンポジションルート（build_server）とツールの登録
-  ├── tools.py      # 5 つのツールの本体と、設定・書き込める索引の解決
-  ├── types.py      # ResponseFormat と応答のモデル（Pydantic）
-  └── _format.py    # 応答の形式（JSON / Markdown）と長さの切り詰め
+  ├── __main__.py      # 起動の入口（main）
+  ├── app.py           # コンポジションルート（build_server）とツールの登録
+  ├── tools.py         # ルールの一覧・検索・エントリの書き込み・削除のツールの本体と、設定・書き込める索引の解決
+  ├── check_tools.py   # 索引のチェックのツールの本体と、続きの位置の文字列の変換
+  ├── record_tools.py  # 既読の記録の確認・削除のツールの本体
+  ├── types.py         # ResponseFormat と応答のモデル（Pydantic）
+  └── _format.py       # 応答の形式（JSON / Markdown）と長さの切り詰め
   ```
 enums:
   - name: ResponseFormat
@@ -42,18 +44,23 @@ constants:
   - name: DEFAULT_LIST_LIMIT
     title: 一覧の件数の既定
     container: server/tools.py
-    summary: '`list_rules` の `limit` の既定'
+    summary: '`list_rules`・`get_read_records` の `limit` の既定'
     value: '`100`'
   - name: MAX_LIST_LIMIT
     title: 一覧の件数の上限
     container: server/tools.py
-    summary: '`list_rules` の `limit` の上限'
+    summary: '`list_rules`・`get_read_records` の `limit` の上限'
     value: '`500`'
   - name: CURSOR_PATTERN
     title: 続きの位置の書式
     container: server/tools.py
-    summary: '`cursor` が受け付ける値（効いているエントリの並びの中の位置を 10 進で書いた文字列）。引数の Schema の `pattern` に置き、外れた値は SDK の引数の検証で断る'
+    summary: '`list_rules`・`get_read_records` の `cursor` が受け付ける値（一覧の並びの中の位置を 10 進で書いた文字列）。引数の Schema の `pattern` に置き、外れた値は SDK の引数の検証で断る'
     value: '`r"^[0-9]+$"`'
+  - name: UNMATCHED_SCAN_TIME_LIMIT
+    title: プロジェクトのファイルを辿る時間の上限
+    container: server/app.py
+    summary: 非機能要件「プロジェクトのファイルを辿る時間」の決定値（秒）。`build_server` の `scan_time_limit` の既定
+    value: '`30`'
 data_models:
   - name: RuleEntry
     title: 効いているエントリ
@@ -243,6 +250,12 @@ data_models:
       - name: skipped_entries
         type: list[dict[str, Any]]
         description: '`skipped_entry` の `position`・`reason`'
+      - name: origin
+        type: Literal["global", "project"]
+        description: 索引の出所。`Settings.project_indexes` に入っていれば `project`
+      - name: unmatched_paths
+        type: list[dict[str, Any]]
+        description: '`unmatched_path` の `position`・`rev`・`rule`（理由に入れた解いた場所）'
   - name: CheckIndexesResult
     title: 索引のチェックの応答
     container: server/types.py
@@ -265,6 +278,9 @@ data_models:
       - name: indexes
         type: list[IndexReport]
         description: 索引ごとの結果（フックが読む順）
+      - name: unmatched_scan
+        type: UnmatchedScanReport
+        description: '`paths` の当たらないエントリの検出の状態'
   - name: WriteEntryResult
     title: エントリの書き込みの応答
     container: server/types.py
@@ -318,6 +334,135 @@ data_models:
       - name: diff
         type: str
         description: '`EditResult.diff`'
+  - name: UnmatchedScanReport
+    title: paths の当たらないエントリの検出の状態
+    container: server/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: インターフェース定義「索引のチェック」の `unmatched_scan`
+    properties:
+      - name: completed
+        type: bool
+        description: 最後まで辿れたか
+      - name: scanned_files
+        type: int
+        description: 最初の呼び出しから辿ったファイルの数
+      - name: reason
+        type: str | None
+        description: 終えられなかった理由（上限の秒数と `cursor` の使い方）
+      - name: next_cursor
+        type: str | None
+        description: '`_encode_scan_cursor` の文字列'
+  - name: ReadSummary
+    title: 読み方ごとの既読のまとめ
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」の `rules[].reads[]`
+    properties:
+      - name: method
+        type: ReadMethod
+        description: 既読の履歴に残る読み方
+      - name: tool
+        type: str
+        description: 既読にしたツールの名前
+      - name: last_time
+        type: str
+        description: その読み方とツールで最後に既読にした時刻（履歴の `time` のまま）
+      - name: count
+        type: int
+        description: その読み方とツールで既読にした回数
+  - name: RuleRead
+    title: 既読のルール
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」の `rules[]`
+    properties:
+      - name: location
+        type: str
+        description: 既読のルールの場所
+      - name: state
+        type: ReadState
+        description: 今の本文と既読にした時点の本文の関係
+      - name: reads
+        type: list[ReadSummary]
+        description: 読み方とツール名の組ごとのまとめ（最後に既読にした時刻の古い順）
+  - name: RecordSessionItem
+    title: 既読の記録のあるセッション
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」の `sessions[]`
+    properties:
+      - name: session_id
+        type: str
+        description: セッションの識別子
+      - name: updated_at
+        type: str
+        description: 既読の記録のファイルの最終更新の時刻（ISO 8601、UTC）
+      - name: rule_count
+        type: int
+        description: 既読のルールの場所の数
+  - name: ReadRecordsResult
+    title: 既読の記録の確認の応答
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: ルールまたはセッションの件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: state_dir
+        type: str
+        description: 読んだ記録フォルダ
+      - name: session_id
+        type: str | None
+        description: 確かめたセッション
+      - name: rules
+        type: list[RuleRead]
+        description: 既読のルール（セッションを省いたときは空）
+      - name: sessions
+        type: list[RecordSessionItem]
+        description: 既読の記録のあるセッション（セッションを指したときは空）
+      - name: total
+        type: int
+        description: ルールまたはセッションの総数
+      - name: next_cursor
+        type: str | None
+        description: 続きを取るときに `cursor` へ渡す値
+  - name: DeleteRecordsResult
+    title: 既読の記録の削除の応答
+    container: server/types.py
+    usecase: 既読の記録を削除する
+    role: DTO
+    summary: インターフェース定義「既読の記録の削除」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: 削除した既読のルールの件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: state_dir
+        type: str
+        description: 削除した記録フォルダ
+      - name: session_id
+        type: str
+        description: 削除したセッション
+      - name: locations
+        type: list[str]
+        description: 削除する前に既読だったルールの場所（初めて現れた順）
 functions:
   - name: main
     title: 起動の入口
@@ -350,7 +495,7 @@ functions:
     title: サーバーの組み立て
     container: server/app.py
     usecase: MCPサーバーを常駐させる
-    summary: コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 5 つのツールを登録する
+    summary: コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 7 つのツールを登録する
     kind: 関数
     scope: public
     args:
@@ -359,21 +504,27 @@ functions:
         required: true
         passing: positional
         description: サーバーを起動した環境変数
+      - name: scan_time_limit
+        type: float
+        required: false
+        default: UNMATCHED_SCAN_TIME_LIMIT
+        passing: keyword
+        description: '`check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）。結合テストが 0 を渡して上限で止まる流れを確かめる'
     returns:
       type: MCPServer
       description: ツールを登録したサーバー
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
       2. `MCPServer(SERVER_NAME)` を作る
-      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で渡すと依存の引数がツールの引数の Schema に残るため）。`annotations` は `list_rules`・`search_rules`・`check_indexes` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry` が `destructiveHint: true` で、全て `openWorldHint: false`
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で渡すと依存の引数がツールの引数の Schema に残るため）。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records` が `destructiveHint: true` で、全て `openWorldHint: false`
       4. サーバーを返す
     unit_tests:
       - name: test_build_server
         case: 正常
-        summary: 5 つのツールを依存の引数なしで登録する
+        summary: 7 つのツールを依存の引数なしで登録する
         condition: 空の `env`
         mock: なし
-        expected: '`list_tools` が 5 つの名前を返し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change` が無く、`delete_index_entry` だけが `destructiveHint: true`'
+        expected: '`list_tools` が 7 つの名前を返し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit` が無く、`delete_index_entry` と `delete_read_records` だけが `destructiveHint: true`'
   - name: list_rules
     title: ルールの一覧
     container: server/tools.py
@@ -506,7 +657,7 @@ functions:
         exception: 手順 1 の引数の組み合わせの誤り、または `_project_settings` が送出する
   - name: check_indexes
     title: 索引のチェック
-    container: server/tools.py
+    container: server/check_tools.py
     usecase: 索引をチェックする
     summary: インターフェース定義「索引のチェック」のツールの本体
     kind: 関数
@@ -523,6 +674,18 @@ functions:
         default: '"markdown"'
         passing: keyword
         description: 応答の形式
+      - name: include_global
+        type: bool
+        required: false
+        default: 'False'
+        passing: keyword
+        description: ユーザー全体の索引の `paths` の当たらないエントリも確かめるか
+      - name: cursor
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 前の呼び出しの `unmatched_scan.next_cursor`
       - name: env
         type: Mapping[str, str]
         required: true
@@ -533,17 +696,24 @@ functions:
         required: true
         passing: injected
         description: '`load_validator` の戻り値'
+      - name: scan_time_limit
+        type: float
+        required: true
+        passing: injected
+        description: プロジェクトのファイルを辿る時間の上限（秒）
     returns:
       type: CallToolResult
       description: '`respond(CheckIndexesResult, format)`'
     process: |-
-      1. `_project_settings(project_dir, env)` で設定を読む
-      2. `settings.indexes` を順に `check_index(index, env, validator=validator)` で確かめ、問題を種類ごとに `IndexReport` の一覧へ分ける
-      3. `problem_count` に問題の件数の合計を入れ、`respond` で返す
+      1. `_project_settings(project_dir, env)` で設定を読む。`cursor` があれば `_decode_scan_cursor(cursor, project_dir, include_global)` で続きの位置に戻す
+      2. `settings.indexes` を順に `check_index(index, env, validator=validator)` で確かめ、問題を種類ごとに `IndexReport` の一覧へ分ける。`origin` は索引が `settings.project_indexes` に入っていれば `project`、無ければ `global`
+      3. 読めた索引のうち `project` のもの（`include_global` が True なら全て）を `read_index` で読み、`scan_unmatched(project_dir, contents, cursor=..., time_limit=scan_time_limit)` で辿る。結果の問題を索引ごとの `unmatched_paths` へ入れる
+      4. `unmatched_scan` に辿った状態を入れる。止まったときは `reason` に上限の秒数と `next_cursor` を `cursor` に渡すと続きから辿れる旨、`next_cursor` に `_encode_scan_cursor` の文字列を入れる
+      5. `problem_count` に、全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` と `project` の索引の `unmatched_paths` の件数の合計を入れ、`respond` で返す
     exceptions:
       - name: ToolError
-        condition: '`_project_settings` が送出する'
-        message: '`_project_settings` と同じ'
+        condition: '`_project_settings` が送出する、または `_decode_scan_cursor` が送出する'
+        message: '`_project_settings` と同じ、または `cursor` が使えない旨'
     unit_tests:
       - name: test_check_indexes
         case: 正常
@@ -551,6 +721,31 @@ functions:
         condition: 違反 1 件とファイルの無いルール 1 件を持つ索引と、無い索引
         mock: なし
         expected: '`problem_count` が 3。無い索引は `hook_error` だけを持つ'
+      - name: test_check_indexes_when_unmatched
+        case: 正常
+        summary: プロジェクトの索引の `paths` の当たらないエントリだけを載せて数える
+        condition: '`global.indexes` とプロジェクトの索引の両方に当たらないエントリを 1 件ずつ、`include_global` は既定'
+        mock: なし
+        expected: '`project` の索引だけが `unmatched_paths` 1 件を持ち、`problem_count` が 1'
+      - name: test_check_indexes_when_include_global
+        case: 正常
+        summary: '`include_global` でユーザー全体の索引も載せ、数えない'
+        condition: 前のテストと同じで `include_global=True`
+        mock: なし
+        expected: 両方の索引が `unmatched_paths` 1 件を持ち、`problem_count` が 1
+      - name: test_check_indexes_when_time_limit
+        case: 正常
+        summary: 辿る時間の上限で止まると続きの位置を返し、渡すと続きから辿る
+        condition: 2 ファイルのプロジェクト、`scan_time_limit=0`。返った `next_cursor` を `cursor` に渡して呼び直す
+        mock: なし
+        expected: 1 回目は `completed` が False で `reason` に秒数と `cursor` を含む。2 回目は `scanned_files` が 2
+      - name: test_check_indexes_when_cursor_invalid
+        case: 異常
+        summary: 使えない `cursor` を断る
+        condition: '`cursor: "broken"`'
+        mock: なし
+        expected: ToolError
+        exception: '`_project_settings` が送出する、または `_decode_scan_cursor` が送出する'
   - name: write_index_entry
     title: エントリの書き込み
     container: server/tools.py
@@ -824,7 +1019,7 @@ functions:
     process: |-
       1. 先頭に `output` を置く
       2. スカラーの項目は `- {項目}: {値}` の行にする。`diff` は `diff` のコードブロックにする
-      3. モデルのリストの項目は `## {項目}` の見出しと、モデルの項目を列にした表にする（リスト・マップの値は JSON の 1 行）。入れ子のリスト（`indexes[].violations` など）は親の行ごとに `### {親の場所}` の見出しを置き、同じ規則で表にする。空のリストは `なし`
+      3. モデルのリストの項目は `## {項目}` の見出しと、モデルの項目を列にした表にする（リスト・マップの値は JSON の 1 行）。入れ子のリスト（`indexes[].violations`・`indexes[].unmatched_paths`・`rules[].reads` など）は親の行ごとに `### {親の場所}` の見出しを置き、同じ規則で表にする。空のリストは `なし`
     unit_tests:
       - name: test_render_markdown
         case: 正常
@@ -866,8 +1061,225 @@ functions:
         condition: 1 件あたり約 1,000 字のエントリ 100 件
         mock: なし
         expected: 返した応答の text が `MAX_RESPONSE_CHARS` 以下で、件数を 1 件増やすと超える
+  - name: _encode_scan_cursor
+    title: 続きの位置の文字列化
+    container: server/check_tools.py
+    usecase: 索引をチェックする
+    summary: '`ScanCursor` と `project_dir`・`include_global` を 1 つの不透明な文字列にする'
+    kind: 関数
+    scope: internal
+    args:
+      - name: cursor
+        type: ScanCursor
+        required: true
+        passing: positional
+        description: 続きの位置
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: 呼び出しの `project_dir`
+      - name: include_global
+        type: bool
+        required: true
+        passing: positional
+        description: 呼び出しの `include_global`
+    returns:
+      type: str
+      description: JSON を base64url（末尾の `=` なし）にした文字列
+    process: 1. 全ての項目を JSON にし、`base64.urlsafe_b64encode` で文字列にする
+  - name: _decode_scan_cursor
+    title: 続きの位置の復元
+    container: server/check_tools.py
+    usecase: 索引をチェックする
+    summary: '`_encode_scan_cursor` の文字列を `ScanCursor` に戻し、呼び出しの `project_dir`・`include_global` と合うかを確かめる'
+    kind: 関数
+    scope: internal
+    args:
+      - name: cursor
+        type: str
+        required: true
+        passing: positional
+        description: 受けた `cursor`
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: 呼び出しの `project_dir`
+      - name: include_global
+        type: bool
+        required: true
+        passing: positional
+        description: 呼び出しの `include_global`
+    returns:
+      type: ScanCursor
+      description: 続きの位置
+    process: |-
+      1. base64url と JSON として読み、項目の型を確かめる。読めなければ `ToolError`
+      2. `project_dir`・`include_global` が呼び出しと違えば `ToolError`
+      3. `ScanCursor` を返す
+    exceptions:
+      - name: ToolError
+        condition: 文字列が読めない、または `project_dir`・`include_global` が前の呼び出しと違う
+        message: '`cursor` が使えない旨と、`cursor` を省いて最初から辿るか前の呼び出しと同じ値で渡す旨'
+    unit_tests:
+      - name: test_decode_scan_cursor
+        case: 正常
+        summary: 文字列にした続きの位置を戻す
+        condition: '`_encode_scan_cursor` の文字列と同じ `project_dir`・`include_global`'
+        mock: なし
+        expected: 元と同じ `ScanCursor`
+      - name: test_decode_scan_cursor_when_mismatched
+        case: 異常
+        summary: 呼び出しの引数が違えば断る
+        condition: '`include_global` を変えて渡す'
+        mock: なし
+        expected: ToolError
+        exception: 文字列が読めない、または `project_dir`・`include_global` が前の呼び出しと違う
+  - name: get_read_records
+    title: 既読の記録の確認
+    container: server/record_tools.py
+    usecase: 既読の記録を確かめる
+    summary: インターフェース定義「既読の記録の確認」のツールの本体
+    kind: 関数
+    scope: public
+    args:
+      - name: session_id
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 確かめるセッション。`None` ならセッションの一覧を返す
+      - name: limit
+        type: int
+        required: false
+        default: DEFAULT_LIST_LIMIT
+        passing: keyword
+        description: 返す件数の上限（1〜`MAX_LIST_LIMIT`。引数の Schema で断る）
+      - name: cursor
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 前の応答の `next_cursor`（`CURSOR_PATTERN`）
+      - name: format
+        type: ResponseFormat
+        required: false
+        default: '"markdown"'
+        passing: keyword
+        description: 応答の形式
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(ReadRecordsResult, format)`'
+    process: |-
+      1. `session_id` があり `is_valid_session_id` が False なら `ToolError`。`_record_settings(env)` で設定を読む
+      2. `session_id` が `None` なら `list_record_sessions(state_dir)` を `RecordSessionItem` にして並べる
+      3. `session_id` があれば `list_rule_states(list_read_entries(...))` で場所ごとの状態を出し、`read_history(...)` の行をその場所ごとに読み方とツール名の組でまとめて（最後の時刻と回数）`RuleRead` にする。既読の記録に無い場所の履歴は捨てる
+      4. `cursor` の位置から `limit` 件を、`fit_page` で `MAX_RESPONSE_CHARS` に収まる件数に切り、続きがあれば `next_cursor` に次の位置を入れて返す
+    exceptions:
+      - name: ToolError
+        condition: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+        message: 受けた値と形式が誤っている旨、または設定ファイルの場所と理由
+    unit_tests:
+      - name: test_get_read_records
+        case: 正常
+        summary: 既読のルールごとに状態と読み方のまとめを返す
+        condition: 本文が同じルールと本文を変えたルールの既読の記録と、`mcp` で 2 回読んだ履歴
+        mock: なし
+        expected: '`state` が `current` と `changed`、`mcp` の行の `count` が 2'
+      - name: test_get_read_records_when_sessions
+        case: 正常
+        summary: セッションを省くとセッションの一覧を返す
+        condition: 既読の記録のある 2 セッション、`session_id` なし
+        mock: なし
+        expected: '`sessions` が最終更新の新しい順に 2 件、`rules` が空'
+      - name: test_get_read_records_when_invalid_session
+        case: 異常
+        summary: 形式の誤ったセッションを断る
+        condition: '`session_id: "../x"`'
+        mock: なし
+        expected: ToolError
+        exception: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+  - name: delete_read_records
+    title: 既読の記録の削除
+    container: server/record_tools.py
+    usecase: 既読の記録を削除する
+    summary: インターフェース定義「既読の記録の削除」のツールの本体
+    kind: 関数
+    scope: public
+    side_effects: そのセッションの既読の記録と案内済みの記録のファイルを削除する
+    args:
+      - name: session_id
+        type: str
+        required: true
+        passing: keyword
+        description: 既読の記録を削除するセッション
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(DeleteRecordsResult, "json")`'
+    process: |-
+      1. `is_valid_session_id` が False なら `ToolError`。`_record_settings(env)` で設定を読む
+      2. `list_read_entries` で削除する前の既読の場所を初めて現れた順に集める
+      3. `delete_record` と `delete_guided` で記録を削除し、場所の一覧を返す
+    exceptions:
+      - name: ToolError
+        condition: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+        message: 受けた値と形式が誤っている旨、または設定ファイルの場所と理由
+    unit_tests:
+      - name: test_delete_read_records
+        case: 正常
+        summary: 既読の記録と案内済みの記録を削除し、既読だった場所を返す
+        condition: 2 つの場所の既読の記録、案内済みの記録、既読の履歴
+        mock: なし
+        expected: '`locations` が 2 件。既読の記録と案内済みの記録のファイルが無く、既読の履歴は残る'
+      - name: test_delete_read_records_when_missing
+        case: 正常
+        summary: 記録の無いセッションは空の一覧を返す
+        condition: 記録の無い `session_id`
+        mock: なし
+        expected: '`success` が True、`locations` が空'
+      - name: test_delete_read_records_when_invalid_session
+        case: 異常
+        summary: 形式の誤ったセッションを断り、何も削除しない
+        condition: '`session_id: "../x"`'
+        mock: なし
+        expected: ToolError
+        exception: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+  - name: _record_settings
+    title: 既読の記録の設定
+    container: server/record_tools.py
+    usecase: 共通
+    summary: '`CLAUDE_PROJECT_DIR` 無しで、フックと同じ規則で設定を読む。ツールの呼び出しのたびに読み直す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+    returns:
+      type: Settings
+      description: 記録フォルダを持つ設定
+    process: '1. `env` から `CLAUDE_PROJECT_DIR` を除いて `load_settings` を返す。`SettingsReadError` は `ToolError`（`{path}: {reason}`）'
+    exceptions:
+      - name: ToolError
+        condition: 設定ファイルが読めない
+        message: 設定ファイルの場所と理由
 test_files:
   - tests/unit/rule_inject/server/test_main.py
   - tests/unit/rule_inject/server/test_app.py
   - tests/unit/rule_inject/server/test_tools.py
+  - tests/unit/rule_inject/server/test_check_tools.py
+  - tests/unit/rule_inject/server/test_record_tools.py
   - tests/unit/rule_inject/server/test_format.py

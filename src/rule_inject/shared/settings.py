@@ -42,6 +42,8 @@ class Settings:
     """設定ファイルと既定値から決めた、フックが使う値。"""
 
     indexes: tuple[str, ...]
+    # `indexes` のうち、当たった `projects` の要素の `indexes` とプロジェクトの既定の置き場所から入ったもの（フックは使わない）
+    project_indexes: tuple[str, ...]
     state_dir: Path
     log_dir: Path
     record_retention_days: int
@@ -182,17 +184,19 @@ def load_settings(env: Mapping[str, str]) -> Settings:
     )
     # 索引の並び: global（無ければユーザーの既定）、続けて当たった要素の indexes
     indexes = global_indexes if "indexes" in global_values else _default_user_index(env)
+    project_indexes: list[str] = []
     for project in matched:
-        indexes.extend(
+        project_indexes.extend(
             resolve_location(written, Path(project_dir)) for written in project.get("indexes", [])
         )
     # 当たった要素のどれも indexes を持たなければ、プロジェクトの既定の置き場所を読む
     if project_dir and not any("indexes" in project for project in matched):
         default_project_index = Path(project_dir) / PROJECT_INDEX_DEFAULT
         if default_project_index.is_file():
-            indexes.append(str(default_project_index))
+            project_indexes.append(str(default_project_index))
     return Settings(
-        indexes=tuple(indexes),
+        indexes=(*indexes, *project_indexes),
+        project_indexes=tuple(project_indexes),
         state_dir=state_dir,
         log_dir=log_dir,
         record_retention_days=record_days,

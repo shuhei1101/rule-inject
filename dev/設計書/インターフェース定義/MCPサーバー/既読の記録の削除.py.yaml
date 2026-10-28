@@ -1,0 +1,155 @@
+title: "既読の記録の削除"
+entry:
+  kind: mcp_tool
+  value: delete_read_records
+flows:
+  - name: 正常系
+    summary: 既読の記録と案内済みの記録を削除し、既読だったルールの場所を返す
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`global.state_dir` でテストの記録フォルダを指す'
+      - name: 記録フォルダ
+        description: 削除するセッションの既読の記録（2 つのルールの場所）・案内済みの記録・既読の履歴と、ほかのセッションの既読の記録
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as delete_read_records
+        participant CF as 設定ファイル
+        participant ST as 既読の記録
+
+        C->>IF: session_id
+        IF->>CF: 読む
+        CF-->>IF: 記録フォルダ
+        IF->>ST: そのセッションの行を読む
+        ST-->>IF: 場所
+        IF->>ST: 既読の記録と案内済みの記録を削除する
+        IF-->>C: locations
+    expected:
+      - '`locations` に 2 つのルールの場所が載っている'
+      - そのセッションの `{session_id}.txt` と `{session_id}.guided.txt` が無い
+      - そのセッションの `{session_id}.history.jsonl` とほかのセッションの既読の記録が残っている
+    test: test_normal
+  - name: 正常系（記録が無い）
+    summary: 既読の記録の無いセッションは、何も削除せず空の一覧を返す
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 記録フォルダ
+        description: そのセッションの記録を置かない
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as delete_read_records
+        participant ST as 既読の記録
+
+        C->>IF: session_id
+        IF->>ST: そのセッションの行を読む
+        ST-->>IF: ファイルが無い
+        IF-->>C: locations 空
+    expected:
+      - '`success` が `true` で `locations` が空'
+      - 結果が `isError` でない
+    test: test_normal_when_no_record
+  - name: 異常系（セッションの形式が誤っている・ToolError）
+    summary: 記録ファイル名に使えない `session_id` をエラーにし、何も削除しない
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 記録フォルダ
+        description: ほかのセッションの既読の記録
+      - name: 引数
+        description: '`session_id` に `../other` を渡す'
+        notes: 記録フォルダの外を指す値
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as delete_read_records
+
+        C->>IF: session_id（形式が誤っている）
+        IF-->>C: isError: true（形式が誤っている旨）
+    expected:
+      - '結果が `isError: true` で、受けた値と形式が誤っている旨が載っている'
+      - 記録フォルダのファイルが削除されていない
+    test: test_error_when_session_id_invalid
+lead: セッションを受け、そのセッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返す。削除したルールは、フックの次の案内で未読として扱われる。
+identifier: delete_read_records
+idempotent: true
+side_effects: 記録フォルダの `{session_id}.txt` と `{session_id}.guided.txt` を削除する（`destructiveHint`）。既読の履歴（`{session_id}.history.jsonl`）とほかのセッションの記録は残す
+request:
+  - name: session_id
+    type: str
+    required: true
+    location: argument
+    description: 既読の記録を削除するセッションの識別子
+    constraints: フックが記録ファイル名に使う形式（`is_valid_session_id`）
+    notes: インターフェース定義「既読の記録の確認」の `session_id` と同じ
+request_example: |-
+  ```json
+  {"session_id": "0f6c2a8e-4b1d-4c3a-9e7f-2d5b8a1c6e90"}
+  ```
+response:
+  - name: success
+    type: bool
+    description: 削除を終えたか
+    notes: 記録の無いセッションでも `true`
+  - name: output
+    type: str
+    description: 削除した既読のルールの件数の 1 行
+  - name: config_path
+    type: str | None
+    description: サーバーが読んだ設定ファイルの場所
+  - name: state_dir
+    type: str
+    description: 削除した記録フォルダ
+  - name: session_id
+    type: str
+    description: 削除したセッション
+  - name: locations
+    type: list[str]
+    description: 削除する前に既読だったルールの場所
+    notes: 既読の記録に初めて現れた順。記録が無かったときは空
+response_example: |-
+  ```json
+  {
+    "success": true,
+    "output": "既読のルール 2 件の記録を削除しました",
+    "config_path": "/home/user/.config/rule-inject/settings.yaml",
+    "state_dir": "/home/user/.local/state/rule-inject",
+    "session_id": "0f6c2a8e-4b1d-4c3a-9e7f-2d5b8a1c6e90",
+    "locations": [
+      "/home/user/project/docs/python.md",
+      "/home/user/project/docs/api.md"
+    ]
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: 削除を終えた
+    notes: 記録の無いセッションは空の `locations` を返す
+  - name: ToolError（セッションの形式が誤っている）
+    condition: '`session_id` が記録ファイル名に使えない形式'
+    notes: 受けた値と、形式が誤っている旨を返す。ファイルのパスには使わず、何も削除しない
+  - name: ToolError（設定ファイルが読めない）
+    condition: 設定ファイルが呼び出しの時点で読めない
+    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返す
+error_format: インターフェース定義「ルールの一覧」と同じ
+constraints:
+  - item: 記録フォルダ
+    constraint: インターフェース定義「既読の記録の確認」と同じ
+  - item: 削除する記録
+    constraint: フックの圧縮の前の削除と同じ関数で、既読の記録と案内済みの記録をファイルごと削除する。既読の履歴は削除しない
+    notes: ER 図『既読の記録』の削除の方針
+  - item: 削除の範囲
+    constraint: セッション単位。ルールの場所ごとの削除はしない
+  - item: 同時の呼び出し
+    constraint: フックが同じセッションの記録へ追記している途中でも削除する。削除の後に追記された行は残る
+    notes: フックの追記は O_APPEND で、無いファイルは作り直す
+  - item: 認可
+    constraint: 制限なし
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/既読の記録を削除する#
+test_file: tests/integration/server/test_delete_read_records.py

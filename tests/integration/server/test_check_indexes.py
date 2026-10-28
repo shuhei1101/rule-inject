@@ -8,14 +8,33 @@ from typing import Any
 
 from mcp.types import CallToolResult
 
+# 位置 0 は `src/app.py` に当たり、位置 1・2・3 はどのファイルにも当たらず、位置 4 は無効
+FIVE_ENTRIES = (
+    "rules:\n"
+    "  - rule: {rule}\n"
+    '    paths: ["**/*.py"]\n'
+    "  - rule: {rule}\n"
+    '    paths: ["**/*.rs"]\n'
+    "  - rule: {rule}\n"
+    '    paths: ["**/config"]\n'
+    "  - rule: {rule}\n"
+    '    paths: ["**/*.py"]\n'
+    '    exclude: ["**/src/**"]\n'
+    "  - rule: {rule}\n"
+    '    paths: ["**/*.go"]\n'
+    "    enabled: false\n"
+)
+
 
 def test_normal_when_no_violation(
     project_dir: Path,
     make_index: Callable[..., Path],
+    make_project_files: Callable[..., None],
     running_server: Callable[..., Any],
 ) -> None:
     """問題の無い索引で `problem_count` が 0 になる（正常系）。"""
     # 準備
+    make_project_files("src/app.py")
     first = make_index("# a\n", "rules/a.md")
     second = make_index("# b\n", "rules/b.md")
     index = make_index(
@@ -32,6 +51,8 @@ def test_normal_when_no_violation(
     assert content["indexes"][0]["violations"] == []
     assert content["indexes"][0]["missing_rules"] == []
     assert content["indexes"][0]["skipped_entries"] == []
+    assert content["indexes"][0]["unmatched_paths"] == []
+    assert content["unmatched_scan"]["completed"] is True
     assert content["config_path"] == str(server.config_path)
 
 
@@ -125,3 +146,197 @@ def test_error_when_settings_unreadable(
     assert result.is_error is True
     assert config in text_of(result)
     assert "foo" in text_of(result)
+
+
+def test_normal_when_paths_unmatched(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    make_project_files: Callable[..., None],
+    running_server: Callable[..., Any],
+    list_revs: Callable[[Any], list[str]],
+) -> None:
+    """プロジェクトの索引の `paths` の当たらないエントリを返し、ユーザー全体の索引の分は返さない（正常系）。"""
+    # 準備
+    rule = rule_file("project.md")
+    global_rule = rule_file("global.md")
+    make_project_files("src/app.py", ".git/config")
+    project_index = make_index(FIVE_ENTRIES.format(rule=rule), "project.yaml")
+    global_index = make_index(
+        f'rules:\n  - rule: {global_rule}\n    paths: ["**/*.java"]\n', "global.yaml"
+    )
+    server = running_server(project_index, global_indexes=[global_index])
+    # 並びは、ユーザー全体の索引の 1 件の後にプロジェクトの索引の効いているエントリ（位置 0〜3）
+    revs = list_revs(server)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    content = result.structured_content
+    reports = {report["origin"]: report for report in content["indexes"]}
+    assert reports["project"]["unmatched_paths"] == [
+        {"position": 1, "rev": revs[2], "rule": str(rule)},
+        {"position": 2, "rev": revs[3], "rule": str(rule)},
+        {"position": 3, "rev": revs[4], "rule": str(rule)},
+    ]
+    assert reports["global"]["unmatched_paths"] == []
+    assert content["problem_count"] == 3
+    assert content["unmatched_scan"]["completed"] is True
+    assert content["unmatched_scan"]["scanned_files"] == 1
+
+
+def test_normal_when_global_included(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    make_project_files: Callable[..., None],
+    running_server: Callable[..., Any],
+    list_revs: Callable[[Any], list[str]],
+) -> None:
+    """`include_global` が `true` のとき、ユーザー全体の索引の `paths` の当たらないエントリも返し、`problem_count` には数えない（正常系）。"""
+    # 準備
+    rule = rule_file("project.md")
+    global_rule = rule_file("global.md")
+    make_project_files("src/app.py", ".git/config")
+    project_index = make_index(FIVE_ENTRIES.format(rule=rule), "project.yaml")
+    global_index = make_index(
+        f'rules:\n  - rule: {global_rule}\n    paths: ["**/*.java"]\n', "global.yaml"
+    )
+    server = running_server(project_index, global_indexes=[global_index])
+    revs = list_revs(server)
+    # 実行
+    result = server.call(
+        "check_indexes", project_dir=str(project_dir), include_global=True, format="json"
+    )
+    # 検証
+    content = result.structured_content
+    reports = {report["origin"]: report for report in content["indexes"]}
+    assert reports["global"]["unmatched_paths"] == [
+        {"position": 0, "rev": revs[0], "rule": str(global_rule)}
+    ]
+    assert [entry["position"] for entry in reports["project"]["unmatched_paths"]] == [1, 2, 3]
+    assert content["problem_count"] == 3
+
+
+def test_normal_when_scan_timed_out(
+    tmp_path: Path,
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    make_project_files: Callable[..., None],
+    running_limited_server: Callable[..., Any],
+) -> None:
+    """上限を超えたら辿るのをやめ、`paths` の当たらないエントリを返さずに、終えられなかったことと続きの位置を返す（正常系）。"""
+    # 準備
+    rule = rule_file("project.md")
+    make_project_files("docs/readme.md", "src/app.py")
+    missing = tmp_path / "rules" / "missing.md"
+    index = make_index(FIVE_ENTRIES.format(rule=rule) + f"  - rule: {missing}\n")
+    server = running_limited_server(index)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    content = result.structured_content
+    scan = content["unmatched_scan"]
+    assert scan["completed"] is False
+    assert "秒" in scan["reason"]
+    assert "cursor" in scan["reason"]
+    assert scan["scanned_files"] == 1
+    assert scan["next_cursor"] is not None
+    assert content["indexes"][0]["unmatched_paths"] == []
+    assert content["indexes"][0]["missing_rules"] == [{"position": 5, "rule": str(missing)}]
+    assert content["problem_count"] == 1
+
+
+def test_normal_when_cursor_passed(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    make_project_files: Callable[..., None],
+    running_limited_server: Callable[..., Any],
+) -> None:
+    """前の呼び出しの `next_cursor` を渡すと続きから辿り、最後まで辿れたら 1 回で辿ったときと同じ `paths` の当たらないエントリを返す（正常系）。"""
+    # 準備
+    rule = rule_file("project.md")
+    make_project_files("docs/readme.md", "src/app.py")
+    index = make_index(FIVE_ENTRIES.format(rule=rule))
+    server = running_limited_server(index)
+    first = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 実行
+    second = server.call(
+        "check_indexes",
+        project_dir=str(project_dir),
+        cursor=first.structured_content["unmatched_scan"]["next_cursor"],
+        format="json",
+    )
+    # 検証
+    content = second.structured_content
+    assert content["unmatched_scan"]["completed"] is True
+    assert content["unmatched_scan"]["next_cursor"] is None
+    assert content["unmatched_scan"]["scanned_files"] == 2
+    assert [entry["position"] for entry in content["indexes"][0]["unmatched_paths"]] == [1, 2, 3]
+    assert content["problem_count"] == 3
+
+
+def test_normal_when_index_changed_since_cursor(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    make_project_files: Callable[..., None],
+    running_limited_server: Callable[..., Any],
+) -> None:
+    """`cursor` を返した後に索引のエントリが変わったら、`cursor` を使わず最初のファイルから辿り直す（正常系）。"""
+    # 準備
+    rule = rule_file("project.md")
+    make_project_files("docs/readme.md", "src/app.py")
+    index = make_index(FIVE_ENTRIES.format(rule=rule))
+    server = running_limited_server(index)
+    first = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    index.write_text(index.read_text(encoding="utf-8").replace("*.rs", "*.toml"), encoding="utf-8")
+    # 実行
+    second = server.call(
+        "check_indexes",
+        project_dir=str(project_dir),
+        cursor=first.structured_content["unmatched_scan"]["next_cursor"],
+        format="json",
+    )
+    # 検証
+    first_scan = first.structured_content["unmatched_scan"]
+    second_scan = second.structured_content["unmatched_scan"]
+    assert second_scan["scanned_files"] == 1
+    assert second_scan["completed"] is False
+    assert second_scan["next_cursor"] != first_scan["next_cursor"]
+
+
+def test_error_when_cursor_invalid(
+    tmp_path: Path,
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    make_project_files: Callable[..., None],
+    running_limited_server: Callable[..., Any],
+    text_of: Callable[[CallToolResult], str],
+) -> None:
+    """読めない `cursor` と、別の `project_dir` で返した `cursor` をエラーにする（異常系）。"""
+    # 準備
+    rule = rule_file("project.md")
+    make_project_files("docs/readme.md", "src/app.py")
+    other_dir = tmp_path / "other"
+    other_dir.mkdir()
+    index = make_index(FIVE_ENTRIES.format(rule=rule))
+    server = running_limited_server(index)
+    issued = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 実行
+    unreadable = server.call(
+        "check_indexes", project_dir=str(project_dir), cursor="not-a-cursor", format="json"
+    )
+    mismatched = server.call(
+        "check_indexes",
+        project_dir=str(other_dir),
+        cursor=issued.structured_content["unmatched_scan"]["next_cursor"],
+        format="json",
+    )
+    # 検証
+    assert unreadable.is_error is True
+    assert "cursor" in text_of(unreadable)
+    assert mismatched.is_error is True
+    assert "cursor" in text_of(mismatched)

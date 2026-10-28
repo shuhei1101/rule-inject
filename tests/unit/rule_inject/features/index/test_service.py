@@ -688,3 +688,17 @@ def test_entry_revs_when_unparsable() -> None:
     # 実行・検証
     with pytest.raises(ValueError, match="3行目"):
         entry_revs(text)
+
+
+def test_entry_matches_path(make_entry: Callable[..., Any]) -> None:
+    """当たるパスと外すパスを見分ける（正常系）。"""
+    from rule_inject.features.index.service import entry_matches_path
+
+    # 準備
+    entry = make_entry("/r/python.md", paths=["**/*.py"], exclude=["**/tests/**"])
+    # 実行
+    matched = entry_matches_path(entry, "/p/src/a.py")
+    excluded = entry_matches_path(entry, "/p/tests/a.py")
+    # 検証
+    assert matched is True
+    assert excluded is False

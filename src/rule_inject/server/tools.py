@@ -1,4 +1,4 @@
-"""5 つのツールの本体と、設定・書き込める索引の解決。"""
+"""ルールの一覧・検索・エントリの書き込み・削除のツールの本体と、設定・書き込める索引の解決。"""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import os
 from collections.abc import Mapping
 from typing import Annotated, Any, Literal
 
-from jsonschema.protocols import Validator
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import CallToolResult
 from pydantic import Field
@@ -16,7 +15,6 @@ from rule_inject.features.index import (
     match_tool,
     read_index,
 )
-from rule_inject.features.index.check import check_index
 from rule_inject.features.index.edit import IndexLocks, delete_entry, write_entry
 from rule_inject.features.index.edit.types import CheckChange
 from rule_inject.features.index.types import (
@@ -28,12 +26,10 @@ from rule_inject.features.index.types import (
 )
 from rule_inject.server._format import fit_page, respond
 from rule_inject.server.types import (
-    CheckIndexesResult,
     DeleteEntryResult,
     EntryIssue,
     EntryRef,
     IndexIssue,
-    IndexReport,
     ListRulesResult,
     ResponseFormat,
     RuleEntry,
@@ -241,54 +237,6 @@ def search_rules(
         matched=matches,
         unreadable_indexes=unreadable,
         skipped_entries=_issues(contents, "skipped"),
-    )
-    return respond(result, format)
-
-
-def check_indexes(
-    *,
-    project_dir: str,
-    format: ResponseFormat = "markdown",
-    env: Mapping[str, str],
-    validator: Validator,
-) -> CallToolResult:
-    """プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・ルールの場所にファイルが無いエントリを返す。"""
-    settings = _project_settings(project_dir, env)
-    reports: list[IndexReport] = []
-    problem_count = 0
-    for index in settings.indexes:
-        problems = check_index(index, env, validator=validator).problems
-        problem_count += len(problems)
-        # 問題を種類ごとの一覧に分ける
-        reports.append(
-            IndexReport(
-                index=index,
-                hook_error=next(
-                    (problem.reason for problem in problems if problem.kind == "hook_error"), None
-                ),
-                violations=[
-                    {"location": problem.location, "reason": problem.reason}
-                    for problem in problems
-                    if problem.kind == "violation"
-                ],
-                missing_rules=[
-                    {"position": problem.position, "rule": problem.reason}
-                    for problem in problems
-                    if problem.kind == "missing_rule"
-                ],
-                skipped_entries=[
-                    {"position": problem.position, "reason": problem.reason}
-                    for problem in problems
-                    if problem.kind == "skipped_entry"
-                ],
-            )
-        )
-    result = CheckIndexesResult(
-        success=True,
-        output=f"索引 {len(reports)} 件・問題 {problem_count} 件",
-        config_path=_config_path(env),
-        problem_count=problem_count,
-        indexes=reports,
     )
     return respond(result, format)
 

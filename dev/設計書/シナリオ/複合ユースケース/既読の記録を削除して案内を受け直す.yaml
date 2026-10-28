@@ -1,0 +1,60 @@
+title: "既読の記録を削除して案内を受け直す"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定（`~/.claude`）のフック・プラグイン・MCP サーバーを読み込ませない
+        notes: サーバーは `--mcp-config` で HTTP の接続先（`http://127.0.0.1:{ポート}/mcp`）として渡す
+      - name: MCP サーバー
+        description: テストがローカルのクローンから起動した常駐の MCP サーバー
+        notes: 起動の方法は単一ユースケース『MCPサーバーを常駐させる』に従う。ポートは空いているポートを設定ファイルに書いて渡す
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+        notes: '-'
+      - name: 索引
+        description: ルールの場所と、当てるパスの glob（対象のファイルに当たる）・書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに当たる要素で指す。設定ファイルの `global.state_dir` でテストの記録フォルダを指す'
+      - name: 既読のセッション
+        description: 1 回目の `claude -p` でルールの本文を Read で読ませたセッション
+        notes: 応答の `session_id` を控え、以降の実行は `--resume {session_id}` で続け、プロンプトで確認・削除のツールにその `session_id` を渡すよう指示する
+      - name: ツールの許可
+        description: '`--allowedTools` でサーバーの確認・削除のツールと、Read・Write・Edit を許可する'
+        notes: 対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+    flow: |-
+      flowchart TD
+        S0([Claude Code]) -->|ルールの本文を読む操作| UC0([ルールを読んだことが記録される:正常シナリオ（Readで読む）])
+        UC0 -->|セッション| UC1([既読の記録を確認する:正常シナリオ])
+        UC1 -->|セッション| UC2([既読の記録を削除する:正常シナリオ])
+        UC2 -->|対象のファイルを書く操作| UC3([未読のルールの案内を受ける:正常シナリオ（止めて案内する）])
+        UC3 --> DONE([対象のファイルが書かれていない状態])
+
+        click UC0 "../単一ユースケース/ルールを読んだことが記録される.yaml#正常シナリオ（Readで読む）"
+        click UC1 "../単一ユースケース/既読の記録を確認する.yaml#正常シナリオ"
+        click UC2 "../単一ユースケース/既読の記録を削除する.yaml#正常シナリオ"
+        click UC3 "../単一ユースケース/未読のルールの案内を受ける.yaml#正常シナリオ（止めて案内する）"
+    expected:
+      - 確認のツールの結果に、ルールの場所と、読んだ方法が Read であることが載っている
+      - 削除のツールの結果に、未読に戻したルールの場所が載っている
+      - 削除の後の書く操作は止められ、案内にルールの場所が載っている
+      - 対象のファイルが作られていない
+      - 既読の履歴のファイルが残っている
+    test: test_normal
+    uses:
+      - dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される#scenarios[正常シナリオ（Readで読む）]
+      - dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する#scenarios[正常シナリオ]
+      - dev/設計書/シナリオ/単一ユースケース/既読の記録を削除する#scenarios[正常シナリオ]
+      - dev/設計書/シナリオ/単一ユースケース/未読のルールの案内を受ける#scenarios[正常シナリオ（止めて案内する）]
+lead: 常駐の MCP サーバーのツールでセッションの既読のルールを確かめてから既読の記録を削除し、次のフックの呼び出しから読んだはずのルールが未読として案内される一連の流れ。
+issue: 65
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: ユーザー
+    interest: ルールの本文を読み直させたいときに、圧縮を待たずに既読を取り消せること
+trigger: Claude Code が、常駐の MCP サーバーの確認のツールでセッションの既読のルールを確かめ、削除のツールで既読の記録を削除する
+preconditions:
+  - プラグインが Claude Code に読み込まれている
+  - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
+  - フックとサーバーが同じ設定ファイルを読み、設定ファイルで指した場所に索引が置かれている
+success_guarantee: 削除のツールが既読の記録を削除した後の最初のフックの呼び出しで、読んだはずのルールが未読として案内される。
+minimal_guarantee: 既読の履歴とほかのセッションの既読の記録は削除されない。
+test_file: tests/e2e/複合ユースケース/test_delete_read_records_then_guided_again.py

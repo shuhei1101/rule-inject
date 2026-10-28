@@ -13,6 +13,8 @@ import pytest
 TOOL_NAMES = [
     "check_indexes",
     "delete_index_entry",
+    "delete_read_records",
+    "get_read_records",
     "list_rules",
     "search_rules",
     "write_index_entry",
