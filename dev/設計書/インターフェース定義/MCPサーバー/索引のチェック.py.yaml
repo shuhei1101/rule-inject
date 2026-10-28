@@ -406,7 +406,7 @@ constraints:
     constraint: '`project_dir` の下を `.git` フォルダだけ除いて辿る。`.gitignore` で除いたファイルも辿る。フォルダへのシンボリックリンクは辿らない。辿るのは 1 回の呼び出しで 1 回だけで、全ての索引のエントリをその結果に当てる'
     notes: フックは `.gitignore` で除いたファイルにも案内を出すため（`要件.md` の推奨案 A）。リンクを辿るとループしうる
   - item: 辿る時間
-    constraint: ファイルを辿り、エントリに当て終えるまでの時間は 10 秒まで。超えたらやめ、`unmatched_scan.completed` を `false` にしてどの索引の `unmatched_paths` も返さない
+    constraint: ファイルを辿り、エントリに当て終えるまでの時間は 30 秒まで。ファイルを 1 つ当てる前ごとに経過時間を確かめ、上限以上ならやめ、`unmatched_scan.completed` を `false` にしてどの索引の `unmatched_paths` も返さない
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[プロジェクトのファイルを辿る時間]
     notes: 当たったエントリは残りのファイルに当てず、まだ当たっていないエントリだけを次のファイルに当てる。全てのエントリが当たったら辿るのもやめる
 refs:
