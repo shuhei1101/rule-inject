@@ -236,7 +236,7 @@ functions:
     process: |-
       1. `locks.lock_for(index_path)` の中で以下を行う
       2. 索引を UTF-8 で読み、`round_trip_yaml()` で読む。読めない・YAML として読めない・最上位がマップでないときは `IndexEditError`
-      3. `position` が無いとき: `rules` が無いか値が空（`None`）なら、ブロックのリストにする。`entry` のキーを `ENTRY_KEY_ORDER` の順に `to_yaml_value` で値にした `CommentedMap` を `rules` の末尾に追加し、その位置を書き込んだ位置にする
+      3. `position` が無いとき: `rules` が無いか、値が空（`None`）か空のフロー形式のリスト（`[]`）なら、ブロックのリストにする。`entry` のキーを `ENTRY_KEY_ORDER` の順に `to_yaml_value` で値にした `CommentedMap` を `rules` の末尾に追加し、その位置を書き込んだ位置にする
       4. `position` があるとき: `rules` のエントリの数以上なら `IndexEditError`（位置が無い旨とエントリの数）。`entry_revs(書く前の内容)[position]` が `expected_rev` と違えば `IndexEditError`（今のバージョンと、一覧を取り直してから呼び直す旨）。`entry_revs` が ValueError を送出したときは `IndexEditError`（フックの読み取りが読めずバージョンを確かめられない旨、その理由、索引を手で直す旨）。`entry` のキーを `to_yaml_value` で置き換え（既にあるキーはその場で、無いキーは末尾に追加）、`remove_keys` のキーを削除する
       5. 書いた後の内容を文字列へ書き出し、`entry_revs(書いた後の内容)[書き込んだ位置]` をバージョンにする。ValueError のときはバージョンを `None` にする（`check_change` がフックの読み取りの失敗を返す）。round-trip で読んだマップは書き換えにだけ使い、バージョンの元にしない
       6. `check_change(index_path, 書く前の内容, 書いた後の内容, バージョン)` が行を返したら `IndexEditError`（書いた後の索引がチェックに通らない旨と、その行を全て）。`dry_run` のときも同じ

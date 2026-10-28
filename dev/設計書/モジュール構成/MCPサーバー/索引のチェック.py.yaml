@@ -306,7 +306,7 @@ notes:
     | --- | --- |
     | 最上位 | マップ。キーは `default_on`・`rules` だけ |
     | `default_on`・`rules[].on` | `read`・`write`・`mcp` のどれかを 1 つ以上、重なりなく並べたリスト |
-    | `rules` | エントリのリスト |
+    | `rules` | エントリのリストか `null`（`rules:` だけで値が無い） |
     | `rules[]` | マップ。`rule` が必須で、キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`enabled` だけ |
     | `rules[].rule` | 1 字以上の文字列 |
     | `rules[].paths`・`exclude`・`tools` | 1 字以上の文字列を 1 つ以上並べたリスト |
