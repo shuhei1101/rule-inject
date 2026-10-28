@@ -332,7 +332,7 @@ def test_write_entry_when_hook_unreadable(
     # 実行・検証
     with pytest.raises(IndexEditError) as raised:
         write(index, {"on": ["read"]}, check, position=0, expected_rev="000000000000")
-    assert "3行目" in raised.value.reason
+    assert "2行目" in raised.value.reason
     assert index.read_text(encoding="utf-8") == text
 
 
@@ -444,7 +444,7 @@ def test_delete_entry_when_rev_mismatch(make_index: Callable[..., Path], locks: 
 @pytest.mark.parametrize(
     ("text", "line"),
     [
-        pytest.param("rules:\n  - rule: a.md\n    on: [foo]\n", "3行目", id="invalid_on"),
+        pytest.param("rules:\n  - rule: a.md\n    on: [foo]\n", "2行目", id="invalid_on"),
         pytest.param("rules: [{rule: a.md}, {rule: b.md}]\n", "1行目", id="flow_rules"),
     ],
 )
