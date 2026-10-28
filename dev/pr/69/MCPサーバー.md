@@ -38,14 +38,20 @@
 
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
 | --- | --- | --- | --- | --- |
-| `tests/unit/rule_inject/features/index/check/test_scan.py` | 全実行 | 新規 | ✅ | 7 テスト pass<br>`テスト結果/20261029024636_253df98_単体テスト.log` |
-| `tests/unit/rule_inject/server/test_check_tools.py` | 全実行 | 新規 | ✅ | 7 テスト pass。`test_tools.py` の `test_check_indexes` をここへ移した<br>`テスト結果/20261029024636_253df98_単体テスト.log` |
-| `tests/unit/rule_inject/server/test_record_tools.py` | 全実行 | 新規 | ✅ | 6 テスト pass<br>`テスト結果/20261029024636_253df98_単体テスト.log` |
-| [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | 登録するツールを 7 つにした<br>`テスト結果/20261029024636_253df98_単体テスト.log` |
-| [tests/unit/rule_inject/server/test_format.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_format.py) | 全実行 | 変更 | ✅ | `test_respond` の組み立てに `origin`・`unmatched_paths`・`unmatched_scan` を足した<br>`テスト結果/20261029024636_253df98_単体テスト.log` |
-| [tests/unit/rule_inject/server/test_tools.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_tools.py) | 全実行 | 変更 | ✅ | `test_check_indexes` を `test_check_tools.py` へ移し、残りが pass<br>`テスト結果/20261029024636_253df98_単体テスト.log` |
-| [tests/unit](https://github.com/shuhei1101/rule-inject/tree/develop/tests/unit)（上のファイルを除く） | 全実行 | 実行のみ | ✅ | 全体で 373 テスト pass<br>`テスト結果/20261029024636_253df98_単体テスト.log`<br>lint 違反なし: `テスト結果/20261029024636_253df98_lint.log` |
+| `tests/unit/rule_inject/features/index/check/test_scan.py` | 全実行 | 新規 | ✅ | 7 テスト pass<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log` |
+| `tests/unit/rule_inject/server/test_check_tools.py` | 全実行 | 新規 | ✅ | 7 テスト pass。`test_tools.py` の `test_check_indexes` をここへ移した<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log` |
+| `tests/unit/rule_inject/server/test_record_tools.py` | 全実行 | 新規 | ✅ | 6 テスト pass<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log` |
+| [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | 登録するツールを 7 つにした<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log` |
+| [tests/unit/rule_inject/server/test_format.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_format.py) | 全実行 | 変更 | ✅ | `test_respond` の組み立てに `origin`・`unmatched_paths`・`unmatched_scan` を足した<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log` |
+| [tests/unit/rule_inject/server/test_tools.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_tools.py) | 全実行 | 変更 | ✅ | `test_check_indexes` を `test_check_tools.py` へ移し、残りが pass<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log` |
+| [tests/unit](https://github.com/shuhei1101/rule-inject/tree/develop/tests/unit)（上のファイルを除く） | 全実行 | 実行のみ | ✅ | 全体で 373 テスト pass<br>`テスト結果/20261029031420_ea8cfc1_単体テスト.log`<br>lint 違反なし: `テスト結果/20261029031420_ea8cfc1_lint.log` |
 
 ### 結合
 
-なし
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_check_indexes.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/integration/server/test_check_indexes.py) | 全実行 | 変更 | ✅ | 12 テスト pass。`paths` の当たらないエントリ・辿る時間の上限・続きの位置の 6 テストを追加し、`test_normal_when_no_violation` を `paths` の当たるファイルを置いた条件に直した<br>`テスト結果/20261029031420_ea8cfc1_結合テスト.log` |
+| `tests/integration/server/test_get_read_records.py` | 全実行 | 新規 | ✅ | 5 テスト pass<br>`テスト結果/20261029031420_ea8cfc1_結合テスト.log` |
+| `tests/integration/server/test_delete_read_records.py` | 全実行 | 新規 | ✅ | 3 テスト pass<br>`テスト結果/20261029031420_ea8cfc1_結合テスト.log` |
+| [tests/integration/server/test_server_start.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/integration/server/test_server_start.py) | 全実行 | 変更 | ✅ | ツールが 7 つになったことに合わせた<br>`テスト結果/20261029031420_ea8cfc1_結合テスト.log` |
+| [tests/integration](https://github.com/shuhei1101/rule-inject/tree/develop/tests/integration)（上のファイルを除く） | 全実行 | 実行のみ | ✅ | 全体で 135 テスト pass<br>`テスト結果/20261029031420_ea8cfc1_結合テスト.log`<br>lint 違反なし: `テスト結果/20261029031420_ea8cfc1_lint.log` |

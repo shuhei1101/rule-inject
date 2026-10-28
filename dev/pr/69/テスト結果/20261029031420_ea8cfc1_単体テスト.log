@@ -43,4 +43,4 @@ tests/unit/rule_inject/shared/test_settings.py ......................... [ 92%]
 tests/unit/rule_inject/shared/test_settings_yaml.py ........             [ 98%]
 tests/unit/rule_inject/shared/test_variables.py .....                    [100%]
 
-============================= 373 passed in 11.29s =============================
+============================= 373 passed in 18.37s =============================
