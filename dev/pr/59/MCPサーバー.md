@@ -79,11 +79,11 @@ diff の見どころは `poc/roundtrip.py`（書き戻しと `load_indexes`）�
 
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
 | --- | --- | --- | --- | --- |
-| `tests/unit/rule_inject/features/index/check/test_service.py` | 全実行 | 新規 | ❌ | 11 テストが Red（`rule_inject.features.index.check` が無い） |
-| `tests/unit/rule_inject/features/index/edit/test_service.py` | 全実行 | 新規 | ❌ | 21 テストが Red（`rule_inject.features.index.edit` が無い） |
-| `tests/unit/rule_inject/features/index/edit/test_types.py` | 全実行 | 新規 | ❌ | 1 テストが Red（同上） |
-| `tests/unit/rule_inject/features/index/edit/test_yaml.py` | 全実行 | 新規 | ❌ | 2 テストが Red（同上） |
-| `tests/unit/rule_inject/server/test_app.py` | 全実行 | 新規 | ❌ | 1 テストが Red（`rule_inject.server` が無い） |
-| `tests/unit/rule_inject/server/test_format.py` | 全実行 | 新規 | ❌ | 4 テストが Red（同上） |
-| `tests/unit/rule_inject/server/test_main.py` | 全実行 | 新規 | ❌ | 2 テストが Red（同上） |
-| `tests/unit/rule_inject/server/test_tools.py` | 全実行 | 新規 | ❌ | 14 テストが Red（同上） |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | 全実行 | 新規 | ✅ | 11 テスト pass |
+| `tests/unit/rule_inject/features/index/edit/test_service.py` | 全実行 | 新規 | ✅ | 21 テスト pass |
+| `tests/unit/rule_inject/features/index/edit/test_types.py` | 全実行 | 新規 | ✅ | 1 テスト pass |
+| `tests/unit/rule_inject/features/index/edit/test_yaml.py` | 全実行 | 新規 | ✅ | 2 テスト pass |
+| `tests/unit/rule_inject/server/test_app.py` | 全実行 | 新規 | ✅ | 1 テスト pass |
+| `tests/unit/rule_inject/server/test_format.py` | 全実行 | 新規 | ✅ | 4 テスト pass |
+| `tests/unit/rule_inject/server/test_main.py` | 全実行 | 新規 | ✅ | 2 テスト pass |
+| `tests/unit/rule_inject/server/test_tools.py` | 全実行 | 新規 | ✅ | 14 テスト pass<br>`tests/unit` 全体 336 テストの実行は `テスト結果/20261028203504_b413ca8_単体テスト.log` |
