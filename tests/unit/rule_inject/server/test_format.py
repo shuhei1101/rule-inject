@@ -64,7 +64,7 @@ def _list_result(entries: list[Any]) -> Any:
 def test_respond(format_: str, has_structured: bool, has_table: bool) -> None:
     """形式ごとに structuredContent の有無を切り替える（正常系）。"""
     from rule_inject.server._format import respond
-    from rule_inject.server.types import CheckIndexesResult, IndexReport
+    from rule_inject.server.types import CheckIndexesResult, IndexReport, UnmatchedScanReport
 
     # 準備
     result = CheckIndexesResult(
@@ -72,13 +72,18 @@ def test_respond(format_: str, has_structured: bool, has_table: bool) -> None:
         output="索引 1 件・問題 1 件",
         config_path="/home/user/.config/rule-inject/settings.yaml",
         problem_count=1,
+        unmatched_scan=UnmatchedScanReport(
+            completed=True, scanned_files=0, reason=None, next_cursor=None
+        ),
         indexes=[
             IndexReport(
                 index="/p/rules.yaml",
+                origin="project",
                 hook_error=None,
                 violations=[{"location": "rules[0].paths", "reason": "[] should be non-empty"}],
                 missing_rules=[],
                 skipped_entries=[],
+                unmatched_paths=[],
             )
         ],
     )
