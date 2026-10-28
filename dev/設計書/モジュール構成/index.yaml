@@ -2,3 +2,5 @@ summary: クラス / 関数 / 関数型 インデックス（単体テストの�
 items:
   - page: プラグイン/
     summary: フックの Python のモジュール
+  - page: MCPサーバー/
+    summary: 常駐の MCP サーバーの Python のモジュール

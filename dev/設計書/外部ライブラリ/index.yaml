@@ -3,7 +3,7 @@ items:
   - page: claude-code.yaml
     summary: フックを呼ぶ Claude Code の CLI
   - page: mcp.yaml
-    summary: E2E テストの文書の MCP サーバーを書く公式の Python SDK
+    summary: 常駐の MCP サーバーと E2E テストの文書の MCP サーバーを書く公式の Python SDK
   - page: jsonschema.yaml
     summary: 索引を JSON Schema で検証するライブラリ
   - page: ruamel-yaml.yaml

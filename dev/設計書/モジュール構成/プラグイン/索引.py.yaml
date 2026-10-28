@@ -3,10 +3,10 @@ lead: 設定（`load_settings`）が決めた索引を標準ライブラリだ�
 directory: |-
   ```text
   src/rule_inject/features/index/
-  ├── __init__.py   # 公開 API（load_indexes / match_path / match_tool / match_read_by / rule_locations）
-  ├── types.py      # Operation・MatchPattern・ArgCondition・ReadByCondition・IndexEntry・MatchedRule・IndexLoadResult
+  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / match_path / match_tool / match_read_by / rule_locations）
+  ├── types.py      # Operation・EntryStatus・MatchPattern・ArgCondition・ReadByCondition・IndexEntry・EntryOutcome・IndexContent・MatchedRule・IndexLoadResult
   ├── _yaml.py      # 索引の YAML の一部だけを読む（行・文字列・リストの読み取りは shared/yaml_lines.py）
-  └── service.py    # 索引の読み込みと照合
+  └── service.py    # 索引の読み込みと照合・エントリのバージョン
   ```
 enums:
   - name: Operation
@@ -24,6 +24,21 @@ enums:
       - value: mcp
         title: MCP
         description: MCP のツールの呼び出し
+  - name: EntryStatus
+    title: エントリの状態
+    container: features/index/types.py
+    usecase: 効いているルールの一覧を見る
+    summary: 索引を読んだときのエントリごとの扱い（Literal）
+    values:
+      - value: effective
+        title: 効いている
+        description: 照合に使う
+      - value: skipped
+        title: 読み飛ばした
+        description: 展開できない変数参照・URL の `rule`・読めない正規表現のため照合に使わない
+      - value: disabled
+        title: 無効
+        description: '`enabled: false` のため照合に使わない'
 constants:
   - name: DEFAULT_ON
     title: 既定の止める操作
@@ -45,6 +60,11 @@ constants:
     container: features/index/service.py
     summary: Read で読めないため読み飛ばす `rule` の頭
     value: '`("http://", "https://")`'
+  - name: REV_LENGTH
+    title: エントリのバージョンの長さ
+    container: features/index/service.py
+    summary: SHA-256 の 16 進のうちバージョンに使う先頭の字数
+    value: '`12`'
 data_models:
   - name: IndexEntry
     title: 索引のエントリ
@@ -139,6 +159,44 @@ data_models:
       - name: args
         type: tuple[ArgCondition, ...]
         description: 引数の条件。全てが当たるときだけ要素を当てる（空なら引数では絞らない）
+  - name: EntryOutcome
+    title: エントリの読み取り結果
+    container: features/index/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: 索引の 1 エントリの位置・書かれた値・バージョンと、照合に使うか
+    properties:
+      - name: position
+        type: int
+        description: 索引の `rules` の中の位置（0 始まり）
+      - name: raw
+        type: Mapping[str, Any]
+        description: '`parse_index` が読んだエントリのキーと値（書かれたまま）'
+      - name: rev
+        type: str
+        description: '`entry_rev(raw)`'
+      - name: status
+        type: EntryStatus
+        description: 照合に使うか
+      - name: entry
+        type: IndexEntry | None
+        description: 状態が `effective` のときだけ持つ、場所を解きパターンをコンパイルしたエントリ
+      - name: reason
+        type: str | None
+        description: 状態が `skipped` のときだけ持つ、読み飛ばした理由（フックが案内に載せる文言）
+  - name: IndexContent
+    title: 索引の読み取り結果
+    container: features/index/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: 読めた索引 1 つのエントリごとの読み取り結果
+    properties:
+      - name: path
+        type: str
+        description: 索引の場所
+      - name: outcomes
+        type: tuple[EntryOutcome, ...]
+        description: '`rules` の並びの順のエントリごとの結果'
 functions:
   - name: parse_index
     title: 索引の YAML の読み取り
@@ -263,12 +321,8 @@ functions:
       type: IndexLoadResult
       description: 読めたエントリと読めなかった索引
     process: |-
-      1. `index_paths` を渡された順に読む。UTF-8 で読み `parse_index` に渡す。OSError / ValueError は `IndexReadError` として `failures` に集め、次の索引へ進む
-      2. `enabled` が `false` のエントリは、以降の展開・解決・コンパイルをせずに外す（`entries` にも `failures` にも入れない）。無効のエントリは照合に使わないため、展開できない変数参照・URL・読めない正規表現を持っていても理由を載せない
-      3. エントリの `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）を `failures` に追加する。同じ索引のほかのエントリは読む
-      4. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `rule {展開した rule} は URL のため Read で読めない`）を `failures` に追加する。同じ索引のほかのエントリは読む
-      5. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは読み飛ばし、`IndexReadError`（path は索引の場所、reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）を `failures` に追加する。同じ索引のほかのエントリは読む
-      6. 展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋める
+      1. `index_paths` を渡された順に `read_index(index_path, env)` で読む。`IndexReadError` は `failures` に集め、次の索引へ進む
+      2. 状態が `effective` のエントリの `entry` を `entries` に、`skipped` のエントリを `IndexReadError`（path は索引の場所、reason は `reason`）として `failures` に追加する。`disabled` のエントリはどちらにも入れない（無効のエントリは照合に使わないため、展開できない変数参照・URL・読めない正規表現を持っていても理由を載せない）
     unit_tests:
       - name: test_load_indexes
         case: 正常
@@ -731,6 +785,128 @@ functions:
         condition: '`conditions` が空、`tool_input` が `{}`'
         mock: なし
         expected: 'True'
+  - name: read_index
+    title: 索引 1 つの読み取り
+    container: features/index/service.py
+    usecase: 効いているルールの一覧を見る
+    summary: 索引 1 つを読み、エントリごとに位置・バージョン・照合に使うかを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`rule` の変数参照の値を使う）
+    returns:
+      type: IndexContent
+      description: エントリごとの読み取り結果
+    process: |-
+      1. UTF-8 で読み `read_index_text` に渡す。OSError は `IndexReadError`（path は索引の場所、reason は `describe(exc)`）を送出する
+
+      `read_index_text` の処理:
+
+      1. `parse_index` に渡す。ValueError は `IndexReadError`（path は索引の場所、reason は `describe(exc)`）を送出する
+      2. エントリごとに `entry_rev(raw)` を求める
+      3. `enabled` が `false` のエントリは、展開・解決・コンパイルをせずに `disabled` にする
+      4. `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは `skipped`（reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）
+      5. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは `skipped`（reason は `rule {展開した rule} は URL のため Read で読めない`）
+      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
+      7. 残りは、展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋めた `IndexEntry` を持つ `effective` にする
+    exceptions:
+      - name: IndexReadError
+        condition: 索引が無い・読めない・`parse_index` が ValueError を送出する
+        message: path は索引の場所、reason は `describe(exc)`
+    unit_tests:
+      - name: test_read_index
+        case: 正常
+        summary: エントリごとの位置・バージョン・状態を返す
+        condition: '通常のエントリ、`enabled: false` のエントリ、`rule: https://example.com/a.md` のエントリの 3 つ'
+        mock: なし
+        expected: '`outcomes` が位置 0・1・2 の順で、状態が `effective`（`entry` あり）・`disabled`・`skipped`（`reason` に URL）。`rev` が各エントリの `entry_rev(raw)`'
+      - name: test_read_index_when_unreadable
+        case: 異常
+        summary: 読めない索引を拒む
+        condition: 実在しないパスと、書式に合わないファイル（パラメータ展開）
+        mock: なし
+        expected: IndexReadError（path が索引の場所）
+        exception: 索引が無い・読めない・`parse_index` が ValueError を送出する
+  - name: entry_rev
+    title: エントリのバージョン
+    container: features/index/service.py
+    usecase: 索引のエントリを編集する
+    summary: エントリのキーと値から、書式によらないバージョンを求める
+    kind: 関数
+    scope: public
+    args:
+      - name: raw
+        type: Mapping[str, Any]
+        required: true
+        passing: positional
+        description: エントリのキーと値（`parse_index` の要素か、round-trip で読んだマップ）
+    returns:
+      type: str
+      description: SHA-256 の 16 進の先頭 `REV_LENGTH` 字
+    process: |-
+      1. 値を再帰でたどり、スカラーを文字列にそろえる（真偽は `true` / `false`、数は `str`、`None` は空文字列）。`parse_index` は全てのスカラーを文字列で返すため、round-trip で読んだ値と同じバージョンになる
+      2. キーの順に並べた JSON（`sort_keys=True`・`ensure_ascii=False`・区切りは `,` と `:`）を UTF-8 にして SHA-256 を求める
+    unit_tests:
+      - name: test_entry_rev_when_format_differs
+        case: 正常
+        summary: 書式だけの違いでは変わらない
+        condition: '`{"rule": "a.md", "enabled": "false"}` と、キーの順が逆で `enabled` が真偽の `False` のマップ'
+        mock: なし
+        expected: 同じ 12 字
+      - name: test_entry_rev_when_value_differs
+        case: 正常
+        summary: 値が違えば変わる
+        condition: '`paths` だけが違う 2 つのマップ'
+        mock: なし
+        expected: 違う値
+  - name: read_index_text
+    title: 索引の内容の読み取り
+    container: features/index/service.py
+    usecase: 索引をチェックする
+    summary: ファイルに書く前の索引の内容を、`read_index` と同じ規則で読む
+    kind: 関数
+    scope: public
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス（`rule` を解くフォルダと、理由に載せる場所に使う）
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 索引の内容
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: IndexContent
+      description: エントリごとの読み取り結果
+    process: '`read_index` の `read_index_text` の処理'
+    exceptions:
+      - name: IndexReadError
+        condition: '`parse_index` が ValueError を送出する'
+        message: path は索引の場所、reason は `describe(exc)`（行の番号を含む）
+    unit_tests:
+      - name: test_read_index_text_when_unparsable
+        case: 異常
+        summary: フックが読めない内容を拒む
+        condition: '`rules:` の下に字下げの崩れた行を持つ内容'
+        mock: なし
+        expected: IndexReadError（reason に行の番号）
+        exception: '`parse_index` が ValueError を送出する'
 test_files:
   - tests/unit/rule_inject/features/index/test_yaml.py
   - tests/unit/rule_inject/features/index/test_service.py

@@ -5,11 +5,15 @@ layers:
       ```bash
       uv run pytest tests/unit
       ```
+    prerequisites:
+      - MCP サーバーのテストは、`pyproject.toml` の任意の依存 `server`（`mcp`・`jsonschema`・`ruamel.yaml`）を使う。同じ依存を `dev` グループにも入れ、`uv run` が入れる
   - name: 結合テスト（バック）
     run_all: |-
       ```bash
       uv run pytest tests/integration
       ```
+    prerequisites:
+      - MCP サーバーのテスト（`tests/integration/server/`）は、単体テストと同じ依存を使い、サーバーを `127.0.0.1` の空いているポート（`RULE_INJECT_PORT`）で子プロセスとして立て、`mcp` の Streamable HTTP のクライアントで呼ぶ
   - name: E2E テスト
     description: 実の Claude Code（`claude -p --plugin-dir {Linux 側の一時フォルダへコピーしたプラグインのフォルダ} --setting-sources project`）を起動して、シナリオごとに確かめる。pytest で実行し、`--run-e2e` を付けたときだけ動く（付けなければ全て skip する）。
     prerequisites:

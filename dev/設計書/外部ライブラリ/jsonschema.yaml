@@ -34,3 +34,7 @@ verification:
 license: MIT（商用利用可）
 official_url: https://github.com/python-jsonschema/jsonschema
 docs_url: https://python-jsonschema.readthedocs.io/
+dependency_scope: 任意
+adoption: 採用
+used_in:
+  - src/rule_inject/features/index/check/service.py

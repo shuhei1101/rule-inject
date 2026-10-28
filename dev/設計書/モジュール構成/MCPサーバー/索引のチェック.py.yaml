@@ -1,0 +1,315 @@
+title: "MCP サーバー / 索引のチェック"
+lead: 索引をフックと同じ読み取り・JSON Schema・ルールの場所の実在の順に確かめ、問題を返す。書く前と書いた後の索引を比べ、新しく出た問題だけを返す。`features/index` のサブフィーチャーで、サーバーの依存（`jsonschema`・`ruamel.yaml`）を使うためフックからは読み込まない。
+directory: |-
+  ```text
+  src/rule_inject/features/index/check/
+  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change）
+  ├── types.py            # ProblemKind・IndexProblem・IndexCheck
+  ├── service.py          # 索引のチェックと、書く前と書いた後の問題の比較
+  └── index.schema.yaml   # 索引の JSON Schema（2020-12）
+  ```
+enums:
+  - name: ProblemKind
+    title: 問題の種類
+    container: features/index/check/types.py
+    usecase: 索引をチェックする
+    summary: 索引の問題の種類（Literal）。インターフェース定義「索引のチェック」の応答の一覧に当たる
+    values:
+      - value: hook_error
+        title: フックが読めない
+        description: '`hook_error`'
+      - value: violation
+        title: JSON Schema への違反
+        description: '`violations`'
+      - value: missing_rule
+        title: ルールの場所にファイルが無い
+        description: '`missing_rules`'
+      - value: skipped_entry
+        title: フックが読み飛ばすエントリ
+        description: '`skipped_entries`'
+constants:
+  - name: INDEX_SCHEMA_FILE
+    title: 索引の JSON Schema のファイル名
+    container: features/index/check/service.py
+    summary: パッケージに同梱する JSON Schema のファイル名。中身は補足「索引の JSON Schema」
+    value: '`"index.schema.yaml"`'
+  - name: ROOT_LOCATION
+    title: 索引の最上位の場所
+    container: features/index/check/service.py
+    summary: 問題が索引全体にかかるときの場所
+    value: '`"$"`'
+data_models:
+  - name: IndexProblem
+    title: 索引の問題
+    container: features/index/check/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: 索引の 1 つの問題
+    properties:
+      - name: kind
+        type: ProblemKind
+        description: 問題の種類
+      - name: location
+        type: str
+        description: 索引の中の場所。キーは `.`、リストの要素は `[位置]` で結ぶ（例 `rules[0].read_by[1].tools`）。索引全体にかかるときは `ROOT_LOCATION`
+      - name: reason
+        type: str
+        description: 理由。`hook_error`・`skipped_entry` はフックが案内に載せる文言、`violation` は `jsonschema` の `message`、`missing_rule` は解いたルールの場所
+      - name: position
+        type: int | None
+        description: 問題のあるエントリの位置。エントリに属さない問題は `None`
+      - name: rev
+        type: str | None
+        description: 問題のあるエントリのバージョン（`entry_rev`）。エントリに属さない問題は `None`
+  - name: IndexCheck
+    title: 索引のチェックの結果
+    container: features/index/check/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: 索引 1 つの問題の一覧
+    properties:
+      - name: index
+        type: str
+        description: チェックした索引の場所
+      - name: problems
+        type: tuple[IndexProblem, ...]
+        description: 見つかった問題。`hook_error` があるときはその 1 件だけ
+functions:
+  - name: load_validator
+    title: JSON Schema の読み込み
+    container: features/index/check/service.py
+    usecase: 索引をチェックする
+    summary: パッケージに同梱した索引の JSON Schema を読み、検証器を作る
+    kind: 関数
+    scope: public
+    returns:
+      type: jsonschema.protocols.Validator
+      description: '`Draft202012Validator`'
+    process: |-
+      1. `importlib.resources` で `INDEX_SCHEMA_FILE` を読み、`ruamel.yaml` の `YAML(typ="safe")` で読む
+      2. `Draft202012Validator.check_schema` で Schema 自体を確かめ、`Draft202012Validator` を返す。サーバーはコンポジションルートで 1 回だけ呼ぶ（モジュールに状態を持たない）
+    unit_tests:
+      - name: test_load_validator
+        case: 正常
+        summary: 同梱の Schema が Schema として正しく、書式どおりの索引を通す
+        condition: '`rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`enabled` を全て持つエントリと `default_on` を持つ索引'
+        mock: なし
+        expected: 例外を送出せず、返した検証器の `iter_errors` が 0 件
+  - name: check_index
+    title: 索引のチェック
+    container: features/index/check/service.py
+    usecase: 索引をチェックする
+    summary: 索引のファイルを読み、`check_index_text` で確かめる
+    kind: 関数
+    scope: public
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`rule` の変数参照の展開に使う）
+      - name: validator
+        type: jsonschema.protocols.Validator
+        required: true
+        passing: keyword
+        description: '`load_validator` の戻り値'
+    returns:
+      type: IndexCheck
+      description: 問題の一覧
+    process: |-
+      1. UTF-8 で読む。OSError は `hook_error`（場所 `ROOT_LOCATION`、理由 `describe(exc)`）だけを持つ結果を返す（フックが読めない理由と同じ文言）
+      2. `check_index_text(index_path, text, env, validator=validator)` を返す
+    unit_tests:
+      - name: test_check_index_when_missing
+        case: 正常
+        summary: 無い索引を hook_error で返す
+        condition: 存在しない索引のパス
+        mock: なし
+        expected: 問題が `hook_error` の 1 件で、理由が `load_indexes` の失敗の理由と同じ
+  - name: check_index_text
+    title: 索引の内容のチェック
+    container: features/index/check/service.py
+    usecase: 索引をチェックする
+    summary: 索引の内容を、フックと同じ読み取り→ JSON Schema → ルールの場所の実在の順に確かめる
+    kind: 関数
+    scope: public
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス（`rule` を解くフォルダ）
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 索引の内容
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+      - name: validator
+        type: jsonschema.protocols.Validator
+        required: true
+        passing: keyword
+        description: '`load_validator` の戻り値'
+    returns:
+      type: IndexCheck
+      description: 問題の一覧。並びは `violation`（`jsonschema` の場所の順）→ `missing_rule` → `skipped_entry`（どちらも位置の順）
+    process: |-
+      1. `read_index_text(index_path, text, env)` で読む。`IndexReadError` は `hook_error`（場所 `ROOT_LOCATION`、理由はその reason）だけを持つ結果を返し、JSON Schema に照らさずルールの場所も確かめない
+      2. `YAML(typ="safe")` で読んだ値を `validator.iter_errors` に渡し、違反ごとに `violation` を作る。場所は `absolute_path` を `.` と `[位置]` で結び（空なら `ROOT_LOCATION`）、理由は `message`。`absolute_path` が `rules` と位置で始まるときは、その位置と、手順 1 の同じ位置のエントリの `rev` を持たせる
+      3. 状態が `effective` のエントリのうち、解いたルールの場所にファイルが無いものを `missing_rule`（場所 `rules[{位置}].rule`、理由は解いた場所）にする。`disabled` のエントリは確かめない
+      4. 状態が `skipped` のエントリを `skipped_entry`（場所 `rules[{位置}]`、理由はその reason）にする
+    unit_tests:
+      - name: test_check_index_text
+        case: 正常
+        summary: 問題の無い索引では問題を返さない
+        condition: ルールのファイルがあるエントリ 1 件の索引
+        mock: なし（`tmp_path` にルールのファイルを置く）
+        expected: '`problems` が空'
+      - name: test_check_index_text_when_unparsable
+        case: 正常
+        summary: フックが読めない索引はその理由だけを返す
+        condition: 字下げの崩れた行と、Schema に違反する値を両方持つ内容
+        mock: なし
+        expected: 問題が `hook_error` の 1 件だけで、理由に行の番号
+      - name: test_check_index_text_when_violation
+        case: 正常
+        summary: JSON Schema への違反を全て並べる
+        condition: '`rules[0].paths: []` と `rules[1]` に知らないキー `foo` を持つ索引（フックは読める）'
+        mock: なし
+        expected: '`violation` が 2 件で、場所が `rules[0].paths` と `rules[1]`、`position` が 0 と 1、`rev` が各エントリのバージョン'
+      - name: test_check_index_text_when_missing_rule
+        case: 正常
+        summary: ルールの場所にファイルが無いエントリを返し、無効のエントリは確かめない
+        condition: 'ファイルが無い `rule` のエントリ 2 件（うち 1 件は `enabled: false`）'
+        mock: なし
+        expected: '`missing_rule` が有効のエントリの 1 件だけで、理由が解いた場所'
+      - name: test_check_index_text_when_skipped
+        case: 正常
+        summary: フックが読み飛ばすエントリを返し、場所は確かめない
+        condition: 未設定の変数参照を持つ `rule` のエントリ
+        mock: なし
+        expected: '`skipped_entry` が 1 件で、理由が `read_index_text` の reason と同じ。`missing_rule` が 0 件'
+  - name: new_problems
+    title: 新しく出た問題
+    container: features/index/check/service.py
+    usecase: 索引のエントリを編集する
+    summary: 書いた後の索引の問題のうち、書く前に無かったものを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: before
+        type: IndexCheck
+        required: true
+        passing: positional
+        description: 書く前の索引のチェックの結果
+      - name: after
+        type: IndexCheck
+        required: true
+        passing: positional
+        description: 書いた後の索引のチェックの結果
+      - name: changed_rev
+        type: str | None
+        required: true
+        passing: positional
+        description: 書いたエントリの書いた後のバージョン
+    returns:
+      type: tuple[IndexProblem, ...]
+      description: 新しく出た問題（`after` の並びの順）
+    process: |-
+      1. `after` に `hook_error` があれば、それだけを返す（書く前も読めなかった場合も含む）
+      2. 問題を、種類・`rev`・場所の先頭の `rules[{位置}]` を `rules[]` に置き換えた場所・理由の組で照らし合わせる（位置は新規作成・削除でずれるため比べない）
+      3. `after` の問題のうち、`rev` が `changed_rev` のものと、手順 2 の組が `before` に無いものを返す
+    unit_tests:
+      - name: test_new_problems_when_existing
+        case: 正常
+        summary: もとからある問題は位置がずれても返さない
+        condition: '`before` の `rules[1].paths` の違反と、`after` の同じ `rev`・理由の `rules[0].paths` の違反。`changed_rev` は別の値'
+        mock: なし
+        expected: 空
+      - name: test_new_problems_when_changed_entry
+        case: 正常
+        summary: 書いたエントリの問題は書く前に同じ理由があっても返す
+        condition: '`before` と `after` に同じ場所・理由の違反があり、`after` の `rev` が `changed_rev`'
+        mock: なし
+        expected: その違反 1 件
+      - name: test_new_problems_when_hook_error
+        case: 正常
+        summary: 書いた後にフックが読めなければそれを返す
+        condition: '`before` と `after` の両方が同じ `hook_error`'
+        mock: なし
+        expected: '`after` の `hook_error` 1 件'
+  - name: check_change
+    title: 書き込みのチェック
+    container: features/index/check/service.py
+    usecase: 索引のエントリを編集する
+    summary: '書く前と書いた後の索引の内容を確かめ、新しく出た問題を `{索引の中の場所}: {理由}` の行で返す。エントリの編集に注入する'
+    kind: 関数
+    scope: public
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス
+      - name: before_text
+        type: str
+        required: true
+        passing: positional
+        description: 書く前の索引の内容
+      - name: after_text
+        type: str
+        required: true
+        passing: positional
+        description: 書いた後の索引の内容
+      - name: changed_rev
+        type: str | None
+        required: true
+        passing: positional
+        description: 書いたエントリの書いた後のバージョン
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: 環境変数（コンポジションルートが `partial` で渡す）
+      - name: validator
+        type: jsonschema.protocols.Validator
+        required: true
+        passing: injected
+        description: '`load_validator` の戻り値（コンポジションルートが `partial` で渡す）'
+    returns:
+      type: tuple[str, ...]
+      description: 新しく出た問題の行。空なら書いてよい
+    process: |-
+      1. `check_index_text` で `before_text` と `after_text` を確かめる
+      2. `new_problems(before, after, changed_rev)` の問題を `{location}: {reason}` の行にして返す
+    unit_tests:
+      - name: test_check_change
+        case: 正常
+        summary: 新しく出た問題を行で返す
+        condition: '書く前は問題が無く、書いた後は `rules[0].paths: []` の内容'
+        mock: なし
+        expected: '`rules[0].paths: {jsonschema の message}` の 1 行'
+notes:
+  索引の JSON Schema: |-
+    `index.schema.yaml` は JSON Schema 2020-12 を YAML で書き、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを通す。
+
+    | 場所 | 通す値 |
+    | --- | --- |
+    | 最上位 | マップ。キーは `default_on`・`rules` だけ |
+    | `default_on`・`rules[].on` | `read`・`write`・`mcp` のどれかを 1 つ以上、重なりなく並べたリスト |
+    | `rules` | エントリのリスト |
+    | `rules[]` | マップ。`rule` が必須で、キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`enabled` だけ |
+    | `rules[].rule` | 1 字以上の文字列 |
+    | `rules[].paths`・`exclude`・`tools` | 1 字以上の文字列を 1 つ以上並べたリスト |
+    | `rules[].args`・`read_by[].args` | 引数のキー → 1 字以上の文字列を 1 つ以上並べたリストのマップ（キーを 1 つ以上持つ） |
+    | `rules[].read_by` | `tools` が必須で、キーは `tools`・`args` だけのマップを 1 つ以上並べたリスト |
+    | `rules[].enabled` | 真偽値 |

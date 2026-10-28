@@ -51,7 +51,7 @@ catalogs:
           ```
 lead: Model Context Protocol の公式の Python SDK。MCP のサーバーとクライアントを書くためのクラスを持つ。
 purl: pkg:pypi/mcp
-dependency_scope: 開発のみ
+dependency_scope: 任意
 adoption: 採用
 upstream: modelcontextprotocol/python-sdk
 license: MIT（商用利用可）
@@ -68,4 +68,7 @@ selection:
 
     プラグインの MCP サーバーを廃止し（#44）、プラグインの依存から外した。E2E テストの `read_by` のシナリオで立てる文書の MCP サーバーだけが使う。
 used_in:
+  - src/rule_inject/server/app.py
+  - src/rule_inject/server/tools.py
+  - src/rule_inject/server/_format.py
   - tests/e2e/conftest.py

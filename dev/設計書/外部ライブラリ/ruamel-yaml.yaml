@@ -32,3 +32,9 @@ verification:
 license: MIT（商用利用可）
 official_url: https://sourceforge.net/projects/ruamel-yaml/
 docs_url: https://yaml.dev/doc/ruamel.yaml/
+dependency_scope: 任意
+adoption: 採用
+used_in:
+  - src/rule_inject/features/index/edit/_yaml.py
+  - src/rule_inject/features/index/edit/service.py
+  - src/rule_inject/features/index/check/service.py

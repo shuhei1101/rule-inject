@@ -14,7 +14,7 @@
 | ドキュメント | `設計書/インターフェース定義/` の MCP サーバーのツール（新規） | - | サーバーの起動と、一覧・検索・チェック・編集のツールを追加する |
 | ドキュメント | `設計書/モジュール構成/` の MCP サーバーのモジュール（新規） | - | サーバーの入口・ツール・索引の検証と書き込みを追加する |
 | 実装 | `src/rule_inject/server/`（新規） | - | サーバーの入口とツールを追加する。Claude Code への HTTP の接続先は、利用者が `claude mcp add --transport http -s user` で設定ファイルのポートを指して登録し、セットアップに記載する |
-| 実装 | [pyproject.toml](https://github.com/shuhei1101/rule-inject/blob/develop/pyproject.toml) | `dependencies` は空で、`mcp` は開発時の依存 | サーバーの依存（`mcp`・`jsonschema`）を、フックが読まない範囲に追加する |
+| 実装 | [pyproject.toml](https://github.com/shuhei1101/rule-inject/blob/develop/pyproject.toml) | `dependencies` は空で、`mcp` は開発時の依存 | サーバーの依存（`mcp`・`jsonschema`・`ruamel.yaml`）を任意の依存 `server` と `dev` グループに追加する。フックは読まない |
 | 実装 | `tests/unit`・`tests/integration`・`tests/e2e` のサーバーのテスト（新規） | - | 追加する |
 
 <!-- /table -->
