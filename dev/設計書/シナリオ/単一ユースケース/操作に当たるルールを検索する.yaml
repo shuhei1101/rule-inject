@@ -112,3 +112,4 @@ preconditions:
   - フックとサーバーが同じ設定ファイルを読む
 success_guarantee: フックの `PreToolUse` と同じ索引・同じ照合で、当たるルールと止めるかを返す。既読の記録は見ず、未読とみなした結果を返す。
 minimal_guarantee: 索引・既読の記録・サーバーの状態を書き換えない。
+test_file: tests/e2e/単一ユースケース/test_search_rules_for_operation.py

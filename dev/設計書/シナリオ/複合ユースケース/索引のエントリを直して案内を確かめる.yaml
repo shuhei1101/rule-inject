@@ -86,3 +86,4 @@ preconditions:
   - フックとサーバーが同じ設定ファイルを読み、設定ファイルで指した場所に索引が置かれている
 success_guarantee: 編集のツールが書き込んだエントリは、サーバーを再起動せずに、検索のツールと次のフックの呼び出しの両方で同じ当たり方をする。
 minimal_guarantee: 書いた後の索引がチェックに通らないときは索引を書き換えず、フックの案内は編集の前のまま変わらない。
+test_file: tests/e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py

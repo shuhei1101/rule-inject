@@ -109,3 +109,4 @@ preconditions:
   - 起動の側の環境変数 `RULE_INJECT_CONFIG` が、フックと同じ設定ファイルを指している
 success_guarantee: サーバーは `127.0.0.1` の、設定ファイルで指したポートだけで待ち受け、`claude mcp add --transport http -s user` で登録した Claude Code から接続できる。
 minimal_guarantee: 起動できないときは待ち受けずに終了し、標準エラーに理由を書く。サーバーの起動と停止は、フックの案内と既読の記録に影響しない。
+test_file: tests/e2e/単一ユースケース/test_run_resident_mcp_server.py

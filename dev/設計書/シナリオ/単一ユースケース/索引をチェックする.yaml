@@ -128,3 +128,4 @@ preconditions:
   - フックとサーバーが同じ設定ファイルを読む
 success_guarantee: 索引ごとに、まずフックと同じ読み取りで読み、読めたときだけ JSON Schema に照らす。違反は索引の場所・索引の中の場所・理由を持つ。
 minimal_guarantee: 索引とサーバーの状態を書き換えない。
+test_file: tests/e2e/単一ユースケース/test_check_indexes.py

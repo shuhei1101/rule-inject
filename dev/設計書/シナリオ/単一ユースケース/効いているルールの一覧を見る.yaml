@@ -86,3 +86,4 @@ preconditions:
   - フックとサーバーが同じ設定ファイルを読む
 success_guarantee: フックが同じプロジェクトで読む索引とエントリを、フックと同じ規則（設定ファイルの `projects[].match`・既定の索引・変数の展開）で返す。
 minimal_guarantee: 索引とサーバーの状態を書き換えない。
+test_file: tests/e2e/単一ユースケース/test_view_effective_rules.py
