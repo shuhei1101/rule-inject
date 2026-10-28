@@ -24,6 +24,7 @@ from rule_inject.features.index.service import (
     _match_pattern,
 )
 from rule_inject.features.index.types import MatchedRule, MatchPattern
+from rule_inject.shared.errors import IndexReadError
 
 
 def test_load_indexes(
@@ -551,3 +552,139 @@ def test_match_args_when_empty() -> None:
     result = _match_args([], {})
     # 検証
     assert result is True
+
+
+def test_read_index(
+    make_index: Callable[..., Path],
+) -> None:
+    """エントリごとの位置・バージョン・状態を返す（正常系）。"""
+    from rule_inject.features.index import entry_rev, read_index
+
+    # 準備
+    index = make_index(
+        "rules:\n"
+        "  - rule: /r/a.md\n"
+        '    paths: ["**/*.py"]\n'
+        "  - rule: /r/off.md\n"
+        "    enabled: false\n"
+        "  - rule: https://example.com/a.md\n"
+    )
+    # 実行
+    content = read_index(str(index), {})
+    # 検証
+    assert content.path == str(index)
+    assert [outcome.position for outcome in content.outcomes] == [0, 1, 2]
+    assert [outcome.status for outcome in content.outcomes] == ["effective", "disabled", "skipped"]
+    assert content.outcomes[0].entry is not None
+    assert content.outcomes[0].entry.location == "/r/a.md"
+    assert content.outcomes[1].entry is None
+    assert "https://example.com/a.md" in (content.outcomes[2].reason or "")
+    assert all(outcome.rev == entry_rev(outcome.raw) for outcome in content.outcomes)
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("missing", id="missing"),
+        pytest.param("broken", id="broken"),
+    ],
+)
+def test_read_index_when_unreadable(
+    tmp_path: Path,
+    make_index: Callable[..., Path],
+    kind: str,
+) -> None:
+    """読めない索引を拒む（異常系）。"""
+    from rule_inject.features.index import read_index
+
+    # 準備
+    index = (
+        tmp_path / "missing.yaml"
+        if kind == "missing"
+        else make_index("rules:\n  - rule: /r/a.md\n   paths: [x]\n", "broken.yaml")
+    )
+    # 実行・検証
+    with pytest.raises(IndexReadError) as raised:
+        read_index(str(index), {})
+    assert raised.value.path == str(index)
+
+
+def test_entry_rev_when_format_differs() -> None:
+    """書式だけの違いでは変わらない（正常系）。"""
+    from rule_inject.features.index import entry_rev
+    from rule_inject.features.index._yaml import parse_index
+
+    # 準備
+    single = "rules:\n  - rule: 'a.md'\n    paths: ['**/*.py']\n    on: [write]\n"
+    double = 'rules:\n  - on: [write]\n    paths: ["**/*.py"]\n    rule: "a.md"\n'
+    first = parse_index(single)[1][0]
+    second = parse_index(double)[1][0]
+    # 実行
+    rev_first = entry_rev(first)
+    rev_second = entry_rev(second)
+    # 検証
+    assert len(rev_first) == 12
+    assert rev_first == rev_second
+
+
+def test_entry_rev_when_value_differs() -> None:
+    """値が違えば変わる（正常系）。"""
+    from rule_inject.features.index import entry_rev
+    from rule_inject.features.index._yaml import parse_index
+
+    # 準備
+    first = parse_index('rules:\n  - rule: a.md\n    paths: ["**/*.py"]\n')[1][0]
+    second = parse_index('rules:\n  - rule: a.md\n    paths: ["**/*.ts"]\n')[1][0]
+    # 実行
+    rev_first = entry_rev(first)
+    rev_second = entry_rev(second)
+    # 検証
+    assert rev_first != rev_second
+
+
+def test_read_index_text_when_unparsable() -> None:
+    """フックが読めない内容を拒む（異常系）。"""
+    from rule_inject.features.index import read_index_text
+
+    # 準備
+    text = "rules:\n  - rule: /r/a.md\n   paths: [x]\n"
+    # 実行・検証
+    with pytest.raises(IndexReadError) as raised:
+        read_index_text("/p/index.yaml", text, {})
+    assert raised.value.path == "/p/index.yaml"
+    assert "3行目" in raised.value.reason
+
+
+def test_entry_revs(
+    tmp_path: Path,
+) -> None:
+    """一覧と同じバージョンを返す（正常系）。"""
+    from rule_inject.features.index import entry_revs, read_index_text
+
+    # 準備
+    text = (
+        "rules:\n"
+        '  - rule: "a\\tb.md"\n'
+        "  - rule: b.md\n"
+        "    paths: [010, 0x1F]\n"
+        "  - rule: c.md\n"
+        "    tools: [~]\n"
+    )
+    index_path = str(tmp_path / "index.yaml")
+    # 実行
+    revs = entry_revs(text)
+    # 検証
+    outcomes = read_index_text(index_path, text, {}).outcomes
+    assert revs == tuple(outcome.rev for outcome in outcomes)
+    assert len(revs) == 3
+
+
+def test_entry_revs_when_unparsable() -> None:
+    """フックが読めない内容を拒む（異常系）。"""
+    from rule_inject.features.index import entry_revs
+
+    # 準備
+    text = "rules:\n  - rule: /r/a.md\n   paths: [x]\n"
+    # 実行・検証
+    with pytest.raises(ValueError, match="3行目"):
+        entry_revs(text)
