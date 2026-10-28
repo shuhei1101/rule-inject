@@ -3,7 +3,7 @@ lead: 設定（`load_settings`）が決めた索引を標準ライブラリだ�
 directory: |-
   ```text
   src/rule_inject/features/index/
-  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / match_path / match_tool / match_read_by / rule_locations）
+  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / entry_revs / match_path / match_tool / match_read_by / rule_locations）
   ├── types.py      # Operation・EntryStatus・MatchPattern・ArgCondition・ReadByCondition・IndexEntry・EntryOutcome・IndexContent・MatchedRule・IndexLoadResult
   ├── _yaml.py      # 索引の YAML の一部だけを読む（行・文字列・リストの読み取りは shared/yaml_lines.py）
   └── service.py    # 索引の読み込みと照合・エントリのバージョン
@@ -848,24 +848,23 @@ functions:
         type: Mapping[str, Any]
         required: true
         passing: positional
-        description: エントリのキーと値（`parse_index` の要素か、round-trip で読んだマップ）
+        description: '`parse_index` が返したエントリ'
     returns:
       type: str
       description: SHA-256 の 16 進の先頭 `REV_LENGTH` 字
     process: |-
-      1. 値を再帰でたどり、スカラーを文字列にそろえる（真偽は `true` / `false`、数は `str`、`None` は空文字列）。`parse_index` は全てのスカラーを文字列で返すため、round-trip で読んだ値と同じバージョンになる
-      2. キーの順に並べた JSON（`sort_keys=True`・`ensure_ascii=False`・区切りは `,` と `:`）を UTF-8 にして SHA-256 を求める
+      1. キーの順に並べた JSON（`sort_keys=True`・`ensure_ascii=False`・区切りは `,` と `:`）を UTF-8 にして SHA-256 を求める
     unit_tests:
       - name: test_entry_rev_when_format_differs
         case: 正常
         summary: 書式だけの違いでは変わらない
-        condition: '`{"rule": "a.md", "enabled": "false"}` と、キーの順が逆で `enabled` が真偽の `False` のマップ'
+        condition: 同じ値を、単一引用符とキーの順・二重引用符と逆のキーの順で書いた 2 つの内容を `parse_index` で読んだエントリ
         mock: なし
         expected: 同じ 12 字
       - name: test_entry_rev_when_value_differs
         case: 正常
         summary: 値が違えば変わる
-        condition: '`paths` だけが違う 2 つのマップ'
+        condition: '`paths` だけが違う 2 つのエントリ'
         mock: なし
         expected: 違う値
   - name: read_index_text
@@ -906,6 +905,41 @@ functions:
         condition: '`rules:` の下に字下げの崩れた行を持つ内容'
         mock: なし
         expected: IndexReadError（reason に行の番号）
+        exception: '`parse_index` が ValueError を送出する'
+  - name: entry_revs
+    title: 内容のエントリのバージョン
+    container: features/index/service.py
+    usecase: 索引のエントリを編集する
+    summary: 索引の内容から、エントリごとのバージョンを位置の順に返す。編集の前後のバージョンを一覧・チェックと同じ求め方でそろえる
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 索引の内容
+    returns:
+      type: tuple[str, ...]
+      description: 位置の順の `entry_rev`
+    process: '`parse_index(text)` のエントリごとに `entry_rev` を求める。`parse_index` の ValueError はそのまま送出する'
+    exceptions:
+      - name: ValueError
+        condition: '`parse_index` が ValueError を送出する'
+        message: '`parse_index` のまま（行の番号を含む）'
+    unit_tests:
+      - name: test_entry_revs
+        case: 正常
+        summary: 一覧と同じバージョンを返す
+        condition: 二重引用符のエスケープ（`"a\tb.md"`）・`[010, 0x1F]`・`[~]` を持つエントリを含む 3 件の内容
+        mock: なし
+        expected: '`read_index_text` の各エントリの `rev` と位置ごとに同じ'
+      - name: test_entry_revs_when_unparsable
+        case: 異常
+        summary: フックが読めない内容を拒む
+        condition: '`rules:` の下に字下げの崩れた行を持つ内容'
+        mock: なし
+        expected: ValueError（行の番号を含む）
         exception: '`parse_index` が ValueError を送出する'
 test_files:
   - tests/unit/rule_inject/features/index/test_yaml.py

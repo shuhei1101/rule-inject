@@ -407,7 +407,7 @@ request_example: |-
 response:
   - name: success
     type: bool
-    description: 書き込んだか（`dry_run` のときは新しい問題が無かったか）
+    description: 常に `true`（書き込めない・チェックに通らないときは ToolError。`dry_run` のときも同じ）
   - name: output
     type: str
     description: 書き込んだ索引と位置の 1 行
