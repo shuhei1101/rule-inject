@@ -410,7 +410,7 @@ functions:
       - name: test_scan_unmatched_when_cursor
         case: 正常
         summary: 続きの位置から辿り、前に当たったエントリは確かめ直さない
-        condition: 前のテストの `next_cursor` を渡し、`time_limit=30`
+        condition: '`docs/readme.md` と `src/app.py` のプロジェクトで、`time_limit=0` の 1 回目の呼び出しが返した `next_cursor` を渡し、`time_limit=30`'
         mock: なし
         expected: '`completed` が True、`scanned_files` が 2、`src/app.py` だけを辿る'
       - name: test_scan_unmatched_when_fingerprint_changed

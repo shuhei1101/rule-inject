@@ -1248,6 +1248,13 @@ functions:
         condition: 記録の無い `session_id`
         mock: なし
         expected: '`success` が True、`locations` が空'
+      - name: test_delete_read_records_when_invalid_session
+        case: 異常
+        summary: 形式の誤ったセッションを断り、何も削除しない
+        condition: '`session_id: "../x"`'
+        mock: なし
+        expected: ToolError
+        exception: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
   - name: _record_settings
     title: 既読の記録の設定
     container: server/record_tools.py
