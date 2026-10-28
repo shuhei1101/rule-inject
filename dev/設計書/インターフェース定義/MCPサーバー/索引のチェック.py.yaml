@@ -224,13 +224,16 @@ flows:
       - '`problem_count` が 3（ユーザー全体の索引の分を数えない）'
     test: test_normal_when_global_included
   - name: 正常系（辿る時間の上限を超える）
-    summary: 上限を超えたら辿るのをやめ、`paths` の当たらないエントリを返さずに終えられなかったことを返す
+    summary: 上限を超えたら辿るのをやめ、`paths` の当たらないエントリを返さずに、終えられなかったことと続きの位置を返す
     setup:
       - name: Mock
         description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）。サーバーの辿る時間の上限をテスト用に 0 秒へ差し替えて起動する
-        notes: 差し替えの口はモジュール構成が決める
-      - name: 設定ファイル・プロジェクトのファイル・索引
+        notes: 差し替えの口はモジュール構成が決める。上限 0 秒では 1 回の呼び出しで 1 つのファイルだけを当てる
+      - name: 設定ファイル・索引
         description: paths がどのファイルにも当たらないフローと同じ
+      - name: プロジェクトのファイル
+        description: paths がどのファイルにも当たらないフローのファイルに、どのエントリにも当たらない `docs/readme.md` を加える
+        notes: 辿る順は `docs/readme.md`、`src/app.py`
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -238,14 +241,91 @@ flows:
         participant PJ as プロジェクトのファイル
 
         C->>IF: project_dir
-        IF->>PJ: .git を除いて辿る
-        IF->>IF: 上限を超えたのでやめる
-        IF-->>C: unmatched_scan.completed false
+        IF->>PJ: .git を除いて名前の順に辿る
+        IF->>IF: docs/readme.md を当てる
+        IF->>IF: 次のファイルの前に上限を超えたのでやめる
+        IF-->>C: unmatched_scan.completed false・next_cursor
     expected:
-      - '`unmatched_scan.completed` が `false` で、`reason` に上限の秒数を含む理由が載っている'
+      - '`unmatched_scan.completed` が `false` で、`reason` に上限の秒数と `cursor` で続きから辿れる旨が載っている'
+      - '`unmatched_scan.scanned_files` が 1 で、`next_cursor` が `None` でない'
       - どの索引の `unmatched_paths` も空
       - 違反・ファイルが無いエントリ・読み飛ばすエントリの確かめは今どおり返っている
     test: test_normal_when_scan_timed_out
+  - name: 正常系（続きから辿る）
+    summary: 前の呼び出しの `next_cursor` を渡すと続きから辿り、最後まで辿れたら 1 回で辿ったときと同じ `paths` の当たらないエントリを返す
+    setup:
+      - name: Mock
+        description: 辿る時間の上限を超えるフローと同じ（上限 0 秒）
+      - name: 設定ファイル・プロジェクトのファイル・索引
+        description: 辿る時間の上限を超えるフローと同じ
+      - name: 引数
+        description: 1 回目は `cursor` を省き、2 回目は 1 回目の `unmatched_scan.next_cursor` を `cursor` に渡す
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant PJ as プロジェクトのファイル
+
+        C->>IF: project_dir
+        IF->>IF: docs/readme.md を当てて上限でやめる
+        IF-->>C: completed false・next_cursor
+        C->>IF: project_dir・cursor
+        IF->>PJ: docs/readme.md より後から辿る
+        IF->>IF: src/app.py をまだ当たっていないエントリに当てる
+        IF-->>C: completed true・unmatched_paths
+    expected:
+      - 2 回目の `unmatched_scan.completed` が `true` で、`next_cursor` が `None`、`scanned_files` が 2
+      - 2 回目の `origin` が `project` の索引の `unmatched_paths` が、paths がどのファイルにも当たらないフローと同じ位置 1・2・3
+      - 2 回目の `problem_count` が 3
+    test: test_normal_when_cursor_passed
+  - name: 正常系（索引が変わった後に続きから辿る）
+    summary: '`cursor` を返した後に索引のエントリが変わったら、`cursor` を使わず最初のファイルから辿り直す'
+    setup:
+      - name: Mock
+        description: 辿る時間の上限を超えるフローと同じ（上限 0 秒）
+      - name: 設定ファイル・プロジェクトのファイル・索引
+        description: 辿る時間の上限を超えるフローと同じ
+      - name: 索引の書き換え
+        description: 1 回目の呼び出しの後、位置 1 のエントリの `paths` を `["**/*.toml"]` に書き換える
+        notes: 位置 1 の `rev` が変わる
+      - name: 引数
+        description: 2 回目は 1 回目の `unmatched_scan.next_cursor` を `cursor` に渡す
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant PJ as プロジェクトのファイル
+
+        C->>IF: project_dir
+        IF-->>C: completed false・next_cursor
+        C->>IF: project_dir・cursor（索引の書き換えの後）
+        IF->>IF: エントリの一覧のハッシュが cursor と違う
+        IF->>PJ: 最初のファイルから辿る
+        IF->>IF: docs/readme.md を当てて上限でやめる
+        IF-->>C: completed false・next_cursor
+    expected:
+      - 2 回目の `unmatched_scan.scanned_files` が 1（1 回目からの合計でない）で、`completed` が `false`
+      - 2 回目の `next_cursor` が 1 回目の `next_cursor` と違う
+    test: test_normal_when_index_changed_since_cursor
+  - name: 異常系（cursorが使えない・ToolError）
+    summary: 読めない `cursor` と、別の `project_dir` で返した `cursor` をエラーにする
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 引数
+        description: 1 つ目の呼び出しは `cursor` に `not-a-cursor` を渡す。2 つ目の呼び出しは、辿る時間の上限を超えるフローの `next_cursor` を、別の `project_dir` で渡す
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+
+        C->>IF: project_dir・cursor（読めない）
+        IF-->>C: isError: true（cursor を省いて呼び直す旨）
+        C->>IF: 別の project_dir・cursor
+        IF-->>C: isError: true（cursor を省いて呼び直す旨）
+    expected:
+      - 'どちらの呼び出しも結果が `isError: true` で、`cursor` を省いて呼び直す旨が載っている'
+    test: test_error_when_cursor_invalid
 lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを返す。
 identifier: check_indexes
 idempotent: true
@@ -272,6 +352,14 @@ request:
     location: argument
     description: ユーザー全体の索引（`global.indexes`、無ければユーザーの既定の索引）の `paths` の当たらないエントリも確かめるか
     notes: 既定ではプロジェクトの索引だけを確かめる。ユーザー全体の索引の違反・ファイルが無いエントリ・読み飛ばすエントリは、この引数によらず今どおり確かめる
+    status: planned
+  - name: cursor
+    type: str | None
+    required: false
+    default: なし（最初のファイルから辿る）
+    location: argument
+    description: 前の呼び出しの `unmatched_scan.next_cursor`。渡すと、`paths` の当たらないエントリの検出を前の呼び出しが止まった続きから行う
+    notes: '`project_dir`・`include_global` は前の呼び出しと同じ値で渡す。違反・ファイルが無いエントリ・読み飛ばすエントリの確かめは、この引数によらず毎回全て行う'
     status: planned
 response:
   - name: success
@@ -318,14 +406,15 @@ response:
   - name: unmatched_scan.completed
     type: bool
     description: '`paths` の当たらないエントリの検出を最後まで行えたか'
-    notes: '`false` のときはどの索引の `unmatched_paths` も空'
+    notes: '`false` のときはどの索引の `unmatched_paths` も空で、`next_cursor` を返す'
   - name: unmatched_scan.scanned_files
     type: int
     description: 辿ったプロジェクトのファイルの数
+    notes: '`cursor` を渡したときは、最初の呼び出しからの合計'
   - name: unmatched_scan.reason
     type: str | None
     description: 検出を終えられなかった理由
-    notes: 辿る時間の上限を超えたとき、上限の秒数を含む。終えられたときは `None`
+    notes: 辿る時間の上限で止まったとき、上限の秒数と、`next_cursor` を `cursor` に渡すと続きから辿れることを含む。終えられたときは `None`
   - name: indexes[].origin
     type: Literal['global', 'project']
     description: 索引の出所
@@ -341,6 +430,10 @@ response:
   - name: indexes[].unmatched_paths[].rule
     type: str
     description: 変数参照を展開し、索引のフォルダから解いたルールの場所
+  - name: unmatched_scan.next_cursor
+    type: str | None
+    description: 辿る時間の上限で止まったときの続きの位置。`cursor` に渡して呼び直すと続きから辿る
+    notes: 最後まで辿れたときは `None`。中身は辿り終えた最後のファイル・まだ当たっていないエントリ・確かめるエントリの一覧のハッシュ・`project_dir`・`include_global` を持つ不透明な文字列
 response_example: |-
   ```json
   {
@@ -348,7 +441,7 @@ response_example: |-
     "output": "索引 2 件・問題 2 件",
     "config_path": "/home/user/.config/rule-inject/settings.yaml",
     "problem_count": 2,
-    "unmatched_scan": {"completed": true, "scanned_files": 1520, "reason": null},
+    "unmatched_scan": {"completed": true, "scanned_files": 1520, "reason": null, "next_cursor": null},
     "indexes": [
       {
         "index": "/home/user/.config/rule-inject/rules.yaml",
@@ -381,6 +474,9 @@ exceptions:
   - name: ToolError（設定ファイルが読めない）
     condition: インターフェース定義「ルールの一覧」と同じ
     notes: 設定ファイルの場所と理由を返す
+  - name: ToolError（cursor が使えない）
+    condition: '`cursor` が読めない、または `project_dir`・`include_global` が `cursor` を返した呼び出しと違う'
+    notes: '`cursor` を省いて呼び直す旨を返す'
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: チェックの順
@@ -403,12 +499,15 @@ constraints:
     constraint: '効いているエントリ（`enabled: false`・読み飛ばすエントリ・フックが読めない索引のエントリを除く）のうち `paths` を持つものを、フックと同じ照合（`paths` と `exclude`。`on` は問わない）でプロジェクトのファイルの絶対パスに当て、どれにも当たらないものを返す。確かめるのは `project` の索引と、`include_global` が `true` のときの `global` の索引'
     notes: 書き込み前の検証（インターフェース定義「エントリの書き込み」「エントリの削除」）には含めない。書くエントリがまだ無いファイルを指すことがあるため
   - item: 辿るファイル
-    constraint: '`project_dir` の下を `.git` フォルダだけ除いて辿る。`.gitignore` で除いたファイルも辿る。フォルダへのシンボリックリンクは辿らない。辿るのは 1 回の呼び出しで 1 回だけで、全ての索引のエントリをその結果に当てる'
-    notes: フックは `.gitignore` で除いたファイルにも案内を出すため（`要件.md` の推奨案 A）。リンクを辿るとループしうる
+    constraint: '`project_dir` の下を `.git` フォルダだけ除いて辿る。`.gitignore` で除いたファイルも辿る。フォルダへのシンボリックリンクは辿らない。辿る順はパスの部品ごとの名前の順に固定する。辿るのは 1 回の呼び出しで 1 回だけで、全ての索引のエントリをその結果に当てる'
+    notes: フックは `.gitignore` で除いたファイルにも案内を出すため（`要件.md` の推奨案 A）。リンクを辿るとループしうる。順を固定するのは、`cursor` で続きの位置を決めるため
   - item: 辿る時間
-    constraint: ファイルを辿り、エントリに当て終えるまでの時間は 30 秒まで。ファイルを 1 つ当てる前ごとに経過時間を確かめ、上限以上ならやめ、`unmatched_scan.completed` を `false` にしてどの索引の `unmatched_paths` も返さない
+    constraint: 1 回の呼び出しで、ファイルを辿り、エントリに当てる時間は 30 秒まで。その呼び出しの 2 つ目以降のファイルを当てる前ごとに経過時間を確かめ、上限以上ならやめ、`unmatched_scan.completed` を `false` にしてどの索引の `unmatched_paths` も返さず、`next_cursor` を返す
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[プロジェクトのファイルを辿る時間]
-    notes: 当たったエントリは残りのファイルに当てず、まだ当たっていないエントリだけを次のファイルに当てる。全てのエントリが当たったら辿るのもやめる
+    notes: 当たったエントリは残りのファイルに当てず、まだ当たっていないエントリだけを次のファイルに当てる。全てのエントリが当たったら辿るのもやめる。1 回の呼び出しで少なくとも 1 つのファイルを当てるため、呼び直すたびに必ず先へ進む
+  - item: 続きから辿る
+    constraint: '`cursor` を渡したときは、`cursor` の最後のファイルより後のファイルから辿り、`cursor` のまだ当たっていないエントリだけを当てる。確かめるエントリの一覧（索引・位置・`rev`）のハッシュが `cursor` と違うときは、`cursor` を使わず最初のファイルから辿り直す'
+    notes: 索引が書き換わると、前の呼び出しで当たったエントリが変わりうるため。呼び直しの間に増えたファイルのうち、辿り終えた位置より前のものは当てない
 refs:
   - dev/設計書/シナリオ/単一ユースケース/索引をチェックする#
 test_file: tests/integration/server/test_check_indexes.py
