@@ -6,7 +6,7 @@ scenarios:
         description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
         notes: クライアントが Claude Code の代わりにツールを呼ぶ
       - name: 設定ファイル
-        description: '`global.state_dir` でテストの記録フォルダを指し、`projects` にプロジェクトの直下を `match` とする要素を持つ'
+        description: '`global.state_dir` でテストの記録フォルダを指し'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 既読の記録
         description: 1 つのセッションの既読の記録に 2 つのルールの場所と今の本文のハッシュがある
@@ -23,7 +23,7 @@ scenarios:
         participant HS as 既読の履歴
         participant FS as ルールの本文
 
-        CL->>SV: 確認（プロジェクトの直下・セッション）
+        CL->>SV: 確認（セッション）
         SV->>CF: 記録フォルダを引く
         CF-->>SV: 記録フォルダ
         SV->>ST: そのセッションの既読の行を読む
@@ -57,7 +57,7 @@ scenarios:
         participant ST as 既読の記録
         participant FS as ルールの本文
 
-        CL->>SV: 確認（プロジェクトの直下・セッション）
+        CL->>SV: 確認（セッション）
         SV->>ST: そのセッションの既読の行を読む
         ST-->>SV: 場所と既読にした時点のハッシュ
         SV->>FS: 今の本文のハッシュを取る
@@ -82,7 +82,7 @@ scenarios:
         participant CF as 設定ファイル
         participant DIR as 記録フォルダ
 
-        CL->>SV: 確認（プロジェクトの直下だけ）
+        CL->>SV: 確認（セッションなし）
         SV->>CF: 記録フォルダを引く
         CF-->>SV: 記録フォルダ
         SV->>DIR: 既読の記録のファイルを並べる
@@ -106,7 +106,7 @@ scenarios:
         participant CL as MCP クライアント
         participant SV as MCP サーバー
 
-        CL->>SV: 確認（プロジェクトの直下・形式の誤ったセッション）
+        CL->>SV: 確認（形式の誤ったセッション）
         SV-->>CL: ツールのエラー（セッションの形式）
     expected:
       - ツールのエラーが返り、受け付けるセッションの形式が載っている

@@ -121,14 +121,19 @@ scenarios:
     setup:
       - name: Mock
         description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+        notes: '-'
       - name: 設定ファイル
-        description: 違反が無いシナリオと同じ
+        description: 違反が無いシナリオの設定に、`global.indexes` でユーザー全体の索引を指す
+        notes: '-'
       - name: プロジェクトのファイル
         description: プロジェクトの直下に置いた数個のファイル
         notes: '例: `src/app.py` だけを置く'
       - name: 索引
         description: '`paths` がプロジェクトのファイルに当たるエントリと、どのファイルにも当たらないエントリを 1 つずつ持ち、各 `rule` の場所にルールの本文がある YAML'
         notes: '例: 当たる `**/*.py` と、当たらない `**/*.rs`'
+      - name: ユーザー全体の索引
+        description: '`paths` がプロジェクトのどのファイルにも当たらないエントリを 1 つ持ち、`rule` の場所にルールの本文がある YAML'
+        notes: '例: `**/*.go`'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -147,14 +152,15 @@ scenarios:
         SC-->>SV: 違反なし
         SV->>PJ: プロジェクトの直下からファイルを辿る
         PJ-->>SV: ファイルの絶対パス
-        SV->>SV: 効いているエントリの paths と exclude を各パスに当てる
+        SV->>SV: プロジェクトの索引の効いているエントリの paths と exclude を各パスに当てる
         SV-->>CL: paths の当たらないエントリ
     expected:
       - 応答の `paths` の当たらないエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
       - '`paths` がファイルに当たるエントリは、`paths` の当たらないエントリに載っていない'
+      - ユーザー全体の索引のエントリは、`paths` の当たらないエントリに載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_paths_unmatched
-lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないエントリを受け取る。
+lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないプロジェクトの索引のエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:

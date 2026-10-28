@@ -6,7 +6,7 @@ scenarios:
         description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
         notes: クライアントが Claude Code の代わりにツールを呼ぶ
       - name: 設定ファイル
-        description: '`global.state_dir` でテストの記録フォルダを指し、`projects` にプロジェクトの直下を `match` とする要素を持つ'
+        description: '`global.state_dir` でテストの記録フォルダを指し'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 記録
         description: 削除するセッションの既読の記録・案内済みの記録・既読の履歴と、別のセッションの既読の記録がある
@@ -19,7 +19,7 @@ scenarios:
         participant ST as 既読の記録
         participant GD as 案内済みの記録
 
-        CL->>SV: 削除（プロジェクトの直下・セッション）
+        CL->>SV: 削除（セッション）
         SV->>CF: 記録フォルダを引く
         CF-->>SV: 記録フォルダ
         SV->>ST: そのセッションの既読の行を読む
@@ -47,7 +47,7 @@ scenarios:
         participant SV as MCP サーバー
         participant ST as 既読の記録
 
-        CL->>SV: 削除（プロジェクトの直下・セッション）
+        CL->>SV: 削除（セッション）
         SV->>ST: そのセッションの記録を削除する
         ST-->>SV: 削除するファイルが無い
         SV-->>CL: 未読に戻したルールが無い
@@ -68,7 +68,7 @@ scenarios:
         participant CL as MCP クライアント
         participant SV as MCP サーバー
 
-        CL->>SV: 削除（プロジェクトの直下・形式の誤ったセッション）
+        CL->>SV: 削除（形式の誤ったセッション）
         SV-->>CL: ツールのエラー（セッションの形式）
     expected:
       - ツールのエラーが返り、受け付けるセッションの形式が載っている
