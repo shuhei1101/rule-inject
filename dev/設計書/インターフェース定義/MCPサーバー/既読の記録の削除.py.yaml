@@ -152,3 +152,4 @@ constraints:
     constraint: 制限なし
 refs:
   - dev/設計書/シナリオ/単一ユースケース/既読の記録を削除する#
+test_file: tests/integration/server/test_delete_read_records.py

@@ -287,3 +287,4 @@ constraints:
     constraint: 制限なし
 refs:
   - dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する#
+test_file: tests/integration/server/test_get_read_records.py
