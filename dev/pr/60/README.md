@@ -1,0 +1,1 @@
+# PoC: 常駐の HTTP の MCP サーバーと、ruamel.yaml の round-trip・jsonschema の検証
