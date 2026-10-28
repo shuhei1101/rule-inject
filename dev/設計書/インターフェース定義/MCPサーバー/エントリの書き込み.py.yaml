@@ -342,6 +342,34 @@ flows:
       - '結果が `isError: true` で、`rules[1].paths` と違反の理由が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_check_failed
+  - name: 異常系（フックが読めない索引・ToolError）
+    summary: フックが読めない索引の、位置で指した書き換えを断る
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するフローと同じ
+      - name: 索引
+        description: 'YAML としては読めるが、エントリに `on: [foo]` を持ちフックが読めない'
+        notes: 書き込みの前のバイト列を控える
+      - name: 引数
+        description: '`position: 0`、任意の `expected_rev`、`entry: {on: [write]}`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as write_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev・entry
+        IF->>IDX: 読む
+        IDX-->>IF: フックの読み取りが読めない内容
+        IF-->>C: isError: true（フックが読めない理由と手で直す旨）
+      ```
+    expected:
+      - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で直す旨が載っている'
+      - 索引のファイルが書き込みの前のバイト列のまま
+    test: test_error_when_hook_unreadable
 lead: 設定ファイルで読む索引に、エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。書いた後の索引に新しい問題が出るときは書き込まない。
 identifier: write_index_entry
 idempotent: false
@@ -464,6 +492,9 @@ exceptions:
   - name: ToolError（書いた後の索引がチェックに通らない）
     condition: 書いた後の索引をフックが読めない、または書く前の索引に無かった問題（JSON Schema の違反・ルールの場所にファイルが無いエントリ）が出る
     notes: 書き込まずに、新しく出た問題ごとの索引の中の場所と理由を返す
+  - name: ToolError（フックが読めない索引）
+    condition: '`position` を渡し、索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない）'
+    notes: 書き込まずに、フックが読めない理由（行の番号を含む）と、索引を手で直す旨を返す。`position` を渡さない新規作成も、書いた後の索引をフックが読めないため「書いた後の索引がチェックに通らない」で断る
 error_format: 'インターフェース定義「ルールの一覧」と同じ。チェックに通らないときは、問題を `{索引の中の場所}: {理由}` の行で全て並べる'
 constraints:
   - item: 書き込める索引

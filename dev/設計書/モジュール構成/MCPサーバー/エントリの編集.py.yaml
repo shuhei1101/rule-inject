@@ -237,7 +237,7 @@ functions:
       1. `locks.lock_for(index_path)` の中で以下を行う
       2. 索引を UTF-8 で読み、`round_trip_yaml()` で読む。読めない・YAML として読めない・最上位がマップでないときは `IndexEditError`
       3. `position` が無いとき: `rules` が無いか値が空（`None`）なら、ブロックのリストにする。`entry` のキーを `ENTRY_KEY_ORDER` の順に `to_yaml_value` で値にした `CommentedMap` を `rules` の末尾に追加し、その位置を書き込んだ位置にする
-      4. `position` があるとき: `rules` のエントリの数以上なら `IndexEditError`（位置が無い旨とエントリの数）。`entry_revs(書く前の内容)[position]` が `expected_rev` と違えば `IndexEditError`（今のバージョンと、一覧を取り直してから呼び直す旨）。`entry_revs` が ValueError を送出したときは `IndexEditError`（フックの読み取りが読めずバージョンを確かめられない旨と、その理由）。`entry` のキーを `to_yaml_value` で置き換え（既にあるキーはその場で、無いキーは末尾に追加）、`remove_keys` のキーを削除する
+      4. `position` があるとき: `rules` のエントリの数以上なら `IndexEditError`（位置が無い旨とエントリの数）。`entry_revs(書く前の内容)[position]` が `expected_rev` と違えば `IndexEditError`（今のバージョンと、一覧を取り直してから呼び直す旨）。`entry_revs` が ValueError を送出したときは `IndexEditError`（フックの読み取りが読めずバージョンを確かめられない旨、その理由、索引を手で直す旨）。`entry` のキーを `to_yaml_value` で置き換え（既にあるキーはその場で、無いキーは末尾に追加）、`remove_keys` のキーを削除する
       5. 書いた後の内容を文字列へ書き出し、`entry_revs(書いた後の内容)[書き込んだ位置]` をバージョンにする。ValueError のときはバージョンを `None` にする（`check_change` がフックの読み取りの失敗を返す）。round-trip で読んだマップは書き換えにだけ使い、バージョンの元にしない
       6. `check_change(index_path, 書く前の内容, 書いた後の内容, バージョン)` が行を返したら `IndexEditError`（書いた後の索引がチェックに通らない旨と、その行を全て）。`dry_run` のときも同じ
       7. 書く前と書いた後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る
@@ -350,18 +350,17 @@ functions:
       type: EditResult
       description: 削除したエントリの `rule` と差分
     process: |-
-      1. `write_entry` の手順 1・2・4 と同じくロックの中で読み、位置とバージョンを確かめる。`rules` がフロー形式（`rules.fa.flow_style()` が真）のときは `IndexEditError`（行で除けない旨）
+      1. `write_entry` の手順 1・2・4 と同じくロックの中で読み、位置とバージョンを確かめる。バージョンを求められた索引は `parse_index` が読め、`rules` はエントリを `- ` で並べたブロックのリストに限られる（フロー形式は `parse_index` が拒む）
       2. 除く行の範囲を決める。行の番号（0 始まり）は、エントリの開始を `rules.lc.item(位置)`、最上位のキーを最上位のマップの `lc.key(キー)` から取る
          - エントリの最後の内容の行: そのエントリの開始の行から、次のエントリの開始の行（最後のエントリのときは `rules` の次の最上位のキーの行か、ファイルの終わり）の手前までのうち、空行とコメントだけの行を除いた最後の行
          - 始まり: 1 つ前のエントリの最後の内容の行の次の行。先頭のエントリのときは `rules` のキーの行の次の行
          - 終わり: 対象のエントリの最後の内容の行
          - 対象の直前のコメント行・対象の中のコメント・対象の行末のコメントが除かれ、前のエントリの行末のコメントと次のエントリの直前のコメント行は残る
       3. 書く前の内容からその範囲の行を除く。唯一のエントリを除いたときは `rules:` だけが残る
-      4. 除いた後の内容を `parse_index` と `round_trip_yaml()` で読み直す。どちらかが読めない、または `parse_index` のエントリが 1 つ減っていないときは `IndexEditError`（削除した後の内容を読めない旨と理由）
-      5. `write_entry` の手順 7・8 と同じく差分を作り、`dry_run` でなければ置き換える。チェックは行わない
+      4. `write_entry` の手順 7・8 と同じく差分を作り、`dry_run` でなければ置き換える。チェックは行わない
     exceptions:
       - name: IndexEditError
-        condition: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`rules` がフロー形式、削除した後の内容を読めない
+        condition: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う
         message: '`write_entry` と同じ'
     unit_tests:
       - name: test_delete_entry
@@ -369,7 +368,7 @@ functions:
         summary: 対象のエントリとそのコメントだけを除き、前後のエントリのコメントを残す
         condition: 各エントリの直前にコメント行を持ち、1 つ目が行末のコメント、2 つ目が中のコメントを持つエントリ 3 件と、その後ろの `default_on` を持つ索引。`rules[0]`・`rules[1]`・`rules[2]` を削除する（パラメータ展開）
         mock: なし
-        expected: 差分が対象のエントリの行・その中と行末のコメント・直前のコメント行だけで、前のエントリの行末のコメント・次のエントリの直前のコメント行・`default_on` が元のまま。`rule` が書いたままの値で、残った内容を `parse_index` が読める
+        expected: 差分が対象のエントリの行・その中と行末のコメント・直前のコメント行だけで、前のエントリの行末のコメント・次のエントリの直前のコメント行・`default_on` が元のまま。`rule` が書いたままの値で、残った内容を `parse_index` が読め、エントリが 1 つ減っている
       - name: test_delete_entry_when_only_entry
         case: 正常
         summary: 唯一のエントリを削除すると `rules:` だけが残る
@@ -382,14 +381,14 @@ functions:
         condition: '`expected_rev` に別の値'
         mock: なし
         expected: IndexEditError で、ファイルは元のまま
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`rules` がフロー形式、削除した後の内容を読めない
-      - name: test_delete_entry_when_flow_rules
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う
+      - name: test_delete_entry_when_hook_unreadable
         case: 異常
-        summary: フロー形式の `rules` からは削除しない
-        condition: '`rules: [{rule: a.md}, {rule: b.md}]` の索引の `rules[0]`'
+        summary: フックが読めない索引からは削除しない
+        condition: '`on: [foo]` を持つ索引と、`rules: [{rule: a.md}, {rule: b.md}]` の索引の `rules[0]`（パラメータ展開）'
         mock: なし
-        expected: IndexEditError（reason に行で除けない旨）で、ファイルは元のまま
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`rules` がフロー形式、削除した後の内容を読めない
+        expected: IndexEditError（reason にフックの読み取りの理由と行の番号）で、ファイルは元のまま
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う
   - name: _replace_file
     title: ファイルの置き換え
     container: features/index/edit/service.py

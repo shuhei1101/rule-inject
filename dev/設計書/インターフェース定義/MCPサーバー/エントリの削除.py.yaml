@@ -249,6 +249,34 @@ flows:
       - '結果が `isError: true` で、今のバージョンと一覧を取り直す旨が載っている'
       - 索引のファイルがテストが書き換えた後のバイト列のまま
     test: test_error_when_rev_mismatch
+  - name: 異常系（フックが読めない索引・ToolError）
+    summary: フックが読めない索引からの削除を断る
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 索引
+        description: YAML としては読めるがフックが読めない索引
+        notes: 'エントリに `on: [foo]` を持つ索引と、`rules: [{rule: a.md}, {rule: b.md}]` の索引（パラメータ展開）。書き込みの前のバイト列を控える'
+      - name: 引数
+        description: '`position: 0` と任意の `expected_rev`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as delete_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev
+        IF->>IDX: 読む
+        IDX-->>IF: フックの読み取りが読めない内容
+        IF-->>C: isError: true（フックが読めない理由と手で直す旨）
+      ```
+    expected:
+      - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で直す旨が載っている'
+      - 索引のファイルが書き込みの前のバイト列のまま
+    test: test_error_when_hook_unreadable
 lead: 設定ファイルで読む索引から、位置で指したエントリを削除する。
 identifier: delete_index_entry
 idempotent: false
@@ -338,6 +366,9 @@ exceptions:
   - name: ToolError（バージョンが合わない）
     condition: '`expected_rev` が今のエントリのバージョンと違う'
     notes: 今のバージョンと、一覧を取り直してから呼び直す旨を返す
+  - name: ToolError（フックが読めない索引）
+    condition: 索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない。`rules` をフロー形式で書いた索引も含む）
+    notes: 削除せずに、フックが読めない理由（行の番号を含む）と、索引を手で直す旨を返す
 error_format: インターフェース定義「エントリの書き込み」と同じ
 constraints:
   - item: 書き込める索引
