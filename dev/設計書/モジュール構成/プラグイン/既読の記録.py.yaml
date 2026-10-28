@@ -86,7 +86,7 @@ functions:
       description: 既読の行。ファイルが無ければ空
     process: |-
       1. `list_read_entries(state_dir, session_id)` で行の順の既読の行を得る
-      2. 集合にする（重なりは 1 つになる）
+      2. ハッシュを持つ行だけを集合にする（重なりは 1 つになる。ハッシュを持たない行は既読として扱わない）
     exceptions:
       - name: RecordReadError
         condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
@@ -645,7 +645,8 @@ functions:
     process: |-
       1. `{state_dir}/{session_id}.txt` を UTF-8 で読む。ファイルが無ければ空を返し、OSError は `RecordReadError`
       2. 空行を除いた行を、最初の `FIELD_SEPARATOR` で場所とハッシュに分ける
-         - `FIELD_SEPARATOR` を含まない行・場所が空の行・ハッシュが `HASH_PREFIX` で始まらない行は読み飛ばす
+         - 場所が空の行は読み飛ばす
+         - `FIELD_SEPARATOR` を含まない行・ハッシュが `HASH_PREFIX` で始まらない行は、ハッシュを空文字にした行として残す（確認のツールが `changed` として返すため）
       3. 行の順に `ReadEntry` を並べる
     exceptions:
       - name: RecordReadError
@@ -654,10 +655,10 @@ functions:
     unit_tests:
       - name: test_list_read_entries
         case: 正常
-        summary: 行の順を保ち、壊れた行を読み飛ばす
-        condition: 場所 B・A・B（別のハッシュ）の行と、タブを持たない行を持つ記録ファイル
+        summary: 行の順を保ち、ハッシュを持たない行は空のハッシュで残す
+        condition: 場所 B・A・B（別のハッシュ）の行と、タブを持たない場所 C の行と、空行を持つ記録ファイル
         mock: なし
-        expected: B・A・B の 3 件を行の順に返す
+        expected: B・A・B・C（ハッシュは空文字）の 4 件を行の順に返す
       - name: test_list_read_entries_when_missing
         case: 正常
         summary: 記録の無いセッションは空を返す
@@ -687,9 +688,9 @@ functions:
       - name: test_list_rule_states
         case: 正常
         summary: 場所ごとに既読・本文が変わった・ファイルが無いを返す
-        condition: 今の本文のハッシュの行を持つ A、古いハッシュの行だけを持つ B、ファイルを削除した C。A は古いハッシュの行も持つ
+        condition: 今の本文のハッシュの行を持つ A、古いハッシュの行だけを持つ B、ファイルを削除した C、ハッシュが空の行だけを持つ D。A は古いハッシュの行も持つ
         mock: なし（`tmp_path` にルールのファイルを置く）
-        expected: '`((A, current), (B, changed), (C, missing))`'
+        expected: '`((A, current), (B, changed), (C, missing), (D, changed))`'
   - name: read_history
     title: 既読の履歴の読み
     container: features/record/service.py
@@ -808,7 +809,7 @@ data_models:
         description: ルールの場所（解決後の絶対パス。改行とタブを含まない）
       - name: hash
         type: str
-        description: 既読にした時点のルールのファイルの中身の SHA-256（`sha256:{16 進数}`）
+        description: 既読にした時点のルールのファイルの中身の SHA-256（`sha256:{16 進数}`）。`list_read_entries` が読んだハッシュを持たない行は空文字
   - name: HistoryEntry
     title: 既読の履歴の行
     container: features/record/types.py
