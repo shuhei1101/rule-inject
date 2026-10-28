@@ -144,7 +144,7 @@ request:
     default: なし（設定ファイルの `global.server_port`）
     description: 待ち受けのポートをその起動だけ上書きする環境変数
     constraints: 1024〜65535 の整数
-    notes: Claude Code の接続先の `url` の `${RULE_INJECT_PORT:-8783}` と同じ値を渡す
+    notes: '`claude mcp add` で登録した URL のポートと同じ値を渡す'
 exceptions:
   - name: なし（正常終了）
     condition: Ctrl+C か SIGTERM を受けた
