@@ -235,16 +235,18 @@ functions:
       description: 書き込んだ位置・バージョン・差分
     process: |-
       1. `locks.lock_for(index_path)` の中で以下を行う
-      2. 索引を UTF-8 で読み、`round_trip_yaml()` で読む。読めない・YAML として読めない・最上位がマップでないときは `IndexEditError`
+      2. 索引を UTF-8 で改行を変えずに読み、最初の改行が `\r\n` ならそれを控えて全て `\n` にそろえる（以降の「書く前の内容」はそろえた内容）。`ruamel.yaml.util.load_yaml_guess_indent` が字下げ `ind` とリストの字下げ `bsi` を推定できたら、`round_trip_yaml()` の字下げを `indent(mapping=ind - bsi, sequence=ind, offset=bsi)` にしてから読む。読めない・YAML として読めない・最上位がマップでないときは `IndexEditError`
       3. `position` が無いとき: `rules` が無いか、値が空（`None`）か空のフロー形式のリスト（`[]`）なら、ブロックのリストにする。`entry` のキーを `ENTRY_KEY_ORDER` の順に `to_yaml_value` で値にした `CommentedMap` を `rules` の末尾に追加し、その位置を書き込んだ位置にする
       4. `position` があるとき: `rules` のエントリの数以上なら `IndexEditError`（位置が無い旨とエントリの数）。`entry_revs(書く前の内容)[position]` が `expected_rev` と違えば `IndexEditError`（今のバージョンと、一覧を取り直してから呼び直す旨）。`entry_revs` が ValueError を送出したときは `IndexEditError`（フックの読み取りが読めずバージョンを確かめられない旨、その理由、索引を手で直す旨）。`entry` のキーを `to_yaml_value` で置き換え（既にあるキーはその場で、無いキーは末尾に追加）、`remove_keys` のキーを削除する
       5. 書いた後の内容を文字列へ書き出し、`entry_revs(書いた後の内容)[書き込んだ位置]` をバージョンにする。ValueError のときはバージョンを `None` にする（`check_change` がフックの読み取りの失敗を返す）。round-trip で読んだマップは書き換えにだけ使い、バージョンの元にしない
+         - 書式を保てたかを確かめる。対象の範囲は `delete_entry` の手順 2 と同じ規則で求める。書いた後の内容では、書いた後の内容を読み直した書き込んだ位置のエントリの範囲。書く前の内容では、`position` があればそのエントリの範囲で、無ければ空。手順 3 で `rules` を作った・ブロックにしたときは、両方の範囲に `rules` のキーの行を含める
+         - それぞれから対象の範囲の行を除いた行の並びが違えば `IndexEditError`（索引の書式を保って書けない旨、最初に違った書く前の行の番号、索引を手で直す旨）。`dry_run` のときも同じ
       6. `check_change(index_path, 書く前の内容, 書いた後の内容, バージョン)` が行を返したら `IndexEditError`（書いた後の索引がチェックに通らない旨と、その行を全て）。`dry_run` のときも同じ
       7. 書く前と書いた後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る
-      8. `dry_run` でなければ `_replace_file` で置き換える
+      8. `dry_run` でなければ、書いた後の内容の改行を手順 2 で控えた改行に戻し、`_replace_file` で置き換える
     exceptions:
       - name: IndexEditError
-        condition: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した
+        condition: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
         message: path は索引の場所、reason はインターフェース定義「エントリの書き込み」の例外の補足にある内容
     unit_tests:
       - name: test_write_entry_when_new
@@ -277,28 +279,28 @@ functions:
         condition: '`expected_rev` に別の値'
         mock: '`check_change`'
         expected: IndexEditError（reason に今のバージョン）で、ファイルは元のまま
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
       - name: test_write_entry_when_position_missing
         case: 異常
         summary: 無い位置へは書き込まない
         condition: 'エントリ 2 件の索引に `position: 2`'
         mock: '`check_change`'
         expected: IndexEditError（reason にエントリの数 2）
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
       - name: test_write_entry_when_unparsable
         case: 異常
         summary: YAML として読めない索引には書き込まない
         condition: 閉じていない `[` を持つ索引と、最上位がリストの索引（パラメータ展開）
         mock: '`check_change`'
         expected: IndexEditError（path が索引の場所）
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
       - name: test_write_entry_when_check_fails
         case: 異常
         summary: 新しい問題が出るときは書き込まない
         condition: '`check_change` が 2 行を返す'
         mock: '`check_change`'
         expected: IndexEditError（reason に 2 行とも含む）で、ファイルは元のまま。`check_change` には書いたエントリのバージョンが渡る
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
       - name: test_write_entry_when_scalar_notation
         case: 正常
         summary: 書き方によらず一覧のバージョンで書き換えられる
@@ -311,7 +313,21 @@ functions:
         condition: 'YAML としては読めるが `parse_index` が ValueError を送出する索引に `position: 0`'
         mock: '`check_change`'
         expected: IndexEditError（reason にフックの読み取りの理由）で、ファイルは元のまま
-        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
+      - name: test_write_entry_when_indent_and_newline
+        case: 正常
+        summary: 索引の字下げと改行を保って書く
+        condition: '`rules:` の下を字下げせずに書いたエントリ 2 件の索引と、`  - ` で字下げした CRLF のエントリ 2 件の索引。`rules[1]` の `paths` を書き換える場合と、新規作成する場合（パラメータ展開）'
+        mock: '`check_change`'
+        expected: '`written` が `true`。ファイルの差分が書いたエントリの行だけで、書いた行も元の字下げで、CRLF の索引は全ての行が CRLF のまま'
+        exception: '-'
+      - name: test_write_entry_when_layout_not_kept
+        case: 異常
+        summary: 対象のエントリの外の行が変わる書き込みは断る
+        condition: '`rules[1]` が `paths: [docs/**, ~]` を持つエントリ 2 件の索引で、`rules[0]` を書き換える場合と新規作成する場合（パラメータ展開）。`dry_run: true` でも同じ'
+        mock: '`check_change`'
+        expected: IndexEditError（reason に書式を保って書けない旨と `rules[1]` の `paths` の行の番号）で、ファイルは元のまま。`check_change` は呼ばれない
+        exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返した、書き出した内容で対象のエントリの外の行が変わる
   - name: delete_entry
     title: エントリの削除
     container: features/index/edit/service.py
@@ -389,6 +405,13 @@ functions:
         mock: なし
         expected: IndexEditError（reason にフックの読み取りの理由と行の番号）で、ファイルは元のまま
         exception: 索引が読めない・YAML として読めない・最上位がマップでない、`position` がエントリの数以上、書く前の内容をフックの読み取りが読めない、`expected_rev` が今のバージョンと違う
+      - name: test_delete_entry_when_crlf
+        case: 正常
+        summary: CRLF の索引の改行を保って削除する
+        condition: CRLF のエントリ 2 件の索引の `rules[0]` を削除する
+        mock: なし
+        expected: 残った全ての行が CRLF のままで、`rules[1]` の行が元のまま
+        exception: '-'
   - name: _replace_file
     title: ファイルの置き換え
     container: features/index/edit/service.py

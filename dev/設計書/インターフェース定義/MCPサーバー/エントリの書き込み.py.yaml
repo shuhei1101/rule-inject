@@ -370,6 +370,33 @@ flows:
       - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で直す旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_hook_unreadable
+  - name: 異常系（索引の書式を保てない・ToolError）
+    summary: 対象のエントリの外の行が変わる書き込みを断る
+    setup:
+      - name: Mock
+        description: なし（同じプロセスで立てたサーバーへ MCP の Python SDK のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するフローと同じ
+      - name: 索引
+        description: 'エントリ 2 件。`rules[1]` が `paths: [docs/**, ~]` を持つ'
+        notes: 書き込みの前のバイト列を控える
+      - name: 引数
+        description: '`position: 0`、`list_rules` で得た `rules[0]` の `rev` を `expected_rev`、`entry: {on: [write]}`'
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as write_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev・entry
+        IF->>IDX: 読む
+        IDX-->>IF: 書式つきの内容
+        IF->>IF: 書き出し、rules[0] の外の行を比べる
+        IF-->>C: isError: true（書式を保てない旨・行の番号・手で直す旨）
+    expected:
+      - '結果が `isError: true` で、索引の書式を保って書けない旨、`rules[1]` の `paths` の行の番号、索引を手で直す旨が載っている'
+      - 索引のファイルが書き込みの前のバイト列のまま
+    test: test_error_when_layout_not_kept
 lead: 設定ファイルで読む索引に、エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。書いた後の索引に新しい問題が出るときは書き込まない。
 identifier: write_index_entry
 idempotent: false
@@ -495,6 +522,9 @@ exceptions:
   - name: ToolError（フックが読めない索引）
     condition: '`position` を渡し、索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない）'
     notes: 書き込まずに、フックが読めない理由（行の番号を含む）と、索引を手で直す旨を返す。`position` を渡さない新規作成も、書いた後の索引をフックが読めないため「書いた後の索引がチェックに通らない」で断る
+  - name: ToolError（索引の書式を保てない）
+    condition: 書き出した内容で、対象のエントリの外の行が変わる（他のエントリが `~`・アンカーなど round-trip が書き換える表記を持つ）
+    notes: 書き込まずに、索引の書式を保って書けない旨、最初に変わる行の番号、索引を手で直す旨を返す
 error_format: 'インターフェース定義「ルールの一覧」と同じ。チェックに通らないときは、問題を `{索引の中の場所}: {理由}` の行で全て並べる'
 constraints:
   - item: 書き込める索引
@@ -507,8 +537,8 @@ constraints:
     constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書く前と書いた後の索引を確かめる。書いた後にフックが読めないか、書く前に無かった問題が出るときだけ断る
     notes: 問題はエントリのバージョンと理由で照らし合わせる（位置は新規作成・削除でずれるため）。書き換えたエントリの問題は、書く前に同じ理由があっても新しい問題として扱う。もとからある問題は、この書き込みで生じたものではないため書き込みを止めない
   - item: 書式の維持
-    constraint: '`ruamel.yaml` の round-trip で読み書きし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び）を変えない。新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリストで書く'
-    notes: 設定は PoC の結果（`width` 4096・字下げ mapping 2 / sequence 4 / offset 2・`preserve_quotes`）。フックの読み取りが受け付ける形式だけで書く
+    constraint: '`ruamel.yaml` の round-trip で読み書きし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリストで書く'
+    notes: 設定は PoC の結果（`width` 4096・`preserve_quotes`）。字下げは索引から推定し（推定できないときは mapping 2 / sequence 4 / offset 2）、改行は索引の改行に合わせる。`~`・アンカーなど round-trip が書き換える表記を他のエントリに持つ索引は、手で直してもらう。フックの読み取りが受け付ける形式だけで書く
   - item: 新規作成の位置
     constraint: '`rules` の末尾。`rules` が無い索引では `rules` を追加する'
   - item: エントリのバージョン
