@@ -336,6 +336,120 @@ def test_write_entry_when_hook_unreadable(
     assert index.read_text(encoding="utf-8") == text
 
 
+NO_INDENT_TEXT = 'rules:\n- rule: a.md\n  paths: ["**/*.py"]\n- rule: b.md\n  paths: ["**/*.ts"]\n'
+
+CRLF_TEXT = (
+    "rules:\r\n"
+    "  - rule: a.md\r\n"
+    '    paths: ["**/*.py"]\r\n'
+    "  - rule: b.md\r\n"
+    '    paths: ["**/*.ts"]\r\n'
+)
+
+
+@pytest.mark.parametrize(
+    ("text", "update", "expected"),
+    [
+        pytest.param(
+            NO_INDENT_TEXT,
+            True,
+            "rules:\n- rule: a.md\n  paths: [\"**/*.py\"]\n- rule: b.md\n  paths: ['**/*.rs']\n",
+            id="no_indent_update",
+        ),
+        pytest.param(
+            NO_INDENT_TEXT,
+            False,
+            NO_INDENT_TEXT + "- rule: c.md\n  paths: ['**/*.go']\n",
+            id="no_indent_new",
+        ),
+        pytest.param(
+            CRLF_TEXT,
+            True,
+            "rules:\r\n"
+            "  - rule: a.md\r\n"
+            '    paths: ["**/*.py"]\r\n'
+            "  - rule: b.md\r\n"
+            "    paths: ['**/*.rs']\r\n",
+            id="crlf_update",
+        ),
+        pytest.param(
+            CRLF_TEXT,
+            False,
+            CRLF_TEXT + "  - rule: c.md\r\n    paths: ['**/*.go']\r\n",
+            id="crlf_new",
+        ),
+    ],
+)
+def test_write_entry_when_indent_and_newline(
+    make_index: Callable[..., Path],
+    make_check: Callable[..., CheckSpy],
+    write: Callable[..., Any],
+    text: str,
+    update: bool,
+    expected: str,
+) -> None:
+    """索引の字下げと改行を保って書く（正常系）。"""
+    from rule_inject.features.index import entry_revs
+
+    # 準備
+    index = make_index(text)
+    check, _ = make_check()
+    # 実行
+    result = write(
+        index,
+        {"paths": ["**/*.rs"]} if update else {"rule": "c.md", "paths": ["**/*.go"]},
+        check,
+        position=1 if update else None,
+        expected_rev=entry_revs(text.replace("\r\n", "\n"))[1] if update else None,
+    )
+    # 検証
+    assert result.written is True
+    assert index.read_bytes().decode("utf-8") == expected
+
+
+@pytest.mark.parametrize(
+    ("position", "entry", "dry_run"),
+    [
+        pytest.param(0, {"paths": ["**/*.rs"]}, False, id="update"),
+        pytest.param(None, {"rule": "c.md"}, False, id="new"),
+        pytest.param(0, {"paths": ["**/*.rs"]}, True, id="update_dry_run"),
+        pytest.param(None, {"rule": "c.md"}, True, id="new_dry_run"),
+    ],
+)
+def test_write_entry_when_layout_not_kept(
+    make_index: Callable[..., Path],
+    make_check: Callable[..., CheckSpy],
+    write: Callable[..., Any],
+    position: int | None,
+    entry: dict[str, Any],
+    dry_run: bool,
+) -> None:
+    """対象のエントリの外の行が変わる書き込みは断る（異常系）。"""
+    from rule_inject.features.index import entry_revs
+    from rule_inject.shared.errors import IndexEditError
+
+    # 準備
+    text = "rules:\n  - rule: a.md\n    paths: [x]\n  - rule: b.md\n    paths: [docs/**, ~]\n"
+    index = make_index(text)
+    before = index.read_bytes()
+    check, calls = make_check()
+    expected_rev = entry_revs(text)[0] if position is not None else None
+    # 実行・検証
+    with pytest.raises(IndexEditError) as raised:
+        write(
+            index,
+            entry,
+            check,
+            position=position,
+            expected_rev=expected_rev,
+            dry_run=dry_run,
+        )
+    assert "書式を保って書けない" in raised.value.reason
+    assert "5行目" in raised.value.reason
+    assert index.read_bytes() == before
+    assert calls == []
+
+
 @pytest.mark.parametrize(
     ("position", "rule", "expected"),
     [
@@ -467,3 +581,19 @@ def test_delete_entry_when_hook_unreadable(
         )
     assert line in raised.value.reason
     assert index.read_text(encoding="utf-8") == text
+
+
+def test_delete_entry_when_crlf(make_index: Callable[..., Path], locks: Any) -> None:
+    """CRLF の索引の改行を保って削除する（正常系）。"""
+    from rule_inject.features.index import entry_revs
+    from rule_inject.features.index.edit import delete_entry
+
+    # 準備
+    index = make_index(CRLF_TEXT)
+    expected_rev = entry_revs(CRLF_TEXT.replace("\r\n", "\n"))[0]
+    # 実行
+    delete_entry(str(index), position=0, expected_rev=expected_rev, dry_run=False, locks=locks)
+    # 検証
+    assert index.read_bytes().decode("utf-8") == (
+        'rules:\r\n  - rule: b.md\r\n    paths: ["**/*.ts"]\r\n'
+    )
