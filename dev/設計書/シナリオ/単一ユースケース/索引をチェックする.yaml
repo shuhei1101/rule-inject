@@ -160,7 +160,7 @@ scenarios:
       - ユーザー全体の索引のエントリは、`paths` の当たらないエントリに載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_paths_unmatched
-lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないプロジェクトの索引のエントリを受け取る。
+lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:

@@ -6,7 +6,7 @@ scenarios:
         description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
         notes: クライアントが Claude Code の代わりにツールを呼ぶ
       - name: 設定ファイル
-        description: '`global.state_dir` でテストの記録フォルダを指し'
+        description: '`global.state_dir` でテストの記録フォルダを指す'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 既読の記録
         description: 1 つのセッションの既読の記録に 2 つのルールの場所と今の本文のハッシュがある
