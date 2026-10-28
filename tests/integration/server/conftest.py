@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import os
 import signal
 import socket
@@ -122,11 +124,27 @@ def free_port() -> Callable[[], int]:
     return _free
 
 
-def _spawn(env: Mapping[str, str], stderr_path: Path) -> subprocess.Popen[bytes]:
-    """`python -m rule_inject.server` を子プロセスとして起動する（標準エラーはファイルへ書く）。"""
+# 辿る時間の上限を 0 秒に差し替えてサーバーを起動するコード（`python -m rule_inject.server` は上限を差し替えられない）
+LIMITED_SERVER_CODE = (
+    "import os\n"
+    "from rule_inject.server.app import build_server\n"
+    "server = build_server(os.environ, scan_time_limit=0)\n"
+    f"server.run('streamable-http', host='{HOST}', port=int(os.environ['RULE_INJECT_PORT']))\n"
+)
+
+
+def _spawn(
+    env: Mapping[str, str], stderr_path: Path, *, limited: bool = False
+) -> subprocess.Popen[bytes]:
+    """`python -m rule_inject.server` を子プロセスとして起動する（標準エラーはファイルへ書く）。limited なら辿る時間の上限を 0 秒にして起動する。"""
+    command = (
+        [sys.executable, "-c", LIMITED_SERVER_CODE]
+        if limited
+        else [sys.executable, "-m", "rule_inject.server"]
+    )
     with stderr_path.open("wb") as stderr_file:
         return subprocess.Popen(
-            [sys.executable, "-m", "rule_inject.server"],
+            command,
             env=dict(env),
             stdout=subprocess.DEVNULL,
             stderr=stderr_file,
@@ -198,10 +216,11 @@ def start_server(
         _stop(server)
 
 
-@pytest.fixture(scope="module")
-def shared_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningServer]:
-    """ツールの結合テストが共有するサーバー。設定ファイルは呼び出しのたびに読み直されるため、テストごとに書き換える。"""
-    home = tmp_path_factory.mktemp("shared_server")
+def _start_shared(
+    tmp_path_factory: pytest.TempPathFactory, name: str, *, limited: bool
+) -> RunningServer:
+    """テスト全体で共有するサーバーを、空いているポートで起動して待ち受けるまで待つ。"""
+    home = tmp_path_factory.mktemp(name)
     config = home / "config" / "settings.yaml"
     config.parent.mkdir()
     with socket.create_server((HOST, 0)) as probe:
@@ -209,10 +228,29 @@ def shared_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningS
     config.write_text(f"global:\n  server_port: {port}\n", encoding="utf-8")
     stderr_path = home / "server.stderr"
     env = _server_env(config, home / "xdg_state", home / "xdg_config")
+    env["RULE_INJECT_PORT"] = str(port)
     server = RunningServer(
-        port=port, process=_spawn(env, stderr_path), config_path=config, stderr_path=stderr_path
+        port=port,
+        process=_spawn(env, stderr_path, limited=limited),
+        config_path=config,
+        stderr_path=stderr_path,
     )
     _wait_ready(server)
+    return server
+
+
+@pytest.fixture(scope="module")
+def shared_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningServer]:
+    """ツールの結合テストが共有するサーバー。設定ファイルは呼び出しのたびに読み直されるため、テストごとに書き換える。"""
+    server = _start_shared(tmp_path_factory, "shared_server", limited=False)
+    yield server
+    _stop(server)
+
+
+@pytest.fixture(scope="module")
+def limited_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningServer]:
+    """辿る時間の上限を 0 秒にして起動した、ツールの結合テストが共有するサーバー（1 回の呼び出しで 1 つのファイルだけを当てる）。"""
+    server = _start_shared(tmp_path_factory, "limited_server", limited=True)
     yield server
     _stop(server)
 
@@ -269,6 +307,76 @@ def running_server(
         return shared_server
 
     return _use
+
+
+@pytest.fixture
+def running_limited_server(
+    limited_server: RunningServer,
+    config_text: Callable[..., str],
+    project_dir: Path,
+) -> Callable[..., RunningServer]:
+    """`running_server` と同じ設定ファイルを書き、辿る時間の上限を 0 秒にしたサーバーを返す factory。"""
+
+    def _use(*project_indexes: Path, global_indexes: Sequence[Path] = ()) -> RunningServer:
+        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に置く。"""
+        text = config_text(
+            limited_server.port,
+            global_indexes=global_indexes,
+            match=project_dir if project_indexes else None,
+            project_indexes=project_indexes,
+        )
+        limited_server.config_path.write_text(text, encoding="utf-8")
+        return limited_server
+
+    return _use
+
+
+@pytest.fixture
+def record_server(shared_server: RunningServer, state_dir: Path) -> RunningServer:
+    """`global.state_dir` でテストの記録フォルダを指した設定ファイルを書き、共有のサーバーを返す。"""
+    text = f"global:\n  server_port: {shared_server.port}\n  state_dir: {state_dir}\n"
+    shared_server.config_path.write_text(text, encoding="utf-8")
+    return shared_server
+
+
+@pytest.fixture
+def write_history_rows(state_dir: Path, session_id: str) -> Callable[..., Path]:
+    """既読の履歴ファイルを、行を 1 行ずつ書いて置く factory。dict は JSON にし、文字列はそのまま書く。"""
+
+    def _write(rows: Sequence[Mapping[str, Any] | str], name: str | None = None) -> Path:
+        """rows を 1 行ずつ、name（無ければこのセッション）の既読の履歴ファイルに書く。"""
+        path = state_dir / f"{name or session_id}.history.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = [row if isinstance(row, str) else json.dumps(row) for row in rows]
+        path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
+        return path
+
+    return _write
+
+
+@pytest.fixture
+def make_project_files(project_dir: Path) -> Callable[..., None]:
+    """プロジェクトの直下の下に、空のファイルをフォルダごと置く factory。"""
+
+    def _make(*names: str) -> None:
+        """names の相対パスのファイルを置く。"""
+        for name in names:
+            path = project_dir / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("", encoding="utf-8")
+
+    return _make
+
+
+@pytest.fixture
+def hashed() -> Callable[[Path], str]:
+    """ルールのファイルの中身の SHA-256 を、既読の記録の書式（`sha256:{16 進数}`）で返す関数。"""
+
+    def _hash(path: Path) -> str:
+        """path の中身のハッシュを返す。"""
+        return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
+
+    return _hash
 
 
 @pytest.fixture
