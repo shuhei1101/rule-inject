@@ -9,7 +9,8 @@ scenarios:
         description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
-        description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文がある YAML
+        description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文があり、各 `paths` がプロジェクトのファイルのどれかに当たる YAML
+        notes: '-'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -31,7 +32,7 @@ scenarios:
         SV-->>CL: 索引ごとに違反なし
     expected:
       - 応答に、チェックした索引の場所と、読んだ設定ファイルの場所が載っている
-      - 応答のどの索引にも、違反とファイルが無いエントリが無い
+      - 応答のどの索引にも、違反とファイルが無いエントリと `paths` の当たらないエントリが無い
     test: test_normal_when_no_violation
   - name: 正常シナリオ（Schemaに違反する）
     setup:
@@ -116,7 +117,44 @@ scenarios:
     expected:
       - 応答のファイルが無いエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
     test: test_normal_when_rule_file_missing
-lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
+  - name: 正常シナリオ（pathsがどのファイルにも当たらない）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いシナリオと同じ
+      - name: プロジェクトのファイル
+        description: プロジェクトの直下に置いた数個のファイル
+        notes: '例: `src/app.py` だけを置く'
+      - name: 索引
+        description: '`paths` がプロジェクトのファイルに当たるエントリと、どのファイルにも当たらないエントリを 1 つずつ持ち、各 `rule` の場所にルールの本文がある YAML'
+        notes: '例: 当たる `**/*.py` と、当たらない `**/*.rs`'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant SC as 索引の JSON Schema
+        participant PJ as プロジェクトのファイル
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>SC: 索引を照らす
+        SC-->>SV: 違反なし
+        SV->>PJ: プロジェクトの直下からファイルを辿る
+        PJ-->>SV: ファイルの絶対パス
+        SV->>SV: 効いているエントリの paths と exclude を各パスに当てる
+        SV-->>CL: paths の当たらないエントリ
+    expected:
+      - 応答の `paths` の当たらないエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
+      - '`paths` がファイルに当たるエントリは、`paths` の当たらないエントリに載っていない'
+      - 索引のファイルが書き換わっていない
+    test: test_normal_when_paths_unmatched
+lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
