@@ -24,7 +24,7 @@ def test_load_validator() -> None:
     from rule_inject.features.index.check import load_validator
 
     # 準備
-    document = {
+    document: dict[str, Any] = {
         "default_on": ["write"],
         "rules": [
             {
