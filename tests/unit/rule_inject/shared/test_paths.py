@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rule_inject.shared import paths
+import rule_inject.shared.paths as paths
 
 
 def test_resolve_location_when_relative() -> None:

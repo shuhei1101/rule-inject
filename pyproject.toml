@@ -19,6 +19,9 @@ dev = [
     "ruamel.yaml>=0.19,<0.20",
     "pytest>=8.0",
     "ruff>=0.5",
+    "mypy>=1.10",
+    "import-linter>=2.0",
+    "types-jsonschema>=4.26,<5",
 ]
 
 [build-system]
@@ -65,3 +68,31 @@ indent-style = "space"
 
 [tool.ruff.lint.isort]
 known-first-party = ["rule_inject"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+explicit_package_bases = true
+
+[tool.importlinter]
+root_package = "rule_inject"
+
+[[tool.importlinter.contracts]]
+name = "hooks と server は features を使い、features は shared を使う"
+type = "layers"
+layers = [
+    "rule_inject.hooks | rule_inject.server",
+    "rule_inject.features",
+    "rule_inject.shared",
+]
+
+[[tool.importlinter.contracts]]
+name = "features の機能どうしは import しない"
+type = "independence"
+modules = [
+    "rule_inject.features.command",
+    "rule_inject.features.document",
+    "rule_inject.features.guidance",
+    "rule_inject.features.index",
+    "rule_inject.features.record",
+]

@@ -144,9 +144,9 @@ def build_server(
         annotations=ToolAnnotations(destructive_hint=False, open_world_hint=False),
         structured_output=False,
     )
-    for function in (delete_index_entry, delete_read_records):
+    for destructive_function in (delete_index_entry, delete_read_records):
         server.add_tool(
-            function,
+            destructive_function,
             annotations=ToolAnnotations(destructive_hint=True, open_world_hint=False),
             structured_output=False,
         )

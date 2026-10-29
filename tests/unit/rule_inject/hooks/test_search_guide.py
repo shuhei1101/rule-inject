@@ -62,6 +62,7 @@ def test_search_guide(
     # 実行
     result = search_guide(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert output["hookEventName"] == "PostToolUse"
     assert output["additionalContext"].startswith(SEARCH_HEADER)
@@ -168,6 +169,7 @@ def test_search_guide_when_guided_unwritable(
     # 実行
     result = search_guide(payload, env)
     # 検証
+    assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
     assert RULE in context
     assert str(state_dir / f"{session_id}.guided.txt") in context
@@ -199,6 +201,7 @@ def test_search_guide_when_rule_changed(
     # 実行
     result = search_guide(payload, env)
     # 検証
+    assert result is not None
     assert str(rule) in result["hookSpecificOutput"]["additionalContext"]
 
 
@@ -223,6 +226,7 @@ def test_search_guide_when_settings_unreadable(
     # 実行
     result = search_guide(payload, env)
     # 検証
+    assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
     assert SETTINGS_FAILURE_SUMMARY in context
     assert env["RULE_INJECT_CONFIG"] in context

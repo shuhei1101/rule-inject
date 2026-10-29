@@ -48,8 +48,8 @@ functions:
         passing: positional
         description: 入力の値
     returns:
-      type: bool
-      description: 文字列で `SESSION_ID_PATTERN` に合うか
+      type: TypeGuard[str]
+      description: 文字列で `SESSION_ID_PATTERN` に合うか。`True` のとき、呼び出し側は値を `str` として扱える
     unit_tests:
       - name: test_is_valid_session_id
         case: 正常

@@ -140,8 +140,10 @@ def _default_user_index(env: Mapping[str, str]) -> list[str]:
 def load_settings(env: Mapping[str, str]) -> Settings:
     """設定ファイルを読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す。"""
     config, parsed = _read_config(env)
-    global_values = dict(parsed.get("global", {}))
-    projects = list(parsed.get("projects", []))
+    global_table = parsed.get("global", {})
+    global_values = dict(global_table) if isinstance(global_table, dict) else {}
+    project_tables = parsed.get("projects", [])
+    projects = list(project_tables) if isinstance(project_tables, list) else []
     # 値を確かめる
     for number, project in enumerate(projects):
         if "match" not in project:
@@ -185,15 +187,17 @@ def load_settings(env: Mapping[str, str]) -> Settings:
     # 索引の並び: global（無ければユーザーの既定）、続けて当たった要素の indexes
     indexes = global_indexes if "indexes" in global_values else _default_user_index(env)
     project_indexes: list[str] = []
-    for project in matched:
-        project_indexes.extend(
-            resolve_location(written, Path(project_dir)) for written in project.get("indexes", [])
-        )
-    # 当たった要素のどれも indexes を持たなければ、プロジェクトの既定の置き場所を読む
-    if project_dir and not any("indexes" in project for project in matched):
-        default_project_index = Path(project_dir) / PROJECT_INDEX_DEFAULT
-        if default_project_index.is_file():
-            project_indexes.append(str(default_project_index))
+    if project_dir:
+        for project in matched:
+            project_indexes.extend(
+                resolve_location(written, Path(project_dir))
+                for written in project.get("indexes", [])
+            )
+        # 当たった要素のどれも indexes を持たなければ、プロジェクトの既定の置き場所を読む
+        if not any("indexes" in project for project in matched):
+            default_project_index = Path(project_dir) / PROJECT_INDEX_DEFAULT
+            if default_project_index.is_file():
+                project_indexes.append(str(default_project_index))
     return Settings(
         indexes=(*indexes, *project_indexes),
         project_indexes=tuple(project_indexes),

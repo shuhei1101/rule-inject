@@ -71,10 +71,10 @@ layers:
       uv run pytest tests/nfr
       ```
   - name: lint
-    description: ruff で linter・formatter の check を検査する。
+    description: ruff で linter・formatter の check を、mypy で型検査を、import-linter で依存の向きを検査する。型検査と依存の向きの検査はプロジェクト全体に回す。
     prerequisites:
-      - 検査の設定は `pyproject.toml` の `[tool.ruff]` が持つ
+      - 検査の設定は `pyproject.toml` の `[tool.ruff]`・`[tool.mypy]`・`[tool.importlinter]` が持つ
     run_all: |-
       ```bash
-      (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; exit $rc)
+      (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; uv run lint-imports || rc=1; exit $rc)
       ```

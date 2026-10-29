@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, Literal
 
 import pytest
+from mcp.types import CallToolResult, TextContent
 from pydantic import BaseModel
 
 
@@ -16,6 +17,13 @@ def _json_or_none(text: str) -> Any:
         return json.loads(text)
     except ValueError:
         return None
+
+
+def _text_of(response: CallToolResult) -> str:
+    """応答の先頭の content からテキストを取り出す。"""
+    content = response.content[0]
+    assert isinstance(content, TextContent)
+    return content.text
 
 
 def _entry(position: int, rule: str = "/r/a.md", paths: list[str] | None = None) -> Any:
@@ -61,7 +69,9 @@ def _list_result(entries: list[Any]) -> Any:
         pytest.param("markdown", False, True, id="markdown"),
     ],
 )
-def test_respond(format_: str, has_structured: bool, has_table: bool) -> None:
+def test_respond(
+    format_: Literal["markdown", "json"], has_structured: bool, has_table: bool
+) -> None:
     """形式ごとに structuredContent の有無を切り替える（正常系）。"""
     from rule_inject.server._format import respond
     from rule_inject.server.types import CheckIndexesResult, IndexReport, UnmatchedScanReport
@@ -90,7 +100,7 @@ def test_respond(format_: str, has_structured: bool, has_table: bool) -> None:
     # 実行
     response = respond(result, format_)
     # 検証
-    text = response.content[0].text
+    text = _text_of(response)
     assert (response.structured_content is not None) is has_structured
     assert response.structured_content == _json_or_none(text)
     assert ("|" in text) is has_table
@@ -125,8 +135,8 @@ def test_fit_page() -> None:
     # 実行
     page, count = fit_page(build, 100, "json")
     # 検証
-    fitted = respond(page, "json").content[0].text
-    over = respond(build(count + 1), "json").content[0].text
+    fitted = _text_of(respond(page, "json"))
+    over = _text_of(respond(build(count + 1), "json"))
     assert 0 < count < 100
     assert len(fitted) <= MAX_RESPONSE_CHARS
     assert len(over) > MAX_RESPONSE_CHARS

@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypeGuard
 
 from rule_inject.features.record.types import (
     HistoryEntry,
@@ -56,7 +57,7 @@ def _record_path(state_dir: Path, session_id: str, suffix: str = RECORD_SUFFIX) 
     return state_dir / f"{session_id}{suffix}"
 
 
-def is_valid_session_id(session_id: object) -> bool:
+def is_valid_session_id(session_id: object) -> TypeGuard[str]:
     """session_id が記録ファイル名に使える形式かを返す。"""
     return isinstance(session_id, str) and SESSION_ID_PATTERN.fullmatch(session_id) is not None
 
@@ -299,13 +300,16 @@ def _history_entry(line: str) -> HistoryEntry | None:
         return None
     if not isinstance(data, dict):
         return None
-    time_value, method, tool, location = (
-        data.get("time"),
-        data.get("method"),
-        data.get("tool"),
-        data.get("location"),
-    )
-    if not all(isinstance(value, str) for value in (time_value, method, tool, location)):
+    time_value = data.get("time")
+    method = data.get("method")
+    tool = data.get("tool")
+    location = data.get("location")
+    if not (
+        isinstance(time_value, str)
+        and isinstance(method, str)
+        and isinstance(tool, str)
+        and isinstance(location, str)
+    ):
         return None
     if method not in {read_method.value for read_method in ReadMethod}:
         return None
