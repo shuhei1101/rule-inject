@@ -1,0 +1,94 @@
+# GitHub Pages 用 Jekyll 設定
+# docs/ 配下を Jekyll サイトとしてビルドする
+
+title: rule-inject
+description: rule-inject の使い方と変更履歴
+
+# GitHub Pages のプロジェクトサイトはリポジトリ名がパスプレフィクスになる
+# 例: https://shuhei1101.github.io/rule-inject/ で配信されるので baseurl を明示
+# これにより {{ '/' | relative_url }} が "/rule-inject/" を返し、
+# トップ / パンくずの リンクが 404 にならなくなる
+baseurl: /rule-inject
+
+# 公開サイトの URL（https://{owner}.github.io{baseurl}/）の所有者
+# 起票の宛先はビルドしたリポジトリ（site.github.repository_nwo）から入れるため、
+# 文字列 owner/name にしない（jekyll-github-metadata が読んで宛先を固定する）
+repository:
+  owner: shuhei1101
+
+# ページから開く起票画面へ渡す固定のラベル
+# リポジトリに同じ名前のラベルが無いと GitHub 側で無視される
+issue_form:
+  labels:
+    - ドキュメントから起票
+    - 確認:task-planner
+
+# Markdown 処理（kramdown + GFM 互換）
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# GitHub Pages 標準プラグイン
+# - jekyll-optional-front-matter: front matter を持たない .md も Jekyll が処理する
+#   （全 MD に "---\nlayout: default\n---" を書かなくて済む）
+# - jekyll-readme-index: README.md をディレクトリのインデックス扱いにする
+#   （フォルダ URL を開くと README.md が描画される）
+# - jekyll-relative-links: [foo](foo.md) を [foo](foo.html) 相当に自動書き換え
+# - jekyll-github-metadata: site.github.repository_nwo（ビルドしたリポジトリ）を入れる
+#   （載せないと cwd に Gemfile が無いローカルビルドで読み込まれず、起票の宛先が空になる）
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-relative-links
+  - jekyll-github-metadata
+
+# 共通の部品（レイアウト・include・データ・アセット）は _theme/ にまとめる
+# 取り込みのコマンド（python -m ai_monitor.distribution import-site）が _theme/ をまとめて置き換える
+layouts_dir: _theme/_layouts
+includes_dir: _theme/_includes
+data_dir: _theme/_data
+
+# _theme/ をコレクションにして、アセット・search.json・llms.txt を今までと同じ URL（/assets/... など）で出力する
+# _layouts / _includes / _data の中は出力されない
+collections:
+  theme:
+    output: true
+    permalink: /:path:output_ext
+
+# 全ページのデフォルト layout を default にする
+# 個別 MD に front matter を書かなくても _theme/_layouts/default.html が適用される
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# jekyll-optional-front-matter を全ファイルに適用する
+optional_front_matter:
+  remove_originals: true
+
+# front matter を持たない README も jekyll-optional-front-matter の変換対象へ戻す
+# （欠落すると front matter の無い README だけがページ化されず、親フォルダの目次を奪う）
+include:
+  - "**/README.md"
+
+# jekyll-readme-index に README.md をディレクトリインデックスとして扱わせる
+readme_index:
+  enabled: true
+  remove_originals: true
+  with_frontmatter: true
+
+# jekyll-relative-links の設定
+relative_links:
+  enabled: true
+  collections: true
+
+# ビルドから除外するもの
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - node_modules
+  # 公開ドキュメントの索引の起点（トップは index.md が持つ。include の **/README.md に当たらない直下だけを外す）
+  - README.md
