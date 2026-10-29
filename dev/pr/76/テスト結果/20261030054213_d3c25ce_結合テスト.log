@@ -1,0 +1,25 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-lint-type-and-import-checks
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 135 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  2%]
+tests/integration/plugin/test_record_read.py ................            [ 14%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 35%]
+..                                                                       [ 37%]
+tests/integration/plugin/test_search_guide.py .............              [ 46%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 53%]
+tests/integration/plugin/test_work_rules.py ...                          [ 55%]
+tests/integration/server/test_check_indexes.py ............              [ 64%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 72%]
+tests/integration/server/test_delete_read_records.py ...                 [ 74%]
+tests/integration/server/test_get_read_records.py .....                  [ 78%]
+tests/integration/server/test_list_rules.py .....                        [ 82%]
+tests/integration/server/test_search_rules.py .....                      [ 85%]
+tests/integration/server/test_server_start.py .....                      [ 89%]
+tests/integration/server/test_write_index_entry.py ..............        [100%]
+
+======================= 135 passed in 139.09s (0:02:19) ========================
