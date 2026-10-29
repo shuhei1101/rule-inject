@@ -32,7 +32,7 @@ develop の [ai-monitor-version.ini](https://github.com/shuhei1101/rule-inject/b
 - [x] ~~部品設計~~（画面の部品を持たない）
 - [x] ~~画面設計~~（変更が画面に及ばない）
 - [x] ~~モジュール構成設計~~（影響なし: 実装を変えない）
-- [ ] ドキュメント修正（ai-monitor-version.ini・dev/テンプレート・docs/_theme・docs/_config.yml・ai-monitor-theme.yaml）
+- [x] ドキュメント修正（ai-monitor-version.ini・dev/テンプレート・docs/_theme・docs/_config.yml・ai-monitor-theme.yaml）
 - [x] ~~単体テスト作成~~（実装を変えない）
 - [x] ~~実装~~（実装を変えない）
 - [x] ~~結合テスト作成~~（実装を変えない）
