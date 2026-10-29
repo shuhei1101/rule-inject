@@ -48,6 +48,7 @@ def test_handle_when_blocked(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
@@ -95,6 +96,7 @@ def test_handle_when_not_blocking(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert RULE in output["additionalContext"]
@@ -115,6 +117,7 @@ def test_handle_when_bash(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
@@ -160,6 +163,7 @@ def test_handle_when_index_unreadable(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert str(missing) in output["additionalContext"]
@@ -188,6 +192,7 @@ def test_handle_when_record_unreadable(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert str(record_file) in output["additionalContext"]
@@ -244,6 +249,7 @@ def test_handle_when_guided_recorded(
     guided_after_write = guided_file.exists()
     guide_rules(read_payload, env)
     # 検証
+    assert blocked is not None
     assert blocked["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert not guided_after_write
     assert read_lines(guided_file) == [RULE]
@@ -272,6 +278,7 @@ def test_handle_when_guided_unwritable(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert RULE in output["additionalContext"]
@@ -303,6 +310,7 @@ def test_handle_when_mcp_args(
     blocked = guide_rules(matched, env)
     passed = guide_rules(unmatched, env)
     # 検証
+    assert blocked is not None
     assert blocked["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert passed is None
 
@@ -329,6 +337,7 @@ def test_handle_when_rule_changed(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert str(rule) in output["permissionDecisionReason"]
@@ -352,6 +361,7 @@ def test_handle_when_settings_unreadable(
     # 実行
     result = guide_rules(payload, env)
     # 検証
+    assert result is not None
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     context = output["additionalContext"]

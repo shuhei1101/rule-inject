@@ -21,9 +21,8 @@ def test_discard_read(
     record_file = write_record(["/r/a.md"])
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
-    result = discard_read(payload, hook_env)
+    discard_read(payload, hook_env)
     # 検証
-    assert result is None
     assert not record_file.exists()
 
 
@@ -44,9 +43,8 @@ def test_discard_read_when_undeletable(
     unwritable(log_folder, 0o555)
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
-    result = discard_read(payload, hook_env)
+    discard_read(payload, hook_env)
     # 検証
-    assert result is None
     assert "delete_record" in capsys.readouterr().err
 
 
@@ -62,9 +60,8 @@ def test_discard_read_when_guided(
     guided_file = write_guided(["/r/b.md"])
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
-    result = discard_read(payload, hook_env)
+    discard_read(payload, hook_env)
     # 検証
-    assert result is None
     assert not record_file.exists()
     assert not guided_file.exists()
 
@@ -84,9 +81,8 @@ def test_discard_read_when_settings_unreadable(
     record_file.write_text("/r/a.md\n", encoding="utf-8")
     payload = hook_payload("PreCompact", trigger="manual")
     # 実行
-    result = discard_read(payload, env)
+    discard_read(payload, env)
     # 検証
-    assert result is None
     assert record_file.exists()
     logged = read_default_log()
     assert len(logged) == 1

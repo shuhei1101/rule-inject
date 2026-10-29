@@ -23,6 +23,8 @@ RUN_PY = Path(__file__).resolve().parents[3] / "hooks" / "run.py"
 def run_module() -> ModuleType:
     """hooks/run.py をモジュールとして読み込む。"""
     spec = importlib.util.spec_from_file_location("hook_run", RUN_PY)
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

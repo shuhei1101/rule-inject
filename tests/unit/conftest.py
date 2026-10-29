@@ -9,9 +9,12 @@ import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
+if TYPE_CHECKING:
+    from rule_inject.features.index.types import Operation
 
 SESSION_ID = "2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10"
 SECONDS_PER_DAY = 86_400
@@ -234,7 +237,7 @@ def make_entry() -> Callable[..., Any]:
         exclude: Sequence[str] = (),
         tools: Sequence[str] = (),
         args: Mapping[str, Sequence[str]] | None = None,
-        on: Sequence[str] = ("read", "write", "mcp"),
+        on: Sequence[Operation] = ("read", "write", "mcp"),
         read_by: Sequence[Mapping[str, Any]] = (),
     ) -> Any:
         """解決後の場所と当てる条件から IndexEntry を作る。"""

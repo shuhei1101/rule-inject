@@ -132,7 +132,9 @@ def test_load_indexes_when_regex_unreadable(
     result = load_indexes([str(index)], {})
     # 検証
     assert [entry.location for entry in result.entries] == ["/r/ok.md"]
-    assert result.entries[0].paths[0].regex.pattern == "\\.py$"
+    regex = result.entries[0].paths[0].regex
+    assert regex is not None
+    assert regex.pattern == "\\.py$"
     assert result.entries[0].args[0].key == "kind"
     assert result.entries[0].args[0].patterns[0].source == "rule"
     assert len(result.failures) == 1
@@ -159,7 +161,9 @@ def test_load_indexes_when_read_by(
     # 検証
     assert len(result.entries[0].read_by) == 1
     condition = result.entries[0].read_by[0]
-    assert condition.tools[0].regex.pattern == "__get_doc$"
+    tool_regex = condition.tools[0].regex
+    assert tool_regex is not None
+    assert tool_regex.pattern == "__get_doc$"
     assert len(condition.args) == 1
     assert condition.args[0].key == "path"
     assert condition.args[0].patterns[0].source == "*.md"
@@ -479,6 +483,7 @@ def test_compile_pattern_when_regex() -> None:
     result = _compile_pattern("re:^a.+b$")
     # 検証
     assert result.source == "re:^a.+b$"
+    assert result.regex is not None
     assert result.regex.pattern == "^a.+b$"
 
 

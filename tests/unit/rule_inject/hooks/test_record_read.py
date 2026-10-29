@@ -146,6 +146,7 @@ def test_record_read_when_unwritable(
     # 実行
     result = record_read(payload, env)
     # 検証
+    assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
     assert str(rule) in context
     assert "PermissionError" in context
@@ -253,6 +254,7 @@ def test_record_read_when_history_unwritable(
     result = record_read(payload, env)
     # 検証
     assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_TEST}"]
+    assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
     assert str(rule) in context
     assert "IsADirectoryError" in context
@@ -439,6 +441,7 @@ def test_record_read_when_settings_unreadable(
     # 実行
     result = record_read(payload, env)
     # 検証
+    assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
     assert SETTINGS_FAILURE_SUMMARY in context
     assert env["RULE_INJECT_CONFIG"] in context

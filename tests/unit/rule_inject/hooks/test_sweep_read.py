@@ -23,9 +23,8 @@ def test_sweep_read(
     expired = write_aged_record("expired-session", 31)
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, hook_env)
+    sweep_read(payload, hook_env)
     # 検証
-    assert result is None
     assert not expired.exists()
 
 
@@ -39,9 +38,8 @@ def test_sweep_read_when_invalid_session_id(
     expired = write_aged_record("expired-session", 31)
     payload = hook_payload("SessionStart", source="startup", session_id="../x")
     # 実行
-    result = sweep_read(payload, hook_env)
+    sweep_read(payload, hook_env)
     # 検証
-    assert result is None
     assert expired.exists()
 
 
@@ -62,9 +60,8 @@ def test_sweep_read_when_undeletable(
     unwritable(log_folder, 0o555)
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, hook_env)
+    sweep_read(payload, hook_env)
     # 検証
-    assert result is None
     entry = json.loads(capsys.readouterr().err)
     assert entry["component"] == "sweep_read"
     assert entry["operation"] == "delete_record"
@@ -82,9 +79,8 @@ def test_sweep_read_when_old_logs(
     expired_log = write_dated_log(today - timedelta(days=3))
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, hook_env)
+    sweep_read(payload, hook_env)
     # 検証
-    assert result is None
     assert not expired_log.exists()
     assert today_log.exists()
 
@@ -104,9 +100,8 @@ def test_sweep_read_when_retention_configured(
     expired_log = write_dated_log(today - timedelta(days=1))
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, env)
+    sweep_read(payload, env)
     # 検証
-    assert result is None
     assert not expired_record.exists()
     assert not expired_log.exists()
     assert today_log.exists()
@@ -124,9 +119,8 @@ def test_sweep_read_when_legacy_log(
     legacy_log.write_text("{}\n", encoding="utf-8")
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, hook_env)
+    sweep_read(payload, hook_env)
     # 検証
-    assert result is None
     assert not legacy_log.exists()
 
 
@@ -144,9 +138,8 @@ def test_sweep_read_when_settings_unreadable(
     expired_log.write_text("{}\n", encoding="utf-8")
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, env)
+    sweep_read(payload, env)
     # 検証
-    assert result is None
     assert expired_log.exists()
     today_log = default_log_folder / f"{today:%Y%m%d}_rule-inject.log"
     logged = [json.loads(line) for line in today_log.read_text(encoding="utf-8").splitlines()]
@@ -164,7 +157,6 @@ def test_sweep_read_when_guided(
     expired = write_aged_record("expired-session", 31, suffix=".guided.txt")
     payload = hook_payload("SessionStart", source="startup")
     # 実行
-    result = sweep_read(payload, hook_env)
+    sweep_read(payload, hook_env)
     # 検証
-    assert result is None
     assert not expired.exists()
