@@ -159,8 +159,9 @@ def _validate_entry(entry: dict[str, Value], number: int) -> None:
     for key in LIST_ENTRY_KEYS:
         if key in entry and not isinstance(entry[key], list):
             raise yaml_error(number, f"{key} はリストで書いてください")
-    if "on" in entry:
-        _parse_operations(list(entry["on"]), number)
+    operations = entry.get("on")
+    if isinstance(operations, list):
+        _parse_operations([str(item) for item in operations], number)
 
 
 def parse_index(text: str) -> tuple[tuple[Operation, ...] | None, list[dict[str, Value]]]:

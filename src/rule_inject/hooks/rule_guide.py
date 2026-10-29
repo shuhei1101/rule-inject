@@ -111,15 +111,14 @@ def _log_record_failure(
 
 def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る。"""
-    session_id = payload.get("session_id")
-    valid_session = is_valid_session_id(session_id)
+    raw_session_id = payload.get("session_id")
+    # 形式が外れた session_id は記録の読み書きに使わず、None として扱う
+    session_id = raw_session_id if is_valid_session_id(raw_session_id) else None
     # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに止めない知らせだけを返す
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
-        notice = settings_failure_notice(
-            Component.RULE_GUIDE, exc, env, session_id if valid_session else None
-        )
+        notice = settings_failure_notice(Component.RULE_GUIDE, exc, env, session_id)
         return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": notice}}
     folder = settings.state_dir
     log_folder = settings.log_dir
@@ -133,7 +132,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             component=Component.RULE_GUIDE,
             operation=LogOperation.READ_INDEX,
             reason=failure.reason,
-            session_id=session_id if valid_session else None,
+            session_id=session_id,
             path=failure.path,
         )
     if loaded.failures:
@@ -142,7 +141,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     # そのセッションで読んだルールを除く（読んだ後に本文が変わったルールは未読のまま残す）。記録が読めなければ止めずに理由を知らせる
     already_read: frozenset[str] = frozenset()
     record_failed = False
-    if valid_session and matched:
+    if session_id is not None and matched:
         try:
             already_read = current_read_locations(
                 read_record(folder, session_id), [rule.location for rule in matched]
@@ -156,8 +155,8 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
         # 既読か分からないため、止めずに案内する
         unread = [MatchedRule(location=rule.location, blocking=False) for rule in unread]
     # 止めるルールが無いときは、このセッションで案内済みの場所を除く（読めなければ未案内として扱う）
-    track_guided = valid_session and bool(unread) and not any(rule.blocking for rule in unread)
-    if track_guided:
+    track_guided = bool(unread) and not any(rule.blocking for rule in unread)
+    if session_id is not None and track_guided:
         try:
             guided = read_guided(folder, session_id)
         except RecordReadError as exc:
@@ -171,7 +170,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
         return None
     guidance = _build(unread, notices)
     # 止めない案内に載せた場所だけを案内済みにする。書けなければ案内は出して理由を知らせる
-    if track_guided and guidance is not None and guidance.shown:
+    if session_id is not None and track_guided and guidance is not None and guidance.shown:
         try:
             append_guided(folder, session_id, guidance.shown)
         except RecordWriteError as exc:
