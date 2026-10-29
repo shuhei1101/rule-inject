@@ -425,25 +425,25 @@ functions:
         summary: 記録を削除する
         condition: 記録ファイルがある
         mock: なし
-        expected: 記録ファイルが無い、None
+        expected: 記録ファイルが無い
       - name: test_discard_read_when_undeletable
         case: 正常
         summary: 削除できないときログに書く
         condition: 書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（設定ファイルの `global.log_dir`）
         mock: なし
-        expected: None、標準エラー出力に `delete_record`
+        expected: 標準エラー出力に `delete_record`
       - name: test_discard_read_when_guided
         case: 正常
         summary: 案内済みの記録も削除する
         condition: そのセッションの `{id}.txt` と `{id}.guided.txt`
         mock: なし
-        expected: どちらも無い、None
+        expected: どちらも無い
       - name: test_discard_read_when_settings_unreadable
         case: 正常
         summary: 設定ファイルが読めないときはログに書くだけで何も削除しない
         condition: '`RULE_INJECT_CONFIG` が知らないキーを持つ設定ファイルを指す。`XDG_STATE_HOME` は一時フォルダで、その下の `rule-inject` にそのセッションの記録ファイルがある'
         mock: なし
-        expected: 記録ファイルが残る。`{XDG_STATE_HOME}/rule-inject/logs` のログに `read_settings` が 1 行、None
+        expected: 記録ファイルが残る。`{XDG_STATE_HOME}/rule-inject/logs` のログに `read_settings` が 1 行
   - name: work_rules
     title: 作業の決まりの注入の処理
     container: hooks/work_rules.py
@@ -530,49 +530,49 @@ functions:
         summary: 保持期間を過ぎた記録を削除する
         condition: 最終更新が 31 日前の別のセッションの記録ファイル
         mock: なし（最終更新は `os.utime` で戻す）
-        expected: 記録ファイルが無い、None
+        expected: 記録ファイルが無い
       - name: test_sweep_read_when_invalid_session_id
         case: 正常
         summary: session_id の形式が外れていれば何も削除しない
         condition: '`session_id` が `../x`、最終更新が 31 日前の記録ファイル'
         mock: なし
-        expected: 記録ファイルが残る、None
+        expected: 記録ファイルが残る
       - name: test_sweep_read_when_undeletable
         case: 正常
         summary: 削除できず、ログにも書けないとき標準エラー出力に書く
         condition: 最終更新が 31 日前の記録ファイル、書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（設定ファイルの `global.log_dir`）
         mock: なし
-        expected: 'None、標準エラー出力に `component: sweep_read`・`operation: delete_record`'
+        expected: '標準エラー出力に `component: sweep_read`・`operation: delete_record`'
       - name: test_sweep_read_when_old_logs
         case: 正常
         summary: 保持日数を過ぎたログのファイルを削除する
         condition: '設定ファイルの `global.log_dir` に日付が今日と 3 日前（UTC）のログのファイル'
         mock: なし
-        expected: 3 日前のファイルが無く、今日のファイルが残る、None
+        expected: 3 日前のファイルが無く、今日のファイルが残る
       - name: test_sweep_read_when_legacy_log
         case: 正常
         summary: 変更前のログを削除する
         condition: 記録フォルダに最終更新が今の `rule-inject.log`
         mock: なし
-        expected: '`rule-inject.log` が無い、None'
+        expected: '`rule-inject.log` が無い'
       - name: test_sweep_read_when_guided
         case: 正常
         summary: 保持期間を過ぎた案内済みの記録も削除する
         condition: 最終更新が 31 日前の別のセッションの `{id}.guided.txt`
         mock: なし（最終更新は `os.utime` で戻す）
-        expected: '`{id}.guided.txt` が無い、None'
+        expected: '`{id}.guided.txt` が無い'
       - name: test_sweep_read_when_settings_unreadable
         case: 正常
         summary: 設定ファイルが読めないときはログに書くだけで何も削除しない
         condition: '設定ファイルが `global.log_retention_days: 0` を持つ。`XDG_STATE_HOME` は一時フォルダで、その下の `rule-inject/logs` に日付が 3 日前（UTC）のログのファイル'
         mock: なし
-        expected: 3 日前のファイルが残る。今日のログのファイルに `read_settings` が 1 行、None
+        expected: 3 日前のファイルが残る。今日のログのファイルに `read_settings` が 1 行
       - name: test_sweep_read_when_retention_configured
         case: 正常
         summary: 設定ファイルの保持の日数で、記録ファイルとログのファイルを削除する
         condition: '設定ファイルが `global.record_retention_days: 1`・`global.log_retention_days: 1` を持つ。最終更新が 2 日前の別のセッションの記録ファイル、日付が今日と 1 日前（UTC）のログのファイル'
         mock: なし
-        expected: 記録ファイルと 1 日前のログのファイルが無く、今日のログのファイルが残る、None
+        expected: 記録ファイルと 1 日前のログのファイルが無く、今日のログのファイルが残る
   - name: main
     title: フックの起動
     container: hooks/run.py（プラグインの直下）
