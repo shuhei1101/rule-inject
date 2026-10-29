@@ -6,7 +6,7 @@ description: rule-inject の使い方と変更履歴
 
 # GitHub Pages のプロジェクトサイトはリポジトリ名がパスプレフィクスになる
 # 例: https://shuhei1101.github.io/rule-inject/ で配信されるので baseurl を明示
-# これにより {{ '/' | relative_url }} が "/ai-monitor/" を返し、
+# これにより {{ '/' | relative_url }} が "/rule-inject/" を返し、
 # トップ / パンくずの リンクが 404 にならなくなる
 baseurl: /rule-inject
 
