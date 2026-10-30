@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 from jsonschema.protocols import Validator
@@ -12,15 +13,24 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import CallToolResult
 
 from rule_inject.features.index import read_index
-from rule_inject.features.index.check import ScanCursor, check_index, scan_unmatched
+from rule_inject.features.index.check import (
+    ScanCursor,
+    TagPattern,
+    check_index,
+    scan_unmatched,
+    tag_patterns,
+    unused_tag_patterns,
+)
 from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 from rule_inject.features.index.types import IndexContent
 from rule_inject.server._format import respond
+from rule_inject.server.dev_docs import UsedTags, fetch_used_tags
 from rule_inject.server.tools import _config_path, _project_settings
 from rule_inject.server.types import (
     CheckIndexesResult,
     IndexReport,
     ResponseFormat,
+    TagCheckReport,
     UnmatchedScanReport,
 )
 from rule_inject.shared.errors import IndexReadError
@@ -127,6 +137,7 @@ def _report(index: str, origin: Literal["global", "project"], check: IndexCheck)
             if problem.kind == "skipped_entry"
         ],
         unmatched_paths=[],
+        unused_tag_patterns=[],
     )
 
 
@@ -138,7 +149,21 @@ def _unmatched_paths(problems: tuple[IndexProblem, ...]) -> list[dict[str, Any]]
     ]
 
 
-def check_indexes(
+def _unused_tag_entries(patterns: Sequence[TagPattern]) -> list[dict[str, Any]]:
+    """使われていないタグのパターンを、位置・バージョン・場所・キー・書いたままのパターンの一覧にする。"""
+    return [
+        {
+            "position": pattern.position,
+            "rev": pattern.rev,
+            "location": pattern.location,
+            "key": pattern.key,
+            "pattern": pattern.pattern.source,
+        }
+        for pattern in patterns
+    ]
+
+
+async def check_indexes(
     *,
     project_dir: str,
     format: ResponseFormat = "markdown",
@@ -147,14 +172,17 @@ def check_indexes(
     env: Mapping[str, str],
     validator: Validator,
     scan_time_limit: float,
+    dev_docs_timeout: float,
 ) -> CallToolResult:
-    """プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・ルールの場所にファイルが無いエントリ・`paths` の当たらないエントリを返す。"""
+    """プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・ルールの場所にファイルが無いエントリ・`paths` の当たらないエントリ・使われていないタグのパターンを返す。"""
     settings = _project_settings(project_dir, env)
     scan_cursor = (
         _decode_scan_cursor(cursor, project_dir, include_global) if cursor is not None else None
     )
     reports: list[IndexReport] = []
-    # `paths` の当たらないエントリを確かめる索引（フックが読めない索引は確かめない）
+    # フックが読めた索引（使われていないタグのパターンは `global` と `project` の全てを確かめる）
+    readable: list[IndexContent] = []
+    # `paths` の当たらないエントリを確かめる索引（読めた索引のうち `project`、`include_global` なら全て）
     contents: list[IndexContent] = []
     for index in settings.indexes:
         origin: Literal["global", "project"] = (
@@ -162,17 +190,45 @@ def check_indexes(
         )
         report = _report(index, origin, check_index(index, env, validator=validator))
         reports.append(report)
-        if report.hook_error is None and (origin == "project" or include_global):
+        if report.hook_error is None:
             try:
-                contents.append(read_index(index, env))
+                content = read_index(index, env)
             except IndexReadError:
                 # 読み取りの失敗は `hook_error` に載せ済み
                 continue
-    scan = scan_unmatched(project_dir, contents, cursor=scan_cursor, time_limit=scan_time_limit)
+            readable.append(content)
+            if origin == "project" or include_global:
+                contents.append(content)
+    patterns = tag_patterns(readable)
+    # dev-docs への問い合わせはファイルを辿る前に始め、辿り終えた後に応答を待つ（問い合わせと辿るのを並べて行う）
+    async with asyncio.TaskGroup() as group:
+        used_task = (
+            group.create_task(
+                fetch_used_tags(settings.dev_docs_url, project_dir, timeout=dev_docs_timeout)
+            )
+            if patterns
+            else None
+        )
+        scan = await asyncio.to_thread(
+            scan_unmatched, project_dir, contents, cursor=scan_cursor, time_limit=scan_time_limit
+        )
+    used: UsedTags | None = used_task.result() if used_task is not None else None
     unmatched_by_index = {check.index: check.problems for check in scan.checks}
     for report in reports:
         report.unmatched_paths = _unmatched_paths(unmatched_by_index.get(report.index, ()))
-    # 問題の件数にユーザー全体の索引の `unmatched_paths` は数えない
+    # タグの確かめ: パターンが無ければ問い合わせず、引けなければ飛ばし、引けたら使われていないものを索引ごとに載せる
+    if used is None:
+        tag_check = TagCheckReport(state="no_patterns", reason=None)
+    elif used.reason is not None:
+        tag_check = TagCheckReport(state="skipped", reason=used.reason)
+    else:
+        tag_check = TagCheckReport(state="checked", reason=None)
+        unused = unused_tag_patterns(patterns, used.tags)
+        for report in reports:
+            report.unused_tag_patterns = _unused_tag_entries(
+                [pattern for pattern in unused if pattern.index == report.index]
+            )
+    # 問題の件数にユーザー全体の索引の `unmatched_paths` と、どの索引の `unused_tag_patterns` も数えない
     problem_count = sum(
         int(report.hook_error is not None)
         + len(report.violations)
@@ -202,6 +258,7 @@ def check_indexes(
             ),
             next_cursor=next_cursor,
         ),
+        tag_check=tag_check,
         indexes=reports,
     )
     return respond(result, format)

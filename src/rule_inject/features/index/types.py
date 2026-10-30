@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -18,6 +19,8 @@ type EntryStatus = Literal["effective", "skipped", "disabled"]
 
 # 索引が `default_on` を書かないときの止める操作
 DEFAULT_ON: tuple[Operation, ...] = OPERATIONS
+# `args` のキーを、ドットの道筋と条件の木の `field` に分ける正規表現。当たらないキーは全体をドットの道筋として読む
+TREE_KEY_PATTERN = re.compile(r"^(?P<path>[^\[\]]+)\[(?P<field>[^\[\]]+)\]$")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -34,10 +37,21 @@ class MatchPattern:
 class ArgCondition:
     """エントリの `args` の 1 キーと、その値に当てるパターン。"""
 
-    # 引数のキー。オブジェクトの子はドットで結ぶ（例 `filter.kind`）
+    # 引数のキー。オブジェクトの子はドットで結ぶ（例 `filter.kind`・`filter[tags]`）
     key: str
     # どれか 1 つに当たれば、そのキーは当たる
     patterns: tuple[MatchPattern, ...]
+    # ドットで結んだ引数の道筋。`key` が `TREE_KEY_PATTERN` に当たればその `path`、当たらなければ `key` のまま
+    path: str = dataclasses.field(init=False)
+    # 道筋の値を条件の木として読むときの `field`。ドットの道筋のキーは None
+    field: str | None = dataclasses.field(init=False)
+
+    def __post_init__(self) -> None:
+        """キーを道筋と `field` に分けて持つ（照合のたびに分け直さない）。"""
+        tree_key = TREE_KEY_PATTERN.match(self.key)
+        # frozen のため object.__setattr__ で入れる
+        object.__setattr__(self, "path", tree_key["path"] if tree_key else self.key)
+        object.__setattr__(self, "field", tree_key["field"] if tree_key else None)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

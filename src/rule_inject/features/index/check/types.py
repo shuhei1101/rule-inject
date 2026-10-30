@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from rule_inject.features.index.types import MatchPattern
+
 # 索引の問題の種類（インターフェース定義「索引のチェック」の応答の一覧に当たる）
 type ProblemKind = Literal[
     "hook_error", "violation", "missing_rule", "skipped_entry", "unmatched_path"
@@ -61,3 +63,21 @@ class UnmatchedScan:
     checks: tuple[IndexCheck, ...]
     # 続きの位置。`completed` が True のときは None
     next_cursor: ScanCursor | None
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class TagPattern:
+    """効いているエントリの `args`・`read_by[].args` の、タグに当てるパターン 1 つとその場所。"""
+
+    # 索引の場所
+    index: str
+    # エントリの位置
+    position: int
+    # エントリのバージョン（`entry_rev`）
+    rev: str
+    # パターンを書いた条件の場所。`args` か `read_by[{要素の位置}].args`
+    location: str
+    # パターンを書いたキー（`ArgCondition.key`。例 `filter[tags]`）
+    key: str
+    # パターン。応答には索引に書いたまま（`source`）を載せる
+    pattern: MatchPattern

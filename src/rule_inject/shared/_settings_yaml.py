@@ -22,6 +22,7 @@ GLOBAL_SCALAR_KEYS = (
     "record_retention_days",
     "log_retention_days",
     "server_port",
+    "dev_docs_url",
 )
 PROJECT_LIST_KEYS = ("indexes",)
 PROJECT_SCALAR_KEYS = ("match",)
