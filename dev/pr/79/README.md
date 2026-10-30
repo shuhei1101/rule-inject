@@ -1,0 +1,1 @@
+# rule-inject の既存の文書全体を dev-docs.yaml に載せ、タグで引けるようにする
