@@ -9,7 +9,7 @@ directory: |-
   ├── tools.py         # ルールの一覧・検索・エントリの書き込み・削除のツールの本体と、設定・書き込める索引の解決
   ├── check_tools.py   # 索引のチェックのツールの本体と、続きの位置の文字列の変換
   ├── dev_docs.py      # dev-docs の search_docs で使われているタグを引くクライアント
-    ├── record_tools.py  # 既読の記録の確認・削除のツールの本体
+  ├── record_tools.py  # 既読の記録の確認・削除のツールの本体
   ├── types.py         # ResponseFormat と応答のモデル（Pydantic）
   └── _format.py       # 応答の形式（JSON / Markdown）と長さの切り詰め
   ```
@@ -1414,7 +1414,7 @@ functions:
     process: |-
       1. `async with asyncio.timeout(timeout)` の中で、`open_session(url)` のセッションの `call_tool(SEARCH_DOCS_TOOL, {**TAG_GROUP_ARGUMENTS, "cwd": project_dir})` を呼ぶ
       2. 上限を超えた（`TimeoutError`）ら、接続先と待ち時間の上限の秒数を含む理由を返す
-      3. 接続・通信に失敗した（`httpx.HTTPError`・`OSError`・`McpError`。`anyio` の TaskGroup が包んだ `ExceptionGroup` の中のものを含む）ら、接続先と接続できなかった旨と例外の内容を含む理由を返す
+      3. 接続・通信に失敗した（`httpx2.HTTPError`・`OSError`・`mcp.shared.exceptions.MCPError`。`anyio` の TaskGroup が包んだ `ExceptionGroup` の中のものを含む）ら、接続先と接続できなかった旨と例外の内容を含む理由を返す
       4. 結果の `is_error` が True なら、接続先とエラーを返した旨と結果の文字列を含む理由を返す
       5. 結果の文字列を JSON として読む。読めない、または `total_count` が整数でないときは、接続先と応答を読めない旨を含む理由を返す
       6. `total_count` が 0 なら、接続先と `project_dir` から読める文書が 0 件だった旨を含む理由を返す

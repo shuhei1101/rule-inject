@@ -49,6 +49,11 @@ catalogs:
           server = MCPServer("rule-inject")
           server.run("streamable-http", host="127.0.0.1", port=60808)
           ```
+      - name: streamable_http_client
+        kind: 関数
+        purpose: Streamable HTTP の MCP サーバーへ接続し、`ClientSession` でツールを呼ぶ
+        description: 接続できないときは、`ClientSession.initialize()` で `httpx2.ConnectError`（`httpx2.HTTPError` の子）を包んだ `ExceptionGroup` が送出される。HTTP のクライアントは依存の `httpx2` で、`httpx` は入らない。MCP のエラーの例外は `mcp.shared.exceptions.MCPError`
+        status: planned
 lead: Model Context Protocol の公式の Python SDK。MCP のサーバーとクライアントを書くためのクラスを持つ。
 purl: pkg:pypi/mcp
 dependency_scope: 任意
@@ -72,3 +77,4 @@ used_in:
   - src/rule_inject/server/tools.py
   - src/rule_inject/server/_format.py
   - tests/e2e/conftest.py
+  - src/rule_inject/server/dev_docs.py
