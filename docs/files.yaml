@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=../schemas/files.schema.yaml
+files:
+  - path: ../README.md
+    name: README
+    description: rule-inject が何かを 1 行で説明し、公開ドキュメントの場所を示す。リポジトリを初めて開くときに読む。
+    tags:
+      - topic:ルールの案内
+  - path: ../CLAUDE.md
+    name: CLAUDE
+    description: Claude Code がリポジトリを開いたときに読む指示で、ドキュメントの場所と索引の引き方を示す。
+    tags:
+      - tool:claude-code
+  - path: rules.yaml
+    name: このリポジトリのルール索引
+    description: このリポジトリ自身が rule-inject に読ませるルール索引で、今は空。索引の書式の置き場所を確かめるときに開く。
+    tags:
+      - topic:ルール索引
+  - path: はじめに/コアコンセプト/MCPサーバー.md
+    name: MCP サーバーの役割
+    description: ローカルで常駐させる MCP サーバーの役割と、フックとの関係を説明する。MCP サーバーを使う理由を知りたいときに読む。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+  - path: はじめに/コアコンセプト/ルールの案内.md
+    name: ルールの案内の仕組み
+    description: 未読のルールの案内・既読の記録・既読の履歴・圧縮での破棄の仕組みを説明する。案内がいつどう出るかを知りたいときに読む。
+    tags:
+      - topic:ルールの案内
+      - topic:既読の記録
+  - path: はじめに/変更履歴.md
+    name: 変更履歴
+    description: バージョンごとの変更の一覧なので、更新の前後で何が変わったかを調べるときに読む。
+    tags:
+      - topic:変更履歴
+  - path: リファレンス/MCPの結果の書式.md
+    name: MCP の結果の書式
+    description: 文書を返す MCP のツールが、結果に文書の場所と範囲を載せる書式を定める。MCP で読んだ文書を既読にしたいときに読む。
+    tags:
+      - topic:既読の記録
+      - tool:mcp
+  - path: リファレンス/MCPツール.md
+    name: MCP ツールの引数と応答
+    description: 常駐の MCP サーバーが持つツールの引数と応答の一覧なので、ツールの呼び方を調べるときに読む。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+  - path: リファレンス/環境変数.md
+    name: 環境変数
+    description: 設定ファイルを指す環境変数と、索引の変数参照の値を説明する。環境変数の名前や置き場所を調べるときに読む。
+    tags:
+      - topic:設定ファイル
+      - topic:変数参照
+  - path: リファレンス/索引の書式.md
+    name: 索引の書式
+    description: ルール索引の YAML のキーを定める。索引にルールを載せるときに読む。
+    tags:
+      - topic:ルール索引
+  - path: リファレンス/設定ファイル.md
+    name: 設定ファイル
+    description: 設定ファイルのキーと、global・projects の当て方と重ね方を定める。設定ファイルを記載するときに読む。
+    tags:
+      - topic:設定ファイル
+  - path: 使い方/セットアップ.md
+    name: セットアップ
+    description: プラグインを読み込み、設定ファイルを置いて環境変数で指すまでの手順なので、初めて使うときに読む。
+    tags:
+      - topic:セットアップ手順
+      - tool:claude-code
+  - path: 使い方/ルールにするか文書にするかを決める.md
+    name: ルールにするか文書にするかの判定
+    description: 規約・手順を rules.yaml へ登録して注入するか、dev-docs の文書にしてタグで読ませるかを決める判定フローチャートなので、規約や手順を追加するときに読む。
+    tags:
+      - scope:判定フローチャート
+      - topic:ルールの注入

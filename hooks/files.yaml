@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../schemas/files.schema.yaml
+files:
+  - path: hooks.json
+    name: フックの定義
+    description: Claude Code に登録する全てのフックの matcher・timeout・コマンドを定める。フックを追加・変更するときに開く。
+    tags:
+      - topic:フック
+      - tool:claude-code
+    related:
+      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+        type: implements
+  - path: run.py
+    name: フックの起動スクリプト
+    description: src/ を import の探索に追加し、引数で指したフックを動かす。フックの起動の仕組みを読む・修正するときに開く。
+    tags:
+      - topic:フック
+      - tool:claude-code
+    related:
+      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+        type: implements
