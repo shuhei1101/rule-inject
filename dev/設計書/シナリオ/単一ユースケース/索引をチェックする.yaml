@@ -239,7 +239,7 @@ scenarios:
       - 応答に、タグの確かめを飛ばしたことが載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_tag_pattern_unused
-  - name: 正常シナリオ（dev-docsに届かない）
+  - name: 異常シナリオ（dev-docsに届かない）
     setup:
       - name: Mock
         description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は起動しない
@@ -272,7 +272,7 @@ scenarios:
       - 応答の使われていないタグのパターンに、どのエントリも載っていない
       - 応答に、`rule` の場所にファイルが無いエントリが載っている
       - ツールはエラーを返さない
-    test: test_normal_when_dev_docs_unreachable
+    test: test_error_when_dev_docs_unreachable
 lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション
