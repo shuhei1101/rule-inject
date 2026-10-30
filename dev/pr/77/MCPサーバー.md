@@ -34,4 +34,16 @@
 
 ## テスト結果
 
-未実施
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/features/index/check/test_tags.py` | 全実行 | 新規 | ✅ | 4 テスト pass |
+| `tests/unit/rule_inject/server/test_dev_docs.py` | 全実行 | 新規 | ✅ | 7 テスト pass |
+| [tests/unit/rule_inject/server/test_check_tools.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_check_tools.py) | 全実行 | 変更 | ✅ | 11 テスト pass |
+| [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | 1 テスト pass |
+| 上記以外の `tests/unit` | 全実行 | 実行のみ | ✅ | 単体テスト全体で 405 テスト pass<br>`テスト結果/20261030180829_f8e16dd_単体テスト.log` |
+
+### 結合
+
+なし

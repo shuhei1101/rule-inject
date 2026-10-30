@@ -1,0 +1,48 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-index-match-filter-tree-and-warn-unused-tags
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 405 items
+
+tests/unit/hooks/test_run.py ...                                         [  0%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  4%]
+................                                                         [  8%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [ 11%]
+tests/unit/rule_inject/features/guidance/test_service.py ........        [ 13%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 14%]
+tests/unit/rule_inject/features/index/check/test_service.py ...........  [ 17%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 18%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 21%]
+.................                                                        [ 25%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 26%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ..               [ 26%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 31%]
+.............................................                            [ 42%]
+tests/unit/rule_inject/features/index/test_yaml.py ............          [ 45%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 49%]
+.............................                                            [ 56%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 57%]
+tests/unit/rule_inject/hooks/test_record_read.py ..............          [ 60%]
+tests/unit/rule_inject/hooks/test_rule_guide.py .............            [ 64%]
+tests/unit/rule_inject/hooks/test_runner.py .....                        [ 65%]
+tests/unit/rule_inject/hooks/test_search_guide.py .......                [ 67%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 69%]
+tests/unit/rule_inject/hooks/test_work_rules.py ....                     [ 70%]
+tests/unit/rule_inject/server/test_app.py .                              [ 70%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 73%]
+tests/unit/rule_inject/server/test_dev_docs.py .......                   [ 74%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 75%]
+tests/unit/rule_inject/server/test_main.py ..                            [ 76%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 77%]
+tests/unit/rule_inject/server/test_tools.py .............                [ 80%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 84%]
+tests/unit/rule_inject/shared/test_paths.py ......                       [ 85%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 92%]
+...................                                                      [ 96%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ........             [ 98%]
+tests/unit/rule_inject/shared/test_variables.py .....                    [100%]
+
+============================= 405 passed in 14.00s =============================
+exit=0
