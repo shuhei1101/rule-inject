@@ -1481,5 +1481,6 @@ test_files:
   - tests/unit/rule_inject/server/test_app.py
   - tests/unit/rule_inject/server/test_tools.py
   - tests/unit/rule_inject/server/test_check_tools.py
+  - tests/unit/rule_inject/server/test_dev_docs.py
   - tests/unit/rule_inject/server/test_record_tools.py
   - tests/unit/rule_inject/server/test_format.py

@@ -128,7 +128,7 @@ JSON Schema の場所は [索引の書式](./索引の書式.md)。
 | `indexes[].skipped_entries[]` | オブジェクトのリスト | フックが読み飛ばすエントリの `position` と `reason` |
 | `indexes[].unmatched_paths[]` | オブジェクトのリスト | `paths` がプロジェクトのどのファイルにも当たらないエントリの `position`・`rev`・解いた `rule`。`origin` が `global` の索引は `include_global` が `true` のときだけ載せる |
 | `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使われているどのタグにも当たらないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も載せる |
-| `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確かめの結果。`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かず飛ばした、`no_patterns` は確かめるパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
+| `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確かめの結果。`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かない、または読める文書が 0 件で飛ばした、`no_patterns` は確かめるパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
 | `tag_check.reason` | 文字列 / `null` | 飛ばした理由。`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返した・読める文書が 0 件だったのどれかを含む。それ以外は `null` |
 
 <!-- /table -->

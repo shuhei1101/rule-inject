@@ -597,3 +597,4 @@ notes:
 test_files:
   - tests/unit/rule_inject/features/index/check/test_service.py
   - tests/unit/rule_inject/features/index/check/test_scan.py
+  - tests/unit/rule_inject/features/index/check/test_tags.py
