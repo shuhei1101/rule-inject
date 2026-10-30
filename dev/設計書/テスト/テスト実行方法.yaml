@@ -73,7 +73,7 @@ layers:
   - name: lint
     description: |-
       ruff で linter・formatter の check を、mypy で型検査を、import-linter で依存の向きを検査する。型検査と依存の向きの検査はプロジェクト全体に回す。
-      反映作業のスクリプト（`dev/pr/{PR 番号}/反映作業/{作業名}/`）は PR ごとに同じファイル名を持ち、`mypy .` では重複モジュールのエラーになる。そのため `mypy .` からは外し（`[tool.mypy]` の `exclude`）、作業のフォルダごとにファイルを直接渡して `mypy` を回す（`exclude` はフォルダの再帰探索だけに効き、直接渡したファイルは検査される）。
+      反映作業のスクリプト（`dev/pr/{PR 番号}/反映作業/{作業名}/`）は `mypy .` から外し（`[tool.mypy]` の `exclude`）、作業のフォルダごとに `mypy` を回す。
     prerequisites:
       - 検査の設定は `pyproject.toml` の `[tool.ruff]`・`[tool.mypy]`・`[tool.importlinter]` が持つ
     run_all: |-
