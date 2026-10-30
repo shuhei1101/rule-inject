@@ -5,10 +5,10 @@ dev-docs の配信元の読み直し:
   時期: マージの後
   回数: 1 回限り
   可逆: true
-  疎通確認: null
-  実行: null
-  確認: null
+  疎通確認: dev-docs の配信元の読み直し/疎通確認.py
+  実行: dev-docs の配信元の読み直し/実行.py
+  確認: dev-docs の配信元の読み直し/確認.py
   切り戻し: null
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
-  確認方法: develop の worktree を配信元にした check_project の違反が 0 件で、search_docs（source は rule-inject）が dev-docs.yaml の各行の文書と files.yaml の行の文書を返す
+  確認方法: develop の worktree を指した check_project の設定のバージョンが current・違反 0 件・索引の同期のずれ 0 件で、status でその配信元が serving
   状態: "-"
