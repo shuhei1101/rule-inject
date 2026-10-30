@@ -1,2 +1,4 @@
 summary: 採用済みの外部 API のリファレンス
-items: []
+items:
+  - page: dev-docs.yaml
+    summary: 使われているタグを引く文書の MCP サーバー

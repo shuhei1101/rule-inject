@@ -907,6 +907,61 @@ flows:
       - '`additionalContext` に索引の場所と、`enabled` の値が許さない値である理由が載っている'
       - 終了コードが `0`
     test: test_error_when_enabled_not_boolean
+  - name: 正常系（MCPのツールの引数の条件の木に当たる）
+    summary: '`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が当たる MCP のツールの呼び出しを止める'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`tools: ["mcp__*__search_docs"]` と、`args` に `filter[tags]: ["re:^python$"]` と `filter[kind]: ["rule"]` をブロックのマップで書いたエントリを 1 つ持つ'
+        notes: '`on` を書かない（`default_on` の既定で `mcp` を含む）'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: mcp__dev-docs__search_docs`、`tool_input` は `{filter: {and: [{field: "kind", op: "eq", values: ["rule"]}, {or: [{field: "tags", op: "eq", values: ["go"]}, {field: "tags", op: "eq", values: ["python"]}]}]}}`'
+        notes: '`tags` は `and` の中の `or` の 2 つ目の条件で当たる'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（MCP のツール名・引数）
+        H->>IDX: 読む
+        H->>H: 条件の木の field ごとの values に当たるエントリを選ぶ
+        H->>ST: 既読を読む（未読）
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` にルールの場所が載っている'
+    test: test_normal_when_mcp_filter_tree_match
+  - name: 正常系（条件の木の否定の中だけに当たる）
+    summary: パターンに当たる値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: 条件の木に当たるフローと同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: mcp__dev-docs__search_docs`、`tool_input` は `{filter: {and: [{field: "kind", op: "eq", values: ["rule"]}, {not: {field: "tags", op: "eq", values: ["python"]}}, {field: "tags", op: "ne", values: ["python"]}]}}`'
+        notes: '`filter[kind]` は当たるが、`filter[tags]` の照合する値が無い'
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（MCP のツール名・引数）
+        H->>IDX: 読む
+        H->>H: not の中と否定の op を除くと tags の値が無いためエントリを外す
+        H-->>CC: 標準出力なし<br>終了コード 0
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_mcp_filter_tree_negated
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
 idempotent: false
 side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -957,7 +1012,7 @@ request:
     required: false
     default: なし（引数では照合しない）
     description: MCP のツールの引数
-    notes: '`mcp__*` のとき、エントリの `args` と照合する。オブジェクトの子はドットで結んだキーで指す'
+    notes: '`mcp__*` のとき、エントリの `args` と照合する。オブジェクトの子はドットで結んだキーで指す。`{道筋}[{field}]` のキーは、道筋の値を条件の木として、その中の条件を指す'
 request_example: |-
   ```json
   {
@@ -1057,5 +1112,8 @@ constraints:
   - item: 設定ファイル
     constraint: 環境変数 `RULE_INJECT_CONFIG` の値（先頭の `~` はホームに展開）の YAML を読む。`RULE_INJECT_CONFIG` が無いときは読まず、設定ファイルのキーを全て既定値で扱う。`projects` の要素は `match` で当て、当たった要素を並びの順に `global` へ重ねる。`CLAUDE_PROJECT_DIR` が無いときはどの要素にも当てない
     notes: キー・既定値・許す値・`match` の当て方は設定の設計書。標準ライブラリだけで読む
+  - item: 条件の木の照合
+    constraint: '`args` のキーが `{道筋}[{field}]`（例 `filter[tags]`）のときは、ドットの道筋が指す値を条件の木（`field`・`op`・`values` の条件と、`and`・`or`・`not` の束の入れ子）として読み、`and`・`or` の中を深さを問わずたどって、`field` が `{field}` と一致する条件の `values` の要素を照合する値にする。`not` の中と、`op` が `ne`・`not_contains`・`not_exists` の条件は値にしない。道筋の途中や値が配列のときは、ドットの道筋と同じく要素ごとにたどる。条件の木として読めない値（オブジェクトでない・`field` も束のキーも持たない）からは値を取らない。照合する値が 1 つも無いキーは当たらない'
+    notes: '`not` と否定の `op` の条件は、その値の文書を読まない検索のため当てない（PR #77 の `要件.md` の推奨案 A）。`[` と `]` を含まないキーは、今どおりドットの道筋として読む'
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

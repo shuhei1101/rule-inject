@@ -1,0 +1,69 @@
+title: "dev-docs"
+version:
+  api_version: バージョンを持たない（MCP のツールの引数は dev-docs の develop に従う）
+  checked_on: '2026-10-30'
+auth:
+  method: なし（127.0.0.1 で待ち受けるローカルのサーバー）
+endpoints:
+  - name: POST /mcp
+    method: POST
+    path: /mcp
+    summary: 'MCP の `tools/call` で `search_docs` を呼び、使われているタグを配信元をまたいで件数つきで引く（`group_by: tags`）'
+    idempotent: true
+    description: 'Streamable HTTP の MCP の入口。rule-inject は `mcp` の HTTP のクライアントでセッションを開き、`search_docs` だけを呼ぶ。`search_docs` は条件に当たる文書を返す読み取りのツール（`readOnlyHint: true`）で、`group_by` を渡すと指定した項目の値ごとの件数を `groups` で返す。配列の項目は要素ごとに数え、値は NFKC と `casefold` で正規化してまとめ、付いている文書が最も多い表記で返す。`groups` は `limit` で切られない。'
+    request:
+      - name: source
+        type: str | list[str]
+        required: false
+        default: 作業中の配信元
+        description: 配信元の ID。`*` で読める全配信元
+        notes: rule-inject は `*` を渡す
+      - name: group_by
+        type: str
+        required: false
+        description: 値ごとの件数を返す項目
+        notes: rule-inject は `tags` を渡す
+      - name: format
+        type: Literal['markdown', 'json']
+        required: false
+        default: markdown
+        description: 結果の形式
+        notes: rule-inject は `json` を渡す
+      - name: filter
+        type: Condition | Group
+        required: false
+        default: 全件
+        description: 条件の木。`Condition` は `field`・`op`・`values`、`Group` は `and`・`or`・`not` のどれか 1 つのキーを持つ
+        notes: ルール案内の `args` の `{道筋}[{field}]` がこの木に当てる。rule-inject からは渡さない
+    request_example: |-
+      ```json
+      {"name": "search_docs", "arguments": {"source": "*", "group_by": "tags", "format": "json"}}
+      ```
+    response:
+      - name: groups[].value
+        type: str
+        description: タグ（まとめた値の代表の表記）
+      - name: groups[].count
+        type: int
+        description: そのタグが付いた文書の数
+    response_example: |-
+      ```json
+      {"groups": [{"value": "python", "count": 12}, {"value": "mcp", "count": 3}]}
+      ```
+    status_codes:
+      - code: '200'
+        condition: 'ツールを呼べた（引数の誤りも `isError: true` の結果として 200 で返る）'
+      - code: 接続できない
+        condition: dev-docs が起動していない・接続先が違う
+lead: リポジトリの文書を配信元ごとに配信し、タグや文書の種類の条件で検索・集計する文書の MCP サーバー。
+used_in:
+  - src/rule_inject/server/check_tools.py
+verification:
+  state: 未確認
+  detail: 設計の段では dev-docs の develop の `docs/リファレンス/文書のMCP.md` と `src/dev_docs/features/search/types.py` を読んだだけで、呼び出してはいない
+base_urls:
+  - env: 既定
+    url: http://127.0.0.1:8781/mcp
+official_url: https://github.com/shuhei1101/dev-docs
+error_format: '引数の誤りは MCP のツールの結果の `isError: true` で返り、本文に項目のパス・期待する型・実際の値が載る。'
+timeout: dev/設計書/非機能要件/非機能要件 の「dev-docs への問い合わせの待ち時間」

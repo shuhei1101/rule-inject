@@ -178,4 +178,15 @@ requirements:
     status: planned
     introduced:
       pr: 69
+  - name: dev-docs への問い合わせの待ち時間
+    english_name: dev_docs_query_timeout
+    category: 性能
+    external_constraint: 未確定（Claude Code が HTTP の MCP のツールの呼び出しを待つ時間の既定値は公開されていない）
+    source_kind: 制限なし
+    value: '10'
+    unit: 秒
+    rationale: '`check_indexes` が dev-docs の `search_docs`（`group_by: tags`）を 1 回呼ぶときの、接続から応答までの上限。dev-docs は同じマシンで待ち受けるため通常はすぐ返り、起動していないときは接続できずにすぐ失敗する。待ちが長いのは dev-docs が応答しないときだけで、その分は「プロジェクトのファイルを辿る時間」（30 秒）に重なるため、その 3 分の 1 で打ち切る。待てる時間は利用者の意向で決まるため、承認確認で確かめる'
+    measurement: 応答しない偽の dev-docs に向けて `check_indexes` を呼び、応答までの時間と `tag_check.state` を確かめる
+    overflow: 上限を超えたら問い合わせをやめ、使われていないタグのパターンの確かめだけを飛ばして `tag_check.state` を `skipped`、`reason` に上限の秒数を載せる。ほかの確かめは今どおり返す（インターフェース定義「索引のチェック」の制約「dev-docs への問い合わせ」）
+    status: planned
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。
