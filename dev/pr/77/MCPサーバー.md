@@ -39,11 +39,14 @@
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
 | --- | --- | --- | --- | --- |
 | `tests/unit/rule_inject/features/index/check/test_tags.py` | 全実行 | 新規 | ✅ | 4 テスト pass |
-| `tests/unit/rule_inject/server/test_dev_docs.py` | 全実行 | 新規 | ✅ | 7 テスト pass |
+| `tests/unit/rule_inject/server/test_dev_docs.py` | 全実行 | 新規 | ✅ | 8 テスト pass |
 | [tests/unit/rule_inject/server/test_check_tools.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_check_tools.py) | 全実行 | 変更 | ✅ | 11 テスト pass |
 | [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | 1 テスト pass |
-| 上記以外の `tests/unit` | 全実行 | 実行のみ | ✅ | 単体テスト全体で 405 テスト pass<br>`テスト結果/20261030180829_f8e16dd_単体テスト.log` |
+| 上記以外の `tests/unit` | 全実行 | 実行のみ | ✅ | 単体テスト全体で 406 テスト pass<br>`テスト結果/20261030182939_e5d1e74_単体テスト.log` |
 
 ### 結合
 
-なし
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_check_indexes.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/integration/server/test_check_indexes.py) | `test_normal_when_tag_pattern_unused`・`test_normal_when_dev_docs_unreachable`・`test_normal_when_dev_docs_returns_nothing` | 新規 | ✅ | 偽の dev-docs（`tests/integration/server/conftest.py` の `start_fake_dev_docs`）で確かめた |
+| 上記以外の `tests/integration` | 全実行 | 実行のみ | ✅ | 結合テスト全体で 140 テスト pass<br>`テスト結果/20261030182939_e5d1e74_結合テスト.log` |
