@@ -831,6 +831,12 @@ functions:
         condition: '`filter`・`tags` で `python` を当てる条件と、`{"filter": {"not": {"field": "tags", "op": "in", "values": ["python"]}}}`'
         mock: なし
         expected: 'False'
+      - name: test_match_args_when_tree
+        case: 正常
+        summary: 入れ子の and・or の中の条件の値に当たる
+        condition: '`filter`・`tags` で `python` を当てる条件と、`{"filter": {"and": [{"field": "kind", "op": "eq", "values": ["rule"]}, {"or": [{"field": "tags", "op": "in", "values": ["python"]}]}]}}`'
+        mock: なし
+        expected: 'True'
   - name: read_index
     title: 索引 1 つの読み取り
     container: features/index/service.py
