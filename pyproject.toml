@@ -73,6 +73,8 @@ known-first-party = ["rule_inject"]
 python_version = "3.12"
 mypy_path = "src"
 explicit_package_bases = true
+# 反映作業のスクリプトは PR ごとに同じファイル名を持つため、`mypy .` からは外し、フォルダごとに検査する
+exclude = ["^dev/pr/"]
 
 [tool.importlinter]
 root_package = "rule_inject"
