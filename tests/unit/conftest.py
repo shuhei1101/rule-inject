@@ -282,6 +282,22 @@ def make_entry() -> Callable[..., Any]:
 
 
 @pytest.fixture
+def index_conditions(index_text: Callable[..., str]) -> Callable[..., tuple[Any, ...]]:
+    """`args` のキーごとのパターンを索引に書いて読み、キーを道筋と field に分けた ArgCondition の並びを返す factory。"""
+
+    def _make(args: Mapping[str, Sequence[str]]) -> tuple[Any, ...]:
+        """args を持つエントリ 1 つの索引を `read_index_text` で読み、エントリの `args` を返す。"""
+        from rule_inject.features.index import read_index_text
+
+        text = index_text("/r/a.md", args=args)
+        entry = read_index_text("/p/index.yaml", text, {}).outcomes[0].entry
+        assert entry is not None
+        return entry.args
+
+    return _make
+
+
+@pytest.fixture
 def rule_file(tmp_path: Path) -> Callable[..., Path]:
     """ルールの本文のファイルを置く factory。"""
 

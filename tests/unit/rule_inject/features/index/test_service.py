@@ -551,12 +551,73 @@ def test_argument_values_when_missing() -> None:
     assert result == []
 
 
+def test_argument_values_when_tree() -> None:
+    """道筋の値を条件の木として読む（正常系）。"""
+    # 準備
+    tool_input = {
+        "filter": {
+            "or": [
+                {"field": "tags", "op": "in", "values": ["a", 1]},
+                {"field": "kind", "op": "eq", "values": ["rule"]},
+            ]
+        }
+    }
+    # 実行
+    result = _argument_values(tool_input, "filter", "tags")
+    # 検証
+    assert result == ["a", "1"]
+
+
+def test_argument_values_when_tree_in_array() -> None:
+    """道筋の値が配列のときは要素ごとに条件の木として読む（正常系）。"""
+    # 準備
+    tool_input = {
+        "filters": [
+            {"field": "tags", "op": "in", "values": ["a"]},
+            {"field": "tags", "op": "in", "values": ["b"]},
+        ]
+    }
+    # 実行
+    result = _argument_values(tool_input, "filters", "tags")
+    # 検証
+    assert result == ["a", "b"]
+
+
 def test_match_args_when_empty() -> None:
     """条件が空なら当たる（正常系）。"""
     # 実行
     result = _match_args([], {})
     # 検証
     assert result is True
+
+
+def test_match_args_when_tree(index_conditions: Callable[..., Any]) -> None:
+    """入れ子の and・or の中の条件の値に当たる（正常系）。"""
+    # 準備
+    conditions = index_conditions({"filter[tags]": ["python"]})
+    tool_input = {
+        "filter": {
+            "and": [
+                {"field": "kind", "op": "eq", "values": ["rule"]},
+                {"or": [{"field": "tags", "op": "in", "values": ["python"]}]},
+            ]
+        }
+    }
+    # 実行
+    result = _match_args(conditions, tool_input)
+    # 検証
+    assert result is True
+
+
+def test_match_args_when_tree_negated_only(index_conditions: Callable[..., Any]) -> None:
+    """条件の木の否定の中にだけある値には当てない（正常系）。"""
+    # 準備
+    conditions = index_conditions({"filter[tags]": ["python"]})
+    tool_input = {"filter": {"not": {"field": "tags", "op": "in", "values": ["python"]}}}
+    # 実行
+    result = _match_args(conditions, tool_input)
+    # 検証
+    assert result is False
 
 
 def test_read_index(
@@ -660,6 +721,37 @@ def test_read_index_text_when_unparsable() -> None:
     assert "3行目" in raised.value.reason
 
 
+def test_read_index_text_when_tree_key() -> None:
+    """引数のキーを道筋と条件の木の field に分ける（正常系）。"""
+    from rule_inject.features.index import read_index_text
+
+    # 準備
+    text = (
+        "rules:\n"
+        "  - rule: /r/a.md\n"
+        "    args:\n"
+        '      filter[tags]: ["a"]\n'
+        '      filter.kind: ["rule"]\n'
+        '      a[b]c: ["x"]\n'
+        "    read_by:\n"
+        '      - tools: ["t"]\n'
+        "        args:\n"
+        '          filter[tags]: ["a"]\n'
+    )
+    # 実行
+    entry = read_index_text("/p/index.yaml", text, {}).outcomes[0].entry
+    # 検証
+    assert entry is not None
+    assert [(c.key, c.path, c.field) for c in entry.args] == [
+        ("filter[tags]", "filter", "tags"),
+        ("filter.kind", "filter.kind", None),
+        ("a[b]c", "a[b]c", None),
+    ]
+    assert [(c.key, c.path, c.field) for c in entry.read_by[0].args] == [
+        ("filter[tags]", "filter", "tags"),
+    ]
+
+
 def test_entry_revs(
     tmp_path: Path,
 ) -> None:
@@ -707,3 +799,84 @@ def test_entry_matches_path(make_entry: Callable[..., Any]) -> None:
     # 検証
     assert matched is True
     assert excluded is False
+
+
+@pytest.mark.parametrize(
+    ("source", "value", "expected"),
+    [
+        pytest.param("m*", "mcp", True, id="glob_whole"),
+        pytest.param("m*", "xm", False, id="glob_not_whole"),
+        pytest.param("re:yth", "python", True, id="regex_partial"),
+    ],
+)
+def test_match_arg_pattern(source: str, value: str, expected: bool) -> None:
+    """glob は全体、正規表現は部分に当てる（正常系）。"""
+    from rule_inject.features.index.service import match_arg_pattern
+
+    # 準備
+    regex = re.compile(source.removeprefix("re:")) if source.startswith("re:") else None
+    pattern = MatchPattern(source=source, regex=regex)
+    # 実行
+    result = match_arg_pattern(pattern, value)
+    # 検証
+    assert result is expected
+
+
+def test_tree_values_when_nested() -> None:
+    """入れ子の and・or の中の条件も取り出す（正常系）。"""
+    from rule_inject.features.index.service import _tree_values
+
+    # 準備
+    node = {
+        "and": [
+            {"field": "tags", "op": "in", "values": ["a"]},
+            {
+                "or": [
+                    {"field": "tags", "op": "eq", "values": ["b"]},
+                    {"field": "kind", "op": "eq", "values": ["rule"]},
+                ]
+            },
+        ]
+    }
+    # 実行
+    result = _tree_values(node, "tags")
+    # 検証
+    assert result == ["a", "b"]
+
+
+def test_tree_values_when_negated() -> None:
+    """not の中と否定の op の条件は取らない（正常系）。"""
+    from rule_inject.features.index.service import _tree_values
+
+    # 準備
+    node = {
+        "and": [
+            {"not": {"field": "tags", "op": "in", "values": ["a"]}},
+            {"field": "tags", "op": "ne", "values": ["b"]},
+            {"field": "tags", "op": "not_contains", "values": ["c"]},
+            {"field": "tags", "op": "not_exists", "values": ["d"]},
+            {"field": "tags", "op": "in", "values": ["e"]},
+        ]
+    }
+    # 実行
+    result = _tree_values(node, "tags")
+    # 検証
+    assert result == ["e"]
+
+
+@pytest.mark.parametrize(
+    "node",
+    [
+        pytest.param("tags", id="string"),
+        pytest.param({"tags": ["a"]}, id="no_field_no_group"),
+        pytest.param({"and": "x"}, id="group_not_array"),
+    ],
+)
+def test_tree_values_when_not_tree(node: Any) -> None:
+    """条件の木として読めない値からは取らない（正常系）。"""
+    from rule_inject.features.index.service import _tree_values
+
+    # 実行
+    result = _tree_values(node, "tags")
+    # 検証
+    assert result == []
