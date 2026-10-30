@@ -86,6 +86,27 @@ def test_fetch_used_tags(
     ]
 
 
+def test_fetch_used_tags_when_no_tag_group(
+    fake_open_session: Callable[..., tuple[OpenSession, list[dict[str, Any]]]],
+) -> None:
+    """タグを持たない文書のグループは使われているタグに含めない（正常系）。"""
+    from rule_inject.server.dev_docs import fetch_used_tags
+
+    # 準備
+    body = {
+        "total_count": 3,
+        "groups": [{"value": "python", "count": 2}, {"value": "（なし）", "count": 1}],
+    }
+    open_session, _ = fake_open_session(json.dumps(body))
+    # 実行
+    result = asyncio.run(
+        fetch_used_tags(DEV_DOCS_URL, PROJECT_DIR, timeout=TIMEOUT, open_session=open_session)
+    )
+    # 検証
+    assert result.tags == ("python",)
+    assert result.reason is None
+
+
 def test_fetch_used_tags_when_no_documents(
     fake_open_session: Callable[..., tuple[OpenSession, list[dict[str, Any]]]],
 ) -> None:
