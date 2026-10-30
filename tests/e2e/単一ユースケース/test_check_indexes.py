@@ -178,3 +178,82 @@ def test_normal_when_global_included(
         project_index.read_text(encoding="utf-8"),
         global_index.read_text(encoding="utf-8"),
     ) == before
+
+
+def test_normal_when_tag_pattern_unused(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    start_dev_docs: Callable[..., str],
+    serve: Callable[..., Any],
+) -> None:
+    """使われているどのタグにも当たらないタグのパターンを、索引の場所とエントリの位置つきで受け取る（正常シナリオ）。"""
+    # 準備
+    dev_docs_url = start_dev_docs(
+        {
+            "total_count": 3,
+            "groups": [{"value": "python", "count": 2}, {"value": "mcp", "count": 1}],
+        }
+    )
+    rule = make_rule("a.md", "# a\n")
+    index = make_text_file(
+        "rules.yaml",
+        f"rules:\n"
+        f"  - rule: {rule}\n"
+        f"    args:\n"
+        f'      filter[tags]: ["re:^python"]\n'
+        f"  - rule: {rule}\n"
+        f"    args:\n"
+        f'      filter[tags]: ["re:^rust"]\n',
+    )
+    before = index.read_text(encoding="utf-8")
+    server = serve(index, dev_docs_url=dev_docs_url)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(e2e_project), format="json")
+    # 検証
+    content = result.structured_content
+    report = content["indexes"][0]
+    assert report["index"] == str(index)
+    assert [(entry["position"], entry["pattern"]) for entry in report["unused_tag_patterns"]] == [
+        (1, "re:^rust")
+    ]
+    assert content["tag_check"] == {"state": "checked", "reason": None}
+    assert index.read_text(encoding="utf-8") == before
+
+
+def test_error_when_dev_docs_unreachable(
+    tmp_path: Path,
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    free_port: Callable[[], int],
+    serve: Callable[..., Any],
+) -> None:
+    """dev-docs に届かないとき、タグの確かめを飛ばした理由とほかの問題を、エラーなしで受け取る（異常シナリオ）。"""
+    # 準備
+    dev_docs_url = f"http://127.0.0.1:{free_port()}/mcp"
+    rule = make_rule("a.md", "# a\n")
+    missing = tmp_path / "rules" / "missing.md"
+    index = make_text_file(
+        "rules.yaml",
+        f"rules:\n"
+        f"  - rule: {rule}\n"
+        f"    args:\n"
+        f'      filter[tags]: ["re:^python"]\n'
+        f"  - rule: {rule}\n"
+        f"    args:\n"
+        f'      filter[tags]: ["re:^rust"]\n'
+        f"  - rule: {missing}\n",
+    )
+    server = serve(index, dev_docs_url=dev_docs_url)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(e2e_project), format="json")
+    # 検証
+    content = result.structured_content
+    report = content["indexes"][0]
+    assert result.is_error is False
+    assert content["tag_check"]["state"] == "skipped"
+    assert dev_docs_url in content["tag_check"]["reason"]
+    assert "接続できない" in content["tag_check"]["reason"]
+    assert report["unused_tag_patterns"] == []
+    assert report["missing_rules"] == [{"position": 2, "rule": str(missing)}]

@@ -17,7 +17,14 @@ OUTPUT_KEY = "output"
 DIFF_KEY = "diff"
 EMPTY_LIST_TEXT = "なし"
 # 入れ子の表にする、行の中のリストのキー
-NESTED_TABLE_KEYS = ("violations", "missing_rules", "skipped_entries", "unmatched_paths", "reads")
+NESTED_TABLE_KEYS = (
+    "violations",
+    "missing_rules",
+    "skipped_entries",
+    "unmatched_paths",
+    "unused_tag_patterns",
+    "reads",
+)
 
 
 def _cell(value: Any) -> str:

@@ -35,6 +35,7 @@ flows:
       - '`problem_count` が 0'
       - '`indexes` に索引の場所が載り、`hook_error` が `None` で `violations`・`missing_rules`・`skipped_entries` が空'
       - '`config_path` が `RULE_INJECT_CONFIG` の場所'
+      - '`tag_check.state` が `no_patterns`（dev-docs に問い合わせない）'
     test: test_normal_when_no_violation
   - name: 正常系（Schemaに違反する）
     summary: フックは読めるが Schema に違反するエントリの場所と理由を返す
@@ -326,7 +327,95 @@ flows:
     expected:
       - 'どちらの呼び出しも結果が `isError: true` で、`cursor` を省いて呼び直す旨が載っている'
     test: test_error_when_cursor_invalid
-lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを返す。
+  - name: 正常系（タグのパターンが使われているどのタグにも当たらない）
+    summary: dev-docs の使われているタグに当たらないタグのパターンを、全ての索引について返し、`problem_count` には数えない
+    setup:
+      - name: Mock
+        description: '偽の dev-docs（テストが MCP の Python SDK で `127.0.0.1` の空いているポートに立てた MCP サーバー。`search_docs` が `groups: [{value: "Python", count: 2}, {value: "mcp", count: 1}]` を返す）。サーバーは違反が無いフローと同じく子プロセスとして立て、MCP の Python SDK の Streamable HTTP のクライアントで接続する'
+      - name: 設定ファイル
+        description: 違反が無いフローの設定に、`global.dev_docs_url` で偽の dev-docs の URL を指し、`global.indexes` でユーザー全体の索引を指す
+      - name: 索引
+        description: '`args: {"filter[tags]": ["python"]}` のエントリ、`args: {"filter[tags]": ["pyhton", "m*"]}` のエントリ、`read_by: [{tools: ["*search_docs"], args: {"filter[tags]": ["rust"]}}]` のエントリ、`args: {"filter.tags": ["go"]}` のエントリ、`enabled: false` で `args: {"filter[tags]": ["java"]}` のエントリを持つ'
+        notes: 位置 0 は正規化したタグ `python` に当たる。位置 1 の `pyhton` と位置 2 の `rust` が当たらない。位置 3 はドットの道筋のため、位置 4 は無効のため確かめない
+      - name: ユーザー全体の索引
+        description: '`args: {"filter[tags]": ["re:^kotlin$"]}` のエントリを 1 つ持つ'
+        notes: 正規表現のパターンも確かめ、`global` の索引も載せることを確かめる
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant IDX as 索引
+        participant DD as dev-docs
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めた
+        IF->>IF: 効いているエントリの [tags] のキーのパターンを集める
+        IF->>DD: search_docs（source *・group_by tags）
+        DD-->>IF: groups
+        IF->>IF: パターンを返ったタグと正規化したタグに当てる
+        IF-->>C: unused_tag_patterns・tag_check
+    expected:
+      - '`origin` が `project` の索引の `unused_tag_patterns` に、位置 1 の `args` の `filter[tags]` の `pyhton` と、位置 2 の `read_by[0].args` の `filter[tags]` の `rust` が `rev` つきで載っている'
+      - 位置 1 の `m*`、位置 0・3・4 のパターンは載っていない
+      - '`origin` が `global` の索引の `unused_tag_patterns` に、位置 0 の `re:^kotlin$` が載っている'
+      - '`tag_check.state` が `checked` で `reason` が `None`'
+      - '`problem_count` が 0（使われていないタグのパターンを数えない）'
+      - '偽の dev-docs が受けた `search_docs` の呼び出しが 1 回で、引数が `source: "*"`・`group_by: "tags"`・`format: "json"`・`cwd` が `project_dir`'
+    test: test_normal_when_tag_pattern_unused
+  - name: 正常系（dev-docsに届かない）
+    summary: dev-docs に接続できないときは、使われていないタグのパターンの確かめだけを飛ばして理由を返し、ツールのエラーにしない
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）。dev-docs は立てない
+      - name: 設定ファイル
+        description: 違反が無いフローの設定に、`global.dev_docs_url` で何も待ち受けていない `127.0.0.1` のポートの URL を指す
+        notes: 空いているポートを取ってすぐ閉じた番号を使う
+      - name: 索引
+        description: '`args: {"filter[tags]": ["python"]}` のエントリと、`rule` の場所にファイルが無いエントリを持つ'
+        notes: ほかの確かめが今どおり返ることを確かめる
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant DD as dev-docs
+
+        C->>IF: project_dir
+        IF->>IF: 違反・ルールの場所・paths を確かめる
+        IF->>DD: search_docs
+        DD-->>IF: 接続できない
+        IF->>IF: タグの確かめを飛ばす
+        IF-->>C: tag_check.state skipped・reason
+    expected:
+      - ツールのエラーにならず `success` が `true`
+      - '`tag_check.state` が `skipped` で、`reason` に接続先の URL と接続できなかった旨が載っている'
+      - どの索引の `unused_tag_patterns` も空
+      - '`missing_rules` にファイルが無いエントリが載り、`problem_count` が 1'
+    test: test_normal_when_dev_docs_unreachable
+  - name: 正常系（dev-docsが0件を返す）
+    summary: dev-docs が読める文書を 0 件と返したときは、全てのパターンを使われていないと報告せず、タグの確かめを飛ばして理由を返す
+    setup:
+      - name: Mock
+        description: '偽の dev-docs（タグのパターンが使われているどのタグにも当たらないフローと同じ立て方）。`search_docs` が `groups` を持たない `{total_count: 0, returned: 0}` を返す'
+      - name: 設定ファイル・索引
+        description: タグのパターンが使われているどのタグにも当たらないフローと同じ
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant DD as dev-docs
+
+        C->>IF: project_dir
+        IF->>DD: search_docs（source *・group_by tags・cwd project_dir）
+        DD-->>IF: total_count 0
+        IF->>IF: タグの確かめを飛ばす
+        IF-->>C: tag_check.state skipped・reason
+    expected:
+      - '`tag_check.state` が `skipped` で、`reason` に読める文書が 0 件だった旨が載っている'
+      - どの索引の `unused_tag_patterns` も空
+      - 偽の dev-docs が受けた `cwd` が `project_dir`
+    test: test_normal_when_dev_docs_returns_nothing
+lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリと、dev-docs の使われているどのタグにも当たらないタグのパターンを返す。
 identifier: check_indexes
 idempotent: true
 side_effects: なし（`readOnlyHint`）
@@ -374,7 +463,7 @@ response:
     description: サーバーが読んだ設定ファイルの場所
   - name: problem_count
     type: int
-    description: 全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` の件数と、プロジェクトの索引の `unmatched_paths` の件数の合計（ユーザー全体の索引の `unmatched_paths` は数えない）
+    description: 全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` の件数と、プロジェクトの索引の `unmatched_paths` の件数の合計（ユーザー全体の索引の `unmatched_paths` と、どの索引の `unused_tag_patterns` も数えない）
   - name: indexes[].index
     type: str
     description: チェックした索引の場所
@@ -434,6 +523,33 @@ response:
     type: str | None
     description: 辿る時間の上限で止まったときの続きの位置。`cursor` に渡して呼び直すと続きから辿る
     notes: 最後まで辿れたときは `None`。中身は辿り終えた最後のファイル・それまでに辿ったファイルの数・まだ当たっていないエントリ・確かめるエントリの一覧のハッシュ・`project_dir`・`include_global` を持つ不透明な文字列
+  - name: indexes[].unused_tag_patterns[].position
+    type: int
+    description: 使われていないタグのパターンを持つエントリの位置
+    notes: '`global` と `project` のどちらの索引も載せる。dev-docs の文書の状態で増減する警告のため `problem_count` には数えない'
+  - name: indexes[].unused_tag_patterns[].rev
+    type: str
+    description: エントリのバージョン
+    notes: インターフェース定義「ルールの一覧」の `rev` と同じ。編集のツールの `expected_rev` に渡せる
+  - name: indexes[].unused_tag_patterns[].location
+    type: str
+    description: パターンを書いた条件の場所
+    example: '`args` / `read_by[1].args`'
+  - name: indexes[].unused_tag_patterns[].key
+    type: str
+    description: パターンを書いたキー
+    example: '`filter[tags]`'
+  - name: indexes[].unused_tag_patterns[].pattern
+    type: str
+    description: 使われているどのタグにも当たらないパターン（索引に書いたまま）
+  - name: tag_check.state
+    type: Literal['checked', 'skipped', 'no_patterns']
+    description: 使われていないタグのパターンの確かめの結果
+    notes: '`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かず飛ばした、`no_patterns` は確かめるパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空'
+  - name: tag_check.reason
+    type: str | None
+    description: 飛ばした理由
+    notes: '`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返した・読める文書が 0 件だったのどれかとその内容を含む。それ以外は `None`'
 response_example: |-
   ```json
   {
@@ -442,6 +558,7 @@ response_example: |-
     "config_path": "/home/user/.config/rule-inject/settings.yaml",
     "problem_count": 2,
     "unmatched_scan": {"completed": true, "scanned_files": 1520, "reason": null, "next_cursor": null},
+    "tag_check": {"state": "checked", "reason": null},
     "indexes": [
       {
         "index": "/home/user/.config/rule-inject/rules.yaml",
@@ -450,7 +567,8 @@ response_example: |-
         "violations": [],
         "missing_rules": [],
         "skipped_entries": [],
-        "unmatched_paths": []
+        "unmatched_paths": [],
+        "unused_tag_patterns": [{"position": 0, "rev": "8b21e4f0a7c3", "location": "args", "key": "filter[tags]", "pattern": "pyhton"}]
       },
       {
         "index": "/home/user/project/rules.yaml",
@@ -459,7 +577,8 @@ response_example: |-
         "violations": [{"location": "rules[0].paths", "reason": "[] should be non-empty"}],
         "missing_rules": [],
         "skipped_entries": [],
-        "unmatched_paths": [{"position": 2, "rev": "3f9a1c0b2d4e", "rule": "/home/user/project/docs/rule/rust.md"}]
+        "unmatched_paths": [{"position": 2, "rev": "3f9a1c0b2d4e", "rule": "/home/user/project/docs/rule/rust.md"}],
+        "unused_tag_patterns": []
       }
     ]
   }
@@ -508,6 +627,17 @@ constraints:
   - item: 続きから辿る
     constraint: '`cursor` を渡したときは、`cursor` の最後のファイルより後のファイルから辿り、`cursor` のまだ当たっていないエントリだけを当てる。確かめるエントリの一覧（索引・位置・`rev`）のハッシュが `cursor` と違うときは、`cursor` を使わず最初のファイルから辿り直す'
     notes: 索引が書き換わると、前の呼び出しで当たったエントリが変わりうるため。呼び直しの間に増えたファイルのうち、辿り終えた位置より前のものは当てない
+  - item: 使われていないタグのパターン
+    constraint: '`global` と `project` の全ての索引の効いているエントリ（`enabled: false`・読み飛ばすエントリ・フックが読めない索引のエントリを除く）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターンを、dev-docs の使われているタグに照らす。パターンはフックと同じ照合（glob・正規表現）で、返ったタグそのものか、NFKC と `casefold` で正規化したタグのどちらかに当たれば使われているとし、どれにも当たらないものを返す'
+    notes: 書き込み前の検証（インターフェース定義「エントリの書き込み」「エントリの削除」）には含めない。書く時点で、まだ文書に付けていないタグを指すことがあるため。ドットの道筋のキー（`filter.tags`）はタグとみなさない
+  - item: dev-docs への問い合わせ
+    constraint: '確かめるパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、`global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`format: "json"`・`cwd: project_dir` で呼び、`groups[].value` を使われているタグとする。接続できない・待ち時間の上限を超えた・`isError` が `true` のときと、`total_count` が 0（`project_dir` から読める配信元が無いか文書が無い。`groups` のキー自体が返らない）のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を載せる'
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[dev-docs への問い合わせの待ち時間]
+    notes: 索引ごとに問い合わせ直さない。ほかの確かめ（違反・ファイルが無いエントリ・読み飛ばすエントリ・`paths` の当たらないエントリ）は今どおり返す。呼び出し方は外部 API「dev-docs」
+  - item: 問い合わせと辿る順
+    constraint: dev-docs への問い合わせは、ファイルを辿る前に始め、辿るのと並べて行う。辿り終えた後（辿る時間の上限で止まったときを含む）に問い合わせの応答を待ち、待ち時間の上限（108 秒）は問い合わせを始めた時点から数える。1 回の呼び出しの所要時間の上限は、問い合わせの待ち時間（108 秒）と辿る時間（30 秒）の大きい方に、余裕を足した 162 秒
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[dev-docs への問い合わせの待ち時間]
+    notes: 続けて行うと 138 秒 + 余裕になる。余裕は、内側の待ち以外の処理（索引の読み取り・JSON Schema・ルールの場所の実在・照合）の実測が無いため、規約『資源の値の決め方』の既定どおり内側の待ち（108 秒）の 50%（54 秒）を仮に置く
 refs:
   - dev/設計書/シナリオ/単一ユースケース/索引をチェックする#
 test_file: tests/integration/server/test_check_indexes.py

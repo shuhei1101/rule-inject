@@ -94,7 +94,7 @@
 
 ## check_indexes
 
-プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないエントリを返す。
+プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないエントリ・dev-docs の使われているどのタグにも当たらないタグのパターンを返す。
 索引の問題はエラーにせず応答に載せる。
 
 索引ごとに、フックと同じ読み取り、JSON Schema、`rule` の場所の実在の順に確かめる。
@@ -115,7 +115,7 @@ JSON Schema の場所は [索引の書式](./索引の書式.md)。
 | `success` | 真偽値 | チェックを最後まで行えたか。問題が見つかっても `true` |
 | `output` | 文字列 | チェックした索引の数と問題の件数の 1 行 |
 | `config_path` | 文字列 / `null` | 読んだ設定ファイルの場所 |
-| `problem_count` | 整数 | 全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` の件数と、`origin` が `project` の索引の `unmatched_paths` の件数の合計。`origin` が `global` の索引の `unmatched_paths` は数えない |
+| `problem_count` | 整数 | 全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` の件数と、`origin` が `project` の索引の `unmatched_paths` の件数の合計。`origin` が `global` の索引の `unmatched_paths` と、どの索引の `unused_tag_patterns` も数えない |
 | `unmatched_scan.completed` | 真偽値 | `paths` の当たらないエントリの検出を最後まで行えたか。`false` のときはどの索引の `unmatched_paths` も空 |
 | `unmatched_scan.scanned_files` | 整数 | 辿ったプロジェクトのファイルの数。`cursor` を渡したときは、最初の呼び出しからの合計 |
 | `unmatched_scan.reason` | 文字列 / `null` | 検出を終えられなかった理由。辿る時間の上限の秒数と、`next_cursor` を `cursor` に渡すと続きから辿れることを含む。終えられたときは `null` |
@@ -127,6 +127,9 @@ JSON Schema の場所は [索引の書式](./索引の書式.md)。
 | `indexes[].missing_rules[]` | オブジェクトのリスト | ルールの場所にファイルが無いエントリの `position` と、解いた `rule` |
 | `indexes[].skipped_entries[]` | オブジェクトのリスト | フックが読み飛ばすエントリの `position` と `reason` |
 | `indexes[].unmatched_paths[]` | オブジェクトのリスト | `paths` がプロジェクトのどのファイルにも当たらないエントリの `position`・`rev`・解いた `rule`。`origin` が `global` の索引は `include_global` が `true` のときだけ載せる |
+| `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使われているどのタグにも当たらないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も載せる |
+| `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確かめの結果。`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かない、または読める文書が 0 件で飛ばした、`no_patterns` は確かめるパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
+| `tag_check.reason` | 文字列 / `null` | 飛ばした理由。`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返した・読める文書が 0 件だったのどれかを含む。それ以外は `null` |
 
 <!-- /table -->
 
@@ -139,7 +142,12 @@ JSON Schema の場所は [索引の書式](./索引の書式.md)。
 - 1 回の呼び出しで辿る時間は 30 秒まで。超えたら辿るのをやめ、`unmatched_scan.completed` を `false` にして、どの索引の `unmatched_paths` も返さず、`unmatched_scan.next_cursor` を返す
 - `next_cursor` を `cursor` に渡して呼び直すと、続きから辿る。`project_dir`・`include_global` は前の呼び出しと同じ値で渡す。確かめるエントリが前の呼び出しの後に変わっていたときは、`cursor` を使わず最初のファイルから辿り直す
 - `hook_error`・`violations`・`missing_rules`・`skipped_entries` の確かめは、`cursor` によらず毎回全て行う
-- `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths` を含めない
+- `unused_tag_patterns` で確かめるのは、効いているエントリ（`unmatched_paths` と同じ除外）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターン。ドットの道筋のキー（`filter.tags`）は確かめない
+- パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかに当たれば使われているとする
+- 確かめるパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使われているタグを引く。索引ごとには問い合わせ直さない
+- dev-docs への問い合わせは、`paths` の当たらないエントリを確かめるファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 108 秒までで、1 回の呼び出しは長くて 162 秒かかる
+- dev-docs に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返す。ほかの確かめは変わらない
+- `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths`・`unused_tag_patterns` を含めない
 
 `cursor` が読めないとき、または `project_dir`・`include_global` が `cursor` を返した呼び出しと違うときは、`isError: true` になり、`cursor` を省いて呼び直す旨を返す。
 

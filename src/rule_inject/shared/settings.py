@@ -35,6 +35,10 @@ MIN_SERVER_PORT = 1024
 MAX_SERVER_PORT = 65535
 # `global.server_port` をその起動だけ上書きする環境変数
 PORT_ENV = "RULE_INJECT_PORT"
+# 設定ファイルに `global.dev_docs_url` が無いときの dev-docs の接続先
+DEFAULT_DEV_DOCS_URL = "http://127.0.0.1:8781/mcp"
+# `global.dev_docs_url` の先頭に許す文字列
+DEV_DOCS_URL_SCHEMES = ("http://", "https://")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -50,6 +54,8 @@ class Settings:
     log_retention_days: int
     # MCP サーバーが待ち受けるポート（フックは使わない）
     server_port: int
+    # `check_indexes` が使われているタグを引く dev-docs の MCP サーバーの URL（フックは使わない）
+    dev_docs_url: str
 
 
 def _matches_project(match: str, project_dir: str) -> bool:
@@ -111,6 +117,18 @@ def _resolve_server_port(
     if written is None:
         return DEFAULT_SERVER_PORT
     return _server_port(config, "global.server_port", str(written))
+
+
+def _resolve_dev_docs_url(config: str, global_values: Mapping[str, object]) -> str:
+    """設定ファイルの dev-docs の接続先、無ければ既定の接続先を返す。"""
+    written = global_values.get("dev_docs_url")
+    if written is None:
+        return DEFAULT_DEV_DOCS_URL
+    url = str(written)
+    # http か https で始まらない接続先は設定ファイルの誤り
+    if not url.startswith(DEV_DOCS_URL_SCHEMES):
+        raise _value_error(config, "global.dev_docs_url", url, "http か https で始まる URL")
+    return url
 
 
 def _read_config(env: Mapping[str, str]) -> tuple[str, dict[str, object]]:
@@ -177,6 +195,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         DEFAULT_LOG_RETENTION_DAYS,
     )
     server_port = _resolve_server_port(config, global_values, env)
+    dev_docs_url = _resolve_dev_docs_url(config, global_values)
     # 起動したプロジェクトの直下に当たる要素を、並びの順に集める
     project_dir = env.get(PROJECT_DIR_ENV)
     matched = (
@@ -206,4 +225,5 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         record_retention_days=record_days,
         log_retention_days=log_days,
         server_port=server_port,
+        dev_docs_url=dev_docs_url,
     )

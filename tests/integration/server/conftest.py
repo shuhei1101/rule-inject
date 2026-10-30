@@ -255,6 +255,82 @@ def limited_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Running
     _stop(server)
 
 
+# 偽の dev-docs を立てるコード。`search_docs` が受けた引数を 1 行ずつ記録し、決めた応答の文字列を返す
+FAKE_DEV_DOCS_CODE = (
+    "import json, os\n"
+    "from mcp.server.mcpserver import MCPServer\n"
+    "server = MCPServer('dev-docs')\n"
+    "@server.tool()\n"
+    "def search_docs(\n"
+    "    source: str = '', group_by: str = '', format: str = 'markdown', cwd: str = ''\n"
+    ") -> str:\n"
+    "    arguments = {'source': source, 'group_by': group_by, 'format': format, 'cwd': cwd}\n"
+    "    with open(os.environ['FAKE_CALLS'], 'a', encoding='utf-8') as calls:\n"
+    "        calls.write(json.dumps(arguments) + '\\n')\n"
+    "    with open(os.environ['FAKE_RESPONSE'], encoding='utf-8') as response:\n"
+    "        return response.read()\n"
+    f"server.run('streamable-http', host='{HOST}', port=int(os.environ['FAKE_PORT']))\n"
+)
+
+
+@dataclass
+class FakeDevDocs:
+    """起動した偽の dev-docs の接続先と、受けた `search_docs` の引数の記録。"""
+
+    url: str
+    calls_path: Path
+
+    def calls(self) -> list[dict[str, str]]:
+        """受けた `search_docs` の引数を、呼ばれた順に返す。"""
+        if not self.calls_path.exists():
+            return []
+        lines = self.calls_path.read_text(encoding="utf-8").splitlines()
+        return [json.loads(line) for line in lines]
+
+
+@pytest.fixture
+def start_fake_dev_docs(
+    tmp_path: Path, free_port: Callable[[], int]
+) -> Iterator[Callable[[Mapping[str, Any]], FakeDevDocs]]:
+    """`search_docs` が決めた応答を返す偽の dev-docs を子プロセスとして立てる factory。終わったら止める。"""
+    processes: list[subprocess.Popen[bytes]] = []
+
+    def _start(response: Mapping[str, Any]) -> FakeDevDocs:
+        """response の JSON を返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ。"""
+        directory = tmp_path / "fake_dev_docs"
+        directory.mkdir(exist_ok=True)
+        response_path = directory / "response.json"
+        response_path.write_text(json.dumps(response, ensure_ascii=False), encoding="utf-8")
+        calls_path = directory / "calls.jsonl"
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            FAKE_PORT=str(port), FAKE_RESPONSE=str(response_path), FAKE_CALLS=str(calls_path)
+        )
+        process = subprocess.Popen(
+            [sys.executable, "-c", FAKE_DEV_DOCS_CODE],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        processes.append(process)
+        deadline = time.monotonic() + START_TIMEOUT_SEC
+        while not is_listening(port):
+            if process.poll() is not None or time.monotonic() > deadline:
+                pytest.fail("偽の dev-docs が待ち受けなかった")
+            time.sleep(POLL_INTERVAL_SEC)
+        return FakeDevDocs(url=f"http://{HOST}:{port}/mcp", calls_path=calls_path)
+
+    yield _start
+    for process in processes:
+        process.terminate()
+        try:
+            process.wait(timeout=STOP_TIMEOUT_SEC)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
 @pytest.fixture
 def project_dir(tmp_path: Path) -> Path:
     """ツールに渡すプロジェクトの直下。"""
@@ -273,9 +349,12 @@ def config_text() -> Callable[..., str]:
         global_indexes: Sequence[Path] = (),
         match: Path | None = None,
         project_indexes: Sequence[Path] = (),
+        dev_docs_url: str | None = None,
     ) -> str:
-        """port のポートと、渡した索引・プロジェクトの要素を書いた設定ファイルの文字列を作る。"""
+        """port のポートと、渡した索引・プロジェクトの要素・dev-docs の接続先を書いた設定ファイルの文字列を作る。"""
         lines = ["global:", f"  server_port: {port}"]
+        if dev_docs_url is not None:
+            lines.append(f"  dev_docs_url: {dev_docs_url}")
         if global_indexes:
             lines.append("  indexes:")
             lines.extend(f"    - {index}" for index in global_indexes)
@@ -295,13 +374,18 @@ def running_server(
 ) -> Callable[..., RunningServer]:
     """プロジェクトの直下に当たる要素に索引を並べた設定ファイルを書き、共有のサーバーを返す factory。"""
 
-    def _use(*project_indexes: Path, global_indexes: Sequence[Path] = ()) -> RunningServer:
-        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に置く。"""
+    def _use(
+        *project_indexes: Path,
+        global_indexes: Sequence[Path] = (),
+        dev_docs_url: str | None = None,
+    ) -> RunningServer:
+        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に置く。"""
         text = config_text(
             shared_server.port,
             global_indexes=global_indexes,
             match=project_dir if project_indexes else None,
             project_indexes=project_indexes,
+            dev_docs_url=dev_docs_url,
         )
         shared_server.config_path.write_text(text, encoding="utf-8")
         return shared_server

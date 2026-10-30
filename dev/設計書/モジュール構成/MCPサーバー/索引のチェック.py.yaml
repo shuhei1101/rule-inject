@@ -1,12 +1,13 @@
 title: "MCP サーバー / 索引のチェック"
-lead: 索引をフックと同じ読み取り・JSON Schema・ルールの場所の実在の順に確かめ、問題を返す。書く前と書いた後の索引を比べ、新しく出た問題だけを返す。プロジェクトのファイルを辿り、`paths` の当たらないエントリを返す。`features/index` のサブフィーチャーで、サーバーの依存（`jsonschema`・`ruamel.yaml`）を使うためフックからは読み込まない。
+lead: 索引をフックと同じ読み取り・JSON Schema・ルールの場所の実在の順に確かめ、問題を返す。書く前と書いた後の索引を比べ、新しく出た問題だけを返す。プロジェクトのファイルを辿り、`paths` の当たらないエントリを返す。使われているタグに当たらないタグのパターンを返す（使われているタグはサーバーが dev-docs から引いて渡す）。`features/index` のサブフィーチャーで、サーバーの依存（`jsonschema`・`ruamel.yaml`）を使うためフックからは読み込まない。
 directory: |-
   ```text
   src/rule_inject/features/index/check/
-  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change / scan_unmatched）
-  ├── types.py            # ProblemKind・IndexProblem・IndexCheck・ScanCursor・UnmatchedScan
+  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change / scan_unmatched / tag_patterns / unused_tag_patterns）
+  ├── types.py            # ProblemKind・IndexProblem・IndexCheck・ScanCursor・UnmatchedScan・TagPattern
   ├── service.py          # 索引のチェックと、書く前と書いた後の問題の比較
   ├── scan.py             # プロジェクトのファイルを辿り、paths の当たらないエントリを返す
+  ├── tags.py             # タグのパターンを集め、使われているタグに当たらないものを返す
   └── index.schema.yaml   # 索引の JSON Schema（2020-12）
   ```
 enums:
@@ -47,6 +48,16 @@ constants:
     container: features/index/check/scan.py
     summary: プロジェクトのファイルを辿るときに中へ入らないフォルダの名前
     value: '`frozenset({".git"})`'
+  - name: TAG_FIELD
+    title: タグの条件の field
+    container: features/index/check/tags.py
+    summary: 使われていないかを確かめる、条件の木のキーの `field`（`ArgCondition.field`）
+    value: '`"tags"`'
+  - name: TAG_NORMALIZATION_FORM
+    title: タグの正規化の形式
+    container: features/index/check/tags.py
+    summary: dev-docs がタグを数える前にかける Unicode の正規化の形式（この後に `casefold` する）
+    value: '`"NFKC"`'
 data_models:
   - name: IndexProblem
     title: 索引の問題
@@ -121,6 +132,31 @@ data_models:
       - name: next_cursor
         type: ScanCursor | None
         description: 続きの位置。`completed` が `True` のときは `None`
+  - name: TagPattern
+    title: タグのパターン
+    container: features/index/check/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: 効いているエントリの `args`・`read_by[].args` の、タグに当てるパターン 1 つとその場所。使われているタグに当たらないものは、索引を読めなくする問題ではなくキーとパターンも返すため、`IndexProblem` にしないでこの型のまま返す
+    properties:
+      - name: index
+        type: str
+        description: 索引の場所
+      - name: position
+        type: int
+        description: エントリの位置
+      - name: rev
+        type: str
+        description: エントリのバージョン（`entry_rev`）
+      - name: location
+        type: str
+        description: パターンを書いた条件の場所。`args` か `read_by[{要素の位置}].args`
+      - name: key
+        type: str
+        description: パターンを書いたキー（`ArgCondition.key`。例 `filter[tags]`）
+      - name: pattern
+        type: MatchPattern
+        description: パターン。応答には `source`（索引に書いたまま）を載せる
 functions:
   - name: load_validator
     title: JSON Schema の読み込み
@@ -473,6 +509,76 @@ functions:
       type: str
       description: 指紋
     process: 1. 並びを JSON にして SHA-256 を取る
+  - name: tag_patterns
+    title: タグのパターンの収集
+    container: features/index/check/tags.py
+    usecase: 索引をチェックする
+    summary: 索引の効いているエントリの `args` と `read_by[].args` から、`field` が `TAG_FIELD` の条件のパターンを集める
+    kind: 関数
+    scope: public
+    args:
+      - name: contents
+        type: Sequence[IndexContent]
+        required: true
+        passing: positional
+        description: 確かめる索引の読み取り結果（フックが読めた `global` と `project` の全ての索引）
+    returns:
+      type: tuple[TagPattern, ...]
+      description: 索引の順・エントリの位置の順・`args` の後に `read_by` の要素の順・書いた順のパターン
+    process: |-
+      1. 状態が `effective` のエントリだけを見る（`enabled: false`・読み飛ばすエントリは見ない）
+      2. `entry.args` の `ArgCondition` で `field` が `TAG_FIELD` のもののパターンを、場所 `args` で並べる。ドットの道筋のキー（`field` が `None`）は見ない
+      3. `entry.read_by` の要素ごとに、同じく場所 `read_by[{要素の位置}].args` で並べる
+    unit_tests:
+      - name: test_tag_patterns
+        case: 正常
+        summary: 条件の木の tags のパターンだけを場所つきで集める
+        condition: '`args: {"filter[tags]": ["a", "b"], "filter[kind]": ["rule"], "filter.tags": ["c"]}` と `read_by: [{tools: [x], args: {"q[tags]": ["d"]}}]` のエントリ'
+        mock: なし
+        expected: '`a`・`b`（場所 `args`・キー `filter[tags]`）、`d`（場所 `read_by[0].args`・キー `q[tags]`）の 3 件。`position`・`rev` がエントリのもの'
+      - name: test_tag_patterns_when_not_effective
+        case: 正常
+        summary: 効いていないエントリは集めない
+        condition: '`enabled: false` のエントリと、変数参照を解けず読み飛ばすエントリが `filter[tags]` を持つ'
+        mock: なし
+        expected: 空
+  - name: unused_tag_patterns
+    title: 使われていないタグのパターンの検出
+    container: features/index/check/tags.py
+    usecase: 索引をチェックする
+    summary: 使われているタグのどれにも当たらないタグのパターンを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: patterns
+        type: Sequence[TagPattern]
+        required: true
+        passing: positional
+        description: '`tag_patterns` の戻り値'
+      - name: tags
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: dev-docs が返した使われているタグ（`groups[].value`）
+    returns:
+      type: tuple[TagPattern, ...]
+      description: 当たらないパターン（`patterns` の順）
+    process: |-
+      1. 照らす値を、`tags` そのものと、各タグを `unicodedata.normalize(TAG_NORMALIZATION_FORM, tag).casefold()` したものの和にする
+      2. パターンごとに、照らす値のどれかに `match_arg_pattern` で当たるかを確かめ、どれにも当たらないものを返す（パターンの側は正規化しない）
+    unit_tests:
+      - name: test_unused_tag_patterns
+        case: 正常
+        summary: 返ったタグか正規化したタグに当たらないパターンだけを返す
+        condition: パターン `python`・`Python`・`pyhton`・`m*`・`re:^kotlin$` と、タグ `Python`・`mcp`
+        mock: なし
+        expected: '`pyhton` と `re:^kotlin$` の 2 件（`python` は正規化した `python` に、`Python` は返ったタグに当たる）'
+      - name: test_unused_tag_patterns_when_fullwidth
+        case: 正常
+        summary: NFKC で揃うタグに当てる
+        condition: パターン `python3` と、タグ `Ｐｙｔｈｏｎ３`（全角）
+        mock: なし
+        expected: 空
 notes:
   索引の JSON Schema: |-
     `index.schema.yaml` は JSON Schema 2020-12 を YAML で書き、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを通す。
@@ -491,3 +597,4 @@ notes:
 test_files:
   - tests/unit/rule_inject/features/index/check/test_service.py
   - tests/unit/rule_inject/features/index/check/test_scan.py
+  - tests/unit/rule_inject/features/index/check/test_tags.py

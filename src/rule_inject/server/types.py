@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, model_serializer
+from pydantic import BaseModel, Field, model_serializer
 
 from rule_inject.features.index.types import Operation
 from rule_inject.features.record.types import ReadMethod, ReadState
 
 # 読むツールの `format`
 type ResponseFormat = Literal["markdown", "json"]
+# 使われていないタグのパターンの確かめの結果（確かめた・dev-docs に届かず飛ばした・確かめるパターンが無い）
+type TagCheckState = Literal["checked", "skipped", "no_patterns"]
 
 
 class RuleEntry(BaseModel):
@@ -107,6 +109,8 @@ class IndexReport(BaseModel):
     missing_rules: list[dict[str, Any]]
     skipped_entries: list[dict[str, Any]]
     unmatched_paths: list[dict[str, Any]]
+    # 使われているどのタグにも当たらないタグのパターン（`global` と `project` のどちらの索引も載せる）
+    unused_tag_patterns: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class UnmatchedScanReport(BaseModel):
@@ -119,6 +123,14 @@ class UnmatchedScanReport(BaseModel):
     next_cursor: str | None
 
 
+class TagCheckReport(BaseModel):
+    """使われていないタグのパターンの確かめの結果。"""
+
+    state: TagCheckState
+    # `skipped` のときの、飛ばした理由。それ以外は None
+    reason: str | None
+
+
 class CheckIndexesResult(BaseModel):
     """索引のチェックの応答。"""
 
@@ -127,6 +139,9 @@ class CheckIndexesResult(BaseModel):
     config_path: str | None
     problem_count: int
     unmatched_scan: UnmatchedScanReport
+    tag_check: TagCheckReport = Field(
+        default_factory=lambda: TagCheckReport(state="no_patterns", reason=None)
+    )
     indexes: list[IndexReport]
 
 

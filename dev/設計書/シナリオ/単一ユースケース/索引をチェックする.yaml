@@ -206,6 +206,73 @@ scenarios:
       - '`problem_count` にユーザー全体の索引の当たらないエントリが数えられていない'
       - 索引のファイルが書き換わっていない
     test: test_normal_when_global_included
+  - name: 正常シナリオ（タグのパターンが使われているどのタグにも当たらない）
+    setup:
+      - name: Mock
+        description: '違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は、テストが起動した文書の MCP サーバーに差し替え、`search_docs` の `group_by: tags` に決まったタグの一覧を返させる'
+        notes: '例: `python`・`mcp` の 2 つのタグを返す'
+      - name: 設定ファイル
+        description: 違反が無いシナリオの設定に、dev-docs の接続先として差し替えた文書の MCP サーバーを指す
+      - name: 索引
+        description: 'MCP のツールの引数の条件の木の `field: tags` の値に当てるエントリを 2 つ持ち、各 `rule` の場所にルールの本文があり、各 `paths` を持たない YAML'
+        notes: '例: 使われているタグに当たる `re:^python` と、どのタグにも当たらない `re:^rust`'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant DD as dev-docs
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引と dev-docs の接続先を引く
+        CF-->>SV: 索引の場所と接続先
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>DD: 使われているタグを件数つきで引く
+        DD-->>SV: タグの一覧
+        SV->>SV: 効いているエントリのタグのパターンを各タグに当てる
+        SV-->>CL: 使われているどのタグにも当たらないタグのパターン
+    expected:
+      - 応答の使われていないタグのパターンに、索引の場所・エントリの位置・どのタグにも当たらないパターンが載っている
+      - 使われているタグに当たるパターンは、使われていないタグのパターンに載っていない
+      - 応答に、タグの確かめを飛ばしたことが載っていない
+      - 索引のファイルが書き換わっていない
+    test: test_normal_when_tag_pattern_unused
+  - name: 異常シナリオ（dev-docsに届かない）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は起動しない
+      - name: 設定ファイル
+        description: 違反が無いシナリオの設定に、dev-docs の接続先として待ち受けていないポートを指す
+      - name: 索引
+        description: タグのパターンが使われているどのタグにも当たらないシナリオと同じ YAML に、`rule` の場所にファイルが無いエントリを 1 つ加えたもの
+        notes: タグの確かめを飛ばしても、ほかの問題を返すことを見分ける
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant FS as ルールの本文
+        participant DD as dev-docs
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引と dev-docs の接続先を引く
+        CF-->>SV: 索引の場所と接続先
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>FS: 各エントリのルールの場所を確かめる
+        FS-->>SV: 無いものがある
+        SV->>DD: 使われているタグを件数つきで引く
+        DD--xSV: 接続できない
+        SV-->>CL: ファイルが無いエントリと、タグの確かめを飛ばしたこと
+    expected:
+      - 応答に、タグの確かめを飛ばしたことと、dev-docs に接続できなかった理由が載っている
+      - 応答の使われていないタグのパターンに、どのエントリも載っていない
+      - 応答に、`rule` の場所にファイルが無いエントリが載っている
+      - ツールはエラーを返さない
+    test: test_error_when_dev_docs_unreachable
 lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション

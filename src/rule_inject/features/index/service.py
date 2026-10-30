@@ -32,6 +32,10 @@ NAME_SEPARATOR = "、"
 REGEX_PREFIX = "re:"
 # 引数のキーをオブジェクトの子へたどる区切り
 ARG_KEY_SEPARATOR = "."
+# 条件の木で中へたどる束のキー。`not` はたどらない
+TREE_GROUP_KEYS = ("and", "or")
+# 条件の木の条件のうち、`values` を照合する値にしない `op`（その値の文書を読まない検索のため）
+NEGATED_OPS = frozenset({"ne", "not_contains", "not_exists"})
 # Read で読めないため読み飛ばす `rule` の頭
 URL_SCHEMES = ("http://", "https://")
 # エントリを照合に使わない `enabled` の値
@@ -269,16 +273,42 @@ def _expand_arrays(nodes: Sequence[Any]) -> list[Any]:
     return expanded
 
 
-def _argument_values(tool_input: Mapping[str, Any], key: str) -> list[str]:
-    """ドット区切りのキーが指す引数の値を、照合する文字列の並びにする。キーが無ければ空。"""
+def _tree_values(node: Any, field: str) -> list[Any]:
+    """条件の木を `and`・`or` の入れ子までたどり、`field` が一致する条件の `values` をつないで返す。木として読めなければ空。"""
+    if not isinstance(node, Mapping):
+        return []
+    values: list[Any] = []
+    # 束は、中の節を深さを問わずたどる（`not` の中はたどらない）
+    for group_key in TREE_GROUP_KEYS:
+        children = node.get(group_key)
+        if isinstance(children, list):
+            for child in children:
+                values.extend(_tree_values(child, field))
+    # 条件は、`field` が一致し、否定の `op` でないときだけ `values` を取る
+    if node.get("field") == field and node.get("op") not in NEGATED_OPS and "values" in node:
+        condition_values = node["values"]
+        if isinstance(condition_values, list):
+            values.extend(condition_values)
+        else:
+            values.append(condition_values)
+    return values
+
+
+def _argument_values(
+    tool_input: Mapping[str, Any], path: str, field: str | None = None
+) -> list[str]:
+    """ドット区切りの道筋が指す引数の値を、`field` があれば条件の木として読んだ値を、照合する文字列の並びにする。道筋が無ければ空。"""
     nodes: list[Any] = [tool_input]
     # 先頭から順にたどる。途中の配列は要素ごとにたどり、オブジェクトでない値と無いキーは捨てる
-    for part in key.split(ARG_KEY_SEPARATOR):
+    for part in path.split(ARG_KEY_SEPARATOR):
         nodes = [
             node[part]
             for node in _expand_arrays(nodes)
             if isinstance(node, Mapping) and part in node
         ]
+    # `field` があれば、たどり着いた値（配列は要素ごと）を条件の木の値に置き換える
+    if field is not None:
+        nodes = [value for node in _expand_arrays(nodes) for value in _tree_values(node, field)]
     values: list[str] = []
     for node in _expand_arrays(nodes):
         # 文字列はそのまま、文字列以外のスカラーは JSON の表記にし、オブジェクトと配列は捨てる
@@ -289,12 +319,17 @@ def _argument_values(tool_input: Mapping[str, Any], key: str) -> list[str]:
     return values
 
 
+def match_arg_pattern(pattern: MatchPattern, value: str) -> bool:
+    """引数の値 1 つにパターンを当てる（正規表現は部分一致、glob は `fnmatch.fnmatchcase`）。"""
+    return _match_pattern(pattern, value, glob_match=_fnmatch_glob)
+
+
 def _match_args(conditions: Sequence[ArgCondition], tool_input: Mapping[str, Any]) -> bool:
     """全てのキーについて、値のどれかがパターンのどれかに当たるか。値が 1 つも無いキーは当たらない。"""
     return all(
         any(
-            _match_pattern(pattern, value, glob_match=_fnmatch_glob)
-            for value in _argument_values(tool_input, condition.key)
+            match_arg_pattern(pattern, value)
+            for value in _argument_values(tool_input, condition.path, condition.field)
             for pattern in condition.patterns
         )
         for condition in conditions

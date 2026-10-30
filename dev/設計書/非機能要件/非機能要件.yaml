@@ -178,4 +178,33 @@ requirements:
     status: planned
     introduced:
       pr: 69
+  - name: dev-docs への問い合わせの待ち時間
+    english_name: dev_docs_query_timeout
+    category: 性能
+    external_constraint: 未確定（Claude Code が HTTP の MCP のツールの呼び出しを待つ時間の既定値は公開されていない）
+    source_kind: 制限なし
+    value: '108'
+    unit: 秒
+    rationale: '`check_indexes` が dev-docs の `search_docs`（`source: "*"`・`group_by: tags`）を 1 回呼ぶときの、接続から応答までの上限。規約『資源の値の決め方』の「下流を待つタイムアウト」で、実測の p99.9 + その 50% とする。実測は 22 回で p99.9 を推定できないため、最大の 71.9 秒を p99.9 に置き、71.9 + 36.0 ≈ 108 秒（内訳）。p99.9 は 1,000 回の実測で置き直す（1 回 30〜70 秒かかるため、この PR では測らない）'
+    measurement: 'dev-docs が配信する文書の数ごとに `search_docs`（`source: "*"`・`group_by: tags`・`format: json`・`cwd` に配信元の中）を 1,000 回呼び、接続から応答までの時間の p99.9 を測る。応答しない偽の dev-docs に向けて `check_indexes` を呼び、応答までの時間と `tag_check.state` を確かめる'
+    overflow: 上限を超えたら問い合わせをやめ、使われていないタグのパターンの確かめだけを飛ばして `tag_check.state` を `skipped`、`reason` に上限の秒数を載せる。ほかの確かめは今どおり返す（インターフェース定義「索引のチェック」の制約「dev-docs への問い合わせ」）
+    breakdown:
+      - part: 文書 51 件の配信元への応答
+        value: 31.4〜64.1 秒（21 回、中央値 47.0 秒）
+        notes: shuhdev-gateway の develop の worktree を `cwd` に渡した実測（2026-10-30、WSL の `/mnt/c`）
+      - part: 文書 585 件の配信元への応答
+        value: 71.9 秒（1 回）
+        notes: claude-balancer のクローンを `cwd` に渡した実測（同日）
+      - part: どの配信元も読まないときの応答
+        value: 0.02〜2.0 秒
+        notes: '`total_count` が 0 で返る'
+      - part: p99.9（仮）
+        value: 71.9 秒
+        notes: 実測の最大
+      - part: 余裕
+        value: 36.0 秒
+        notes: p99.9 の 50%
+      - part: 決定値
+        value: 108 秒
+    status: planned
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。

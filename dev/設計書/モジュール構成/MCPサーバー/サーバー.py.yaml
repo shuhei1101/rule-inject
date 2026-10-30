@@ -8,6 +8,7 @@ directory: |-
   ├── app.py           # コンポジションルート（build_server）とツールの登録
   ├── tools.py         # ルールの一覧・検索・エントリの書き込み・削除のツールの本体と、設定・書き込める索引の解決
   ├── check_tools.py   # 索引のチェックのツールの本体と、続きの位置の文字列の変換
+  ├── dev_docs.py      # dev-docs の search_docs で使われているタグを引くクライアント
   ├── record_tools.py  # 既読の記録の確認・削除のツールの本体
   ├── types.py         # ResponseFormat と応答のモデル（Pydantic）
   └── _format.py       # 応答の形式（JSON / Markdown）と長さの切り詰め
@@ -25,6 +26,21 @@ enums:
       - value: json
         title: JSON
         description: structuredContent と text に同じ JSON を入れる
+  - name: TagCheckState
+    title: タグの確かめの結果
+    container: server/types.py
+    usecase: 索引をチェックする
+    summary: インターフェース定義「索引のチェック」の `tag_check.state`（Literal）
+    values:
+      - value: checked
+        title: 確かめた
+        description: dev-docs のタグに照らした
+      - value: skipped
+        title: 飛ばした
+        description: dev-docs に届かず、または読める文書が 0 件で飛ばした
+      - value: no_patterns
+        title: 確かめるパターンが無い
+        description: タグのパターンが無く、dev-docs に問い合わせなかった
 constants:
   - name: SERVER_NAME
     title: サーバーの名前
@@ -61,6 +77,26 @@ constants:
     container: server/app.py
     summary: 非機能要件「プロジェクトのファイルを辿る時間」の決定値（秒）。`build_server` の `scan_time_limit` の既定
     value: '`30`'
+  - name: DEV_DOCS_TIMEOUT
+    title: dev-docsへの問い合わせの待ち時間の上限
+    container: server/app.py
+    summary: 非機能要件「dev-docs への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
+    value: '`108`'
+  - name: SEARCH_DOCS_TOOL
+    title: dev-docsの検索のツール名
+    container: server/dev_docs.py
+    summary: 使われているタグを引く dev-docs のツール
+    value: '`"search_docs"`'
+  - name: TAG_GROUP_ARGUMENTS
+    title: タグを引く検索の引数
+    container: server/dev_docs.py
+    summary: '`search_docs` に渡す固定の引数（これに `cwd` を加える）'
+    value: '`{"source": "*", "group_by": "tags", "format": "json"}`'
+  - name: NO_TAG_LABEL
+    title: タグを持たない文書のグループの値
+    container: server/dev_docs.py
+    summary: dev-docs がタグを持たない文書をまとめて返す `groups[].value`。使われているタグに含めない
+    value: '`"（なし）"`'
 data_models:
   - name: RuleEntry
     title: 効いているエントリ
@@ -256,6 +292,10 @@ data_models:
       - name: unmatched_paths
         type: list[dict[str, Any]]
         description: '`unmatched_path` の `position`・`rev`・`rule`（理由に入れた解いた場所）'
+      - name: unused_tag_patterns
+        type: list[dict[str, Any]]
+        description: 使われていないタグのパターンの `position`・`rev`・`location`・`key`・`pattern`（`TagPattern.pattern.source`）
+        default: 空のリスト
   - name: CheckIndexesResult
     title: 索引のチェックの応答
     container: server/types.py
@@ -281,6 +321,10 @@ data_models:
       - name: unmatched_scan
         type: UnmatchedScanReport
         description: '`paths` の当たらないエントリの検出の状態'
+      - name: tag_check
+        type: TagCheckReport
+        description: 使われていないタグのパターンの確かめの結果
+        default: '`TagCheckReport(state="no_patterns", reason=None)`'
   - name: WriteEntryResult
     title: エントリの書き込みの応答
     container: server/types.py
@@ -463,6 +507,32 @@ data_models:
       - name: locations
         type: list[str]
         description: 削除する前に既読だったルールの場所（初めて現れた順）
+  - name: TagCheckReport
+    title: タグの確かめの結果
+    container: server/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: インターフェース定義「索引のチェック」の `tag_check`
+    properties:
+      - name: state
+        type: TagCheckState
+        description: 確かめの結果
+      - name: reason
+        type: str | None
+        description: '`skipped` のときの `UsedTags.reason`。それ以外は `None`'
+  - name: UsedTags
+    title: dev-docsの使われているタグ
+    container: server/dev_docs.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: '`fetch_used_tags` の結果。引けたタグか、引けなかった理由のどちらかを持つ（frozen の dataclass）'
+    properties:
+      - name: tags
+        type: tuple[str, ...]
+        description: '`groups[].value` の並び。`reason` があるときは空'
+      - name: reason
+        type: str | None
+        description: タグを引けなかった理由（接続先の URL を含む）。引けたときは `None`
 functions:
   - name: main
     title: 起動の入口
@@ -510,13 +580,19 @@ functions:
         default: UNMATCHED_SCAN_TIME_LIMIT
         passing: keyword
         description: '`check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）。結合テストが 0 を渡して上限で止まる流れを確かめる'
+      - name: dev_docs_timeout
+        type: float
+        required: false
+        default: DEV_DOCS_TIMEOUT
+        passing: keyword
+        description: '`check_indexes` の dev-docs への問い合わせの待ち時間の上限（秒）'
     returns:
       type: MCPServer
       description: ツールを登録したサーバー
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
       2. `MCPServer(SERVER_NAME)` を作る
-      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で渡すと依存の引数がツールの引数の Schema に残るため）。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records` が `destructiveHint: true` で、全て `openWorldHint: false`
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes` は `async def` で閉じ込める。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records` が `destructiveHint: true` で、全て `openWorldHint: false`
       4. サーバーを返す
     unit_tests:
       - name: test_build_server
@@ -524,7 +600,7 @@ functions:
         summary: 7 つのツールを依存の引数なしで登録する
         condition: 空の `env`
         mock: なし
-        expected: '`list_tools` が 7 つの名前を返し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit` が無く、`delete_index_entry` と `delete_read_records` だけが `destructiveHint: true`'
+        expected: '`list_tools` が 7 つの名前を返し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout` が無く、`delete_index_entry` と `delete_read_records` だけが `destructiveHint: true`'
   - name: list_rules
     title: ルールの一覧
     container: server/tools.py
@@ -701,15 +777,22 @@ functions:
         required: true
         passing: injected
         description: プロジェクトのファイルを辿る時間の上限（秒）
+      - name: dev_docs_timeout
+        type: float
+        required: true
+        passing: injected
+        description: dev-docs への問い合わせの待ち時間の上限（秒）
     returns:
       type: CallToolResult
       description: '`respond(CheckIndexesResult, format)`'
     process: |-
       1. `_project_settings(project_dir, env)` で設定を読む。`cursor` があれば `_decode_scan_cursor(cursor, project_dir, include_global)` で続きの位置に戻す
       2. `settings.indexes` を順に `check_index(index, env, validator=validator)` で確かめ、問題を種類ごとに `IndexReport` の一覧へ分ける。`origin` は索引が `settings.project_indexes` に入っていれば `project`、無ければ `global`
-      3. 読めた索引のうち `project` のもの（`include_global` が True なら全て）を `read_index` で読み、`scan_unmatched(project_dir, contents, cursor=..., time_limit=scan_time_limit)` で辿る。結果の問題を索引ごとの `unmatched_paths` へ入れる
-      4. `unmatched_scan` に辿った状態を入れる。止まったときは `reason` に上限の秒数と `next_cursor` を `cursor` に渡すと続きから辿れる旨、`next_cursor` に `_encode_scan_cursor` の文字列を入れる
-      5. `problem_count` に、全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` と `project` の索引の `unmatched_paths` の件数の合計を入れ、`respond` で返す
+      3. 読めた索引を全て `read_index` で読み、`tag_patterns` でタグのパターンを集める。辿るのは、そのうち `project` のもの（`include_global` が True なら全て）
+      4. `asyncio.TaskGroup` の中で、パターンが 1 つ以上あれば先に `fetch_used_tags(settings.dev_docs_url, project_dir, timeout=dev_docs_timeout)` のタスクを作り、続けて `asyncio.to_thread(scan_unmatched, project_dir, contents, cursor=..., time_limit=scan_time_limit)` を待つ（問い合わせと辿るのを並べて行い、辿り終えた後に問い合わせの応答を待つ）。辿った結果の問題を索引ごとの `unmatched_paths` へ入れる
+      5. `unmatched_scan` に辿った状態を入れる。止まったときは `reason` に上限の秒数と `next_cursor` を `cursor` に渡すと続きから辿れる旨、`next_cursor` に `_encode_scan_cursor` の文字列を入れる
+      6. `tag_check` を決める。パターンが無ければ `no_patterns`、`UsedTags.reason` があれば `skipped` とその理由、それ以外は `checked` にして `unused_tag_patterns(patterns, used.tags)` の結果を索引ごとの `unused_tag_patterns` へ入れる（`global` と `project` のどちらの索引も）
+      7. `problem_count` に、全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` と `project` の索引の `unmatched_paths` の件数の合計を入れ（`unused_tag_patterns` は数えない）、`respond` で返す
     exceptions:
       - name: ToolError
         condition: '`_project_settings` が送出する、または `_decode_scan_cursor` が送出する'
@@ -746,6 +829,31 @@ functions:
         mock: なし
         expected: ToolError
         exception: '`_project_settings` が送出する、または `_decode_scan_cursor` が送出する'
+      - name: test_check_indexes_when_tag_unused
+        case: 正常
+        summary: 使われていないタグのパターンを全ての索引に載せ、数えない
+        condition: '`global.indexes` の索引とプロジェクトの索引に `args: {"filter[tags]": ["pyhton"]}` のエントリを 1 件ずつ、`include_global` は既定'
+        mock: '`fetch_used_tags` を `UsedTags(tags=("python",), reason=None)` を返して引数を記録する関数に差し替える'
+        expected: 両方の索引が `unused_tag_patterns` 1 件（`location` `args`・`key` `filter[tags]`・`pattern` `pyhton`・`rev`）を持つ。`tag_check.state` が `checked`、`problem_count` が 0。`fetch_used_tags` の呼び出しが 1 回で、接続先が `Settings.dev_docs_url`、`cwd` に渡す値が `project_dir`
+      - name: test_check_indexes_when_tag_check_skipped
+        case: 正常
+        summary: dev-docs に届かないときはタグの確かめだけを飛ばす
+        condition: 前のテストの索引に、ファイルの無いルールのエントリを 1 件加える
+        mock: '`fetch_used_tags` を `UsedTags(tags=(), reason="x")` を返す関数に差し替える'
+        expected: '`tag_check` が `skipped`・`reason` `x`。どの索引の `unused_tag_patterns` も空。`missing_rules` 1 件で `problem_count` が 1'
+      - name: test_check_indexes_when_no_tag_patterns
+        case: 正常
+        summary: タグのパターンが無ければ dev-docs に問い合わせない
+        condition: '`args: {"filter.tags": ["go"]}` だけを持つ索引'
+        mock: '`fetch_used_tags` を呼ばれた回数を数える関数に差し替える'
+        expected: '`tag_check` が `no_patterns`・`reason` None。`fetch_used_tags` が呼ばれていない'
+      - name: test_check_indexes_when_query_parallel
+        case: 正常
+        summary: dev-docs への問い合わせを、ファイルを辿るのと並べて行う
+        condition: タグのパターンを 1 つ持つ索引
+        mock: '`fetch_used_tags` を、呼ばれたら `threading.Event` を立てて `UsedTags(tags=("a",), reason=None)` を返す関数に、`scan_unmatched` を、その Event を 5 秒まで待ち、待てたかを記録して本物を呼ぶ関数に差し替える'
+        expected: 偽の `scan_unmatched` が Event を待てている（辿り終える前に問い合わせが始まっている）。`tag_check.state` が `checked`
+    is_async: true
   - name: write_index_entry
     title: エントリの書き込み
     container: server/tools.py
@@ -1276,10 +1384,116 @@ functions:
       - name: ToolError
         condition: 設定ファイルが読めない
         message: 設定ファイルの場所と理由
+  - name: fetch_used_tags
+    title: 使われているタグの問い合わせ
+    container: server/dev_docs.py
+    usecase: 索引をチェックする
+    summary: 'dev-docs の `search_docs` を `group_by: tags` で 1 回呼び、使われているタグを返す。届かないときは例外にせず理由を返す'
+    description: 実際の dev-docs への疎通テストは置かない。dev-docs は利用者の端末で別に立てる開発用のサーバーでテストの環境に無いため、呼び方と応答の読み方は外部 API「dev-docs」の実測と、偽の dev-docs を立てる結合テストで確かめる
+    kind: 関数
+    scope: public
+    is_async: true
+    args:
+      - name: url
+        type: str
+        required: true
+        passing: positional
+        description: dev-docs の接続先（`Settings.dev_docs_url`）
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: '`cwd` に渡すプロジェクトの直下'
+      - name: timeout
+        type: float
+        required: true
+        passing: keyword
+        description: 問い合わせを始めてから応答を読み終えるまでの待ち時間の上限（秒）
+      - name: open_session
+        type: Callable[[str], AbstractAsyncContextManager[ClientSession]]
+        required: false
+        default: _open_session
+        passing: keyword
+        description: 接続先への初期化済みの MCP のセッションを開く関数（テストで差し替える）
+    returns:
+      type: UsedTags
+      description: 使われているタグか、引けなかった理由
+    process: |-
+      1. `async with asyncio.timeout(timeout)` の中で、`open_session(url)` のセッションの `call_tool(SEARCH_DOCS_TOOL, {**TAG_GROUP_ARGUMENTS, "cwd": project_dir})` を呼ぶ
+      2. 上限を超えた（`TimeoutError`）ら、接続先と待ち時間の上限の秒数を含む理由を返す
+      3. 接続・通信に失敗した（`httpx2.HTTPError`・`OSError`・`mcp.shared.exceptions.MCPError`。`anyio` の TaskGroup が包んだ `ExceptionGroup` の中のものを含む）ら、接続先と接続できなかった旨と例外の内容を含む理由を返す
+      4. 結果の `is_error` が True なら、接続先とエラーを返した旨と結果の文字列を含む理由を返す
+      5. 結果の文字列を JSON として読む。読めない、または `total_count` が整数でないときは、接続先と応答を読めない旨を含む理由を返す
+      6. `total_count` が 0 なら、接続先と `project_dir` から読める文書が 0 件だった旨を含む理由を返す
+      7. `groups[].value` の文字列のうち `NO_TAG_LABEL` を除いたものを並べた `UsedTags` を返す
+    unit_tests:
+      - name: test_fetch_used_tags
+        case: 正常
+        summary: groups の値を使われているタグにする
+        condition: '`{"total_count": 3, "groups": [{"value": "Python", "count": 2}, {"value": "mcp", "count": 1}]}` を返すセッション'
+        mock: '`open_session` を、受けた引数を記録して決めた結果を返す偽のセッションに差し替える'
+        expected: '`tags` が `("Python", "mcp")`、`reason` が None。受けた引数が `source: "*"`・`group_by: "tags"`・`format: "json"`・`cwd` が `project_dir`'
+      - name: test_fetch_used_tags_when_no_documents
+        case: 正常
+        summary: 読める文書が 0 件なら飛ばす理由を返す
+        condition: '`{"total_count": 0, "returned": 0}` を返すセッション'
+        mock: 同上
+        expected: '`tags` が空、`reason` に接続先と 0 件の旨'
+      - name: test_fetch_used_tags_when_tool_error
+        case: 正常
+        summary: ツールのエラーを飛ばす理由にする
+        condition: '`is_error` が True で文字列 `bad argument` を返すセッション'
+        mock: 同上
+        expected: '`reason` に接続先と `bad argument`'
+      - name: test_fetch_used_tags_when_unreadable
+        case: 正常
+        summary: 読めない応答を飛ばす理由にする
+        condition: JSON でない文字列を返すセッションと、`total_count` を持たない JSON を返すセッション（パラメータ展開）
+        mock: 同上
+        expected: '`reason` に接続先と応答を読めない旨'
+      - name: test_fetch_used_tags_when_timeout
+        case: 正常
+        summary: 待ち時間の上限を超えたら飛ばす理由を返す
+        condition: '`call_tool` が 1 秒待つセッションと `timeout=0.01`'
+        mock: 同上
+        expected: '`reason` に接続先と `0.01` 秒'
+      - name: test_fetch_used_tags_when_unreachable
+        case: 正常
+        summary: 接続できないときは飛ばす理由を返す
+        condition: 空いているポートを取ってすぐ閉じた `http://127.0.0.1:{ポート}/mcp`
+        mock: なし（既定の `_open_session`）
+        expected: 例外を送出せず、`reason` に接続先と接続できなかった旨
+      - name: test_fetch_used_tags_when_no_tag_group
+        case: 正常
+        summary: タグを持たない文書のグループは使われているタグに含めない
+        condition: '`{"total_count": 3, "groups": [{"value": "python", "count": 2}, {"value": "（なし）", "count": 1}]}` を返すセッション'
+        mock: '`test_fetch_used_tags` と同じ'
+        expected: '`tags` が `("python",)`、`reason` が None'
+  - name: _open_session
+    title: dev-docsのセッションの開始
+    container: server/dev_docs.py
+    usecase: 索引をチェックする
+    summary: 接続先へ `mcp` の Streamable HTTP のクライアントで接続し、初期化した `ClientSession` を返す非同期のコンテキストマネージャー
+    kind: 関数
+    scope: internal
+    is_async: true
+    args:
+      - name: url
+        type: str
+        required: true
+        passing: positional
+        description: dev-docs の接続先
+    returns:
+      type: AbstractAsyncContextManager[ClientSession]
+      description: 初期化済みのセッション。抜けるときに接続を閉じる
+    process: |-
+      1. `streamable_http_client(url)` で読み書きのストリームを開き、`ClientSession` を作って `initialize()` する（`contextlib.asynccontextmanager`）
+      2. セッションを渡し、抜けるときにセッションとストリームを閉じる
 test_files:
   - tests/unit/rule_inject/server/test_main.py
   - tests/unit/rule_inject/server/test_app.py
   - tests/unit/rule_inject/server/test_tools.py
   - tests/unit/rule_inject/server/test_check_tools.py
+  - tests/unit/rule_inject/server/test_dev_docs.py
   - tests/unit/rule_inject/server/test_record_tools.py
   - tests/unit/rule_inject/server/test_format.py

@@ -517,6 +517,34 @@ def marker() -> Callable[[str], str]:
     return _make
 
 
+# 偽の dev-docs が返す応答の JSON を渡す環境変数と、待ち受けるポートを渡す環境変数
+DEV_DOCS_BODY_ENV = "E2E_DEV_DOCS_BODY"
+DEV_DOCS_PORT_ENV = "E2E_DEV_DOCS_PORT"
+# 偽の dev-docs のスクリプト。`search_docs` が引数に関わらず決めた応答の JSON を返す Streamable HTTP の MCP サーバー
+DEV_DOCS_SERVER_SCRIPT = f'''"""E2E テストが使う、使われているタグを返す偽の dev-docs。"""
+
+from __future__ import annotations
+
+import os
+
+from mcp.server.mcpserver import MCPServer
+
+server = MCPServer("dev-docs")
+
+
+@server.tool(name="search_docs")
+def search_docs(
+    source: str = "", group_by: str = "", format: str = "markdown", cwd: str = ""
+) -> str:
+    """使われているタグを件数つきで返す。"""
+    return os.environ["{DEV_DOCS_BODY_ENV}"]
+
+
+if __name__ == "__main__":
+    server.run("streamable-http", host="{SERVER_HOST}", port=int(os.environ["{DEV_DOCS_PORT_ENV}"]))
+'''
+
+
 @pytest.fixture
 def make_rule(tmp_path: Path) -> Callable[..., Path]:
     """ローカルのルールの本文（Markdown）を置く factory。"""
@@ -678,14 +706,17 @@ def write_server_config(
         *,
         project_indexes: Sequence[Path] = (),
         global_indexes: Sequence[Path] = (),
+        dev_docs_url: str | None = None,
     ) -> Path:
-        """設定ファイルを書き、プロジェクトの設定の `env` にそのパスを置く。"""
+        """設定ファイルを書き、プロジェクトの設定の `env` にそのパスを置く。dev_docs_url があれば `global.dev_docs_url` に書く。"""
         lines = [
             "global:",
             f'  state_dir: "{state_dir}"',
             f'  log_dir: "{log_folder}"',
             f"  server_port: {port}",
         ]
+        if dev_docs_url is not None:
+            lines.append(f"  dev_docs_url: {dev_docs_url}")
         if global_indexes:
             lines.append("  indexes:")
             lines.extend(f'    - "{index}"' for index in global_indexes)
@@ -754,13 +785,61 @@ def serve(
 ) -> Callable[..., ResidentServer]:
     """空いているポートを設定ファイルに書き、常駐の MCP サーバーを起動する factory。"""
 
-    def _serve(*project_indexes: Path, global_indexes: Sequence[Path] = ()) -> ResidentServer:
-        """project_indexes を起動したプロジェクトに当たる要素の索引に、global_indexes を `global.indexes` に置いて起動する。"""
+    def _serve(
+        *project_indexes: Path,
+        global_indexes: Sequence[Path] = (),
+        dev_docs_url: str | None = None,
+    ) -> ResidentServer:
+        """project_indexes を起動したプロジェクトに当たる要素の索引に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に置いて起動する。"""
         port = free_port()
-        write_server_config(port, project_indexes=project_indexes, global_indexes=global_indexes)
+        write_server_config(
+            port,
+            project_indexes=project_indexes,
+            global_indexes=global_indexes,
+            dev_docs_url=dev_docs_url,
+        )
         return resident_server(port)
 
     return _serve
+
+
+@pytest.fixture
+def start_dev_docs(
+    tmp_path: Path, free_port: Callable[[], int]
+) -> Iterator[Callable[[Mapping[str, Any]], str]]:
+    """`search_docs` が決めた応答を返す偽の dev-docs を子プロセスとして立て、その接続先を返す factory。終わったら止める。"""
+    processes: list[subprocess.Popen[bytes]] = []
+
+    def _start(response: Mapping[str, Any]) -> str:
+        """response の JSON を返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ。"""
+        script = tmp_path / "dev_docs_server.py"
+        script.write_text(DEV_DOCS_SERVER_SCRIPT, encoding="utf-8")
+        port = free_port()
+        env = dict(os.environ)
+        env[DEV_DOCS_BODY_ENV] = json.dumps(response, ensure_ascii=False)
+        env[DEV_DOCS_PORT_ENV] = str(port)
+        process = subprocess.Popen(
+            [sys.executable, str(script)],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        processes.append(process)
+        deadline = time.monotonic() + SERVER_START_TIMEOUT_SEC
+        while not _port_is_listening(port):
+            if process.poll() is not None or time.monotonic() > deadline:
+                pytest.fail("偽の dev-docs が待ち受けなかった")
+            time.sleep(SERVER_POLL_INTERVAL_SEC)
+        return f"http://{SERVER_HOST}:{port}/mcp"
+
+    yield _start
+    for process in processes:
+        process.terminate()
+        try:
+            process.wait(timeout=SERVER_STOP_TIMEOUT_SEC)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
 
 
 @pytest.fixture

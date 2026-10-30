@@ -27,6 +27,9 @@ overview:
     - id: SRV
       label: MCP サーバー
       kind: system
+    - id: DD
+      label: dev-docs
+      kind: external
   edges:
     - from: U
       to: IDX
@@ -49,6 +52,9 @@ overview:
     - from: SRV
       to: IDX
       label: 照合・書き込み
+    - from: SRV
+      to: DD
+      label: 使われているタグの問い合わせ（HTTP）
   subgraphs:
     - id: SYS
       label: rule-inject
@@ -83,6 +89,12 @@ external_systems:
     notes:
       事前確認: 不要。Claude Code がフックを起動する側のため、呼ばれた時点で到達している。
     detail: dev/設計書/外部ライブラリ/claude-code#
+  - name: dev-docs
+    purpose: '`check_indexes` で使われているタグを引く'
+    direction: 双方向
+    protocol: MCP（Streamable HTTP）
+    detail: dev/設計書/外部API/dev-docs#
+    status: planned
 constraints: |-
   - フックは Python の標準ライブラリだけで書く
   - 動かす場所はユーザーの端末（Linux / WSL）で、フックは MCP サーバーが動いていなくても案内できる

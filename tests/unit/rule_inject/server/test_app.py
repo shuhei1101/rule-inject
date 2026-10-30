@@ -13,7 +13,14 @@ TOOL_NAMES = [
     "search_rules",
     "write_index_entry",
 ]
-INJECTED_NAMES = {"env", "validator", "locks", "check_change", "scan_time_limit"}
+INJECTED_NAMES = {
+    "env",
+    "validator",
+    "locks",
+    "check_change",
+    "scan_time_limit",
+    "dev_docs_timeout",
+}
 
 
 def test_build_server() -> None:

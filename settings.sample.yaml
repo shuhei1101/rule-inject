@@ -15,6 +15,8 @@ global:
   log_retention_days: 3
   # 常駐の MCP サーバーが 127.0.0.1 で待ち受けるポート。1024〜65535 の整数（既定: 8783）。環境変数 RULE_INJECT_PORT で上書きできる
   server_port: 8783
+  # check_indexes が使われているタグを引く dev-docs の MCP サーバーの URL。http:// か https:// で始まる（既定: http://127.0.0.1:8781/mcp）
+  dev_docs_url: http://127.0.0.1:8781/mcp
 projects:
   # 絶対パスかプロジェクト名。絶対パスは起動したプロジェクトがそのパスかその配下のとき、プロジェクト名はフォルダ名が一致したときに当たる
   - match: project-name

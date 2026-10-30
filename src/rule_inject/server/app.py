@@ -17,13 +17,18 @@ from rule_inject.server.types import ResponseFormat
 SERVER_NAME = "rule-inject"
 # `check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）
 UNMATCHED_SCAN_TIME_LIMIT = 30
+# `check_indexes` が dev-docs への問い合わせの応答を待つ時間の上限（秒）
+DEV_DOCS_TIMEOUT = 108
 LIST_LIMIT_FIELD = Field(ge=1, le=tools.MAX_LIST_LIMIT)
 CURSOR_FIELD = Field(pattern=tools.CURSOR_PATTERN)
 POSITION_FIELD = Field(ge=0)
 
 
 def build_server(
-    env: Mapping[str, str], *, scan_time_limit: float = UNMATCHED_SCAN_TIME_LIMIT
+    env: Mapping[str, str],
+    *,
+    scan_time_limit: float = UNMATCHED_SCAN_TIME_LIMIT,
+    dev_docs_timeout: float = DEV_DOCS_TIMEOUT,
 ) -> MCPServer:
     """依存を作ってツールへ渡し、7 つのツールを登録した `MCPServer` を返す。"""
     validator = load_validator()
@@ -31,7 +36,7 @@ def build_server(
     check = partial(check_change, env=env, validator=validator)
     server = MCPServer(SERVER_NAME)
 
-    # 依存（env・validator・locks・check_change・scan_time_limit）を閉じ込め、引数をツールの引数だけにした関数を登録する
+    # 依存（env・validator・locks・check_change・scan_time_limit・dev_docs_timeout）を閉じ込め、引数をツールの引数だけにした関数を登録する
     # （partial で渡すと、依存の引数がツールの引数の Schema に残るため）
     def list_rules(
         project_dir: str,
@@ -63,14 +68,14 @@ def build_server(
             env=env,
         )
 
-    def check_indexes(
+    async def check_indexes(
         project_dir: str,
         format: ResponseFormat = "markdown",
         include_global: bool = False,
         cursor: str | None = None,
     ) -> CallToolResult:
-        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも当たらないエントリが無いかで確かめる。include_global でユーザー全体の索引の paths の当たらないエントリも確かめ、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に渡して呼び直す。"""
-        return check_tools.check_indexes(
+        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも当たらないエントリが無いか・タグのパターンが dev-docs の使われているどのタグにも当たらないエントリが無いかで確かめる。include_global でユーザー全体の索引の paths の当たらないエントリも確かめ、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に渡して呼び直す。dev-docs に届かないときはタグの確かめだけを飛ばし、tag_check に理由を返す。"""
+        return await check_tools.check_indexes(
             project_dir=project_dir,
             format=format,
             include_global=include_global,
@@ -78,6 +83,7 @@ def build_server(
             env=env,
             validator=validator,
             scan_time_limit=scan_time_limit,
+            dev_docs_timeout=dev_docs_timeout,
         )
 
     def write_index_entry(
