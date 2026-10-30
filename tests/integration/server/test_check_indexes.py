@@ -340,3 +340,124 @@ def test_error_when_cursor_invalid(
     assert "cursor" in text_of(unreadable)
     assert mismatched.is_error is True
     assert "cursor" in text_of(mismatched)
+
+
+def test_normal_when_tag_pattern_unused(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    start_fake_dev_docs: Callable[..., Any],
+    running_server: Callable[..., Any],
+) -> None:
+    """dev-docs の使われているタグに当たらないタグのパターンを、全ての索引について返し、`problem_count` には数えない（正常系）。"""
+    # 準備
+    fake = start_fake_dev_docs(
+        {
+            "total_count": 3,
+            "groups": [{"value": "Python", "count": 2}, {"value": "mcp", "count": 1}],
+        }
+    )
+    rule = make_index("# a\n", "rules/a.md")
+    project_index = make_index(
+        "rules:\n"
+        f"  - rule: {rule}\n"
+        "    args:\n"
+        '      filter[tags]: ["python"]\n'
+        f"  - rule: {rule}\n"
+        "    args:\n"
+        '      filter[tags]: ["pyhton", "m*"]\n'
+        f"  - rule: {rule}\n"
+        "    read_by:\n"
+        '      - tools: ["*search_docs"]\n'
+        "        args:\n"
+        '          filter[tags]: ["rust"]\n'
+        f"  - rule: {rule}\n"
+        "    args:\n"
+        '      filter.tags: ["go"]\n'
+        f"  - rule: {rule}\n"
+        "    enabled: false\n"
+        "    args:\n"
+        '      filter[tags]: ["java"]\n',
+        "project.yaml",
+    )
+    global_index = make_index(
+        f'rules:\n  - rule: {rule}\n    args:\n      filter[tags]: ["re:^kotlin$"]\n',
+        "global.yaml",
+    )
+    server = running_server(project_index, global_indexes=[global_index], dev_docs_url=fake.url)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    content = result.structured_content
+    reports = {report["origin"]: report for report in content["indexes"]}
+    assert [
+        (entry["position"], entry["location"], entry["key"], entry["pattern"])
+        for entry in reports["project"]["unused_tag_patterns"]
+    ] == [
+        (1, "args", "filter[tags]", "pyhton"),
+        (2, "read_by[0].args", "filter[tags]", "rust"),
+    ]
+    assert all(entry["rev"] for entry in reports["project"]["unused_tag_patterns"])
+    assert [
+        (entry["position"], entry["location"], entry["key"], entry["pattern"])
+        for entry in reports["global"]["unused_tag_patterns"]
+    ] == [(0, "args", "filter[tags]", "re:^kotlin$")]
+    assert content["tag_check"] == {"state": "checked", "reason": None}
+    assert content["problem_count"] == 0
+    assert fake.calls() == [
+        {"source": "*", "group_by": "tags", "format": "json", "cwd": str(project_dir)}
+    ]
+
+
+def test_normal_when_dev_docs_unreachable(
+    tmp_path: Path,
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    free_port: Callable[[], int],
+    running_server: Callable[..., Any],
+) -> None:
+    """dev-docs に接続できないときは、タグの確かめだけを飛ばして理由を返し、ツールのエラーにしない（正常系）。"""
+    # 準備
+    rule = make_index("# a\n", "rules/a.md")
+    index = make_index(
+        "rules:\n"
+        f"  - rule: {rule}\n"
+        "    args:\n"
+        '      filter[tags]: ["python"]\n'
+        f"  - rule: {tmp_path}/rules/missing.md\n"
+    )
+    url = f"http://127.0.0.1:{free_port()}/mcp"
+    server = running_server(index, dev_docs_url=url)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    content = result.structured_content
+    report = content["indexes"][0]
+    assert content["success"] is True
+    assert content["tag_check"]["state"] == "skipped"
+    assert url in content["tag_check"]["reason"]
+    assert "接続できない" in content["tag_check"]["reason"]
+    assert report["unused_tag_patterns"] == []
+    assert len(report["missing_rules"]) == 1
+    assert content["problem_count"] == 1
+
+
+def test_normal_when_dev_docs_returns_nothing(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    start_fake_dev_docs: Callable[..., Any],
+    running_server: Callable[..., Any],
+) -> None:
+    """dev-docs が読める文書を 0 件と返したときは、タグの確かめを飛ばして理由を返す（正常系）。"""
+    # 準備
+    fake = start_fake_dev_docs({"total_count": 0, "returned": 0})
+    rule = make_index("# a\n", "rules/a.md")
+    index = make_index(f'rules:\n  - rule: {rule}\n    args:\n      filter[tags]: ["python"]\n')
+    server = running_server(index, dev_docs_url=fake.url)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    content = result.structured_content
+    assert content["tag_check"]["state"] == "skipped"
+    assert "0 件" in content["tag_check"]["reason"]
+    assert content["indexes"][0]["unused_tag_patterns"] == []
+    assert [call["cwd"] for call in fake.calls()] == [str(project_dir)]

@@ -604,6 +604,75 @@ def test_normal_when_mcp_args_unmatched(
     assert completed.returncode == 0
 
 
+MCP_FILTER_TREE_ENTRY = {
+    "rule": RULE,
+    "tools": ["mcp__*__search_docs"],
+    "args": {"filter[tags]": ["re:^python$"], "filter[kind]": ["rule"]},
+}
+
+
+def test_normal_when_mcp_filter_tree_match(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が当たる MCP のツールの呼び出しを止める（正常系）。"""
+    # 準備
+    index = write_index(MCP_FILTER_TREE_ENTRY)
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="mcp__dev-docs__search_docs",
+        tool_input={
+            "filter": {
+                "and": [
+                    {"field": "kind", "op": "eq", "values": ["rule"]},
+                    {
+                        "or": [
+                            {"field": "tags", "op": "eq", "values": ["go"]},
+                            {"field": "tags", "op": "eq", "values": ["python"]},
+                        ]
+                    },
+                ]
+            }
+        },
+    )
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert RULE in output["permissionDecisionReason"]
+    assert completed.returncode == 0
+
+
+def test_normal_when_mcp_filter_tree_negated(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """パターンに当たる値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない（正常系）。"""
+    # 準備
+    index = write_index(MCP_FILTER_TREE_ENTRY)
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="mcp__dev-docs__search_docs",
+        tool_input={
+            "filter": {
+                "and": [
+                    {"field": "kind", "op": "eq", "values": ["rule"]},
+                    {"not": {"field": "tags", "op": "eq", "values": ["python"]}},
+                    {"field": "tags", "op": "ne", "values": ["python"]},
+                ]
+            }
+        },
+    )
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert completed.returncode == 0
+
+
 def test_normal_when_regex_path(
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     write_index: Callable[..., Path],
