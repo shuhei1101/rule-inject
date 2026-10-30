@@ -522,7 +522,7 @@ request:
     required: false
     default: なし（`read_by` の `args` を書いたエントリには当てない）
     description: MCP のツールに渡された引数
-    notes: '`tool_name` が MCP のツールのときだけ使う。`read_by` の `args` を、ルール案内の `args` と同じ規則（ドット区切りのキー・配列は要素ごと・文字列以外のスカラーは JSON の表記）で照合する'
+    notes: '`tool_name` が MCP のツールのときだけ使う。`read_by` の `args` を、ルール案内の `args` と同じ規則（ドット区切りのキー・`{道筋}[{field}]` のキーは条件の木の中の `field` の条件の `values`・配列は要素ごと・文字列以外のスカラーは JSON の表記）で照合する'
   - name: '`tool_response.file`'
     type: dict[str, Any]
     required: false
