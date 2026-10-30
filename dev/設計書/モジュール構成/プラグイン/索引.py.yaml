@@ -3,7 +3,7 @@ lead: 設定（`load_settings`）が決めた索引を標準ライブラリだ�
 directory: |-
   ```text
   src/rule_inject/features/index/
-  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / entry_revs / match_path / match_tool / match_read_by / rule_locations）
+  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / entry_revs / match_path / match_tool / match_read_by / match_arg_pattern / rule_locations）
   ├── types.py      # Operation・EntryStatus・MatchPattern・ArgCondition・ReadByCondition・IndexEntry・EntryOutcome・IndexContent・MatchedRule・IndexLoadResult
   ├── _yaml.py      # 索引の YAML の一部だけを読む（行・文字列・リストの読み取りは shared/yaml_lines.py）
   └── service.py    # 索引の読み込みと照合・エントリのバージョン
@@ -65,6 +65,21 @@ constants:
     container: features/index/service.py
     summary: SHA-256 の 16 進のうちバージョンに使う先頭の字数
     value: '`12`'
+  - name: TREE_KEY_PATTERN
+    title: 条件の木のキーの書き方
+    container: features/index/service.py
+    summary: '`args` のキーを、ドットの道筋と条件の木の `field` に分ける正規表現。当たらないキーは全体をドットの道筋として読む'
+    value: '`re.compile(r"^(?P<path>[^\[\]]+)\[(?P<field>[^\[\]]+)\]$")`'
+  - name: TREE_GROUP_KEYS
+    title: 条件の木でたどる束のキー
+    container: features/index/service.py
+    summary: 条件の木で中へたどる束。`not` はたどらない
+    value: '`("and", "or")`'
+  - name: NEGATED_OPS
+    title: 値にしない否定の op
+    container: features/index/service.py
+    summary: 条件の木の条件のうち、`values` を照合する値にしない `op`
+    value: '`frozenset({"ne", "not_contains", "not_exists"})`'
 data_models:
   - name: IndexEntry
     title: 索引のエントリ
@@ -138,14 +153,20 @@ data_models:
     container: features/index/types.py
     usecase: 共通
     role: DTO
-    summary: エントリの `args` の 1 キーと、その値に当てるパターン
+    summary: エントリの `args` の 1 キーと、その値に当てるパターン。索引を読むときにキーを `TREE_KEY_PATTERN` で道筋と `field` に分けておき、照合のたびに分け直さない
     properties:
       - name: key
         type: str
-        description: 引数のキー。オブジェクトの子はドットで結ぶ（例 `filter.kind`）
+        description: 索引に書かれたままの引数のキー（例 `filter.kind`・`filter[tags]`）
       - name: patterns
         type: tuple[MatchPattern, ...]
         description: どれか 1 つに当たれば、そのキーは当たる
+      - name: path
+        type: str
+        description: ドットで結んだ引数の道筋。`key` が `TREE_KEY_PATTERN` に当たればその `path`、当たらなければ `key` のまま
+      - name: field
+        type: str | None
+        description: 道筋の値を条件の木として読むときの `field`（`key` が `TREE_KEY_PATTERN` に当たったときの `field`）。ドットの道筋のキーは `None`
   - name: ReadByCondition
     title: 既読にする呼び出しの条件
     container: features/index/types.py
@@ -655,7 +676,7 @@ functions:
     title: 引数の値の取り出し
     container: features/index/service.py
     usecase: 共通
-    summary: ドット区切りのキーが指す引数の値を、照合する文字列の並びにする
+    summary: ドット区切りの道筋が指す引数の値を、`field` があればその値を条件の木として読んだ値を、照合する文字列の並びにする
     kind: 関数
     scope: internal
     args:
@@ -664,18 +685,25 @@ functions:
         required: true
         passing: positional
         description: MCP のツールの引数
-      - name: key
+      - name: path
         type: str
         required: true
         passing: positional
-        description: ドットで結んだ引数のキー
+        description: ドットで結んだ引数の道筋（`ArgCondition.path`）
+      - name: field
+        type: str | None
+        required: false
+        default: None
+        passing: positional
+        description: 道筋の値を条件の木として読むときの `field`（`ArgCondition.field`）。`None` なら道筋の値をそのまま使う
     returns:
       type: list[str]
       description: 照合する値。キーが無ければ空
     process: |-
-      1. キーをドットで分け、先頭から順にたどる。たどる途中の値が配列なら要素ごとにたどり、オブジェクトでない値や無いキーは捨てる
-      2. たどり着いた値が配列なら要素ごとに取り出す
-      3. 文字列はそのまま、文字列以外のスカラー（数・真偽・`null`）は `json.dumps` の表記にし、オブジェクトと配列の中の配列は捨てる
+      1. 道筋をドットで分け、先頭から順にたどる。たどる途中の値が配列なら要素ごとにたどり、オブジェクトでない値や無いキーは捨てる
+      2. `field` があれば、たどり着いた値（配列なら要素ごと）を `_tree_values(値, field)` で条件の木の値に置き換える
+      3. 値が配列なら要素ごとに取り出す
+      4. 文字列はそのまま、文字列以外のスカラー（数・真偽・`null`）は `json.dumps` の表記にし、オブジェクトと配列の中の配列は捨てる
     unit_tests:
       - name: test_argument_values_when_nested_array
         case: 正常
@@ -695,6 +723,18 @@ functions:
         condition: '`{"a": "x"}` と `a.b`'
         mock: なし
         expected: 空
+      - name: test_argument_values_when_tree
+        case: 正常
+        summary: 道筋の値を条件の木として読む
+        condition: '`{"filter": {"or": [{"field": "tags", "op": "in", "values": ["a", 1]}, {"field": "kind", "op": "eq", "values": ["rule"]}]}}` と `filter`・`tags`'
+        mock: なし
+        expected: '`["a", "1"]`'
+      - name: test_argument_values_when_tree_in_array
+        case: 正常
+        summary: 道筋の値が配列のときは要素ごとに条件の木として読む
+        condition: '`{"filters": [{"field": "tags", "op": "in", "values": ["a"]}, {"field": "tags", "op": "in", "values": ["b"]}]}` と `filters`・`tags`'
+        mock: なし
+        expected: '`["a", "b"]`'
   - name: match_read_by
     title: 既読にする呼び出しの照合
     container: features/index/service.py
@@ -777,7 +817,7 @@ functions:
     returns:
       type: bool
       description: 全ての条件が当たれば True（条件が空なら True）
-    process: 1. 全ての `ArgCondition` について、`_argument_values(tool_input, key)` の値のどれかが `patterns` のどれかに当たるかを確かめる（値の glob は `fnmatch.fnmatchcase`）。値が 1 つも無ければ当てない
+    process: 1. 全ての `ArgCondition` について、`_argument_values(tool_input, path, field)` の値のどれかに `patterns` のどれかが `match_arg_pattern` で当たるかを確かめる。値が 1 つも無ければ当てない
     unit_tests:
       - name: test_match_args_when_empty
         case: 正常
@@ -785,6 +825,12 @@ functions:
         condition: '`conditions` が空、`tool_input` が `{}`'
         mock: なし
         expected: 'True'
+      - name: test_match_args_when_tree_negated_only
+        case: 正常
+        summary: 条件の木の否定の中にだけある値には当てない
+        condition: '`filter`・`tags` で `python` を当てる条件と、`{"filter": {"not": {"field": "tags", "op": "in", "values": ["python"]}}}`'
+        mock: なし
+        expected: 'False'
   - name: read_index
     title: 索引 1 つの読み取り
     container: features/index/service.py
@@ -906,6 +952,12 @@ functions:
         mock: なし
         expected: IndexReadError（reason に行の番号）
         exception: '`parse_index` が ValueError を送出する'
+      - name: test_read_index_text_when_tree_key
+        case: 正常
+        summary: 引数のキーを道筋と条件の木の field に分ける
+        condition: '`args` に `filter[tags]`・`filter.kind`・`a[b]c` のキーを持つエントリと、`read_by[0].args` に `filter[tags]` を持つエントリ'
+        mock: なし
+        expected: '`ArgCondition` の `key`・`path`・`field` が、`filter[tags]`・`filter`・`tags`、`filter.kind`・`filter.kind`・`None`、`a[b]c`・`a[b]c`・`None`。`read_by` の条件も同じく分ける'
   - name: entry_revs
     title: 内容のエントリのバージョン
     container: features/index/service.py
@@ -970,6 +1022,80 @@ functions:
         condition: '`paths: ["**/*.py"]`・`exclude: ["**/tests/**"]` のエントリ、`/p/src/a.py` と `/p/tests/a.py`'
         mock: なし
         expected: 前者は True、後者は False
+  - name: match_arg_pattern
+    title: 引数の値へのパターンの照合
+    container: features/index/service.py
+    usecase: 共通
+    summary: 引数の値 1 つに `MatchPattern` を当てる（`_match_args` と、索引のチェックの使われていないタグのパターンの確かめが共有する）
+    kind: 関数
+    scope: public
+    args:
+      - name: pattern
+        type: MatchPattern
+        required: true
+        passing: positional
+        description: パターン
+      - name: value
+        type: str
+        required: true
+        passing: positional
+        description: 引数の値
+    returns:
+      type: bool
+      description: 当たるか
+    process: 1. `_match_pattern(pattern, value, glob_match=_fnmatch_glob)` を返す（正規表現は部分一致、glob は `fnmatch.fnmatchcase`）
+    unit_tests:
+      - name: test_match_arg_pattern
+        case: 正常
+        summary: glob は全体、正規表現は部分に当てる
+        condition: '`m*` と `mcp`、`m*` と `xm`、`re:yth` と `python`（パラメータ展開）'
+        mock: なし
+        expected: True・False・True
+  - name: _tree_values
+    title: 条件の木の値の取り出し
+    container: features/index/service.py
+    usecase: 共通
+    summary: 条件の木を `and`・`or` の入れ子までたどり、`field` が一致する条件の `values` を返す
+    kind: 関数
+    scope: internal
+    args:
+      - name: node
+        type: Any
+        required: true
+        passing: positional
+        description: 条件の木の節（条件か束）
+      - name: field
+        type: str
+        required: true
+        passing: positional
+        description: 取り出す条件の `field`
+    returns:
+      type: list[Any]
+      description: 当たった条件の `values` を木の並びの順につないだもの（文字列にするのは呼び出し元）。木として読めなければ空
+    process: |-
+      1. `node` がオブジェクトでなければ空を返す
+      2. `TREE_GROUP_KEYS` のキーを持ちその値が配列なら、要素ごとに `_tree_values` を呼んでつなぐ。`not` の中はたどらない
+      3. `field` キーの値が引数の `field` と一致し、`op` が `NEGATED_OPS` に入らず、`values` キーを持つなら、`values` を返す値に加える（配列は要素を、それ以外はその値を 1 つ）
+      4. `field` も束のキーも持たない節からは何も取らない
+    unit_tests:
+      - name: test_tree_values_when_nested
+        case: 正常
+        summary: 入れ子の and・or の中の条件も取り出す
+        condition: '`{"and": [{"field": "tags", "op": "in", "values": ["a"]}, {"or": [{"field": "tags", "op": "eq", "values": ["b"]}, {"field": "kind", "op": "eq", "values": ["rule"]}]}]}` と `tags`'
+        mock: なし
+        expected: '`["a", "b"]`'
+      - name: test_tree_values_when_negated
+        case: 正常
+        summary: not の中と否定の op の条件は取らない
+        condition: '`{"and": [{"not": {"field": "tags", "op": "in", "values": ["a"]}}, {"field": "tags", "op": "ne", "values": ["b"]}, {"field": "tags", "op": "not_contains", "values": ["c"]}, {"field": "tags", "op": "not_exists", "values": ["d"]}, {"field": "tags", "op": "in", "values": ["e"]}]}` と `tags`'
+        mock: なし
+        expected: '`["e"]`'
+      - name: test_tree_values_when_not_tree
+        case: 正常
+        summary: 条件の木として読めない値からは取らない
+        condition: '`"tags"`・`{"tags": ["a"]}`・`{"and": "x"}` と `tags`（パラメータ展開）'
+        mock: なし
+        expected: 空
 test_files:
   - tests/unit/rule_inject/features/index/test_yaml.py
   - tests/unit/rule_inject/features/index/test_service.py
