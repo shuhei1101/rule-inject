@@ -21,6 +21,8 @@ from rule_inject.shared.errors import describe
 SEARCH_DOCS_TOOL = "search_docs"
 # `search_docs` に渡す固定の引数（これに `cwd` を加える）
 TAG_GROUP_ARGUMENTS = {"source": "*", "group_by": "tags", "format": "json"}
+# dev-docs がタグを持たない文書をまとめて返す `groups[].value`。使われているタグに含めない
+NO_TAG_LABEL = "（なし）"
 # 応答を読めないときの理由に載せる、応答の文字列の字数の上限
 UNREADABLE_EXCERPT_CHARS = 200
 
@@ -74,7 +76,9 @@ def _parse_tags(url: str, project_dir: str, result: Any) -> UsedTags:
         tags=tuple(
             group["value"]
             for group in groups
-            if isinstance(group, dict) and isinstance(group.get("value"), str)
+            if isinstance(group, dict)
+            and isinstance(group.get("value"), str)
+            and group["value"] != NO_TAG_LABEL
         ),
         reason=None,
     )
