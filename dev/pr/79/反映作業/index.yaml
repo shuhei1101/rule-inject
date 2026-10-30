@@ -1,0 +1,14 @@
+dev-docs の配信元の読み直し:
+  説明: 利用者の端末の dev-docs が配信元として読む develop の worktree（`.claude/worktrees/develop`）へ、マージで入った dev-docs.yaml・files.yaml・schemas/files.schema.yaml を取り込み、dev-docs に配信元の設定を読み直させる
+  タグ: [設定の読み直し]
+  実行者: planner
+  時期: マージの後
+  回数: 1 回限り
+  可逆: true
+  疎通確認: dev-docs の配信元の読み直し/疎通確認.py
+  実行: dev-docs の配信元の読み直し/実行.py
+  確認: dev-docs の配信元の読み直し/確認.py
+  切り戻し: null
+  失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: develop の worktree を指した check_project の設定のバージョンが current・違反 0 件・索引の同期のずれ 0 件で、status でその配信元が serving
+  状態: "-"

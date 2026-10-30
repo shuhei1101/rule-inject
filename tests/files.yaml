@@ -1,0 +1,714 @@
+# yaml-language-server: $schema=../schemas/files.schema.yaml
+files:
+  - path: e2e/conftest.py
+    name: E2E テストの共通設定
+    description: 実の Claude Code（claude -p）を起動する E2E テストが共有するフィクスチャと、実行の進行の記録を持つ。E2E テストの準備を読む・修正するときに開く。
+    tags:
+      - topic:テスト補助
+      - tool:pytest
+      - tool:claude-code
+  - path: e2e/単一ユースケース/test_check_indexes.py
+    name: 「索引をチェックする」の E2E テスト
+    description: 「索引をチェックする」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「索引をチェックする」を修正したときに流す。
+    tags:
+      - topic:索引のチェック
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/索引をチェックする
+        type: see_also
+  - path: e2e/単一ユースケース/test_delete_read_records.py
+    name: 「既読の記録を削除する」の E2E テスト
+    description: 「既読の記録を削除する」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既読の記録を削除する」を修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/既読の記録を削除する
+        type: see_also
+  - path: e2e/単一ユースケース/test_edit_index_entries.py
+    name: 「索引のエントリを編集する」の E2E テスト
+    description: 「索引のエントリを編集する」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「索引のエントリを編集する」を修正したときに流す。
+    tags:
+      - topic:索引の編集
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/索引のエントリを編集する
+        type: see_also
+  - path: e2e/単一ユースケース/test_ended_session_records_cleaned.py
+    name: 「終わったセッションの既読の記録が掃除される」の E2E テスト
+    description: 「終わったセッションの既読の記録が掃除される」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「終わったセッションの既読の記録が掃除される」を修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/終わったセッションの既読の記録が掃除される
+        type: see_also
+  - path: e2e/単一ユースケース/test_old_log_cleaned.py
+    name: 「古いログが掃除される」の E2E テスト
+    description: 「古いログが掃除される」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「古いログが掃除される」を修正したときに流す。
+    tags:
+      - topic:ログ
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/古いログが掃除される
+        type: see_also
+  - path: e2e/単一ユースケース/test_receive_guidance_for_search_results.py
+    name: 「検索の結果に出たファイルのルールの案内を受ける」の E2E テスト
+    description: 「検索の結果に出たファイルのルールの案内を受ける」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「検索の結果に出たファイルのルールの案内を受ける」を修正したときに流す。
+    tags:
+      - topic:ルールの案内
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/検索の結果に出たファイルのルールの案内を受ける
+        type: see_also
+  - path: e2e/単一ユースケース/test_receive_unread_rule_guidance.py
+    name: 「未読のルールの案内を受ける」の E2E テスト
+    description: 「未読のルールの案内を受ける」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「未読のルールの案内を受ける」を修正したときに流す。
+    tags:
+      - topic:ルールの案内
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/未読のルールの案内を受ける
+        type: see_also
+  - path: e2e/単一ユースケース/test_receive_work_rules_at_session_start.py
+    name: 「セッションの開始時に作業の決まりを受け取る」の E2E テスト
+    description: 「セッションの開始時に作業の決まりを受け取る」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「セッションの開始時に作業の決まりを受け取る」を修正したときに流す。
+    tags:
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/セッションの開始時に作業の決まりを受け取る
+        type: see_also
+  - path: e2e/単一ユースケース/test_record_discarded_on_compact.py
+    name: 「圧縮で既読の記録が捨てられる」の E2E テスト
+    description: 「圧縮で既読の記録が捨てられる」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「圧縮で既読の記録が捨てられる」を修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/圧縮で既読の記録が捨てられる
+        type: see_also
+  - path: e2e/単一ユースケース/test_rule_read_recorded.py
+    name: 「ルールを読んだことが記録される」の E2E テスト
+    description: 「ルールを読んだことが記録される」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「ルールを読んだことが記録される」を修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される
+        type: see_also
+  - path: e2e/単一ユースケース/test_run_resident_mcp_server.py
+    name: 「MCPサーバーを常駐させる」の E2E テスト
+    description: 「MCPサーバーを常駐させる」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「MCPサーバーを常駐させる」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーを常駐させる
+        type: see_also
+  - path: e2e/単一ユースケース/test_search_rules_for_operation.py
+    name: 「操作に当たるルールを検索する」の E2E テスト
+    description: 「操作に当たるルールを検索する」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「操作に当たるルールを検索する」を修正したときに流す。
+    tags:
+      - topic:ルール索引
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/操作に当たるルールを検索する
+        type: see_also
+  - path: e2e/単一ユースケース/test_view_effective_rules.py
+    name: 「効いているルールの一覧を見る」の E2E テスト
+    description: 「効いているルールの一覧を見る」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「効いているルールの一覧を見る」を修正したときに流す。
+    tags:
+      - topic:ルール索引
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/効いているルールの一覧を見る
+        type: see_also
+  - path: e2e/単一ユースケース/test_view_read_records.py
+    name: 「既読の記録を確認する」の E2E テスト
+    description: 「既読の記録を確認する」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既読の記録を確認する」を修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する
+        type: see_also
+  - path: e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
+    name: 「既読の記録を削除して案内を受け直す」の E2E テスト
+    description: 「既読の記録を削除して案内を受け直す」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既読の記録を削除して案内を受け直す」を修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - topic:ルールの案内
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/複合ユースケース/既読の記録を削除して案内を受け直す
+        type: see_also
+  - path: e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py
+    name: 「索引のエントリを直して案内を確かめる」の E2E テスト
+    description: 「索引のエントリを直して案内を確かめる」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「索引のエントリを直して案内を確かめる」を修正したときに流す。
+    tags:
+      - topic:索引の編集
+      - topic:ルールの案内
+      - tool:mcp
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/複合ユースケース/索引のエントリを直して案内を確かめる
+        type: see_also
+  - path: e2e/複合ユースケース/test_read_rule_then_touch_file.py
+    name: 「ルールを読んでからファイルを触る」の E2E テスト
+    description: 「ルールを読んでからファイルを触る」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「ルールを読んでからファイルを触る」を修正したときに流す。
+    tags:
+      - topic:ルールの案内
+      - topic:既読の記録
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/複合ユースケース/ルールを読んでからファイルを触る
+        type: see_also
+  - path: integration/conftest.py
+    name: 結合テストの共通設定
+    description: フックを子プロセスとして起動し、標準入力へ JSON を渡す結合テストのフィクスチャを持つ。フックの結合テストの準備を読む・修正するときに開く。
+    tags:
+      - topic:テスト補助
+      - topic:フック
+      - tool:pytest
+  - path: integration/plugin/test_discard_read.py
+    name: 既読の記録の破棄フックの結合テスト
+    description: 既読の記録の破棄のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録の破棄のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:既読の記録
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/discard_read
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の破棄.py
+        type: see_also
+  - path: integration/plugin/test_record_read.py
+    name: 既読の記録フックの結合テスト
+    description: 既読の記録のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:既読の記録
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/record_read
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録.py
+        type: see_also
+  - path: integration/plugin/test_rule_guide.py
+    name: ルール案内フックの結合テスト
+    description: ルール案内のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。ルール案内のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:ルールの案内
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/rule_guide
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/ルール案内.py
+        type: see_also
+  - path: integration/plugin/test_search_guide.py
+    name: 検索結果の案内フックの結合テスト
+    description: 検索結果の案内のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。検索結果の案内のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:ルールの案内
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/search_guide
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
+        type: see_also
+  - path: integration/plugin/test_sweep_read.py
+    name: 既読の記録の掃除フックの結合テスト
+    description: 既読の記録の掃除のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録の掃除のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:既読の記録
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/sweep_read
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の掃除.py
+        type: see_also
+  - path: integration/plugin/test_work_rules.py
+    name: 作業の決まりの注入フックの結合テスト
+    description: 作業の決まりの注入のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。作業の決まりの注入のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/work_rules
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/作業の決まりの注入.py
+        type: see_also
+  - path: integration/server/conftest.py
+    name: サーバーの結合テストの共通設定
+    description: サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで呼ぶフィクスチャを持つ。サーバーの結合テストの準備を読む・修正するときに開く。
+    tags:
+      - topic:テスト補助
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+  - path: integration/server/test_check_indexes.py
+    name: インターフェース定義『索引のチェック』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「索引のチェック」を呼んで確かめる結合テスト。「索引のチェック」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/check_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/索引のチェック.py
+        type: see_also
+  - path: integration/server/test_delete_index_entry.py
+    name: インターフェース定義『エントリの削除』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「エントリの削除」を呼んで確かめる結合テスト。「エントリの削除」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの削除.py
+        type: see_also
+  - path: integration/server/test_delete_read_records.py
+    name: インターフェース定義『既読の記録の削除』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「既読の記録の削除」を呼んで確かめる結合テスト。「既読の記録の削除」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/record_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の削除.py
+        type: see_also
+  - path: integration/server/test_get_read_records.py
+    name: インターフェース定義『既読の記録の確認』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「既読の記録の確認」を呼んで確かめる結合テスト。「既読の記録の確認」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/record_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の確認.py
+        type: see_also
+  - path: integration/server/test_list_rules.py
+    name: インターフェース定義『ルールの一覧』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「ルールの一覧」を呼んで確かめる結合テスト。「ルールの一覧」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの一覧.py
+        type: see_also
+  - path: integration/server/test_search_rules.py
+    name: インターフェース定義『ルールの検索』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「ルールの検索」を呼んで確かめる結合テスト。「ルールの検索」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの検索.py
+        type: see_also
+  - path: integration/server/test_server_start.py
+    name: インターフェース定義『サーバーの起動』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの起動」を呼んで確かめる結合テスト。「サーバーの起動」を修正したときに流す。
+    tags:
+      - topic:起動
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/__main__
+        type: tests
+      - to: src/rule_inject/server/app
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
+        type: see_also
+  - path: integration/server/test_write_index_entry.py
+    name: インターフェース定義『エントリの書き込み』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「エントリの書き込み」を呼んで確かめる結合テスト。「エントリの書き込み」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの書き込み.py
+        type: see_also
+  - path: nfr/test_version_consistency.py
+    name: バージョンの一致の非機能要件テスト
+    description: version.ini・pyproject.toml・uv.lock・プラグインの定義のバージョンが揃っているかを確かめるテスト。バージョンを上げるときに流す。
+    tags:
+      - topic:バージョン
+      - tool:pytest
+    related:
+      - to: dev/設計書/非機能要件/非機能要件
+        type: see_also
+  - path: unit/conftest.py
+    name: 単体テストの共通設定
+    description: 全ての単体テストが共有するフィクスチャを持つ。単体テストの準備を読む・修正するときに開く。
+    tags:
+      - topic:テスト補助
+      - tool:pytest
+  - path: unit/hooks/test_run.py
+    name: フックの起動スクリプトの単体テスト
+    description: フックの起動スクリプトの振る舞いを確かめる単体テスト。フックの起動スクリプトを修正したときに流す。
+    tags:
+      - topic:フック
+      - tool:pytest
+    related:
+      - to: hooks/run
+        type: tests
+  - path: unit/rule_inject/features/command/test_service.py
+    name: 読むコマンドのパスの取り出しの単体テスト
+    description: 読むコマンドのパスの取り出しの振る舞いを確かめる単体テスト。読むコマンドのパスの取り出しを修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - topic:コマンドの解析
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/command/service
+        type: tests
+  - path: unit/rule_inject/features/document/test_service.py
+    name: MCP の結果の文書の取り出しの単体テスト
+    description: MCP の結果の文書の取り出しの振る舞いを確かめる単体テスト。MCP の結果の文書の取り出しを修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/document/service
+        type: tests
+  - path: unit/rule_inject/features/guidance/test_service.py
+    name: 案内文の組み立ての単体テスト
+    description: 案内文の組み立ての振る舞いを確かめる単体テスト。案内文の組み立てを修正したときに流す。
+    tags:
+      - topic:ルールの案内
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/guidance/service
+        type: tests
+  - path: unit/rule_inject/features/index/check/test_scan.py
+    name: 当たらないエントリの走査の単体テスト
+    description: 当たらないエントリの走査の振る舞いを確かめる単体テスト。当たらないエントリの走査を修正したときに流す。
+    tags:
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/check/scan
+        type: tests
+  - path: unit/rule_inject/features/index/check/test_service.py
+    name: 索引のチェックの単体テスト
+    description: 索引のチェックの振る舞いを確かめる単体テスト。索引のチェックを修正したときに流す。
+    tags:
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/check/service
+        type: tests
+  - path: unit/rule_inject/features/index/check/test_tags.py
+    name: 使われていないタグのパターンの検出の単体テスト
+    description: 使われていないタグのパターンの検出の振る舞いを確かめる単体テスト。使われていないタグのパターンの検出を修正したときに流す。
+    tags:
+      - topic:索引のチェック
+      - topic:タグ
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/check/tags
+        type: tests
+  - path: unit/rule_inject/features/index/edit/test_service.py
+    name: 索引のエントリの書き込みと削除の単体テスト
+    description: 索引のエントリの書き込みと削除の振る舞いを確かめる単体テスト。索引のエントリの書き込みと削除を修正したときに流す。
+    tags:
+      - topic:索引の編集
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/edit/service
+        type: tests
+  - path: unit/rule_inject/features/index/edit/test_types.py
+    name: 索引の編集の型の単体テスト
+    description: 索引の編集の型の振る舞いを確かめる単体テスト。索引の編集の型を修正したときに流す。
+    tags:
+      - topic:索引の編集
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/edit/types
+        type: tests
+  - path: unit/rule_inject/features/index/edit/test_yaml.py
+    name: 索引の書き込みの YAML の設定の単体テスト
+    description: 索引の書き込みの YAML の設定の振る舞いを確かめる単体テスト。索引の書き込みの YAML の設定を修正したときに流す。
+    tags:
+      - topic:索引の編集
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/edit/_yaml
+        type: tests
+  - path: unit/rule_inject/features/index/test_service.py
+    name: 索引の読み込みと照合の単体テスト
+    description: 索引の読み込みと照合の振る舞いを確かめる単体テスト。索引の読み込みと照合を修正したときに流す。
+    tags:
+      - topic:ルール索引
+      - topic:ルールの案内
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/service
+        type: tests
+  - path: unit/rule_inject/features/index/test_yaml.py
+    name: 索引の YAML の読み取りの単体テスト
+    description: 索引の YAML の読み取りの振る舞いを確かめる単体テスト。索引の YAML の読み取りを修正したときに流す。
+    tags:
+      - topic:ルール索引
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/_yaml
+        type: tests
+  - path: unit/rule_inject/features/record/test_service.py
+    name: 既読の記録ファイルの読み書きの単体テスト
+    description: 既読の記録ファイルの読み書きの振る舞いを確かめる単体テスト。既読の記録ファイルの読み書きを修正したときに流す。
+    tags:
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/record/service
+        type: tests
+  - path: unit/rule_inject/hooks/test_discard_read.py
+    name: 既読の記録の破棄の単体テスト
+    description: 既読の記録の破棄の振る舞いを確かめる単体テスト。既読の記録の破棄を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/discard_read
+        type: tests
+  - path: unit/rule_inject/hooks/test_record_read.py
+    name: 既読の記録の単体テスト
+    description: 既読の記録の振る舞いを確かめる単体テスト。既読の記録を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/record_read
+        type: tests
+  - path: unit/rule_inject/hooks/test_rule_guide.py
+    name: ルール案内の単体テスト
+    description: ルール案内の振る舞いを確かめる単体テスト。ルール案内を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:ルールの案内
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/rule_guide
+        type: tests
+  - path: unit/rule_inject/hooks/test_runner.py
+    name: フックの共通の実行処理の単体テスト
+    description: フックの共通の実行処理の振る舞いを確かめる単体テスト。フックの共通の実行処理を修正したときに流す。
+    tags:
+      - topic:フック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/_runner
+        type: tests
+  - path: unit/rule_inject/hooks/test_search_guide.py
+    name: 検索結果の案内の単体テスト
+    description: 検索結果の案内の振る舞いを確かめる単体テスト。検索結果の案内を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:ルールの案内
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/search_guide
+        type: tests
+  - path: unit/rule_inject/hooks/test_sweep_read.py
+    name: 既読の記録の掃除の単体テスト
+    description: 既読の記録の掃除の振る舞いを確かめる単体テスト。既読の記録の掃除を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/sweep_read
+        type: tests
+  - path: unit/rule_inject/hooks/test_work_rules.py
+    name: 作業の決まりの注入の単体テスト
+    description: 作業の決まりの注入の振る舞いを確かめる単体テスト。作業の決まりの注入を修正したときに流す。
+    tags:
+      - topic:フック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/work_rules
+        type: tests
+  - path: unit/rule_inject/server/conftest.py
+    name: サーバーの単体テストの共通設定
+    description: サーバーの単体テストが共有するフィクスチャを持つ。サーバーの単体テストの準備を読む・修正するときに開く。
+    tags:
+      - topic:テスト補助
+      - topic:MCPサーバー
+      - tool:pytest
+  - path: unit/rule_inject/server/test_app.py
+    name: サーバーのコンポジションルートの単体テスト
+    description: サーバーのコンポジションルートの振る舞いを確かめる単体テスト。サーバーのコンポジションルートを修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - topic:MCPツール
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/app
+        type: tests
+  - path: unit/rule_inject/server/test_check_tools.py
+    name: 索引のチェックのツールの単体テスト
+    description: 索引のチェックのツールの振る舞いを確かめる単体テスト。索引のチェックのツールを修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/check_tools
+        type: tests
+  - path: unit/rule_inject/server/test_dev_docs.py
+    name: 使われているタグを引くクライアントの単体テスト
+    description: 使われているタグを引くクライアントの振る舞いを確かめる単体テスト。使われているタグを引くクライアントを修正したときに流す。
+    tags:
+      - topic:タグ
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/dev_docs
+        type: tests
+  - path: unit/rule_inject/server/test_format.py
+    name: 応答の形式と長さの切り詰めの単体テスト
+    description: 応答の形式と長さの切り詰めの振る舞いを確かめる単体テスト。応答の形式と長さの切り詰めを修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/_format
+        type: tests
+  - path: unit/rule_inject/server/test_main.py
+    name: サーバーの起動の入口の単体テスト
+    description: サーバーの起動の入口の振る舞いを確かめる単体テスト。サーバーの起動の入口を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/__main__
+        type: tests
+  - path: unit/rule_inject/server/test_record_tools.py
+    name: 既読の記録のツールの単体テスト
+    description: 既読の記録のツールの振る舞いを確かめる単体テスト。既読の記録のツールを修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/record_tools
+        type: tests
+  - path: unit/rule_inject/server/test_tools.py
+    name: ルールの一覧・検索・エントリ編集のツールの単体テスト
+    description: ルールの一覧・検索・エントリ編集のツールの振る舞いを確かめる単体テスト。ルールの一覧・検索・エントリ編集のツールを修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:ルール索引
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/tools
+        type: tests
+  - path: unit/rule_inject/shared/test_logger.py
+    name: 失敗のログの単体テスト
+    description: 失敗のログの振る舞いを確かめる単体テスト。失敗のログを修正したときに流す。
+    tags:
+      - topic:ログ
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/logger
+        type: tests
+  - path: unit/rule_inject/shared/test_paths.py
+    name: 記録フォルダとルールの場所の解決の単体テスト
+    description: 記録フォルダとルールの場所の解決の振る舞いを確かめる単体テスト。記録フォルダとルールの場所の解決を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - topic:既読の記録
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/paths
+        type: tests
+  - path: unit/rule_inject/shared/test_settings.py
+    name: 設定ファイルの読み取りの単体テスト
+    description: 設定ファイルの読み取りの振る舞いを確かめる単体テスト。設定ファイルの読み取りを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/settings
+        type: tests
+  - path: unit/rule_inject/shared/test_settings_yaml.py
+    name: 設定ファイルの YAML の読み取りの単体テスト
+    description: 設定ファイルの YAML の読み取りの振る舞いを確かめる単体テスト。設定ファイルの YAML の読み取りを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/_settings_yaml
+        type: tests
+  - path: unit/rule_inject/shared/test_variables.py
+    name: 索引の変数参照の展開の単体テスト
+    description: 索引の変数参照の展開の振る舞いを確かめる単体テスト。索引の変数参照の展開を修正したときに流す。
+    tags:
+      - topic:変数参照
+      - topic:ルール索引
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/variables
+        type: tests
