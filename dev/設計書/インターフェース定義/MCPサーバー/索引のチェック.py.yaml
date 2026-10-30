@@ -361,7 +361,7 @@ flows:
       - '`origin` が `global` の索引の `unused_tag_patterns` に、位置 0 の `re:^kotlin$` が載っている'
       - '`tag_check.state` が `checked` で `reason` が `None`'
       - '`problem_count` が 0（使われていないタグのパターンを数えない）'
-      - '偽の dev-docs が受けた `search_docs` の呼び出しが 1 回で、引数が `source: "*"`・`group_by: "tags"`・`format: "json"`'
+      - '偽の dev-docs が受けた `search_docs` の呼び出しが 1 回で、引数が `source: "*"`・`group_by: "tags"`・`format: "json"`・`cwd` が `project_dir`'
     test: test_normal_when_tag_pattern_unused
   - name: 正常系（dev-docsに届かない）
     summary: dev-docs に接続できないときは、使われていないタグのパターンの確かめだけを飛ばして理由を返し、ツールのエラーにしない
@@ -392,6 +392,29 @@ flows:
       - どの索引の `unused_tag_patterns` も空
       - '`missing_rules` にファイルが無いエントリが載り、`problem_count` が 1'
     test: test_normal_when_dev_docs_unreachable
+  - name: 正常系（dev-docsが0件を返す）
+    summary: dev-docs が読める文書を 0 件と返したときは、全てのパターンを使われていないと報告せず、タグの確かめを飛ばして理由を返す
+    setup:
+      - name: Mock
+        description: '偽の dev-docs（タグのパターンが使われているどのタグにも当たらないフローと同じ立て方）。`search_docs` が `groups` を持たない `{total_count: 0, returned: 0}` を返す'
+      - name: 設定ファイル・索引
+        description: タグのパターンが使われているどのタグにも当たらないフローと同じ
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant DD as dev-docs
+
+        C->>IF: project_dir
+        IF->>DD: search_docs（source *・group_by tags・cwd project_dir）
+        DD-->>IF: total_count 0
+        IF->>IF: タグの確かめを飛ばす
+        IF-->>C: tag_check.state skipped・reason
+    expected:
+      - '`tag_check.state` が `skipped` で、`reason` に読める文書が 0 件だった旨が載っている'
+      - どの索引の `unused_tag_patterns` も空
+      - 偽の dev-docs が受けた `cwd` が `project_dir`
+    test: test_normal_when_dev_docs_returns_nothing
 lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリと、dev-docs の使われているどのタグにも当たらないタグのパターンを返す。
 identifier: check_indexes
 idempotent: true
@@ -526,7 +549,7 @@ response:
   - name: tag_check.reason
     type: str | None
     description: 飛ばした理由
-    notes: '`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返したのどれかとその内容を含む。それ以外は `None`'
+    notes: '`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返した・読める文書が 0 件だったのどれかとその内容を含む。それ以外は `None`'
 response_example: |-
   ```json
   {
@@ -608,9 +631,13 @@ constraints:
     constraint: '`global` と `project` の全ての索引の効いているエントリ（`enabled: false`・読み飛ばすエントリ・フックが読めない索引のエントリを除く）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターンを、dev-docs の使われているタグに照らす。パターンはフックと同じ照合（glob・正規表現）で、返ったタグそのものか、NFKC と `casefold` で正規化したタグのどちらかに当たれば使われているとし、どれにも当たらないものを返す'
     notes: 書き込み前の検証（インターフェース定義「エントリの書き込み」「エントリの削除」）には含めない。書く時点で、まだ文書に付けていないタグを指すことがあるため。ドットの道筋のキー（`filter.tags`）はタグとみなさない
   - item: dev-docs への問い合わせ
-    constraint: '確かめるパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、`global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`format: "json"` で呼び、`groups[].value` を使われているタグとする。接続できない・待ち時間の上限を超えた・`isError` が `true` のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を載せる'
+    constraint: '確かめるパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、`global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`format: "json"`・`cwd: project_dir` で呼び、`groups[].value` を使われているタグとする。接続できない・待ち時間の上限を超えた・`isError` が `true` のときと、`total_count` が 0（`project_dir` から読める配信元が無いか文書が無い。`groups` のキー自体が返らない）のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を載せる'
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[dev-docs への問い合わせの待ち時間]
     notes: 索引ごとに問い合わせ直さない。ほかの確かめ（違反・ファイルが無いエントリ・読み飛ばすエントリ・`paths` の当たらないエントリ）は今どおり返す。呼び出し方は外部 API「dev-docs」
+  - item: 問い合わせと辿る順
+    constraint: dev-docs への問い合わせは、ファイルを辿る前に始め、辿るのと並べて行う。辿り終えた後（辿る時間の上限で止まったときを含む）に問い合わせの応答を待ち、待ち時間の上限（108 秒）は問い合わせを始めた時点から数える。1 回の呼び出しの所要時間の上限は、問い合わせの待ち時間（108 秒）と辿る時間（30 秒）の大きい方に、余裕を足した 162 秒
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[dev-docs への問い合わせの待ち時間]
+    notes: 続けて行うと 138 秒 + 余裕になる。余裕は、内側の待ち以外の処理（索引の読み取り・JSON Schema・ルールの場所の実在・照合）の実測が無いため、規約『資源の値の決め方』の既定どおり内側の待ち（108 秒）の 50%（54 秒）を仮に置く
 refs:
   - dev/設計書/シナリオ/単一ユースケース/索引をチェックする#
 test_file: tests/integration/server/test_check_indexes.py
