@@ -52,6 +52,7 @@ endpoints:
       - name: groups[].value
         type: str
         description: タグ（まとめた値の代表の表記）
+        notes: タグを持たない文書は、値が `（なし）` のグループにまとめて返る（dev-docs の develop の `src/dev_docs/features/search/service.py` の `NONE_LABEL`）。rule-inject はこの値を使われているタグに含めない
       - name: groups[].count
         type: int
         description: そのタグが付いた文書の数

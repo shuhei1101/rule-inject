@@ -92,6 +92,11 @@ constants:
     container: server/dev_docs.py
     summary: '`search_docs` に渡す固定の引数（これに `cwd` を加える）'
     value: '`{"source": "*", "group_by": "tags", "format": "json"}`'
+  - name: NO_TAG_LABEL
+    title: タグを持たない文書のグループの値
+    container: server/dev_docs.py
+    summary: dev-docs がタグを持たない文書をまとめて返す `groups[].value`。使われているタグに含めない
+    value: '`"（なし）"`'
 data_models:
   - name: RuleEntry
     title: 効いているエントリ
@@ -1420,7 +1425,7 @@ functions:
       4. 結果の `is_error` が True なら、接続先とエラーを返した旨と結果の文字列を含む理由を返す
       5. 結果の文字列を JSON として読む。読めない、または `total_count` が整数でないときは、接続先と応答を読めない旨を含む理由を返す
       6. `total_count` が 0 なら、接続先と `project_dir` から読める文書が 0 件だった旨を含む理由を返す
-      7. `groups[].value` の文字列を並べた `UsedTags` を返す
+      7. `groups[].value` の文字列のうち `NO_TAG_LABEL` を除いたものを並べた `UsedTags` を返す
     unit_tests:
       - name: test_fetch_used_tags
         case: 正常
@@ -1458,6 +1463,12 @@ functions:
         condition: 空いているポートを取ってすぐ閉じた `http://127.0.0.1:{ポート}/mcp`
         mock: なし（既定の `_open_session`）
         expected: 例外を送出せず、`reason` に接続先と接続できなかった旨
+      - name: test_fetch_used_tags_when_no_tag_group
+        case: 正常
+        summary: タグを持たない文書のグループは使われているタグに含めない
+        condition: '`{"total_count": 3, "groups": [{"value": "python", "count": 2}, {"value": "（なし）", "count": 1}]}` を返すセッション'
+        mock: '`test_fetch_used_tags` と同じ'
+        expected: '`tags` が `("python",)`、`reason` が None'
   - name: _open_session
     title: dev-docsのセッションの開始
     container: server/dev_docs.py
