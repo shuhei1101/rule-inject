@@ -254,7 +254,7 @@ settings:
     required: false
     default: http://127.0.0.1:8781/mcp
     description: '`check_indexes` が使われているタグを引く dev-docs の MCP サーバーの URL。フックは使わない'
-    reload: restart
+    reload: immediate
     allowed: '`http://` か `https://` で始まる URL。それ以外の値は設定ファイルの誤りとして扱う'
     refs:
       - dev/設計書/外部API/dev-docs#base_urls
