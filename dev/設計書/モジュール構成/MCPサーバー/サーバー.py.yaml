@@ -290,6 +290,7 @@ data_models:
       - name: unused_tag_patterns
         type: list[dict[str, Any]]
         description: 使われていないタグのパターンの `position`・`rev`・`location`・`key`・`pattern`（`TagPattern.pattern.source`）
+        default: 空のリスト
   - name: CheckIndexesResult
     title: 索引のチェックの応答
     container: server/types.py
@@ -318,6 +319,7 @@ data_models:
       - name: tag_check
         type: TagCheckReport
         description: 使われていないタグのパターンの確かめの結果
+        default: '`TagCheckReport(state="no_patterns", reason=None)`'
   - name: WriteEntryResult
     title: エントリの書き込みの応答
     container: server/types.py

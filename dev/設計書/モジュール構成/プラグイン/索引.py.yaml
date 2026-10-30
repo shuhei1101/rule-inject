@@ -67,7 +67,7 @@ constants:
     value: '`12`'
   - name: TREE_KEY_PATTERN
     title: 条件の木のキーの書き方
-    container: features/index/service.py
+    container: features/index/types.py
     summary: '`args` のキーを、ドットの道筋と条件の木の `field` に分ける正規表現。当たらないキーは全体をドットの道筋として読む'
     value: '`re.compile(r"^(?P<path>[^\[\]]+)\[(?P<field>[^\[\]]+)\]$")`'
   - name: TREE_GROUP_KEYS
