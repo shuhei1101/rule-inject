@@ -33,7 +33,7 @@ develop の `dev-docs.yaml` はバージョン 1 のままで、利用者の端�
 - [x] ~~部品設計~~（画面の部品を持たない）
 - [x] ~~画面設計~~（変更が画面に及ばない）
 - [x] ~~モジュール構成設計~~（影響なし: 実装を変えない）
-- [ ] ドキュメント修正（dev-docs.yaml・files.yaml・schemas/files.schema.yaml）
+- [x] ドキュメント修正（dev-docs.yaml・files.yaml・schemas/files.schema.yaml）
 - [x] ~~単体テスト作成~~（実装を変えない）
 - [x] ~~実装~~（実装を変えない）
 - [x] ~~結合テスト作成~~（実装を変えない）
