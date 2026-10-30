@@ -39,4 +39,4 @@ dev-docs の `search_docs` の `filter` が `field`・`op`・`values` の条件�
 - [x] 単体テスト作成
 - [x] 実装
 - [x] 結合テスト作成
-- [ ] E2E テスト作成
+- [x] E2E テスト作成
