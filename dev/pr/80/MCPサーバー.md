@@ -21,4 +21,14 @@
 
 ## テスト結果
 
-なし
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/unit](https://github.com/shuhei1101/rule-inject/tree/develop/tests/unit) | 全実行 | 実行のみ | ✅ | 406 テスト pass<br>`テスト結果/20261031151452_c5dcf1e_単体テスト.log` |
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration](https://github.com/shuhei1101/rule-inject/tree/develop/tests/integration) | 全実行 | 実行のみ | ✅ | 140 テスト pass<br>`テスト結果/20261031151452_c5dcf1e_結合テスト.log` |

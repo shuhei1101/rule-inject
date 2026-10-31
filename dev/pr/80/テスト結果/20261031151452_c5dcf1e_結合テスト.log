@@ -1,0 +1,25 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-server-remeasure-dev-docs-query-timeout
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 140 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  2%]
+tests/integration/plugin/test_record_read.py ................            [ 14%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 34%]
+....                                                                     [ 37%]
+tests/integration/plugin/test_search_guide.py .............              [ 46%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 52%]
+tests/integration/plugin/test_work_rules.py ...                          [ 55%]
+tests/integration/server/test_check_indexes.py ...............           [ 65%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 73%]
+tests/integration/server/test_delete_read_records.py ...                 [ 75%]
+tests/integration/server/test_get_read_records.py .....                  [ 79%]
+tests/integration/server/test_list_rules.py .....                        [ 82%]
+tests/integration/server/test_search_rules.py .....                      [ 86%]
+tests/integration/server/test_server_start.py .....                      [ 90%]
+tests/integration/server/test_write_index_entry.py ..............        [100%]
+
+======================= 140 passed in 404.99s (0:06:44) ========================
