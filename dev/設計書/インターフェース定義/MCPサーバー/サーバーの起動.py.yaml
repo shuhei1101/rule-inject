@@ -35,7 +35,8 @@ flows:
       - name: Mock
         description: なし（起動のコマンドを子プロセスで実行する）
       - name: 設定ファイル
-        description: 正常系と同じ
+        description: テストがポート 0 で待ち受けて割り当てられたポートを `global.server_port` に書いた設定ファイル
+        notes: テストはそのポートを起動から確かめ終わるまで待ち受けたままにする
       - name: 環境変数
         description: '`RULE_INJECT_PORT` に設定ファイルと別の空いているポートを渡す'
     flow: |-
@@ -51,7 +52,7 @@ flows:
         SV->>SV: RULE_INJECT_PORT のポートで待ち受ける
       ```
     expected:
-      - '`RULE_INJECT_PORT` のポートで待ち受け、設定ファイルのポートでは待ち受けていない'
+      - 設定ファイルのポートをテストが待ち受けていても起動に成功し、`RULE_INJECT_PORT` のポートで待ち受ける
     test: test_normal_when_port_overridden
   - name: 正常系（止める）
     summary: SIGTERM で待ち受けを閉じて終わる
@@ -73,18 +74,17 @@ flows:
       ```
     expected:
       - 終了コードが SIGTERM で終わったことを示す（シェルでは 143、`subprocess` の `returncode` では -15）
-      - 標準エラーに `Application shutdown complete.` が出ている
-      - 設定ファイルのポートで待ち受けていない
+      - 標準エラーに `Application shutdown complete.` と `Finished server process` が出ている
     test: test_normal_when_stopped
   - name: 異常系（ポートが使われている・OSError）
     summary: 待ち受けに失敗し、理由を書いて終わる
     setup:
       - name: Mock
         description: なし（起動のコマンドを子プロセスで実行する）
-      - name: 設定ファイル
-        description: 正常系と同じ
       - name: ポートの使用
-        description: テストが設定ファイルのポートを先に待ち受けておく
+        description: テストがポート 0 で待ち受け、割り当てられたポートを待ち受けたままにする
+      - name: 設定ファイル
+        description: '`global.server_port` にテストが待ち受けているポートを書いた設定ファイル'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -122,7 +122,8 @@ flows:
         SV-->>U: 標準エラーに設定ファイルの場所と理由<br>0 以外の終了コード
       ```
     expected:
-      - 終了コードが 0 以外で、どのポートでも待ち受けていない
+      - 終了コードが 0 以外
+      - 標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
       - 標準エラーに、設定ファイルの場所と読めない理由が載っている
     test: test_error_when_settings_unreadable
 lead: 設定ファイルを読み、`127.0.0.1` のポートで Streamable HTTP の MCP サーバーとして待ち受ける。Ctrl+C か SIGTERM で待ち受けを閉じて終わる。

@@ -14,6 +14,7 @@ layers:
       ```
     prerequisites:
       - MCP サーバーのテスト（`tests/integration/server/`）は、単体テストと同じ依存を使い、サーバーを `127.0.0.1` の空いているポート（`RULE_INJECT_PORT`）で子プロセスとして立て、`mcp` の Streamable HTTP のクライアントで呼ぶ
+      - サーバー・偽の dev-docs の起動は、子プロセスの標準エラーに `Uvicorn running on http://127.0.0.1:{ポート}` が出たことで確かめる（ポートへ接続できるだけでは、他のプロセスが待ち受けていても通るため）。待ち受けに失敗して子プロセスが終わったら、別の空いているポートで起動し直す（5 回まで）
   - name: E2E テスト
     description: 実の Claude Code（`claude -p --plugin-dir {Linux 側の一時フォルダへコピーしたプラグインのフォルダ} --setting-sources project`）を起動して、シナリオごとに確かめる。pytest で実行し、`--run-e2e` を付けたときだけ動く（付けなければ全て skip する）。
     prerequisites:

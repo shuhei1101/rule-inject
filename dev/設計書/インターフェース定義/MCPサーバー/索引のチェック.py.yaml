@@ -370,7 +370,7 @@ flows:
         description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）。dev-docs は立てない
       - name: 設定ファイル
         description: 違反が無いフローの設定に、`global.dev_docs_url` で何も待ち受けていない `127.0.0.1` のポートの URL を指す
-        notes: 空いているポートを取ってすぐ閉じた番号を使う
+        notes: テストがポート 0 で bind し、listen しないまま握っている番号を使う（接続は拒否され、他のプロセスはそのポートで待ち受けられない）
       - name: 索引
         description: '`args: {"filter[tags]": ["python"]}` のエントリと、`rule` の場所にファイルが無いエントリを持つ'
         notes: ほかの確かめが今どおり返ることを確かめる
