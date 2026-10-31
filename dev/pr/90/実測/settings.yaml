@@ -1,0 +1,7 @@
+# 実測で RULE_INJECT_CONFIG に渡す設定ファイル。手元で使っている実際の索引と、タグのパターンを持つ測る用の索引
+# プロジェクトの索引は、projects を持たないため既定の置き場所（project_dir の rules.yaml）を読む
+global:
+  indexes:
+    - /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/rules.yaml
+    - /mnt/c/Users/shuhe/repo/ai-monitor/.claude/worktrees/develop/rules.global.yaml
+    - /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-server-remeasure-check-indexes-margin/dev/pr/90/実測/tags.rules.yaml
