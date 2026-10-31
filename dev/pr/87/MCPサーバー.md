@@ -20,9 +20,9 @@
 | `test_error_when_port_in_use` | テストがポート 0 で待ち受けて握ったポートを設定ファイルに書く | `free_port` の番号を後から待ち受けない |
 | `test_normal_when_stopped` | 停止後のポートへの接続の確かめに代えて、標準エラーの `Finished server process` で確かめる | |
 | `test_error_when_settings_unreadable` | `ConnectionRefusedError` の確かめに代えて、標準エラーに `Uvicorn running on` が出ていないことで確かめる | |
-| `test_normal_when_dev_docs_unreachable` | テストがポート 0 で bind し、listen しないまま握っている番号の URL を使う | |
+| `test_normal_when_dev_docs_unreachable` | テストが `SO_REUSEADDR` を付けずにポート 0 で bind し、listen しないまま握っている番号の URL を使う | |
 
-起動し直す回数の 5 回は、取り合いが起きるのは閉じてから子プロセスが待ち受けるまでの間に他のプロセスが同じ番号を取ったときだけで、5 回続けて起きることは負荷の高いときも無いと見込んだ値。
+起動し直す回数の 5 回は、1 回の起動で取り合いが起きる確率 0.1・1 回の実行での起動 約 13 回から、1 回の実行が失敗する確率を 0.1% 以下にする回数として導いた（導き方はテスト実行方法の結合テスト（バック）の補足「起動し直す回数」）。
 
 ## テスト結果
 
