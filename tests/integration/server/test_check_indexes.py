@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import socket
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -412,7 +413,6 @@ def test_normal_when_dev_docs_unreachable(
     tmp_path: Path,
     project_dir: Path,
     make_index: Callable[..., Path],
-    free_port: Callable[[], int],
     running_server: Callable[..., Any],
 ) -> None:
     """dev-docs に接続できないときは、タグの確かめだけを飛ばして理由を返し、ツールのエラーにしない（正常系）。"""
@@ -425,10 +425,14 @@ def test_normal_when_dev_docs_unreachable(
         '      filter[tags]: ["python"]\n'
         f"  - rule: {tmp_path}/rules/missing.md\n"
     )
-    url = f"http://127.0.0.1:{free_port()}/mcp"
-    server = running_server(index, dev_docs_url=url)
-    # 実行
-    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 接続先のポートは、SO_REUSEADDR を付けずに bind して listen しないまま握る
+    # （接続は拒否され、呼び終わるまで他のプロセスはそのポートで待ち受けられない）
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as held:
+        held.bind(("127.0.0.1", 0))
+        url = f"http://127.0.0.1:{held.getsockname()[1]}/mcp"
+        server = running_server(index, dev_docs_url=url)
+        # 実行
+        result = server.call("check_indexes", project_dir=str(project_dir), format="json")
     # 検証
     content = result.structured_content
     report = content["indexes"][0]
