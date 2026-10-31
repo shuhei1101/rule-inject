@@ -29,11 +29,15 @@ async def _call_once(cwd: str) -> dict:
     started = time.monotonic()
     try:
         async with asyncio.timeout(CALL_LIMIT_SECONDS):
-            async with streamable_http_client(DEV_DOCS_URL) as (read, write), ClientSession(read, write) as session:
+            async with (
+                streamable_http_client(DEV_DOCS_URL) as (read, write),
+                ClientSession(read, write) as session,
+            ):
                 await session.initialize()
-                result = await session.call_tool(SEARCH_DOCS_TOOL, {**TAG_GROUP_ARGUMENTS, "cwd": cwd})
-    # 失敗した回も 1 行として残し、集計で数える（測定は続ける）
-    except Exception as error:
+                result = await session.call_tool(
+                    SEARCH_DOCS_TOOL, {**TAG_GROUP_ARGUMENTS, "cwd": cwd}
+                )
+    except Exception as error:  # noqa: BLE001 -- 失敗した回も 1 行として残し、集計で数える（測定は続ける）
         return {"seconds": round(time.monotonic() - started, 3), "error": repr(error)}
     elapsed = time.monotonic() - started
     text = "".join(item.text for item in result.content if isinstance(item, TextContent))
