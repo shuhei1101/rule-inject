@@ -16,6 +16,7 @@
 | --- | --- | --- |
 | サーバー・偽の dev-docs の起動待ち | 子プロセスの標準エラーに `Uvicorn running on http://127.0.0.1:{ポート}` が出たことで起動を確かめる | 偽の dev-docs の標準エラーも捨てずにファイルへ書く |
 | サーバー・偽の dev-docs のポート | 待ち受けに失敗して子プロセスが終わったら、別の空いているポートで起動し直す（5 回まで） | `free_port`・`_start_shared`・`start_server`・`start_fake_dev_docs` |
+| 起動を待つ上限（`START_TIMEOUT_SEC`）と、起動して失敗で終わるまでを待つ上限（`EXIT_TIMEOUT_SEC`） | どちらも 51 秒にする。負荷の中で 1,000 回測った起動の p99.9 33.8 秒 + 50% | 導き方はテスト実行方法の結合テスト（バック）の補足「起動を待つ上限」。測るスクリプトと結果は `dev/pr/87/実測/` |
 | `test_normal_when_port_overridden` | 設定ファイルのポートは、テストがポート 0 で待ち受けて握ったまま起動し、起動に成功することで確かめる | `port_is_listening(config_port)` の確かめを外す |
 | `test_error_when_port_in_use` | テストがポート 0 で待ち受けて握ったポートを設定ファイルに書く | `free_port` の番号を後から待ち受けない |
 | `test_normal_when_stopped` | 停止後のポートへの接続の確かめに代えて、標準エラーの `Finished server process` で確かめる | |
