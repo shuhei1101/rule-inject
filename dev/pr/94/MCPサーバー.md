@@ -27,7 +27,10 @@
 
 ### 単体
 
-なし
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/unit/rule_inject/server/test_dev_docs.py](https://github.com/shuhei1101/rule-inject/blob/fix/server/dev-docs-url-and-test-ports/tests/unit/rule_inject/server/test_dev_docs.py) | 全実行 | 変更 | ✅ | `test_fetch_used_tags_when_unreachable` の接続先を変更<br>`テスト結果/20261101004114_b0705b7_単体テスト.log` |
+| `tests/unit` の他のファイル | 全実行 | 実行のみ | ✅ | `tests/unit` 全体で 406 テスト pass<br>`テスト結果/20261101004114_b0705b7_単体テスト.log` |
 
 ### 結合
 
