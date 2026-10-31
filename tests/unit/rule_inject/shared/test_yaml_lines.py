@@ -49,7 +49,7 @@ def test_tokenize_when_hash_in_word() -> None:
 def test_tokenize_when_tab_indent() -> None:
     """タブのインデントを拒む（異常系）。"""
     # 実行・検証
-    with pytest.raises(ValueError, match="^2行目: インデントにタブは使えません$"):
+    with pytest.raises(ValueError, match=r"^2行目: インデントにタブは使えません$"):
         tokenize("a:\n\t- x\n")
 
 
@@ -72,7 +72,7 @@ def test_parse_scalar(text: str, expected: str) -> None:
 def test_parse_scalar_when_empty() -> None:
     """空の値を拒む（異常系）。"""
     # 実行・検証
-    with pytest.raises(ValueError, match="^1行目: 値が空です$"):
+    with pytest.raises(ValueError, match=r"^1行目: 値が空です$"):
         parse_scalar("  ", 1)
 
 
@@ -86,7 +86,7 @@ def test_parse_scalar_when_empty() -> None:
 def test_parse_scalar_when_unclosed_quote(text: str) -> None:
     """閉じていない引用符を拒む（異常系）。"""
     # 実行・検証
-    with pytest.raises(ValueError, match="^1行目: 引用符が閉じていません$"):
+    with pytest.raises(ValueError, match=r"^1行目: 引用符が閉じていません$"):
         parse_scalar(text, 1)
 
 
@@ -123,14 +123,14 @@ def test_parse_flow_list_when_unclosed_bracket() -> None:
 def test_parse_flow_list_when_unclosed_quote() -> None:
     """要素の閉じていない引用符を拒む（異常系）。"""
     # 実行・検証
-    with pytest.raises(ValueError, match="^1行目: 引用符が閉じていません$"):
+    with pytest.raises(ValueError, match=r"^1行目: 引用符が閉じていません$"):
         parse_flow_list('["a, b]', 1)
 
 
 def test_parse_flow_list_when_empty_item() -> None:
     """空の要素を拒む（異常系）。"""
     # 実行・検証
-    with pytest.raises(ValueError, match="^1行目: 値が空です$"):
+    with pytest.raises(ValueError, match=r"^1行目: 値が空です$"):
         parse_flow_list("[a, , b]", 1)
 
 
@@ -177,7 +177,7 @@ def test_split_key_when_invalid(text: str) -> None:
     # 準備
     line = Line(number=1, indent=0, text=text)
     # 実行・検証
-    with pytest.raises(ValueError, match="^1行目: `キー: 値` の形式で書いてください$"):
+    with pytest.raises(ValueError, match=r"^1行目: `キー: 値` の形式で書いてください$"):
         split_key(line)
 
 
@@ -213,5 +213,5 @@ def test_read_value_when_missing() -> None:
     # 準備
     lines = tokenize("key:\nother: 1\n")
     # 実行・検証
-    with pytest.raises(ValueError, match="^1行目: key の値がありません$"):
+    with pytest.raises(ValueError, match=r"^1行目: key の値がありません$"):
         read_value(lines, lines[0], 1, "key", "", 1)
