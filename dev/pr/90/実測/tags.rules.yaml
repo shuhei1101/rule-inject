@@ -1,0 +1,1065 @@
+rules:
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-container.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-0-*"
+        - "re:^unused-0-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-test-fixture.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-1-*"
+        - "re:^unused-1-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-design-policy.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-2-*"
+        - "re:^unused-2-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-checksheet.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-3-*"
+        - "re:^unused-3-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-flowchart.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-4-*"
+        - "re:^unused-4-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-setup-procedure.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-5-*"
+        - "re:^unused-5-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-getting-started.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-6-*"
+        - "re:^unused-6-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-reference.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-7-*"
+        - "re:^unused-7-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-template.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-8-*"
+        - "re:^unused-8-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-skill.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-9-*"
+        - "re:^unused-9-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-writing-style.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-10-*"
+        - "re:^unused-10-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-issue-presentation.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-11-*"
+        - "re:^unused-11-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-keep-existing-text.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-12-*"
+        - "re:^unused-12-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-config-location.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-13-*"
+        - "re:^unused-13-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-code-tool-usage.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-14-*"
+        - "re:^unused-14-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-json.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-15-*"
+        - "re:^unused-15-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-common.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-16-*"
+        - "re:^unused-16-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-plugin.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-17-*"
+        - "re:^unused-17-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-mcp.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-18-*"
+        - "re:^unused-18-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-skills-usage.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-19-*"
+        - "re:^unused-19-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-subagent.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-20-*"
+        - "re:^unused-20-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-hook.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-21-*"
+        - "re:^unused-21-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-context-placement.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-22-*"
+        - "re:^unused-22-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-rule-writing.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-23-*"
+        - "re:^unused-23-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-yaml.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-24-*"
+        - "re:^unused-24-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-rule-index-registration.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-25-*"
+        - "re:^unused-25-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-document-management.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-26-*"
+        - "re:^unused-26-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-yaml-file-unit.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-27-*"
+        - "re:^unused-27-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-tag-term-registration.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-28-*"
+        - "re:^unused-28-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-coding-general.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-29-*"
+        - "re:^unused-29-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/typescript-core-style.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-30-*"
+        - "re:^unused-30-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/ui-no-iframe.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-31-*"
+        - "re:^unused-31-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-precheck.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-32-*"
+        - "re:^unused-32-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-content-location.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-33-*"
+        - "re:^unused-33-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/html-core-server-rendering.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-34-*"
+        - "re:^unused-34-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/markdown-editing.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-35-*"
+        - "re:^unused-35-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/markdown-mermaid.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-36-*"
+        - "re:^unused-36-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/markdown-flowchart.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-37-*"
+        - "re:^unused-37-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/react-state-effect.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-38-*"
+        - "re:^unused-38-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-react-state-placement.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-39-*"
+        - "re:^unused-39-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-design-principles.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-40-*"
+        - "re:^unused-40-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/prompt-file.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-41-*"
+        - "re:^unused-41-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-architecture-composition-root.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-42-*"
+        - "re:^unused-42-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-concurrency-async.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-43-*"
+        - "re:^unused-43-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-core-comment.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-44-*"
+        - "re:^unused-44-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-application.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-45-*"
+        - "re:^unused-45-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-schema.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-46-*"
+        - "re:^unused-46-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-health-check.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-47-*"
+        - "re:^unused-47-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-route.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-48-*"
+        - "re:^unused-48-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-auth-error.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-49-*"
+        - "re:^unused-49-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-llm-provider.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-50-*"
+        - "re:^unused-50-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-llm-prompt-loader.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-51-*"
+        - "re:^unused-51-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-llm-exception-retry.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-52-*"
+        - "re:^unused-52-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-packaging-pyproject.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-53-*"
+        - "re:^unused-53-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-scripts-python-script.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-54-*"
+        - "re:^unused-54-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-scripts-tkinter.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-55-*"
+        - "re:^unused-55-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-scripts-launcher-windows.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-56-*"
+        - "re:^unused-56-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-error-definition.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-57-*"
+        - "re:^unused-57-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-type-definition.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-58-*"
+        - "re:^unused-58-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-constant.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-59-*"
+        - "re:^unused-59-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-settings.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-60-*"
+        - "re:^unused-60-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-testing-pytest.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-61-*"
+        - "re:^unused-61-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-testing-strategy.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-62-*"
+        - "re:^unused-62-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-testing-fixture.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-63-*"
+        - "re:^unused-63-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/ui-screen-division.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-64-*"
+        - "re:^unused-64-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/ui-screen-design-principles.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-65-*"
+        - "re:^unused-65-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-container.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-66-*"
+        - "re:^unused-66-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-test-fixture.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-67-*"
+        - "re:^unused-67-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-design-policy.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-68-*"
+        - "re:^unused-68-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-checksheet.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-69-*"
+        - "re:^unused-69-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-flowchart.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-70-*"
+        - "re:^unused-70-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-setup-procedure.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-71-*"
+        - "re:^unused-71-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-getting-started.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-72-*"
+        - "re:^unused-72-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-reference.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-73-*"
+        - "re:^unused-73-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-template.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-74-*"
+        - "re:^unused-74-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-skill.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-75-*"
+        - "re:^unused-75-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-writing-style.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-76-*"
+        - "re:^unused-76-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-issue-presentation.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-77-*"
+        - "re:^unused-77-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-keep-existing-text.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-78-*"
+        - "re:^unused-78-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-config-location.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-79-*"
+        - "re:^unused-79-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-code-tool-usage.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-80-*"
+        - "re:^unused-80-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-json.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-81-*"
+        - "re:^unused-81-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-common.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-82-*"
+        - "re:^unused-82-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-plugin.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-83-*"
+        - "re:^unused-83-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-mcp.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-84-*"
+        - "re:^unused-84-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-skills-usage.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-85-*"
+        - "re:^unused-85-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-subagent.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-86-*"
+        - "re:^unused-86-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-hook.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-87-*"
+        - "re:^unused-87-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-context-placement.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-88-*"
+        - "re:^unused-88-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-rule-writing.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-89-*"
+        - "re:^unused-89-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-yaml.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-90-*"
+        - "re:^unused-90-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-rule-index-registration.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-91-*"
+        - "re:^unused-91-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-document-management.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-92-*"
+        - "re:^unused-92-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-yaml-file-unit.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-93-*"
+        - "re:^unused-93-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-tag-term-registration.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-94-*"
+        - "re:^unused-94-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-coding-general.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-95-*"
+        - "re:^unused-95-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/typescript-core-style.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-96-*"
+        - "re:^unused-96-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/ui-no-iframe.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-97-*"
+        - "re:^unused-97-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-precheck.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-98-*"
+        - "re:^unused-98-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-content-location.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-99-*"
+        - "re:^unused-99-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/html-core-server-rendering.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-100-*"
+        - "re:^unused-100-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/markdown-editing.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-101-*"
+        - "re:^unused-101-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/markdown-mermaid.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-102-*"
+        - "re:^unused-102-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/markdown-flowchart.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-103-*"
+        - "re:^unused-103-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/react-state-effect.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-104-*"
+        - "re:^unused-104-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-react-state-placement.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-105-*"
+        - "re:^unused-105-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/dev-design-principles.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-106-*"
+        - "re:^unused-106-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/prompt-file.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-107-*"
+        - "re:^unused-107-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-architecture-composition-root.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-108-*"
+        - "re:^unused-108-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-concurrency-async.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-109-*"
+        - "re:^unused-109-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-core-comment.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-110-*"
+        - "re:^unused-110-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-application.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-111-*"
+        - "re:^unused-111-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-schema.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-112-*"
+        - "re:^unused-112-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-health-check.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-113-*"
+        - "re:^unused-113-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-route.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-114-*"
+        - "re:^unused-114-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-fastapi-auth-error.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-115-*"
+        - "re:^unused-115-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-llm-provider.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-116-*"
+        - "re:^unused-116-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-llm-prompt-loader.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-117-*"
+        - "re:^unused-117-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-llm-exception-retry.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-118-*"
+        - "re:^unused-118-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-packaging-pyproject.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-119-*"
+        - "re:^unused-119-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-scripts-python-script.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-120-*"
+        - "re:^unused-120-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-scripts-tkinter.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-121-*"
+        - "re:^unused-121-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-scripts-launcher-windows.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-122-*"
+        - "re:^unused-122-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-error-definition.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-123-*"
+        - "re:^unused-123-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-type-definition.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-124-*"
+        - "re:^unused-124-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-constant.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-125-*"
+        - "re:^unused-125-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-shared-settings.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-126-*"
+        - "re:^unused-126-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-testing-pytest.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-127-*"
+        - "re:^unused-127-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-testing-strategy.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-128-*"
+        - "re:^unused-128-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/python-testing-fixture.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-129-*"
+        - "re:^unused-129-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/ui-screen-division.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-130-*"
+        - "re:^unused-130-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/ui-screen-design-principles.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-131-*"
+        - "re:^unused-131-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-container.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-132-*"
+        - "re:^unused-132-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-test-fixture.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-133-*"
+        - "re:^unused-133-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-design-policy.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-134-*"
+        - "re:^unused-134-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-checksheet.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-135-*"
+        - "re:^unused-135-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-flowchart.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-136-*"
+        - "re:^unused-136-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-setup-procedure.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-137-*"
+        - "re:^unused-137-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-getting-started.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-138-*"
+        - "re:^unused-138-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-reference.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-139-*"
+        - "re:^unused-139-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-template.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-140-*"
+        - "re:^unused-140-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/template/template-skill.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-141-*"
+        - "re:^unused-141-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-writing-style.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-142-*"
+        - "re:^unused-142-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-issue-presentation.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-143-*"
+        - "re:^unused-143-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/convention-keep-existing-text.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-144-*"
+        - "re:^unused-144-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/flowchart/flowchart-config-location.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-145-*"
+        - "re:^unused-145-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-code-tool-usage.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-146-*"
+        - "re:^unused-146-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-json.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-147-*"
+        - "re:^unused-147-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-common.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-148-*"
+        - "re:^unused-148-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-plugin.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-149-*"
+        - "re:^unused-149-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-mcp.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-150-*"
+        - "re:^unused-150-x$"
+  - rule: /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/docs/rule/claude-skills-usage.yaml
+    tools:
+      - "mcp__*__search_docs"
+    args:
+      filter[tags]:
+        - "unused-151-*"
+        - "re:^unused-151-x$"

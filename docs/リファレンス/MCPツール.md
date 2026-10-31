@@ -145,7 +145,7 @@ JSON Schema の場所は [索引の書式](./索引の書式.md)。
 - `unused_tag_patterns` で確かめるのは、効いているエントリ（`unmatched_paths` と同じ除外）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターン。ドットの道筋のキー（`filter.tags`）は確かめない
 - パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかに当たれば使われているとする
 - 確かめるパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使われているタグを引く。索引ごとには問い合わせ直さない
-- dev-docs への問い合わせは、`paths` の当たらないエントリを確かめるファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 210 秒かかる
+- dev-docs への問い合わせは、`paths` の当たらないエントリを確かめるファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
 - dev-docs に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返す。ほかの確かめは変わらない
 - `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths`・`unused_tag_patterns` を含めない
 
