@@ -49,16 +49,16 @@ scenarios:
         SV-->>U: SIGTERM で終わる（終了コード 143）
     expected:
       - プロセスが SIGTERM で終わり、標準エラーに `Application shutdown complete.` が出ている
-      - 設定ファイルのポートで待ち受けていない
+      - 標準エラーに `Finished server process` が出ている
     test: test_normal_when_stopped
   - name: 異常シナリオ（ポートが使われている）
     setup:
       - name: Mock
         description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）
-      - name: 設定ファイル
-        description: 正常シナリオと同じ
       - name: ポートの使用
-        description: テストが設定ファイルのポートを先に待ち受けておく
+        description: テストがポート 0 で待ち受け、割り当てられたポートを待ち受けたままにする
+      - name: 設定ファイル
+        description: 待ち受けのポートのキーにテストが待ち受けているポートを書いた設定ファイル
     flow: |-
       sequenceDiagram
         participant U as 利用者
@@ -92,7 +92,7 @@ scenarios:
         CF-->>SV: 読めない（知らないキー）
         SV-->>U: 標準エラーに設定ファイルの場所と理由を書き、0 以外の終了コードで終わる
     expected:
-      - プロセスが 0 以外の終了コードで終わり、待ち受けていない
+      - プロセスが 0 以外の終了コードで終わり、標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
       - 標準エラーに、設定ファイルの場所と読めない理由が載っている
     test: test_error_when_settings_unreadable
 lead: 利用者がローカルのクローンから起動のコマンドで MCP サーバーを前面で動かし、Claude Code に HTTP の MCP サーバーとして登録して接続する。止めるときは Ctrl+C か SIGTERM で終わらせる。
