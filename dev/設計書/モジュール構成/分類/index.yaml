@@ -1,0 +1,5 @@
+summary: "分類ごとの構成とディレクトリ構成を束ねる設計書"
+docs_index: true
+items:
+  - page: MCPサーバー/
+    summary: MCP サーバーの分類ごとの構成とディレクトリ構成

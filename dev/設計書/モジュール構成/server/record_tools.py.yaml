@@ -1,0 +1,144 @@
+title: "MCP サーバー / サーバー / record_tools.py"
+test_files:
+  - tests/unit/rule_inject/server/test_record_tools.py
+functions:
+  - name: get_read_records
+    title: 既読の記録の確認
+    container: server/record_tools.py
+    usecase: 既読の記録を確かめる
+    summary: インターフェース定義「既読の記録の確認」のツールの本体
+    kind: 関数
+    scope: public
+    args:
+      - name: session_id
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 確かめるセッション。`None` ならセッションの一覧を返す
+      - name: limit
+        type: int
+        required: false
+        default: DEFAULT_LIST_LIMIT
+        passing: keyword
+        description: 返す件数の上限（1〜`MAX_LIST_LIMIT`。引数の Schema で断る）
+      - name: cursor
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 前の応答の `next_cursor`（`CURSOR_PATTERN`）
+      - name: format
+        type: ResponseFormat
+        required: false
+        default: '"markdown"'
+        passing: keyword
+        description: 応答の形式
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(ReadRecordsResult, format)`'
+    process: |-
+      1. `session_id` があり `is_valid_session_id` が False なら `ToolError`。`_record_settings(env)` で設定を読む
+      2. `session_id` が `None` なら `list_record_sessions(state_dir)` を `RecordSessionItem` にして並べる
+      3. `session_id` があれば `list_rule_states(list_read_entries(...))` で場所ごとの状態を出し、`read_history(...)` の行をその場所ごとに読み方とツール名の組でまとめて（最後の時刻と回数）`RuleRead` にする。既読の記録に無い場所の履歴は捨てる
+      4. `cursor` の位置から `limit` 件を、`fit_page` で `MAX_RESPONSE_CHARS` に収まる件数に切り、続きがあれば `next_cursor` に次の位置を入れて返す
+    exceptions:
+      - name: ToolError
+        condition: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+        message: 受けた値と形式が誤っている旨、または設定ファイルの場所と理由
+    unit_tests:
+      - name: test_get_read_records
+        case: 正常
+        summary: 既読のルールごとに状態と読み方のまとめを返す
+        condition: 本文が同じルールと本文を変えたルールの既読の記録と、`mcp` で 2 回読んだ履歴
+        mock: なし
+        expected: '`state` が `current` と `changed`、`mcp` の行の `count` が 2'
+      - name: test_get_read_records_when_sessions
+        case: 正常
+        summary: セッションを省くとセッションの一覧を返す
+        condition: 既読の記録のある 2 セッション、`session_id` なし
+        mock: なし
+        expected: '`sessions` が最終更新の新しい順に 2 件、`rules` が空'
+      - name: test_get_read_records_when_invalid_session
+        case: 異常
+        summary: 形式の誤ったセッションを断る
+        condition: '`session_id: "../x"`'
+        mock: なし
+        expected: ToolError
+        exception: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+  - name: delete_read_records
+    title: 既読の記録の削除
+    container: server/record_tools.py
+    usecase: 既読の記録を削除する
+    summary: インターフェース定義「既読の記録の削除」のツールの本体
+    kind: 関数
+    scope: public
+    side_effects: そのセッションの既読の記録と案内済みの記録のファイルを削除する
+    args:
+      - name: session_id
+        type: str
+        required: true
+        passing: keyword
+        description: 既読の記録を削除するセッション
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(DeleteRecordsResult, "json")`'
+    process: |-
+      1. `is_valid_session_id` が False なら `ToolError`。`_record_settings(env)` で設定を読む
+      2. `list_read_entries` で削除する前の既読の場所を初めて現れた順に集める
+      3. `delete_record` と `delete_guided` で記録を削除し、場所の一覧を返す
+    exceptions:
+      - name: ToolError
+        condition: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+        message: 受けた値と形式が誤っている旨、または設定ファイルの場所と理由
+    unit_tests:
+      - name: test_delete_read_records
+        case: 正常
+        summary: 既読の記録と案内済みの記録を削除し、既読だった場所を返す
+        condition: 2 つの場所の既読の記録、案内済みの記録、既読の履歴
+        mock: なし
+        expected: '`locations` が 2 件。既読の記録と案内済みの記録のファイルが無く、既読の履歴は残る'
+      - name: test_delete_read_records_when_missing
+        case: 正常
+        summary: 記録の無いセッションは空の一覧を返す
+        condition: 記録の無い `session_id`
+        mock: なし
+        expected: '`success` が True、`locations` が空'
+      - name: test_delete_read_records_when_invalid_session
+        case: 異常
+        summary: 形式の誤ったセッションを断り、何も削除しない
+        condition: '`session_id: "../x"`'
+        mock: なし
+        expected: ToolError
+        exception: '`session_id` が記録ファイル名に使えない形式、または `_record_settings` が送出する'
+  - name: _record_settings
+    title: 既読の記録の設定
+    container: server/record_tools.py
+    usecase: 共通
+    summary: '`CLAUDE_PROJECT_DIR` 無しで、フックと同じ規則で設定を読む。ツールの呼び出しのたびに読み直す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+    returns:
+      type: Settings
+      description: 記録フォルダを持つ設定
+    process: '1. `env` から `CLAUDE_PROJECT_DIR` を除いて `load_settings` を返す。`SettingsReadError` は `ToolError`（`{path}: {reason}`）'
+    exceptions:
+      - name: ToolError
+        condition: 設定ファイルが読めない
+        message: 設定ファイルの場所と理由

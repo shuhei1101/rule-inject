@@ -1,0 +1,102 @@
+title: "MCP サーバー / サーバー / _format.py"
+test_files:
+  - tests/unit/rule_inject/server/test_format.py
+constants:
+  - name: MAX_RESPONSE_CHARS
+    title: 応答の長さの上限
+    container: server/_format.py
+    summary: 非機能要件「MCPのツールの応答の長さ」の決定値（text の字数）
+    value: '`40_000`'
+functions:
+  - name: respond
+    title: 応答の組み立て
+    container: server/_format.py
+    usecase: 共通
+    summary: 応答のモデルを、形式に合わせた `CallToolResult` にする
+    kind: 関数
+    scope: public
+    args:
+      - name: result
+        type: BaseModel
+        required: true
+        passing: positional
+        description: 応答のモデル
+      - name: format
+        type: ResponseFormat
+        required: true
+        passing: positional
+        description: 応答の形式
+    returns:
+      type: CallToolResult
+      description: ツールの結果
+    process: |-
+      1. `json` のときは `model_dump(mode="json", exclude_none=False)` を structuredContent に、同じ値の JSON を text に入れる
+      2. `markdown` のときは `render_markdown(result)` を text に入れ、structuredContent を返さない
+    unit_tests:
+      - name: test_respond
+        case: 正常
+        summary: 形式ごとに structuredContent の有無を切り替える
+        condition: 同じ `CheckIndexesResult` を `json` と `markdown` で渡す（パラメータ展開）
+        mock: なし
+        expected: '`json` は structuredContent が text の JSON と同じ値、`markdown` は structuredContent が `None` で text が表を含む'
+  - name: render_markdown
+    title: Markdown の応答
+    container: server/_format.py
+    usecase: 共通
+    summary: 応答のモデルの各項目を Markdown にする。全ての応答のモデルに共通の 1 つの関数
+    kind: 関数
+    scope: public
+    args:
+      - name: result
+        type: BaseModel
+        required: true
+        passing: positional
+        description: 応答のモデル
+    returns:
+      type: str
+      description: Markdown
+    process: |-
+      1. 先頭に `output` を置く
+      2. スカラーの項目は `- {項目}: {値}` の行にする。`diff` は `diff` のコードブロックにする
+      3. モデルのリストの項目は `## {項目}` の見出しと、モデルの項目を列にした表にする（リスト・マップの値は JSON の 1 行）。入れ子のリスト（`indexes[].violations`・`indexes[].unmatched_paths`・`rules[].reads` など）は親の行ごとに `### {親の場所}` の見出しを置き、同じ規則で表にする。空のリストは `なし`
+    unit_tests:
+      - name: test_render_markdown
+        case: 正常
+        summary: リストは表に、空のリストは「なし」にする
+        condition: '`entries` 2 件と空の `skipped_entries` を持つ `ListRulesResult`'
+        mock: なし
+        expected: '`## entries` の下に 2 行の表、`## skipped_entries` の下に `なし`'
+  - name: fit_page
+    title: 応答の長さの切り詰め
+    container: server/_format.py
+    usecase: 効いているルールの一覧を見る
+    summary: 応答の text が `MAX_RESPONSE_CHARS` に収まるまで、一覧の末尾から要素を切る
+    kind: 関数
+    scope: public
+    args:
+      - name: build
+        type: Callable[[int], BaseModel]
+        required: true
+        passing: positional
+        description: 一覧に入れる件数を受け、その件数で応答のモデルを作る関数
+      - name: count
+        type: int
+        required: true
+        passing: positional
+        description: 切る前の件数
+      - name: format
+        type: ResponseFormat
+        required: true
+        passing: positional
+        description: 応答の形式（形式ごとに text の長さが違う）
+    returns:
+      type: tuple[BaseModel, int]
+      description: 収まった応答と、その件数
+    process: 件数を `count` から二分探索で減らし、`respond(build(件数), format)` の text が `MAX_RESPONSE_CHARS` 以下になる最大の件数を返す。0 件でも超えるときは 0 件の応答を返す（理由の一覧が長いとき）
+    unit_tests:
+      - name: test_fit_page
+        case: 正常
+        summary: 上限に収まる最大の件数を返す
+        condition: 1 件あたり約 1,000 字のエントリ 100 件
+        mock: なし
+        expected: 返した応答の text が `MAX_RESPONSE_CHARS` 以下で、件数を 1 件増やすと超える

@@ -1,0 +1,15 @@
+title: "MCP サーバー / サーバー"
+lead: 常駐の MCP サーバーの起動の入口、コンポジションルート、ツールの本体と応答の形式。ツールは引数の確かめと `features/index`・`features/record` の呼び出しと応答の組み立てだけを行い、サブフィーチャー同士の組み合わせ（チェックを編集へ注入する）はコンポジションルートが行う。
+directory: |-
+  ```text
+  src/rule_inject/server/
+  ├── __init__.py
+  ├── __main__.py      # 起動の入口（main）
+  ├── app.py           # コンポジションルート（build_server）とツールの登録
+  ├── tools.py         # ルールの一覧・検索・エントリの書き込み・削除のツールの本体と、設定・書き込める索引の解決
+  ├── check_tools.py   # 索引のチェックのツールの本体と、続きの位置の文字列の変換
+  ├── dev_docs.py      # dev-docs の search_docs で使われているタグを引くクライアント
+  ├── record_tools.py  # 既読の記録の確認・削除のツールの本体
+  ├── types.py         # ResponseFormat と応答のモデル（Pydantic）
+  └── _format.py       # 応答の形式（JSON / Markdown）と長さの切り詰め
+  ```

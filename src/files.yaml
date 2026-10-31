@@ -256,7 +256,7 @@ files:
       - topic:起動
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/__main__.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
         type: see_also
@@ -267,7 +267,7 @@ files:
       - topic:MCPツール
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/_format.py
         type: implements
   - path: rule_inject/server/app.py
     name: サーバーのコンポジションルート
@@ -277,7 +277,7 @@ files:
       - topic:MCPツール
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/app.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
         type: see_also
@@ -289,7 +289,7 @@ files:
       - topic:索引のチェック
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/check_tools.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/索引のチェック.py
         type: implements
@@ -302,7 +302,7 @@ files:
       - tool:dev-docs
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/dev_docs.py
         type: implements
   - path: rule_inject/server/record_tools.py
     name: 既読の記録のツール
@@ -312,7 +312,7 @@ files:
       - topic:既読の記録
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/record_tools.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の確認.py
         type: implements
@@ -326,7 +326,7 @@ files:
       - topic:ルール索引
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/tools.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの一覧.py
         type: implements
@@ -344,7 +344,7 @@ files:
       - tool:mcp
       - tool:pydantic
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/サーバー.py
+      - to: dev/設計書/モジュール構成/server/types.py
         type: implements
   - path: rule_inject/shared/_settings_yaml.py
     name: 設定ファイルの YAML の読み取り

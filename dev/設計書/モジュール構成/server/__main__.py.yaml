@@ -1,0 +1,37 @@
+title: "MCP サーバー / サーバー / __main__.py"
+test_files:
+  - tests/unit/rule_inject/server/test_main.py
+constants:
+  - name: HOST
+    title: 待ち受けのアドレス
+    container: server/__main__.py
+    summary: 非機能要件「MCPサーバーの待ち受けのアドレス」の決定値
+    value: '`"127.0.0.1"`'
+functions:
+  - name: main
+    title: 起動の入口
+    container: server/__main__.py
+    usecase: MCPサーバーを常駐させる
+    summary: 設定ファイルとポートを確かめ、`HOST` のポートで Streamable HTTP として待ち受ける（`python -m rule_inject.server`）
+    kind: 関数
+    scope: public
+    returns:
+      type: None
+      description: 終わるときは終了コードで抜ける
+    process: |-
+      1. `env = os.environ` として `load_settings(env)` で設定ファイルと `RULE_INJECT_PORT` を確かめる。`SettingsReadError` は標準エラーへ `{path}: {reason}` を書き、終了コード 1 で終わる
+      2. `socket.create_server((HOST, settings.server_port))` で待ち受けられるか確かめて閉じる。OSError は標準エラーへポートの番号と「別のプロセスが使っている」旨を書き、終了コード 1 で終わる（uvicorn は待ち受けの失敗を自分のログに書いて終わるため、先に確かめる）
+      3. `build_server(env).run("streamable-http", host=HOST, port=settings.server_port)` で待ち受ける。Ctrl+C・SIGTERM は uvicorn が待ち受けを閉じてから終わる
+    unit_tests:
+      - name: test_main_when_settings_unreadable
+        case: 異常
+        summary: 設定ファイルが読めなければ待ち受けずに終わる
+        condition: '`RULE_INJECT_CONFIG` が無いファイルを指す'
+        mock: '`MCPServer.run`（呼ばれないことを確かめる）'
+        expected: '`SystemExit(1)` で、標準エラーに設定ファイルの場所'
+      - name: test_main_when_port_in_use
+        case: 異常
+        summary: ポートが使われていれば待ち受けずに終わる
+        condition: テストが同じポートで待ち受けておき、`RULE_INJECT_PORT` にそのポート
+        mock: '`MCPServer.run`（呼ばれないことを確かめる）'
+        expected: '`SystemExit(1)` で、標準エラーにポートの番号'
