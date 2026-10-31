@@ -1,0 +1,60 @@
+title: "MCP サーバー / サーバー / app.py"
+test_files:
+  - tests/unit/rule_inject/server/test_app.py
+constants:
+  - name: SERVER_NAME
+    title: サーバーの名前
+    container: server/app.py
+    summary: '`MCPServer` の `name`'
+    value: '`"rule-inject"`'
+  - name: UNMATCHED_SCAN_TIME_LIMIT
+    title: プロジェクトのファイルを辿る時間の上限
+    container: server/app.py
+    summary: 非機能要件「プロジェクトのファイルを辿る時間」の決定値（秒）。`build_server` の `scan_time_limit` の既定
+    value: '`30`'
+  - name: DEV_DOCS_TIMEOUT
+    title: dev-docsへの問い合わせの待ち時間の上限
+    container: server/app.py
+    summary: 非機能要件「dev-docs への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
+    value: '`207`'
+functions:
+  - name: build_server
+    title: サーバーの組み立て
+    container: server/app.py
+    usecase: MCPサーバーを常駐させる
+    summary: コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 7 つのツールを登録する
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+      - name: scan_time_limit
+        type: float
+        required: false
+        default: UNMATCHED_SCAN_TIME_LIMIT
+        passing: keyword
+        description: '`check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）。結合テストが 0 を渡して上限で止まる流れを確かめる'
+      - name: dev_docs_timeout
+        type: float
+        required: false
+        default: DEV_DOCS_TIMEOUT
+        passing: keyword
+        description: '`check_indexes` の dev-docs への問い合わせの待ち時間の上限（秒）'
+    returns:
+      type: MCPServer
+      description: ツールを登録したサーバー
+    process: |-
+      1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
+      2. `MCPServer(SERVER_NAME)` を作る
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes` は `async def` で閉じ込める。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records` が `destructiveHint: true` で、全て `openWorldHint: false`
+      4. サーバーを返す
+    unit_tests:
+      - name: test_build_server
+        case: 正常
+        summary: 7 つのツールを依存の引数なしで登録する
+        condition: 空の `env`
+        mock: なし
+        expected: '`list_tools` が 7 つの名前を返し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout` が無く、`delete_index_entry` と `delete_read_records` だけが `destructiveHint: true`'

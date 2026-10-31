@@ -1,0 +1,5 @@
+summary: "MCP サーバーの分類ごとの構成とディレクトリ構成"
+docs_index: true
+items:
+  - page: サーバー.yaml
+    summary: 起動の入口・コンポジションルート・ツールの本体と応答の形式

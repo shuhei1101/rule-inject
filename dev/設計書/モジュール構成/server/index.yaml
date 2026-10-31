@@ -1,0 +1,19 @@
+summary: "常駐の MCP サーバーの起動・ツール・応答の形式の物理ファイルごとのモジュール"
+docs_index: true
+items:
+  - page: __main__.py.yaml
+    summary: 起動の入口
+  - page: app.py.yaml
+    summary: コンポジションルートとツールの登録
+  - page: tools.py.yaml
+    summary: ルールの一覧・検索・エントリの書き込み・削除のツール
+  - page: check_tools.py.yaml
+    summary: 索引のチェックのツールと続きの位置の変換
+  - page: dev_docs.py.yaml
+    summary: dev-docs から使われているタグを引くクライアント
+  - page: record_tools.py.yaml
+    summary: 既読の記録の確認・削除のツール
+  - page: types.py.yaml
+    summary: 応答の形式の種類と応答のモデル
+  - page: _format.py.yaml
+    summary: 応答の形式と長さの切り詰め

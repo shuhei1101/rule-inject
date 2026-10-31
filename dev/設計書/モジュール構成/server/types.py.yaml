@@ -1,0 +1,452 @@
+title: "MCP サーバー / サーバー / types.py"
+enums:
+  - name: ResponseFormat
+    title: 応答の形式
+    container: server/types.py
+    usecase: 共通
+    summary: 読むツールの `format`（Literal）
+    values:
+      - value: markdown
+        title: Markdown
+        description: 同じ項目を Markdown の表で text に入れ、structuredContent を返さない
+      - value: json
+        title: JSON
+        description: structuredContent と text に同じ JSON を入れる
+  - name: TagCheckState
+    title: タグの確かめの結果
+    container: server/types.py
+    usecase: 索引をチェックする
+    summary: インターフェース定義「索引のチェック」の `tag_check.state`（Literal）
+    values:
+      - value: checked
+        title: 確かめた
+        description: dev-docs のタグに照らした
+      - value: skipped
+        title: 飛ばした
+        description: dev-docs に届かず、または読める文書が 0 件で飛ばした
+      - value: no_patterns
+        title: 確かめるパターンが無い
+        description: タグのパターンが無く、dev-docs に問い合わせなかった
+data_models:
+  - name: RuleEntry
+    title: 効いているエントリ
+    container: server/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: インターフェース定義「ルールの一覧」の `entries[]`
+    properties:
+      - name: index
+        type: str
+        description: エントリを持つ索引の場所
+      - name: position
+        type: int
+        description: 索引の `rules` の中の位置
+      - name: rev
+        type: str
+        description: エントリのバージョン
+      - name: rule
+        type: str
+        description: 解いたルールの場所
+      - name: paths
+        type: list[str]
+        description: 索引に書いたままのパターン
+      - name: exclude
+        type: list[str]
+        description: 同上
+      - name: tools
+        type: list[str]
+        description: 同上
+      - name: args
+        type: dict[str, list[str]]
+        description: 同上
+      - name: on
+        type: list[Operation]
+        description: '`default_on` を埋めた操作の種別（`OPERATIONS` の順）'
+      - name: read_by
+        type: list[dict[str, Any]]
+        description: 索引に書いたままの `read_by`
+  - name: IndexIssue
+    title: 索引ごとの理由
+    container: server/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: '`unreadable_indexes[]`'
+    properties:
+      - name: index
+        type: str
+        description: 読めない索引の場所
+      - name: reason
+        type: str
+        description: フックが案内に載せる理由
+  - name: EntryIssue
+    title: 照合に使わないエントリ
+    container: server/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: '`skipped_entries[]` と `disabled_entries[]`'
+    properties:
+      - name: index
+        type: str
+        description: エントリを持つ索引の場所
+      - name: position
+        type: int
+        description: 位置
+      - name: rev
+        type: str
+        description: バージョン
+      - name: rule
+        type: str
+        description: 索引に書いたままの `rule`
+      - name: reason
+        type: str | None
+        description: 読み飛ばした理由。`disabled_entries` では応答に含めない（`exclude_none`）
+  - name: ListRulesResult
+    title: ルールの一覧の応答
+    container: server/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: インターフェース定義「ルールの一覧」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: 索引の数と各一覧の件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: indexes
+        type: list[str]
+        description: 読む索引の場所
+      - name: entries
+        type: list[RuleEntry]
+        description: 効いているエントリのこのページ
+      - name: unreadable_indexes
+        type: list[IndexIssue]
+        description: 先頭のページだけ
+      - name: skipped_entries
+        type: list[EntryIssue]
+        description: 先頭のページだけ
+      - name: disabled_entries
+        type: list[EntryIssue]
+        description: 先頭のページだけ
+      - name: total
+        type: int
+        description: 効いているエントリの総数
+      - name: next_cursor
+        type: str | None
+        description: 続きの位置
+  - name: RuleMatch
+    title: 当たったルール
+    container: server/types.py
+    usecase: 操作に当たるルールを検索する
+    role: DTO
+    summary: '`matched[]`'
+    properties:
+      - name: rule
+        type: str
+        description: 解いたルールの場所
+      - name: blocking
+        type: bool
+        description: 未読のときに操作を止めるか
+      - name: entries
+        type: list[EntryRef]
+        description: 当たったエントリ（`index`・`position`）
+  - name: EntryRef
+    title: エントリの場所
+    container: server/types.py
+    usecase: 操作に当たるルールを検索する
+    role: DTO
+    summary: '`matched[].entries[]`'
+    properties:
+      - name: index
+        type: str
+        description: 索引の場所
+      - name: position
+        type: int
+        description: 位置
+  - name: SearchRulesResult
+    title: ルールの検索の応答
+    container: server/types.py
+    usecase: 操作に当たるルールを検索する
+    role: DTO
+    summary: インターフェース定義「ルールの検索」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: 当たったルールと止めるルールの件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: operation
+        type: Operation
+        description: 照合に使った操作の種別
+      - name: matched
+        type: list[RuleMatch]
+        description: 当たったルール
+      - name: unreadable_indexes
+        type: list[IndexIssue]
+        description: 読めない索引
+      - name: skipped_entries
+        type: list[EntryIssue]
+        description: 読み飛ばしたエントリ
+  - name: IndexReport
+    title: 索引ごとのチェックの結果
+    container: server/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: インターフェース定義「索引のチェック」の `indexes[]`。`IndexCheck` の問題を種類ごとの一覧に分ける
+    properties:
+      - name: index
+        type: str
+        description: 索引の場所
+      - name: hook_error
+        type: str | None
+        description: '`hook_error` の理由'
+      - name: violations
+        type: list[dict[str, str]]
+        description: '`violation` の `location`・`reason`'
+      - name: missing_rules
+        type: list[dict[str, Any]]
+        description: '`missing_rule` の `position`・`rule`（理由に入れた解いた場所）'
+      - name: skipped_entries
+        type: list[dict[str, Any]]
+        description: '`skipped_entry` の `position`・`reason`'
+      - name: origin
+        type: Literal["global", "project"]
+        description: 索引の出所。`Settings.project_indexes` に入っていれば `project`
+      - name: unmatched_paths
+        type: list[dict[str, Any]]
+        description: '`unmatched_path` の `position`・`rev`・`rule`（理由に入れた解いた場所）'
+      - name: unused_tag_patterns
+        type: list[dict[str, Any]]
+        description: 使われていないタグのパターンの `position`・`rev`・`location`・`key`・`pattern`（`TagPattern.pattern.source`）
+        default: 空のリスト
+  - name: CheckIndexesResult
+    title: 索引のチェックの応答
+    container: server/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: インターフェース定義「索引のチェック」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: 索引の数と問題の件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: problem_count
+        type: int
+        description: 問題の件数の合計
+      - name: indexes
+        type: list[IndexReport]
+        description: 索引ごとの結果（フックが読む順）
+      - name: unmatched_scan
+        type: UnmatchedScanReport
+        description: '`paths` の当たらないエントリの検出の状態'
+      - name: tag_check
+        type: TagCheckReport
+        description: 使われていないタグのパターンの確かめの結果
+        default: '`TagCheckReport(state="no_patterns", reason=None)`'
+  - name: WriteEntryResult
+    title: エントリの書き込みの応答
+    container: server/types.py
+    usecase: 索引のエントリを編集する
+    role: DTO
+    summary: インターフェース定義「エントリの書き込み」のレスポンス（`success`・`output`・`index`・`position`・`rev`・`written`・`diff`）
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`（書けないときは ToolError）
+      - name: output
+        type: str
+        description: 書き込んだ索引と位置の 1 行
+      - name: index
+        type: str
+        description: '`EditResult.index`'
+      - name: position
+        type: int
+        description: '`EditResult.position`'
+      - name: rev
+        type: str
+        description: '`EditResult.rev`'
+      - name: written
+        type: bool
+        description: '`EditResult.written`'
+      - name: diff
+        type: str
+        description: '`EditResult.diff`'
+  - name: DeleteEntryResult
+    title: エントリの削除の応答
+    container: server/types.py
+    usecase: 索引のエントリを編集する
+    role: DTO
+    summary: インターフェース定義「エントリの削除」のレスポンス（`success`・`output`・`index`・`rule`・`written`・`diff`）
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: 削除した索引と位置の 1 行
+      - name: index
+        type: str
+        description: '`EditResult.index`'
+      - name: rule
+        type: str
+        description: '`EditResult.rule`'
+      - name: written
+        type: bool
+        description: '`EditResult.written`'
+      - name: diff
+        type: str
+        description: '`EditResult.diff`'
+  - name: UnmatchedScanReport
+    title: paths の当たらないエントリの検出の状態
+    container: server/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: インターフェース定義「索引のチェック」の `unmatched_scan`
+    properties:
+      - name: completed
+        type: bool
+        description: 最後まで辿れたか
+      - name: scanned_files
+        type: int
+        description: 最初の呼び出しから辿ったファイルの数
+      - name: reason
+        type: str | None
+        description: 終えられなかった理由（上限の秒数と `cursor` の使い方）
+      - name: next_cursor
+        type: str | None
+        description: '`_encode_scan_cursor` の文字列'
+  - name: ReadSummary
+    title: 読み方ごとの既読のまとめ
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」の `rules[].reads[]`
+    properties:
+      - name: method
+        type: ReadMethod
+        description: 既読の履歴に残る読み方
+      - name: tool
+        type: str
+        description: 既読にしたツールの名前
+      - name: last_time
+        type: str
+        description: その読み方とツールで最後に既読にした時刻（履歴の `time` のまま）
+      - name: count
+        type: int
+        description: その読み方とツールで既読にした回数
+  - name: RuleRead
+    title: 既読のルール
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」の `rules[]`
+    properties:
+      - name: location
+        type: str
+        description: 既読のルールの場所
+      - name: state
+        type: ReadState
+        description: 今の本文と既読にした時点の本文の関係
+      - name: reads
+        type: list[ReadSummary]
+        description: 読み方とツール名の組ごとのまとめ（最後に既読にした時刻の古い順）
+  - name: RecordSessionItem
+    title: 既読の記録のあるセッション
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」の `sessions[]`
+    properties:
+      - name: session_id
+        type: str
+        description: セッションの識別子
+      - name: updated_at
+        type: str
+        description: 既読の記録のファイルの最終更新の時刻（ISO 8601、UTC）
+      - name: rule_count
+        type: int
+        description: 既読のルールの場所の数
+  - name: ReadRecordsResult
+    title: 既読の記録の確認の応答
+    container: server/types.py
+    usecase: 既読の記録を確かめる
+    role: DTO
+    summary: インターフェース定義「既読の記録の確認」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: ルールまたはセッションの件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: state_dir
+        type: str
+        description: 読んだ記録フォルダ
+      - name: session_id
+        type: str | None
+        description: 確かめたセッション
+      - name: rules
+        type: list[RuleRead]
+        description: 既読のルール（セッションを省いたときは空）
+      - name: sessions
+        type: list[RecordSessionItem]
+        description: 既読の記録のあるセッション（セッションを指したときは空）
+      - name: total
+        type: int
+        description: ルールまたはセッションの総数
+      - name: next_cursor
+        type: str | None
+        description: 続きを取るときに `cursor` へ渡す値
+  - name: DeleteRecordsResult
+    title: 既読の記録の削除の応答
+    container: server/types.py
+    usecase: 既読の記録を削除する
+    role: DTO
+    summary: インターフェース定義「既読の記録の削除」のレスポンス
+    properties:
+      - name: success
+        type: bool
+        description: 常に `True`
+      - name: output
+        type: str
+        description: 削除した既読のルールの件数の 1 行
+      - name: config_path
+        type: str | None
+        description: 設定ファイルの場所
+      - name: state_dir
+        type: str
+        description: 削除した記録フォルダ
+      - name: session_id
+        type: str
+        description: 削除したセッション
+      - name: locations
+        type: list[str]
+        description: 削除する前に既読だったルールの場所（初めて現れた順）
+  - name: TagCheckReport
+    title: タグの確かめの結果
+    container: server/types.py
+    usecase: 索引をチェックする
+    role: DTO
+    summary: インターフェース定義「索引のチェック」の `tag_check`
+    properties:
+      - name: state
+        type: TagCheckState
+        description: 確かめの結果
+      - name: reason
+        type: str | None
+        description: '`skipped` のときの `UsedTags.reason`。それ以外は `None`'

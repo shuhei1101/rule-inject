@@ -1,0 +1,373 @@
+title: "MCP サーバー / サーバー / tools.py"
+test_files:
+  - tests/unit/rule_inject/server/test_tools.py
+constants:
+  - name: DEFAULT_LIST_LIMIT
+    title: 一覧の件数の既定
+    container: server/tools.py
+    summary: '`list_rules`・`get_read_records` の `limit` の既定'
+    value: '`100`'
+  - name: MAX_LIST_LIMIT
+    title: 一覧の件数の上限
+    container: server/tools.py
+    summary: '`list_rules`・`get_read_records` の `limit` の上限'
+    value: '`500`'
+  - name: CURSOR_PATTERN
+    title: 続きの位置の書式
+    container: server/tools.py
+    summary: '`list_rules`・`get_read_records` の `cursor` が受け付ける値（一覧の並びの中の位置を 10 進で書いた文字列）。引数の Schema の `pattern` に置き、外れた値は SDK の引数の検証で断る'
+    value: '`r"^[0-9]+$"`'
+functions:
+  - name: list_rules
+    title: ルールの一覧
+    container: server/tools.py
+    usecase: 効いているルールの一覧を見る
+    summary: インターフェース定義「ルールの一覧」のツールの本体
+    kind: 関数
+    scope: public
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: keyword
+        description: プロジェクトの直下
+      - name: limit
+        type: Annotated[int, Field(ge=1, le=MAX_LIST_LIMIT)]
+        required: false
+        default: DEFAULT_LIST_LIMIT
+        passing: keyword
+        description: 返す件数の上限
+      - name: cursor
+        type: Annotated[str | None, Field(pattern=CURSOR_PATTERN)]
+        required: false
+        default: None
+        passing: keyword
+        description: 前の応答の `next_cursor`
+      - name: format
+        type: ResponseFormat
+        required: false
+        default: '"markdown"'
+        passing: keyword
+        description: 応答の形式
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(ListRulesResult, format)`'
+    process: |-
+      1. `_project_settings(project_dir, env)` で設定を読む
+      2. `settings.indexes` を順に `read_index` で読む。`IndexReadError` は `unreadable_indexes` に、状態が `effective` のエントリは `RuleEntry`（パターンは `raw` のまま、`rule` と `on` は `entry` の値）に、`skipped` は `skipped_entries` に、`disabled` は `disabled_entries` に入れる
+      3. 効いているエントリの `int(cursor or 0)` 番目から `limit` 件を取り、`cursor` があるときは `unreadable_indexes`・`skipped_entries`・`disabled_entries` を空にする
+      4. `fit_page` で応答が `MAX_RESPONSE_CHARS` に収まる件数まで末尾から切り、残りがあれば `next_cursor` に次の位置を入れる
+      5. `respond` で返す
+    exceptions:
+      - name: ToolError
+        condition: '`_project_settings` が送出する'
+        message: '`_project_settings` と同じ'
+    unit_tests:
+      - name: test_list_rules_when_paged
+        case: 正常
+        summary: '`limit` と `cursor` で続きを返し、理由の一覧は先頭のページだけに載せる'
+        condition: '効いているエントリ 3 件と無効のエントリ 1 件の索引を `limit: 2` で 2 回呼ぶ'
+        mock: なし
+        expected: 1 回目は 2 件で `next_cursor` が `"2"`、`disabled_entries` が 1 件。2 回目は 1 件で `next_cursor` が `None`、`disabled_entries` が空。どちらも `total` が 3
+  - name: search_rules
+    title: ルールの検索
+    container: server/tools.py
+    usecase: 操作に当たるルールを検索する
+    summary: インターフェース定義「ルールの検索」のツールの本体
+    kind: 関数
+    scope: public
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: keyword
+        description: プロジェクトの直下
+      - name: path
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 操作の対象のファイルのパス
+      - name: operation
+        type: Literal['read', 'write'] | None
+        required: false
+        default: None
+        passing: keyword
+        description: パスへの操作の種別
+      - name: tool_name
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: MCP のツールの完全名
+      - name: arguments
+        type: dict[str, Any] | None
+        required: false
+        default: None
+        passing: keyword
+        description: MCP のツールの引数
+      - name: format
+        type: ResponseFormat
+        required: false
+        default: '"markdown"'
+        passing: keyword
+        description: 応答の形式
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(SearchRulesResult, format)`'
+    process: |-
+      1. `path` と `tool_name` が両方ある・どちらも無い、`path` があって `operation` が無い、`path` が絶対パスでないときは `ToolError`（渡し方）
+      2. `_project_settings(project_dir, env)` で設定を読み、`list_rules` の手順 2 と同じく索引を読む
+      3. 効いているエントリを 1 件ずつ、`path` のときは `match_path([entry], path, operation)`、ツールのときは `match_tool([entry], tool_name, arguments or {})`（操作の種別は `mcp`）で当て、当たったエントリの索引と位置を、ルールの場所ごとに初めて当たった順でまとめる。`blocking` はまとめたエントリの `MatchedRule.blocking` のどれかが真か
+      4. `respond` で返す
+    exceptions:
+      - name: ToolError
+        condition: 手順 1 の引数の組み合わせの誤り、または `_project_settings` が送出する
+        message: 渡し方。`_project_settings` のときはその理由
+    unit_tests:
+      - name: test_search_rules_when_same_rule
+        case: 正常
+        summary: 同じルールに当たったエントリを 1 件にまとめ、どれかが止めれば止める
+        condition: '同じ `rule` で `on: [read]` と `on: [write]` のエントリが同じパスに当たる。`operation: write`'
+        mock: なし
+        expected: '`matched` が 1 件で `blocking` が `true`、`entries` が 2 件'
+      - name: test_search_rules_when_invalid_arguments
+        case: 異常
+        summary: 引数の組み合わせの誤りを拒む
+        condition: '`path` と `tool_name` の両方、どちらも無し、`operation` 無しの `path`、相対パスの `path`（パラメータ展開）'
+        mock: なし
+        expected: ToolError
+        exception: 手順 1 の引数の組み合わせの誤り、または `_project_settings` が送出する
+  - name: write_index_entry
+    title: エントリの書き込み
+    container: server/tools.py
+    usecase: 索引のエントリを編集する
+    summary: インターフェース定義「エントリの書き込み」のツールの本体
+    kind: 関数
+    scope: public
+    side_effects: 索引のファイルを書き換える
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: keyword
+        description: プロジェクトの直下
+      - name: index
+        type: str
+        required: true
+        passing: keyword
+        description: 書き込む索引の場所
+      - name: entry
+        type: dict[str, Any]
+        required: true
+        passing: keyword
+        description: 書き込むキーと値
+      - name: position
+        type: Annotated[int | None, Field(ge=0)]
+        required: false
+        default: None
+        passing: keyword
+        description: 書き換えるエントリの位置
+      - name: expected_rev
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 書き換える前のバージョン
+      - name: remove_keys
+        type: list[str] | None
+        required: false
+        default: None
+        passing: keyword
+        description: 削除するキー
+      - name: dry_run
+        type: bool
+        required: false
+        default: 'False'
+        passing: keyword
+        description: 書き込まずに確かめるか
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+      - name: locks
+        type: IndexLocks
+        required: true
+        passing: injected
+        description: 索引ごとのロック
+      - name: check_change
+        type: CheckChange
+        required: true
+        passing: injected
+        description: 書き込みのチェック
+    returns:
+      type: CallToolResult
+      description: '`respond(WriteEntryResult, "json")`'
+    process: |-
+      1. `position` があって `expected_rev` が無い、`position` が無いのに `remove_keys` がある、`entry` と `remove_keys` に同じキーがあるときは `ToolError`（渡し方）
+      2. `_project_settings(project_dir, env)` で設定を読み、`_editable_index(index, settings)` で書き込む索引を決める
+      3. `write_entry` を呼ぶ。`IndexEditError` は `ToolError`（`{path}: {reason}`）
+      4. `output` を `{index} の rules[{position}] を書き込みました`（`dry_run` のときは `…を書き込まずに確かめました`）にして返す
+    exceptions:
+      - name: ToolError
+        condition: 手順 1 の誤り、または `_project_settings`・`_editable_index` が送出する、または `write_entry` が `IndexEditError` を送出する
+        message: インターフェース定義「エントリの書き込み」の例外の補足
+    unit_tests:
+      - name: test_write_index_entry_when_invalid_arguments
+        case: 異常
+        summary: 引数の組み合わせの誤りを拒む
+        condition: '`expected_rev` 無しの `position`、`position` 無しの `remove_keys`、`entry` と `remove_keys` の同じキー（パラメータ展開）'
+        mock: '`write_entry`（呼ばれないことを確かめる）'
+        expected: ToolError
+        exception: 手順 1 の誤り、または `_project_settings`・`_editable_index` が送出する、または `write_entry` が `IndexEditError` を送出する
+  - name: delete_index_entry
+    title: エントリの削除
+    container: server/tools.py
+    usecase: 索引のエントリを編集する
+    summary: インターフェース定義「エントリの削除」のツールの本体
+    kind: 関数
+    scope: public
+    side_effects: 索引のファイルを書き換える
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: keyword
+        description: プロジェクトの直下
+      - name: index
+        type: str
+        required: true
+        passing: keyword
+        description: 索引の場所
+      - name: position
+        type: Annotated[int, Field(ge=0)]
+        required: true
+        passing: keyword
+        description: 削除するエントリの位置
+      - name: expected_rev
+        type: str
+        required: true
+        passing: keyword
+        description: 削除するエントリのバージョン
+      - name: dry_run
+        type: bool
+        required: false
+        default: 'False'
+        passing: keyword
+        description: 書き込まずに確かめるか
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+      - name: locks
+        type: IndexLocks
+        required: true
+        passing: injected
+        description: 索引ごとのロック
+    returns:
+      type: CallToolResult
+      description: '`respond(DeleteEntryResult, "json")`'
+    process: |-
+      1. `write_index_entry` の手順 2 と同じく索引を決める
+      2. `delete_entry` を呼ぶ。`IndexEditError` は `ToolError`（`{path}: {reason}`）
+      3. `output` を `{index} の rules[{position}] を削除しました`（`dry_run` のときは `…を削除せずに確かめました`）にして返す
+    exceptions:
+      - name: ToolError
+        condition: '`_project_settings`・`_editable_index` が送出する、または `delete_entry` が `IndexEditError` を送出する'
+        message: インターフェース定義「エントリの削除」の例外の補足
+  - name: _project_settings
+    title: プロジェクトの設定
+    container: server/tools.py
+    usecase: 共通
+    summary: '`project_dir` を `CLAUDE_PROJECT_DIR` として、フックと同じ規則で設定を読む。ツールの呼び出しのたびに読み直す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: プロジェクトの直下
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+    returns:
+      type: Settings
+      description: そのプロジェクトでフックが使う設定
+    process: |-
+      1. `project_dir` が絶対パスでなければ `ToolError`（絶対パスで渡す旨）
+      2. `load_settings({**env, CLAUDE_PROJECT_DIR: project_dir})` を返す。`SettingsReadError` は `ToolError`（`{path}: {reason}`）
+    exceptions:
+      - name: ToolError
+        condition: '`project_dir` が絶対パスでない、または設定ファイルが読めない'
+        message: 絶対パスで渡す旨、または設定ファイルの場所と理由
+    unit_tests:
+      - name: test_project_settings_when_project_matched
+        case: 正常
+        summary: '`project_dir` で `projects[].match` を当てる'
+        condition: '`projects` に `match: /home/user/project` と `indexes: [rules.yaml]` を持つ設定ファイルと、`project_dir: /home/user/project`'
+        mock: なし
+        expected: '`indexes` の末尾が `/home/user/project/rules.yaml`'
+      - name: test_project_settings_when_relative
+        case: 異常
+        summary: 相対パスを拒む
+        condition: '`project_dir: project`'
+        mock: なし
+        expected: ToolError
+        exception: '`project_dir` が絶対パスでない、または設定ファイルが読めない'
+  - name: _editable_index
+    title: 書き込める索引
+    container: server/tools.py
+    usecase: 索引のエントリを編集する
+    summary: '`index` が設定で読む索引のどれかを確かめ、シンボリックリンクを解いた場所を返す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: index
+        type: str
+        required: true
+        passing: positional
+        description: ツールに渡された索引の場所
+      - name: settings
+        type: Settings
+        required: true
+        passing: positional
+        description: '`_project_settings` の戻り値'
+    returns:
+      type: str
+      description: シンボリックリンクを解いた索引の場所
+    process: |-
+      1. 先頭の `~` を展開し、`os.path.realpath` で解く
+      2. `settings.indexes` をそれぞれ `os.path.realpath` で解いた中に無ければ `ToolError`（設定ファイルで読む索引でない旨と、読む索引の場所）
+    exceptions:
+      - name: ToolError
+        condition: 設定ファイルで読む索引でない
+        message: 設定ファイルで読む索引でない旨と、読む索引の場所
+    unit_tests:
+      - name: test_editable_index_when_symlink
+        case: 正常
+        summary: シンボリックリンクを解いて比べる
+        condition: 読む索引を指すシンボリックリンクを `index` に渡す
+        mock: なし
+        expected: 解いた索引の場所
+      - name: test_editable_index_when_not_read
+        case: 異常
+        summary: 読む索引でないファイルを拒む
+        condition: 読む索引と同じフォルダの別の YAML
+        mock: なし
+        expected: ToolError（読む索引の場所を含む）
+        exception: 設定ファイルで読む索引でない
