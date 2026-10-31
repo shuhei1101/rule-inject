@@ -1,0 +1,69 @@
+$ uv run pytest tests/integration -q -p no:cacheprovider --basetemp={一時フォルダ}
+commit: 8ab27d601641061340b819cd10b9b6987ce5c4c6
+同時実行 1〜3 回目と並べて繰り返し流した側の 3 回目（終了時刻の名前）
+........................................................................ [ 51%]
+.................F..................................................     [100%]
+=================================== FAILURES ===================================
+_____________________ test_normal_when_tag_pattern_unused ______________________
+
+project_dir = PosixPath('/tmp/claude-1000/-mnt-c-Users-shuhe-repo-rule-inject/8b935a49-fc3b-43fa-b1ad-e4622b4147b0/scratchpad/bg2/tmp/test_normal_when_tag_pattern_u0/workspace')
+make_index = <function make_index.<locals>._make at 0x7293271abb00>
+start_fake_dev_docs = <function start_fake_dev_docs.<locals>._start at 0x7293271a9a80>
+running_server = <function running_server.<locals>._use at 0x7293271a98a0>
+
+    def test_normal_when_tag_pattern_unused(
+        project_dir: Path,
+        make_index: Callable[..., Path],
+        start_fake_dev_docs: Callable[..., Any],
+        running_server: Callable[..., Any],
+    ) -> None:
+        """dev-docs の使われているタグに当たらないタグのパターンを、全ての索引について返し、`problem_count` には数えない（正常系）。"""
+        # 準備
+>       fake = start_fake_dev_docs(
+            {
+                "total_count": 3,
+                "groups": [{"value": "Python", "count": 2}, {"value": "mcp", "count": 1}],
+            }
+        )
+
+tests/integration/server/test_check_indexes.py:354: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/integration/server/conftest.py:354: in _start
+    port, process, _ = _launch(_spawn_at)
+                       ^^^^^^^^^^^^^^^^^^
+tests/integration/server/conftest.py:152: in _launch
+    if _wait_ready(process, stderr_path, port):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+process = <Popen: returncode: -9 args: ['/mnt/c/Users/shuhe/repo/rule-inject/.claude/w...>
+stderr_path = PosixPath('/tmp/claude-1000/-mnt-c-Users-shuhe-repo-rule-inject/8b935a49-fc3b-43fa-b1ad-e4622b4147b0/scratchpad/bg2/tmp/test_normal_when_tag_pattern_u0/fake_dev_docs/fake-0-0.stderr')
+port = 56988
+
+    def _wait_ready(process: subprocess.Popen[bytes], stderr_path: Path, port: int) -> bool:
+        """標準エラーに `port` の待ち受けの開始の行が出るまで待つ。
+    
+        先に子プロセスが終わったときは、待ち受けに失敗したとして False を返す。
+        時間を超えたときは子プロセスを止めて失敗にする。
+        """
+        deadline = time.monotonic() + START_TIMEOUT_SEC
+        while True:
+            stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
+            # 行が出ている: このポートで待ち受けている（他のプロセスの待ち受けでは出ない）
+            if ready_line(port) in stderr:
+                return True
+            # 行が出ないまま終わった: 待ち受けに失敗した（ポートを他のプロセスに取られた等）
+            if process.poll() is not None:
+                return False
+            # 終わらず行も出ない: 時間の上限まで待ち、超えたら止めて失敗にする
+            if time.monotonic() > deadline:
+                process.kill()
+                process.wait()
+>               pytest.fail(f"{START_TIMEOUT_SEC} 秒で待ち受けなかった: {stderr}")
+E               Failed: 30 秒で待ち受けなかった:
+
+tests/integration/server/conftest.py:136: Failed
+=========================== short test summary info ============================
+FAILED tests/integration/server/test_check_indexes.py::test_normal_when_tag_pattern_unused
+1 failed, 139 passed in 251.36s (0:04:11)
+exit: 1

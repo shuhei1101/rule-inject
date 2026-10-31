@@ -1,5 +1,5 @@
 $ (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; for d in dev/pr/*/反映作業/*/; do uv run mypy "$d"*.py || rc=1; done; uv run lint-imports || rc=1; exit $rc)
-commit: 860633bd62093c8ec557fda5d46ed2114f217643
+commit: 8ab27d601641061340b819cd10b9b6987ce5c4c6
 All checks passed!
 278 files already formatted
 Success: no issues found in 121 source files
