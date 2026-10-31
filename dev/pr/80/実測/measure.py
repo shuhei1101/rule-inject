@@ -16,8 +16,8 @@ from mcp.types import TextContent
 
 from rule_inject.server.dev_docs import SEARCH_DOCS_TOOL, TAG_GROUP_ARGUMENTS
 
-# 手元で常駐している dev-docs の接続先
-DEV_DOCS_URL = "http://127.0.0.1:8781/mcp"
+# 手元で常駐している dev-docs の接続先（dev-docs の #36 から、末尾の / の無い /mcp への POST は 405 を返す）
+DEV_DOCS_URL = "http://127.0.0.1:8781/mcp/"
 # 1 回の呼び出しを打ち切る時間（秒）。応答しない 1 回で測定全体を止めない
 CALL_LIMIT_SECONDS = 600
 # 既定の呼び出しの回数

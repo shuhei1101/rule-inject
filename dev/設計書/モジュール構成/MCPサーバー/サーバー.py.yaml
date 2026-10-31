@@ -81,7 +81,7 @@ constants:
     title: dev-docsへの問い合わせの待ち時間の上限
     container: server/app.py
     summary: 非機能要件「dev-docs への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
-    value: '`108`'
+    value: '`207`'
   - name: SEARCH_DOCS_TOOL
     title: dev-docsの検索のツール名
     container: server/dev_docs.py
