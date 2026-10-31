@@ -1,0 +1,283 @@
+title: "プラグイン / 共通 / logger.py"
+test_files:
+  - tests/unit/rule_inject/shared/test_logger.py
+enums:
+  - name: LogOperation
+    title: 失敗した操作
+    container: shared/logger.py
+    usecase: 共通
+    summary: ログの `operation` の値
+    values:
+      - value: read_index
+        title: 索引の読み込み
+        description: 索引が読めない
+      - value: read_record
+        title: 既読の読み込み
+        description: 記録ファイルが読めない
+      - value: write_record
+        title: 既読の追記
+        description: 記録に書けない
+      - value: delete_record
+        title: 既読の削除
+        description: 記録ファイルを削除できない
+      - value: unexpected
+        title: 想定外
+        description: 上のどれにも当たらない例外
+      - value: delete_log
+        title: ログの削除
+        description: 保持日数を過ぎたログのファイルか変更前のログを削除できない
+      - value: write_history
+        title: 既読の履歴の追記
+        description: 既読の履歴に書けない
+      - value: read_settings
+        title: 設定ファイルの読み取り
+        description: 設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。既定のログのフォルダへ書く
+  - name: Component
+    title: 出した元
+    container: shared/logger.py
+    usecase: 共通
+    summary: ログの `component` の値（インターフェース定義の識別子）
+    values:
+      - value: rule_guide
+        title: ルール案内
+        description: PreToolUse の案内
+      - value: record_read
+        title: 既読の記録
+        description: PostToolUse
+      - value: discard_read
+        title: 既読の記録の破棄
+        description: PreCompact
+      - value: work_rules
+        title: 作業の決まりの注入
+        description: SessionStart
+      - value: sweep_read
+        title: 既読の記録の掃除
+        description: SessionStart
+      - value: search_guide
+        title: 検索結果の案内
+        description: PostToolUse の検索結果への案内
+constants:
+  - name: LOG_FILE_SUFFIX
+    title: ログのファイル名の後半
+    container: shared/logger.py
+    summary: '`{yyyymmdd}` に続くログのファイル名の後半'
+    value: '`_rule-inject.log`'
+  - name: LEGACY_LOG_FILE_NAME
+    title: 変更前のログのファイル名
+    container: shared/logger.py
+    summary: 記録フォルダの直下に残った変更前のログの名前
+    value: '`rule-inject.log`'
+functions:
+  - name: write_log
+    title: ログの書き出し
+    container: shared/logger.py
+    usecase: 共通
+    summary: 失敗した操作を ER 図「ログ」の形式で 1 行追記する
+    kind: 関数
+    scope: public
+    side_effects: その時刻の日付のログのファイルに 1 行追記する。書けないときは標準エラー出力へ 1 行出す
+    args:
+      - name: log_folder
+        type: Path
+        required: true
+        passing: positional
+        description: ログのフォルダ（呼び出し元は `Settings.log_dir` を、設定ファイルが読めないときは `default_log_dir(env)` を渡す）
+      - name: component
+        type: Component
+        required: true
+        passing: keyword
+        description: 出した元
+      - name: operation
+        type: LogOperation
+        required: true
+        passing: keyword
+        description: 失敗した操作
+      - name: reason
+        type: str
+        required: true
+        passing: keyword
+        description: 理由
+      - name: session_id
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: セッション
+      - name: path
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 対象のパス
+      - name: now
+        type: Callable[[], datetime]
+        required: false
+        default: 現在の UTC の時刻
+        passing: injected
+        description: 時刻の取得
+    returns:
+      type: None
+      description: なし
+    process: |-
+      1. `now()` を 1 回だけ呼び、時刻（UTC の ISO 8601）と引数を JSON の 1 行にする
+      2. ログのフォルダを作り、`log_file_path(log_folder, その時刻の日付)` へ追記する
+      3. OSError なら同じ 1 行を標準エラー出力へ出す（例外は送出しない）
+    unit_tests:
+      - name: test_write_log
+        case: 正常
+        summary: ログに 1 行追記する
+        condition: 書ける一時フォルダ、`now` は固定の時刻
+        mock: なし
+        expected: '`now` の日付の `{yyyymmdd}_rule-inject.log` に time・component・session_id・operation・path・reason を持つ JSON が 1 行ある'
+      - name: test_write_log_when_unwritable
+        case: 異常
+        summary: 書けないとき標準エラー出力へ出す
+        condition: 書き込み権限の無いフォルダ
+        mock: なし
+        expected: 例外を送出せず、標準エラー出力に同じ JSON が 1 行出る
+      - name: test_write_log_when_date_changes
+        case: 正常
+        summary: 日付が変わると別のファイルに書く
+        condition: '`now` を 2026-09-29T23:59:59+00:00 と 2026-09-30T00:00:00+00:00 にして 1 回ずつ呼ぶ'
+        mock: なし
+        expected: '`20260929_rule-inject.log` と `20260930_rule-inject.log` に 1 行ずつある'
+  - name: log_file_path
+    title: ログのファイルのパス
+    container: shared/logger.py
+    usecase: 共通
+    summary: その日付のログのファイルのパスを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: log_folder
+        type: Path
+        required: true
+        passing: positional
+        description: ログのフォルダ
+      - name: day
+        type: date
+        required: true
+        passing: positional
+        description: UTC の日付
+    returns:
+      type: Path
+      description: '`{log_folder}/{yyyymmdd}{LOG_FILE_SUFFIX}`'
+    process: |-
+      1. `day` を `%Y%m%d` で文字にし、`LOG_FILE_SUFFIX` を続けた名前を `log_folder` と結ぶ
+
+      案内文で利用者に見せるログの場所は、`log_file_path(Settings.log_dir, 今日（UTC）)`（設定ファイルが読めないときは `default_log_dir(env)`）を渡す
+    unit_tests:
+      - name: test_log_file_path
+        case: 正常
+        summary: 日付を頭に置いた名前になる
+        condition: '`day` が 2026-09-29'
+        mock: なし
+        expected: '`{log_folder}/20260929_rule-inject.log`'
+  - name: sweep_logs
+    title: ログの掃除
+    container: shared/logger.py
+    usecase: 古いログが掃除される
+    summary: 日付が保持日数以上前のログのファイルを削除し、削除できなかったものを返す
+    kind: 関数
+    scope: public
+    side_effects: ログのファイルを削除する
+    args:
+      - name: log_folder
+        type: Path
+        required: true
+        passing: positional
+        description: ログのフォルダ
+      - name: retention_days
+        type: int
+        required: true
+        passing: positional
+        description: 保持日数（1 以上）
+      - name: today
+        type: Callable[[], date]
+        required: false
+        default: 今日の UTC の日付
+        passing: injected
+        description: 今日の日付の取得
+    returns:
+      type: tuple[LogDeleteError, ...]
+      description: 削除できなかったログのファイルごとの失敗。全て削除できたか削除するものが無ければ空
+    process: |-
+      1. `os.scandir(log_folder)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
+      2. `retention_days` が `today()` から `date.min` までの日数より大きければ、削除するものが無いとして空を返す（日付の引き算が暦の範囲を超えないようにする）
+      3. 名前が `{8 桁の数字}{LOG_FILE_SUFFIX}` で、数字が `%Y%m%d` として読め、シンボリックリンクを辿らずに通常のファイルの項目だけを対象にする
+      4. 日付が `today() - retention_days 日` 以前のものを削除する。削除する前に無くなっていたもの（FileNotFoundError）は削除した状態と同じとして扱う
+      5. 削除できないもの（その他の OSError）は LogDeleteError にして集め、残りの掃除を続ける
+    exceptions:
+      - name: OSError
+        condition: ログのフォルダはあるが列挙できない（FileNotFoundError 以外）。捕まえずに送出し、フックの最上位が `unexpected` として扱う
+    unit_tests:
+      - name: test_sweep_logs
+        case: 正常
+        summary: 日付が保持日数以上前のファイルだけを削除する
+        condition: '`today` を 2026-09-29 に固定、`retention_days` が 3、20260929・20260927・20260926 のログのファイル'
+        mock: '`today`'
+        expected: 20260926 のファイルが無く、他は残る。戻り値は空
+      - name: test_sweep_logs_when_not_log
+        case: 正常
+        summary: ログのファイルでないものは削除しない
+        condition: '`today` を固定、形式に合わない `notes.txt`・`2026_rule-inject.log`・`20261399_rule-inject.log`、名前が古い日付の形式に合うサブフォルダとシンボリックリンク'
+        mock: '`today`'
+        expected: どれも残る
+      - name: test_sweep_logs_when_missing
+        case: 正常
+        summary: ログのフォルダが無ければ何もしない
+        condition: まだ無いログのフォルダ
+        mock: なし
+        expected: 戻り値が空で、フォルダを作らない
+      - name: test_sweep_logs_when_undeletable
+        case: 異常
+        summary: 削除できないログのファイルを返す
+        condition: 保持日数を過ぎたログのファイルを置き、ログのフォルダを書き込み権限なし（`chmod 555`）
+        mock: '`today`'
+        expected: LogDeleteError が 1 件（path がそのファイル）で、ファイルが残る
+      - name: test_sweep_logs_when_retention_too_long
+        case: 正常
+        summary: 暦の範囲を超えるほど大きい保持日数なら何も削除しない
+        condition: '`today` を 2026-09-29 に固定、`retention_days` が 999999、日付が 2020-01-01 のログのファイル'
+        mock: '`today`'
+        expected: 例外を送出せず、ファイルが残り、戻り値は空
+  - name: delete_legacy_log
+    title: 変更前のログの削除
+    container: shared/logger.py
+    usecase: 古いログが掃除される
+    summary: 記録フォルダに残った変更前のログを削除し、削除できなければ失敗を返す
+    kind: 関数
+    scope: public
+    side_effects: '`{state_folder}/{LEGACY_LOG_FILE_NAME}` を削除する'
+    args:
+      - name: state_folder
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+    returns:
+      type: LogDeleteError | None
+      description: 削除できなかったときの失敗。削除できたか無かったときは None
+    process: |-
+      1. `{state_folder}/{LEGACY_LOG_FILE_NAME}` をシンボリックリンクを辿らずに調べ、通常のファイルでなければ（無いときも）None を返す
+      2. 削除する。削除する前に無くなっていたもの（FileNotFoundError）は None を返す
+      3. 削除できない（その他の OSError）ときは LogDeleteError を返す
+    unit_tests:
+      - name: test_delete_legacy_log
+        case: 正常
+        summary: 変更前のログを削除する
+        condition: 記録フォルダに `rule-inject.log`
+        mock: なし
+        expected: ファイルが無く、None
+      - name: test_delete_legacy_log_when_missing
+        case: 正常
+        summary: 無ければ何もしない
+        condition: 記録フォルダが無い場合と、`rule-inject.log` が無い場合と、`rule-inject.log` がフォルダの場合（パラメータ展開）
+        mock: なし
+        expected: None。フォルダは残る
+      - name: test_delete_legacy_log_when_undeletable
+        case: 異常
+        summary: 削除できないとき失敗を返す
+        condition: '`rule-inject.log` を置き、記録フォルダを書き込み権限なし（`chmod 555`）'
+        mock: なし
+        expected: LogDeleteError（path がそのファイル）で、ファイルが残る

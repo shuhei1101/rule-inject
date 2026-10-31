@@ -1,42 +1,6 @@
-title: "プラグイン / MCPの結果の文書"
-lead: MCP のツールの結果から、閉じタグまでそろった `<document>` と、文字列の `path`・`scope` を持つオブジェクトを、文書の場所と範囲として取り出す。
-directory: |-
-  ```text
-  src/rule_inject/features/document/
-  ├── __init__.py   # 公開 API
-  ├── types.py      # ResultDocument・DocumentScope
-  └── service.py    # MCP のツールの結果から文書を取り出す
-  ```
-data_models:
-  - name: ResultDocument
-    title: 結果の文書
-    container: features/document/types.py
-    usecase: ルールを読んだことが記録される
-    role: DTO
-    summary: MCP のツールの結果に載った文書の場所と範囲（`@dataclass(frozen=True, slots=True, kw_only=True)`）
-    properties:
-      - name: path
-        type: str
-        description: 結果に載ったままの文書のパス（解いていない）
-      - name: scope
-        type: str
-        description: 結果に載ったままの範囲（`DocumentScope` の値か、それ以外の文字列）
-enums:
-  - name: DocumentScope
-    title: 文書の範囲
-    container: features/document/types.py
-    usecase: ルールを読んだことが記録される
-    summary: 結果の文書の `scope` の値（StrEnum）
-    values:
-      - value: full
-        title: 全文
-        description: 文書の全文を載せた。既読になる
-      - value: section
-        title: 一部の見出し
-        description: 文書の一部の見出しだけを載せた
-      - value: summary
-        title: 説明だけ
-        description: 文書の説明だけを載せた
+title: "プラグイン / MCPの結果の文書 / service.py"
+test_files:
+  - tests/unit/rule_inject/features/document/test_service.py
 constants:
   - name: TAG_PATTERN
     title: 文書のタグ
@@ -127,5 +91,3 @@ functions:
         condition: 閉じた `<document path="a.md" scope="full">` の本文に、閉じた `<document path="b.md" scope="full">…</document>` を含む文字列
         mock: なし
         expected: '`a.md` の 1 件'
-test_files:
-  - tests/unit/rule_inject/features/document/test_service.py

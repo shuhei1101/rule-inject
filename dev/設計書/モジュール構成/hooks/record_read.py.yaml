@@ -1,0 +1,123 @@
+title: "プラグイン / フック / record_read.py"
+test_files:
+  - tests/unit/rule_inject/hooks/test_record_read.py
+functions:
+  - name: record_read
+    title: 既読の記録の処理
+    container: hooks/record_read.py
+    usecase: ルールを読んだことが記録される
+    summary: Read か Bash で全体を読んだルールの場所と、MCP のツールの結果に載った全文のルールの文書の場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）を、本文のハッシュと一緒に既読にして既読の履歴へ書き、書けなければ理由を返す
+    kind: フック
+    scope: public
+    inherits: HookHandler
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        passing: positional
+        description: PostToolUse の入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: dict[str, Any] | None
+      description: 既読の記録か既読の履歴に書けなかったときだけ additionalContext
+    process: |-
+      1. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（記録しない）。以降の索引は `load_indexes(settings.indexes, env)`、記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
+      2. 既読にする場所を決める。`load_indexes` の `failures`（URL のために読み飛ばしたエントリを含む）は知らせず、ログにも書かない
+         - Read の場合、`tool_response.file` の `startLine` が 1 で `numLines` が `totalLines` と同じときだけ（3 つとも bool でない整数のときだけ）、`file_path` のうち `rule_locations` にあるもの
+         - Bash の場合、`extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの
+         - `mcp__` で始まるツールで、`extract_documents(tool_response)` が 1 件以上返す場合、`scope` が `DocumentScope.FULL` で `path` が `http://`・`https://` で始まらない文書の `path` を `resolve_location(path, cwd)` で解いたうち `rule_locations` にあるもの（`read_by` は照合しない）
+         - `mcp__` で始まるツールで、文書が 0 件の場合、`match_read_by(entries, tool_name, tool_input)`
+      3. 場所の重なりを除き、`hash_locations` で本文のハッシュを付ける。読めずハッシュを取れない場所は記録しない（知らせない。ログにも書かない）
+      4. 行が無ければ None を返す
+      5. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と additionalContext にして返す（履歴へは書かない）
+      6. `append_history(state_dir, session_id, locations, method=..., tool=tool_name)` で、記録した行の場所を既読の履歴へ書く。method は Read が `ReadMethod.READ`、Bash が `ReadMethod.BASH`、MCP のツールが `ReadMethod.MCP`
+      7. HistoryWriteError はログ（`write_history`）と、場所と理由を載せた additionalContext にして返す（既読の記録はそのまま残す）
+    unit_tests:
+      - name: test_record_read_when_read_tool
+        case: 正常
+        summary: Read で読んだルールを記録する
+        condition: Read、ルールの場所、`tool_response.file` が `startLine` 1・`numLines` と `totalLines` が同じ
+        mock: なし
+        expected: 記録ファイルに場所とルールの中身の `sha256:` のハッシュの 1 行、履歴ファイルに `method` が `read`・`tool` が `Read` の 1 行、戻り値 None
+      - name: test_record_read_when_bash
+        case: 正常
+        summary: cat で読んだルールを記録する
+        condition: '`cat {相対パス}`'
+        mock: なし
+        expected: 記録ファイルに絶対パスとハッシュの 1 行、履歴ファイルに `method` が `bash`・`tool` が `Bash` の 1 行
+      - name: test_record_read_when_not_rule
+        case: 正常
+        summary: ルールでないパスは記録しない
+        condition: 索引に無いパス
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い
+      - name: test_record_read_when_unwritable
+        case: 正常
+        summary: 書けないとき理由を返す
+        condition: 書き込み権限の無い記録フォルダ
+        mock: なし
+        expected: additionalContext に場所と理由
+      - name: test_record_read_when_mcp_tool
+        case: 正常
+        summary: '`read_by` に当たった MCP のツールの呼び出しでルールを記録する'
+        condition: '`read_by` に `tools: ["mcp__docs__get_doc"]` を持つエントリ、`tool_name` が `mcp__docs__get_doc`'
+        mock: なし
+        expected: 記録ファイルにそのエントリの場所、履歴ファイルに `method` が `mcp`・`tool` が `mcp__docs__get_doc` の 1 行、戻り値 None
+      - name: test_record_read_when_read_by_not_matched
+        case: 正常
+        summary: '`read_by` に当たらない MCP のツールは記録しない'
+        condition: '`tools: ["mcp__*"]` を持ち `read_by` の無いエントリ、`tool_name` が `mcp__docs__get_doc`'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_history_unwritable
+        case: 正常
+        summary: 履歴に書けないとき既読を残して理由を返す
+        condition: Read、ルールの場所、記録フォルダに `{id}.history.jsonl` という名前のフォルダを置く
+        mock: なし
+        expected: 記録ファイルに場所、additionalContext に場所と理由、ログに `write_history` の行
+      - name: test_record_read_when_rule_is_url
+        case: 正常
+        summary: '`rule` が URL のエントリは `read_by` に当たっても記録せず、知らせもしない'
+        condition: '`rule: https://example.com/a.md`・`read_by` に `tools: ["mcp__docs__get_doc"]` を持つエントリだけ、`tool_name` が `mcp__docs__get_doc`'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルもログのファイルも無い、戻り値 None
+      - name: test_record_read_when_read_partially
+        case: 正常
+        summary: Read で一部だけを読んだときは記録しない
+        condition: Read、ルールの場所、`tool_response.file` が `startLine` 5・`numLines` 7・`totalLines` 11。別に `tool_response` に `file` が無い呼び出しと、`startLine` が文字列 `"1"` の呼び出し
+        mock: なし
+        expected: どの呼び出しでも記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_mcp_document
+        case: 正常
+        summary: MCP のツールの結果の全文の文書だけを記録する
+        condition: ルール A・B のエントリ。`tool_response` が、A の `scope="full"` と B の `scope="summary"` の閉じた `<document>` を持つ文字列。A の `path` は `cwd` からの相対パス
+        mock: なし
+        expected: 記録ファイルに A の絶対パスとハッシュの 1 行だけ、履歴ファイルに `method` が `mcp` の 1 行、戻り値 None
+      - name: test_record_read_when_mcp_document_without_read_by
+        case: 正常
+        summary: 書式に従う文書がある結果には `read_by` を当てない
+        condition: '`read_by` に `tools: ["mcp__docs__get_doc"]` を持つルール A のエントリ、`tool_name` が `mcp__docs__get_doc`、`tool_response` が索引に無い文書の `{"path": "other.md", "scope": "full"}`'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_mcp_document_is_url
+        case: 正常
+        summary: '`path` が URL の文書は記録しない'
+        condition: '`tool_response` が `{"path": "https://example.com/a.md", "scope": "full"}` だけ'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_rule_unreadable
+        case: 正常
+        summary: ハッシュを取れないルールは記録しない
+        condition: ファイルが無いルールのエントリ。`read_by` に当たる MCP のツールの呼び出し
+        mock: なし
+        expected: 記録ファイルも履歴ファイルもログのファイルも無い、戻り値 None
+      - name: test_record_read_when_settings_unreadable
+        case: 正常
+        summary: 設定ファイルが読めないときは記録せずに知らせる
+        condition: '`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ。Read でファイル全体を読んだ呼び出し'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い。additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由。ログに `read_settings` が 1 行

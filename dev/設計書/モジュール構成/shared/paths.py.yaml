@@ -1,0 +1,112 @@
+title: "プラグイン / 共通 / paths.py"
+test_files:
+  - tests/unit/rule_inject/shared/test_paths.py
+constants:
+  - name: STATE_DIR_NAME
+    title: 記録フォルダの名前
+    container: shared/paths.py
+    summary: 既定の記録フォルダの最後の名前
+    value: '`rule-inject`'
+  - name: LOG_DIR_NAME
+    title: ログのフォルダの名前
+    container: shared/paths.py
+    summary: 既定のログのフォルダの最後の名前（既定の記録フォルダの下）
+    value: '`logs`'
+functions:
+  - name: resolve_location
+    title: 場所の解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: ルールの場所や対象のパスを、照合・記録に使う正規の形式へ揃える
+    kind: 関数
+    scope: public
+    args:
+      - name: location
+        type: str
+        required: true
+        passing: positional
+        description: 絶対パス・`~` で始まるパス・相対パス
+      - name: base
+        type: Path
+        required: true
+        passing: positional
+        description: 相対パスを解く基準
+    returns:
+      type: str
+      description: '`~` を展開して基準から解き、`..` を畳んだ絶対パス（シンボリックリンクは辿らない）'
+    process: |-
+      1. `~` を展開し、相対なら `base` と結ぶ
+      2. `os.path.normpath` で畳んで返す
+    unit_tests:
+      - name: test_resolve_location_when_relative
+        case: 正常
+        summary: 相対パスを基準から解く
+        condition: '`../r/a.md`、基準 `/p/idx`'
+        mock: なし
+        expected: '`/p/r/a.md`'
+      - name: test_resolve_location_when_home
+        case: 正常
+        summary: '`~` を展開する'
+        condition: '`~/r/a.md`'
+        mock: なし
+        expected: ホームの下の `r/a.md` の絶対パス
+  - name: default_state_dir
+    title: 既定の記録フォルダの解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: 設定ファイルに `global.state_dir` が無いときの記録フォルダを決める
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`XDG_STATE_HOME` を使う）
+    returns:
+      type: Path
+      description: 記録フォルダの絶対パス（作らない）
+    process: 1. `XDG_STATE_HOME`（無いか空なら `~/.local/state`）の `~` を展開し、その下の `STATE_DIR_NAME` を返す
+    unit_tests:
+      - name: test_default_state_dir_when_xdg_state_home
+        case: 正常
+        summary: XDG_STATE_HOME の下を使う
+        condition: '`XDG_STATE_HOME=/s`'
+        mock: なし
+        expected: '`/s/rule-inject`'
+      - name: test_default_state_dir_when_no_env
+        case: 正常
+        summary: 既定の場所を使う
+        condition: '`XDG_STATE_HOME` が無い'
+        mock: なし
+        expected: '`~/.local/state/rule-inject` の絶対パス'
+  - name: default_log_dir
+    title: 既定のログのフォルダの解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: 設定ファイルに `global.log_dir` が無いとき・設定ファイルが読めないときのログのフォルダを決める
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`XDG_STATE_HOME` を使う）
+    returns:
+      type: Path
+      description: ログのフォルダの絶対パス（作らない）
+    process: 1. `default_state_dir(env)` の下の `LOG_DIR_NAME` を返す（設定ファイルの `global.state_dir` には従わない）
+    unit_tests:
+      - name: test_default_log_dir_when_xdg_state_home
+        case: 正常
+        summary: XDG_STATE_HOME の下を使う
+        condition: '`XDG_STATE_HOME=/s`'
+        mock: なし
+        expected: '`/s/rule-inject/logs`'
+      - name: test_default_log_dir_when_no_env
+        case: 正常
+        summary: 既定の場所を使う
+        condition: '`XDG_STATE_HOME` が無い'
+        mock: なし
+        expected: '`~/.local/state/rule-inject/logs` の絶対パス'

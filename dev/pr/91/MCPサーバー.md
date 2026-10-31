@@ -18,7 +18,7 @@
 | 設計書の分割 | 要素を `container` ごとに `モジュール構成/features/index/edit/{types,_yaml,service}.py.yaml` と `モジュール構成/features/index/check/{types,service,scan,tags}.py.yaml` の設計書へ移す。書くツールの `create` で作る | - |
 | 束ねる設計書 | `lead`・`directory`・`notes` を、要素を持たない束ねる設計書 `モジュール構成/分類/MCPサーバー/{エントリの編集,索引のチェック}.yaml` へ移す | - |
 | 単体テストのファイル | `test_files` を物理ファイルごとに対応する設計書へ移す | `check/types.py` は単体テストのファイルを持たない |
-| 参照の張り直し | `src/files.yaml` の `related` の `to` を分けた設計書へ置き換える。エントリの編集の関数型の `summary` が指す `MCPサーバー/索引のチェック.py` を `features/index/check/service.py` の設計書へ置き換える | - |
+| 参照の張り直し | `src/files.yaml` の `related` の `to` を分けた設計書へ置き換える（`check/index.schema.yaml` は JSON Schema の決まりを持つ束ねる設計書 `分類/MCPサーバー/索引のチェック`）。エントリの編集の関数型の `summary` が指す `MCPサーバー/索引のチェック.py` を `features/index/check/service.py` の設計書へ置き換える | - |
 | 目次 | `モジュール構成/MCPサーバー/` を削除し、`モジュール構成/index.yaml` から行を削除する | - |
 | 既存機能への影響 | ソースコード・テスト・インターフェース定義は変えない | - |
 

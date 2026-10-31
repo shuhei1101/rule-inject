@@ -1,0 +1,55 @@
+title: "プラグイン / フック / work_rules.py"
+test_files:
+  - tests/unit/rule_inject/hooks/test_work_rules.py
+functions:
+  - name: work_rules
+    title: 作業の決まりの注入の処理
+    container: hooks/work_rules.py
+    usecase: セッションの開始時に作業の決まりを受け取る
+    summary: 作業の決まりを返し、圧縮の後に記録が残っていれば削除できなかったことも返す
+    kind: フック
+    scope: public
+    inherits: HookHandler
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        passing: positional
+        description: SessionStart の入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: dict[str, Any]
+      description: additionalContext に `WORK_RULES`（と削除できずに残った記録の知らせ）
+    unit_tests:
+      - name: test_work_rules
+        case: 正常
+        summary: 作業の決まりを返す
+        condition: '`source: startup`'
+        mock: なし
+        expected: additionalContext が `WORK_RULES`
+      - name: test_work_rules_when_record_left_after_compact
+        case: 正常
+        summary: 圧縮の後の削除できずに残った記録を知らせる
+        condition: '`source: compact` で記録ファイルがある'
+        mock: なし
+        expected: additionalContext に `WORK_RULES` と記録ファイル・ログの場所
+      - name: test_work_rules_when_settings_unreadable_after_compact
+        case: 正常
+        summary: 圧縮の後に設定ファイルが読めなければ作業の決まりに理由を続ける
+        condition: '`source: compact`。`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ'
+        mock: なし
+        expected: additionalContext が `WORK_RULES` で始まり、空行の後に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由・ログの場所。ログに `read_settings` が 1 行
+      - name: test_work_rules_when_settings_unreadable_at_startup
+        case: 正常
+        summary: 圧縮の後でなければ設定ファイルを読まない
+        condition: '`source: startup`。`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ'
+        mock: なし
+        expected: additionalContext が `WORK_RULES` だけ。ログのファイルが無い
+    process: |-
+      1. `source` が `compact` でないか、session_id の形式が外れていれば、設定ファイルを読まずに `WORK_RULES` だけを返す
+      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`WORK_RULES` の後に空行を挟んで `build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を続けて返す
+      3. `record_exists(settings.state_dir, session_id)` が真なら、`WORK_RULES` の後に `LEFTOVER_NOTICE`（記録ファイルと `settings.log_dir` の場所）を続けて返す。偽なら `WORK_RULES` だけを返す

@@ -1,0 +1,11 @@
+summary: "索引のチェックと、書く前と書いた後の問題の比較"
+docs_index: true
+items:
+  - page: types.py.yaml
+    summary: 問題の種類・問題・チェックの結果・辿る位置・タグのパターンの型
+  - page: service.py.yaml
+    summary: 索引のチェックと、書く前と書いた後の問題の比較
+  - page: scan.py.yaml
+    summary: プロジェクトのファイルを辿り、paths の当たらないエントリを返す
+  - page: tags.py.yaml
+    summary: タグのパターンを集め、使われているタグに当たらないものを返す

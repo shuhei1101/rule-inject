@@ -1,0 +1,7 @@
+summary: "セッションごとの既読の記録の読み・追記・削除"
+docs_index: true
+items:
+  - page: types.py.yaml
+    summary: 読み方・既読の状態・記録の行・既読の履歴の行・記録のセッションの型
+  - page: service.py.yaml
+    summary: 記録ファイルの読み・追記・削除・掃除と、既読の履歴の追記・読みと、本文のハッシュ

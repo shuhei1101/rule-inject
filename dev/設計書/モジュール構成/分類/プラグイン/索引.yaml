@@ -1,0 +1,10 @@
+title: "プラグイン / 索引"
+lead: 設定（`load_settings`）が決めた索引を標準ライブラリだけで読み、操作の対象のパスかツール名に当たるルールをルールごとにまとめて返す。MCP のツールの呼び出しが `read_by` に当たるルールの場所も返す。
+directory: |-
+  ```text
+  src/rule_inject/features/index/
+  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / entry_revs / match_path / match_tool / match_read_by / match_arg_pattern / rule_locations）
+  ├── types.py      # Operation・EntryStatus・MatchPattern・ArgCondition・ReadByCondition・IndexEntry・EntryOutcome・IndexContent・MatchedRule・IndexLoadResult
+  ├── _yaml.py      # 索引の YAML の一部だけを読む（行・文字列・リストの読み取りは shared/yaml_lines.py）
+  └── service.py    # 索引の読み込みと照合・エントリのバージョン
+  ```

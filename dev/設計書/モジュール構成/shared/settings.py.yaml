@@ -1,0 +1,303 @@
+title: "プラグイン / 共通 / settings.py"
+test_files:
+  - tests/unit/rule_inject/shared/test_settings.py
+constants:
+  - name: DEFAULT_RECORD_RETENTION_DAYS
+    title: 既読の記録の保持日数の既定
+    container: shared/settings.py
+    summary: 設定ファイルに `global.record_retention_days` が無いときの既読の記録の保持日数
+    value: '`30`'
+  - name: DEFAULT_LOG_RETENTION_DAYS
+    title: ログの保持日数の既定
+    container: shared/settings.py
+    summary: 設定ファイルに `global.log_retention_days` が無いときのログの保持日数
+    value: '`3`'
+  - name: CONFIG_ENV
+    title: 設定ファイルの環境変数
+    container: shared/settings.py
+    summary: 設定ファイルの場所を指す環境変数の名前
+    value: '`RULE_INJECT_CONFIG`'
+  - name: USER_INDEX_DEFAULT
+    title: ユーザーの索引の既定の置き場所
+    container: shared/settings.py
+    summary: '`global.indexes` が無いときに読む索引の、設定フォルダからのパス。設定フォルダは `XDG_CONFIG_HOME`（無いか空なら `~/.config`）'
+    value: '`rule-inject/rules.yaml`'
+  - name: PROJECT_INDEX_DEFAULT
+    title: プロジェクトの索引の既定の置き場所
+    container: shared/settings.py
+    summary: 当たった `projects` の要素のどれも `indexes` を持たないときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス
+    value: '`rules.yaml`'
+  - name: WORKTREES_DIR
+    title: worktree の置き場所
+    container: shared/settings.py
+    summary: '`projects[].match` を当てるとき、この下を本体のリポジトリとして見るフォルダの、リポジトリの直下からのパス'
+    value: '`.claude/worktrees`'
+  - name: DEFAULT_SERVER_PORT
+    title: MCPサーバーのポートの既定
+    container: shared/settings.py
+    summary: 設定ファイルに `global.server_port` が無いときのポート
+    value: '`8783`'
+  - name: PORT_ENV
+    title: ポートを上書きする環境変数
+    container: shared/settings.py
+    summary: '`global.server_port` をその起動だけ上書きする環境変数の名前'
+    value: '`"RULE_INJECT_PORT"`'
+  - name: DEFAULT_DEV_DOCS_URL
+    title: dev-docsの接続先の既定
+    container: shared/settings.py
+    summary: 設定ファイルに `global.dev_docs_url` が無いときの dev-docs の接続先
+    value: '`"http://127.0.0.1:8781/mcp"`'
+  - name: DEV_DOCS_URL_SCHEMES
+    title: dev-docsの接続先に許すスキーム
+    container: shared/settings.py
+    summary: '`global.dev_docs_url` の先頭に許す文字列'
+    value: '`("http://", "https://")`'
+functions:
+  - name: load_settings
+    title: 設定の読み込み
+    container: shared/settings.py
+    usecase: 共通
+    summary: '`RULE_INJECT_CONFIG` が指す設定ファイルを読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`CONFIG_ENV`・`CLAUDE_PROJECT_DIR`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` を使う）
+    returns:
+      type: Settings
+      description: フックが使う値
+    process: |-
+      1. `CONFIG_ENV` が無いか空なら設定ファイルを読まず、空の設定として 4 へ進む
+      2. 先頭の `~` を展開したパスを UTF-8 で読み `parse_settings` に渡す
+      3. 値を確かめる
+         - `global.indexes`・`global.state_dir`・`global.log_dir` の値は、`~` を展開して絶対パスでなければ誤り
+         - `global.record_retention_days`・`global.log_retention_days` は 10 進の整数として読み、1 以上でなければ誤り
+         - `global.server_port` は 10 進の整数として読み、1024〜65535 でなければ誤り
+         - `global.dev_docs_url` は `DEV_DOCS_URL_SCHEMES` のどれかで始まらなければ誤り
+         - `projects` の要素が `match` を持たなければ誤り
+      4. `CLAUDE_PROJECT_DIR` があれば、`_matches_project(match, CLAUDE_PROJECT_DIR)` が真の `projects` の要素を並びの順に集める（無ければどの要素も当てない）
+      5. 索引の並びを作る
+         - `global.indexes` があればその値（`~` を展開）を並べる。無ければ `{XDG_CONFIG_HOME か ~/.config}/{USER_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる
+         - 続けて、当たった要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
+         - 当たった要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
+         - 当たった要素とプロジェクトの既定の置き場所から並べた索引を `project_indexes` にも入れる
+      6. `state_dir`・`log_dir` は `global` の値（`~` を展開）か、無ければ `default_state_dir(env)`・`default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（3 の `global.server_port` と同じ規則で確かめる）、無ければ `global` の値、それも無ければ `DEFAULT_SERVER_PORT`。dev-docs の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`
+      7. `Settings` を返す
+    exceptions:
+      - name: SettingsReadError
+        condition: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
+        message: path は設定ファイルの場所、reason は `describe(exc)`
+      - name: SettingsReadError
+        condition: '`parse_settings` が ValueError を送出する（YAML の書式・知らないキー・許さない形式）'
+        message: path は設定ファイルの場所、reason は `describe(exc)`（行番号を含む）
+      - name: SettingsReadError
+        condition: 3 の値の誤り、6 の `PORT_ENV` の値の誤り
+        message: 'path は設定ファイルの場所（`PORT_ENV` の誤りは `RULE_INJECT_PORT`）、reason は `{キー}: {書かれた値} は {許す値}ではない`（例 `global.log_retention_days: 0 は 1 以上の整数ではない`・`RULE_INJECT_PORT: 80 は 1024〜65535 の整数ではない`）'
+    unit_tests:
+      - name: test_load_settings
+        case: 正常
+        summary: 設定ファイルの値を使う
+        condition: '`global` に全てのキー（`indexes` は絶対パス 1 つ）、`projects` に `CLAUDE_PROJECT_DIR` のフォルダ名を `match` に持ち `indexes` に相対パス `rules/a.yaml` を持つ要素。`CLAUDE_PROJECT_DIR` の直下にも `rules.yaml` を置く'
+        mock: なし（設定ファイルは一時ファイル）
+        expected: '`indexes` が `global` の索引、`{CLAUDE_PROJECT_DIR}/rules/a.yaml` の順の 2 つ（直下の `rules.yaml` は入らない）。`state_dir`・`log_dir`・保持日数が設定ファイルの値'
+      - name: test_load_settings_when_no_config
+        case: 正常
+        summary: '`RULE_INJECT_CONFIG` が無ければ既定値を使う'
+        condition: '`RULE_INJECT_CONFIG` が無い。`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`CLAUDE_PROJECT_DIR` は一時フォルダで、`{XDG_CONFIG_HOME}/rule-inject/rules.yaml` と `{CLAUDE_PROJECT_DIR}/rules.yaml` を置く'
+        mock: なし
+        expected: '`indexes` がユーザー、プロジェクトの既定の索引の順の 2 つ。`state_dir` が `{XDG_STATE_HOME}/rule-inject`、`log_dir` が `{XDG_STATE_HOME}/rule-inject/logs`、保持日数が 30 と 3'
+      - name: test_load_settings_when_default_missing
+        case: 正常
+        summary: 既定の置き場所に索引が無ければ並べない
+        condition: '`RULE_INJECT_CONFIG` が無い。`XDG_CONFIG_HOME` と `CLAUDE_PROJECT_DIR` は空の一時フォルダ'
+        mock: なし
+        expected: '`indexes` が空'
+      - name: test_load_settings_when_projects_order
+        case: 正常
+        summary: 当たった要素を並びの順に重ねる
+        condition: '`projects` に、フォルダ名で当たる要素 A（`indexes: [/a.yaml]`）、当たらない要素 B（`indexes: [/b.yaml]`）、絶対パスで当たる要素 C（`indexes: [/c.yaml]`）。`global.indexes: [/g.yaml]`'
+        mock: なし
+        expected: '`indexes` が `/g.yaml`・`/a.yaml`・`/c.yaml` の順'
+      - name: test_load_settings_when_indexes_empty
+        case: 正常
+        summary: 空の並びは既定の置き場所も読まない
+        condition: '`global.indexes: []` と、当たる要素の `indexes: []`。両方の既定の置き場所に索引を置く'
+        mock: なし
+        expected: '`indexes` が空'
+      - name: test_load_settings_when_no_project_dir
+        case: 正常
+        summary: '`CLAUDE_PROJECT_DIR` が無ければどの要素も当てない'
+        condition: '`CLAUDE_PROJECT_DIR` が無い。`projects` に絶対パスとフォルダ名の要素'
+        mock: なし
+        expected: '`indexes` が `global` の索引だけ'
+      - name: test_load_settings_when_home
+        case: 正常
+        summary: '`RULE_INJECT_CONFIG` の `~` を展開する'
+        condition: '`HOME` を一時フォルダに向け、`RULE_INJECT_CONFIG=~/c/settings.yaml` に `global.log_retention_days: 5` を置く'
+        mock: '`HOME`（monkeypatch）'
+        expected: '`log_retention_days` が 5'
+      - name: test_load_settings_when_missing
+        case: 異常
+        summary: 指したファイルが無い
+        condition: '`RULE_INJECT_CONFIG` が実在しないパス'
+        mock: なし
+        expected: SettingsReadError（path がそのパス、reason に `FileNotFoundError`）
+        exception: 設定ファイルが無い・読めない
+      - name: test_load_settings_when_unknown_key
+        case: 異常
+        summary: 知らないキーを拒む
+        condition: '`projects` の要素に `index:` がある'
+        mock: なし
+        expected: SettingsReadError（reason に行番号と `index`）
+        exception: '`parse_settings` が ValueError を送出する'
+      - name: test_load_settings_when_relative_global_path
+        case: 異常
+        summary: '`global` の相対パスを拒む'
+        condition: '`global.indexes: [rules.yaml]`、`global.state_dir: state`、`global.log_dir: logs` のどれか 1 つ（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason にキーと値）
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_invalid_retention
+        case: 異常
+        summary: 1 以上の整数でない保持日数を拒む
+        condition: '`global.record_retention_days` か `global.log_retention_days` が `0`・`-1`・`abc`・`1.5`（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason にキーと値）。既定の日数に置き換えない
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_match_missing
+        case: 異常
+        summary: '`match` の無い要素を拒む'
+        condition: '`projects` の要素が `indexes` だけを持つ'
+        mock: なし
+        expected: SettingsReadError（reason に `projects[0].match`）
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_not_utf8
+        case: 異常
+        summary: UTF-8 として読めない設定ファイル
+        condition: '`RULE_INJECT_CONFIG` が UTF-8 でないバイト列（`b"\xff\xfe"`）のファイルを指す'
+        mock: なし
+        expected: SettingsReadError（path が設定ファイルの場所）
+        exception: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
+      - name: test_load_settings_when_invalid_server_port
+        case: 異常
+        summary: 範囲の外のポートを拒む
+        condition: '`global.server_port` が `1023`・`65536`・`abc`（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason に `global.server_port` と値）
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_server_port
+        case: 正常
+        summary: ポートを設定ファイルから読み、無ければ既定にする
+        condition: '`global.server_port: 9000` の設定ファイルと、`server_port` を書かない設定ファイル（パラメータ展開）'
+        mock: なし
+        expected: '`server_port` が 9000 と 8783'
+      - name: test_load_settings_when_port_env
+        case: 正常
+        summary: 環境変数のポートが設定ファイルより優先する
+        condition: '`global.server_port: 9000` の設定ファイルと `RULE_INJECT_PORT=9100`、設定ファイル無しと `RULE_INJECT_PORT=9100`（パラメータ展開）'
+        mock: なし
+        expected: どちらも `server_port` が 9100
+      - name: test_load_settings_when_invalid_port_env
+        case: 異常
+        summary: 許す範囲の外の環境変数のポートを拒む
+        condition: '`RULE_INJECT_PORT=80`'
+        mock: なし
+        expected: SettingsReadError（path が `RULE_INJECT_PORT`）
+        exception: 3 の値の誤り、6 の `PORT_ENV` の値の誤り
+      - name: test_load_settings_when_project_indexes
+        case: 正常
+        summary: プロジェクトの索引だけを `project_indexes` に分ける
+        condition: '`global.indexes` に 1 つ、当たる `projects` の要素の `indexes` に 1 つを持つ設定ファイルと、`CLAUDE_PROJECT_DIR`。もう 1 つは `projects` を持たず、`CLAUDE_PROJECT_DIR` の直下に `rules.yaml` を置く（パラメータ展開）'
+        mock: なし
+        expected: '`indexes` は両方を並べ、`project_indexes` は要素の索引（またはプロジェクトの既定の索引）だけ'
+      - name: test_load_settings_when_dev_docs_url
+        case: 正常
+        summary: dev-docs の接続先を設定ファイルから読み、無ければ既定にする
+        condition: '`global.dev_docs_url: https://docs.example/mcp` の設定ファイルと、`dev_docs_url` を書かない設定ファイル（パラメータ展開）'
+        mock: なし
+        expected: '`dev_docs_url` が `https://docs.example/mcp` と `http://127.0.0.1:8781/mcp`'
+      - name: test_load_settings_when_invalid_dev_docs_url
+        case: 異常
+        summary: http か https で始まらない接続先を誤りにする
+        condition: '`global.dev_docs_url` が `127.0.0.1:8781/mcp`・`ftp://h/mcp`（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason に `global.dev_docs_url` と値）。既定の接続先に置き換えない
+  - name: _matches_project
+    title: プロジェクトの当て方
+    container: shared/settings.py
+    usecase: 共通
+    summary: '`projects[].match` が起動したプロジェクトに当たるかを返す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: match
+        type: str
+        required: true
+        passing: positional
+        description: '`projects[].match` の値（絶対パス・`~` で始まるパス・プロジェクト名）'
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: '`CLAUDE_PROJECT_DIR` の値'
+    returns:
+      type: bool
+      description: 当たるとき真
+    process: |-
+      1. `project_dir` を `os.path.normpath` で畳み、`/{WORKTREES_DIR}/` を含むならその前までを本体のパスとする（含まなければ畳んだパスが本体）
+      2. `match` の `~` を展開して絶対パスなら、畳んだ `match` と本体のパスが同じか、本体のパスが `{match}/` で始まるとき真
+      3. 絶対パスでなければプロジェクト名として、本体のパスの最後のフォルダ名と一致するとき真
+    unit_tests:
+      - name: test_matches_project_when_absolute
+        case: 正常
+        summary: 絶対パスはそのパスと配下に当てる
+        condition: '`match` が `/w/repo`。`project_dir` が `/w/repo`・`/w/repo/sub`・`/w/repo2`（パラメータ展開）'
+        mock: なし
+        expected: 順に真・真・偽
+      - name: test_matches_project_when_name
+        case: 正常
+        summary: プロジェクト名はフォルダ名で当てる
+        condition: '`match` が `repo`。`project_dir` が `/w/repo`・`/w/other`（パラメータ展開）'
+        mock: なし
+        expected: 順に真・偽
+      - name: test_matches_project_when_worktree
+        case: 正常
+        summary: worktree は本体で当てる
+        condition: '`project_dir` が `/w/repo/.claude/worktrees/feat`。`match` が `repo`・`/w/repo`・`feat`（パラメータ展開）'
+        mock: なし
+        expected: 順に真・真・偽
+data_models:
+  - name: Settings
+    title: 設定
+    container: shared/settings.py
+    usecase: 共通
+    role: DTO
+    summary: 設定ファイルと既定値から決めた、フックが使う値
+    properties:
+      - name: indexes
+        type: tuple[str, ...]
+        description: 読む索引の絶対パス。`global.indexes`（無ければユーザーの既定の置き場所）の後に、当たった `projects` の要素の `indexes`（どれも持たなければプロジェクトの既定の置き場所）を並べる。既定の置き場所はファイルがあるときだけ入る
+      - name: state_dir
+        type: Path
+        description: 記録フォルダの絶対パス（作らない）
+      - name: log_dir
+        type: Path
+        description: ログのフォルダの絶対パス（作らない）
+      - name: record_retention_days
+        type: int
+        description: 既読の記録の保持日数（1 以上）
+      - name: log_retention_days
+        type: int
+        description: ログの保持日数（1 以上）
+      - name: server_port
+        type: int
+        description: MCP サーバーが待ち受けるポート（1024〜65535）。フックは使わない
+      - name: project_indexes
+        type: tuple[str, ...]
+        description: '`indexes` のうち、当たった `projects` の要素の `indexes` とプロジェクトの既定の置き場所から入ったもの（`indexes` と同じ順）。フックは使わない'
+      - name: dev_docs_url
+        type: str
+        description: '`check_indexes` が使われているタグを引く dev-docs の MCP サーバーの URL。フックは使わない'

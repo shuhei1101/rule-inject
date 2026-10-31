@@ -1,0 +1,9 @@
+title: "プラグイン / MCPの結果の文書"
+lead: MCP のツールの結果から、閉じタグまでそろった `<document>` と、文字列の `path`・`scope` を持つオブジェクトを、文書の場所と範囲として取り出す。
+directory: |-
+  ```text
+  src/rule_inject/features/document/
+  ├── __init__.py   # 公開 API
+  ├── types.py      # ResultDocument・DocumentScope
+  └── service.py    # MCP のツールの結果から文書を取り出す
+  ```

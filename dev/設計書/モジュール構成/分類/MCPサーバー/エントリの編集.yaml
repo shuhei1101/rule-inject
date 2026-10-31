@@ -1,0 +1,10 @@
+title: "MCP サーバー / エントリの編集"
+lead: 索引のエントリを `ruamel.yaml` の round-trip で新規作成・書き換え・削除し、対象のエントリ以外の行を変えずに一時ファイルとの置き換えで書き戻す。書き込みのチェックは注入した関数で行い、索引のチェックを直接は読み込まない。`features/index` のサブフィーチャー。
+directory: |-
+  ```text
+  src/rule_inject/features/index/edit/
+  ├── __init__.py   # 公開 API（write_entry / delete_entry / IndexLocks）
+  ├── types.py      # CheckChange・EditResult・IndexLocks
+  ├── _yaml.py      # round-trip の設定と、書き込む値の書式
+  └── service.py    # エントリの書き込み・削除とファイルの置き換え
+  ```

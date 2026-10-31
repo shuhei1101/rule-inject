@@ -1,12 +1,6 @@
-title: "プラグイン / 案内"
-lead: フックが返す案内文（止める案内・止めない案内・検索結果の案内・失敗の知らせ・作業の決まり）を組み立てる。
-directory: |-
-  ```text
-  src/rule_inject/features/guidance/
-  ├── __init__.py   # 公開 API
-  ├── types.py      # GuidedRule（案内が読むルールの最小の型）・Guidance（案内文と載せた場所）
-  └── service.py    # 案内文の組み立てと文面の定数
-  ```
+title: "プラグイン / 案内 / service.py"
+test_files:
+  - tests/unit/rule_inject/features/guidance/test_service.py
 constants:
   - name: GUIDANCE_LIMIT
     title: 案内文の上限
@@ -177,32 +171,3 @@ functions:
         condition: 1 件 150 字の場所を 100 件、`limit=10000`
         mock: なし
         expected: 10,000 字以内で、末尾に載せきれなかった件数があり、`shown` は載せた分だけ
-test_files:
-  - tests/unit/rule_inject/features/guidance/test_service.py
-data_models:
-  - name: GuidedRule
-    title: 案内するルール
-    container: features/guidance/types.py
-    usecase: 未読のルールの案内を受ける
-    role: Protocol
-    summary: 案内文の組み立てが読む属性だけを持つ型（`typing.Protocol`）。索引の `MatchedRule` を import せず、フックが `MatchedRule` をそのまま渡せる
-    properties:
-      - name: location
-        type: str
-        description: ルールの場所
-      - name: blocking
-        type: bool
-        description: 操作を止めるルールか
-  - name: Guidance
-    title: 案内文
-    container: features/guidance/types.py
-    usecase: 未読のルールの案内を受ける
-    role: DTO
-    summary: 組み立てた案内文と、上限に収まって載せたルールの場所。フックは `shown` だけを案内済みにする
-    properties:
-      - name: text
-        type: str
-        description: 案内文
-      - name: shown
-        type: tuple[str, ...]
-        description: 案内文に載せたルールの場所（載せた順）

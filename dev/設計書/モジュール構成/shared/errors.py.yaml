@@ -1,0 +1,72 @@
+title: "プラグイン / 共通 / errors.py"
+classes:
+  - name: RuleInjectError
+    title: プラグインの例外
+    container: shared/errors.py
+    usecase: 共通
+    summary: このプラグインが送出する例外の基底
+    kind: クラス
+    inherits: Exception
+    properties:
+      - name: path
+        type: str
+        description: 失敗した操作の対象のファイル・フォルダ・場所
+      - name: reason
+        type: str
+        description: 理由（元の例外のクラス名と文面）
+  - name: IndexReadError
+    title: 索引が読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 索引が無い・読めない・書式に合わない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: RecordReadError
+    title: 既読の記録が読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 記録ファイルはあるが読めない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: RecordWriteError
+    title: 既読の記録に書けない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 記録フォルダが作れない・記録ファイルに追記できない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: RecordDeleteError
+    title: 既読の記録を削除できない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 記録ファイルはあるが削除できない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: LogDeleteError
+    title: ログを削除できない
+    container: shared/errors.py
+    usecase: 古いログが掃除される
+    summary: 削除する対象のログのファイルはあるが削除できない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: HistoryWriteError
+    title: 既読の履歴に書けない
+    container: shared/errors.py
+    usecase: ルールを読んだことが記録される
+    summary: 記録フォルダが作れない・既読の履歴ファイルに追記できない
+    kind: クラス
+    inherits: RuleInjectError
+  - name: SettingsReadError
+    title: 設定ファイルが読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。`path` は設定ファイルの場所
+    kind: クラス
+    inherits: RuleInjectError
+  - name: IndexEditError
+    title: 索引を編集できない
+    container: shared/errors.py
+    usecase: 索引のエントリを編集する
+    summary: 索引が YAML として読めない・エントリの位置が無い・バージョンが合わない・書いた後の索引がチェックに通らない。`path` は索引の場所、`reason` はツールの結果にそのまま載せる文言
+    kind: クラス
+    inherits: RuleInjectError

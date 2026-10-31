@@ -1,7 +1,0 @@
-summary: "常駐の MCP サーバーの Python のモジュール"
-docs_index: true
-items:
-  - page: 索引のチェック.py.yaml
-    summary: 索引のフックの読み取り・JSON Schema・ルールの場所の実在のチェック
-  - page: エントリの編集.py.yaml
-    summary: 索引のエントリの round-trip での書き込み・削除

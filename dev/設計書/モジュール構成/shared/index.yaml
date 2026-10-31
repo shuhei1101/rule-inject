@@ -1,0 +1,15 @@
+summary: "フックが共有する設定・場所の解決・ログ・例外の物理ファイルごとのモジュール"
+docs_index: true
+items:
+  - page: errors.py.yaml
+    summary: 設定ファイル・索引の読み取りと編集・既読の記録・既読の履歴・ログの例外
+  - page: paths.py.yaml
+    summary: 既定の記録フォルダ・ログのフォルダとルールの場所の解決
+  - page: settings.py.yaml
+    summary: 設定ファイルの読み取りと projects の当て方
+  - page: _settings_yaml.py.yaml
+    summary: 設定ファイルの YAML の一部だけを読む
+  - page: variables.py.yaml
+    summary: '!{名前} を環境変数の値へ展開する'
+  - page: logger.py.yaml
+    summary: 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを削除する

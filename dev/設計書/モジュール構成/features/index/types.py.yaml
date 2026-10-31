@@ -1,0 +1,181 @@
+title: "プラグイン / 索引 / types.py"
+enums:
+  - name: Operation
+    title: 操作の種別
+    container: features/index/types.py
+    usecase: 共通
+    summary: エントリの `on`・`default_on` と呼ばれた操作の種別（Literal）
+    values:
+      - value: read
+        title: 読む
+        description: Read・Grep・Bash の読むコマンド
+      - value: write
+        title: 書く
+        description: Edit・Write・NotebookEdit
+      - value: mcp
+        title: MCP
+        description: MCP のツールの呼び出し
+  - name: EntryStatus
+    title: エントリの状態
+    container: features/index/types.py
+    usecase: 効いているルールの一覧を見る
+    summary: 索引を読んだときのエントリごとの扱い（Literal）
+    values:
+      - value: effective
+        title: 効いている
+        description: 照合に使う
+      - value: skipped
+        title: 読み飛ばした
+        description: 展開できない変数参照・URL の `rule`・読めない正規表現のため照合に使わない
+      - value: disabled
+        title: 無効
+        description: '`enabled: false` のため照合に使わない'
+constants:
+  - name: DEFAULT_ON
+    title: 既定の止める操作
+    container: features/index/types.py
+    summary: 索引が `default_on` を書かないときの値
+    value: '`("read", "write", "mcp")`'
+  - name: TREE_KEY_PATTERN
+    title: 条件の木のキーの書き方
+    container: features/index/types.py
+    summary: '`args` のキーを、ドットの道筋と条件の木の `field` に分ける正規表現。当たらないキーは全体をドットの道筋として読む'
+    value: '`re.compile(r"^(?P<path>[^\[\]]+)\[(?P<field>[^\[\]]+)\]$")`'
+data_models:
+  - name: IndexEntry
+    title: 索引のエントリ
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: 索引の 1 エントリ（場所を解決し、`on` を埋めた後）
+    properties:
+      - name: location
+        type: str
+        description: 解決後のルールの場所（絶対パス）
+      - name: paths
+        type: tuple[MatchPattern, ...]
+        description: 当てるパスのパターン
+      - name: exclude
+        type: tuple[MatchPattern, ...]
+        description: 外すパスのパターン
+      - name: tools
+        type: tuple[MatchPattern, ...]
+        description: 当てるツール名のパターン
+      - name: args
+        type: tuple[ArgCondition, ...]
+        description: MCP のツールの引数の条件。全てが当たるときだけエントリを当てる（空なら引数では絞らない）
+      - name: on
+        type: frozenset[Operation]
+        description: 止める操作
+      - name: read_by
+        type: tuple[ReadByCondition, ...]
+        description: そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
+  - name: MatchedRule
+    title: 当たったルール
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: ルールの場所ごとに 1 件へまとめた照合の結果
+    properties:
+      - name: location
+        type: str
+        description: ルールの場所
+      - name: blocking
+        type: bool
+        description: 当たったエントリのどれか 1 つでも操作の種別が `on` に入っていれば True
+  - name: IndexLoadResult
+    title: 索引の読み込みの結果
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: 読めたエントリと読めなかった索引
+    properties:
+      - name: entries
+        type: tuple[IndexEntry, ...]
+        description: 読めた全ての索引のエントリ
+      - name: failures
+        type: tuple[IndexReadError, ...]
+        description: 読めなかった索引ごとの例外
+  - name: MatchPattern
+    title: 照合のパターン
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: 索引に書かれた glob か正規表現のパターン 1 つ（正規表現はコンパイル済み）
+    properties:
+      - name: source
+        type: str
+        description: 索引に書かれたままのパターン（`re:` を含む）
+      - name: regex
+        type: re.Pattern[str] | None
+        description: '`re:` で始まるパターンの、`re:` を除いてコンパイルした正規表現。glob のときは None'
+  - name: ArgCondition
+    title: 引数の条件
+    container: features/index/types.py
+    usecase: 共通
+    role: DTO
+    summary: エントリの `args` の 1 キーと、その値に当てるパターン。索引を読むときにキーを `TREE_KEY_PATTERN` で道筋と `field` に分けておき、照合のたびに分け直さない
+    properties:
+      - name: key
+        type: str
+        description: 索引に書かれたままの引数のキー（例 `filter.kind`・`filter[tags]`）
+      - name: patterns
+        type: tuple[MatchPattern, ...]
+        description: どれか 1 つに当たれば、そのキーは当たる
+      - name: path
+        type: str
+        description: ドットで結んだ引数の道筋。`key` が `TREE_KEY_PATTERN` に当たればその `path`、当たらなければ `key` のまま
+      - name: field
+        type: str | None
+        description: 道筋の値を条件の木として読むときの `field`（`key` が `TREE_KEY_PATTERN` に当たったときの `field`）。ドットの道筋のキーは `None`
+  - name: ReadByCondition
+    title: 既読にする呼び出しの条件
+    container: features/index/types.py
+    usecase: ルールを読んだことが記録される
+    role: DTO
+    summary: エントリの `read_by` の 1 要素（パターンはコンパイル済み）
+    properties:
+      - name: tools
+        type: tuple[MatchPattern, ...]
+        description: 当てる MCP のツールの完全名のパターン。どれか 1 つに当たればよい
+      - name: args
+        type: tuple[ArgCondition, ...]
+        description: 引数の条件。全てが当たるときだけ要素を当てる（空なら引数では絞らない）
+  - name: EntryOutcome
+    title: エントリの読み取り結果
+    container: features/index/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: 索引の 1 エントリの位置・書かれた値・バージョンと、照合に使うか
+    properties:
+      - name: position
+        type: int
+        description: 索引の `rules` の中の位置（0 始まり）
+      - name: raw
+        type: Mapping[str, Any]
+        description: '`parse_index` が読んだエントリのキーと値（書かれたまま）'
+      - name: rev
+        type: str
+        description: '`entry_rev(raw)`'
+      - name: status
+        type: EntryStatus
+        description: 照合に使うか
+      - name: entry
+        type: IndexEntry | None
+        description: 状態が `effective` のときだけ持つ、場所を解きパターンをコンパイルしたエントリ
+      - name: reason
+        type: str | None
+        description: 状態が `skipped` のときだけ持つ、読み飛ばした理由（フックが案内に載せる文言）
+  - name: IndexContent
+    title: 索引の読み取り結果
+    container: features/index/types.py
+    usecase: 効いているルールの一覧を見る
+    role: DTO
+    summary: 読めた索引 1 つのエントリごとの読み取り結果
+    properties:
+      - name: path
+        type: str
+        description: 索引の場所
+      - name: outcomes
+        type: tuple[EntryOutcome, ...]
+        description: '`rules` の並びの順のエントリごとの結果'

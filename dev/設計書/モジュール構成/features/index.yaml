@@ -1,0 +1,11 @@
+summary: "フックと MCP サーバーが使う機能の物理ファイルごとのモジュール"
+docs_index: true
+items:
+  - page: index/
+    summary: 索引の YAML の読み取りと照合・チェック・エントリの編集
+  - page: record/
+    summary: セッションごとの既読の記録の読み・追記・削除
+  - page: guidance/
+    summary: 案内文の組み立て
+  - page: document/
+    summary: MCP のツールの結果から文書の場所と範囲を取り出す

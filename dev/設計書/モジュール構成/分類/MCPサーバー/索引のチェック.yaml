@@ -1,0 +1,27 @@
+title: "MCP サーバー / 索引のチェック"
+lead: 索引をフックと同じ読み取り・JSON Schema・ルールの場所の実在の順に確かめ、問題を返す。書く前と書いた後の索引を比べ、新しく出た問題だけを返す。プロジェクトのファイルを辿り、`paths` の当たらないエントリを返す。使われているタグに当たらないタグのパターンを返す（使われているタグはサーバーが dev-docs から引いて渡す）。`features/index` のサブフィーチャーで、サーバーの依存（`jsonschema`・`ruamel.yaml`）を使うためフックからは読み込まない。
+directory: |-
+  ```text
+  src/rule_inject/features/index/check/
+  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change / scan_unmatched / tag_patterns / unused_tag_patterns）
+  ├── types.py            # ProblemKind・IndexProblem・IndexCheck・ScanCursor・UnmatchedScan・TagPattern
+  ├── service.py          # 索引のチェックと、書く前と書いた後の問題の比較
+  ├── scan.py             # プロジェクトのファイルを辿り、paths の当たらないエントリを返す
+  ├── tags.py             # タグのパターンを集め、使われているタグに当たらないものを返す
+  └── index.schema.yaml   # 索引の JSON Schema（2020-12）
+  ```
+notes:
+  索引の JSON Schema: |-
+    `index.schema.yaml` は JSON Schema 2020-12 を YAML で書き、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを通す。
+
+    | 場所 | 通す値 |
+    | --- | --- |
+    | 最上位 | マップ。キーは `default_on`・`rules` だけ |
+    | `default_on`・`rules[].on` | `read`・`write`・`mcp` のどれかを 1 つ以上、重なりなく並べたリスト |
+    | `rules` | エントリのリストか `null`（`rules:` だけで値が無い） |
+    | `rules[]` | マップ。`rule` が必須で、キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`enabled` だけ |
+    | `rules[].rule` | 1 字以上の文字列 |
+    | `rules[].paths`・`exclude`・`tools` | 1 字以上の文字列を 1 つ以上並べたリスト |
+    | `rules[].args`・`read_by[].args` | 引数のキー → 1 字以上の文字列を 1 つ以上並べたリストのマップ（キーを 1 つ以上持つ） |
+    | `rules[].read_by` | `tools` が必須で、キーは `tools`・`args` だけのマップを 1 つ以上並べたリスト |
+    | `rules[].enabled` | 真偽値 |

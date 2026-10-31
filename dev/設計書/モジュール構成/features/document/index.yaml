@@ -1,0 +1,7 @@
+summary: "MCP のツールの結果から文書の場所と範囲を取り出す"
+docs_index: true
+items:
+  - page: types.py.yaml
+    summary: 結果の文書と文書の範囲の型
+  - page: service.py.yaml
+    summary: MCP のツールの結果から文書を取り出す

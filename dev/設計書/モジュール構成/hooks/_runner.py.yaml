@@ -1,0 +1,185 @@
+title: "プラグイン / フック / _runner.py"
+test_files:
+  - tests/unit/rule_inject/hooks/test_runner.py
+constants:
+  - name: SETTINGS_FAILURE_SUMMARY
+    title: 設定ファイルの失敗の知らせの冒頭
+    container: hooks/_runner.py
+    summary: 設定ファイルを読めなかったときに `build_failure_notice` へ渡す 1 文
+    value: '`設定ファイルを読めませんでした`'
+function_types:
+  - name: HookHandler
+    title: フックの処理の関数型
+    container: hooks/_runner.py
+    usecase: 共通
+    summary: 入力の JSON と環境変数を受け、標準出力へ返す JSON（無ければ None）を返す
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        description: フックの入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        description: 環境変数
+    returns:
+      type: dict[str, Any] | None
+      description: 出力する JSON
+    implementations:
+      - target: guide_rules
+      - target: record_read
+      - target: discard_read
+      - target: work_rules
+      - target: sweep_read
+functions:
+  - name: run_hook
+    title: フックの実行
+    container: hooks/_runner.py
+    usecase: 共通
+    summary: 標準入力を読み、処理を呼び、結果を標準出力へ出し、想定外の例外を捕まえて終了コード 0 を返す
+    kind: 関数
+    scope: public
+    side_effects: 標準出力へ JSON を出す。失敗はログへ書く
+    args:
+      - name: component
+        type: Component
+        required: true
+        passing: positional
+        description: 出した元
+      - name: handle
+        type: HookHandler
+        required: true
+        passing: positional
+        description: 処理
+      - name: on_unexpected
+        type: Callable[[str, Path], dict[str, Any] | None]
+        required: true
+        passing: positional
+        description: 想定外の例外の文面とログの場所から、知らせの JSON を作る
+      - name: stdin
+        type: TextIO
+        required: false
+        default: sys.stdin
+        passing: injected
+        description: 標準入力
+      - name: stdout
+        type: TextIO
+        required: false
+        default: sys.stdout
+        passing: injected
+        description: 標準出力
+      - name: env
+        type: Mapping[str, str]
+        required: false
+        default: os.environ
+        passing: injected
+        description: 環境変数
+    returns:
+      type: int
+      description: 常に 0
+    process: |-
+      1. 標準入力を JSON として読む
+      2. `handle(payload, env)` を呼び、None でなければ JSON を 1 行出す
+      3. 例外は捕まえ、`write_log(component, operation="unexpected")` を書き、`on_unexpected` の結果を出す。ログのフォルダは `load_settings(env).log_dir`、SettingsReadError なら `default_log_dir(env)`
+    unit_tests:
+      - name: test_run_hook
+        case: 正常
+        summary: 処理の結果を出す
+        condition: handle が dict を返す
+        mock: なし（stdin / stdout は StringIO）
+        expected: stdout にその JSON、戻り値 0
+      - name: test_run_hook_when_none
+        case: 正常
+        summary: 出すものが無い
+        condition: handle が None を返す
+        mock: なし
+        expected: stdout が空、戻り値 0
+      - name: test_run_hook_when_unexpected
+        case: 正常
+        summary: 想定外の例外を捕まえる
+        condition: handle が RuntimeError を送出する
+        mock: なし
+        expected: 'ログに `operation: unexpected` が 1 行、stdout に on_unexpected の JSON、戻り値 0'
+      - name: test_run_hook_when_unexpected_and_settings_unreadable
+        case: 正常
+        summary: 設定ファイルが読めなくても想定外の例外を既定のログのフォルダへ書く
+        condition: handle が RuntimeError を送出する。`RULE_INJECT_CONFIG` が YAML として読めないファイルを指し、`XDG_STATE_HOME` は一時フォルダ
+        mock: なし
+        expected: '`{XDG_STATE_HOME}/rule-inject/logs` のログに `operation: unexpected` が 1 行、戻り値 0'
+  - name: log_settings_failure
+    title: 設定ファイルの誤りのログ
+    container: hooks/_runner.py
+    usecase: 共通
+    summary: 設定ファイルを読めなかったことを既定のログのフォルダへ書き、そのログのファイルの場所を返す
+    kind: 関数
+    scope: public
+    side_effects: ログのファイルへ 1 行追記する
+    args:
+      - name: component
+        type: Component
+        required: true
+        passing: positional
+        description: 出した元
+      - name: error
+        type: SettingsReadError
+        required: true
+        passing: positional
+        description: 設定ファイルの失敗
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`default_log_dir` に渡す）
+      - name: session_id
+        type: str | None
+        required: true
+        passing: positional
+        description: フックの入力の session_id
+    returns:
+      type: Path
+      description: 書いたログのファイルの場所（その日の `log_file_path`）
+    process: |-
+      1. `write_log(default_log_dir(env), component, operation="read_settings", ...)` で、設定ファイルの場所と理由を書く
+      2. `log_file_path(default_log_dir(env), 今日（UTC）)` を返す
+    unit_tests:
+      - name: test_log_settings_failure
+        case: 正常
+        summary: 既定のログのフォルダへ書く
+        condition: '`XDG_STATE_HOME` を一時フォルダにし、SettingsReadError を渡す'
+        mock: なし
+        expected: '`{XDG_STATE_HOME}/rule-inject/logs` の今日の日付のファイルに `operation: read_settings` と設定ファイルの場所・理由の 1 行があり、戻り値がそのファイルの場所'
+  - name: settings_failure_notice
+    title: 設定ファイルの誤りの知らせ
+    container: hooks/_runner.py
+    usecase: 共通
+    summary: 設定ファイルを読めなかったことをログへ書き、場所と理由とログの場所を載せた知らせの文を返す
+    kind: 関数
+    scope: public
+    side_effects: ログのファイルへ 1 行追記する
+    args:
+      - name: component
+        type: Component
+        required: true
+        passing: positional
+        description: 出した元
+      - name: error
+        type: SettingsReadError
+        required: true
+        passing: positional
+        description: 設定ファイルの失敗
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`log_settings_failure` に渡す）
+      - name: session_id
+        type: str | None
+        required: true
+        passing: positional
+        description: フックの入力の session_id
+    returns:
+      type: str
+      description: '`additionalContext` に載せる知らせの文'
+    process: |-
+      1. `log_settings_failure(component, error, env, session_id)` でログへ書き、ログのファイルの場所を受け取る
+      2. `build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログのファイルの場所)` を返す

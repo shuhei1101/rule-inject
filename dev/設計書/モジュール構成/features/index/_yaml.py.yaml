@@ -1,0 +1,105 @@
+title: "プラグイン / 索引 / _yaml.py"
+test_files:
+  - tests/unit/rule_inject/features/index/test_yaml.py
+functions:
+  - name: parse_index
+    title: 索引の YAML の読み取り
+    container: features/index/_yaml.py
+    usecase: 共通
+    summary: 索引の YAML のうち設定の設計書に挙げたキーと形式だけを読む
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 索引のファイルの中身
+    returns:
+      type: tuple[tuple[Operation, ...] | None, list[dict[str, str | list[str] | dict[str, list[str]] | list[dict[str, list[str] | dict[str, list[str]]]]]]]
+      description: '`default_on`（無ければ None）と、`rules` の各エントリのキーと値（`args` はキー → パターンのリスト、`read_by` は `tools`・`args` を持つマップのリスト）'
+    process: |-
+      1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
+      2. 最上位のキーは `default_on` と `rules` だけを許す
+      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` / `enabled` だけを許す
+      4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
+      5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読む。キーは空白を含まない文字列（ドットを含んでよい）
+      6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
+      7. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返す
+    exceptions:
+      - name: ValueError
+        condition: 許さないキー・形式・値がある
+        message: '`{行番号}行目: {理由}`'
+    unit_tests:
+      - name: test_parse_index
+        case: 正常
+        summary: フローとブロックのリスト、引用符、コメントを読む
+        condition: '`default_on: [write]` と、`paths` をブロック、`on` をフローで書いた 2 エントリ。引用符の中に `#` を含む値'
+        mock: なし
+        expected: '`default_on` と 2 エントリのキーと値が読め、引用符の中の `#` が残る'
+      - name: test_parse_index_when_no_default_on
+        case: 正常
+        summary: '`default_on` が無い'
+        condition: '`rules` だけの索引'
+        mock: なし
+        expected: '`default_on` が None'
+      - name: test_parse_index_when_unknown_key
+        case: 異常
+        summary: 許さないキーを拒む
+        condition: エントリに `foo:` がある
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_rule_missing
+        case: 異常
+        summary: '`rule` の無いエントリを拒む'
+        condition: '`paths` だけのエントリ'
+        mock: なし
+        expected: ValueError
+        exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_invalid_on
+        case: 異常
+        summary: '`on` の外の値を拒む'
+        condition: '`on: [delete]`'
+        mock: なし
+        expected: ValueError
+        exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_args
+        case: 正常
+        summary: '`args` のブロックのマップを読む'
+        condition: '`args:` の下に `tags: ["re:^python$"]`（フロー）と `filter.kind:` + `- rule`（ブロック）を書いたエントリ'
+        mock: なし
+        expected: '`args` が `{"tags": ["re:^python$"], "filter.kind": ["rule"]}`'
+      - name: test_parse_index_when_args_flow_map
+        case: 異常
+        summary: '`args` のフローのマップを拒む'
+        condition: '`args: {tags: [a]}`'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_read_by
+        case: 正常
+        summary: '`read_by` のマップのリストを読む'
+        condition: '`read_by:` の下に、`tools: [mcp__docs__get_doc]` と `args:` + `path: ["re:\\.md$"]` を持つ要素と、`tools:` + `- mcp__docs__search`（ブロック）だけの要素を書いたエントリ'
+        mock: なし
+        expected: '`read_by` が `[{"tools": ["mcp__docs__get_doc"], "args": {"path": ["re:\\.md$"]}}, {"tools": ["mcp__docs__search"]}]`'
+      - name: test_parse_index_when_read_by_without_tools
+        case: 異常
+        summary: '`tools` の無い `read_by` の要素を拒む'
+        condition: '`read_by:` の下に `args:` だけを持つ要素'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_enabled
+        case: 正常
+        summary: '`enabled` を読む'
+        condition: '`enabled: false` のエントリと `enabled: true` のエントリと `enabled` を書かないエントリの 3 つ'
+        mock: なし
+        expected: 1 つ目の `enabled` が `"false"`、2 つ目が `"true"`、3 つ目は `enabled` のキーを持たない
+      - name: test_parse_index_when_invalid_enabled
+        case: 異常
+        summary: '`enabled` の `true` / `false` 以外の値を拒む'
+        condition: '`enabled: no` か `enabled: [false]` を持つエントリ（2 通りをパラメータ化）'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形式・値がある
