@@ -1,0 +1,6 @@
+# 実測で RULE_INJECT_CONFIG に渡す設定ファイル。索引は手元で使っている実際の索引
+# プロジェクトの索引は、projects を持たないため既定の置き場所（project_dir の rules.yaml）を読む
+global:
+  indexes:
+    - /mnt/c/Users/shuhe/repo/knowledge/.claude/worktrees/develop/rules.yaml
+    - /mnt/c/Users/shuhe/repo/ai-monitor/.claude/worktrees/develop/rules.global.yaml
