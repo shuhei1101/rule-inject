@@ -1,0 +1,30 @@
+$ uv run pytest tests/integration
+commit: 860633bd62093c8ec557fda5d46ed2114f217643
+同時に別のプロセスが uv run pytest tests/integration を繰り返し流している間の 2 回目
+load average（開始時）: 10.91 11.49 10.81 2/2401 28094 / 8 コア
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/fix-tests-integration-server-port
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 140 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  2%]
+tests/integration/plugin/test_record_read.py ................            [ 14%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 34%]
+....                                                                     [ 37%]
+tests/integration/plugin/test_search_guide.py .............              [ 46%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 52%]
+tests/integration/plugin/test_work_rules.py ...                          [ 55%]
+tests/integration/server/test_check_indexes.py ...............           [ 65%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 73%]
+tests/integration/server/test_delete_read_records.py ...                 [ 75%]
+tests/integration/server/test_get_read_records.py .....                  [ 79%]
+tests/integration/server/test_list_rules.py .....                        [ 82%]
+tests/integration/server/test_search_rules.py .....                      [ 86%]
+tests/integration/server/test_server_start.py .....                      [ 90%]
+tests/integration/server/test_write_index_entry.py ..............        [100%]
+
+======================= 140 passed in 138.35s (0:02:18) ========================
+exit: 0
+load average（終了時）: 7.41 9.66 10.21 8/2297 33984
