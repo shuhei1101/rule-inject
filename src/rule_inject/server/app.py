@@ -18,7 +18,7 @@ SERVER_NAME = "rule-inject"
 # `check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）
 UNMATCHED_SCAN_TIME_LIMIT = 30
 # `check_indexes` が dev-docs への問い合わせの応答を待つ時間の上限（秒）
-DEV_DOCS_TIMEOUT = 108
+DEV_DOCS_TIMEOUT = 207
 LIST_LIMIT_FIELD = Field(ge=1, le=tools.MAX_LIST_LIMIT)
 CURSOR_FIELD = Field(pattern=tools.CURSOR_PATTERN)
 POSITION_FIELD = Field(ge=0)
