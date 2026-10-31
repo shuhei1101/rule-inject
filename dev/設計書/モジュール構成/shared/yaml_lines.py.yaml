@@ -447,3 +447,5 @@ functions:
         mock: なし
         expected: '`{キー} の値がありません` の ValueError'
         exception: 同じ行に値が無く、続くブロックのリストも無い
+test_files:
+  - tests/unit/rule_inject/shared/test_yaml_lines.py
