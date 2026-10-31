@@ -43,7 +43,10 @@ SECONDS_PER_DAY = 86_400
 HOOK_CONTEXT_ATTACHMENT_TYPE = "hook_additional_context"
 # 常駐の MCP サーバーの待ち受けのアドレスと、接続・起動・停止の待ち時間
 SERVER_HOST = "127.0.0.1"
-SERVER_START_TIMEOUT_SEC = 60
+# 1 回の起動で、標準エラーに待ち受けの開始の行が出るまでを待つ上限
+SERVER_START_TIMEOUT_SEC = 51
+# 待ち受けに失敗して子プロセスが終わったとき、別の空いているポートで起動し直す回数の上限
+SERVER_START_ATTEMPTS = 5
 SERVER_STOP_TIMEOUT_SEC = 20
 SERVER_CALL_TIMEOUT_SEC = 60
 SERVER_POLL_INTERVAL_SEC = 0.1
@@ -628,13 +631,60 @@ class ResidentServer:
         return asyncio.run(asyncio.wait_for(_call(), SERVER_CALL_TIMEOUT_SEC))
 
 
-def _port_is_listening(port: int) -> bool:
-    """127.0.0.1 のポートへ接続できるか。"""
-    try:
-        with socket.create_connection((SERVER_HOST, port), timeout=0.5):
+def _free_port() -> int:
+    """ポート 0 で待ち受けて、割り当てられたポートを返す（すぐ閉じる）。
+
+    閉じてから子プロセスが待ち受けるまでの間に他のプロセスが同じポートを取ることがあるため、
+    この番号で起動する側は `_launch` で起動を確かめ、失敗したら別の番号で起動し直す。
+    """
+    with socket.create_server((SERVER_HOST, 0)) as probe:
+        return int(probe.getsockname()[1])
+
+
+def _ready_line(port: int) -> str:
+    """uvicorn が待ち受けを始めたときに標準エラーへ書く行（`port` で待ち受けたときだけ出る）。"""
+    return f"Uvicorn running on http://{SERVER_HOST}:{port}"
+
+
+def _wait_ready(process: subprocess.Popen[bytes], stderr_path: Path, port: int) -> bool:
+    """標準エラーに `port` の待ち受けの開始の行が出るまで待つ。
+
+    先に子プロセスが終わったときは、待ち受けに失敗したとして False を返す。
+    時間を超えたときは子プロセスを止めて失敗にする。
+    """
+    deadline = time.monotonic() + SERVER_START_TIMEOUT_SEC
+    while True:
+        stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
+        # 行が出ている: このポートで待ち受けている（他のプロセスの待ち受けでは出ない）
+        if _ready_line(port) in stderr:
             return True
-    except OSError:
-        return False
+        # 行が出ないまま終わった: 待ち受けに失敗した（ポートを他のプロセスに取られた等）
+        if process.poll() is not None:
+            return False
+        # 終わらず行も出ない: 時間の上限まで待ち、超えたら止めて失敗にする
+        if time.monotonic() > deadline:
+            process.kill()
+            process.wait()
+            pytest.fail(f"{SERVER_START_TIMEOUT_SEC} 秒で待ち受けなかった: {stderr}")
+        time.sleep(SERVER_POLL_INTERVAL_SEC)
+
+
+def _launch(
+    spawn: Callable[[int, int], tuple[subprocess.Popen[bytes], Path]],
+) -> tuple[int, subprocess.Popen[bytes], Path]:
+    """空いているポートで子プロセスを起動して待ち受けるまで待ち、失敗したら別のポートで起動し直す。
+
+    spawn は (ポート, 何回目か) を受けて起動し、子プロセスと標準エラーのファイルを返す。
+    待ち受けたポート・子プロセス・標準エラーのファイルを返す。`SERVER_START_ATTEMPTS` 回とも失敗したら失敗にする。
+    """
+    stderr = ""
+    for attempt in range(SERVER_START_ATTEMPTS):
+        port = _free_port()
+        process, stderr_path = spawn(port, attempt)
+        if _wait_ready(process, stderr_path, port):
+            return port, process, stderr_path
+        stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
+    pytest.fail(f"{SERVER_START_ATTEMPTS} 回起動し直しても待ち受けなかった: {stderr}")
 
 
 def _listening_addresses(port: int) -> set[str]:
@@ -659,24 +709,6 @@ def _stop_server(server: ResidentServer) -> None:
     except subprocess.TimeoutExpired:
         server.process.kill()
         server.process.wait()
-
-
-@pytest.fixture
-def free_port() -> Callable[[], int]:
-    """空いているポートを 1 つ返す関数。"""
-
-    def _free() -> int:
-        """ポート 0 で待ち受けて、割り当てられたポートを返す（すぐ閉じる）。"""
-        with socket.create_server((SERVER_HOST, 0)) as probe:
-            return int(probe.getsockname()[1])
-
-    return _free
-
-
-@pytest.fixture
-def port_is_listening() -> Callable[[int], bool]:
-    """127.0.0.1 のポートへ接続できるかを返す関数。"""
-    return _port_is_listening
 
 
 @pytest.fixture
@@ -738,15 +770,19 @@ def resident_server(
     """ローカルのクローンから `python -m rule_inject.server` を子プロセスとして起動する factory。終わったら止める。"""
     started: list[ResidentServer] = []
 
-    def _start(port: int, *, wait_ready: bool = True) -> ResidentServer:
-        """設定ファイルを指して起動する。wait_ready なら待ち受けるまで待つ。"""
+    def _spawn_at(
+        configure: Callable[[int], object], port: int, attempt: int
+    ) -> tuple[subprocess.Popen[bytes], Path]:
+        """port を configure に渡して設定ファイルを書き、それを指して起動する。"""
+        server_config_path.parent.mkdir(parents=True, exist_ok=True)
+        configure(port)
         env = {
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }
         env["RULE_INJECT_CONFIG"] = str(server_config_path)
         env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
         env["XDG_STATE_HOME"] = str(tmp_path / "xdg_state")
-        stderr_path = tmp_path / f"server-{len(started)}.stderr"
+        stderr_path = tmp_path / f"server-{len(started)}-{attempt}.stderr"
         with stderr_path.open("wb") as stderr_file:
             process = subprocess.Popen(
                 [sys.executable, "-m", "rule_inject.server"],
@@ -755,14 +791,23 @@ def resident_server(
                 stdout=subprocess.DEVNULL,
                 stderr=stderr_file,
             )
+        return process, stderr_path
+
+    def _start(configure: Callable[[int], object], *, wait_ready: bool = True) -> ResidentServer:
+        """空いているポートを configure に渡して設定ファイルを書かせ、起動する。
+
+        wait_ready なら待ち受けるまで待ち、待ち受けに失敗したら別のポートで起動し直す。
+        wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確かめに使う）。
+        """
+        if wait_ready:
+            port, process, stderr_path = _launch(
+                lambda port, attempt: _spawn_at(configure, port, attempt)
+            )
+        else:
+            port = _free_port()
+            process, stderr_path = _spawn_at(configure, port, 0)
         server = ResidentServer(port=port, process=process, stderr_path=stderr_path)
         started.append(server)
-        if wait_ready:
-            deadline = time.monotonic() + SERVER_START_TIMEOUT_SEC
-            while not _port_is_listening(port):
-                if process.poll() is not None or time.monotonic() > deadline:
-                    pytest.fail(f"サーバーが待ち受けなかった: {server.stderr_text()}")
-                time.sleep(SERVER_POLL_INTERVAL_SEC)
         return server
 
     yield _start
@@ -779,7 +824,6 @@ def stop_server() -> Callable[[ResidentServer], None]:
 @pytest.fixture
 def serve(
     e2e_project: Path,
-    free_port: Callable[[], int],
     write_server_config: Callable[..., Path],
     resident_server: Callable[..., ResidentServer],
 ) -> Callable[..., ResidentServer]:
@@ -791,45 +835,45 @@ def serve(
         dev_docs_url: str | None = None,
     ) -> ResidentServer:
         """project_indexes を起動したプロジェクトに当たる要素の索引に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に置いて起動する。"""
-        port = free_port()
-        write_server_config(
-            port,
-            project_indexes=project_indexes,
-            global_indexes=global_indexes,
-            dev_docs_url=dev_docs_url,
+        return resident_server(
+            lambda port: write_server_config(
+                port,
+                project_indexes=project_indexes,
+                global_indexes=global_indexes,
+                dev_docs_url=dev_docs_url,
+            )
         )
-        return resident_server(port)
 
     return _serve
 
 
 @pytest.fixture
-def start_dev_docs(
-    tmp_path: Path, free_port: Callable[[], int]
-) -> Iterator[Callable[[Mapping[str, Any]], str]]:
+def start_dev_docs(tmp_path: Path) -> Iterator[Callable[[Mapping[str, Any]], str]]:
     """`search_docs` が決めた応答を返す偽の dev-docs を子プロセスとして立て、その接続先を返す factory。終わったら止める。"""
     processes: list[subprocess.Popen[bytes]] = []
 
     def _start(response: Mapping[str, Any]) -> str:
-        """response の JSON を返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ。"""
+        """response の JSON を返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ（失敗したら別のポートで立て直す）。"""
         script = tmp_path / "dev_docs_server.py"
         script.write_text(DEV_DOCS_SERVER_SCRIPT, encoding="utf-8")
-        port = free_port()
-        env = dict(os.environ)
-        env[DEV_DOCS_BODY_ENV] = json.dumps(response, ensure_ascii=False)
-        env[DEV_DOCS_PORT_ENV] = str(port)
-        process = subprocess.Popen(
-            [sys.executable, str(script)],
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        processes.append(process)
-        deadline = time.monotonic() + SERVER_START_TIMEOUT_SEC
-        while not _port_is_listening(port):
-            if process.poll() is not None or time.monotonic() > deadline:
-                pytest.fail("偽の dev-docs が待ち受けなかった")
-            time.sleep(SERVER_POLL_INTERVAL_SEC)
+
+        def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
+            """port で偽の dev-docs を起動する（標準エラーはファイルへ書く）。"""
+            env = dict(os.environ)
+            env[DEV_DOCS_BODY_ENV] = json.dumps(response, ensure_ascii=False)
+            env[DEV_DOCS_PORT_ENV] = str(port)
+            stderr_path = tmp_path / f"dev-docs-{len(processes)}-{attempt}.stderr"
+            with stderr_path.open("wb") as stderr_file:
+                process = subprocess.Popen(
+                    [sys.executable, str(script)],
+                    env=env,
+                    stdout=subprocess.DEVNULL,
+                    stderr=stderr_file,
+                )
+            processes.append(process)
+            return process, stderr_path
+
+        port, _, _ = _launch(_spawn_at)
         return f"http://{SERVER_HOST}:{port}/mcp"
 
     yield _start

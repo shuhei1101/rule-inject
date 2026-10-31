@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import socket
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -226,12 +227,10 @@ def test_error_when_dev_docs_unreachable(
     e2e_project: Path,
     make_text_file: Callable[..., Path],
     make_rule: Callable[..., Path],
-    free_port: Callable[[], int],
     serve: Callable[..., Any],
 ) -> None:
     """dev-docs に届かないとき、タグの確かめを飛ばした理由とほかの問題を、エラーなしで受け取る（異常シナリオ）。"""
     # 準備
-    dev_docs_url = f"http://127.0.0.1:{free_port()}/mcp"
     rule = make_rule("a.md", "# a\n")
     missing = tmp_path / "rules" / "missing.md"
     index = make_text_file(
@@ -245,9 +244,14 @@ def test_error_when_dev_docs_unreachable(
         f'      filter[tags]: ["re:^rust"]\n'
         f"  - rule: {missing}\n",
     )
-    server = serve(index, dev_docs_url=dev_docs_url)
-    # 実行
-    result = server.call("check_indexes", project_dir=str(e2e_project), format="json")
+    # 接続先のポートは、SO_REUSEADDR を付けずに bind して listen しないまま握る
+    # （接続は拒否され、呼び終わるまで他のプロセスはそのポートで待ち受けられない）
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as held:
+        held.bind(("127.0.0.1", 0))
+        dev_docs_url = f"http://127.0.0.1:{held.getsockname()[1]}/mcp"
+        server = serve(index, dev_docs_url=dev_docs_url)
+        # 実行
+        result = server.call("check_indexes", project_dir=str(e2e_project), format="json")
     # 検証
     content = result.structured_content
     report = content["indexes"][0]
