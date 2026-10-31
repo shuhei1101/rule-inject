@@ -355,10 +355,10 @@ functions:
       description: 前後の空白を落としたキーと、最初の `:` より後ろの残り（空白は落とさない）
     process: |-
       1. 最初の `:` で分ける
-      2. `:` が無い・キーが空・キーに空白を含むときは ValueError
+      2. `:` が無い・キーが空・キーに半角スペースを含むときは ValueError
     exceptions:
       - name: ValueError
-        condition: '`:` が無い・キーが空・キーに空白を含む'
+        condition: '`:` が無い・キーが空・キーに半角スペースを含む'
         message: '`{行番号}行目: `キー: 値` の形式で書いてください`'
     unit_tests:
       - name: test_split_key
@@ -373,7 +373,7 @@ functions:
         condition: '`abc`・`: x`・`a b: x`'
         mock: なし
         expected: '`キー: 値` の形式で書いてください の ValueError'
-        exception: '`:` が無い・キーが空・キーに空白を含む'
+        exception: '`:` が無い・キーが空・キーに半角スペースを含む'
   - name: read_value
     title: キーの値の読み取り
     container: shared/yaml_lines.py
