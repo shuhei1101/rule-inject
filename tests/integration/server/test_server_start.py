@@ -21,8 +21,8 @@ HOST = "127.0.0.1"
 LOOPBACK_HEX = "0100007F"
 SIGTERM_EXIT_CODES = (128 + signal.SIGTERM, -signal.SIGTERM)
 STOP_TIMEOUT_SEC = 15
-# 起動して失敗で終わるまでの上限（子プロセスの起動を含むため、起動を待つ上限と揃える）
-EXIT_TIMEOUT_SEC = 30
+# 起動して失敗で終わるまでを待つ上限（導き方はテスト実行方法の結合テスト（バック）の補足「起動を待つ上限」）
+EXIT_TIMEOUT_SEC = 51
 
 
 def test_normal(

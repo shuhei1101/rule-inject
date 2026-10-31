@@ -22,7 +22,8 @@ from mcp.client.streamable_http import streamable_http_client
 from mcp.types import CallToolResult
 
 HOST = "127.0.0.1"
-START_TIMEOUT_SEC = 30
+# 1 回の起動で、標準エラーに待ち受けの開始の行が出るまでを待つ上限（導き方はテスト実行方法の結合テスト（バック）の補足「起動を待つ上限」）
+START_TIMEOUT_SEC = 51
 STOP_TIMEOUT_SEC = 15
 CALL_TIMEOUT_SEC = 30
 POLL_INTERVAL_SEC = 0.1
