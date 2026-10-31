@@ -1,5 +1,5 @@
 $ uv run pytest tests/integration
-commit: 8ab27d601641061340b819cd10b9b6987ce5c4c6
+commit: 8c6b60680f7b8af6c146d47561d8740daf35fa0d
 ============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
 rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/fix-tests-integration-server-port
@@ -23,5 +23,5 @@ tests/integration/server/test_search_rules.py .....                      [ 86%]
 tests/integration/server/test_server_start.py .....                      [ 90%]
 tests/integration/server/test_write_index_entry.py ..............        [100%]
 
-======================= 140 passed in 271.23s (0:04:31) ========================
+======================= 140 passed in 167.21s (0:02:47) ========================
 exit: 0

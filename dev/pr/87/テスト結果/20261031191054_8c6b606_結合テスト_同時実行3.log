@@ -1,7 +1,7 @@
 $ uv run pytest tests/integration
-commit: 8ab27d601641061340b819cd10b9b6987ce5c4c6
-同時に別のプロセスが uv run pytest tests/integration を繰り返し流している間の 1 回目
-load average（開始時）: 16.20 15.12 12.78 4/2319 13857 / 8 コア
+commit: 8c6b60680f7b8af6c146d47561d8740daf35fa0d
+同時に別のプロセスが uv run pytest tests/integration を繰り返し流している間の 3 回目
+load average（開始時）: 11.18 11.18 14.43 7/2185 2406 / 8 コア
 ============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
 rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/fix-tests-integration-server-port
@@ -25,6 +25,6 @@ tests/integration/server/test_search_rules.py .....                      [ 86%]
 tests/integration/server/test_server_start.py .....                      [ 90%]
 tests/integration/server/test_write_index_entry.py ..............        [100%]
 
-======================= 140 passed in 233.79s (0:03:53) ========================
+======================= 140 passed in 180.03s (0:03:00) ========================
 exit: 0
-load average（終了時）: 17.18 16.18 13.76 6/2653 39746
+load average（終了時）: 12.92 11.50 13.93 4/2504 10615
