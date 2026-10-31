@@ -1,0 +1,451 @@
+title: "プラグイン / 共通 / yaml_lines.py"
+constants:
+  - name: LIST_ITEM_MARK
+    title: リストの要素の頭
+    container: shared/yaml_lines.py
+    summary: ブロックのリストの要素の行の先頭
+    value: '`"- "`'
+  - name: QUOTE_CHARS
+    title: 引用符
+    container: shared/yaml_lines.py
+    summary: 文字列を囲む引用符（二重・一重）
+    value: "`\"\\\"'\"`"
+  - name: MIN_QUOTED_LENGTH
+    title: 引用符つきの最短の長さ
+    container: shared/yaml_lines.py
+    summary: 開き引用符と閉じ引用符を合わせた最短の字数
+    value: '`2`'
+  - name: RESERVED_HEADS
+    title: 引用符なしで置けない先頭の文字
+    container: shared/yaml_lines.py
+    summary: 引用符なしの値の先頭に置けない、YAML では別の意味になる文字
+    value: '`"{|>&!%@`*"`'
+data_models:
+  - name: Line
+    title: YAML の行
+    container: shared/yaml_lines.py
+    usecase: 共通
+    role: DTO
+    summary: コメントと空行を落とした後の 1 行（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: number
+        type: int
+        description: 元のテキストでの行番号（1 始まり）
+      - name: indent
+        type: int
+        description: 行頭の空白の字数
+      - name: text
+        type: str
+        description: 行頭の空白とコメントを落とした中身
+functions:
+  - name: yaml_error
+    title: 行番号つきのエラーの作成
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: 行番号つきの ValueError を作って返す（送出は呼び出し元）
+    kind: 関数
+    scope: public
+    args:
+      - name: number
+        type: int
+        required: true
+        passing: positional
+        description: 行番号
+      - name: reason
+        type: str
+        required: true
+        passing: positional
+        description: 理由
+    returns:
+      type: ValueError
+      description: 'メッセージが `{行番号}行目: {理由}` の ValueError'
+    unit_tests:
+      - name: test_yaml_error
+        case: 正常
+        summary: 行番号つきのメッセージ
+        condition: '`3`・`値が空です`'
+        mock: なし
+        expected: 'メッセージが `3行目: 値が空です` の ValueError'
+  - name: _strip_comment
+    title: コメントの除去
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: 引用符の外の `#`（行頭か空白・タブの直後）から行末までを落とす
+    kind: 関数
+    scope: internal
+    args:
+      - name: raw
+        type: str
+        required: true
+        passing: positional
+        description: 1 行の文字列
+    returns:
+      type: str
+      description: コメントを落とした文字列
+    process: |-
+      1. 先頭から走査し、引用符（`QUOTE_CHARS`）の中は閉じるまで読み進める
+      2. 引用符の外で、行頭か空白・タブの直後にある `#` の手前までを返す
+      3. 当たる `#` が無ければそのまま返す
+  - name: tokenize
+    title: 行の読み取り
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: コメントと空行を落とし、行番号とインデントを持つ行の並びにする
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: YAML のテキスト
+    returns:
+      type: list[Line]
+      description: コメントと空行を落とした行（元の順）
+    process: |-
+      1. 行ごとに `_strip_comment` でコメントを落とし、末尾の空白を落とす
+      2. 空白だけの行は捨てる
+      3. 行頭の空白にタブがあれば ValueError
+      4. 行番号・行頭の空白の字数・残りの中身で `Line` を作る
+    exceptions:
+      - name: ValueError
+        condition: 行頭の空白にタブがある
+        message: '`{行番号}行目: インデントにタブは使えません`'
+    unit_tests:
+      - name: test_tokenize
+        case: 正常
+        summary: コメントと空行を落として行番号とインデントを持たせる
+        condition: '1 行目 `a: 1  # c`、2 行目が空、3 行目 `  - "#x"`'
+        mock: なし
+        expected: "`Line(number=1, indent=0, text=\"a: 1\")`・`Line(number=3, indent=2, text='- \"#x\"')` の 2 件（引用符の中の `#` は残る）"
+      - name: test_tokenize_when_hash_in_word
+        case: 正常
+        summary: 語の途中の `#` はコメントにしない
+        condition: '`a: b#c`'
+        mock: なし
+        expected: '`text` が `a: b#c`'
+      - name: test_tokenize_when_tab_indent
+        case: 異常
+        summary: タブのインデントを拒む
+        condition: 2 行目の行頭にタブ
+        mock: なし
+        expected: '`2行目: インデントにタブは使えません` の ValueError'
+        exception: 行頭の空白にタブがある
+  - name: parse_scalar
+    title: 文字列の読み取り
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: 引用符あり・なしの文字列 1 つを読む
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 値の文字列
+      - name: number
+        type: int
+        required: true
+        passing: positional
+        description: エラーに載せる行番号
+    returns:
+      type: str
+      description: 引用符を外した文字列
+    process: |-
+      1. 前後の空白を落とし、空なら ValueError
+      2. 先頭が引用符なら、長さが `MIN_QUOTED_LENGTH` 以上で末尾が同じ引用符であることを確かめて中身を返す。一重引用符は `''` を `'` に、二重引用符は `\"` を `"`・`\\` を `\` に戻す
+      3. 引用符なしで先頭が `RESERVED_HEADS` の文字なら ValueError
+      4. それ以外はそのまま返す
+    exceptions:
+      - name: ValueError
+        condition: 値が空
+        message: '`{行番号}行目: 値が空です`'
+      - name: ValueError
+        condition: 引用符が閉じていない
+        message: '`{行番号}行目: 引用符が閉じていません`'
+      - name: ValueError
+        condition: 引用符なしの値の先頭が `RESERVED_HEADS` の文字
+        message: '`{行番号}行目: 先頭が {文字} の値は引用符で囲んでください`'
+    unit_tests:
+      - name: test_parse_scalar
+        case: 正常
+        summary: 引用符あり・なしを読む
+        condition: "` abc `・`\"a\\\"b\"`・`'it''s'`"
+        mock: なし
+        expected: "`abc`・`a\"b`・`it's`"
+      - name: test_parse_scalar_when_empty
+        case: 異常
+        summary: 空の値を拒む
+        condition: '`  `'
+        mock: なし
+        expected: '`値が空です` の ValueError'
+        exception: 値が空
+      - name: test_parse_scalar_when_unclosed_quote
+        case: 異常
+        summary: 閉じていない引用符を拒む
+        condition: '`"abc`・`"`'
+        mock: なし
+        expected: '`引用符が閉じていません` の ValueError'
+        exception: 引用符が閉じていない
+      - name: test_parse_scalar_when_reserved_head
+        case: 異常
+        summary: 別の意味になる先頭の文字を拒む
+        condition: '`*abc`'
+        mock: なし
+        expected: '`先頭が * の値は引用符で囲んでください` の ValueError'
+        exception: 引用符なしの値の先頭が `RESERVED_HEADS` の文字
+  - name: _split_flow_items
+    title: フローのリストの分割
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: フローのリストの中身を、引用符の外のカンマで分ける
+    kind: 関数
+    scope: internal
+    args:
+      - name: body
+        type: str
+        required: true
+        passing: positional
+        description: '`[` と `]` を外した中身'
+      - name: number
+        type: int
+        required: true
+        passing: positional
+        description: エラーに載せる行番号
+    returns:
+      type: list[str]
+      description: 分けた要素の文字列（空白は落とさない）
+    process: |-
+      1. 先頭から走査し、引用符の中のカンマは区切りにしない
+      2. 引用符の外のカンマで区切る
+      3. 走査の終わりで引用符が閉じていなければ ValueError
+    exceptions:
+      - name: ValueError
+        condition: 引用符が閉じていない
+        message: '`{行番号}行目: 引用符が閉じていません`'
+  - name: parse_flow_list
+    title: フローのリストの読み取り
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: '`[a, b]` の形式のリストを読む'
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: '`[` で始まる値の文字列'
+      - name: number
+        type: int
+        required: true
+        passing: positional
+        description: エラーに載せる行番号
+    returns:
+      type: list[str]
+      description: 要素の文字列のリスト。`[]` は空のリスト
+    process: |-
+      1. 末尾が `]` でなければ ValueError
+      2. 中身が空白だけなら空のリストを返す
+      3. `_split_flow_items` で分けた要素を、それぞれ `parse_scalar` で読む
+    exceptions:
+      - name: ValueError
+        condition: 末尾が `]` でない
+        message: '`{行番号}行目: リストが `]` で閉じていません`'
+      - name: ValueError
+        condition: 要素の引用符が閉じていない・要素が空・要素の先頭が `RESERVED_HEADS` の文字
+        message: '`parse_scalar`・`_split_flow_items` のメッセージ'
+    unit_tests:
+      - name: test_parse_flow_list
+        case: 正常
+        summary: 要素を読む
+        condition: "`[a, \"b, c\", 'd']`"
+        mock: なし
+        expected: '`["a", "b, c", "d"]`（引用符の中のカンマで分けない）'
+      - name: test_parse_flow_list_when_empty
+        case: 正常
+        summary: 空のリスト
+        condition: '`[ ]`'
+        mock: なし
+        expected: 空のリスト
+      - name: test_parse_flow_list_when_unclosed_bracket
+        case: 異常
+        summary: 閉じていないリストを拒む
+        condition: '`[a, b`'
+        mock: なし
+        expected: '`リストが `]` で閉じていません` の ValueError'
+        exception: 末尾が `]` でない
+      - name: test_parse_flow_list_when_unclosed_quote
+        case: 異常
+        summary: 要素の閉じていない引用符を拒む
+        condition: '`["a, b]`'
+        mock: なし
+        expected: '`引用符が閉じていません` の ValueError'
+        exception: 要素の引用符が閉じていない・要素が空・要素の先頭が `RESERVED_HEADS` の文字
+      - name: test_parse_flow_list_when_empty_item
+        case: 異常
+        summary: 空の要素を拒む
+        condition: '`[a, , b]`'
+        mock: なし
+        expected: '`値が空です` の ValueError'
+        exception: 要素の引用符が閉じていない・要素が空・要素の先頭が `RESERVED_HEADS` の文字
+  - name: read_block_list
+    title: ブロックのリストの読み取り
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: '`- a` の行が続く限りブロックのリストを読み、次に読む行の位置を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: lines
+        type: list[Line]
+        required: true
+        passing: positional
+        description: '`tokenize` の行'
+      - name: start
+        type: int
+        required: true
+        passing: positional
+        description: 読み始める行の位置
+      - name: min_indent
+        type: int
+        required: true
+        passing: positional
+        description: 要素の行に求める最小のインデント
+    returns:
+      type: tuple[list[str], int]
+      description: 要素の文字列のリストと、次に読む行の位置
+    process: |-
+      1. `start` から、インデントが `min_indent` 以上で `LIST_ITEM_MARK` で始まる行を読み進める
+      2. 各行の `LIST_ITEM_MARK` の後ろを `parse_scalar` で読む
+      3. 当たらない行に来たら、その位置を返す
+    exceptions:
+      - name: ValueError
+        condition: 要素の値が `parse_scalar` で読めない
+        message: '`parse_scalar` のメッセージ'
+    unit_tests:
+      - name: test_read_block_list
+        case: 正常
+        summary: 続く要素の行を読み、次の位置を返す
+        condition: '`tokenize` した `a:` / `  - x` / `  - "y"` / `b: 1` を `start=1`・`min_indent=1` で'
+        mock: なし
+        expected: '`(["x", "y"], 3)`'
+      - name: test_read_block_list_when_shallow
+        case: 正常
+        summary: 浅いインデントの行で止める
+        condition: '`- x` の行（インデント 0）を `min_indent=1` で'
+        mock: なし
+        expected: '`([], start)`'
+  - name: split_key
+    title: キーと値の分割
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: '`key: value` の行をキーと値の残りに分ける'
+    kind: 関数
+    scope: public
+    args:
+      - name: line
+        type: Line
+        required: true
+        passing: positional
+        description: '`tokenize` の行'
+    returns:
+      type: tuple[str, str]
+      description: 前後の空白を落としたキーと、最初の `:` より後ろの残り（空白は落とさない）
+    process: |-
+      1. 最初の `:` で分ける
+      2. `:` が無い・キーが空・キーに半角スペースを含むときは ValueError
+    exceptions:
+      - name: ValueError
+        condition: '`:` が無い・キーが空・キーに半角スペースを含む'
+        message: '`{行番号}行目: `キー: 値` の形式で書いてください`'
+    unit_tests:
+      - name: test_split_key
+        case: 正常
+        summary: キーと残りに分ける
+        condition: '`state_dir: ~/a:b`'
+        mock: なし
+        expected: '`("state_dir", " ~/a:b")`'
+      - name: test_split_key_when_invalid
+        case: 異常
+        summary: キーの形式でない行を拒む
+        condition: '`abc`・`: x`・`a b: x`'
+        mock: なし
+        expected: '`キー: 値` の形式で書いてください の ValueError'
+        exception: '`:` が無い・キーが空・キーに半角スペースを含む'
+  - name: read_value
+    title: キーの値の読み取り
+    container: shared/yaml_lines.py
+    usecase: 共通
+    summary: キーの値を読み、次に読む行の位置を返す。同じ行に値が無ければ続く行のブロックのリストを読む
+    kind: 関数
+    scope: public
+    args:
+      - name: lines
+        type: list[Line]
+        required: true
+        passing: positional
+        description: '`tokenize` の行'
+      - name: line
+        type: Line
+        required: true
+        passing: positional
+        description: キーの行
+      - name: next_position
+        type: int
+        required: true
+        passing: positional
+        description: キーの行の次の位置
+      - name: key
+        type: str
+        required: true
+        passing: positional
+        description: エラーに載せるキー
+      - name: rest
+        type: str
+        required: true
+        passing: positional
+        description: '`split_key` の値の残り'
+      - name: min_indent
+        type: int
+        required: true
+        passing: positional
+        description: ブロックのリストの要素の行に求める最小のインデント
+    returns:
+      type: tuple[str | list[str], int]
+      description: 値（文字列か文字列のリスト）と、次に読む行の位置
+    process: |-
+      1. `rest` の前後の空白を落とす
+      2. `[` で始まれば `parse_flow_list` で読み、`next_position` を返す
+      3. 空でなければ `parse_scalar` で読み、`next_position` を返す
+      4. 空なら `next_position` から `read_block_list` で読む。要素が無ければ ValueError
+    exceptions:
+      - name: ValueError
+        condition: 同じ行に値が無く、続くブロックのリストも無い
+        message: '`{行番号}行目: {キー} の値がありません`'
+      - name: ValueError
+        condition: 値が `parse_scalar`・`parse_flow_list` で読めない
+        message: '`parse_scalar`・`parse_flow_list` のメッセージ'
+    unit_tests:
+      - name: test_read_value
+        case: 正常
+        summary: 同じ行の文字列とフローのリストを読む
+        condition: '`rest` が ` abc` と ` [a, b]`'
+        mock: なし
+        expected: '`("abc", next_position)` と `(["a", "b"], next_position)`'
+      - name: test_read_value_when_block_list
+        case: 正常
+        summary: 続く行のブロックのリストを読む
+        condition: '`rest` が空、続く行が `  - x` / `  - y`'
+        mock: なし
+        expected: '`(["x", "y"], ブロックの次の位置)`'
+      - name: test_read_value_when_missing
+        case: 異常
+        summary: 値が無いキーを拒む
+        condition: '`rest` が空、続く行がリストでない'
+        mock: なし
+        expected: '`{キー} の値がありません` の ValueError'
+        exception: 同じ行に値が無く、続くブロックのリストも無い
+test_files:
+  - tests/unit/rule_inject/shared/test_yaml_lines.py

@@ -712,3 +712,13 @@ files:
     related:
       - to: src/rule_inject/shared/variables
         type: tests
+  - path: unit/rule_inject/shared/test_yaml_lines.py
+    name: YAML の行の読み取りの単体テスト
+    description: YAML の行の読み取りの振る舞いを確かめる単体テスト。YAML の行の読み取りを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - topic:ルール索引
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/yaml_lines
+        type: tests

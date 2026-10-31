@@ -403,5 +403,5 @@ files:
       - topic:設定ファイル
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/分類/プラグイン/共通
+      - to: dev/設計書/モジュール構成/shared/yaml_lines.py
         type: implements

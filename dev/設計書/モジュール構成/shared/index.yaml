@@ -13,3 +13,5 @@ items:
     summary: '!{名前} を環境変数の値へ展開する'
   - page: logger.py.yaml
     summary: 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを削除する
+  - page: yaml_lines.py.yaml
+    summary: 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り
