@@ -1,0 +1,1 @@
+# モジュール構成に shared/yaml_lines.py の要素の設計書を作る
