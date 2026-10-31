@@ -21,6 +21,8 @@ HOST = "127.0.0.1"
 LOOPBACK_HEX = "0100007F"
 SIGTERM_EXIT_CODES = (128 + signal.SIGTERM, -signal.SIGTERM)
 STOP_TIMEOUT_SEC = 15
+# 起動して失敗で終わるまでの上限（子プロセスの起動を含むため、起動を待つ上限と揃える）
+EXIT_TIMEOUT_SEC = 30
 
 
 def test_normal(
@@ -80,7 +82,7 @@ def test_error_when_port_in_use(
         port = int(held.getsockname()[1])
         # 実行
         server = start_server(lambda _port: config_text(port), wait_ready=False)
-        server.process.wait(timeout=STOP_TIMEOUT_SEC)
+        server.process.wait(timeout=EXIT_TIMEOUT_SEC)
     # 検証
     assert server.process.returncode != 0
     assert str(port) in server.stderr_text()
@@ -96,7 +98,7 @@ def test_error_when_settings_unreadable(
     server = start_server(
         lambda port: f"global:\n  server_port: {port}\n  foo: 1\n", wait_ready=False
     )
-    server.process.wait(timeout=STOP_TIMEOUT_SEC)
+    server.process.wait(timeout=EXIT_TIMEOUT_SEC)
     # 検証
     assert server.process.returncode != 0
     assert "Uvicorn running on" not in server.stderr_text()
