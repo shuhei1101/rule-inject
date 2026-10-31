@@ -1,0 +1,9 @@
+title: "プラグイン / 既読の記録"
+lead: セッションごとの既読の記録ファイルと案内済みの記録ファイルと既読の履歴ファイル（ER 図「既読の記録」）の読み・追記・削除・掃除。
+directory: |-
+  ```text
+  src/rule_inject/features/record/
+  ├── __init__.py   # 公開 API
+  ├── types.py      # ReadMethod・ReadState・ReadEntry・HistoryEntry・RecordSession
+  └── service.py    # 記録ファイルの読み・追記・削除・掃除と、既読の履歴の追記・読みと、本文のハッシュ
+  ```

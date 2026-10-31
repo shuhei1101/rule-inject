@@ -3,3 +3,7 @@ docs_index: true
 items:
   - page: サーバー.yaml
     summary: 起動の入口・コンポジションルート・ツールの本体と応答の形式
+  - page: 索引のチェック.yaml
+    summary: 索引のフックの読み取り・JSON Schema・ルールの場所の実在のチェック
+  - page: エントリの編集.yaml
+    summary: 索引のエントリの round-trip での書き込み・削除

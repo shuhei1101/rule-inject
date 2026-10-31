@@ -1,0 +1,132 @@
+title: "プラグイン / フック / rule_guide.py"
+test_files:
+  - tests/unit/rule_inject/hooks/test_rule_guide.py
+constants:
+  - name: TOOL_OPERATIONS
+    title: ツールと操作の種別
+    container: hooks/rule_guide.py
+    summary: ツール名から操作の種別への対応
+    entries:
+      - key: Read
+        value: read
+      - key: Grep
+        value: read
+      - key: Bash
+        value: read
+      - key: Edit
+        value: write
+      - key: Write
+        value: write
+      - key: NotebookEdit
+        value: write
+functions:
+  - name: guide_rules
+    title: ルール案内の処理
+    container: hooks/rule_guide.py
+    usecase: 未読のルールの案内を受ける
+    summary: 操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る
+    kind: フック
+    scope: public
+    inherits: HookHandler
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        passing: positional
+        description: PreToolUse の入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数
+    returns:
+      type: dict[str, Any] | None
+      description: '止める案内（permissionDecision: deny）・止めない案内（additionalContext）・なし'
+    process: |-
+      1. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
+      2. `load_indexes(settings.indexes, env)` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
+      3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）
+      4. 当たったルールから、`read_record` の既読の行で `current_read_locations` が返す場所を除く（本文が変わったルールは未読のまま残る）。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
+      5. 止めるルールがあれば deny と `build_guidance` を返す（案内済みにはしない）
+      6. 止めるルールが無ければ、`read_guided` の案内済みを除く。読めなければ未案内として扱い、ログ（`read_record`）と知らせの文に回す
+      7. 残ったルールを `build_guidance` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
+      8. 案内と知らせを additionalContext にする（どちらも無ければ None）
+    unit_tests:
+      - name: test_handle_when_blocked
+        case: 正常
+        summary: 止める
+        condition: '`on: [write]` のエントリと Write、既読なし'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: permissionDecision が deny、理由に場所
+      - name: test_handle_when_already_read
+        case: 正常
+        summary: 既読なら何も出さない
+        condition: 記録に場所と今のハッシュの行がある
+        mock: なし
+        expected: None
+      - name: test_handle_when_not_blocking
+        case: 正常
+        summary: 止めずに案内する
+        condition: '`on: [write]` のエントリと Read'
+        mock: なし
+        expected: additionalContext だけがある
+      - name: test_handle_when_bash
+        case: 正常
+        summary: Bash の読むコマンド
+        condition: '`cat {実在する .py}`、`on: [read]`'
+        mock: なし
+        expected: deny
+      - name: test_handle_when_grep_folder
+        case: 正常
+        summary: Grep がフォルダを指すときは照合しない
+        condition: Grep の `path` がフォルダ
+        mock: なし
+        expected: None
+      - name: test_handle_when_index_unreadable
+        case: 正常
+        summary: 索引が読めない
+        condition: 実在しない索引
+        mock: なし
+        expected: additionalContext に索引の場所と理由、ログに `read_index`
+      - name: test_handle_when_record_unreadable
+        case: 正常
+        summary: 記録が読めない
+        condition: 読み取り権限の無い記録ファイル
+        mock: なし
+        expected: deny を出さず additionalContext に理由、ログに `read_record`
+      - name: test_handle_when_already_guided
+        case: 正常
+        summary: 案内済みなら止めない案内を出さない
+        condition: '`on: [write]` のエントリと Read、案内済みの記録に場所がある'
+        mock: なし
+        expected: None
+      - name: test_handle_when_guided_recorded
+        case: 正常
+        summary: 止めない案内に載せた場所だけを案内済みにする
+        condition: '`on: [write]` のエントリと Read を呼ぶ。別に `on: [write]` のエントリと Write を呼ぶ'
+        mock: なし
+        expected: Read の後は案内済みの記録に場所が 1 行。Write（deny）の後は行が増えない
+      - name: test_handle_when_guided_unwritable
+        case: 正常
+        summary: 案内済みに書けなくても案内を出す
+        condition: '`on: [write]` のエントリと Read、書き込み権限の無い記録フォルダ'
+        mock: なし
+        expected: additionalContext に場所と記録ファイルの理由、ログに `write_record`
+      - name: test_handle_when_mcp_args
+        case: 正常
+        summary: MCP のツールの引数で当てる
+        condition: '`tools: ["mcp__*__search_*"]`・`args` に `kind: ["rule"]`・`on: [mcp]` のエントリ。`tool_input` が `{"kind": "rule"}` の呼び出しと `{"kind": "note"}` の呼び出し'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: 前者は deny、後者は None
+      - name: test_handle_when_rule_changed
+        case: 正常
+        summary: 読んだ後に変わったルールを案内する
+        condition: '`on: [write]` のエントリと Write。記録に場所と書き換える前のハッシュの行があり、ルールの中身を書き換える'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: permissionDecision が deny、理由に場所
+      - name: test_handle_when_settings_unreadable
+        case: 正常
+        summary: 設定ファイルが読めないときは照合せずに知らせる
+        condition: '`RULE_INJECT_CONFIG` が知らないキーを持つ設定ファイルを指す。`XDG_STATE_HOME` は一時フォルダ。Write'
+        mock: なし
+        expected: deny を出さず、additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由・ログの場所。`{XDG_STATE_HOME}/rule-inject/logs` のログに `read_settings` が 1 行

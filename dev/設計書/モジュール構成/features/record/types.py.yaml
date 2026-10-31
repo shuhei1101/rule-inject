@@ -1,0 +1,81 @@
+title: "プラグイン / 既読の記録 / types.py"
+enums:
+  - name: ReadMethod
+    title: 読み方
+    container: features/record/types.py
+    usecase: ルールを読んだことが記録される
+    summary: 既読の履歴の `method` の値（StrEnum）
+    values:
+      - value: read
+        title: Read
+        description: Read で読んだ
+      - value: bash
+        title: Bash
+        description: Bash の読むコマンドで読んだ
+      - value: mcp
+        title: MCP のツール
+        description: MCP のツールの結果の文書か、`read_by` に当たった MCP のツールの呼び出しで読んだ
+  - name: ReadState
+    title: 既読の状態
+    container: features/record/types.py
+    usecase: 既読の記録を確認する
+    summary: 既読のルールの今の本文と既読にした時点の本文の関係（Literal）。インターフェース定義「既読の記録の確認」の `rules[].state`
+    values:
+      - value: current
+        title: 既読
+        description: その場所のどれかの行のハッシュが今の本文のハッシュと同じ
+      - value: changed
+        title: 本文が変わった
+        description: どの行のハッシュとも違う（案内では未読）
+      - value: missing
+        title: ファイルが無い
+        description: その場所にファイルが無いか読めない
+data_models:
+  - name: ReadEntry
+    title: 既読の行
+    container: features/record/types.py
+    usecase: 共通
+    role: DTO
+    summary: 既読の記録の 1 行（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: location
+        type: str
+        description: ルールの場所（解決後の絶対パス。改行とタブを含まない）
+      - name: hash
+        type: str
+        description: 既読にした時点のルールのファイルの中身の SHA-256（`sha256:{16 進数}`）。`list_read_entries` が読んだハッシュを持たない行は空文字
+  - name: HistoryEntry
+    title: 既読の履歴の行
+    container: features/record/types.py
+    usecase: 既読の記録を確認する
+    role: DTO
+    summary: 既読の履歴（`.history.jsonl`）の 1 行（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: time
+        type: str
+        description: 既読にした時刻（`HISTORY_TIME_FORMAT` の UTC）
+      - name: method
+        type: ReadMethod
+        description: 読み方
+      - name: tool
+        type: str
+        description: 既読にしたツールの名前
+      - name: location
+        type: str
+        description: 既読にしたルールの場所
+  - name: RecordSession
+    title: 既読の記録のあるセッション
+    container: features/record/types.py
+    usecase: 既読の記録を確認する
+    role: DTO
+    summary: 記録フォルダに既読の記録ファイルを持つセッション 1 つ（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: session_id
+        type: str
+        description: セッションの識別子
+      - name: updated_at
+        type: datetime
+        description: 既読の記録ファイルの最終更新の時刻（UTC のタイムゾーン付き）
+      - name: rule_count
+        type: int
+        description: 既読のルールの場所の数（重なりを落とす）

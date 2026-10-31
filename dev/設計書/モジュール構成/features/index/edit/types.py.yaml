@@ -1,0 +1,98 @@
+title: "MCP サーバー / エントリの編集 / types.py"
+test_files:
+  - tests/unit/rule_inject/features/index/edit/test_types.py
+function_types:
+  - name: CheckChange
+    title: 書き込みのチェック
+    container: features/index/edit/types.py
+    usecase: 索引のエントリを編集する
+    summary: '書く前と書いた後の索引の内容を受け、新しく出た問題を `{索引の中の場所}: {理由}` の行で返す。実装は `dev/設計書/モジュール構成/features/index/check/service.py` の `check_change`'
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス
+      - name: before_text
+        type: str
+        required: true
+        passing: positional
+        description: 書く前の内容
+      - name: after_text
+        type: str
+        required: true
+        passing: positional
+        description: 書いた後の内容
+      - name: changed_rev
+        type: str | None
+        required: true
+        passing: positional
+        description: 書いたエントリの書いた後のバージョン
+    returns:
+      type: tuple[str, ...]
+      description: 新しく出た問題の行。空なら書いてよい
+classes:
+  - name: IndexLocks
+    title: 索引ごとのロック
+    container: features/index/edit/types.py
+    usecase: 索引のエントリを編集する
+    summary: 同じ索引への書き込み・削除を 1 つずつ行うための、索引の場所ごとの `threading.Lock`。サーバーのコンポジションルートが 1 つ作って渡す（モジュールに状態を持たない）
+    kind: クラス
+    properties:
+      - name: _guard
+        type: threading.Lock
+        access: 内部 (_)
+        description: '`_locks` の追加を 1 つずつ行うロック'
+      - name: _locks
+        type: dict[str, threading.Lock]
+        access: 内部 (_)
+        description: 索引の場所 → ロック
+    methods:
+      - name: lock_for
+        title: 索引のロック
+        summary: 索引の場所のロックを返す。無ければ `_guard` の中で作る
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        args:
+          - name: index_path
+            type: str
+            required: true
+            passing: positional
+            description: シンボリックリンクを解いた索引の場所
+        returns:
+          type: threading.Lock
+          description: 同じ場所には同じロック
+        unit_tests:
+          - name: test_lock_for
+            case: 正常
+            summary: 同じ場所には同じロック、違う場所には別のロックを返す
+            condition: 同じ場所で 2 回、別の場所で 1 回呼ぶ
+            mock: なし
+            expected: 1 回目と 2 回目が同じオブジェクトで、3 回目は別のオブジェクト
+data_models:
+  - name: EditResult
+    title: 編集の結果
+    container: features/index/edit/types.py
+    usecase: 索引のエントリを編集する
+    role: DTO
+    summary: 書き込み・削除の結果
+    properties:
+      - name: index
+        type: str
+        description: 編集した索引の場所
+      - name: position
+        type: int
+        description: 書き込んだ・削除したエントリの位置
+      - name: rev
+        type: str | None
+        description: 書き込んだ後のエントリのバージョン。削除のときは `None`
+      - name: rule
+        type: str | None
+        description: 削除したエントリの `rule`（索引に書いたまま）。書き込みのときは `None`
+      - name: written
+        type: bool
+        description: 索引のファイルを書き換えたか
+      - name: diff
+        type: str
+        description: 書き換えの前後の unified diff（前後 3 行）

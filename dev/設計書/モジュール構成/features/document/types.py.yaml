@@ -1,0 +1,31 @@
+title: "プラグイン / MCPの結果の文書 / types.py"
+data_models:
+  - name: ResultDocument
+    title: 結果の文書
+    container: features/document/types.py
+    usecase: ルールを読んだことが記録される
+    role: DTO
+    summary: MCP のツールの結果に載った文書の場所と範囲（`@dataclass(frozen=True, slots=True, kw_only=True)`）
+    properties:
+      - name: path
+        type: str
+        description: 結果に載ったままの文書のパス（解いていない）
+      - name: scope
+        type: str
+        description: 結果に載ったままの範囲（`DocumentScope` の値か、それ以外の文字列）
+enums:
+  - name: DocumentScope
+    title: 文書の範囲
+    container: features/document/types.py
+    usecase: ルールを読んだことが記録される
+    summary: 結果の文書の `scope` の値（StrEnum）
+    values:
+      - value: full
+        title: 全文
+        description: 文書の全文を載せた。既読になる
+      - value: section
+        title: 一部の見出し
+        description: 文書の一部の見出しだけを載せた
+      - value: summary
+        title: 説明だけ
+        description: 文書の説明だけを載せた

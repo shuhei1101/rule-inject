@@ -1,0 +1,93 @@
+title: "プラグイン / MCPの結果の文書 / service.py"
+test_files:
+  - tests/unit/rule_inject/features/document/test_service.py
+constants:
+  - name: TAG_PATTERN
+    title: 文書のタグ
+    container: features/document/service.py
+    summary: '`<document>` の開きタグ（属性の部分を取る）か閉じタグ'
+    value: '`<document\b([^>]*)>|</document>`'
+  - name: ATTRIBUTE_PATTERN
+    title: タグの属性
+    container: features/document/service.py
+    summary: 開きタグの属性の名前と、二重引用符で囲んだ値
+    value: '`([A-Za-z_][A-Za-z0-9_-]*)="([^"]*)"`'
+functions:
+  - name: extract_documents
+    title: 結果の文書の取り出し
+    container: features/document/service.py
+    usecase: ルールを読んだことが記録される
+    summary: MCP のツールの結果から、書式に従う文書を見つけた順に返す
+    kind: 関数
+    scope: public
+    args:
+      - name: response
+        type: object
+        required: true
+        passing: positional
+        description: PostToolUse の `tool_response`（文字列・オブジェクト・配列・それ以外）
+    returns:
+      type: tuple[ResultDocument, ...]
+      description: 見つけた順の文書（重なりは除かない）。書式に従う文書が無ければ空
+    process: |-
+      1. 値を深さ優先でたどる
+         - オブジェクトの場合、文字列の `path` と `scope` を両方持てば文書にし、続けて全ての値をたどる
+         - 配列の場合、要素を順にたどる
+         - 文字列の場合、JSON として読み、オブジェクトか配列になればそれをたどる。読めないか、それ以外の値になれば、文字列のまま `TAG_PATTERN` に当たるタグを先頭から順に読み、開きタグを積み、閉じタグで直近の開きタグと組にする（組む開きタグが無い閉じタグは読み飛ばす）。組のうち別の組の内側に無いものを開きタグの順に取り、開きタグの `ATTRIBUTE_PATTERN` に `path` と `scope` を両方持つものを文書にする
+         - それ以外の値は文書にしない
+      2. 見つけた順に返す
+    unit_tests:
+      - name: test_extract_documents_when_markdown
+        case: 正常
+        summary: 閉じた `<document>` を順に取り出す
+        condition: '`scope` が `full` と `summary` の閉じた `<document>` を 2 つ並べた文字列'
+        mock: なし
+        expected: 2 件（`path`・`scope` が書いた値、書いた順）
+      - name: test_extract_documents_when_unclosed
+        case: 正常
+        summary: 閉じタグの無い `<document>` は数えない
+        condition: 閉じタグの無い `<document path="a.md" scope="full">` の後に、閉じた `<document path="b.md" scope="full">…</document>` を置いた文字列
+        mock: なし
+        expected: '`b.md` の 1 件'
+      - name: test_extract_documents_when_json_items
+        case: 正常
+        summary: どの深さのオブジェクトの `path`・`scope` も取り出す
+        condition: '`{"items": [{"path": "a.md", "scope": "full", "body": "…"}], "meta": {"child": {"path": "b.md", "scope": "section"}}}`'
+        mock: なし
+        expected: '`a.md`（`full`）と `b.md`（`section`）の 2 件'
+      - name: test_extract_documents_when_json_string
+        case: 正常
+        summary: 文字列に入った JSON もたどる
+        condition: '`{"result": "{\"items\": [{\"path\": \"a.md\", \"scope\": \"full\"}]}"}`'
+        mock: なし
+        expected: '`a.md` の 1 件'
+      - name: test_extract_documents_when_text_in_json
+        case: 正常
+        summary: JSON の値の文字列から `<document>` を取り出す
+        condition: '`{"result": "<document path=\"a.md\" scope=\"full\">…</document>"}`'
+        mock: なし
+        expected: '`a.md` の 1 件'
+      - name: test_extract_documents_when_not_json
+        case: 正常
+        summary: JSON として読めない文字列はテキストとして探す
+        condition: '`{broken` の後に閉じた `<document path="a.md" scope="full">…</document>` を置いた文字列'
+        mock: なし
+        expected: '`a.md` の 1 件'
+      - name: test_extract_documents_when_attribute_missing
+        case: 正常
+        summary: '`path` か `scope` が欠けたものは文書にしない'
+        condition: '`scope` の無い閉じた `<document path="a.md">…</document>` と、`{"path": "b.md", "scope": 1}` を持つ配列'
+        mock: なし
+        expected: 空
+      - name: test_extract_documents_when_not_container
+        case: 正常
+        summary: 文字列・オブジェクト・配列でなければ文書は無い
+        condition: '`None` と `1`'
+        mock: なし
+        expected: どちらも空
+      - name: test_extract_documents_when_nested
+        case: 正常
+        summary: 本文に入れ子で載った `<document>` は数えず、外側の文書を取り出す
+        condition: 閉じた `<document path="a.md" scope="full">` の本文に、閉じた `<document path="b.md" scope="full">…</document>` を含む文字列
+        mock: なし
+        expected: '`a.md` の 1 件'

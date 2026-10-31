@@ -7,7 +7,7 @@ files:
       - topic:既読の記録
       - topic:コマンドの解析
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/コマンドの解析.py
+      - to: dev/設計書/モジュール構成/features/command/service.py
         type: implements
   - path: rule_inject/features/document/service.py
     name: MCP の結果の文書の取り出し
@@ -16,7 +16,7 @@ files:
       - topic:既読の記録
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/MCPの結果の文書.py
+      - to: dev/設計書/モジュール構成/features/document/service.py
         type: implements
   - path: rule_inject/features/document/types.py
     name: MCP の結果の文書の型
@@ -25,7 +25,7 @@ files:
       - topic:既読の記録
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/MCPの結果の文書.py
+      - to: dev/設計書/モジュール構成/features/document/types.py
         type: implements
   - path: rule_inject/features/guidance/service.py
     name: 案内文の組み立て
@@ -33,7 +33,7 @@ files:
     tags:
       - topic:ルールの案内
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/案内.py
+      - to: dev/設計書/モジュール構成/features/guidance/service.py
         type: implements
   - path: rule_inject/features/guidance/types.py
     name: 案内文の型
@@ -41,7 +41,7 @@ files:
     tags:
       - topic:ルールの案内
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/案内.py
+      - to: dev/設計書/モジュール構成/features/guidance/types.py
         type: implements
   - path: rule_inject/features/index/_yaml.py
     name: 索引の YAML の読み取り
@@ -49,7 +49,7 @@ files:
     tags:
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/索引.py
+      - to: dev/設計書/モジュール構成/features/index/_yaml.py
         type: implements
   - path: rule_inject/features/index/check/index.schema.yaml
     name: ルール索引のスキーマ
@@ -59,7 +59,7 @@ files:
       - topic:索引のチェック
       - tool:jsonschema
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/索引のチェック.py
+      - to: dev/設計書/モジュール構成/分類/MCPサーバー/索引のチェック
         type: implements
   - path: rule_inject/features/index/check/scan.py
     name: 当たらないエントリの走査
@@ -67,7 +67,7 @@ files:
     tags:
       - topic:索引のチェック
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/索引のチェック.py
+      - to: dev/設計書/モジュール構成/features/index/check/scan.py
         type: implements
   - path: rule_inject/features/index/check/service.py
     name: 索引のチェック
@@ -76,7 +76,7 @@ files:
       - topic:索引のチェック
       - tool:jsonschema
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/索引のチェック.py
+      - to: dev/設計書/モジュール構成/features/index/check/service.py
         type: implements
   - path: rule_inject/features/index/check/tags.py
     name: 使われていないタグのパターンの検出
@@ -86,7 +86,7 @@ files:
       - topic:タグ
       - tool:dev-docs
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/索引のチェック.py
+      - to: dev/設計書/モジュール構成/features/index/check/tags.py
         type: implements
   - path: rule_inject/features/index/check/types.py
     name: 索引のチェックの型
@@ -94,7 +94,7 @@ files:
     tags:
       - topic:索引のチェック
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/索引のチェック.py
+      - to: dev/設計書/モジュール構成/features/index/check/types.py
         type: implements
   - path: rule_inject/features/index/edit/_yaml.py
     name: 索引の書き込みの YAML の設定
@@ -103,7 +103,7 @@ files:
       - topic:索引の編集
       - tool:ruamel-yaml
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/エントリの編集.py
+      - to: dev/設計書/モジュール構成/features/index/edit/_yaml.py
         type: implements
   - path: rule_inject/features/index/edit/service.py
     name: 索引のエントリの書き込みと削除
@@ -112,7 +112,7 @@ files:
       - topic:索引の編集
       - tool:ruamel-yaml
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/エントリの編集.py
+      - to: dev/設計書/モジュール構成/features/index/edit/service.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの書き込み.py
         type: see_also
@@ -124,7 +124,7 @@ files:
     tags:
       - topic:索引の編集
     related:
-      - to: dev/設計書/モジュール構成/MCPサーバー/エントリの編集.py
+      - to: dev/設計書/モジュール構成/features/index/edit/types.py
         type: implements
   - path: rule_inject/features/index/service.py
     name: 索引の読み込みと照合
@@ -133,7 +133,7 @@ files:
       - topic:ルール索引
       - topic:ルールの案内
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/索引.py
+      - to: dev/設計書/モジュール構成/features/index/service.py
         type: implements
   - path: rule_inject/features/index/types.py
     name: 索引の型
@@ -141,7 +141,7 @@ files:
     tags:
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/索引.py
+      - to: dev/設計書/モジュール構成/features/index/types.py
         type: implements
   - path: rule_inject/features/record/service.py
     name: 既読の記録ファイルの読み書き
@@ -149,7 +149,7 @@ files:
     tags:
       - topic:既読の記録
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/既読の記録.py
+      - to: dev/設計書/モジュール構成/features/record/service.py
         type: implements
   - path: rule_inject/features/record/types.py
     name: 既読の記録の型
@@ -157,7 +157,7 @@ files:
     tags:
       - topic:既読の記録
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/既読の記録.py
+      - to: dev/設計書/モジュール構成/features/record/types.py
         type: implements
   - path: rule_inject/hooks/__init__.py
     name: フックの入口
@@ -166,7 +166,7 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/__init__.py
         type: implements
   - path: rule_inject/hooks/_runner.py
     name: フックの共通の実行処理
@@ -175,7 +175,7 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/_runner.py
         type: implements
   - path: rule_inject/hooks/discard_read.py
     name: 既読の記録の破棄
@@ -185,7 +185,7 @@ files:
       - topic:既読の記録
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/discard_read.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の破棄.py
         type: implements
@@ -197,7 +197,7 @@ files:
       - topic:既読の記録
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/record_read.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/既読の記録.py
         type: implements
@@ -209,7 +209,7 @@ files:
       - topic:ルールの案内
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/rule_guide.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/ルール案内.py
         type: implements
@@ -221,7 +221,7 @@ files:
       - topic:ルールの案内
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/search_guide.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
         type: implements
@@ -233,7 +233,7 @@ files:
       - topic:既読の記録
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/sweep_read.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の掃除.py
         type: implements
@@ -244,7 +244,7 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/フック.py
+      - to: dev/設計書/モジュール構成/hooks/work_rules.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/作業の決まりの注入.py
         type: implements
@@ -352,7 +352,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/shared/_settings_yaml.py
         type: implements
   - path: rule_inject/shared/errors.py
     name: 共通の例外
@@ -360,7 +360,7 @@ files:
     tags:
       - topic:例外
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/shared/errors.py
         type: implements
   - path: rule_inject/shared/logger.py
     name: 失敗のログ
@@ -368,7 +368,7 @@ files:
     tags:
       - topic:ログ
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/shared/logger.py
         type: implements
   - path: rule_inject/shared/paths.py
     name: 記録フォルダとルールの場所の解決
@@ -377,7 +377,7 @@ files:
       - topic:設定ファイル
       - topic:既読の記録
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/shared/paths.py
         type: implements
   - path: rule_inject/shared/settings.py
     name: 設定ファイルの読み取り
@@ -385,7 +385,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/shared/settings.py
         type: implements
   - path: rule_inject/shared/variables.py
     name: 索引の変数参照の展開
@@ -394,7 +394,7 @@ files:
       - topic:変数参照
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/shared/variables.py
         type: implements
   - path: rule_inject/shared/yaml_lines.py
     name: YAML の行の読み取り
@@ -403,5 +403,5 @@ files:
       - topic:設定ファイル
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/共通.py
+      - to: dev/設計書/モジュール構成/分類/プラグイン/共通
         type: implements

@@ -1,0 +1,17 @@
+summary: "プラグインの分類ごとの構成とディレクトリ構成"
+docs_index: true
+items:
+  - page: フック.yaml
+    summary: Claude Code が呼ぶフックの入口と共通の実行処理
+  - page: 索引.yaml
+    summary: 索引の YAML の読み取りとパス・ツール名の照合
+  - page: 既読の記録.yaml
+    summary: セッションごとの既読の記録の読み・追記・削除
+  - page: 案内.yaml
+    summary: 止める案内・止めない案内・失敗の知らせ・作業の決まりの文面
+  - page: 共通.yaml
+    summary: 記録フォルダ・場所の解決・ログ・例外
+  - page: MCPの結果の文書.yaml
+    summary: MCP のツールの結果から文書の場所と範囲を取り出す
+  - page: コマンドの解析.yaml
+    summary: Bash のコマンドから読むファイルのパスを取り出す

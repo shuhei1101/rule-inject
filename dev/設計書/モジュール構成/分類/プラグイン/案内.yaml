@@ -1,0 +1,9 @@
+title: "プラグイン / 案内"
+lead: フックが返す案内文（止める案内・止めない案内・検索結果の案内・失敗の知らせ・作業の決まり）を組み立てる。
+directory: |-
+  ```text
+  src/rule_inject/features/guidance/
+  ├── __init__.py   # 公開 API
+  ├── types.py      # GuidedRule（案内が読むルールの最小の型）・Guidance（案内文と載せた場所）
+  └── service.py    # 案内文の組み立てと文面の定数
+  ```

@@ -1,0 +1,7 @@
+summary: "案内文の組み立て"
+docs_index: true
+items:
+  - page: types.py.yaml
+    summary: 案内が読むルールの最小の型と、案内文と載せた場所
+  - page: service.py.yaml
+    summary: 案内文の組み立てと文面の定数

@@ -1,10 +1,12 @@
 summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
 items:
-  - page: プラグイン/
-    summary: フックの Python のモジュール
-  - page: MCPサーバー/
-    summary: 常駐の MCP サーバーの Python のモジュール
   - page: server/
     summary: 常駐の MCP サーバーの起動・ツール・応答の形式の物理ファイルごとのモジュール
   - page: 分類/
     summary: 分類ごとの構成とディレクトリ構成を束ねる設計書
+  - page: hooks/
+    summary: Claude Code が呼ぶフックの入口と共通の実行処理の物理ファイルごとのモジュール
+  - page: features/
+    summary: フックと MCP サーバーが使う機能の物理ファイルごとのモジュール
+  - page: shared/
+    summary: フックが共有する設定・場所の解決・ログ・例外の物理ファイルごとのモジュール

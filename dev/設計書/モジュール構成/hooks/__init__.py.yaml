@@ -1,0 +1,19 @@
+title: "プラグイン / フック / __init__.py"
+constants:
+  - name: HOOKS
+    title: フックの対応表
+    container: hooks/__init__.py
+    summary: run.py の引数の名前から、出した元・処理・想定外の例外の知らせ方を引く
+    entries:
+      - key: rule_guide
+        value: '`("rule_guide", guide_rules, 止めずに additionalContext で知らせる)`'
+      - key: record_read
+        value: '`("record_read", record_read, additionalContext で知らせる)`'
+      - key: discard_read
+        value: '`("discard_read", discard_read, 出力しない)`'
+      - key: work_rules
+        value: '`("work_rules", work_rules, 出力しない)`'
+      - key: sweep_read
+        value: '`("sweep_read", sweep_read, 出力しない)`'
+      - key: search_guide
+        value: '`("search_guide", search_guide, additionalContext で知らせる)`'

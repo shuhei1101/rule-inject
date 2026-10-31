@@ -1,0 +1,759 @@
+title: "プラグイン / 既読の記録 / service.py"
+test_files:
+  - tests/unit/rule_inject/features/record/test_service.py
+constants:
+  - name: SESSION_ID_PATTERN
+    title: セッションの識別子の形式
+    container: features/record/service.py
+    summary: 記録ファイル名に使える session_id の形式
+    value: '`^[A-Za-z0-9_-]{1,128}$`'
+  - name: GUIDED_SUFFIX
+    title: 案内済みの記録ファイルの名前の末尾
+    container: features/record/service.py
+    summary: 案内済みの記録ファイルは `{session_id}{GUIDED_SUFFIX}`
+    value: '`.guided.txt`'
+  - name: HISTORY_SUFFIX
+    title: 既読の履歴ファイルの名前の末尾
+    container: features/record/service.py
+    summary: 既読の履歴ファイルは `{session_id}{HISTORY_SUFFIX}`
+    value: '`.history.jsonl`'
+  - name: HASH_PREFIX
+    title: 本文のハッシュの頭
+    container: features/record/service.py
+    summary: 本文のハッシュは `{HASH_PREFIX}{SHA-256 の 16 進数}`
+    value: '`sha256:`'
+  - name: FIELD_SEPARATOR
+    title: 既読の行の区切り
+    container: features/record/service.py
+    summary: 既読の記録の 1 行で、場所と本文のハッシュを区切る文字
+    value: '`\t`'
+functions:
+  - name: is_valid_session_id
+    title: セッションの識別子の判定
+    container: features/record/service.py
+    usecase: 共通
+    summary: session_id が記録ファイル名に使える形式かを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: session_id
+        type: object
+        required: true
+        passing: positional
+        description: 入力の値
+    returns:
+      type: TypeGuard[str]
+      description: 文字列で `SESSION_ID_PATTERN` に合うか。`True` のとき、呼び出し側は値を `str` として扱える
+    unit_tests:
+      - name: test_is_valid_session_id
+        case: 正常
+        summary: UUID を許す
+        condition: '`2f9c1b7e-0d54-4b7a-9d4f-5c3a1e2b7f10`'
+        mock: なし
+        expected: 'True'
+      - name: test_is_valid_session_id_when_invalid
+        case: 正常
+        summary: 形式が外れた値を拒む
+        condition: '`../x`、空文字、129 文字、None'
+        mock: なし
+        expected: すべて False
+  - name: read_record
+    title: 既読の読み込み
+    container: features/record/service.py
+    usecase: 共通
+    summary: そのセッションの既読の行の集合を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+    returns:
+      type: frozenset[ReadEntry]
+      description: 既読の行。ファイルが無ければ空
+    process: |-
+      1. `list_read_entries(state_dir, session_id)` で行の順の既読の行を得る
+      2. ハッシュを持つ行だけを集合にする（重なりは 1 つになる。ハッシュを持たない行は既読として扱わない）
+    exceptions:
+      - name: RecordReadError
+        condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_read_record
+        case: 正常
+        summary: 行を集合で返す
+        condition: 同じ場所とハッシュの行が 2 行と、同じ場所で別のハッシュの行が 1 行の記録ファイル
+        mock: なし
+        expected: 2 件の集合（場所とハッシュが書いた値）
+      - name: test_read_record_when_missing
+        case: 正常
+        summary: ファイルが無ければ空
+        condition: 記録ファイルが無い
+        mock: なし
+        expected: 空の集合
+      - name: test_read_record_when_unreadable
+        case: 異常
+        summary: 読めない
+        condition: 読み取り権限の無い記録ファイル（`chmod 000`）
+        mock: なし
+        expected: RecordReadError（path が記録ファイル）
+        exception: ファイルはあるが読めない
+      - name: test_read_record_when_without_hash
+        case: 正常
+        summary: ハッシュを持たない行は読み飛ばす
+        condition: 場所だけの行・`\tsha256:…` のように場所が空の行・`{場所}\tmd5:…` の行と、場所とハッシュの行が 1 行の記録ファイル
+        mock: なし
+        expected: 場所とハッシュの行の 1 件だけの集合
+  - name: append_record
+    title: 既読の追記
+    container: features/record/service.py
+    usecase: 共通
+    summary: 既読の行を 1 行ずつ記録ファイルへ追記する
+    kind: 関数
+    scope: public
+    side_effects: 記録フォルダを作り、記録ファイルへ追記する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+      - name: entries
+        type: Sequence[ReadEntry]
+        required: true
+        passing: positional
+        description: 既読にする行
+    returns:
+      type: None
+      description: なし
+    process: |-
+      1. `entries` が空なら何もしない
+      2. 行ごとに `{location}{FIELD_SEPARATOR}{hash}` にする
+      3. 記録フォルダを作る（親も含め、あればそのまま）
+      4. 全行を 1 つの文字列にし、`O_APPEND` で開いて 1 回で書く
+    exceptions:
+      - name: RecordWriteError
+        condition: フォルダが作れない・追記できない（OSError）
+    unit_tests:
+      - name: test_append_record
+        case: 正常
+        summary: フォルダを作って追記する
+        condition: まだ無い記録フォルダ、2 件の行を 2 回に分けて追記
+        mock: なし
+        expected: 記録ファイルに `{場所}\t{ハッシュ}` の 4 行が追記の順である
+      - name: test_append_record_when_empty
+        case: 正常
+        summary: 空なら書かない
+        condition: '`entries` が空'
+        mock: なし
+        expected: 記録ファイルもフォルダも作らない
+      - name: test_append_record_when_unwritable
+        case: 異常
+        summary: 書けない
+        condition: 書き込み権限の無い記録フォルダ（`chmod 555`）
+        mock: なし
+        expected: RecordWriteError（path が記録フォルダか記録ファイル）
+        exception: フォルダが作れない・追記できない
+  - name: delete_record
+    title: 既読の削除
+    container: features/record/service.py
+    usecase: 共通
+    summary: そのセッションの記録ファイルを削除する
+    kind: 関数
+    scope: public
+    side_effects: 記録ファイルを削除する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+    returns:
+      type: None
+      description: なし（ファイルが無ければ何もしない）
+    exceptions:
+      - name: RecordDeleteError
+        condition: ファイルはあるが削除できない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_delete_record
+        case: 正常
+        summary: 対象のセッションだけを削除する
+        condition: 2 セッション分の記録ファイル
+        mock: なし
+        expected: 対象のファイルが無く、別のファイルが残る
+      - name: test_delete_record_when_missing
+        case: 正常
+        summary: 無ければ何もしない
+        condition: 記録ファイルが無い
+        mock: なし
+        expected: 例外を送出しない
+      - name: test_delete_record_when_undeletable
+        case: 異常
+        summary: 削除できない
+        condition: 記録フォルダを書き込み権限なし（`chmod 555`）
+        mock: なし
+        expected: RecordDeleteError
+        exception: ファイルはあるが削除できない
+  - name: record_exists
+    title: 記録の有無
+    container: features/record/service.py
+    usecase: 共通
+    summary: そのセッションの記録ファイルがあるかを返す（圧縮の後の削除できずに残った記録の確認に使う）
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+    returns:
+      type: bool
+      description: あれば True
+    unit_tests:
+      - name: test_record_exists
+        case: 正常
+        summary: 有無を返す
+        condition: 記録ファイルがあるセッションと無いセッション
+        mock: なし
+        expected: True と False
+  - name: sweep_records
+    title: 既読の掃除
+    container: features/record/service.py
+    usecase: 終わったセッションの既読の記録が掃除される
+    summary: 保持期間を過ぎた別のセッションの既読の記録ファイルと案内済みの記録ファイルと既読の履歴ファイルを削除し、削除できなかったものを返す
+    kind: 関数
+    scope: public
+    side_effects: 記録ファイルを削除する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: keep_session_id
+        type: str
+        required: true
+        passing: positional
+        description: 削除しないセッション（始まったセッション）の、形式を確かめた session_id
+      - name: now
+        type: Callable[[], float]
+        required: false
+        default: time.time
+        passing: injected
+        description: 現在の時刻（UNIX 時刻の秒）を返す関数
+      - name: retention_days
+        type: int
+        required: true
+        passing: keyword
+        description: 保持日数（1 以上。呼び出し元が `read_retention_days` で読む）
+    returns:
+      type: tuple[RecordDeleteError, ...]
+      description: 削除できなかった記録ファイルごとの失敗。全て削除できたか削除するものが無ければ空
+    process: |-
+      1. `os.scandir(state_dir)` で直下を列挙する。フォルダが無ければ（FileNotFoundError）空を返す（フォルダは作らない）
+      2. 名前が `{session_id}{GUIDED_SUFFIX}`・`{session_id}{HISTORY_SUFFIX}`・`{session_id}{RECORD_SUFFIX}` の形式（末尾を `GUIDED_SUFFIX`・`HISTORY_SUFFIX` から先に外し、残りが `is_valid_session_id` に合う）で、シンボリックリンクを辿らずに通常のファイルで、`keep_session_id` のものでない項目だけを対象にする
+      3. 最終更新（`st_mtime`）が `now() - retention_days 日` より前のものを削除する。既読の記録・案内済みの記録・既読の履歴は、それぞれ自分の最終更新で比べる。削除する前に無くなっていたもの（FileNotFoundError）は削除した状態と同じとして扱う
+      4. 削除できないもの（その他の OSError）は RecordDeleteError にして集め、残りの掃除を続ける
+    exceptions:
+      - name: OSError
+        condition: 記録フォルダはあるが列挙できない（FileNotFoundError 以外）。捕まえずに送出し、フックの最上位が `unexpected` として扱う
+    unit_tests:
+      - name: test_sweep_records
+        case: 正常
+        summary: 保持期間を過ぎた記録ファイルだけを削除する
+        condition: '`retention_days` が 30、最終更新が 31 日前と 29 日前の記録ファイル、`now` を固定'
+        mock: '`now`'
+        expected: 31 日前のファイルが無く 29 日前のファイルが残る。戻り値は空
+      - name: test_sweep_records_when_kept_session
+        case: 正常
+        summary: 始まったセッションの記録は削除しない
+        condition: '`keep_session_id` の記録ファイルの最終更新が 31 日前'
+        mock: '`now`'
+        expected: そのファイルが残る
+      - name: test_sweep_records_when_not_record
+        case: 正常
+        summary: 記録ファイルでないものは削除しない
+        condition: 最終更新が 31 日前の `rule-inject.log`、名前が session_id の形式に合わない `a b.txt`、`.txt` で終わるサブフォルダ、`.txt` で終わるシンボリックリンク
+        mock: '`now`'
+        expected: どれも残る
+      - name: test_sweep_records_when_missing
+        case: 正常
+        summary: 記録フォルダが無ければ何もしない
+        condition: まだ無い記録フォルダ
+        mock: なし
+        expected: 戻り値が空で、フォルダを作らない
+      - name: test_sweep_records_when_undeletable
+        case: 異常
+        summary: 削除できない記録ファイルを返す
+        condition: 最終更新が 31 日前の記録ファイルを置き、記録フォルダを書き込み権限なし（`chmod 555`）
+        mock: '`now`'
+        expected: RecordDeleteError が 1 件（path がその記録ファイル）で、ファイルが残る
+        exception: 削除できない記録ファイルを払い出さずに返す
+      - name: test_sweep_records_when_guided
+        case: 正常
+        summary: 保持期間を過ぎた案内済みの記録ファイルも削除する
+        condition: 最終更新が 31 日前と 29 日前の `{id}.guided.txt`、`keep_session_id` の 31 日前の `{id}.guided.txt`、名前が形式に合わない 31 日前の `a b.guided.txt`
+        mock: '`now`'
+        expected: 31 日前の別のセッションの `.guided.txt` だけが無く、残りは残る
+      - name: test_sweep_records_when_history
+        case: 正常
+        summary: 保持期間を過ぎた既読の履歴ファイルも削除する
+        condition: 最終更新が 31 日前と 29 日前の `{id}.history.jsonl`、`keep_session_id` の 31 日前の `{id}.history.jsonl`、名前が形式に合わない 31 日前の `a b.history.jsonl`
+        mock: '`now`'
+        expected: 31 日前の別のセッションの `.history.jsonl` だけが無く、残りは残る
+  - name: read_guided
+    title: 案内済みの読み込み
+    container: features/record/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: そのセッションで止めずに案内した場所の集合を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+    returns:
+      type: frozenset[str]
+      description: 案内済みの場所。ファイルが無ければ空
+    process: |-
+      1. `{state_dir}/{session_id}{GUIDED_SUFFIX}` を UTF-8 で読み、空行を除いた行の集合にする（無ければ空）
+      2. ファイルを読んで空行を除く部分だけを `read_record` と共通の内部の関数で行う。場所とハッシュに分ける処理は `read_record` だけが持つ
+    exceptions:
+      - name: RecordReadError
+        condition: ファイルはあるが読めない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_read_guided
+        case: 正常
+        summary: 案内済みの記録を集合で返す
+        condition: 同じセッションの `{id}.txt`（場所 A とハッシュの行）と `{id}.guided.txt`（場所 B が 2 行）
+        mock: なし
+        expected: B だけの 1 件の集合（既読の記録を読まない）
+      - name: test_read_guided_when_missing
+        case: 正常
+        summary: ファイルが無ければ空
+        condition: 案内済みの記録ファイルが無い
+        mock: なし
+        expected: 空の集合
+      - name: test_read_guided_when_unreadable
+        case: 異常
+        summary: 読めない
+        condition: 読み取り権限の無い案内済みの記録ファイル（`chmod 000`）
+        mock: なし
+        expected: RecordReadError（path が `{id}.guided.txt`）
+        exception: ファイルはあるが読めない
+  - name: append_guided
+    title: 案内済みの追記
+    container: features/record/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: 止めずに案内した場所を 1 行ずつ案内済みの記録ファイルへ追記する
+    kind: 関数
+    scope: public
+    side_effects: 記録フォルダを作り、案内済みの記録ファイルへ追記する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 案内済みにする場所
+    returns:
+      type: None
+      description: なし
+    process: 1. `append_record` と共通の内部の関数で、`{state_dir}/{session_id}{GUIDED_SUFFIX}` へ同じ規則（空なら書かない・フォルダを作る・`O_APPEND` で 1 回に書く）で追記する
+    exceptions:
+      - name: RecordWriteError
+        condition: フォルダが作れない・追記できない（OSError）
+    unit_tests:
+      - name: test_append_guided
+        case: 正常
+        summary: 案内済みの記録ファイルへ追記する
+        condition: まだ無い記録フォルダ、2 件の場所
+        mock: なし
+        expected: '`{id}.guided.txt` に 2 行があり、`{id}.txt` は作らない'
+      - name: test_append_guided_when_unwritable
+        case: 異常
+        summary: 書けない
+        condition: 記録フォルダを書き込み権限なし（`chmod 500`）
+        mock: なし
+        expected: RecordWriteError（path が `{id}.guided.txt`）
+        exception: フォルダが作れない・追記できない
+  - name: delete_guided
+    title: 案内済みの削除
+    container: features/record/service.py
+    usecase: 圧縮で既読の記録が捨てられる
+    summary: そのセッションの案内済みの記録ファイルを削除する（ファイルが無ければ何もしない）
+    kind: 関数
+    scope: public
+    side_effects: 案内済みの記録ファイルを削除する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+    returns:
+      type: None
+      description: なし
+    process: 1. `delete_record` と共通の内部の関数で `{state_dir}/{session_id}{GUIDED_SUFFIX}` を削除する。無ければ（FileNotFoundError）何もしない
+    exceptions:
+      - name: RecordDeleteError
+        condition: ファイルはあるが削除できない（FileNotFoundError 以外の OSError）
+    unit_tests:
+      - name: test_delete_guided
+        case: 正常
+        summary: 案内済みの記録ファイルだけを削除する
+        condition: 同じセッションの `{id}.txt` と `{id}.guided.txt`
+        mock: なし
+        expected: '`{id}.guided.txt` が無く `{id}.txt` が残る'
+      - name: test_delete_guided_when_missing
+        case: 正常
+        summary: ファイルが無ければ何もしない
+        condition: 案内済みの記録ファイルが無い
+        mock: なし
+        expected: 例外を送出しない
+      - name: test_delete_guided_when_undeletable
+        case: 異常
+        summary: 削除できない
+        condition: 案内済みの記録ファイルを置き、記録フォルダを書き込み権限なし（`chmod 555`）
+        mock: なし
+        expected: RecordDeleteError（path が `{id}.guided.txt`）
+        exception: ファイルはあるが削除できない
+  - name: append_history
+    title: 既読の履歴の追記
+    container: features/record/service.py
+    usecase: ルールを読んだことが記録される
+    summary: 既読にした場所ごとに、時刻・セッション・読み方・ツール名・場所の JSON を 1 行ずつ既読の履歴ファイルへ追記する
+    kind: 関数
+    scope: public
+    side_effects: 記録フォルダを作り、既読の履歴ファイルへ追記する
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: 形式を確かめた session_id
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 既読にした場所
+      - name: method
+        type: ReadMethod
+        required: true
+        passing: keyword
+        description: 読み方
+      - name: tool
+        type: str
+        required: true
+        passing: keyword
+        description: 既読にしたツールの名前（`Read`・`Bash`・MCP のツールの完全名）
+      - name: now
+        type: Callable[[], datetime]
+        required: false
+        default: 現在の UTC の時刻
+        passing: injected
+        description: 時刻の取得
+    returns:
+      type: None
+      description: なし
+    process: |-
+      1. `locations` が空なら何もしない
+      2. `now()` を 1 回だけ呼び、秒までの UTC の ISO 8601（`2026-10-24T09:30:00Z`）にする
+      3. 場所ごとに `time`・`session_id`・`method`・`tool`・`location` を持つ JSON（`ensure_ascii=False`、改行を含まない）を 1 行にする
+      4. `append_record` と共通の内部の関数と同じ規則（フォルダを作る・`O_APPEND` で 1 回に書く・一部だけ書けたら失敗）で `{state_dir}/{session_id}{HISTORY_SUFFIX}` へ書く。失敗は HistoryWriteError にする
+    exceptions:
+      - name: HistoryWriteError
+        condition: フォルダが作れない・追記できない（OSError）
+    unit_tests:
+      - name: test_append_history
+        case: 正常
+        summary: 場所ごとに JSON を 1 行ずつ追記する
+        condition: まだ無い記録フォルダ、2 件の場所、`method` が `mcp`、`tool` が `mcp__docs__get_doc`、`now` は 2026-10-24T09:30:00.5+00:00
+        mock: '`now`'
+        expected: '`{id}.history.jsonl` に 2 行。各行の `time` が `2026-10-24T09:30:00Z`、`session_id`・`method`・`tool` が渡した値、`location` が場所の順。`{id}.txt` は作らない'
+      - name: test_append_history_when_empty
+        case: 正常
+        summary: 空なら書かない
+        condition: '`locations` が空'
+        mock: なし
+        expected: 履歴ファイルもフォルダも作らない
+      - name: test_append_history_when_unwritable
+        case: 異常
+        summary: 書けない
+        condition: 記録フォルダに `{id}.history.jsonl` という名前のフォルダを置く
+        mock: なし
+        expected: HistoryWriteError（path が `{id}.history.jsonl`）
+        exception: フォルダが作れない・追記できない
+  - name: hash_locations
+    title: 本文のハッシュの付与
+    container: features/record/service.py
+    usecase: ルールを読んだことが記録される
+    summary: 既読にする場所ごとに今のルールのファイルの本文のハッシュを取り、既読の行にして返す
+    kind: 関数
+    scope: public
+    args:
+      - name: locations
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 既読にする場所（解決後の絶対パス）
+    returns:
+      type: tuple[ReadEntry, ...]
+      description: ハッシュを取れた場所の既読の行（`locations` の順）。読めなかった場所は含まない
+    process: |-
+      1. 場所ごとに、ファイルの中身をバイト列で読み、SHA-256 の 16 進数に `HASH_PREFIX` を付ける（本文のハッシュ）
+         - 読めない場合（OSError。無い・フォルダ・権限が無い）、その場所を読み飛ばす
+      2. ハッシュを取れた場所を `ReadEntry` にして返す
+    unit_tests:
+      - name: test_hash_locations
+        case: 正常
+        summary: 場所ごとに本文のハッシュを付ける
+        condition: 中身が `test` のファイルと、中身が空のファイル
+        mock: なし
+        expected: 2 件。`test` のファイルの `hash` が `sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08`、空のファイルの `hash` が `sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+      - name: test_hash_locations_when_unreadable
+        case: 正常
+        summary: 読めない場所は含めない
+        condition: 無いファイル・フォルダ・読み取り権限の無いファイル（`chmod 000`）と、読めるファイル
+        mock: なし
+        expected: 読めるファイルの 1 件だけ
+  - name: current_read_locations
+    title: 今の本文での既読の判定
+    container: features/record/service.py
+    usecase: 未読のルールの案内を受ける
+    summary: 当たったルールの場所のうち、既読の行に場所と今の本文のハッシュの組があるものを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: frozenset[ReadEntry]
+        required: true
+        passing: positional
+        description: '`read_record` で読んだ既読の行'
+      - name: locations
+        type: Iterable[str]
+        required: true
+        passing: positional
+        description: 当たったルールの場所
+    returns:
+      type: frozenset[str]
+      description: 既読として扱う場所
+    process: |-
+      1. `entries` の場所に無い場所は、ハッシュを取らずに未読とする
+      2. 残りの場所の今の本文のハッシュを `hash_locations` と同じ方法で取る（本文のハッシュの付与）
+      3. 場所と今のハッシュの組が `entries` にある場所を返す。ハッシュを取れない場所は未読とする
+    unit_tests:
+      - name: test_current_read_locations
+        case: 正常
+        summary: 今の本文のハッシュの組がある場所を既読にする
+        condition: 記録に場所 A と A の今のハッシュの行。場所は A と、記録に無い B
+        mock: なし
+        expected: A だけの集合
+      - name: test_current_read_locations_when_changed
+        case: 正常
+        summary: 本文が変わった場所は未読にする
+        condition: 記録に場所 A と書き換える前のハッシュの行。A のファイルの中身を書き換える
+        mock: なし
+        expected: 空の集合
+      - name: test_current_read_locations_when_reread
+        case: 正常
+        summary: 読み直した新しいハッシュの行があれば既読にする
+        condition: 記録に場所 A の書き換える前のハッシュの行と、書き換えた後のハッシュの行
+        mock: なし
+        expected: A だけの集合
+      - name: test_current_read_locations_when_unreadable
+        case: 正常
+        summary: 今のハッシュを取れない場所は未読にする
+        condition: 記録に場所 A の行があり、A のファイルを削除する
+        mock: なし
+        expected: 空の集合
+  - name: list_read_entries
+    title: 既読の行の並び
+    container: features/record/service.py
+    usecase: 既読の記録を確認する
+    summary: そのセッションの既読の行を、記録ファイルの行の順に返す（ファイルが無ければ空）
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: '`is_valid_session_id` を通ったセッション'
+    returns:
+      type: tuple[ReadEntry, ...]
+      description: 行の順の既読の行。同じ場所の行も落とさない
+    process: |-
+      1. `{state_dir}/{session_id}.txt` を UTF-8 で読む。ファイルが無ければ空を返し、OSError は `RecordReadError`
+      2. 空行を除いた行を、最初の `FIELD_SEPARATOR` で場所とハッシュに分ける
+         - 場所が空の行は読み飛ばす
+         - `FIELD_SEPARATOR` を含まない行・ハッシュが `HASH_PREFIX` で始まらない行は、ハッシュを空文字にした行として残す（確認のツールが `changed` として返すため）
+      3. 行の順に `ReadEntry` を並べる
+    exceptions:
+      - name: RecordReadError
+        condition: 記録ファイルがあるのに読めない
+        message: path は記録ファイル、reason は `describe(exc)`
+    unit_tests:
+      - name: test_list_read_entries
+        case: 正常
+        summary: 行の順を保ち、ハッシュを持たない行は空のハッシュで残す
+        condition: 場所 B・A・B（別のハッシュ）の行と、タブを持たない場所 C の行と、空行を持つ記録ファイル
+        mock: なし
+        expected: B・A・B・C（ハッシュは空文字）の 4 件を行の順に返す
+      - name: test_list_read_entries_when_missing
+        case: 正常
+        summary: 記録の無いセッションは空を返す
+        condition: 記録ファイルの無い `session_id`
+        mock: なし
+        expected: 空
+  - name: list_rule_states
+    title: 既読のルールの状態
+    container: features/record/service.py
+    usecase: 既読の記録を確認する
+    summary: 既読の行の場所ごとに、今の本文が既読にした時点と同じかを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[ReadEntry]
+        required: true
+        passing: positional
+        description: '`list_read_entries` の戻り値'
+    returns:
+      type: tuple[tuple[str, ReadState], ...]
+      description: 場所が初めて現れた順の、場所と状態の組
+    process: |-
+      1. 場所を初めて現れた順に並べ、`hash_locations` で今の本文のハッシュを取る
+      2. ハッシュを取れない場所は `missing`、その場所のどれかの行のハッシュと同じなら `current`、それ以外は `changed`（フックの `current_read_locations` と同じ判定）
+    unit_tests:
+      - name: test_list_rule_states
+        case: 正常
+        summary: 場所ごとに既読・本文が変わった・ファイルが無いを返す
+        condition: 今の本文のハッシュの行を持つ A、古いハッシュの行だけを持つ B、ファイルを削除した C、ハッシュが空の行だけを持つ D。A は古いハッシュの行も持つ
+        mock: なし（`tmp_path` にルールのファイルを置く）
+        expected: '`((A, current), (B, changed), (C, missing), (D, changed))`'
+  - name: read_history
+    title: 既読の履歴の読み
+    container: features/record/service.py
+    usecase: 既読の記録を確認する
+    summary: そのセッションの既読の履歴を全行読み、読めた行を行の順に返す（ファイルが無ければ空）
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+      - name: session_id
+        type: str
+        required: true
+        passing: positional
+        description: '`is_valid_session_id` を通ったセッション'
+    returns:
+      type: tuple[HistoryEntry, ...]
+      description: 行の順の履歴
+    process: |-
+      1. `{session_id}{HISTORY_SUFFIX}` を UTF-8 で読む。ファイルが無ければ空を返し、OSError は `RecordReadError`
+      2. 各行を JSON として読む。JSON として読めない行・オブジェクトでない行・`time`・`method`・`tool`・`location` のどれかが文字列でない行・`method` が `ReadMethod` の値でない行は読み飛ばす（フックが追記している途中の行を失敗にしない）
+    exceptions:
+      - name: RecordReadError
+        condition: 既読の履歴ファイルがあるのに読めない
+        message: path は既読の履歴ファイル、reason は `describe(exc)`
+    unit_tests:
+      - name: test_read_history
+        case: 正常
+        summary: 読める行を行の順に返し、壊れた行を読み飛ばす
+        condition: '`append_history` で追記した 2 行の間に、JSON として読めない行・`tool` の無い行・`method` が `other` の行を挟む'
+        mock: なし
+        expected: 追記した 2 行だけを、書いた値のまま返す
+  - name: list_record_sessions
+    title: 既読の記録のあるセッションの一覧
+    container: features/record/service.py
+    usecase: 既読の記録を確認する
+    summary: 記録フォルダの既読の記録ファイルを持つセッションを、最終更新の新しい順に返す
+    kind: 関数
+    scope: public
+    args:
+      - name: state_dir
+        type: Path
+        required: true
+        passing: positional
+        description: 記録フォルダ
+    returns:
+      type: tuple[RecordSession, ...]
+      description: 最終更新の新しい順のセッション。記録フォルダが無ければ空
+    process: |-
+      1. `os.scandir(state_dir)` で並べる。記録フォルダが無ければ空を返す（フォルダは作らない）
+      2. 名前が `RECORD_SUFFIX` で終わり `GUIDED_SUFFIX` で終わらず、末尾を外した名前が `is_valid_session_id` を通る通常のファイル（シンボリックリンクを辿らない）だけを取る
+      3. それぞれ `updated_at` を `st_mtime` の UTC、`rule_count` を `list_read_entries` の場所の重なりを落とした数にし、`updated_at` の新しい順に並べる。並べる間に削除されたファイルは飛ばす
+    exceptions:
+      - name: RecordReadError
+        condition: 記録フォルダか記録ファイルがあるのに読めない
+        message: path は読めない場所、reason は `describe(exc)`
+    unit_tests:
+      - name: test_list_record_sessions
+        case: 正常
+        summary: 既読の記録ファイルだけを最終更新の新しい順に返す
+        condition: 最終更新をずらした `a.txt`（場所 2 つ・3 行）・`b.txt`（場所 1 つ）と、`a.guided.txt`・`a.history.jsonl`・`bad name.txt`
+        mock: なし（`os.utime` で最終更新を決める）
+        expected: 新しい方から `a`（`rule_count` 2）・`b`（`rule_count` 1）の順で、他のファイルを含まない
+      - name: test_list_record_sessions_when_missing
+        case: 正常
+        summary: 記録フォルダが無ければ空を返す
+        condition: 存在しない記録フォルダ
+        mock: なし
+        expected: 空で、フォルダを作らない

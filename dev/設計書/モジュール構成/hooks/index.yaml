@@ -1,0 +1,21 @@
+summary: "Claude Code が呼ぶフックの入口と共通の実行処理の物理ファイルごとのモジュール"
+docs_index: true
+items:
+  - page: run.py.yaml
+    summary: プラグインの直下の起動スクリプト。src/ を sys.path に追加して引数のフックを動かす
+  - page: __init__.py.yaml
+    summary: フックのパッケージ
+  - page: _runner.py.yaml
+    summary: 標準入出力・想定外の例外・ログ・設定ファイルの誤りのログの共通処理
+  - page: rule_guide.py.yaml
+    summary: ルール案内（PreToolUse）
+  - page: record_read.py.yaml
+    summary: 既読の記録（PostToolUse）
+  - page: search_guide.py.yaml
+    summary: 検索結果の案内（PostToolUse）
+  - page: discard_read.py.yaml
+    summary: 既読の記録の破棄（PreCompact）
+  - page: sweep_read.py.yaml
+    summary: 既読の記録の掃除（SessionStart）
+  - page: work_rules.py.yaml
+    summary: 作業の決まりの注入（SessionStart）
