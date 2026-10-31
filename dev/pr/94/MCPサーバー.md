@@ -5,12 +5,8 @@
 | 分類 | ページ / ファイル | 概要 | 補足 |
 | --- | --- | --- | --- |
 | ドキュメント | [設計書/シナリオ/単一ユースケース/MCPサーバーを常駐させる.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/dev/%E8%A8%AD%E8%A8%88%E6%9B%B8/%E3%82%B7%E3%83%8A%E3%83%AA%E3%82%AA/%E5%8D%98%E4%B8%80%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/MCP%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E5%B8%B8%E9%A7%90%E3%81%95%E3%81%9B%E3%82%8B.yaml) | 止めるシナリオの期待値「設定ファイルのポートで待ち受けていない」、ポートが使われているシナリオのセットアップ「テストが設定ファイルのポートを先に待ち受けておく」 | 更新対象 |
-| ドキュメント | [設計書/モジュール構成/shared/settings.py.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/dev/%E8%A8%AD%E8%A8%88%E6%9B%B8/%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%BC%E3%83%AB%E6%A7%8B%E6%88%90/shared/settings.py.yaml) | 定数 `DEFAULT_DEV_DOCS_URL` の値と、既定の値を期待する単体テストのケース | 更新対象 |
 | ドキュメント | [設計書/モジュール構成/server/dev_docs.py.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/dev/%E8%A8%AD%E8%A8%88%E6%9B%B8/%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%BC%E3%83%AB%E6%A7%8B%E6%88%90/server/dev_docs.py.yaml) | 接続できないときの単体テストの条件「空いているポートを取ってすぐ閉じた `http://127.0.0.1:{ポート}/mcp`」 | 更新対象 |
-| 実装 | [src/rule_inject/shared/settings.py](https://github.com/shuhei1101/rule-inject/blob/develop/src/rule_inject/shared/settings.py) | `DEFAULT_DEV_DOCS_URL = "http://127.0.0.1:8781/mcp"` | 更新対象 |
-| 実装 | [settings.sample.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/settings.sample.yaml) | `dev_docs_url` の値とコメントの既定 | 更新対象 |
-| テスト | [tests/unit/rule_inject/shared/test_settings.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/shared/test_settings.py) | 既定の `dev_docs_url` を期待するケース | 更新対象 |
-| テスト | [tests/unit/rule_inject/server/test_dev_docs.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_dev_docs.py) | `DEV_DOCS_URL` と、`test_fetch_used_tags_when_unreachable` の bind してすぐ閉じるポート | 更新対象 |
+| テスト | [tests/unit/rule_inject/server/test_dev_docs.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/unit/rule_inject/server/test_dev_docs.py) | `test_fetch_used_tags_when_unreachable` の bind してすぐ閉じるポート | 更新対象 |
 | テスト | [tests/e2e/conftest.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/e2e/conftest.py) | `free_port`（待ち受けてすぐ閉じる）・`resident_server`（ポートへ接続できるかで起動を待つ）・`serve`・`start_dev_docs` | 更新対象 |
 | テスト | [tests/e2e/単一ユースケース/test_run_resident_mcp_server.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/e2e/%E5%8D%98%E4%B8%80%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/test_run_resident_mcp_server.py) | 4 テストとも `free_port` の番号で起動し、ポートの状態で確かめる | 更新対象 |
 | テスト | [tests/e2e/単一ユースケース/test_check_indexes.py](https://github.com/shuhei1101/rule-inject/blob/develop/tests/e2e/%E5%8D%98%E4%B8%80%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B1%E3%83%BC%E3%82%B9/test_check_indexes.py) | `test_error_when_dev_docs_unreachable` が `free_port` の番号を接続できない URL に使う | 更新対象 |
@@ -19,7 +15,6 @@
 
 | 対象 | 方針 | 補足 |
 | --- | --- | --- |
-| 既定の接続先 | `DEFAULT_DEV_DOCS_URL`・`settings.sample.yaml`・設定ファイルのリファレンス・設計書の値を `http://127.0.0.1:8781/mcp/` にする | dev-docs は `/mcp` への POST に 405、`/mcp/` に 200 を返す |
 | E2E のサーバー・偽の dev-docs の起動待ち | 子プロセスの標準エラーに `Uvicorn running on http://127.0.0.1:{ポート}` が出たことで起動を確かめる | 結合テストの `_wait_ready` と同じ確かめ方。偽の dev-docs の標準エラーも捨てずにファイルへ書く |
 | E2E のサーバー・偽の dev-docs のポート | 待ち受けに失敗して子プロセスが終わったら、別の空いているポートで起動し直す | 起動を待つ上限と起動し直す回数は、テスト実行方法の結合テスト（バック）の補足で導いた値（`START_TIMEOUT_SEC` 51 秒・5 回）を使う |
 | `test_error_when_port_in_use`（E2E） | テストがポート 0 で待ち受けて握ったポートを設定ファイルに書く | `free_port` の番号を後から待ち受けない |
