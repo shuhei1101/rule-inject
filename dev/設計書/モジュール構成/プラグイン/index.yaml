@@ -1,4 +1,0 @@
-summary: フックの Python のモジュール
-items:
-  - page: コマンドの解析.py.yaml
-    summary: Bash のコマンドから読むファイルのパスを取り出す

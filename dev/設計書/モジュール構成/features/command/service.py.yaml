@@ -1,11 +1,6 @@
-title: "プラグイン / コマンドの解析"
-lead: Bash のコマンドの文字列から、読むコマンドが読むファイルの絶対パスを取り出し、検索のコマンドとその結果の行から実在するファイルを拾う。
-directory: |-
-  ```text
-  src/rule_inject/features/command/
-  ├── __init__.py   # 公開 API
-  └── service.py    # 読むコマンドの引数からパスを取り出し、検索の結果の行からパスを拾う
-  ```
+title: "プラグイン / コマンドの解析 / service.py"
+test_files:
+  - tests/unit/rule_inject/features/command/test_service.py
 constants:
   - name: READ_COMMANDS
     title: 読むコマンド
@@ -292,8 +287,6 @@ functions:
         condition: 実在するファイル 105 行、`limit=100`
         mock: なし
         expected: '`paths` が先頭 100 件、`unchecked` が 5'
-test_files:
-  - tests/unit/rule_inject/features/command/test_service.py
 data_models:
   - name: ResultPaths
     title: 検索の結果から拾ったパス

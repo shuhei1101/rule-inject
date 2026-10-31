@@ -7,7 +7,7 @@ files:
       - topic:既読の記録
       - topic:コマンドの解析
     related:
-      - to: dev/設計書/モジュール構成/プラグイン/コマンドの解析.py
+      - to: dev/設計書/モジュール構成/features/command/service.py
         type: implements
   - path: rule_inject/features/document/service.py
     name: MCP の結果の文書の取り出し

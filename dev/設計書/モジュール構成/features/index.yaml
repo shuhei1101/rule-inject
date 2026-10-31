@@ -9,3 +9,5 @@ items:
     summary: 案内文の組み立て
   - page: document/
     summary: MCP のツールの結果から文書の場所と範囲を取り出す
+  - page: command/
+    summary: Bash のコマンドから読むファイルのパスを取り出す

@@ -1,7 +1,5 @@
 summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
 items:
-  - page: プラグイン/
-    summary: フックの Python のモジュール
   - page: server/
     summary: 常駐の MCP サーバーの起動・ツール・応答の形式の物理ファイルごとのモジュール
   - page: 分類/

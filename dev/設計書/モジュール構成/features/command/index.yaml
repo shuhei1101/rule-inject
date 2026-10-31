@@ -1,0 +1,5 @@
+summary: "Bash のコマンドから読むファイルのパスを取り出す"
+docs_index: true
+items:
+  - page: service.py.yaml
+    summary: 読むコマンドが読むファイルと、検索のコマンドの結果の実在するファイルを取り出す
