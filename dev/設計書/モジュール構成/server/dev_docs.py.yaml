@@ -108,7 +108,7 @@ functions:
       - name: test_fetch_used_tags_when_unreachable
         case: 正常
         summary: 接続できないときは飛ばす理由を返す
-        condition: 空いているポートを取ってすぐ閉じた `http://127.0.0.1:{ポート}/mcp`
+        condition: テストが `SO_REUSEADDR` を付けずにポート 0 で bind し、listen しないまま握っている `http://127.0.0.1:{ポート}/mcp`
         mock: なし（既定の `_open_session`）
         expected: 例外を送出せず、`reason` に接続先と接続できなかった旨
       - name: test_fetch_used_tags_when_no_tag_group

@@ -195,13 +195,13 @@ def test_fetch_used_tags_when_unreachable() -> None:
     """接続できないときは飛ばす理由を返す（正常系）。"""
     from rule_inject.server.dev_docs import fetch_used_tags
 
-    # 準備: 空いているポートを取ってすぐ閉じ、何も待ち受けていない接続先にする
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        port = probe.getsockname()[1]
-    url = f"http://127.0.0.1:{port}/mcp"
-    # 実行
-    result = asyncio.run(fetch_used_tags(url, PROJECT_DIR, timeout=TIMEOUT))
+    # 準備: 接続先のポートは、SO_REUSEADDR を付けずに bind して listen しないまま握る
+    # （接続は拒否され、呼び終わるまで他のプロセスはそのポートで待ち受けられない）
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as held:
+        held.bind(("127.0.0.1", 0))
+        url = f"http://127.0.0.1:{held.getsockname()[1]}/mcp"
+        # 実行
+        result = asyncio.run(fetch_used_tags(url, PROJECT_DIR, timeout=TIMEOUT))
     # 検証
     assert result.tags == ()
     assert result.reason is not None
