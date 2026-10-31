@@ -14,5 +14,6 @@
 | [_settings_yaml.py](./_settings_yaml.py.yaml) | 設定ファイルの YAML の一部だけを読む |
 | [variables.py](./variables.py.yaml) | !{名前} を環境変数の値へ展開する |
 | [logger.py](./logger.py.yaml) | 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを削除する |
+| [yaml_lines.py](./yaml_lines.py.yaml) | 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り |
 
 <!-- /table -->
