@@ -52,7 +52,7 @@ endpoints:
       - name: groups[].value
         type: str
         description: タグ（まとめた値の代表の表記）
-        notes: タグを持たない文書は、値が `（なし）` のグループにまとめて返る（dev-docs の develop の `src/dev_docs/features/search/service.py` の `NONE_LABEL`）。rule-inject はこの値を使われているタグに含めない
+        notes: "タグを持たない文書は、値が `（なし）` のグループにまとめて返る（dev-docs の develop の `src/dev_docs/features/search/service.py` の `NONE_LABEL`）。rule-inject はこの値を使われているタグに含めない。`tags` を `- name: ...` の要素で持つ配信元は、配信元の `dev-docs.yaml` の `metadata`（`tags: tags[].name`）でタグの名前を返す。その対応が無い配信元は、辞書を文字列にした値（`{'name': ...}`）を返す"
       - name: groups[].count
         type: int
         description: そのタグが付いた文書の数
@@ -70,8 +70,8 @@ used_in:
   - src/rule_inject/server/check_tools.py
 verification:
   state: 済
-  date: '2026-10-30'
-  detail: '手元で常駐している dev-docs（`http://127.0.0.1:8781/mcp`）を、rule-inject の `.venv` の `mcp`（2.2.0）の `streamable_http_client` から `{"source": "*", "group_by": "tags", "format": "json"}` で呼んだ。`cwd` 無しと、配信元の `scope` に当たらない `cwd`（rule-inject のクローン）は `isError: false`・`total_count: 0` で、`groups` のキーが返らなかった。`cwd` に配信元の中（shuhdev-gateway の develop の worktree・claude-balancer のクローン）を渡すと `total_count` 51・585 と `groups` 12 件・152 件が返った。応答までの時間は、文書 51 件の配信元へ 21 回で 31.4〜64.1 秒（中央値 47.0 秒）、585 件の配信元へ 1 回で 71.9 秒、どの配信元も読まないときは 0.02〜2.0 秒'
+  date: '2026-11-01'
+  detail: '手元で常駐している dev-docs（`http://127.0.0.1:8781/mcp`）を dev-docs の管理ツールの `restart` で起動し直し、dev-docs の develop の d358fe3（dev-docs#50 の 9bac461 を含む）と knowledge の develop の eb35a25 の `dev-docs.yaml` で応答させた。rule-inject の `fetch_used_tags` から `check_indexes` と同じ引数（`{"source": "*", "group_by": "tags", "format": "json"}`、`cwd`: rule-inject のクローン）で呼ぶと、約 35 秒でタグ 800 件が返り、`{` で始まる値は 0 件だった。`filter[tags]` に `topic:フロントエンド`・`scope:next`・`re:^topic:`・`re:^scope:`・`topic:存在しないタグ` を持つ一時の索引で `check_indexes` を呼ぶと、`tag_check.state` が `checked`、`unused_tag_patterns` は `topic:存在しないタグ` の 1 件だけだった'
 base_urls:
   - env: 既定
     url: http://127.0.0.1:8781/mcp
