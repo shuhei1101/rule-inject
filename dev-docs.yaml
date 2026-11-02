@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/dev-docs/e1740866425c5c8c49bbd2ebc610fbcbdf8061fd/schemas/dev-docs.schema.json
 version: "3"
 name: rule-inject
+worktrees: [".claude/worktrees/*"]
 description: Claude Code がファイルを触る前に、そのファイルに当たるルールを案内するプラグインの設計書・公開ドキュメント・ソースコード・テスト
 instructions: |-
   設計書（`dev/設計書/`）と各フォルダの `index.yaml` は YAML が正本で、種類ごとの行に分かれる。
