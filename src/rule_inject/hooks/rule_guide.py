@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
@@ -15,7 +16,7 @@ from rule_inject.features.guidance import (
     build_failure_notice,
     build_guidance,
 )
-from rule_inject.features.index import load_indexes, match_path, match_tool
+from rule_inject.features.index import load_indexes, match_path, match_tool, merge_matched
 from rule_inject.features.index.types import IndexEntry, MatchedRule, Operation
 from rule_inject.features.record import (
     append_guided,
@@ -50,19 +51,6 @@ PATH_KEYS = {
 NOTICE_SEPARATOR = "\n\n"
 
 
-def _merge(matches: Sequence[MatchedRule]) -> list[MatchedRule]:
-    """同じルールの場所を 1 件にまとめ、どれか 1 つでも止めるなら止める（並びは保つ）。"""
-    blocking_by_location: dict[str, bool] = {}
-    for rule in matches:
-        blocking_by_location[rule.location] = (
-            blocking_by_location.get(rule.location, False) or rule.blocking
-        )
-    return [
-        MatchedRule(location=location, blocking=blocking)
-        for location, blocking in blocking_by_location.items()
-    ]
-
-
 def _target_paths(payload: Mapping[str, Any], tool_name: str) -> list[str]:
     """ツールの入力から、照合する操作の対象の絶対パスを取り出す。"""
     tool_input = payload["tool_input"]
@@ -89,7 +77,7 @@ def _match(payload: Mapping[str, Any], entries: Sequence[IndexEntry]) -> list[Ma
     matches: list[MatchedRule] = []
     for path in _target_paths(payload, tool_name):
         matches.extend(match_path(entries, path, operation))
-    return _merge(matches)
+    return merge_matched(matches)
 
 
 def _log_record_failure(
@@ -153,7 +141,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     unread = [rule for rule in matched if rule.location not in already_read]
     if record_failed:
         # 既読か分からないため、止めずに案内する
-        unread = [MatchedRule(location=rule.location, blocking=False) for rule in unread]
+        unread = [dataclasses.replace(rule, blocking=False) for rule in unread]
     # 止めるルールが無いときは、このセッションで案内済みの場所を除く（読めなければ未案内として扱う）
     track_guided = bool(unread) and not any(rule.blocking for rule in unread)
     if session_id is not None and track_guided:

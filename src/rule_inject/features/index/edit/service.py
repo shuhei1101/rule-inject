@@ -24,7 +24,17 @@ from rule_inject.shared.errors import IndexEditError, describe
 RULES_KEY = "rules"
 COMMENT_MARK = "#"
 # 新規作成するエントリにキーを書く順（ここに無いキーは渡された順で後ろに置く）
-ENTRY_KEY_ORDER = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "enabled")
+ENTRY_KEY_ORDER = (
+    "rule",
+    "paths",
+    "exclude",
+    "tools",
+    "args",
+    "on",
+    "read_by",
+    "read_tool",
+    "enabled",
+)
 # 改行
 LF = "\n"
 CRLF = "\r\n"

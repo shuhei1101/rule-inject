@@ -14,7 +14,8 @@ from rule_inject.features.guidance import (
     build_failure_notice,
     build_search_guidance,
 )
-from rule_inject.features.index import load_indexes, match_path
+from rule_inject.features.index import load_indexes, match_path, merge_matched
+from rule_inject.features.index.types import MatchedRule
 from rule_inject.features.record import (
     append_guided,
     current_read_locations,
@@ -74,14 +75,14 @@ def _log_record_failure(
     )
 
 
-def _build(locations: Sequence[str], unchecked: int, notices: Sequence[str]) -> Guidance | None:
-    """知らせの分を引いた字数に収めた案内文を組み立てる（案内する場所が無ければ None）。"""
-    if not locations:
+def _build(rules: Sequence[MatchedRule], unchecked: int, notices: Sequence[str]) -> Guidance | None:
+    """知らせの分を引いた字数に収めた案内文を組み立てる（案内するルールが無ければ None）。"""
+    if not rules:
         return None
     budget = GUIDANCE_LIMIT - (
         len(NOTICE_SEPARATOR) + len(NOTICE_SEPARATOR.join(notices)) if notices else 0
     )
-    return build_search_guidance(locations, unchecked=unchecked, limit=budget)
+    return build_search_guidance(rules, unchecked=unchecked, limit=budget)
 
 
 def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
@@ -120,14 +121,11 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
         )
     if loaded.failures:
         notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
-    # 読む操作として当たるルールを、場所ごとに 1 件へまとめる（出た順）
-    matched = list(
-        dict.fromkeys(
-            rule.location
-            for path in found.paths
-            for rule in match_path(loaded.entries, path, "read")
-        )
+    # 読む操作として当たるルールを、場所ごとに 1 件へまとめる（出た順。参照するツールも合わせる）
+    matched_rules = merge_matched(
+        [rule for path in found.paths for rule in match_path(loaded.entries, path, "read")]
     )
+    matched = [rule.location for rule in matched_rules]
     # 既読と案内済みを除く（読んだ後に本文が変わったルールは既読にしない）。読めない記録は空として扱い、理由を知らせる
     excluded: set[str] = set()
     if matched:
@@ -145,7 +143,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
             except RecordReadError as exc:
                 _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)
                 notices.append(build_failure_notice(summary, [exc], log_path))
-    remaining = [location for location in matched if location not in excluded]
+    remaining = [rule for rule in matched_rules if rule.location not in excluded]
     guidance = _build(remaining, found.unchecked, notices)
     # 案内に載せた場所だけを案内済みにする。書けなければ案内は出して理由を知らせる
     if guidance is not None and guidance.shown:

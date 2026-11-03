@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
+
 from rule_inject.features.index.types import OPERATIONS, Operation
 from rule_inject.shared.yaml_lines import (
     LIST_ITEM_MARK,
     Line,
+    parse_scalar,
     read_value,
     split_key,
     tokenize,
@@ -13,7 +16,7 @@ from rule_inject.shared.yaml_lines import (
 )
 
 TOP_KEYS = ("default_on", "rules")
-ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "enabled")
+ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "read_tool", "enabled")
 # 値がリストのエントリのキー（`rule` と `enabled` が文字列、`args` はキーごとのリストのマップ、`read_by` はマップのリスト）
 LIST_ENTRY_KEYS = ("paths", "exclude", "tools", "on")
 ENABLED_KEY = "enabled"
@@ -24,9 +27,17 @@ READ_BY_KEY = "read_by"
 # `read_by` の要素のキー（`tools` は必須）
 READ_BY_KEYS = ("tools", ARGS_KEY)
 READ_BY_TOOLS_KEY = "tools"
+READ_TOOL_KEY = "read_tool"
+READ_TOOL_TOOL_KEY = "tool"
+# `read_tool` の値が JSON のオブジェクトの文字列のキー
+READ_TOOL_JSON_KEYS = ("args", "optional_args")
+# `read_tool` のマップのキー（`tool` は必須）
+READ_TOOL_KEYS = (READ_TOOL_TOOL_KEY, *READ_TOOL_JSON_KEYS)
+# `read_tool.tool` の頭（MCP のツールの完全名）
+MCP_TOOL_PREFIX = "mcp__"
 
 type ReadByItem = dict[str, list[str] | dict[str, list[str]]]
-type Value = str | list[str] | dict[str, list[str]] | list[ReadByItem]
+type Value = str | list[str] | dict[str, list[str]] | list[ReadByItem] | dict[str, str]
 
 
 def _parse_operations(values: list[str], number: int) -> tuple[Operation, ...]:
@@ -117,6 +128,54 @@ def _read_read_by(
     return items, position
 
 
+def _check_json_object(text: str, key: str, number: int) -> None:
+    """`read_tool` の `args`・`optional_args` の文字列が JSON のオブジェクトとして読めるかを確かめる。"""
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise yaml_error(number, f"read_tool の {key} を JSON として読めません: {exc.msg}") from exc
+    if not isinstance(value, dict):
+        raise yaml_error(number, f"read_tool の {key} は JSON のオブジェクトで書いてください")
+
+
+def _read_read_tool(
+    lines: list[Line], line: Line, next_position: int, rest: str, key_indent: int
+) -> tuple[dict[str, str], int]:
+    """`read_tool` の続く行に並ぶ `tool`・`args`・`optional_args` のブロックのマップを読み、次に読む行の位置を返す。"""
+    # 同じ行に値がある（フローのマップなど）形式は読まない
+    if rest.strip():
+        raise yaml_error(line.number, "read_tool は続く行に `tool:` などのキーを並べてください")
+    if next_position >= len(lines) or lines[next_position].indent <= key_indent:
+        raise yaml_error(line.number, "read_tool の値がありません")
+    # 続く行の最初のキーの桁に、残りのキーが揃う
+    item_indent = lines[next_position].indent
+    item: dict[str, str] = {}
+    position = next_position
+    while position < len(lines) and lines[position].indent > key_indent:
+        item_line = lines[position]
+        if item_line.indent != item_indent:
+            raise yaml_error(item_line.number, "read_tool のキーは同じ桁に揃えてください")
+        item_key, item_rest = split_key(item_line)
+        if item_key not in READ_TOOL_KEYS:
+            raise yaml_error(item_line.number, f"read_tool に許さないキーです: {item_key}")
+        if item_key in item:
+            raise yaml_error(item_line.number, f"read_tool のキーが重複しています: {item_key}")
+        # 値はどのキーも同じ行の文字列 1 つ
+        value = parse_scalar(item_rest, item_line.number)
+        # tool は MCP のツールの完全名、args・optional_args は JSON のオブジェクトの文字列
+        if item_key == READ_TOOL_TOOL_KEY and not value.startswith(MCP_TOOL_PREFIX):
+            raise yaml_error(
+                item_line.number, f"read_tool の tool は {MCP_TOOL_PREFIX} で始めてください"
+            )
+        if item_key in READ_TOOL_JSON_KEYS:
+            _check_json_object(value, item_key, item_line.number)
+        item[item_key] = value
+        position += 1
+    if READ_TOOL_TOOL_KEY not in item:
+        raise yaml_error(line.number, "read_tool に tool がありません")
+    return item, position
+
+
 def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int]:
     """`- ` で始まるエントリ 1 つを読み、次に読む行の位置を返す。"""
     first = lines[position]
@@ -132,11 +191,13 @@ def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int
             raise yaml_error(current.number, f"許さないキーです: {key}")
         if key in entry:
             raise yaml_error(current.number, f"キーが重複しています: {key}")
-        # args はキーごとのパターンのリストを並べたマップ、read_by は要素のリスト、それ以外は文字列かリスト
+        # args はキーごとのパターンのリストを並べたマップ、read_by は要素のリスト、read_tool は文字列のマップ、それ以外は文字列かリスト
         if key == ARGS_KEY:
             entry[key], position = _read_args(lines, current, position + 1, rest, key_indent)
         elif key == READ_BY_KEY:
             entry[key], position = _read_read_by(lines, current, position + 1, rest, key_indent)
+        elif key == READ_TOOL_KEY:
+            entry[key], position = _read_read_tool(lines, current, position + 1, rest, key_indent)
         else:
             entry[key], position = read_value(lines, current, position + 1, key, rest, key_indent)
         # `enabled` は文字列 `true` / `false` だけを許す（リストや他の値は、キーの行番号で拒む）

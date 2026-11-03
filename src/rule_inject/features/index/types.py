@@ -65,6 +65,18 @@ class ReadByCondition:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class ReadTool:
+    """エントリの `read_tool`。案内に載せ、一致する呼び出しを既読にする（パターンでなく値）。"""
+
+    # MCP のツールの完全名（`mcp__` で始まる）
+    tool: str
+    # 既読の判定に使う引数。`args` の JSON の文字列を読んだオブジェクト（キーの順を保つ）
+    args: Mapping[str, Any]
+    # 案内に「省略可」として載せ、既読の判定には使わない引数
+    optional_args: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class IndexEntry:
     """索引の 1 エントリ（場所を解決し、`on` を埋めた後）。"""
 
@@ -82,6 +94,8 @@ class IndexEntry:
     on: frozenset[Operation]
     # そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
     read_by: tuple[ReadByCondition, ...]
+    # ルールを参照する MCP のツールと引数。書かないエントリは None
+    read_tool: ReadTool | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -91,6 +105,8 @@ class MatchedRule:
     location: str
     # 当たったエントリのどれか 1 つでも操作の種別が `on` に入っていれば True
     blocking: bool
+    # 当たったエントリの `read_tool`（同じ値は 1 つにし、当たった順）
+    read_tools: tuple[ReadTool, ...] = ()
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
