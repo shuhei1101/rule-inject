@@ -1,0 +1,62 @@
+# rule-inject のルール索引（このリポジトリで作業するときに読む）
+# rule: 索引ファイルからの相対パスか !{環境変数} で始まるパス / paths: 当てるファイルの glob（クォート必須）
+# 設計書の Schema は AI Monitor の rules.global.yaml が案内する。knowledge の rules.yaml にある規約は載せない
+default_on: ["write"]
+rules:
+  - rule: docs/リファレンス/索引の書式.md
+    paths:
+      - "**/rules.yaml"
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-naming.yaml"
+    paths:
+      - "**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-naming"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-type-hint.yaml"
+    paths:
+      - "**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-type-hint"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-language-rules.yaml"
+    paths:
+      - "**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-language-rules"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-architecture-layout.yaml"
+    paths:
+      - "**/src/**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-architecture-layout"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-architecture-dependency-management.yaml"
+    paths:
+      - "**/src/**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-architecture-dependency-management"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-shared-logger.yaml"
+    paths:
+      - "**/shared/logger.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-shared-logger"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-testing-layers.yaml"
+    paths:
+      - "**/tests/**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-testing-layers"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-testing-mock.yaml"
+    paths:
+      - "**/tests/integration/**/*.py"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-testing-mock"]}, "view": "full"}'
+  - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-style.yaml"
+    paths:
+      - "**/pyproject.toml"
+    read_tool:
+      tool: mcp__plugin_dev-docs_dev-docs__search_docs
+      args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-style"]}, "view": "full"}'

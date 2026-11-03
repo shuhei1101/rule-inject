@@ -72,3 +72,8 @@ files:
     tags:
       - topic:判定フローチャート
       - topic:ルールの注入
+  - path: ../rules.yaml
+    name: このリポジトリのルール索引（直下）
+    description: このリポジトリで作業するときに rule-inject が案内するルールのエントリを持つ索引。案内するルールを追加・修正するときに開く。
+    tags:
+      - topic:ルール索引
