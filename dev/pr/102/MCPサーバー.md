@@ -42,3 +42,17 @@
 ## テスト結果
 
 ドキュメント修正（`8b8b70f`）は公開ドキュメントだけの修正で、関係する単体・結合テストが無いため実行していない。
+
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/features/index/edit/test_yaml.py` | 全実行 | 変更 | ✅ | `read_tool` の書き出し<br>`テスト結果/20261104013227_ba53c1d_単体テスト.log` |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | 全実行 | 変更 | ✅ | Schema が `read_tool` を通す |
+| `tests/unit` のその他 | 全実行 | 実行のみ | ✅ | 計 472 テスト pass |
+
+lint: `テスト結果/20261104013227_ba53c1d_lint.log`（違反なし）
+
+### 結合
+
+未実施（結合テスト作成の工程で実行する）
