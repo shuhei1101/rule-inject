@@ -949,6 +949,6 @@ functions:
       - name: test_json_equal
         case: 正常
         summary: 型を区別して入れ子まで比べる
-        condition: '`{"a": [1, {"b": true}]}` と、キーの順だけが違う値・`true` を `1` にした値・配列の順を変えた値'
+        condition: '`{"a": [1, {"b": true}], "c": 2}` と、キーの順だけが違う値・配列の順を変えた値・`true` を `1` にした値'
         mock: なし
         expected: 1 つ目は True、2 つ目と 3 つ目は False

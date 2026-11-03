@@ -107,13 +107,13 @@ functions:
       - name: test_parse_index_when_read_tool
         case: 正常
         summary: '`read_tool` のブロックのマップを読む'
-        condition: '`read_tool:` の下に `tool: mcp__docs__search_docs` と、単一引用符で囲んだ `args` の JSON `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を書いたエントリと、`tool` だけの `read_tool` のエントリ'
+        condition: '`read_tool:` の下に `tool: mcp__docs__search_docs` と、単一引用符で囲んだ `args` の JSON `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を書いたエントリと、`tool` だけの `read_tool` のエントリと、`args` と `optional_args` を書いた `read_tool` のエントリ'
         mock: なし
-        expected: '1 つ目の `read_tool` が `tool` と、書いた JSON の文字列のままの `args` を持ち、2 つ目は `args` のキーを持たない'
+        expected: '1 つ目の `read_tool` が `tool` と、書いた JSON の文字列のままの `args` を持ち、2 つ目は `args` のキーを持たず、3 つ目は `args`・`optional_args` を文字列のまま持つ'
       - name: test_parse_index_when_read_tool_invalid
         case: 異常
         summary: '`read_tool` の書式の誤りを拒む'
-        condition: '`args` だけを持つ `read_tool`・`tool: docs_search`・`read_tool: {tool: mcp__a}`・`read_tool` に `foo:` を持つ・`args` が JSON として読めない・`args` が JSON の配列のエントリ（6 通りをパラメータ化）'
+        condition: '`args` だけを持つ `read_tool`・`tool: docs_search`・`read_tool: {tool: mcp__a}`・`read_tool` に `foo:` を持つ・`args` が JSON として読めない・`args` が JSON の配列・`optional_args` が JSON の配列のエントリ（7 通りをパラメータ化）'
         mock: なし
         expected: 行番号つきの ValueError
         exception: 許さないキー・形式・値がある

@@ -122,19 +122,19 @@ functions:
         condition: '`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ。Read でファイル全体を読んだ呼び出し'
         mock: なし
         expected: 記録ファイルも履歴ファイルも無い。additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由。ログに `read_settings` が 1 行
-      - name: test_record_read_when_read_tool
+      - name: test_record_read_when_read_tool_call
         case: 正常
         summary: '`read_tool` に一致する呼び出しは、全文でない文書の結果でも記録する'
         condition: '`read_tool` が `tool: mcp__docs__search_docs`・`args` が JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` で `read_by` の無いルール A のエントリ、`tool_name` が `mcp__docs__search_docs`、`tool_input` が同じ `filter` に `view: full` を加えたもの、`tool_response` が A の `scope="section"` の文書'
         mock: なし
         expected: 記録ファイルに A の場所とハッシュの 1 行、履歴ファイルに `method` が `mcp`・`tool` が `mcp__docs__search_docs` の 1 行、戻り値 None
-      - name: test_record_read_when_read_tool_unmatched
+      - name: test_record_read_when_read_tool_call_unmatched
         case: 正常
         summary: '`read_tool` の引数と違う呼び出しは記録しない'
         condition: '同じエントリ、`tool_input` の `filter.values` が `["go"]`、`tool_response` が A の `scope="section"` の文書'
         mock: なし
         expected: 記録ファイルも履歴ファイルも無い、戻り値 None
-      - name: test_record_read_when_read_tool_and_document
+      - name: test_record_read_when_read_tool_call_and_document
         case: 正常
         summary: 全文の文書と `read_tool` の一致の両方を、重なりを落として記録する
         condition: 'ルール A・B のエントリ。B は `read_tool` に一致する。`tool_response` が A と B の `scope="full"` の文書'
