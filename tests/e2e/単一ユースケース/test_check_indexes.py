@@ -261,3 +261,26 @@ def test_error_when_dev_docs_unreachable(
     assert "接続できない" in content["tag_check"]["reason"]
     assert report["unused_tag_patterns"] == []
     assert report["missing_rules"] == [{"position": 2, "rule": str(missing)}]
+
+
+def test_normal_when_read_tool_violates_schema(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    serve: Callable[..., Any],
+) -> None:
+    """参照するツールの引数が空のオブジェクトのエントリの、Schema の違反の場所と理由を受け取る（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("a.md", "# a\n")
+    index = make_text_file(
+        "rules.yaml",
+        f"rules:\n  - rule: {rule}\n    read_tool:\n      tool: mcp__docs__search_docs\n      args: '{{}}'\n",
+    )
+    server = serve(index)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(e2e_project), format="json")
+    # 検証
+    report = result.structured_content["indexes"][0]
+    assert report["violations"][0]["location"] == "rules[0].read_tool.args"
+    assert report["violations"][0]["reason"]
+    assert report["hook_error"] is None

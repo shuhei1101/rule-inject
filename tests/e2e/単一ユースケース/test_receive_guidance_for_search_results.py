@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-SEARCH_GUIDANCE = "検索で当たったファイルに未読のルールがあります"
+SEARCH_GUIDANCE = "検索結果のファイルに関連する未読のルールがあります"
+SEARCH_TOOL = "mcp__docs__search_docs"
 GREP_PROMPT = (
     "Grep で {folder} の中から「{needle}」を検索し、当たったファイルの名前だけを答えてください。"
     "他のことはしないでください。"
@@ -51,7 +53,7 @@ def test_normal(
     assert run.denied_tools == []
     transcript = transcript_text(run.session_id)
     assert SEARCH_GUIDANCE in transcript
-    assert "読むかは任意" in transcript
+    assert "参照は任意" in transcript
     assert str(rule) in transcript
     assert guided_locations(run.session_id) == [str(rule)]
 
@@ -92,3 +94,39 @@ def test_normal_when_already_guided(
     assert guided_count == 1
     assert run.denied_tools == []
     assert guidance_count(run.session_id, SEARCH_GUIDANCE) == guided_count
+
+
+def test_normal_with_read_tool(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[..., None],
+    run_claude: Callable[..., Any],
+    transcript_text: Callable[[str], str],
+    marker: Callable[[str], str],
+) -> None:
+    """Grep の結果に出たファイルの、参照するツールを記載したルールを、ツールの名前と引数を添えて案内する（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    id_marker = marker("RULE-ID")
+    read_tool = {
+        "tool": SEARCH_TOOL,
+        "args": json.dumps({"filter": {"field": "id", "op": "eq", "values": [id_marker]}}),
+    }
+    configure_index(
+        make_index(
+            {"rule": str(rule), "paths": ["**/*.txt"], "on": ["write"], "read_tool": read_tool}
+        )
+    )
+    needle = marker("NEEDLE")
+    (e2e_project / "notes.txt").write_text(f"{needle}\n", encoding="utf-8")
+    # 実行
+    run = run_claude(GREP_PROMPT.format(folder=e2e_project, needle=needle), allow=["Grep"])
+    # 検証
+    assert run.denied_tools == []
+    transcript = transcript_text(run.session_id)
+    assert SEARCH_GUIDANCE in transcript
+    assert f"ツール: {SEARCH_TOOL}" in transcript
+    assert id_marker in transcript
+    assert "パスを Read で参照してください" in transcript
+    assert str(rule) in transcript

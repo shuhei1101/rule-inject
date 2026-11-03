@@ -97,3 +97,32 @@ def test_error_when_project_dir_not_absolute(
     # 検証
     assert result.is_error is True
     assert "絶対パス" in tool_text(result)
+
+
+def test_normal_when_entry_has_read_tool(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    serve: Callable[..., Any],
+) -> None:
+    """参照するツールを記載したエントリは記載したとおりの値を、記載していないエントリは None を受け取る（正常シナリオ）。"""
+    # 準備
+    with_tool = make_rule("a.md", "# a\n")
+    without_tool = make_rule("b.md", "# b\n")
+    arguments = '{"filter": {"field": "id", "op": "eq", "values": ["a"]}}'
+    index = make_text_file(
+        "rules.yaml",
+        "rules:\n"
+        f"  - rule: {with_tool}\n"
+        "    read_tool:\n"
+        "      tool: mcp__docs__search_docs\n"
+        f"      args: '{arguments}'\n"
+        f"  - rule: {without_tool}\n",
+    )
+    server = serve(index)
+    # 実行
+    result = server.call("list_rules", project_dir=str(e2e_project), format="json")
+    # 検証
+    entries = result.structured_content["entries"]
+    assert entries[0]["read_tool"] == {"tool": "mcp__docs__search_docs", "args": arguments}
+    assert entries[1]["read_tool"] is None

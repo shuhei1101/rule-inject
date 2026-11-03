@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,9 @@ WRITE_THEN_SEARCH_PROMPT = (
     "同じ書き込みをやり直してください。"
 )
 SEARCH_TOOL = "mcp__docs__search_docs"
+WRITE_PROMPT = "Write で {target} に「hello」と書いてください。止められたら、案内に従ってから同じ書き込みをやり直してください。"
+SECTIONED_BODY = "# ノートの規約\n\n## 命名\n\n小文字で書く\n\n## 例外\n\n握りつぶさない\n"
+NAMING_SECTION = "## 命名\n\n小文字で書く\n"
 WRITE_THEN_CAT_PROMPT = (
     "Write で {target} に「hello」と書いてください。"
     "止められたら、案内に従って、ルールの本文を Read ではなく Bash の cat で読み、"
@@ -58,7 +62,7 @@ def test_normal(
     # 検証
     assert run.denied_tools[0] == "Write"
     assert str(rule) in run.denial_reasons[0]
-    assert "Read で読んでから" in run.denial_reasons[0]
+    assert "Read で参照してください" in run.denial_reasons[0]
     assert body_marker in "\n".join(run.tool_results.values())
     assert "hello" in target.read_text(encoding="utf-8")
 
@@ -171,3 +175,87 @@ def test_normal_when_rule_changed(
     assert str(rule) in run.denial_reasons[0]
     assert changed_marker in "\n".join(run.tool_results.values())
     assert "hello" in second_target.read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def guided_rule(
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[[Path | str], None],
+    marker: Callable[[str], str],
+) -> tuple[Path, str]:
+    """書く操作を必須とし、参照するツールと `sections` を含む引数を記載したルールを置き、ルールのパスと引数の id を返す。"""
+    rule = make_rule("notes.md", SECTIONED_BODY)
+    id_marker = marker("RULE-ID")
+    arguments = json.dumps(
+        {"filter": {"field": "id", "op": "eq", "values": [id_marker]}, "sections": ["命名"]},
+        ensure_ascii=False,
+    )
+    configure_index(
+        make_index(
+            {
+                "rule": str(rule),
+                "paths": ["**/*.txt"],
+                "on": ["write"],
+                "read_tool": {"tool": SEARCH_TOOL, "args": arguments},
+            }
+        )
+    )
+    return rule, id_marker
+
+
+def test_normal_when_read_by_guided_tool(
+    e2e_project: Path,
+    guided_rule: tuple[Path, str],
+    section_docs_mcp_config: Callable[[Path, str], tuple[Path, Path]],
+    run_claude: Callable[..., Any],
+) -> None:
+    """止められた書く操作が、案内されたツールと引数でセクションだけを読んだ後のやり直しで通る（正常シナリオ）。"""
+    # 準備
+    rule, id_marker = guided_rule
+    mcp_config, calls = section_docs_mcp_config(rule, NAMING_SECTION)
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(
+        WRITE_PROMPT.format(target=target),
+        allow=["Write", "Edit", SEARCH_TOOL, "Read"],
+        mcp_config=mcp_config,
+        max_turns=8,
+    )
+    # 検証
+    assert run.denied_tools[0] == "Write"
+    lines = run.denial_reasons[0].splitlines()
+    assert id_marker in lines[lines.index(f"- {rule}") + 1]
+    received = [json.loads(line) for line in calls.read_text(encoding="utf-8").splitlines()]
+    assert {"field": "id", "op": "eq", "values": [id_marker]} in [
+        call.get("filter") for call in received
+    ]
+    assert ["命名"] in [call.get("sections") for call in received]
+    assert "hello" in target.read_text(encoding="utf-8")
+
+
+def test_normal_when_guided_tool_unavailable(
+    e2e_project: Path,
+    guided_rule: tuple[Path, str],
+    section_docs_mcp_config: Callable[[Path, str], tuple[Path, Path]],
+    run_claude: Callable[..., Any],
+) -> None:
+    """案内されたツールが使えないときは、パスを Read で読んだ後のやり直しで書く操作が通る（正常シナリオ）。"""
+    # 準備
+    rule, id_marker = guided_rule
+    mcp_config, _ = section_docs_mcp_config(rule, NAMING_SECTION)
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(
+        WRITE_PROMPT.format(target=target),
+        allow=["Write", "Edit", "Read"],
+        deny=[SEARCH_TOOL],
+        mcp_config=mcp_config,
+        max_turns=8,
+    )
+    # 検証
+    assert run.denied_tools[0] == "Write"
+    lines = run.denial_reasons[0].splitlines()
+    assert id_marker in lines[lines.index(f"- {rule}") + 1]
+    assert "## 例外" in "\n".join(run.tool_results.values())
+    assert "hello" in target.read_text(encoding="utf-8")

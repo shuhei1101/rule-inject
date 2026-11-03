@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Callable
 from pathlib import Path
@@ -9,8 +10,9 @@ from typing import Any
 
 import pytest
 
-GUIDANCE_START = "操作の対象に当たる未読のルールがあります"
-NON_BLOCKING_GUIDANCE = "必要に応じて下の場所を Read で読んでください"
+GUIDANCE_START = "この操作に関連する未読のルールがあります"
+NON_BLOCKING_GUIDANCE = "必要に応じて下のルールを参照してください"
+SEARCH_TOOL = "mcp__docs__search_docs"
 WRITE_PROMPT = "Write で {target} に「hello」と書いてください。他のことはしないでください。"
 RULE_COUNT = 100
 GUIDANCE_LIMIT = 10000
@@ -38,7 +40,7 @@ def test_normal_when_blocked(
     # 検証
     assert "Write" in run.denied_tools
     assert str(rule) in run.denial_reasons[0]
-    assert "Read で読んでから" in run.denial_reasons[0]
+    assert "Read で参照してください" in run.denial_reasons[0]
     assert not target.exists()
 
 
@@ -90,7 +92,7 @@ def test_normal_when_rule_changed_after_read(
     # 検証
     assert "Write" in run.denied_tools
     assert str(rule) in run.denial_reasons[0]
-    assert "Read で読んでから" in run.denial_reasons[0]
+    assert "Read で参照してください" in run.denial_reasons[0]
     assert not target.exists()
 
 
@@ -374,3 +376,85 @@ def test_normal_when_entry_disabled(
     assert NON_BLOCKING_GUIDANCE not in transcript
     assert str(rule) not in transcript
     assert "索引を読めませんでした" not in transcript
+
+
+def _read_tool(id_marker: str) -> dict[str, str]:
+    """文面に載ったかで見分けられる id を引数に持つ、索引の `read_tool`。"""
+    return {
+        "tool": SEARCH_TOOL,
+        "args": json.dumps({"filter": {"field": "id", "op": "eq", "values": [id_marker]}}),
+    }
+
+
+def test_normal_when_blocked_with_read_tool(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[[Path | str], None],
+    run_claude: Callable[..., Any],
+    marker: Callable[[str], str],
+) -> None:
+    """参照するツールを記載したルールで Write が止められ、案内のパスの下にツールの名前と引数が載る（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    id_marker = marker("RULE-ID")
+    configure_index(
+        make_index(
+            {
+                "rule": str(rule),
+                "paths": ["**/*.txt"],
+                "on": ["write"],
+                "read_tool": _read_tool(id_marker),
+            }
+        )
+    )
+    target = e2e_project / "notes.txt"
+    # 実行
+    run = run_claude(WRITE_PROMPT.format(target=target), allow=["Write"])
+    # 検証
+    assert "Write" in run.denied_tools
+    lines = run.denial_reasons[0].splitlines()
+    tool_line = lines[lines.index(f"- {rule}") + 1]
+    assert tool_line.startswith(f"  ツール: {SEARCH_TOOL} ")
+    assert id_marker in tool_line
+    assert "パスを Read で参照してください" in run.denial_reasons[0]
+    assert not target.exists()
+
+
+def test_normal_when_not_blocked_with_read_tool(
+    e2e_project: Path,
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[[Path | str], None],
+    run_claude: Callable[..., Any],
+    transcript_text: Callable[[str], str],
+    marker: Callable[[str], str],
+) -> None:
+    """参照するツールを記載したルールを、Read を止めずに、パスの下にツールの名前と引数を添えて案内する（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("notes.md", "# ノートの規約\n")
+    id_marker = marker("RULE-ID")
+    configure_index(
+        make_index(
+            {
+                "rule": str(rule),
+                "paths": ["**/*.txt"],
+                "on": ["write"],
+                "read_tool": _read_tool(id_marker),
+            }
+        )
+    )
+    file_marker = marker("FILE-BODY")
+    target = e2e_project / "notes.txt"
+    target.write_text(f"{file_marker}\n", encoding="utf-8")
+    prompt = f"Read で {target} を読み、中身をそのまま答えてください。他のことはしないでください。"
+    # 実行
+    run = run_claude(prompt, allow=["Read"])
+    # 検証
+    assert run.denied_tools == []
+    transcript = transcript_text(run.session_id)
+    assert NON_BLOCKING_GUIDANCE in transcript
+    assert f"ツール: {SEARCH_TOOL}" in transcript
+    assert id_marker in transcript
+    assert "パスを Read で参照してください" in transcript
+    assert str(rule) in transcript
