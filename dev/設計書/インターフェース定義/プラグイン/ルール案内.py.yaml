@@ -962,6 +962,149 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_mcp_filter_tree_negated
+  - name: 正常系（参照するツールを添えて止めて案内する）
+    summary: '`read_tool` を持つエントリの未読のルールで Write を止め、場所の下にツールの名前と引数を載せる'
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool: {tool: mcp__docs__search_docs, args: {id: python, sections: [命名]}}` のエントリを 1 つ持つ'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: 対象のパスに当たるエントリを選ぶ（read_tool あり）
+        H->>ST: そのセッションの既読を読む（未読）
+        H-->>CC: permissionDecision: deny + 場所とツールの行を並べた案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"id": "python", "sections": ["命名"]}`'
+      - '`permissionDecisionReason` の冒頭に、ツールで参照し、使えないときは Read で読む旨が載っている'
+      - 終了コードが `0`
+    test: test_normal_when_blocked_with_read_tool
+  - name: 正常系（参照するツールを添えて止めずに案内する）
+    summary: '`read_tool` を持つエントリの未読のルールを、止めずにツールの名前と引数を添えて案内する'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool: {tool: mcp__docs__search_docs}` のエントリを 1 つ持つ'
+        notes: '`args` を持たない'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` は `.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>H: 標準入力（Read・対象のパス）
+        H->>IDX: 読む
+        H->>ST: 既読を読む（未読）
+        H->>GD: 案内済みを読む（未案内）
+        H->>GD: ルールの場所を追記する
+        H-->>CC: additionalContext（場所とツールの行を並べた案内）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` の場所の行の次の行が `  ツール: mcp__docs__search_docs {}`'
+      - 案内済みの記録にルールの場所が 1 行ある
+      - 終了コードが `0`
+    test: test_normal_when_not_blocked_with_read_tool
+  - name: 正常系（参照するツールを持つルールと持たないルールを並べる）
+    summary: '`read_tool` を持つルールにだけツールの行を置き、持たないルールは場所の行だけにする'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 2 つ持ち、1 つ目だけが `read_tool` を持つ（ルールの場所は別）'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H-->>CC: permissionDecision: deny + 2 件の案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecisionReason` の 1 つ目のルールの場所の次の行が `ツール:` の行'
+      - '`permissionDecisionReason` の 2 つ目のルールの場所の次に `ツール:` の行が無い'
+    test: test_normal_when_read_tool_mixed
+  - name: 正常系（同じルールの参照するツールをまとめる）
+    summary: 同じルールを指すエントリ 2 つの `read_tool` を、同じ組は 1 つにして当たった順に並べる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '同じルールの場所を指し `on: [write]` のエントリを 3 つ持つ。1 つ目と 2 つ目は同じ `read_tool`（`tool` と `args` の組）、3 つ目は `args` の違う `read_tool`'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Write`、3 つのエントリに当たるパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む
+        H->>H: 同じルールの場所のエントリを 1 件にまとめ、read_tool の重なりを除く
+        H-->>CC: permissionDecision: deny + 1 件の案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecisionReason` にルールの場所の行が 1 行だけある'
+      - その下に `ツール:` の行が 2 行あり、1 つ目のエントリの `read_tool`、3 つ目のエントリの `read_tool` の順
+    test: test_normal_when_read_tools_merged
+  - name: 異常系（参照するツールの書式が誤り・止めずに理由を載せる）
+    summary: '`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を載せる'
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool: {args: {id: python}}` のエントリを 1 つ持つ'
+      - name: 入力
+        description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>IDX: 読む（read_tool の書式の誤り）
+        H-->>CC: additionalContext（索引の場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に索引の場所と、`read_tool` の `tool` が無い旨が載っている'
+      - ログに `read_index` の行がある
+    test: test_error_when_read_tool_invalid
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
 idempotent: false
 side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -1034,12 +1177,12 @@ response:
     notes: 操作の種別が `on` に当たる未読のルールが 1 件でもあるときだけ載せる
   - name: '`hookSpecificOutput.permissionDecisionReason`'
     type: str
-    description: 止める案内。未読のルールの場所と、本文の読み方（Read）と、読んだ後に同じ操作をやり直すこと
+    description: 止める案内。未読のルールの場所と、本文の読み方（Read）と、読んだ後に同じ操作をやり直すこと。`read_tool` を持つエントリのルールは、場所の行の下にツールの名前と引数の行
     constraints: 10,000 字以内
     notes: '`permissionDecision` を載せたときだけ載せる。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 止めない案内。未読で未案内のルールの場所と読み方。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
+    description: 止めない案内。未読で未案内のルールの場所と読み方（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 操作を止めないときだけ載せる。「やり直してください」は含めない
 response_example: |-
@@ -1115,5 +1258,14 @@ constraints:
   - item: 条件の木の照合
     constraint: '`args` のキーが `{道筋}[{field}]`（例 `filter[tags]`）のときは、ドットの道筋が指す値を条件の木（`field`・`op`・`values` の条件と、`and`・`or`・`not` の束の入れ子）として読み、`and`・`or` の中を深さを問わずたどって、`field` が `{field}` と一致する条件の `values` の要素を照合する値にする。`not` の中と、`op` が `ne`・`not_contains`・`not_exists` の条件は値にしない。道筋の途中や値が配列のときは、ドットの道筋と同じく要素ごとにたどる。条件の木として読めない値（オブジェクトでない・`field` も束のキーも持たない）からは値を取らない。照合する値が 1 つも無いキーは当たらない'
     notes: '`not` と否定の `op` の条件は、その値の文書を読まない検索のため当てない（PR #77 の `要件.md` の推奨案 A）。`[` と `]` を含まないキーは、今どおりドットの道筋として読む'
+  - item: 参照するツールの案内
+    constraint: |-
+      当たったエントリが `read_tool` を持つルールは、場所の行（`- {場所}`）の下に `  ツール: {tool} {args}` の行を置く。`args` は記載のキーの順の JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を置く。
+      案内に `ツール:` の行が 1 つでもあるときは、冒頭の文の後ろに「`ツール:` の行があるルールは、そのツールと引数で参照してください。ツールが使えないときは場所を Read で読んでください。」を添える。`ツール:` の行が無い案内の文面は変えない。
+      同じルールの場所にまとめたエントリの `read_tool` は、`tool` と `args` の組が同じものを 1 つにし、当たった順に並べる
+    notes: 場所の行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも載せない。文面はユーザーの目に触れるため、インターフェース定義設計の合格後にユーザーへ確認する
+  - item: 参照するツールの書式
+    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args` を持つときはオブジェクトにする。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
+    notes: '`read_tool` は案内と既読にだけ使い、操作を止めるかの照合（`paths`・`tools`・`args`）には使わない'
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

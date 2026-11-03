@@ -123,6 +123,39 @@ settings:
     allowed: '`rules[].args` と同じ書き方と照合の規則'
     status: planned
     visibility: user
+  - key: rules[].read_tool
+    title: 参照するツール
+    file: 索引（*.yaml）
+    type: object
+    required: false
+    default: なし（案内は場所を Read で読む旨だけ）
+    description: ルールを参照する MCP のツールと引数。案内でルールの場所の下にツールの名前と引数を載せ、その値と一致する呼び出しが終わった後に、結果の範囲と `read_by` によらずそのルールをそのセッションの既読にする
+    missing: 書式に合わないときは、その索引を読まず、索引が読めないときと同じく索引の場所と理由をコンテキストへ載せる
+    reload: immediate
+    allowed: '`tool`（必須）と `args`（任意）だけを持つマップ'
+    status: planned
+    visibility: user
+  - key: rules[].read_tool.tool
+    title: 参照するツール名
+    file: 索引（*.yaml）
+    type: str
+    required: true
+    description: ルールを参照する MCP のツールの完全名。パターンでなく、そのまま案内に載せて呼ぶ名前
+    reload: immediate
+    allowed: '`mcp__` で始まる文字列'
+    status: planned
+    visibility: user
+  - key: rules[].read_tool.args
+    title: 参照する引数
+    file: 索引（*.yaml）
+    type: dict[str, Any]
+    required: false
+    default: なし（引数を書かずに呼ぶ）
+    description: ツールに渡す引数の値。案内に JSON で載せ、呼び出しの引数の最上位に書いた全てのキーがあり値が等しいとき既読にする（呼び出しが余分なキーを持っていてもよい）
+    reload: immediate
+    allowed: 値は JSON で表せる任意の値。パターンとしては読まない
+    status: planned
+    visibility: user
   - key: RULE_INJECT_CONFIG
     title: 設定ファイルの場所
     file: ~/.claude/settings.json
@@ -225,7 +258,7 @@ settings:
     type: bool
     required: false
     default: 'true'
-    description: エントリを照合に使うか。`false` のエントリは、案内（止める・止めない）にも既読の記録（`read_by` を含む）にも使わない。同じルールの場所を指す有効なエントリは今までどおり照合する
+    description: エントリを照合に使うか。`false` のエントリは、案内（止める・止めない）にも既読の記録（`read_by`・`read_tool` を含む）にも使わない。同じルールの場所を指す有効なエントリは今までどおり照合する
     reload: immediate
     allowed: '`true` / `false`。それ以外の値はその索引を読めない索引として扱う'
     status: planned

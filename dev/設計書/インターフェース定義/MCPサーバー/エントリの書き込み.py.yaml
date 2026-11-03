@@ -397,6 +397,37 @@ flows:
       - '結果が `isError: true` で、索引の書式を保って書けない旨、`rules[1]` の `paths` の行の番号、索引を手で直す旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_layout_not_kept
+  - name: 正常系（参照するツールを書く）
+    summary: 位置で指したエントリに `read_tool` を書き、`read_by` の後ろに並べる
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するフローと同じ
+      - name: 索引
+        description: '`read_by` と `enabled` を持つエントリを 1 つ持つ'
+        notes: 書き込みの前の内容を控える
+      - name: 引数
+        description: '`position: 0`、エントリの `expected_rev`、`entry` に `read_tool: {tool: mcp__docs__search_docs, args: {id: python, sections: [命名]}}` だけ'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as write_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev・entry（read_tool）
+        IF->>IDX: round-trip で読む
+        IDX-->>IF: 書式つきの内容
+        IF->>IF: バージョンを比べ、read_tool を加えてチェックする
+        IF->>IDX: 一時ファイルを書き、置き換える
+        IF-->>C: position・rev・diff
+      ```
+    expected:
+      - 書き込みの前との差分が `read_tool` の行だけで、`read_by` の後ろ・`enabled` の前に並んでいる
+      - '`read_tool` がブロックのマップで、`args` の `sections` が 1 行のフロー形式'
+      - インターフェース定義「ルールの一覧」で読むと、そのエントリの `read_tool` が渡した値
+    test: test_normal_when_read_tool_written
 lead: 設定ファイルで読む索引に、エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。書いた後の索引に新しい問題が出るときは書き込まない。
 identifier: write_index_entry
 idempotent: false
@@ -421,7 +452,7 @@ request:
     required: true
     location: argument
     description: 書き込むキーと値
-    constraints: キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`enabled`
+    constraints: キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`
     notes: '`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを渡す（渡さないキーはそのまま残る）'
   - name: position
     type: int
@@ -537,7 +568,7 @@ constraints:
     constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書く前と書いた後の索引を確かめる。書いた後にフックが読めないか、書く前に無かった問題が出るときだけ断る
     notes: 問題はエントリのバージョンと理由で照らし合わせる（位置は新規作成・削除でずれるため）。書き換えたエントリの問題は、書く前に同じ理由があっても新しい問題として扱う。もとからある問題は、この書き込みで生じたものではないため書き込みを止めない
   - item: 書式の維持
-    constraint: '`ruamel.yaml` の round-trip で読み書きし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリストで書く'
+    constraint: '`ruamel.yaml` の round-trip で読み書きし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool` の後に `args`。`args` の中はブロックのマップで、値のリストは 1 行のフロー形式）で書く'
     notes: 設定は PoC の結果（`width` 4096・`preserve_quotes`）。字下げは索引から推定し（推定できないときは mapping 2 / sequence 4 / offset 2）、改行は索引の改行に合わせる。`~`・アンカーなど round-trip が書き換える表記を他のエントリに持つ索引は、手で直してもらう。フックの読み取りが受け付ける形式だけで書く
   - item: 新規作成の位置
     constraint: '`rules` の末尾。`rules` が無い索引では `rules` を追加する'

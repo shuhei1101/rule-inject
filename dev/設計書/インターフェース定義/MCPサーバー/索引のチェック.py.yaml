@@ -415,6 +415,59 @@ flows:
       - どの索引の `unused_tag_patterns` も空
       - 偽の dev-docs が受けた `cwd` が `project_dir`
     test: test_normal_when_dev_docs_returns_nothing
+  - name: 正常系（参照するツールの記載がSchemaに違反する）
+    summary: '`read_tool` が `tool` を持たないエントリを、フックが読めない索引として理由を返す'
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 違反が無いフローと同じ
+      - name: 索引
+        description: '1 つ目のエントリが `read_tool: {args: {id: python}}` を持つ'
+        notes: ルール案内の制約「参照するツールの書式」のとおり、フックも読めない
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant IDX as 索引
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めない（read_tool の書式の誤り）
+        IF-->>C: hook_error
+      ```
+    expected:
+      - '`hook_error` に、`read_tool` の `tool` が無い旨が載っている'
+      - '`violations` が空（JSON Schema には照らさない）'
+    test: test_normal_when_read_tool_violates_schema
+  - name: 正常系（参照するツールの引数が空）
+    summary: フックは読めるが、`read_tool.args` が空のオブジェクトのエントリの Schema の違反を返す
+    setup:
+      - name: Mock
+        description: なし（同上）
+      - name: 設定ファイル
+        description: 違反が無いフローと同じ
+      - name: 索引
+        description: '1 つ目のエントリが `read_tool: {tool: mcp__docs__search_docs, args: {}}` を持つ'
+        notes: フックは読めるが、Schema は `args` を書くときキーを 1 つ以上求める
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as check_indexes
+        participant IDX as 索引
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: 読めた
+        IF->>IF: JSON Schema に照らす（違反）
+        IF-->>C: violations
+      ```
+    expected:
+      - '`violations` に `location` が `rules[0].read_tool.args` の違反と理由が載っている'
+      - '`hook_error` が `None`'
+    test: test_normal_when_read_tool_args_empty
 lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリと、dev-docs の使われているどのタグにも当たらないタグのパターンを返す。
 identifier: check_indexes
 idempotent: true
@@ -603,7 +656,7 @@ constraints:
     notes: フックが読めない索引はどのエントリも案内に効かないため、その理由だけを返す
   - item: 索引の JSON Schema
     constraint: 索引のキーと値の範囲を JSON Schema 2020-12 で書いた YAML を `jsonschema` で照らす。違反は全て並べる
-    notes: 'Schema が受け付ける範囲は、フックの読み取りが受け付ける範囲の内側にする（例: `paths: []` はフックが読めるが Schema は要素を 1 つ以上求める）。置き場所はモジュール構成が決める'
+    notes: 'Schema が受け付ける範囲は、フックの読み取りが受け付ける範囲の内側にする（例: `paths: []` はフックが読めるが Schema は要素を 1 つ以上求める）。置き場所はモジュール構成が決める。`read_tool` は `tool`（`^mcp__` の文字列）を必須、`args`（キーを 1 つ以上持つオブジェクト）を任意とし、他のキーを許さない'
   - item: 索引の中の場所
     constraint: キーは `.`、リストの要素は `[位置]` で結ぶ（例 `rules[0].read_by[1].tools`）。最上位の違反は `$`
   - item: ルールの場所の実在
