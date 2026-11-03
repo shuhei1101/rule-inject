@@ -160,8 +160,8 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - セッションの記録（transcript）の検索結果の案内の文面に、索引に記載したツールの名前と引数が載っている
-      - 同じ文面に、ツールが使えないときに Read で読むルールの場所が、ツールの後に載っている
+      - セッションの記録（transcript）の検索結果の案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
+      - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
     test: test_normal_with_read_tool
 lead: Claude Code が Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）を呼んだ直後に、`PostToolUse` フックが結果に出た実在するファイルに当たる、未読で未案内のルールを止めずに案内する。読むかは任意と伝える。
 issue: 16
