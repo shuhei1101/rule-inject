@@ -65,6 +65,9 @@ data_models:
       - name: read_by
         type: list[dict[str, Any]]
         description: 索引に書いたままの `read_by`
+      - name: read_tool
+        type: dict[str, Any] | None
+        description: 索引に書いたままの `read_tool`。書かないエントリは None
   - name: IndexIssue
     title: 索引ごとの理由
     container: server/types.py

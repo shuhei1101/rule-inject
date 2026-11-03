@@ -6,7 +6,7 @@ constants:
     title: 新しいエントリのキーの並び
     container: features/index/edit/service.py
     summary: 新規作成するエントリにキーを書く順。ここに無いキーは渡された順で後ろに置く
-    value: '`("rule", "paths", "exclude", "tools", "args", "on", "read_by", "enabled")`'
+    value: '`("rule", "paths", "exclude", "tools", "args", "on", "read_by", "read_tool", "enabled")`'
 functions:
   - name: write_entry
     title: エントリの書き込み

@@ -641,7 +641,7 @@ constraints:
     constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
     notes: '-'
   - item: 参照するツールの一致
-    constraint: '`read_tool` の `tool` がツールの完全名と同じで、`args` に書いた全てのキーが `tool_input` の最上位にあり、値が等しい（JSON として同じ値。オブジェクトはキーの順を問わず、配列は順まで同じ）ときに一致とする。`tool_input` が `args` に無いキーを持っていても一致とする。`args` を持たない `read_tool` は、ツールの完全名が同じなら一致とする'
+    constraint: '`read_tool` の `tool` がツールの完全名と同じで、`args` に書いた全てのキーが `tool_input` の最上位にあり、値が等しいときに一致とする。書いた文字列は、呼び出しの値が同じ文字列か、文字列以外のスカラー（数値・真偽値・null）の JSON の表記が同じときに等しく、書いたリストは、呼び出しの値が同じ長さの配列で要素が順に等しいときに等しい。`tool_input` が `args` に無いキーを持っていても一致とする。`args` を持たない `read_tool` は、ツールの完全名が同じなら一致とする'
     notes: パターンでなく値で比べる（`*`・`re:` も文字どおりの値）。Claude Code が既定値の引数を加えて呼んでも既読にするため、`tool_input` の余分なキーは問わない
 identifier: record_read
 response:

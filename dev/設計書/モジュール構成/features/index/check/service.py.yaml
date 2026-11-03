@@ -30,7 +30,7 @@ functions:
       - name: test_load_validator
         case: 正常
         summary: 同梱の Schema が Schema として正しく、書式どおりの索引を通す
-        condition: '`rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`enabled` を全て持つエントリと `default_on` を持つ索引'
+        condition: '`rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled` を全て持つエントリと `default_on` を持つ索引'
         mock: なし
         expected: 例外を送出せず、返した検証器の `iter_errors` が 0 件
   - name: check_index

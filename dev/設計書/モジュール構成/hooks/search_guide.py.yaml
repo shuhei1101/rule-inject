@@ -31,9 +31,9 @@ functions:
       3. `extract_result_paths(lines, base)` で照合するパスを拾う。無ければ None
       4. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
       5. `load_indexes(settings.indexes, env)` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
-      6. パスごとに `match_path(entries, path, "read")` で当て、ルールの場所ごとに 1 件へまとめる（出た順）
+      6. パスごとに `match_path(entries, path, "read")` で当て、`merge_matched` でルールの場所ごとに 1 件へまとめる（出た順。`read_tools` も合わせる）
       7. `read_record` の既読の行で `current_read_locations` が返す場所と、`read_guided` の案内済みを除く。読めない記録は空として扱い、ログ（`read_record`）と知らせの文に回す
-      8. 残った場所があれば `build_search_guidance(locations, unchecked=...)` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
+      8. 残ったルールがあれば `build_search_guidance(rules, unchecked=...)` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
       9. 案内と知らせを `hookSpecificOutput.additionalContext`（`hookEventName: PostToolUse`）にする。どちらも無ければ None
     unit_tests:
       - name: test_search_guide
@@ -78,3 +78,9 @@ functions:
         condition: '`RULE_INJECT_CONFIG` が YAML として読めないファイルを指す。`XDG_STATE_HOME` は一時フォルダ。`tool_response.filenames` に実在する `.py`'
         mock: なし
         expected: 案内済みの記録が無い。additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由。ログに `read_settings` が 1 行
+      - name: test_search_guide_when_read_tool
+        case: 正常
+        summary: 参照するツールを添えて案内する
+        condition: '`**/*.py`・`read_tool` に `tool: mcp__docs__search_docs` を持つエントリ、`tool_response.filenames` に実在する `.py`'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: 'additionalContext の 1 行目が `SEARCH_HEADER` + `READ_TOOL_NOTE`、場所の次の行が `  ツール: mcp__docs__search_docs {}`'

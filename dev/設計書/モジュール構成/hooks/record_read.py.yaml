@@ -6,7 +6,7 @@ functions:
     title: 既読の記録の処理
     container: hooks/record_read.py
     usecase: ルールを読んだことが記録される
-    summary: Read か Bash で全体を読んだルールの場所と、MCP のツールの結果に載った全文のルールの文書の場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）を、本文のハッシュと一緒に既読にして既読の履歴へ書き、書けなければ理由を返す
+    summary: Read か Bash で全体を読んだルールの場所と、MCP のツールの結果に載った全文のルールの文書の場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）と `read_tool` に一致したルールの場所を、本文のハッシュと一緒に既読にして既読の履歴へ書き、書けなければ理由を返す
     kind: フック
     scope: public
     inherits: HookHandler
@@ -31,6 +31,7 @@ functions:
          - Bash の場合、`extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの
          - `mcp__` で始まるツールで、`extract_documents(tool_response)` が 1 件以上返す場合、`scope` が `DocumentScope.FULL` で `path` が `http://`・`https://` で始まらない文書の `path` を `resolve_location(path, cwd)` で解いたうち `rule_locations` にあるもの（`read_by` は照合しない）
          - `mcp__` で始まるツールで、文書が 0 件の場合、`match_read_by(entries, tool_name, tool_input)`
+         - `mcp__` で始まるツールは、上の 2 つのどちらの場合も、`match_read_tool(entries, tool_name, tool_input)` の場所を後ろに加える（文書の `scope` と `read_by` によらない）
       3. 場所の重なりを除き、`hash_locations` で本文のハッシュを付ける。読めずハッシュを取れない場所は記録しない（知らせない。ログにも書かない）
       4. 行が無ければ None を返す
       5. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と additionalContext にして返す（履歴へは書かない）
@@ -121,3 +122,21 @@ functions:
         condition: '`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ。Read でファイル全体を読んだ呼び出し'
         mock: なし
         expected: 記録ファイルも履歴ファイルも無い。additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由。ログに `read_settings` が 1 行
+      - name: test_record_read_when_read_tool
+        case: 正常
+        summary: '`read_tool` に一致する呼び出しは、全文でない文書の結果でも記録する'
+        condition: '`read_tool` が `tool: mcp__docs__search_docs`・`args` の `id: python` で `read_by` の無いルール A のエントリ、`tool_name` が `mcp__docs__search_docs`、`tool_input` が `{"id": "python", "view": "full"}`、`tool_response` が A の `scope="section"` の文書'
+        mock: なし
+        expected: 記録ファイルに A の場所とハッシュの 1 行、履歴ファイルに `method` が `mcp`・`tool` が `mcp__docs__search_docs` の 1 行、戻り値 None
+      - name: test_record_read_when_read_tool_unmatched
+        case: 正常
+        summary: '`read_tool` の引数と違う呼び出しは記録しない'
+        condition: '同じエントリ、`tool_input` が `{"id": "go"}`、`tool_response` が A の `scope="section"` の文書'
+        mock: なし
+        expected: 記録ファイルも履歴ファイルも無い、戻り値 None
+      - name: test_record_read_when_read_tool_and_document
+        case: 正常
+        summary: 全文の文書と `read_tool` の一致の両方を、重なりを落として記録する
+        condition: 'ルール A・B のエントリ。B は `read_tool` に一致する。`tool_response` が A と B の `scope="full"` の文書'
+        mock: なし
+        expected: 記録ファイルに A・B の 2 行（B は 1 行だけ）

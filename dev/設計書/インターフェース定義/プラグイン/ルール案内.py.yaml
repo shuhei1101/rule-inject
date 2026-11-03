@@ -1265,7 +1265,7 @@ constraints:
       同じルールの場所にまとめたエントリの `read_tool` は、`tool` と `args` の組が同じものを 1 つにし、当たった順に並べる
     notes: 場所の行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも載せない。文面はユーザーの目に触れるため、インターフェース定義設計の合格後にユーザーへ確認する
   - item: 参照するツールの書式
-    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args` を持つときはオブジェクトにする。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
+    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args` を持つときは値が文字列か文字列のリストのオブジェクトにする。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
     notes: '`read_tool` は案内と既読にだけ使い、操作を止めるかの照合（`paths`・`tools`・`args`）には使わない'
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

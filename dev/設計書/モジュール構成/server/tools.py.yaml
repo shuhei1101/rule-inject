@@ -59,7 +59,7 @@ functions:
       description: '`respond(ListRulesResult, format)`'
     process: |-
       1. `_project_settings(project_dir, env)` で設定を読む
-      2. `settings.indexes` を順に `read_index` で読む。`IndexReadError` は `unreadable_indexes` に、状態が `effective` のエントリは `RuleEntry`（パターンは `raw` のまま、`rule` と `on` は `entry` の値）に、`skipped` は `skipped_entries` に、`disabled` は `disabled_entries` に入れる
+      2. `settings.indexes` を順に `read_index` で読む。`IndexReadError` は `unreadable_indexes` に、状態が `effective` のエントリは `RuleEntry`（パターンと `read_tool` は `raw` のまま、`rule` と `on` は `entry` の値）に、`skipped` は `skipped_entries` に、`disabled` は `disabled_entries` に入れる
       3. 効いているエントリの `int(cursor or 0)` 番目から `limit` 件を取り、`cursor` があるときは `unreadable_indexes`・`skipped_entries`・`disabled_entries` を空にする
       4. `fit_page` で応答が `MAX_RESPONSE_CHARS` に収まる件数まで末尾から切り、残りがあれば `next_cursor` に次の位置を入れる
       5. `respond` で返す
