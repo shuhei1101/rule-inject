@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from _common import TARGET_REPOS, find_issue, run_gh
+from _common import TARGET_REPOS, find_issue, has_index, run_gh
 
 
 def main() -> int:
@@ -19,12 +19,13 @@ def main() -> int:
     # 依頼先ごとに、Issue の一覧を読めるか
     for repo in TARGET_REPOS:
         try:
+            has_index(repo)
             find_issue(repo)
         except RuntimeError as exc:
-            print(f"{repo} の Issue の読み取り: failed（{exc}）")
+            print(f"{repo} の索引と Issue の読み取り: failed（{exc}）")
             failed = True
             continue
-        print(f"{repo} の Issue の読み取り: ok")
+        print(f"{repo} の索引と Issue の読み取り: ok")
     return 1 if failed else 0
 
 

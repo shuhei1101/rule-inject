@@ -8,7 +8,8 @@ from dataclasses import dataclass
 
 # 依頼する Issue のタイトル（既に起票したかの判定にも使う）
 ISSUE_TITLE = "索引のエントリに参照するツール（read_tool）を記載する"
-# 依頼先: AI Monitor の監視対象のうち、rule-inject の索引（rules.yaml）を持つプロジェクトのリポジトリ。
+# 依頼先の候補: AI Monitor の監視対象のうち、設定が rule-inject の索引を指すプロジェクトのリポジトリ。
+# 実際に依頼するのは、索引（INDEX_PATHS のどれか）がリポジトリにあるものだけ（has_index）。
 # knowledge は shuhei1101/knowledge#158 で同じ見直しを扱うため含めない
 TARGET_REPOS = (
     "shuhei1101/ai-monitor",
@@ -49,6 +50,14 @@ rule-inject の索引のエントリに、ルールを参照する MCP のツー
 """
 
 
+# 索引を探すリポジトリの直下からのパス
+INDEX_PATHS = ("rules.yaml", "docs/rules.yaml")
+# 索引を探すブランチ（無いブランチは飛ばす。既定のブランチも探す）
+INDEX_BRANCHES = ("develop",)
+# gh api がファイルやブランチが無いときに返す HTTP の状態
+NOT_FOUND = "HTTP 404"
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Issue:
     """依頼の Issue 1 件（番号・状態）。"""
@@ -84,4 +93,27 @@ def find_issue(repo: str) -> Issue | None:
     for item in json.loads(result.stdout):
         if item["title"] == ISSUE_TITLE:
             return Issue(number=item["number"], state=item["state"])
+    return None
+
+
+def _default_branch(repo: str) -> str:
+    """リポジトリの既定のブランチ名を返す。"""
+    result = run_gh(["api", f"repos/{repo}", "--jq", ".default_branch"])
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip())
+    return result.stdout.strip()
+
+
+def has_index(repo: str) -> str | None:
+    """リポジトリに索引があれば `{ブランチ}:{パス}` を、無ければ None を返す。"""
+    branches = dict.fromkeys((*INDEX_BRANCHES, _default_branch(repo)))
+    for branch in branches:
+        for path in INDEX_PATHS:
+            result = run_gh(["api", f"repos/{repo}/contents/{path}?ref={branch}", "--jq", ".path"])
+            # 見つかれば、その場所を返す
+            if result.returncode == 0:
+                return f"{branch}:{path}"
+            # ファイルかブランチが無いときだけ次を探し、それ以外の失敗は止める
+            if NOT_FOUND not in result.stderr:
+                raise RuntimeError(result.stderr.strip())
     return None

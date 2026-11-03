@@ -1,5 +1,5 @@
 索引の参照するツールの記載の依頼:
-  説明: AI Monitor の監視対象のうち rule-inject の索引（rules.yaml）を持つプロジェクトのリポジトリごとに、dev-docs の配信元の文書を指すエントリへ read_tool を記載するよう依頼する Issue を起票する（knowledge は shuhei1101/knowledge#158 で同じ見直しを扱うため対象外）
+  説明: AI Monitor の監視対象のうち設定が rule-inject の索引を指すプロジェクトのリポジトリを候補にし、実行の時点で develop か既定のブランチの rules.yaml・docs/rules.yaml に索引があるリポジトリごとに、dev-docs の配信元の文書を指すエントリへ read_tool を記載するよう依頼する Issue を起票する（索引の無いリポジトリは skipped。knowledge は shuhei1101/knowledge#158 で同じ見直しを扱うため対象外）
   タグ: [Issue 起票, 他リポジトリ]
   実行者: tester
   時期: master へ入った後
@@ -10,5 +10,5 @@
   確認: 索引の参照するツールの記載の依頼/確認.py
   切り戻し: 索引の参照するツールの記載の依頼/切り戻し.py
   失敗時: 起票は冪等でないため再試行せず、failed の行を添えて依頼元へ返す（実行し直すと、起票済みのリポジトリは skipped になる）
-  確認方法: 対象の各リポジトリに、タイトルが「索引のエントリに参照するツール（read_tool）を記載する」の Issue がある
+  確認方法: 索引のある各リポジトリに、タイトルが「索引のエントリに参照するツール（read_tool）を記載する」の Issue がある
   状態: "-"

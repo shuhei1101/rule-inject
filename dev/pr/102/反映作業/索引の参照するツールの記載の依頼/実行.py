@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from _common import ISSUE_BODY, ISSUE_TITLE, TARGET_REPOS, find_issue, run_gh
+from _common import ISSUE_BODY, ISSUE_TITLE, TARGET_REPOS, find_issue, has_index, run_gh
 
 DRY_RUN_FLAG = "--dry-run"
 
@@ -18,19 +18,24 @@ def main(argv: list[str]) -> int:
         return 1
     print("前提確認: ok")
 
-    # 計画: 依頼の Issue がまだ無いリポジトリを選ぶ（--dry-run もここを通る）
+    # 計画: 索引があり、依頼の Issue がまだ無いリポジトリを選ぶ（--dry-run もここを通る）
     planned: list[str] = []
     for repo in TARGET_REPOS:
         try:
-            existing = find_issue(repo)
+            index = has_index(repo)
+            existing = find_issue(repo) if index is not None else None
         except RuntimeError as exc:
             print(f"{repo} の Issue の起票: failed（{exc}）")
             return 1
+        # 索引が無いリポジトリは、記載する対象が無いため依頼しない
+        if index is None:
+            print(f"{repo} の Issue の起票: skipped（索引が無い）")
+            continue
         if existing is not None:
             print(f"{repo} の Issue の起票: skipped（#{existing.number} {existing.state}）")
             continue
         planned.append(repo)
-        print(f"起票する: {repo}「{ISSUE_TITLE}」")
+        print(f"起票する: {repo}「{ISSUE_TITLE}」（索引 {index}）")
     if dry_run:
         for repo in planned:
             print(f"{repo} の Issue の起票: changed")

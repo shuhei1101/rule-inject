@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from _common import TARGET_REPOS, find_issue
+from _common import TARGET_REPOS, find_issue, has_index
 
 
 def main() -> int:
@@ -12,10 +12,15 @@ def main() -> int:
     failed = False
     for repo in TARGET_REPOS:
         try:
-            issue = find_issue(repo)
+            index = has_index(repo)
+            issue = find_issue(repo) if index is not None else None
         except RuntimeError as exc:
             print(f"{repo} の依頼の Issue: failed（{exc}）")
             failed = True
+            continue
+        # 索引が無いリポジトリは依頼の対象外
+        if index is None:
+            print(f"{repo} の依頼の Issue: skipped（索引が無い）")
             continue
         # 依頼の Issue が無ければ、まだ効いていない
         if issue is None:
