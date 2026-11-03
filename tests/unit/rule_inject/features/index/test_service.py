@@ -13,17 +13,20 @@ from rule_inject.features.index import (
     load_indexes,
     match_path,
     match_read_by,
+    match_read_tool,
     match_tool,
+    merge_matched,
     rule_locations,
 )
 from rule_inject.features.index.service import (
     _argument_values,
     _compile_pattern,
     _glob_match,
+    _json_equal,
     _match_args,
     _match_pattern,
 )
-from rule_inject.features.index.types import MatchedRule, MatchPattern
+from rule_inject.features.index.types import MatchedRule, MatchPattern, ReadTool
 from rule_inject.shared.errors import IndexReadError
 
 
@@ -299,6 +302,43 @@ def test_match_path_when_regex(
     assert result == expected
 
 
+def test_match_path_when_read_tool(make_entry: Callable[..., Any]) -> None:
+    """当たったエントリの `read_tool` を載せる（正常系）。"""
+    # 準備
+    tool_a = ReadTool(tool="mcp__a__get", args={"id": "a"}, optional_args={})
+    tool_a_again = ReadTool(tool="mcp__a__get", args={"id": "a"}, optional_args={})
+    tool_b = ReadTool(tool="mcp__b__get", args={}, optional_args={})
+    entries = [
+        make_entry("/r/doc.md", paths=["**/*.py"], read_tool=tool_a),
+        make_entry("/r/doc.md", paths=["**/*.py"]),
+        make_entry("/r/doc.md", paths=["**/*.py"], read_tool=tool_a_again),
+        make_entry("/r/doc.md", paths=["**/*.py"], read_tool=tool_b),
+    ]
+    # 実行
+    result = match_path(entries, "/p/a.py", "write")
+    # 検証
+    assert result == [MatchedRule(location="/r/doc.md", blocking=True, read_tools=(tool_a, tool_b))]
+
+
+def test_merge_matched() -> None:
+    """場所ごとにまとめ、止めるかと参照するツールを合わせる（正常系）。"""
+    # 準備
+    tool_a = ReadTool(tool="mcp__a__get", args={}, optional_args={})
+    tool_b = ReadTool(tool="mcp__b__get", args={}, optional_args={})
+    rules = [
+        MatchedRule(location="/r/a.md", blocking=False, read_tools=(tool_a,)),
+        MatchedRule(location="/r/b.md", blocking=False),
+        MatchedRule(location="/r/a.md", blocking=True, read_tools=(tool_a, tool_b)),
+    ]
+    # 実行
+    result = merge_matched(rules)
+    # 検証
+    assert result == [
+        MatchedRule(location="/r/a.md", blocking=True, read_tools=(tool_a, tool_b)),
+        MatchedRule(location="/r/b.md", blocking=False),
+    ]
+
+
 def test_match_tool(make_entry: Callable[..., Any]) -> None:
     """ツール名の glob に当てる（正常系）。"""
     # 準備
@@ -429,6 +469,162 @@ def test_match_read_by_when_duplicate(make_entry: Callable[..., Any]) -> None:
     result = match_read_by(entries, "mcp__docs__get_doc", {})
     # 検証
     assert result == ["/r/doc.md"]
+
+
+SEARCH_ARGS = {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}
+
+
+def test_match_read_tool(make_entry: Callable[..., Any]) -> None:
+    """ツール名と引数が一致する呼び出しに当てる（正常系）。"""
+    # 準備
+    read_tool = ReadTool(tool="mcp__docs__search_docs", args=SEARCH_ARGS, optional_args={})
+    entries = [make_entry("/r/doc.md", read_tool=read_tool)]
+    tool_input = {
+        "view": "full",
+        "sections": ["命名"],
+        "filter": {"values": ["python"], "op": "eq", "field": "id"},
+    }
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", tool_input)
+    # 検証
+    assert result == ["/r/doc.md"]
+
+
+@pytest.mark.parametrize(
+    "tool_input",
+    [
+        pytest.param(
+            {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["例外"]},
+            id="sections_differ",
+        ),
+        pytest.param(
+            {"filter": {"field": "id", "op": "eq", "values": ["python"]}}, id="sections_missing"
+        ),
+        pytest.param(
+            {
+                "filter": {"field": "id", "op": "eq", "values": ["python"]},
+                "sections": ["命名", "例外"],
+            },
+            id="sections_longer",
+        ),
+        pytest.param(
+            {"filter": {"field": "id", "op": "eq", "values": ["go"]}, "sections": ["命名"]},
+            id="filter_values_differ",
+        ),
+    ],
+)
+def test_match_read_tool_when_args_unmatched(
+    make_entry: Callable[..., Any], tool_input: dict[str, Any]
+) -> None:
+    """引数の値が違うか無ければ当てない（正常系）。"""
+    # 準備
+    read_tool = ReadTool(tool="mcp__docs__search_docs", args=SEARCH_ARGS, optional_args={})
+    entries = [make_entry("/r/doc.md", read_tool=read_tool)]
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", tool_input)
+    # 検証
+    assert result == []
+
+
+def test_match_read_tool_when_tool_unmatched(make_entry: Callable[..., Any]) -> None:
+    """ツール名が違えば当てない（パターンとして読まない）（正常系）。"""
+    # 準備
+    read_tool = ReadTool(tool="mcp__docs__search_*", args={}, optional_args={})
+    entries = [make_entry("/r/doc.md", read_tool=read_tool)]
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", {})
+    # 検証
+    assert result == []
+
+
+@pytest.mark.parametrize(
+    ("tool_input", "expected"),
+    [
+        pytest.param({"limit": 1, "full": True}, ["/r/doc.md"], id="same_types"),
+        pytest.param({"limit": True, "full": True}, [], id="bool_for_number"),
+        pytest.param({"limit": "1", "full": True}, [], id="string_for_number"),
+    ],
+)
+def test_match_read_tool_when_scalar_not_string(
+    make_entry: Callable[..., Any], tool_input: dict[str, Any], expected: list[str]
+) -> None:
+    """真偽値と数値・文字列を区別する（正常系）。"""
+    # 準備
+    read_tool = ReadTool(
+        tool="mcp__docs__search_docs", args={"limit": 1, "full": True}, optional_args={}
+    )
+    entries = [make_entry("/r/doc.md", read_tool=read_tool)]
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", tool_input)
+    # 検証
+    assert result == expected
+
+
+def test_match_read_tool_when_without_args(make_entry: Callable[..., Any]) -> None:
+    """`args` の無い `read_tool` はツール名だけで当てる（正常系）。"""
+    # 準備
+    read_tool = ReadTool(tool="mcp__docs__search_docs", args={}, optional_args={})
+    entries = [make_entry("/r/doc.md", read_tool=read_tool)]
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", {"id": "x"})
+    # 検証
+    assert result == ["/r/doc.md"]
+
+
+@pytest.mark.parametrize(
+    "tool_input",
+    [
+        pytest.param({"filter": {"field": "id"}}, id="optional_omitted"),
+        pytest.param({"filter": {"field": "id"}, "sections": ["例外"]}, id="optional_differs"),
+    ],
+)
+def test_match_read_tool_when_optional_args(
+    make_entry: Callable[..., Any], tool_input: dict[str, Any]
+) -> None:
+    """`optional_args` は省いても違う値でも当てる（正常系）。"""
+    # 準備
+    read_tool = ReadTool(
+        tool="mcp__docs__search_docs",
+        args={"filter": {"field": "id"}},
+        optional_args={"sections": ["命名"]},
+    )
+    entries = [make_entry("/r/doc.md", read_tool=read_tool)]
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", tool_input)
+    # 検証
+    assert result == ["/r/doc.md"]
+
+
+def test_match_read_tool_when_duplicate(make_entry: Callable[..., Any]) -> None:
+    """同じルールのエントリを 1 件にまとめる（正常系）。"""
+    # 準備
+    read_tool = ReadTool(tool="mcp__docs__search_docs", args={}, optional_args={})
+    entries = [
+        make_entry("/r/doc.md", read_tool=read_tool),
+        make_entry("/r/doc.md", read_tool=read_tool),
+    ]
+    # 実行
+    result = match_read_tool(entries, "mcp__docs__search_docs", {})
+    # 検証
+    assert result == ["/r/doc.md"]
+
+
+@pytest.mark.parametrize(
+    ("actual", "expected"),
+    [
+        pytest.param({"c": 2, "a": [1, {"b": True}]}, True, id="key_order_differs"),
+        pytest.param({"a": [{"b": True}, 1], "c": 2}, False, id="array_order_differs"),
+        pytest.param({"a": [1, {"b": 1}], "c": 2}, False, id="bool_to_number"),
+    ],
+)
+def test_json_equal(actual: Any, expected: bool) -> None:
+    """型を区別して入れ子まで比べる（正常系）。"""
+    # 準備
+    written = {"a": [1, {"b": True}], "c": 2}
+    # 実行
+    result = _json_equal(written, actual)
+    # 検証
+    assert result is expected
 
 
 def test_rule_locations(make_entry: Callable[..., Any]) -> None:

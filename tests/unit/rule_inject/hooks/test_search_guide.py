@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from rule_inject.features.guidance.service import SEARCH_HEADER
+from rule_inject.features.guidance.service import READ_TOOL_NOTE, SEARCH_HEADER
 from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.search_guide import search_guide
 
@@ -235,3 +235,32 @@ def test_search_guide_when_settings_unreadable(
     logged = read_default_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_settings"
+
+
+def test_search_guide_when_read_tool(
+    python_file: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """参照するツールを添えて案内する（正常系）。"""
+    # 準備
+    env = guide_env(
+        "rules:\n"
+        f"  - rule: {RULE}\n"
+        "    paths: ['**/*.py']\n"
+        "    read_tool:\n"
+        "      tool: mcp__docs__search_docs\n"
+    )
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Grep",
+        tool_input={"pattern": "print", "path": str(python_file.parent)},
+        tool_response={"mode": "files_with_matches", "filenames": [python_file.name]},
+    )
+    # 実行
+    result = search_guide(payload, env)
+    # 検証
+    assert result is not None
+    lines = result["hookSpecificOutput"]["additionalContext"].splitlines()
+    assert lines[:2] == [SEARCH_HEADER, READ_TOOL_NOTE]
+    assert lines[lines.index(f"- {RULE}") + 1] == "  ツール: mcp__docs__search_docs {}"

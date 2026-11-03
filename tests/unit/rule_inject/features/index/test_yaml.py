@@ -173,3 +173,69 @@ def test_parse_index_when_invalid_enabled(value: str) -> None:
     # 実行・検証
     with pytest.raises(ValueError, match="3行目"):
         parse_index(text)
+
+
+READ_TOOL_INDEX = """\
+rules:
+  - rule: ./a.md
+    read_tool:
+      tool: mcp__docs__search_docs
+      args: '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+  - rule: ./b.md
+    read_tool:
+      tool: mcp__docs__search_docs
+  - rule: ./c.md
+    read_tool:
+      tool: mcp__docs__search_docs
+      args: '{"filter": {"field": "id"}}'
+      optional_args: '{"sections": ["命名"]}'
+"""
+
+
+def test_parse_index_when_read_tool() -> None:
+    """`read_tool` のブロックのマップを読む（正常系）。"""
+    # 実行
+    _, entries = parse_index(READ_TOOL_INDEX)
+    # 検証
+    assert entries == [
+        {
+            "rule": "./a.md",
+            "read_tool": {
+                "tool": "mcp__docs__search_docs",
+                "args": '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}',
+            },
+        },
+        {"rule": "./b.md", "read_tool": {"tool": "mcp__docs__search_docs"}},
+        {
+            "rule": "./c.md",
+            "read_tool": {
+                "tool": "mcp__docs__search_docs",
+                "args": '{"filter": {"field": "id"}}',
+                "optional_args": '{"sections": ["命名"]}',
+            },
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    "read_tool",
+    [
+        pytest.param("    read_tool:\n      args: '{\"id\": \"a\"}'\n", id="tool_missing"),
+        pytest.param("    read_tool:\n      tool: docs_search\n", id="tool_not_mcp"),
+        pytest.param("    read_tool: {tool: mcp__a}\n", id="same_line_value"),
+        pytest.param("    read_tool:\n      tool: mcp__a\n      foo: bar\n", id="unknown_key"),
+        pytest.param("    read_tool:\n      tool: mcp__a\n      args: '{broken'\n", id="args_not_json"),
+        pytest.param("    read_tool:\n      tool: mcp__a\n      args: '[1]'\n", id="args_not_object"),
+        pytest.param(
+            "    read_tool:\n      tool: mcp__a\n      optional_args: '[1]'\n",
+            id="optional_args_not_object",
+        ),
+    ],
+)
+def test_parse_index_when_read_tool_invalid(read_tool: str) -> None:
+    """`read_tool` の書式の誤りを拒む（異常系）。"""
+    # 準備
+    text = "rules:\n  - rule: ./a.md\n" + read_tool
+    # 実行・検証
+    with pytest.raises(ValueError, match="行目"):
+        parse_index(text)

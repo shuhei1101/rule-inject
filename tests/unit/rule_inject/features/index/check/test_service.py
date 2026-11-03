@@ -35,6 +35,11 @@ def test_load_validator() -> None:
                 "args": {"kind": ["rule"]},
                 "on": ["read", "write"],
                 "read_by": [{"tools": ["mcp__docs__get_doc"], "args": {"path": ["*.md"]}}],
+                "read_tool": {
+                    "tool": "mcp__docs__search_docs",
+                    "args": '{"filter": {"field": "id", "op": "eq", "values": ["a"]}}',
+                    "optional_args": '{"sections": ["命名"]}',
+                },
                 "enabled": True,
             }
         ],

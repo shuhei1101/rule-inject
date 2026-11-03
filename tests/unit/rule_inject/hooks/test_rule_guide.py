@@ -52,7 +52,7 @@ def test_handle_when_blocked(
     output = result["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
-    assert "Read で読んでから" in output["permissionDecisionReason"]
+    assert "Read で参照してください" in output["permissionDecisionReason"]
 
 
 def test_handle_when_already_read(
@@ -371,3 +371,105 @@ def test_handle_when_settings_unreadable(
     logged = read_default_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_settings"
+
+
+def test_handle_when_read_tool(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """参照するツールを添えて止める（正常系）。"""
+    # 準備
+    env = guide_env(
+        "rules:\n"
+        f"  - rule: {RULE}\n"
+        "    paths: ['**/*.py']\n"
+        "    on: [write]\n"
+        "    read_tool:\n"
+        "      tool: mcp__docs__search_docs\n"
+        """      args: '{"filter": {"field": "id", "op": "eq", "values": ["python"]}}'\n"""
+    )
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Write",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py"), "content": ""},
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is not None
+    output = result["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    lines = output["permissionDecisionReason"].splitlines()
+    assert lines[lines.index(f"- {RULE}") + 1] == (
+        '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}'
+    )
+
+
+def test_handle_when_read_tools_merged(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """複数のパスに当たった同じルールの参照するツールをまとめる（正常系）。"""
+    # 準備
+    env = guide_env(
+        "rules:\n"
+        f"  - rule: {RULE}\n"
+        "    paths: ['**/a.py']\n"
+        "    on: [read]\n"
+        "    read_tool:\n"
+        "      tool: mcp__a__get\n"
+        f"  - rule: {RULE}\n"
+        "    paths: ['**/b.py']\n"
+        "    on: [read]\n"
+        "    read_tool:\n"
+        "      tool: mcp__b__get\n"
+    )
+    first = tmp_path / "a.py"
+    second = tmp_path / "b.py"
+    first.write_text("print()\n", encoding="utf-8")
+    second.write_text("print()\n", encoding="utf-8")
+    payload = hook_payload(
+        "PreToolUse", tool_name="Bash", tool_input={"command": f"cat {first} {second}"}
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is not None
+    reason = result["hookSpecificOutput"]["permissionDecisionReason"]
+    lines = reason.splitlines()
+    assert lines.count(f"- {RULE}") == 1
+    start = lines.index(f"- {RULE}")
+    assert lines[start + 1 : start + 3] == ["  ツール: mcp__a__get {}", "  ツール: mcp__b__get {}"]
+
+
+def test_handle_when_read_tool_invalid(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    read_daily_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """書式の誤った `read_tool` の索引は読めない索引として知らせる（正常系）。"""
+    # 準備
+    env = guide_env(
+        "rules:\n"
+        f"  - rule: {RULE}\n"
+        "    paths: ['**/*.py']\n"
+        "    on: [write]\n"
+        "    read_tool:\n"
+        """      args: '{"id": "python"}'\n"""
+    )
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Write",
+        tool_input={"file_path": str(tmp_path / "app.py"), "content": ""},
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is not None
+    output = result["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert "索引を読めませんでした" in output["additionalContext"]
+    assert read_daily_log()[0]["operation"] == "read_index"

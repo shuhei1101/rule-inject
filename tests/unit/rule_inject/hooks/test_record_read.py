@@ -452,3 +452,117 @@ def test_record_read_when_settings_unreadable(
     logged = read_default_log()
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_settings"
+
+
+READ_TOOL_ENTRY = (
+    "    read_tool:\n"
+    "      tool: mcp__docs__search_docs\n"
+    """      args: '{"filter": {"field": "id", "op": "eq", "values": ["python"]}}'\n"""
+)
+
+
+def test_record_read_when_read_tool_call(
+    tmp_path: Path,
+    settings_env: Callable[..., dict[str, str]],
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """`read_tool` に一致する呼び出しは、全文でない文書の結果でも記録する（正常系）。"""
+    # 準備
+    rule_a = rule_file("a.md", "test")
+    index = make_index(f"rules:\n  - rule: {rule_a}\n" + READ_TOOL_ENTRY)
+    env = settings_env(indexes=[str(index)])
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={
+            "filter": {"field": "id", "op": "eq", "values": ["python"]},
+            "view": "full",
+        },
+        cwd=tmp_path,
+        tool_response='<document path="rules/a.md" scope="section">本文の一部</document>',
+    )
+    # 実行
+    result = record_read(payload, env)
+    # 検証
+    assert result is None
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule_a}\t{HASH_TEST}"]
+    history = read_history()
+    assert len(history) == 1
+    assert history[0]["method"] == "mcp"
+    assert history[0]["tool"] == "mcp__docs__search_docs"
+
+
+def test_record_read_when_read_tool_call_unmatched(
+    tmp_path: Path,
+    settings_env: Callable[..., dict[str, str]],
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    state_dir: Path,
+    session_id: str,
+) -> None:
+    """`read_tool` の引数と違う呼び出しは記録しない（正常系）。"""
+    # 準備
+    rule_a = rule_file("a.md", "test")
+    index = make_index(f"rules:\n  - rule: {rule_a}\n" + READ_TOOL_ENTRY)
+    env = settings_env(indexes=[str(index)])
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"filter": {"field": "id", "op": "eq", "values": ["go"]}},
+        cwd=tmp_path,
+        tool_response='<document path="rules/a.md" scope="section">本文の一部</document>',
+    )
+    # 実行
+    result = record_read(payload, env)
+    # 検証
+    assert result is None
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert not (state_dir / f"{session_id}.history.jsonl").exists()
+
+
+def test_record_read_when_read_tool_call_and_document(
+    tmp_path: Path,
+    settings_env: Callable[..., dict[str, str]],
+    make_index: Callable[..., Path],
+    rule_file: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """全文の文書と `read_tool` の一致の両方を、重なりを落として記録する（正常系）。"""
+    # 準備
+    rule_a = rule_file("a.md", "test")
+    rule_b = rule_file("b.md", "test")
+    index = make_index(
+        "rules:\n"
+        f"  - rule: {rule_a}\n"
+        '    paths:\n      - "**/*.py"\n'
+        f"  - rule: {rule_b}\n" + READ_TOOL_ENTRY
+    )
+    env = settings_env(indexes=[str(index)])
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={"filter": {"field": "id", "op": "eq", "values": ["python"]}},
+        cwd=tmp_path,
+        tool_response=(
+            '<document path="rules/a.md" scope="full">本文 A</document>\n'
+            '<document path="rules/b.md" scope="full">本文 B</document>'
+        ),
+    )
+    # 実行
+    result = record_read(payload, env)
+    # 検証
+    assert result is None
+    assert read_lines(state_dir / f"{session_id}.txt") == [
+        f"{rule_a}\t{HASH_TEST}",
+        f"{rule_b}\t{HASH_TEST}",
+    ]
