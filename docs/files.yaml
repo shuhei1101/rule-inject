@@ -12,7 +12,7 @@ files:
       - tool:claude-code
   - path: rules.yaml
     name: このリポジトリのルール索引
-    description: このリポジトリ自身が rule-inject に読ませるルール索引で、今は空。索引の書式の置き場所を確かめるときに開く。
+    description: 環境変数が指す 2 つめのルール索引で、今は空（このリポジトリのルールは直下の rules.yaml に載せる）。索引の書式の置き場所を確かめるときに開く。
     tags:
       - topic:ルール索引
   - path: はじめに/コアコンセプト/MCPサーバー.md
@@ -72,3 +72,8 @@ files:
     tags:
       - topic:判定フローチャート
       - topic:ルールの注入
+  - path: ../rules.yaml
+    name: このリポジトリのルール索引（直下）
+    description: このリポジトリで作業するときに rule-inject が案内するルールのエントリを持つ索引。案内するルールを追加・修正するときに開く。
+    tags:
+      - topic:ルール索引
