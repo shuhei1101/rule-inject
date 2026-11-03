@@ -220,12 +220,16 @@ def test_parse_index_when_read_tool() -> None:
 @pytest.mark.parametrize(
     "read_tool",
     [
-        pytest.param("    read_tool:\n      args: '{\"id\": \"a\"}'\n", id="tool_missing"),
+        pytest.param('    read_tool:\n      args: \'{"id": "a"}\'\n', id="tool_missing"),
         pytest.param("    read_tool:\n      tool: docs_search\n", id="tool_not_mcp"),
         pytest.param("    read_tool: {tool: mcp__a}\n", id="same_line_value"),
         pytest.param("    read_tool:\n      tool: mcp__a\n      foo: bar\n", id="unknown_key"),
-        pytest.param("    read_tool:\n      tool: mcp__a\n      args: '{broken'\n", id="args_not_json"),
-        pytest.param("    read_tool:\n      tool: mcp__a\n      args: '[1]'\n", id="args_not_object"),
+        pytest.param(
+            "    read_tool:\n      tool: mcp__a\n      args: '{broken'\n", id="args_not_json"
+        ),
+        pytest.param(
+            "    read_tool:\n      tool: mcp__a\n      args: '[1]'\n", id="args_not_object"
+        ),
         pytest.param(
             "    read_tool:\n      tool: mcp__a\n      optional_args: '[1]'\n",
             id="optional_args_not_object",

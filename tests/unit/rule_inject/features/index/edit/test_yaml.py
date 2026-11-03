@@ -67,7 +67,9 @@ def test_to_yaml_value_when_read_tool() -> None:
     from rule_inject.features.index.edit._yaml import round_trip_yaml, to_yaml_value
 
     # 準備
-    arguments = '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+    arguments = (
+        '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+    )
     read_tool = {"args": arguments, "tool": "mcp__docs__search_docs"}
     entry = CommentedMap()
     entry["rule"] = "a.md"
