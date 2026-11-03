@@ -1,4 +1,4 @@
-"""既読の記録（PostToolUse）。Read・Bash で全体を読んだルールと、MCP のツールの結果に載った全文のルールの場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）を、本文のハッシュと一緒に既読にし、既読の履歴へ残す。"""
+"""既読の記録（PostToolUse）。Read・Bash で全体を読んだルールと、MCP のツールの結果に載った全文のルールの場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）と `read_tool` に一致したルールの場所を、本文のハッシュと一緒に既読にし、既読の履歴へ残す。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,12 @@ from typing import Any
 from rule_inject.features.command import FULL_READ_COMMANDS, extract_read_paths
 from rule_inject.features.document import DocumentScope, extract_documents
 from rule_inject.features.guidance import build_failure_notice
-from rule_inject.features.index import load_indexes, match_read_by, rule_locations
+from rule_inject.features.index import (
+    load_indexes,
+    match_read_by,
+    match_read_tool,
+    rule_locations,
+)
 from rule_inject.features.index.types import IndexEntry
 from rule_inject.features.record import (
     ReadMethod,
@@ -76,17 +81,20 @@ def _document_paths(payload: Mapping[str, Any]) -> list[str] | None:
 def _locations_and_method(
     payload: Mapping[str, Any], entries: tuple[IndexEntry, ...]
 ) -> tuple[list[str], ReadMethod]:
-    """既読にする場所と読み方を決める。MCP のツールは結果の全文の文書、無ければ `read_by` に当たるエントリのルールの場所。それ以外は索引に載ったルールのパスだけ。"""
+    """既読にする場所と読み方を決める。MCP のツールは結果の全文の文書（無ければ `read_by` に当たるエントリ）と `read_tool` に一致するエントリのルールの場所。それ以外は索引に載ったルールのパスだけ。"""
     tool_name = payload["tool_name"]
     listed = rule_locations(entries)
     if tool_name.startswith(MCP_TOOL_PREFIX):
+        tool_input = payload.get("tool_input") or {}
         paths = _document_paths(payload)
         # 書式に従う文書が無い結果は、`read_by` に当たる呼び出しで判断する
         if paths is None:
-            return match_read_by(
-                entries, tool_name, payload.get("tool_input") or {}
-            ), ReadMethod.MCP
-        return [path for path in dict.fromkeys(paths) if path in listed], ReadMethod.MCP
+            found = match_read_by(entries, tool_name, tool_input)
+        else:
+            found = [path for path in paths if path in listed]
+        # `read_tool` に一致する呼び出しは、文書の範囲と `read_by` によらず後ろに加える
+        found.extend(match_read_tool(entries, tool_name, tool_input))
+        return list(dict.fromkeys(found)), ReadMethod.MCP
     # Read・Bash: 索引に載ったルールの場所と同じパスだけ
     locations = [path for path in dict.fromkeys(_read_paths(payload)) if path in listed]
     return locations, ReadMethod.READ if tool_name == "Read" else ReadMethod.BASH

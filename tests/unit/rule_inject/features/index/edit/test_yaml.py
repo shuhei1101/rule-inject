@@ -60,3 +60,32 @@ def test_to_yaml_value() -> None:
     assert "    read_by:" in lines
     assert any(line.startswith("    paths: [") and line.endswith("]") for line in lines)
     assert parse_index(text)[1] == [values]
+
+
+def test_to_yaml_value_when_read_tool() -> None:
+    """`read_tool` をブロックのマップで書き出す（正常系）。"""
+    from rule_inject.features.index.edit._yaml import round_trip_yaml, to_yaml_value
+
+    # 準備
+    arguments = (
+        '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+    )
+    read_tool = {"args": arguments, "tool": "mcp__docs__search_docs"}
+    entry = CommentedMap()
+    entry["rule"] = "a.md"
+    entry["read_tool"] = to_yaml_value("read_tool", read_tool)
+    document = CommentedMap()
+    document["rules"] = CommentedSeq([entry])
+    buffer = io.StringIO()
+    # 実行
+    round_trip_yaml().dump(document, buffer)
+    # 検証
+    text = buffer.getvalue()
+    assert text.splitlines()[2:] == [
+        "    read_tool:",
+        "      tool: mcp__docs__search_docs",
+        f"      args: '{arguments}'",
+    ]
+    assert parse_index(text)[1] == [
+        {"rule": "a.md", "read_tool": {"tool": "mcp__docs__search_docs", "args": arguments}}
+    ]

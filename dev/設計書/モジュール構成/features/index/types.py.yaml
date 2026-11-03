@@ -70,6 +70,9 @@ data_models:
       - name: read_by
         type: tuple[ReadByCondition, ...]
         description: そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
+      - name: read_tool
+        type: ReadTool | None
+        description: ルールを参照する MCP のツールと引数。書かないエントリは None
   - name: MatchedRule
     title: 当たったルール
     container: features/index/types.py
@@ -83,6 +86,9 @@ data_models:
       - name: blocking
         type: bool
         description: 当たったエントリのどれか 1 つでも操作の種別が `on` に入っていれば True
+      - name: read_tools
+        type: tuple[ReadTool, ...]
+        description: 当たったエントリの `read_tool`（同じ値は 1 つにし、当たった順）。既定は空のタプル
   - name: IndexLoadResult
     title: 索引の読み込みの結果
     container: features/index/types.py
@@ -179,3 +185,19 @@ data_models:
       - name: outcomes
         type: tuple[EntryOutcome, ...]
         description: '`rules` の並びの順のエントリごとの結果'
+  - name: ReadTool
+    title: 参照するツール
+    container: features/index/types.py
+    usecase: 未読のルールの案内を受ける
+    role: DTO
+    summary: エントリの `read_tool`。案内に載せ、一致する呼び出しを既読にする（パターンでなく値）
+    properties:
+      - name: tool
+        type: str
+        description: MCP のツールの完全名（`mcp__` で始まる）
+      - name: args
+        type: Mapping[str, Any]
+        description: '`args` の JSON の文字列を `json.loads` で読んだオブジェクト（キーの順を保つ）。`args` を書かないときは空の辞書'
+      - name: optional_args
+        type: Mapping[str, Any]
+        description: '`optional_args` を同じく読んだオブジェクト。案内にだけ使い、既読の照合には使わない。書かないときは空の辞書'

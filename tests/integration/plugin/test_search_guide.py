@@ -98,7 +98,7 @@ def test_normal(
     assert output["hookEventName"] == "PostToolUse"
     assert "permissionDecision" not in output
     assert RULE in output["additionalContext"]
-    assert "読むかは任意" in output["additionalContext"]
+    assert "参照は任意" in output["additionalContext"]
     assert "やり直してください" not in output["additionalContext"]
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0
@@ -368,4 +368,42 @@ def test_normal_when_entry_disabled(
     # 検証
     assert completed.stdout == ""
     assert not (state_dir / f"{session_id}.guided.txt").exists()
+    assert completed.returncode == 0
+
+
+def test_normal_with_read_tool(
+    tmp_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    src_files: Path,
+    search_payload: Callable[..., dict[str, Any]],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """検索の結果に出たファイルに当たる `read_tool` を持つエントリのルールを、ツールの名前と引数を添えて案内する（正常系）。"""
+    # 準備
+    index = make_index(
+        index_text(
+            {
+                "rule": RULE,
+                "paths": ["**/*.py"],
+                "read_tool": {
+                    "tool": "mcp__docs__search_docs",
+                    "args": '{"filter": {"field": "id", "op": "eq", "values": ["python"]}}',
+                },
+            }
+        )
+    )
+    payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
+    # 実行
+    completed = run_hook("search_guide", payload, index=index)
+    # 検証
+    lines = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"].splitlines()
+    assert lines[lines.index(f"- {RULE}") + 1] == (
+        '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}'
+    )
+    assert "そのツールで参照してください" in lines[1]
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0

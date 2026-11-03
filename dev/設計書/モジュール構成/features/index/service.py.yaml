@@ -146,7 +146,7 @@ functions:
       description: 当たったルール（索引の順）
     process: |-
       1. `entry_matches_path` が True のエントリを選ぶ（glob は `_glob_match`、正規表現は部分一致。`_match_pattern`）
-      2. 同じ `location` を 1 件にまとめ、`operation` がどれかの `on` に入っていれば `blocking` を True にする
+      2. エントリごとに `MatchedRule`（`blocking` は `operation` が `on` に入っているか、`read_tools` は `read_tool` を持てばその 1 件）にし、`merge_matched` でルールの場所ごとに 1 件へまとめる
     unit_tests:
       - name: test_match_path
         case: 正常
@@ -178,6 +178,12 @@ functions:
         condition: '`paths: ["re:/src/[a-z_]+\\.py$"]`・`exclude: ["re:/src/_"]`、`/p/src/app.py` と `/p/src/_gen.py`'
         mock: なし
         expected: 前者は 1 件、後者は空
+      - name: test_match_path_when_read_tool
+        case: 正常
+        summary: 当たったエントリの `read_tool` を載せる
+        condition: '同じ `location` で、`read_tool` A を持つエントリ・`read_tool` を持たないエントリ・A と同じ値の `read_tool` を持つエントリ・`read_tool` B を持つエントリの 4 つ'
+        mock: なし
+        expected: 1 件で、`read_tools` が A・B の順の 2 件
   - name: match_tool
     title: ツール名の照合
     container: features/index/service.py
@@ -239,6 +245,32 @@ functions:
         condition: '`tools: ["re:__create_"]`、`mcp__github__create_issue`'
         mock: なし
         expected: 1 件
+  - name: merge_matched
+    title: 照合の結果のまとめ
+    container: features/index/service.py
+    usecase: 共通
+    summary: 照合の結果を、ルールの場所ごとに 1 件へまとめる（`match_path`・`match_tool` と、複数のパスの結果をまとめるフックが使う）
+    kind: 関数
+    scope: public
+    args:
+      - name: rules
+        type: Sequence[MatchedRule]
+        required: true
+        passing: positional
+        description: 照合の結果
+    returns:
+      type: list[MatchedRule]
+      description: ルールの場所ごとに 1 件（初めて出た順）
+    process: |-
+      1. 同じ `location` の結果を 1 件にまとめ、どれか 1 つでも `blocking` が True なら True にする
+      2. `read_tools` は出た順につなぎ、同じ値（`tool`・`args`・`optional_args` が等しい）の 2 つ目以降を落とす
+    unit_tests:
+      - name: test_merge_matched
+        case: 正常
+        summary: 場所ごとにまとめ、止めるかと参照するツールを合わせる
+        condition: '場所 a（`blocking` False・`read_tools` [A]）、場所 b（False・[]）、場所 a（True・[A, B]）の順の 3 件'
+        mock: なし
+        expected: 'a（True・[A, B]）、b（False・[]）の順の 2 件'
   - name: rule_locations
     title: ルールの場所の一覧
     container: features/index/service.py
@@ -509,6 +541,80 @@ functions:
         condition: 同じ `location` でどちらも `read_by` に当たる 2 エントリ
         mock: なし
         expected: 場所 1 件
+  - name: match_read_tool
+    title: 参照するツールの照合
+    container: features/index/service.py
+    usecase: ルールを読んだことが記録される
+    summary: MCP のツールの呼び出しが `read_tool` に一致するエントリのルールの場所を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 索引のエントリ
+      - name: tool_name
+        type: str
+        required: true
+        passing: positional
+        description: MCP のツールの完全名
+      - name: tool_input
+        type: Mapping[str, Any]
+        required: true
+        passing: positional
+        description: MCP のツールの引数（JSON 由来の値のため Any）
+    returns:
+      type: list[str]
+      description: 一致したルールの場所（索引の順。重なりを落とす）
+    process: |-
+      1. `read_tool` を持ち、`read_tool.tool` が `tool_name` と同じ（パターンでなく文字列の一致）エントリを選ぶ
+      2. `read_tool.args` の全てのキーが `tool_input` の最上位にあり、値が JSON の値として等しい（`_json_equal`）エントリだけを残す（`tool_input` の他のキーは見ない。`args` が空なら残す）
+      3. `read_tool.optional_args` と、エントリの `tools`・`args`・`read_by` は見ない
+      4. 同じ `location` を 1 件にまとめる（並びは保つ）
+    unit_tests:
+      - name: test_match_read_tool
+        case: 正常
+        summary: ツール名と引数が一致する呼び出しに当てる
+        condition: '`read_tool` が `mcp__docs__search_docs` と `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` のエントリ、`mcp__docs__search_docs` と、キーの順を変え `view: full` を加えた同じ値の引数'
+        mock: なし
+        expected: そのエントリの場所 1 件
+      - name: test_match_read_tool_when_args_unmatched
+        case: 正常
+        summary: 引数の値が違うか無ければ当てない
+        condition: '同じエントリ、`sections` が `["例外"]`・`sections` が無い・`sections` が `["命名", "例外"]`・`filter.values` が `["go"]` の引数（4 通りをパラメータ化）'
+        mock: なし
+        expected: 空
+      - name: test_match_read_tool_when_tool_unmatched
+        case: 正常
+        summary: ツール名が違えば当てない
+        condition: '`read_tool` が `mcp__docs__search_*` で `args` が空のエントリ、`mcp__docs__search_docs` と `{}`'
+        mock: なし
+        expected: 空（パターンとして読まない）
+      - name: test_match_read_tool_when_scalar_not_string
+        case: 正常
+        summary: 真偽値と数値・文字列を区別する
+        condition: '`read_tool` の `args` が `{"limit": 1, "full": true}` のエントリ、`{"limit": 1, "full": true}`・`{"limit": true, "full": true}`・`{"limit": "1", "full": true}`'
+        mock: なし
+        expected: 1 つ目は場所 1 件、2 つ目と 3 つ目は空
+      - name: test_match_read_tool_when_without_args
+        case: 正常
+        summary: '`args` の無い `read_tool` はツール名だけで当てる'
+        condition: '`read_tool` が `mcp__docs__search_docs` だけのエントリ、`mcp__docs__search_docs` と `{"id": "x"}`'
+        mock: なし
+        expected: そのエントリの場所 1 件
+      - name: test_match_read_tool_when_optional_args
+        case: 正常
+        summary: '`optional_args` は省いても違う値でも当てる'
+        condition: '`args` が `{"filter": {"field": "id"}}`・`optional_args` が `{"sections": ["命名"]}` のエントリ、`sections` を省いた引数と `sections` が `["例外"]` の引数'
+        mock: なし
+        expected: どちらも場所 1 件
+      - name: test_match_read_tool_when_duplicate
+        case: 正常
+        summary: 同じルールのエントリを 1 件にまとめる
+        condition: 同じ `location` でどちらも一致する `read_tool` を持つ 2 エントリ
+        mock: なし
+        expected: 場所 1 件
   - name: _match_args
     title: 引数の条件の照合
     container: features/index/service.py
@@ -581,7 +687,7 @@ functions:
       3. `enabled` が `false` のエントリは、展開・解決・コンパイルをせずに `disabled` にする
       4. `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは `skipped`（reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）
       5. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは `skipped`（reason は `rule {展開した rule} は URL のため Read で読めない`）
-      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
+      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args`・`optional_args` は `json.loads` で読んだ辞書）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
       7. 残りは、展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋めた `IndexEntry` を持つ `effective` にする
     exceptions:
       - name: IndexReadError
@@ -814,3 +920,35 @@ functions:
         condition: '`"tags"`・`{"tags": ["a"]}`・`{"and": "x"}` と `tags`（パラメータ展開）'
         mock: なし
         expected: 空
+  - name: _json_equal
+    title: JSON の値の比較
+    container: features/index/service.py
+    usecase: ルールを読んだことが記録される
+    summary: 2 つの JSON の値が等しいかを返す（`match_read_tool` が使う）
+    kind: 関数
+    scope: internal
+    args:
+      - name: written
+        type: Any
+        required: true
+        passing: positional
+        description: '`read_tool.args` の値'
+      - name: actual
+        type: Any
+        required: true
+        passing: positional
+        description: 呼び出しの引数の値
+    returns:
+      type: bool
+      description: 等しければ True
+    process: |-
+      1. 真偽値は真偽値とだけ、数値は数値（真偽値を除く）とだけ、文字列・null は同じ型とだけ `==` で比べる
+      2. オブジェクトは同じキーの集合を持ち、キーごとに等しいときに等しい（キーの順は問わない）
+      3. 配列は同じ長さで、要素が順に等しいときに等しい
+    unit_tests:
+      - name: test_json_equal
+        case: 正常
+        summary: 型を区別して入れ子まで比べる
+        condition: '`{"a": [1, {"b": true}], "c": 2}` と、キーの順だけが違う値・配列の順を変えた値・`true` を `1` にした値'
+        mock: なし
+        expected: 1 つ目は True、2 つ目と 3 つ目は False

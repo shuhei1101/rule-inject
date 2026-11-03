@@ -28,6 +28,8 @@ class RuleEntry(BaseModel):
     args: dict[str, list[str]]
     on: list[Operation]
     read_by: list[dict[str, Any]]
+    # 索引に書いたままの `read_tool`。書かないエントリは None
+    read_tool: dict[str, Any] | None = None
 
 
 class IndexIssue(BaseModel):

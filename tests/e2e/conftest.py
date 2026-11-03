@@ -85,6 +85,46 @@ if __name__ == "__main__":
 '''
 
 
+# セクションを返す文書の MCP サーバーへ、返す文書の場所・本文と、受けた引数を書き出すファイルを渡す環境変数
+SECTION_DOCS_PATH_ENV = "E2E_SECTION_DOCS_PATH"
+SECTION_DOCS_BODY_ENV = "E2E_SECTION_DOCS_BODY"
+SECTION_DOCS_CALLS_ENV = "E2E_SECTION_DOCS_CALLS"
+# `search_docs` が受けた引数を 1 行の JSON で書き出し、文書の一部を `scope="section"` の文書として返す stdio の MCP サーバー
+SECTION_DOCS_SERVER_SCRIPT = f'''"""E2E テストが使う、文書の一部を返す stdio の MCP サーバー。"""
+
+from __future__ import annotations
+
+import json
+import os
+from typing import Any
+
+from mcp.server.mcpserver import MCPServer
+
+server = MCPServer("docs")
+
+
+@server.tool(name="search_docs")
+def search_docs(
+    source: str = "",
+    filter: dict[str, Any] | None = None,
+    view: str = "",
+    sections: list[str] | None = None,
+) -> str:
+    """受けた引数を書き出し、文書の一部を返す。"""
+    arguments = {{"source": source, "filter": filter, "view": view, "sections": sections}}
+    received = {{key: value for key, value in arguments.items() if value}}
+    with open(os.environ["{SECTION_DOCS_CALLS_ENV}"], "a", encoding="utf-8") as calls:
+        calls.write(json.dumps(received, ensure_ascii=False) + "\\n")
+    path = os.environ["{SECTION_DOCS_PATH_ENV}"]
+    body = os.environ["{SECTION_DOCS_BODY_ENV}"]
+    return f'<document path="{{path}}" scope="section">\\n{{body}}</document>'
+
+
+if __name__ == "__main__":
+    server.run()
+'''
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     """費用のかかる E2E テストを実行する `--run-e2e` を追加する。"""
     parser.addoption(
@@ -567,7 +607,7 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
     """エントリの dict を並べた索引の YAML を置き、そのパスを返す factory。"""
 
     def _make(*entries: Mapping[str, Any], to: str = "index.yaml") -> Path:
-        """各エントリの rule・paths・on・enabled・read_by から索引を組み立て、tmp_path の下の to に書く。"""
+        """各エントリの rule・paths・on・enabled・read_by・read_tool から索引を組み立て、tmp_path の下の to に書く。"""
         lines = ["rules:"]
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
@@ -591,6 +631,12 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
                         for arg_key, patterns in condition["args"].items():
                             lines.append(f"          {arg_key}:")
                             lines.extend(f'            - "{pattern}"' for pattern in patterns)
+            # 参照するツールは、`tool` と JSON の文字列の `args`・`optional_args` を単一引用符で書く
+            if entry.get("read_tool"):
+                lines.append("    read_tool:")
+                for tool_key, value in entry["read_tool"].items():
+                    text = value if tool_key == "tool" else f"'{value}'"
+                    lines.append(f"      {tool_key}: {text}")
         path = tmp_path / to
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -951,3 +997,29 @@ def tool_text() -> Callable[[CallToolResult], str]:
         return "\n".join(getattr(content, "text", "") for content in result.content)
 
     return _text
+
+
+@pytest.fixture
+def section_docs_mcp_config(tmp_path: Path) -> Callable[[Path, str], tuple[Path, Path]]:
+    """`search_docs` が受けた引数を書き出し、ルールの一部を返す stdio の MCP サーバー `docs` を置き、`--mcp-config` に渡す設定のファイルと、引数を書き出すファイルを返す factory。"""
+
+    def _make(rule: Path, section_body: str) -> tuple[Path, Path]:
+        """rule の場所と section_body を返すサーバーのスクリプトと設定を tmp_path の下に書く。"""
+        script = tmp_path / "section_docs_server.py"
+        script.write_text(SECTION_DOCS_SERVER_SCRIPT, encoding="utf-8")
+        calls = tmp_path / "section_docs_calls.jsonl"
+        config = tmp_path / "section_docs_mcp.json"
+        server = {
+            "type": "stdio",
+            "command": sys.executable,
+            "args": [str(script)],
+            "env": {
+                SECTION_DOCS_PATH_ENV: str(rule),
+                SECTION_DOCS_BODY_ENV: section_body,
+                SECTION_DOCS_CALLS_ENV: str(calls),
+            },
+        }
+        config.write_text(json.dumps({"mcpServers": {"docs": server}}), encoding="utf-8")
+        return config, calls
+
+    return _make

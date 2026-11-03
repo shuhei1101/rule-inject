@@ -133,6 +133,31 @@ flows:
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
+  - name: 正常系（参照するツールを書いたエントリがある）
+    summary: '`read_tool` を書いたエントリは索引に書いたままの値を、書かないエントリは `None` を返す'
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
+      - name: 索引
+        description: '`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を書いたエントリと、書かないエントリを 1 つずつ'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as list_rules
+        participant IDX as 索引
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: エントリ
+        IF-->>C: entries
+      ```
+    expected:
+      - '1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が書いた JSON の文字列のまま'
+      - 2 つ目のエントリの `read_tool` が `None`
+    test: test_normal_when_entry_has_read_tool
 lead: プロジェクトの直下を受け、フックがそのプロジェクトで読む索引と、効いているエントリを返す。読めない索引・読み飛ばしたエントリ・無効のエントリも理由とともに返す。
 identifier: list_rules
 idempotent: true
@@ -219,6 +244,10 @@ response:
   - name: entries[].read_by
     type: list[dict]
     description: 既読にする呼び出し（`tools`・`args`）
+  - name: entries[].read_tool
+    type: dict[str, Any] | None
+    description: ルールを参照する MCP のツール（`tool`・`args`・`optional_args`。索引に書いたまま）
+    notes: エントリが `read_tool` を書かないときは `None`
   - name: unreadable_indexes[].index
     type: str
     description: 読めない索引の場所

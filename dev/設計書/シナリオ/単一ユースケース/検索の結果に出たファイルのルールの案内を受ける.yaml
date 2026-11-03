@@ -122,6 +122,47 @@ scenarios:
       - '`claude -p` の結果の `permission_denials` が空'
       - この実行で増えたセッションの記録（transcript）に、検索結果の案内の文面が載っていない
     test: test_normal_when_already_guided
+  - name: 正常シナリオ（参照するツールを添えて案内する）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 検索されるファイル
+        description: 検索で当たる文字列を含むファイルを 1 つ置く
+      - name: 索引
+        description: 正常シナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と引数を記載した YAML
+        notes: 読む操作を必須に含めない
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: 正常シナリオと同じ（プロジェクトのフォルダを Grep で検索し、当たったファイルの名前だけを回答する）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>CC: Grep（フォルダ）を実行する
+        CC->>P: Grep の入力と結果
+        P->>P: 結果から実在するファイルの絶対パスを拾う
+        P->>IDX: 拾ったパスと読む操作に当たるエントリを引く
+        IDX-->>P: ルールの場所・参照するツールと引数
+        P->>ST: そのセッションの既読を引く
+        ST-->>P: 未読
+        P->>GD: そのセッションの案内済みを引く
+        GD-->>P: 未案内
+        P->>GD: ルールの場所を追加する
+        P-->>CC: 参照するツールと引数・ルールの場所と、読むかは任意であることをコンテキストへ載せる
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - セッションの記録（transcript）の検索結果の案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
+      - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
+    test: test_normal_with_read_tool
 lead: Claude Code が Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）を呼んだ直後に、`PostToolUse` フックが結果に出た実在するファイルに当たる、未読で未案内のルールを止めずに案内する。読むかは任意と伝える。
 issue: 16
 primary_actor: Claude Code のセッション

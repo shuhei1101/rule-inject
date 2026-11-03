@@ -273,6 +273,36 @@ scenarios:
       - 応答に、`rule` の場所にファイルが無いエントリが載っている
       - ツールはエラーを返さない
     test: test_error_when_dev_docs_unreachable
+  - name: 正常シナリオ（参照するツールの記載がSchemaに違反する）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが起動した常駐の MCP サーバーを、MCP の Python SDK のクライアントで呼ぶ）
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: 'ルールを参照する MCP のツールの名前と、引数に空のオブジェクトの JSON（`{}`）を記載したエントリを 1 つ持つ YAML'
+        notes: 他のキーは索引の書式どおりにする。フックは読めるが、JSON Schema は引数のオブジェクトにキーを 1 つ以上求める
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+        participant SC as 索引の JSON Schema
+
+        CL->>SV: チェック（プロジェクトの直下）
+        SV->>CF: プロジェクトに当たる索引を引く
+        CF-->>SV: 索引の場所
+        SV->>IDX: フックと同じ読み取りで読む
+        IDX-->>SV: 読めた
+        SV->>SC: 索引を照らす
+        SC-->>SV: 参照するツールの引数が空
+        SV-->>CL: 索引ごとの違反
+    expected:
+      - 応答のその索引の違反に、そのエントリの参照するツールの引数（`rules[0].read_tool.args`）の位置と理由が載っている
+      - 応答のその索引に、フックが読めない理由が載っていない
+    test: test_normal_when_read_tool_violates_schema
 lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
 issue: 58
 primary_actor: Claude Code のセッション

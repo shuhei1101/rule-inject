@@ -206,6 +206,38 @@ scenarios:
       - ツールの結果がエラーで、エントリの位置が無い旨と索引のエントリの数が載っている
       - 索引のファイルが編集の前のバイト列のまま
     test: test_error_when_entry_not_found
+  - name: 正常シナリオ（参照するツールを記載する）
+    setup:
+      - name: Mock
+        description: エントリを新規作成するシナリオと同じ（テストが起動した常駐の MCP サーバーを、MCP の Python SDK のクライアントで呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するシナリオと同じ
+      - name: 索引
+        description: '`read_by` を持つエントリを 1 つ持つ YAML'
+        notes: 編集の前の内容を控え、差分を比べる
+      - name: ルールの本文
+        description: エントリが指すルールの Markdown を置く
+      - name: 引数
+        description: 索引の場所と、既存のエントリの位置と、ルールを参照する MCP のツールと引数（`sections` を含む）を追加したエントリを渡す
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as 設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 編集（索引の場所・エントリの位置・参照するツールと引数を追加したエントリ）
+        SV->>CF: 索引の場所が設定ファイルで読む索引かを引く
+        CF-->>SV: 読む索引
+        SV->>IDX: 索引を読む
+        IDX-->>SV: 書式つきの内容
+        SV->>SV: エントリを置き換え、書いた後の索引をチェックする
+        SV->>IDX: 書き込む
+        SV-->>CL: 書き込んだエントリの位置
+    expected:
+      - 編集の前との差分が、参照するツールと引数の行だけで、`read_by` の後ろに並んでいる
+      - 索引をフックと同じ読み取りで読むと、そのエントリが参照するツールと引数を持って読める
+    test: test_normal_when_read_tool_written
 lead: Claude Code が常駐の MCP サーバーの編集のツールで、設定ファイルで読む索引のエントリを新規作成・編集・削除する。書いた後の索引がチェックに通らないときは書き込まない。
 issue: 58
 primary_actor: Claude Code のセッション

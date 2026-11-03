@@ -239,8 +239,9 @@ def make_entry() -> Callable[..., Any]:
         args: Mapping[str, Sequence[str]] | None = None,
         on: Sequence[Operation] = ("read", "write", "mcp"),
         read_by: Sequence[Mapping[str, Any]] = (),
+        read_tool: Any = None,
     ) -> Any:
-        """解決後の場所と当てる条件から IndexEntry を作る。"""
+        """解決後の場所と当てる条件から IndexEntry を作る（read_tool は ReadTool か None）。"""
         from rule_inject.features.index.service import REGEX_PREFIX
         from rule_inject.features.index.types import (
             ArgCondition,
@@ -276,6 +277,7 @@ def make_entry() -> Callable[..., Any]:
                 )
                 for condition in read_by
             ),
+            read_tool=read_tool,
         )
 
     return _make

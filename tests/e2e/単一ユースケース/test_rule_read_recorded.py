@@ -174,3 +174,45 @@ def test_normal_when_mcp_result_not_full(
     # 検証
     assert record_locations(run.session_id) == []
     assert record_history(run.session_id) == []
+
+
+# セクションを 2 つ持つルールの本文と、そのうち `命名` のセクション
+SECTIONED_BODY = "# Python の規約\n\n## 命名\n\n小文字で書く\n\n## 例外\n\n握りつぶさない\n"
+NAMING_SECTION = "## 命名\n\n小文字で書く\n"
+
+
+def test_normal_when_read_by_guided_tool(
+    make_rule: Callable[..., Path],
+    make_index: Callable[..., Path],
+    configure_index: Callable[[Path | str], None],
+    section_docs_mcp_config: Callable[[Path, str], tuple[Path, Path]],
+    run_claude: Callable[..., Any],
+    record_locations: Callable[[str], list[str]],
+    record_history: Callable[[str], list[dict[str, Any]]],
+) -> None:
+    """索引に記載した MCP のツールと引数でセクションだけを読んだルールの場所が、既読の記録と既読の履歴に載る（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("python.md", SECTIONED_BODY)
+    arguments = (
+        '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+    )
+    configure_index(
+        make_index({"rule": str(rule), "read_tool": {"tool": SEARCH_TOOL, "args": arguments}})
+    )
+    mcp_config, _ = section_docs_mcp_config(rule, NAMING_SECTION)
+    prompt = (
+        "MCP のツール search_docs を、filter に "
+        '{"field": "id", "op": "eq", "values": ["python"]}、sections に ["命名"] を渡して 1 回だけ呼んでください。'
+        "他のことはしないでください。"
+    )
+    # 実行
+    run = run_claude(prompt, allow=[SEARCH_TOOL], deny=["Read", "Bash"], mcp_config=mcp_config)
+    # 検証
+    recorded = record_locations(run.session_id)
+    assert len(recorded) == 1
+    assert recorded[0].startswith(f"{rule}\tsha256:")
+    history = record_history(run.session_id)
+    assert len(history) == 1
+    assert history[0]["method"] == "mcp"
+    assert history[0]["tool"] == SEARCH_TOOL
+    assert history[0]["location"] == str(rule)

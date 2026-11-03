@@ -144,3 +144,32 @@ def test_error_when_settings_unreadable(
     assert result.is_error is True
     assert config in text_of(result)
     assert "foo" in text_of(result)
+
+
+def test_normal_when_entry_has_read_tool(
+    tmp_path: Path,
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    running_server: Callable[..., Any],
+) -> None:
+    """`read_tool` を書いたエントリは索引に書いたままの値を、書かないエントリは None を返す（正常系）。"""
+    # 準備
+    arguments = (
+        '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+    )
+    index = make_index(
+        "rules:\n"
+        f"  - rule: {tmp_path}/rules/a.md\n"
+        "    read_tool:\n"
+        "      tool: mcp__docs__search_docs\n"
+        f"      args: '{arguments}'\n"
+        f"  - rule: {tmp_path}/rules/b.md\n",
+        "project/rules.yaml",
+    )
+    server = running_server(index)
+    # 実行
+    result = server.call("list_rules", project_dir=str(project_dir), format="json")
+    # 検証
+    entries = result.structured_content["entries"]
+    assert entries[0]["read_tool"] == {"tool": "mcp__docs__search_docs", "args": arguments}
+    assert entries[1]["read_tool"] is None

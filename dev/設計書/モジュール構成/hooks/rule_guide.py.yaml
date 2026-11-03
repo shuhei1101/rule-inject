@@ -45,8 +45,8 @@ functions:
     process: |-
       1. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
       2. `load_indexes(settings.indexes, env)` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
-      3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）
-      4. 当たったルールから、`read_record` の既読の行で `current_read_locations` が返す場所を除く（本文が変わったルールは未読のまま残る）。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない
+      3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）。パスごとの `match_path` の結果は `merge_matched` でルールの場所ごとに 1 件へまとめる（`read_tools` も合わせる）
+      4. 当たったルールから、`read_record` の既読の行で `current_read_locations` が返す場所を除く（本文が変わったルールは未読のまま残る）。記録が読めなければログ（`read_record`）と知らせの文に回し、止めない（`dataclasses.replace(rule, blocking=False)` で `read_tools` は保つ）
       5. 止めるルールがあれば deny と `build_guidance` を返す（案内済みにはしない）
       6. 止めるルールが無ければ、`read_guided` の案内済みを除く。読めなければ未案内として扱い、ログ（`read_record`）と知らせの文に回す
       7. 残ったルールを `build_guidance` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
@@ -130,3 +130,21 @@ functions:
         condition: '`RULE_INJECT_CONFIG` が知らないキーを持つ設定ファイルを指す。`XDG_STATE_HOME` は一時フォルダ。Write'
         mock: なし
         expected: deny を出さず、additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由・ログの場所。`{XDG_STATE_HOME}/rule-inject/logs` のログに `read_settings` が 1 行
+      - name: test_handle_when_read_tool
+        case: 正常
+        summary: 参照するツールを添えて止める
+        condition: '`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` を持つエントリと Write、既読なし'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: 'permissionDecision が deny、理由のパスの次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
+      - name: test_handle_when_read_tools_merged
+        case: 正常
+        summary: 複数のパスに当たった同じルールの参照するツールをまとめる
+        condition: '`cat a.py b.py`（どちらも実在）、`**/a.py` に当たり `read_tool` A を持つエントリと `**/b.py` に当たり `read_tool` B を持つエントリが同じルールを指す。`on: [read]`'
+        mock: なし
+        expected: deny の理由にルールの場所が 1 行、その下に A・B の `ツール:` の行
+      - name: test_handle_when_read_tool_invalid
+        case: 正常
+        summary: 書式の誤った `read_tool` の索引は読めない索引として知らせる
+        condition: '`read_tool` が `tool` を持たないエントリだけの索引と Write'
+        mock: なし
+        expected: deny を出さず、additionalContext に索引の場所と理由、ログに `read_index`

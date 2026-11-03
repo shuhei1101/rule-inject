@@ -24,7 +24,17 @@ from rule_inject.shared.errors import IndexEditError, describe
 RULES_KEY = "rules"
 COMMENT_MARK = "#"
 # 新規作成するエントリにキーを書く順（ここに無いキーは渡された順で後ろに置く）
-ENTRY_KEY_ORDER = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "enabled")
+ENTRY_KEY_ORDER = (
+    "rule",
+    "paths",
+    "exclude",
+    "tools",
+    "args",
+    "on",
+    "read_by",
+    "read_tool",
+    "enabled",
+)
 # 改行
 LF = "\n"
 CRLF = "\r\n"
@@ -159,6 +169,17 @@ def _replace_file(index_path: str, text: str) -> None:
         raise IndexEditError(path=index_path, reason=describe(exc)) from exc
 
 
+def _insert_position(target: CommentedMap, key: str) -> int:
+    """既にあるエントリへ無いキーを書く位置を返す（`ENTRY_KEY_ORDER` でそのキーより前のキーのうち最後のものの後ろ。並びに無いキーは末尾）。"""
+    if key not in ENTRY_KEY_ORDER:
+        return len(target)
+    earlier = ENTRY_KEY_ORDER[: ENTRY_KEY_ORDER.index(key)]
+    keys = list(target.keys())
+    positions = [index for index, existing in enumerate(keys) if existing in earlier]
+    # 前に来るキーが 1 つも無ければ、`ENTRY_KEY_ORDER` の後ろのキーより前（先頭）に書く
+    return positions[-1] + 1 if positions else 0
+
+
 def _new_entry(entry: Mapping[str, Any]) -> CommentedMap:
     """新規作成するエントリを、キーの並びと値の書式を決めて作る。"""
     mapping = CommentedMap()
@@ -254,9 +275,12 @@ def write_entry(
             _check_target(index_path, before, rules, position, expected_rev or "")
             written_position = position
             target = rules[position]
-            # 渡されたキーは、あればその場で、無ければ末尾に書く。`remove_keys` のキーは削除する
+            # 渡されたキーは、あればその場で、無ければ `ENTRY_KEY_ORDER` の並びの位置に書く。`remove_keys` のキーは削除する
             for key, value in entry.items():
-                target[key] = to_yaml_value(key, value)
+                if key in target:
+                    target[key] = to_yaml_value(key, value)
+                else:
+                    target.insert(_insert_position(target, key), key, to_yaml_value(key, value))
             for key in remove_keys:
                 target.pop(key, None)
             before_range = _entry_line_range(before_lines, before_data, position)

@@ -1,0 +1,25 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 153 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  2%]
+tests/integration/plugin/test_record_read.py ...................         [ 15%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 33%]
+.........                                                                [ 39%]
+tests/integration/plugin/test_search_guide.py ..............             [ 48%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 54%]
+tests/integration/plugin/test_work_rules.py ...                          [ 56%]
+tests/integration/server/test_check_indexes.py .................         [ 67%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 74%]
+tests/integration/server/test_delete_read_records.py ...                 [ 76%]
+tests/integration/server/test_get_read_records.py .....                  [ 79%]
+tests/integration/server/test_list_rules.py ......                       [ 83%]
+tests/integration/server/test_search_rules.py .....                      [ 86%]
+tests/integration/server/test_server_start.py .....                      [ 90%]
+tests/integration/server/test_write_index_entry.py ...............       [100%]
+
+======================= 153 passed in 297.53s (0:04:57) ========================

@@ -22,6 +22,7 @@ from rule_inject.features.index.types import (
     MatchPattern,
     Operation,
     ReadByCondition,
+    ReadTool,
 )
 from rule_inject.shared.errors import IndexReadError, describe
 from rule_inject.shared.paths import resolve_location
@@ -72,6 +73,18 @@ def _compile_arg_conditions(raw_args: Mapping[str, Sequence[str]]) -> tuple[ArgC
     )
 
 
+def _build_read_tool(raw: Mapping[str, str] | None) -> ReadTool | None:
+    """読み取った `read_tool`（JSON の文字列のまま）を、引数を読んだ ReadTool にする。"""
+    if raw is None:
+        return None
+    # `parse_index` が JSON のオブジェクトとして読めることを確かめ済み
+    return ReadTool(
+        tool=raw["tool"],
+        args=json.loads(raw.get("args", "{}")),
+        optional_args=json.loads(raw.get("optional_args", "{}")),
+    )
+
+
 def _build_entry(
     raw: Mapping[str, Any], location: str, fallback_on: frozenset[Operation]
 ) -> IndexEntry:
@@ -90,6 +103,7 @@ def _build_entry(
             )
             for item in raw.get("read_by", ())
         ),
+        read_tool=_build_read_tool(raw.get("read_tool")),
     )
 
 
@@ -234,18 +248,49 @@ def _glob_match(pattern: str, path: str) -> bool:
     return re.fullmatch(_translate(pattern), path) is not None
 
 
-def _merge(entries: Sequence[IndexEntry], operation: Operation) -> list[MatchedRule]:
-    """同じルールの場所のエントリを 1 件にまとめ、どれかが止めるなら止める。"""
-    blocking_by_location: dict[str, bool] = {}
-    for entry in entries:
-        blocking = operation in entry.on
-        blocking_by_location[entry.location] = (
-            blocking_by_location.get(entry.location, False) or blocking
+def merge_matched(rules: Sequence[MatchedRule]) -> list[MatchedRule]:
+    """照合の結果をルールの場所ごとに 1 件へまとめる（どれかが止めるなら止め、参照するツールは重なりを落としてつなぐ）。"""
+    merged: dict[str, MatchedRule] = {}
+    for rule in rules:
+        current = merged.get(rule.location)
+        # 初めて出た場所はそのまま置く
+        if current is None:
+            merged[rule.location] = MatchedRule(
+                location=rule.location,
+                blocking=rule.blocking,
+                read_tools=_unique_read_tools(rule.read_tools),
+            )
+            continue
+        # 既に出た場所は、止めるかを OR で合わせ、参照するツールを後ろにつなぐ
+        merged[rule.location] = MatchedRule(
+            location=rule.location,
+            blocking=current.blocking or rule.blocking,
+            read_tools=_unique_read_tools((*current.read_tools, *rule.read_tools)),
         )
-    return [
-        MatchedRule(location=location, blocking=blocking)
-        for location, blocking in blocking_by_location.items()
-    ]
+    return list(merged.values())
+
+
+def _unique_read_tools(read_tools: Sequence[ReadTool]) -> tuple[ReadTool, ...]:
+    """参照するツールを、同じ値（`tool`・`args`・`optional_args` が等しい）の 2 つ目以降を落として返す。"""
+    unique: list[ReadTool] = []
+    for read_tool in read_tools:
+        if read_tool not in unique:
+            unique.append(read_tool)
+    return tuple(unique)
+
+
+def _merge(entries: Sequence[IndexEntry], operation: Operation) -> list[MatchedRule]:
+    """エントリを照合の結果にし、同じルールの場所を 1 件にまとめる。"""
+    return merge_matched(
+        [
+            MatchedRule(
+                location=entry.location,
+                blocking=operation in entry.on,
+                read_tools=(entry.read_tool,) if entry.read_tool is not None else (),
+            )
+            for entry in entries
+        ]
+    )
 
 
 def _fnmatch_glob(pattern: str, value: str) -> bool:
@@ -382,6 +427,53 @@ def match_read_by(
             and _match_args(condition.args, tool_input)
             for condition in entry.read_by
         )
+    ]
+    return list(dict.fromkeys(locations))
+
+
+def _json_equal(written: Any, actual: Any) -> bool:
+    """2 つの JSON の値が等しいかを返す（真偽値と数値を区別し、オブジェクトはキーの順を問わず、配列は順まで比べる）。"""
+    # 真偽値は真偽値とだけ比べる（Python では True == 1 のため型で分ける）
+    if isinstance(written, bool) or isinstance(actual, bool):
+        return type(written) is type(actual) and written == actual
+    # オブジェクトは同じキーの集合を持ち、キーごとに等しいとき
+    if isinstance(written, Mapping):
+        return (
+            isinstance(actual, Mapping)
+            and written.keys() == actual.keys()
+            and all(_json_equal(value, actual[key]) for key, value in written.items())
+        )
+    # 配列は同じ長さで、要素が順に等しいとき
+    if isinstance(written, list):
+        return (
+            isinstance(actual, list)
+            and len(written) == len(actual)
+            and all(_json_equal(left, right) for left, right in zip(written, actual, strict=True))
+        )
+    # 数値は数値と、文字列・null は同じ型とだけ比べる
+    if isinstance(written, int | float):
+        return isinstance(actual, int | float) and written == actual
+    return type(written) is type(actual) and written == actual
+
+
+def _read_tool_matches(read_tool: ReadTool, tool_name: str, tool_input: Mapping[str, Any]) -> bool:
+    """呼び出しが `read_tool` に一致するか（`args` の全てのキーが最上位にあり値が等しい。`optional_args` は見ない）。"""
+    return read_tool.tool == tool_name and all(
+        key in tool_input and _json_equal(value, tool_input[key])
+        for key, value in read_tool.args.items()
+    )
+
+
+def match_read_tool(
+    entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
+) -> list[str]:
+    """MCP のツールの呼び出しが `read_tool` に一致するエントリのルールの場所を、索引の順に重なりを落として返す。"""
+    # 案内用の tools・args と read_by は見ず、read_tool に一致するエントリだけを選ぶ
+    locations = [
+        entry.location
+        for entry in entries
+        if entry.read_tool is not None
+        and _read_tool_matches(entry.read_tool, tool_name, tool_input)
     ]
     return list(dict.fromkeys(locations))
 

@@ -1,0 +1,22 @@
+前提確認: ok
+起票する: shuhei1101/ai-monitor「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:rules.yaml）
+起票する: shuhei1101/aituber「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:rules.yaml）
+起票する: shuhei1101/gui-support「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:rules.yaml）
+起票する: shuhei1101/voice-paste「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:docs/rules.yaml）
+shuhei1101/text-factory の Issue の起票: skipped（索引が無い）
+shuhei1101/image-factory の Issue の起票: skipped（索引が無い）
+shuhei1101/sound-factory の Issue の起票: skipped（索引が無い）
+shuhei1101/video-factory の Issue の起票: skipped（索引が無い）
+shuhei1101/asset-library の Issue の起票: skipped（索引が無い）
+起票する: shuhei1101/mindstella「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:docs/rules.yaml）
+起票する: shuhei1101/observability「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:docs/rules.yaml）
+起票する: shuhei1101/rule-inject「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:docs/rules.yaml）
+起票する: shuhei1101/shuhdev-gateway「索引のエントリに参照するツール（read_tool）を記載する」（索引 develop:rules.yaml）
+shuhei1101/ai-monitor の Issue の起票: changed
+shuhei1101/aituber の Issue の起票: changed
+shuhei1101/gui-support の Issue の起票: changed
+shuhei1101/voice-paste の Issue の起票: changed
+shuhei1101/mindstella の Issue の起票: changed
+shuhei1101/observability の Issue の起票: changed
+shuhei1101/rule-inject の Issue の起票: changed
+shuhei1101/shuhdev-gateway の Issue の起票: changed

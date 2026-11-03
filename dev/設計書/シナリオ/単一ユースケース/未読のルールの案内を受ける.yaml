@@ -31,7 +31,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面に、ルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている
+      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_blocked
   - name: 正常シナリオ（既読のため案内しない）
@@ -410,7 +410,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面に、ルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている
+      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_rule_changed_after_read
   - name: 異常シナリオ（設定ファイルが読めない）
@@ -482,6 +482,81 @@ scenarios:
       - この実行のセッションの記録（transcript）に、ルールの場所を載せた案内の文面が無い
       - この実行のセッションの記録（transcript）に、読めなかった索引の場所と理由が載っていない
     test: test_normal_when_entry_disabled
+  - name: 正常シナリオ（参照するツールを添えて止めて案内する）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 止めて案内するシナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と引数を記載した YAML
+        notes: 引数は、文面に載ったかで見分けられる値にする
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        notes: 対象のファイルはまだ無いパス
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: Write（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所・参照するツールと引数（書く操作が必須）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H-->>CC: 操作を止め、参照するツールと引数を先に、Read で読むルールの場所を後に案内する
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` に Write が載っている'
+      - 止めた理由の文面のルールのパスの行の下に、索引に記載したツールの名前と引数の行が載っている
+      - 止めた理由の文面に、ツールが使えないときはパスを Read で参照する旨が載っている
+      - 対象のファイルが作られていない
+    test: test_normal_when_blocked_with_read_tool
+  - name: 正常シナリオ（参照するツールを添えて止めずに案内する）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに置いたルールの Markdown
+      - name: 索引
+        description: 止めずに案内するシナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と引数を記載した YAML
+        notes: 読む操作は必須に含めない
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、既にある対象のファイルを Read で読むよう指示する
+        notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を置く
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+        participant FS as 対象のファイル
+
+        CC->>H: Read（対象のパス）
+        H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
+        IDX-->>H: ルールの場所・参照するツールと引数（読む操作は必須でない）
+        H->>ST: そのセッションの既読を引く
+        ST-->>H: 未読
+        H->>GD: そのセッションの案内済みを引く
+        GD-->>H: 未案内
+        H->>GD: ルールの場所を追加する
+        H-->>CC: 操作を止めず、参照するツールと引数・ルールの場所をコンテキストへ載せる
+        CC->>FS: 読む
+      ```
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - セッションの記録（transcript）の操作を止めない案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
+      - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
+    test: test_normal_when_not_blocked_with_read_tool
 lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
 issue: 2
 primary_actor: Claude Code のセッション

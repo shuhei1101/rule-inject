@@ -39,6 +39,10 @@ $defs:
     minProperties: 1
     additionalProperties:
       $ref: '#/$defs/patterns'
+  json_object_text:
+    type: string
+    pattern: ^\s*\{\s*"
+    description: キーを 1 つ以上持つ JSON のオブジェクトの文字列（空のオブジェクト `{}` は通さない）。
   entry:
     type: object
     required:
@@ -89,6 +93,27 @@ $defs:
               $ref: '#/$defs/arguments'
               title: 既読にする引数
               description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。
+      read_tool:
+        type: object
+        required:
+        - tool
+        additionalProperties: false
+        title: 参照するツール
+        description: ルールを参照する MCP のツールと引数。案内に載せ、一致する呼び出しで既読にする。
+        properties:
+          tool:
+            type: string
+            pattern: ^mcp__
+            title: 参照するツール名
+            description: MCP のツールの完全名。パターンとしては読まない。
+          args:
+            $ref: '#/$defs/json_object_text'
+            title: 参照する引数
+            description: 既読の判定に使う引数を、JSON のオブジェクトで書いた文字列。
+          optional_args:
+            $ref: '#/$defs/json_object_text'
+            title: 省略してよい引数
+            description: 案内に「省略可」として載せ、既読の判定には使わない引数を、JSON のオブジェクトで書いた文字列。
       enabled:
         type: boolean
         title: 有効

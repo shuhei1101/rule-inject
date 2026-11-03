@@ -243,3 +243,45 @@ def test_error_when_entry_not_found(
     assert "位置 1" in tool_text(result)
     assert "1 件" in tool_text(result)
     assert index.read_bytes() == before
+
+
+def test_normal_when_read_tool_written(
+    e2e_project: Path,
+    make_text_file: Callable[..., Path],
+    make_rule: Callable[..., Path],
+    serve: Callable[..., Any],
+) -> None:
+    """`read_by` を持つエントリに参照するツールと引数を書くと、その行だけが `read_by` の後ろに追加され、フックが読める（正常シナリオ）。"""
+    # 準備
+    rule = make_rule("a.md", "# a\n")
+    before = f'rules:\n  - rule: {rule}\n    read_by:\n      - tools: ["mcp__docs__get_doc"]\n'
+    index = make_text_file("rules.yaml", before)
+    server = serve(index)
+    expected_rev = _revs(server, e2e_project)[0]
+    arguments = '{"filter": {"field": "id", "op": "eq", "values": ["a"]}, "sections": ["命名"]}'
+    # 実行
+    server.call(
+        "write_index_entry",
+        project_dir=str(e2e_project),
+        index=str(index),
+        position=0,
+        expected_rev=expected_rev,
+        entry={"read_tool": {"tool": "mcp__docs__search_docs", "args": arguments}},
+    )
+    # 検証
+    after_lines = index.read_text(encoding="utf-8").splitlines()
+    assert after_lines[: len(before.splitlines())] == before.splitlines()
+    assert after_lines[len(before.splitlines()) :] == [
+        "    read_tool:",
+        "      tool: mcp__docs__search_docs",
+        f"      args: '{arguments}'",
+    ]
+    loaded = load_indexes([str(index)], {})
+    assert loaded.failures == ()
+    read_tool = loaded.entries[0].read_tool
+    assert read_tool is not None
+    assert read_tool.tool == "mcp__docs__search_docs"
+    assert read_tool.args == {
+        "filter": {"field": "id", "op": "eq", "values": ["a"]},
+        "sections": ["命名"],
+    }

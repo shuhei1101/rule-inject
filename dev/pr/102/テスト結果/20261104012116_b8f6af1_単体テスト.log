@@ -1,0 +1,36 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 369 items / 3 errors
+
+==================================== ERRORS ====================================
+__ ERROR collecting tests/unit/rule_inject/features/guidance/test_service.py ___
+ImportError while importing test module '/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance/tests/unit/rule_inject/features/guidance/test_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/features/guidance/test_service.py:11: in <module>
+    from rule_inject.features.guidance.service import (
+E   ImportError: cannot import name 'READ_NOTE' from 'rule_inject.features.guidance.service' (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance/src/rule_inject/features/guidance/service.py)
+____ ERROR collecting tests/unit/rule_inject/features/index/test_service.py ____
+ImportError while importing test module '/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance/tests/unit/rule_inject/features/index/test_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/features/index/test_service.py:12: in <module>
+    from rule_inject.features.index import (
+E   ImportError: cannot import name 'match_read_tool' from 'rule_inject.features.index' (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance/src/rule_inject/features/index/__init__.py)
+______ ERROR collecting tests/unit/rule_inject/hooks/test_search_guide.py ______
+ImportError while importing test module '/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance/tests/unit/rule_inject/hooks/test_search_guide.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_search_guide.py:12: in <module>
+    from rule_inject.features.guidance.service import READ_TOOL_NOTE, SEARCH_HEADER
+E   ImportError: cannot import name 'READ_TOOL_NOTE' from 'rule_inject.features.guidance.service' (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-guidance-read-tool-guidance/src/rule_inject/features/guidance/service.py)
+=========================== short test summary info ============================
+ERROR tests/unit/rule_inject/features/guidance/test_service.py
+ERROR tests/unit/rule_inject/features/index/test_service.py
+ERROR tests/unit/rule_inject/hooks/test_search_guide.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 3 errors in 11.80s ==============================
