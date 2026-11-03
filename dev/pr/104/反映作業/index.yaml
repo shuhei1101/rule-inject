@@ -5,9 +5,9 @@
   時期: master へ入った後
   回数: 1 回限り
   可逆: true
-  疎通確認: null
-  実行: null
-  確認: null
+  疎通確認: メインのクローンへの索引の取り込み/疎通確認.py
+  実行: メインのクローンへの索引の取り込み/実行.py
+  確認: メインのクローンへの索引の取り込み/確認.py
   切り戻し: null
   失敗時: fast-forward で取り込めないときは再試行せず、git status の出力を添えて依頼元へ返す
   確認方法: /mnt/c/Users/shuhe/repo/rule-inject/rules.yaml があり、取り込んだ時刻より後の ~/.local/state/rule-inject/logs/ のログに、この場所の FileNotFoundError の行が無い
