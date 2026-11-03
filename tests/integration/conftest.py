@@ -187,7 +187,7 @@ def index_text() -> Callable[..., str]:
     """エントリの dict を並べた索引の YAML の文字列を返す factory。"""
 
     def _text(*entries: Mapping[str, Any], default_on: Sequence[str] | None = None) -> str:
-        """各エントリの rule・paths・exclude・tools・args・on・read_by・enabled から索引の文字列を組み立てる。"""
+        """各エントリの rule・paths・exclude・tools・args・on・read_by・read_tool・enabled から索引の文字列を組み立てる。"""
         lines: list[str] = []
         # 索引の既定の止める操作
         if default_on is not None:
@@ -225,6 +225,12 @@ def index_text() -> Callable[..., str]:
                         for arg_key, patterns in condition["args"].items():
                             lines.append(f"          {arg_key}:")
                             lines.extend(f'            - "{pattern}"' for pattern in patterns)
+            # 参照するツールは、`tool` と JSON の文字列の `args`・`optional_args` を単一引用符で書く
+            if entry.get("read_tool"):
+                lines.append("    read_tool:")
+                for tool_key, value in entry["read_tool"].items():
+                    text = value if tool_key == "tool" else f"'{value}'"
+                    lines.append(f"      {tool_key}: {text}")
         return "\n".join(lines) + "\n"
 
     return _text

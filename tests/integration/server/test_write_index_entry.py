@@ -433,3 +433,49 @@ def test_error_when_layout_not_kept(
     assert "5行目" in text_of(result)
     assert "手で直" in text_of(result)
     assert index.read_bytes() == before
+
+
+def test_normal_when_read_tool_written(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    running_server: Callable[..., Any],
+    list_revs: Callable[[Any], list[str]],
+) -> None:
+    """位置で指したエントリに `read_tool` を書き、`read_by` の後ろに並べる（正常系）。"""
+    # 準備
+    rule = make_index("# a\n", "rules/a.md")
+    before = (
+        "rules:\n"
+        f"  - rule: {rule}\n"
+        "    read_by:\n"
+        '      - tools: ["mcp__docs__get_doc"]\n'
+        "    enabled: true\n"
+    )
+    index = make_index(before)
+    server = running_server(index)
+    expected_rev = list_revs(server)[0]
+    arguments = (
+        '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'
+    )
+    read_tool = {"tool": "mcp__docs__search_docs", "args": arguments}
+    # 実行
+    server.call(
+        "write_index_entry",
+        project_dir=str(project_dir),
+        index=str(index),
+        position=0,
+        expected_rev=expected_rev,
+        entry={"read_tool": read_tool},
+    )
+    # 検証
+    after_lines = index.read_text(encoding="utf-8").splitlines()
+    added = [line for line in after_lines if line not in before.splitlines()]
+    assert added == [
+        "    read_tool:",
+        "      tool: mcp__docs__search_docs",
+        f"      args: '{arguments}'",
+    ]
+    assert after_lines.index("    read_tool:") > after_lines.index("    read_by:")
+    assert after_lines.index("    read_tool:") < after_lines.index("    enabled: true")
+    listed = server.call("list_rules", project_dir=str(project_dir), format="json")
+    assert listed.structured_content["entries"][0]["read_tool"] == read_tool

@@ -60,7 +60,7 @@ def test_normal_when_blocked(
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
-    assert "Read で読んでから" in output["permissionDecisionReason"]
+    assert "Read で参照してください" in output["permissionDecisionReason"]
     assert completed.returncode == 0
 
 
@@ -831,4 +831,152 @@ def test_error_when_enabled_not_boolean(
     assert "permissionDecision" not in output
     assert str(index) in output["additionalContext"]
     assert "enabled" in output["additionalContext"]
+    assert completed.returncode == 0
+
+
+READ_TOOL = {
+    "tool": "mcp__docs__search_docs",
+    "args": '{"filter": {"field": "id", "op": "eq", "values": ["python"]}}',
+    "optional_args": '{"sections": ["命名"]}',
+}
+
+
+def _lines(text: str) -> list[str]:
+    """案内文を行に分ける。"""
+    return text.splitlines()
+
+
+def test_normal_when_blocked_with_read_tool(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`read_tool` を持つエントリの未読のルールで Write を止め、パスの下にツールの名前と引数を載せる（正常系）。"""
+    # 準備
+    index = write_index(
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "read_tool": READ_TOOL}
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    lines = _lines(output["permissionDecisionReason"])
+    assert lines[lines.index(f"- {RULE}") + 1] == (
+        '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}'
+        '（省略可: {"sections": ["命名"]}）'
+    )
+    assert "そのツールで参照してください" in lines[1]
+    assert "パスを Read で参照してください" in lines[1]
+    assert completed.returncode == 0
+
+
+def test_normal_when_not_blocked_with_read_tool(
+    tmp_path: Path,
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """`read_tool` を持つエントリの未読のルールを、止めずにツールの名前と引数を添えて案内する（正常系）。"""
+    # 準備
+    index = write_index(
+        {
+            "rule": RULE,
+            "paths": ["**/*.py"],
+            "on": ["write"],
+            "read_tool": {"tool": "mcp__docs__search_docs"},
+        }
+    )
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py")},
+    )
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    lines = _lines(output["additionalContext"])
+    assert lines[lines.index(f"- {RULE}") + 1] == "  ツール: mcp__docs__search_docs {}"
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
+    assert completed.returncode == 0
+
+
+def test_normal_when_read_tool_mixed(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`read_tool` を持つルールにだけツールの行を置き、持たないルールはパスの行だけにする（正常系）。"""
+    # 準備
+    other = "/r/other.md"
+    index = write_index(
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "read_tool": READ_TOOL},
+        {"rule": other, "paths": ["**/*.py"], "on": ["write"]},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    lines = _lines(json.loads(completed.stdout)["hookSpecificOutput"]["permissionDecisionReason"])
+    assert lines[lines.index(f"- {RULE}") + 1].startswith("  ツール: ")
+    following = lines[lines.index(f"- {other}") + 1 :]
+    assert not any(line.startswith("  ツール: ") for line in following)
+
+
+def test_normal_when_read_tools_merged(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """同じルールのエントリ 3 つの `read_tool` を、同じ値は 1 つにして当たった順に並べる（正常系）。"""
+    # 準備
+    other_tool = {"tool": "mcp__docs__search_docs", "args": '{"filter": {"field": "id"}}'}
+    index = write_index(
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "read_tool": READ_TOOL},
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "read_tool": READ_TOOL},
+        {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "read_tool": other_tool},
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    lines = _lines(json.loads(completed.stdout)["hookSpecificOutput"]["permissionDecisionReason"])
+    assert lines.count(f"- {RULE}") == 1
+    start = lines.index(f"- {RULE}")
+    assert lines[start + 1 : start + 3] == [
+        '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}'
+        '（省略可: {"sections": ["命名"]}）',
+        '  ツール: mcp__docs__search_docs {"filter": {"field": "id"}}',
+    ]
+
+
+def test_error_when_read_tool_invalid(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を載せる（異常系）。"""
+    # 準備
+    index = write_index(
+        {
+            "rule": RULE,
+            "paths": ["**/*.py"],
+            "on": ["write"],
+            "read_tool": {"args": '{"filter": {"field": "id"}}'},
+        }
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert str(index) in output["additionalContext"]
+    assert "read_tool に tool がありません" in output["additionalContext"]
+    logged = read_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_index"
     assert completed.returncode == 0

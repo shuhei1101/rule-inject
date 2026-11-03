@@ -465,3 +465,44 @@ def test_normal_when_dev_docs_returns_nothing(
     assert "0 件" in content["tag_check"]["reason"]
     assert content["indexes"][0]["unused_tag_patterns"] == []
     assert [call["cwd"] for call in fake.calls()] == [str(project_dir)]
+
+
+def test_normal_when_read_tool_name_missing(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    running_server: Callable[..., Any],
+) -> None:
+    """`read_tool` が `tool` を持たないエントリを、フックが読めない索引として理由を返す（正常系）。"""
+    # 準備
+    rule = make_index("# a\n", "rules/a.md")
+    index = make_index(
+        f'rules:\n  - rule: {rule}\n    read_tool:\n      args: \'{{"filter": {{"field": "id"}}}}\'\n'
+    )
+    server = running_server(index)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    report = result.structured_content["indexes"][0]
+    assert "read_tool に tool がありません" in report["hook_error"]
+    assert report["violations"] == []
+
+
+def test_normal_when_read_tool_violates_schema(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    running_server: Callable[..., Any],
+) -> None:
+    """フックは読めるが、`read_tool.args` が空のオブジェクトのエントリの Schema の違反を返す（正常系）。"""
+    # 準備
+    rule = make_index("# a\n", "rules/a.md")
+    index = make_index(
+        f"rules:\n  - rule: {rule}\n    read_tool:\n      tool: mcp__docs__search_docs\n      args: '{{}}'\n"
+    )
+    server = running_server(index)
+    # 実行
+    result = server.call("check_indexes", project_dir=str(project_dir), format="json")
+    # 検証
+    report = result.structured_content["indexes"][0]
+    assert report["violations"][0]["location"] == "rules[0].read_tool.args"
+    assert report["violations"][0]["reason"]
+    assert report["hook_error"] is None

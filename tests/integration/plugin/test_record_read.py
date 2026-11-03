@@ -532,3 +532,93 @@ def test_normal_when_bash_entry_disabled(
     assert not (state_dir / f"{session_id}.txt").exists()
     assert not (state_dir / f"{session_id}.history.jsonl").exists()
     assert completed.returncode == 0
+
+
+SEARCH_FILTER = {"field": "id", "op": "eq", "values": ["python"]}
+
+
+@pytest.fixture
+def read_tool_index(
+    rule_file: Callable[..., Path],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+) -> tuple[Path, Path]:
+    """`read_tool`（`filter` と `sections`）を持ち `read_by` の無いエントリの索引と、そのルールのパスを返す。"""
+    rule = rule_file("python.md")
+    index = make_index(
+        index_text(
+            {
+                "rule": str(rule),
+                "read_tool": {
+                    "tool": "mcp__docs__search_docs",
+                    "args": '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}',
+                },
+            }
+        )
+    )
+    return index, rule
+
+
+def test_normal_when_read_by_read_tool_call(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    read_tool_index: tuple[Path, Path],
+    state_dir: Path,
+    session_id: str,
+    read_lines: Callable[[Path], list[str]],
+    read_history: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """`read_tool` に一致する呼び出しは、結果の文書の `scope` が `full` でなくてもルールの場所を記録する（正常系）。"""
+    # 準備
+    index, rule = read_tool_index
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input={
+            "sections": ["命名"],
+            "view": "full",
+            "filter": {"values": ["python"], "op": "eq", "field": "id"},
+        },
+        tool_response=f'<document path="{rule}" scope="section"># 規約</document>',
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert read_lines(state_dir / f"{session_id}.txt") == [f"{rule}\t{HASH_RULE}"]
+    history = read_history()
+    assert len(history) == 1
+    assert history[0]["method"] == "mcp"
+    assert history[0]["tool"] == "mcp__docs__search_docs"
+    assert history[0]["location"] == str(rule)
+    assert completed.stdout == ""
+
+
+@pytest.mark.parametrize(
+    "tool_input",
+    [
+        pytest.param({"filter": SEARCH_FILTER, "sections": ["例外"]}, id="sections_differ"),
+        pytest.param({"filter": SEARCH_FILTER}, id="sections_missing"),
+    ],
+)
+def test_normal_when_read_tool_args_unmatched(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    read_tool_index: tuple[Path, Path],
+    state_dir: Path,
+    session_id: str,
+    tool_input: dict[str, Any],
+) -> None:
+    """`read_tool` と同じツールでも、`args` のキーが無いか値が違う呼び出しでは記録しない（正常系）。"""
+    # 準備
+    index, rule = read_tool_index
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="mcp__docs__search_docs",
+        tool_input=tool_input,
+        tool_response=f'<document path="{rule}" scope="section"># 規約</document>',
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index)
+    # 検証
+    assert not (state_dir / f"{session_id}.txt").exists()
+    assert completed.stdout == ""
