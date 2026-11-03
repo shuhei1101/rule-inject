@@ -193,6 +193,41 @@ scenarios:
       - そのセッションの既読の記録に、ルールの場所が載っていない
       - そのセッションの既読の履歴に、ルールの場所を持つ行が無い
     test: test_normal_when_mcp_result_not_full
+  - name: 正常シナリオ（案内されたツールと引数で読む）
+    setup:
+      - name: Mock
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で渡す。ツール `search_docs` は、`sections` を含む引数を受けたら、ルールの本文のうちそのセクションだけを `<document path="{ルールの場所}" scope="section">` で包んで返す
+      - name: ルールの本文
+        description: ローカルに置いた、セクションを 2 つ以上持つルールの Markdown
+      - name: 索引
+        description: そのルールの場所に、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と `sections` を含む引数を記載し、`read_by` を持たないエントリを 1 つ持つ YAML
+      - name: 操作
+        description: プロンプトで、`search_docs` を索引に記載した引数で 1 回呼ぶよう指示する
+        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant DOC as 文書の MCP サーバー
+        participant P as PostToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant HS as 既読の履歴
+
+        CC->>DOC: search_docs（索引に記載した引数）
+        DOC-->>CC: document（ルールの場所・scope section）で包んだセクション
+        CC->>P: MCP のツールの名前・入力と結果
+        P->>IDX: ツール名と引数が、参照するツールと引数の記載に一致するエントリを引く
+        IDX-->>P: ルールの場所
+        P->>P: ルールの本文のハッシュを取る
+        P->>ST: そのセッションの既読に場所とハッシュを追加する
+        P->>HS: 時刻・読み方・ツール名・ルールの場所を追加する
+      ```
+    expected:
+      - そのセッションの既読の記録に、ルールの場所と、読んだ時点のルールの本文のハッシュが載っている
+      - そのセッションの既読の履歴に、読み方が `mcp` でツール名 `mcp__docs__search_docs` とルールの場所を持つ行がある
+    test: test_normal_when_read_by_guided_tool
 lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読むか、MCP のツールでルールの文書を受け取った後、`PostToolUse` フックがその場所をそのセッションの既読として記録し、既読の履歴にも残す。
 issue: 2
 primary_actor: Claude Code のセッション
