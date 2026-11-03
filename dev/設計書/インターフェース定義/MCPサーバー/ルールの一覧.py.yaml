@@ -141,7 +141,7 @@ flows:
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
-        description: '`read_tool: {tool: mcp__docs__search_docs, args: {id: python, sections: [命名]}}` を書いたエントリと、書かないエントリを 1 つずつ'
+        description: '`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を書いたエントリと、書かないエントリを 1 つずつ'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -155,7 +155,7 @@ flows:
         IF-->>C: entries
       ```
     expected:
-      - '1 つ目のエントリの `read_tool` が `{"tool": "mcp__docs__search_docs", "args": {"id": "python", "sections": ["命名"]}}`'
+      - '1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が書いた JSON の文字列のまま'
       - 2 つ目のエントリの `read_tool` が `None`
     test: test_normal_when_entry_has_read_tool
 lead: プロジェクトの直下を受け、フックがそのプロジェクトで読む索引と、効いているエントリを返す。読めない索引・読み飛ばしたエントリ・無効のエントリも理由とともに返す。

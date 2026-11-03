@@ -66,7 +66,7 @@ functions:
       1. 文字列のリストは 1 行のフロー形式（`fa.set_flow_style()`）の `CommentedSeq` にする（`paths`・`exclude`・`tools`・`on`）
       2. `args` のマップはブロックの `CommentedMap` にし、各値を手順 1 のフロー形式にする
       3. `read_by` のリストはブロックの `CommentedSeq` にし、各要素のマップに手順 1・2 を当てる
-      4. `read_tool` のマップはブロックの `CommentedMap` にし、`tool`・`args` の順に並べ、`args` に手順 2 を当てる（値が文字列のキーはそのまま、リストのキーは 1 行のフロー形式）
+      4. `read_tool` のマップはブロックの `CommentedMap` にし、`tool`・`args` の順に並べ、`args` の文字列は単一引用符の文字列（`SingleQuotedScalarString`）にする
       5. それ以外（`rule` の文字列・`enabled` の真偽値・型の合わない値）はそのまま返す。型の合わない値は書き込みのチェックが JSON Schema の違反として断る
     unit_tests:
       - name: test_to_yaml_value
@@ -78,6 +78,6 @@ functions:
       - name: test_to_yaml_value_when_read_tool
         case: 正常
         summary: '`read_tool` をブロックのマップで書き出す'
-        condition: '`read_tool: {args: {sections: ["命名"], id: "python"}, tool: "mcp__docs__search_docs"}` を新しいエントリとして書き出す'
+        condition: '`read_tool: {args: <JSON の文字列 {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}>, tool: "mcp__docs__search_docs"}` を新しいエントリとして書き出す'
         mock: なし
-        expected: '`read_tool` の下に `tool`・`args` の順でブロックのマップ、`args` の `sections` は 1 行の `[命名]`、`id` は文字列。書き出した内容を `parse_index` が読める'
+        expected: '`read_tool` の下に `tool`・`args` の順でブロックのマップ、`args` は単一引用符で囲んだ 1 行の文字列。書き出した内容を `parse_index` が読める'

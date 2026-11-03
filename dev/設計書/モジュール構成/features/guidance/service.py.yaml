@@ -95,9 +95,9 @@ functions:
       - name: test_build_guidance_when_read_tools
         case: 正常
         summary: 参照するツールの行と添え書きを載せる
-        condition: '`read_tools` に `mcp__docs__search_docs` と `(("id", "python"), ("sections", ("命名",)))` を持つ止めるルールと、`read_tools` が空のルール'
+        condition: '`read_tools` に `mcp__docs__search_docs` と `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を持つ止めるルールと、`read_tools` が空のルール'
         mock: なし
-        expected: '1 行目が `BLOCKING_HEADER` + `READ_TOOL_NOTE`。1 つ目の場所の次の行が `  ツール: mcp__docs__search_docs {"id": "python", "sections": ["命名"]}`、2 つ目の場所の次に `ツール:` の行が無い'
+        expected: '1 行目が `BLOCKING_HEADER` + `READ_TOOL_NOTE`。1 つ目の場所の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}`、2 つ目の場所の次に `ツール:` の行が無い'
       - name: test_build_guidance_when_no_read_tools
         case: 正常
         summary: 参照するツールが無ければ文面を変えない
@@ -209,9 +209,9 @@ functions:
       - name: test_build_search_guidance_when_read_tools
         case: 正常
         summary: 参照するツールの行と添え書きを載せる
-        condition: '`read_tools` に `mcp__docs__search_docs` と `(("id", "python"),)` を持つルール 1 件'
+        condition: '`read_tools` に `mcp__docs__search_docs` と `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` を持つルール 1 件'
         mock: なし
-        expected: '1 行目が `SEARCH_HEADER` + `READ_TOOL_NOTE`、場所の次の行が `  ツール: mcp__docs__search_docs {"id": "python"}`'
+        expected: '1 行目が `SEARCH_HEADER` + `READ_TOOL_NOTE`、場所の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
   - name: _tool_line
     title: 参照するツールの行
     container: features/guidance/service.py
@@ -228,11 +228,11 @@ functions:
     returns:
       type: str
       description: '`READ_TOOL_PREFIX` + `{tool} {args の JSON}`'
-    process: '`args` を書いた順の辞書（値のタプルはリスト）にし、`json.dumps(ensure_ascii=False)`（区切りは既定の `, `・`: `）で JSON にする。`args` が空なら `{}`'
+    process: '`args` を `json.dumps(ensure_ascii=False)`（区切りは既定の `, `・`: `。キーの順は書いた順）で 1 行の JSON にする。`args` が空なら `{}`'
     unit_tests:
       - name: test_tool_line
         case: 正常
         summary: 書いた順の JSON にする
-        condition: '`mcp__docs__search_docs` と `(("sections", ("命名",)), ("id", "python"))`。別に `args` が空'
+        condition: '`mcp__docs__search_docs` と、`sections` を先に書いた `{"sections": ["命名"], "filter": {"field": "id"}}`。別に `args` が空'
         mock: なし
-        expected: '`  ツール: mcp__docs__search_docs {"sections": ["命名"], "id": "python"}` と `  ツール: mcp__docs__search_docs {}`'
+        expected: '`  ツール: mcp__docs__search_docs {"sections": ["命名"], "filter": {"field": "id"}}` と `  ツール: mcp__docs__search_docs {}`'

@@ -133,9 +133,9 @@ functions:
       - name: test_handle_when_read_tool
         case: 正常
         summary: 参照するツールを添えて止める
-        condition: '`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と `args` の `id: python` を持つエントリと Write、既読なし'
+        condition: '`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` を持つエントリと Write、既読なし'
         mock: なし（索引と記録フォルダは一時ファイル）
-        expected: 'permissionDecision が deny、理由の場所の次の行が `  ツール: mcp__docs__search_docs {"id": "python"}`'
+        expected: 'permissionDecision が deny、理由の場所の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
       - name: test_handle_when_read_tools_merged
         case: 正常
         summary: 複数のパスに当たった同じルールの参照するツールをまとめる

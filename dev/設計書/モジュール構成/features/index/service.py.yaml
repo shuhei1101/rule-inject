@@ -569,23 +569,20 @@ functions:
       description: 一致したルールの場所（索引の順。重なりを落とす）
     process: |-
       1. `read_tool` を持ち、`read_tool.tool` が `tool_name` と同じ（パターンでなく文字列の一致）エントリを選ぶ
-      2. `read_tool.args` の全てのキーが `tool_input` の最上位にあり、値が等しいエントリだけを残す（`tool_input` の他のキーは見ない。`args` が空なら残す）
-         - 書いた値が文字列なら、呼び出しの値が同じ文字列か、文字列以外のスカラー（数値・真偽値・null）の JSON の表記（`json.dumps`）が同じ文字列のときに等しい
-         - 書いた値がタプルなら、呼び出しの値が同じ長さの配列で、要素ごとに上の規則で等しいときに等しい
-         - 呼び出しの値がオブジェクトのときは等しくない
+      2. `read_tool.args` の全てのキーが `tool_input` の最上位にあり、値が JSON の値として等しい（`_json_equal`）エントリだけを残す（`tool_input` の他のキーは見ない。`args` が空なら残す）
       3. エントリの `tools`・`args`・`read_by` は見ない
       4. 同じ `location` を 1 件にまとめる（並びは保つ）
     unit_tests:
       - name: test_match_read_tool
         case: 正常
         summary: ツール名と引数が一致する呼び出しに当てる
-        condition: '`read_tool` が `mcp__docs__search_docs` と `(("id", "python"), ("sections", ("命名",)))` のエントリ、`mcp__docs__search_docs` と `{"sections": ["命名"], "id": "python", "view": "full"}`'
+        condition: '`read_tool` が `mcp__docs__search_docs` と `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` のエントリ、`mcp__docs__search_docs` と、キーの順を変え `view: full` を加えた同じ値の引数'
         mock: なし
         expected: そのエントリの場所 1 件
       - name: test_match_read_tool_when_args_unmatched
         case: 正常
         summary: 引数の値が違うか無ければ当てない
-        condition: '同じエントリ、`{"id": "python", "sections": ["例外"]}`・`{"id": "python"}`・`{"id": "python", "sections": ["命名", "例外"]}`（3 通りをパラメータ化）'
+        condition: '同じエントリ、`sections` が `["例外"]`・`sections` が無い・`sections` が `["命名", "例外"]`・`filter.values` が `["go"]` の引数（4 通りをパラメータ化）'
         mock: なし
         expected: 空
       - name: test_match_read_tool_when_tool_unmatched
@@ -596,10 +593,10 @@ functions:
         expected: 空（パターンとして読まない）
       - name: test_match_read_tool_when_scalar_not_string
         case: 正常
-        summary: 文字列以外のスカラーを JSON の表記で比べる
-        condition: '`read_tool` の `args` が `(("limit", "5"), ("full", "true"))` のエントリ、`{"limit": 5, "full": true}` と `{"limit": "5", "full": "true"}` と `{"limit": 6, "full": true}`'
+        summary: 真偽値と数値・文字列を区別する
+        condition: '`read_tool` の `args` が `{"limit": 1, "full": true}` のエントリ、`{"limit": 1, "full": true}`・`{"limit": true, "full": true}`・`{"limit": "1", "full": true}`'
         mock: なし
-        expected: 1 つ目と 2 つ目は場所 1 件、3 つ目は空
+        expected: 1 つ目は場所 1 件、2 つ目と 3 つ目は空
       - name: test_match_read_tool_when_without_args
         case: 正常
         summary: '`args` の無い `read_tool` はツール名だけで当てる'
@@ -684,7 +681,7 @@ functions:
       3. `enabled` が `false` のエントリは、展開・解決・コンパイルをせずに `disabled` にする
       4. `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは `skipped`（reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）
       5. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは `skipped`（reason は `rule {展開した rule} は URL のため Read で読めない`）
-      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args` の値のリストはタプル）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
+      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args` は `json.loads` で読んだ辞書）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
       7. 残りは、展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋めた `IndexEntry` を持つ `effective` にする
     exceptions:
       - name: IndexReadError
@@ -917,3 +914,35 @@ functions:
         condition: '`"tags"`・`{"tags": ["a"]}`・`{"and": "x"}` と `tags`（パラメータ展開）'
         mock: なし
         expected: 空
+  - name: _json_equal
+    title: JSON の値の比較
+    container: features/index/service.py
+    usecase: ルールを読んだことが記録される
+    summary: 2 つの JSON の値が等しいかを返す（`match_read_tool` が使う）
+    kind: 関数
+    scope: internal
+    args:
+      - name: written
+        type: Any
+        required: true
+        passing: positional
+        description: '`read_tool.args` の値'
+      - name: actual
+        type: Any
+        required: true
+        passing: positional
+        description: 呼び出しの引数の値
+    returns:
+      type: bool
+      description: 等しければ True
+    process: |-
+      1. 真偽値は真偽値とだけ、数値は数値（真偽値を除く）とだけ、文字列・null は同じ型とだけ `==` で比べる
+      2. オブジェクトは同じキーの集合を持ち、キーごとに等しいときに等しい（キーの順は問わない）
+      3. 配列は同じ長さで、要素が順に等しいときに等しい
+    unit_tests:
+      - name: test_json_equal
+        case: 正常
+        summary: 型を区別して入れ子まで比べる
+        condition: '`{"a": [1, {"b": true}]}` と、キーの順だけが違う値・`true` を `1` にした値・配列の順を変えた値'
+        mock: なし
+        expected: 1 つ目は True、2 つ目と 3 つ目は False

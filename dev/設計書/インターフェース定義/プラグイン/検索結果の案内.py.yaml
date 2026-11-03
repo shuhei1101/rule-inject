@@ -379,7 +379,7 @@ flows:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 索引
-        description: '`paths: ["**/*.py"]`・`read_tool: {tool: mcp__docs__search_docs, args: {id: python}}` のエントリを 1 つ持つ'
+        description: '`paths: ["**/*.py"]`・`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` を持つエントリを 1 つ持つ'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -398,7 +398,7 @@ flows:
         P-->>CC: additionalContext（場所とツールの行を並べた案内）<br>終了コード 0
       ```
     expected:
-      - '`additionalContext` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"id": "python"}`'
+      - '`additionalContext` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
       - '`additionalContext` の冒頭に、ツールで参照し、使えないときは Read で読む旨が載っている'
       - 案内済みの記録にルールの場所が 1 行ある
     test: test_normal_with_read_tool

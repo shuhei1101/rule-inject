@@ -968,7 +968,7 @@ flows:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 索引
-        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool: {tool: mcp__docs__search_docs, args: {id: python, sections: [命名]}}` のエントリを 1 つ持つ'
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と、`args` に JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を持つエントリを 1 つ持つ'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -989,7 +989,7 @@ flows:
       ```
     expected:
       - '`permissionDecision` が `deny`'
-      - '`permissionDecisionReason` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"id": "python", "sections": ["命名"]}`'
+      - '`permissionDecisionReason` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}`'
       - '`permissionDecisionReason` の冒頭に、ツールで参照し、使えないときは Read で読む旨が載っている'
       - 終了コードが `0`
     test: test_normal_when_blocked_with_read_tool
@@ -1086,7 +1086,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool: {args: {id: python}}` のエントリを 1 つ持つ'
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool` に `args` だけ（`tool` が無い）のエントリを 1 つ持つ'
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
@@ -1260,12 +1260,12 @@ constraints:
     notes: '`not` と否定の `op` の条件は、その値の文書を読まない検索のため当てない（PR #77 の `要件.md` の推奨案 A）。`[` と `]` を含まないキーは、今どおりドットの道筋として読む'
   - item: 参照するツールの案内
     constraint: |-
-      当たったエントリが `read_tool` を持つルールは、場所の行（`- {場所}`）の下に `  ツール: {tool} {args}` の行を置く。`args` は記載のキーの順の JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を置く。
+      当たったエントリが `read_tool` を持つルールは、場所の行（`- {場所}`）の下に `  ツール: {tool} {args}` の行を置く。`args` は記載の JSON を読み、キーの順を保って 1 行に書き直した JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を置く。
       案内に `ツール:` の行が 1 つでもあるときは、冒頭の文の後ろに「`ツール:` の行があるルールは、そのツールと引数で参照してください。ツールが使えないときは場所を Read で読んでください。」を添える。`ツール:` の行が無い案内の文面は変えない。
       同じルールの場所にまとめたエントリの `read_tool` は、`tool` と `args` の組が同じものを 1 つにし、当たった順に並べる
     notes: 場所の行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも載せない。文面はユーザーの目に触れるため、インターフェース定義設計の合格後にユーザーへ確認する
   - item: 参照するツールの書式
-    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args` を持つときは値が文字列か文字列のリストのオブジェクトにする。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
+    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args` を持つときは JSON のオブジェクトを表す文字列にする（標準ライブラリの `json` で読む）。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
     notes: '`read_tool` は案内と既読にだけ使い、操作を止めるかの照合（`paths`・`tools`・`args`）には使わない'
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

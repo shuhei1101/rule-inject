@@ -493,11 +493,11 @@ flows:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 索引
-        description: 'ルールの場所と `read_tool: {tool: mcp__docs__search_docs, args: {id: python, sections: [命名]}}` を持ち、`read_by` を持たないエントリを 1 つ持つ'
+        description: 'ルールの場所と、`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を持ち、`read_by` を持たないエントリを 1 つ持つ'
       - name: 既読の記録
         description: 空の一時フォルダ
       - name: 入力
-        description: '`tool_name: mcp__docs__search_docs`、`tool_input: {sections: [命名], id: python, view: full}`、`tool_response` はルールの場所の `<document path="..." scope="section">` で包んだ文字列'
+        description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{"sections": ["命名"], "view": "full", "filter": {"values": ["python"], "op": "eq", "field": "id"}}`、`tool_response` はルールの場所の `<document path="..." scope="section">` で包んだ文字列'
         notes: '`tool_input` のキーの順を `args` と変え、`args` に無い `view` を加える'
     flow: |-
       ```mermaid
@@ -531,7 +531,7 @@ flows:
       - name: 既読の記録
         description: 空の一時フォルダ
       - name: 入力
-        description: '`tool_name: mcp__docs__search_docs` で、`tool_input: {id: python, sections: [例外]}` と `tool_input: {id: python}` の 2 回を順に渡す。`tool_response` はどちらも `scope="section"` の文書'
+        description: '`tool_name: mcp__docs__search_docs` で、`tool_input` に `sections` が `["例外"]` のものと、`{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` だけのものの 2 回を順に渡す。`tool_response` はどちらも `scope="section"` の文書'
         notes: 1 回目は `sections` の値が違い、2 回目は `sections` のキーが無い
     flow: |-
       ```mermaid
@@ -641,7 +641,7 @@ constraints:
     constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
     notes: '-'
   - item: 参照するツールの一致
-    constraint: '`read_tool` の `tool` がツールの完全名と同じで、`args` に書いた全てのキーが `tool_input` の最上位にあり、値が等しいときに一致とする。書いた文字列は、呼び出しの値が同じ文字列か、文字列以外のスカラー（数値・真偽値・null）の JSON の表記が同じときに等しく、書いたリストは、呼び出しの値が同じ長さの配列で要素が順に等しいときに等しい。`tool_input` が `args` に無いキーを持っていても一致とする。`args` を持たない `read_tool` は、ツールの完全名が同じなら一致とする'
+    constraint: '`read_tool` の `tool` がツールの完全名と同じで、`args`（JSON のオブジェクト）に書いた全てのキーが `tool_input` の最上位にあり、値が JSON の値として等しいときに一致とする。オブジェクトはキーの順を問わず、配列は順まで同じで、真偽値と数値は区別する。`tool_input` が `args` に無いキーを持っていても一致とする。`args` を持たない `read_tool` は、ツールの完全名が同じなら一致とする'
     notes: パターンでなく値で比べる（`*`・`re:` も文字どおりの値）。Claude Code が既定値の引数を加えて呼んでも既読にするため、`tool_input` の余分なキーは問わない
 identifier: record_read
 response:

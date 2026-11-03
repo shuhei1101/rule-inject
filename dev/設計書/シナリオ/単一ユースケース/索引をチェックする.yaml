@@ -281,8 +281,8 @@ scenarios:
         description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
-        description: 'ルールを参照する MCP のツールの名前と、空の引数（`args: {}`）を記載したエントリを 1 つ持つ YAML'
-        notes: 他のキーは索引の書式どおりにする。フックは読めるが、JSON Schema は引数にキーを 1 つ以上求める
+        description: 'ルールを参照する MCP のツールの名前と、引数に空のオブジェクトの JSON（`{}`）を記載したエントリを 1 つ持つ YAML'
+        notes: 他のキーは索引の書式どおりにする。フックは読めるが、JSON Schema は引数のオブジェクトにキーを 1 つ以上求める
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント

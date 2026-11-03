@@ -40,5 +40,5 @@ data_models:
         type: str
         description: MCP のツールの完全名
       - name: args
-        type: tuple[tuple[str, str | tuple[str, ...]], ...]
-        description: 引数のキーと値の組（索引に書いた順）
+        type: Mapping[str, Any]
+        description: 引数のオブジェクト（索引に書いたキーの順）

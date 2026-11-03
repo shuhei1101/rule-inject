@@ -148,12 +148,12 @@ settings:
   - key: rules[].read_tool.args
     title: 参照する引数
     file: 索引（*.yaml）
-    type: dict[str, str | list[str]]
+    type: str
     required: false
     default: なし（引数を書かずに呼ぶ）
-    description: ツールに渡す引数の値。案内に JSON で載せ、呼び出しの引数の最上位に書いた全てのキーがあり値が等しいとき既読にする（呼び出しが余分なキーを持っていてもよい）
+    description: ツールに渡す引数を JSON のオブジェクトで書いた文字列。案内にそのまま JSON で載せ、呼び出しの引数の最上位に書いた全てのキーがあり値が等しいとき既読にする（呼び出しが余分なキーを持っていてもよい）
     reload: immediate
-    allowed: 値は文字列か文字列のリスト。パターンとしては読まない。数値・真偽値の引数は文字列で書き、呼び出しの値の JSON の表記と比べる
+    allowed: JSON のオブジェクトを表す文字列（YAML では単一引用符で囲む）。JSON として読めない・オブジェクトでない値は索引を読めなくする。値はパターンとしては読まず、JSON の値として比べる（オブジェクトはキーの順を問わず、配列は順まで同じ、真偽値と数値は区別する）
     status: planned
     visibility: user
   - key: RULE_INJECT_CONFIG

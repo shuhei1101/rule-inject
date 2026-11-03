@@ -125,13 +125,13 @@ functions:
       - name: test_record_read_when_read_tool
         case: 正常
         summary: '`read_tool` に一致する呼び出しは、全文でない文書の結果でも記録する'
-        condition: '`read_tool` が `tool: mcp__docs__search_docs`・`args` の `id: python` で `read_by` の無いルール A のエントリ、`tool_name` が `mcp__docs__search_docs`、`tool_input` が `{"id": "python", "view": "full"}`、`tool_response` が A の `scope="section"` の文書'
+        condition: '`read_tool` が `tool: mcp__docs__search_docs`・`args` が JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` で `read_by` の無いルール A のエントリ、`tool_name` が `mcp__docs__search_docs`、`tool_input` が同じ `filter` に `view: full` を加えたもの、`tool_response` が A の `scope="section"` の文書'
         mock: なし
         expected: 記録ファイルに A の場所とハッシュの 1 行、履歴ファイルに `method` が `mcp`・`tool` が `mcp__docs__search_docs` の 1 行、戻り値 None
       - name: test_record_read_when_read_tool_unmatched
         case: 正常
         summary: '`read_tool` の引数と違う呼び出しは記録しない'
-        condition: '同じエントリ、`tool_input` が `{"id": "go"}`、`tool_response` が A の `scope="section"` の文書'
+        condition: '同じエントリ、`tool_input` の `filter.values` が `["go"]`、`tool_response` が A の `scope="section"` の文書'
         mock: なし
         expected: 記録ファイルも履歴ファイルも無い、戻り値 None
       - name: test_record_read_when_read_tool_and_document
