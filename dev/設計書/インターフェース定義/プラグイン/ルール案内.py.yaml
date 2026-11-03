@@ -32,7 +32,7 @@ flows:
       ```
     expected:
       - '`permissionDecision` が `deny`'
-      - '`permissionDecisionReason` にルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている'
+      - '`permissionDecisionReason` にルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている'
       - 終了コードが `0`
     test: test_normal_when_blocked
   - name: 正常系（既読のため案内しない）
@@ -968,7 +968,7 @@ flows:
       - name: Mock
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 索引
-        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と、`args` に JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を持つエントリを 1 つ持つ'
+        description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と、`args` に JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}`、`optional_args` に `{"sections": ["命名"]}` を持つエントリを 1 つ持つ'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -989,8 +989,8 @@ flows:
       ```
     expected:
       - '`permissionDecision` が `deny`'
-      - '`permissionDecisionReason` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}`'
-      - '`permissionDecisionReason` の冒頭に、ツールで参照し、使えないときは Read で読む旨が載っている'
+      - '`permissionDecisionReason` のパスの行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}（省略可: {"sections": ["命名"]}）`'
+      - '`permissionDecisionReason` の 2 行目に、`ツール:` の行のツールで参照し、記載の引数は全て指定し、使えないときはパスを Read で参照する旨が載っている'
       - 終了コードが `0`
     test: test_normal_when_blocked_with_read_tool
   - name: 正常系（参照するツールを添えて止めずに案内する）
@@ -1177,12 +1177,12 @@ response:
     notes: 操作の種別が `on` に当たる未読のルールが 1 件でもあるときだけ載せる
   - name: '`hookSpecificOutput.permissionDecisionReason`'
     type: str
-    description: 止める案内。未読のルールの場所と、本文の読み方（Read）と、読んだ後に同じ操作をやり直すこと。`read_tool` を持つエントリのルールは、場所の行の下にツールの名前と引数の行
+    description: 止める案内。参照してから同じ操作をやり直すことと、参照の方法（制約「案内文の構成」）と、未読のルールのパス。`read_tool` を持つエントリのルールは、パスの行の下にツールの名前と引数の行
     constraints: 10,000 字以内
     notes: '`permissionDecision` を載せたときだけ載せる。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 止めない案内。未読で未案内のルールの場所と読み方（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
+    description: 止めない案内。参照の方法（制約「案内文の構成」）と、未読で未案内のルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 操作を止めないときだけ載せる。「やり直してください」は含めない
 response_example: |-
@@ -1191,7 +1191,7 @@ response_example: |-
     "hookSpecificOutput": {
       "hookEventName": "PreToolUse",
       "permissionDecision": "deny",
-      "permissionDecisionReason": "操作の対象に当たる未読のルールがあります。下の場所を Read で読んでから、同じ操作をやり直してください。\n- /home/user/rules/python.md"
+      "permissionDecisionReason": "この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。\nパスを Read で参照してください。\n- /home/user/rules/python.md"
     }
   }
   ```
@@ -1260,12 +1260,17 @@ constraints:
     notes: '`not` と否定の `op` の条件は、その値の文書を読まない検索のため当てない（PR #77 の `要件.md` の推奨案 A）。`[` と `]` を含まないキーは、今どおりドットの道筋として読む'
   - item: 参照するツールの案内
     constraint: |-
-      当たったエントリが `read_tool` を持つルールは、場所の行（`- {場所}`）の下に `  ツール: {tool} {args}` の行を置く。`args` は記載の JSON を読み、キーの順を保って 1 行に書き直した JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を置く。
-      案内に `ツール:` の行が 1 つでもあるときは、冒頭の文の後ろに「`ツール:` の行があるルールは、そのツールと引数で参照してください。ツールが使えないときは場所を Read で読んでください。」を添える。`ツール:` の行が無い案内の文面は変えない。
-      同じルールの場所にまとめたエントリの `read_tool` は、`tool` と `args` の組が同じものを 1 つにし、当たった順に並べる
-    notes: 場所の行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも載せない。文面はユーザーの目に触れるため、インターフェース定義設計の合格後にユーザーへ確認する
+      当たったエントリが `read_tool` を持つルールは、パスの行（`- {パス}`）の下に `  ツール: {tool} {args}` の行を置く。`args` は記載の JSON を読み、キーの順を保って 1 行に書き直した JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を置く。`optional_args` を持つときは、行の末尾に `（省略可: {optional_args}）`（同じ書き直しの JSON）を続ける。
+      同じルールのパスにまとめたエントリの `read_tool` は、`tool`・`args`・`optional_args` が同じものを 1 つにし、当たった順に並べる
+    notes: パスの行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも載せない
+  - item: 案内文の構成
+    constraint: |-
+      1 行目は、止める案内が「この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。」、止めない案内が「この操作に関連する未読のルールがあります。必要に応じて下のルールを参照してください。この案内はルールごとにセッションで 1 回だけ表示します。」。
+      2 行目は参照の方法で、載せたルールに `ツール:` の行が 1 つでもあるときは「`ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。」、無いときは「パスを Read で参照してください。」。
+      3 行目からルールのパスの行を並べ、載せきれなかったときは末尾に「ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。」を置く
+    notes: 文面はユーザーの確認で決めた（PR #102 の確認ログ）
   - item: 参照するツールの書式
-    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args` を持つときは JSON のオブジェクトを表す文字列にする（標準ライブラリの `json` で読む）。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
+    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args`・`optional_args` を持つときは JSON のオブジェクトを表す文字列にする（標準ライブラリの `json` で読む）。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
     notes: '`read_tool` は案内と既読にだけ使い、操作を止めるかの照合（`paths`・`tools`・`args`）には使わない'
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

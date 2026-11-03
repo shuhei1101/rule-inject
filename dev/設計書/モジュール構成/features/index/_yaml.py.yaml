@@ -17,7 +17,7 @@ functions:
         description: 索引のファイルの中身
     returns:
       type: tuple[tuple[Operation, ...] | None, list[dict[str, str | list[str] | dict[str, list[str]] | list[dict[str, list[str] | dict[str, list[str]]]] | dict[str, str]]]]
-      description: '`default_on`（無ければ None）と、`rules` の各エントリのキーと値（`args` はキー → パターンのリスト、`read_by` は `tools`・`args` を持つマップのリスト、`read_tool` は `tool` と任意の `args`（JSON の文字列のまま）を持つマップ）'
+      description: '`default_on`（無ければ None）と、`rules` の各エントリのキーと値（`args` はキー → パターンのリスト、`read_by` は `tools`・`args` を持つマップのリスト、`read_tool` は `tool` と任意の `args`・`optional_args`（JSON の文字列のまま）を持つマップ）'
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
       2. 最上位のキーは `default_on` と `rules` だけを許す
@@ -25,8 +25,8 @@ functions:
       4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
       5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読む。キーは空白を含まない文字列（ドットを含んでよい）
       6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
-      7. `read_tool` は続く行に、エントリのキーより深い桁でキーを並べたブロックのマップだけを読む。キーは `tool`（必須。`mcp__` で始まる文字列）と `args`（任意。文字列）だけを許す。`args` は `json.loads` で読めて JSON のオブジェクトになる文字列だけを許し、文字列のまま返す
-      8. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素・`tool` の無い `read_tool`・`mcp__` で始まらない `tool`・`read_tool` の同じ行の値・JSON として読めないかオブジェクトでない `read_tool.args` を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返す
+      7. `read_tool` は続く行に、エントリのキーより深い桁でキーを並べたブロックのマップだけを読む。キーは `tool`（必須。`mcp__` で始まる文字列）と `args`・`optional_args`（任意。文字列）だけを許す。`args`・`optional_args` は `json.loads` で読めて JSON のオブジェクトになる文字列だけを許し、文字列のまま返す
+      8. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素・`tool` の無い `read_tool`・`mcp__` で始まらない `tool`・`read_tool` の同じ行の値・JSON として読めないかオブジェクトでない `read_tool.args`・`read_tool.optional_args` を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返す
     exceptions:
       - name: ValueError
         condition: 許さないキー・形式・値がある

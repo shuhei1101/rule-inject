@@ -198,3 +198,6 @@ data_models:
       - name: args
         type: Mapping[str, Any]
         description: '`args` の JSON の文字列を `json.loads` で読んだオブジェクト（キーの順を保つ）。`args` を書かないときは空の辞書'
+      - name: optional_args
+        type: Mapping[str, Any]
+        description: '`optional_args` を同じく読んだオブジェクト。案内にだけ使い、既読の照合には使わない。書かないときは空の辞書'

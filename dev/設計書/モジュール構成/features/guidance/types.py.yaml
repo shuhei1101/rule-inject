@@ -42,3 +42,6 @@ data_models:
       - name: args
         type: Mapping[str, Any]
         description: 引数のオブジェクト（索引に書いたキーの順）
+      - name: optional_args
+        type: Mapping[str, Any]
+        description: '省略してよい引数のオブジェクト（空なら `（省略可: ...）` を付けない）'

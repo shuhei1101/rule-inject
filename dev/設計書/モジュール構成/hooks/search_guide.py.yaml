@@ -83,4 +83,4 @@ functions:
         summary: 参照するツールを添えて案内する
         condition: '`**/*.py`・`read_tool` に `tool: mcp__docs__search_docs` を持つエントリ、`tool_response.filenames` に実在する `.py`'
         mock: なし（索引と記録フォルダは一時ファイル）
-        expected: 'additionalContext の 1 行目が `SEARCH_HEADER` + `READ_TOOL_NOTE`、場所の次の行が `  ツール: mcp__docs__search_docs {}`'
+        expected: 'additionalContext の 1 行目が `SEARCH_HEADER`、2 行目が `READ_TOOL_NOTE`、パスの次の行が `  ツール: mcp__docs__search_docs {}`'

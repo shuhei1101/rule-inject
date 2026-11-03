@@ -66,7 +66,7 @@ functions:
       1. 文字列のリストは 1 行のフロー形式（`fa.set_flow_style()`）の `CommentedSeq` にする（`paths`・`exclude`・`tools`・`on`）
       2. `args` のマップはブロックの `CommentedMap` にし、各値を手順 1 のフロー形式にする
       3. `read_by` のリストはブロックの `CommentedSeq` にし、各要素のマップに手順 1・2 を当てる
-      4. `read_tool` のマップはブロックの `CommentedMap` にし、`tool`・`args` の順に並べ、`args` の文字列は単一引用符の文字列（`SingleQuotedScalarString`）にする
+      4. `read_tool` のマップはブロックの `CommentedMap` にし、`tool`・`args`・`optional_args` の順に並べ、`args`・`optional_args` の文字列は単一引用符の文字列（`SingleQuotedScalarString`）にする
       5. それ以外（`rule` の文字列・`enabled` の真偽値・型の合わない値）はそのまま返す。型の合わない値は書き込みのチェックが JSON Schema の違反として断る
     unit_tests:
       - name: test_to_yaml_value

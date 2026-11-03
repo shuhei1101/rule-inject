@@ -31,7 +31,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面に、ルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている
+      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_blocked
   - name: 正常シナリオ（既読のため案内しない）
@@ -410,7 +410,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面に、ルールの場所と、Read で読んでから同じ操作をやり直す旨が載っている
+      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_rule_changed_after_read
   - name: 異常シナリオ（設定ファイルが読めない）

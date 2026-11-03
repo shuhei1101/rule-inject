@@ -263,7 +263,7 @@ functions:
       description: ルールの場所ごとに 1 件（初めて出た順）
     process: |-
       1. 同じ `location` の結果を 1 件にまとめ、どれか 1 つでも `blocking` が True なら True にする
-      2. `read_tools` は出た順につなぎ、同じ値（`tool` と `args` が等しい）の 2 つ目以降を落とす
+      2. `read_tools` は出た順につなぎ、同じ値（`tool`・`args`・`optional_args` が等しい）の 2 つ目以降を落とす
     unit_tests:
       - name: test_merge_matched
         case: 正常
@@ -570,7 +570,7 @@ functions:
     process: |-
       1. `read_tool` を持ち、`read_tool.tool` が `tool_name` と同じ（パターンでなく文字列の一致）エントリを選ぶ
       2. `read_tool.args` の全てのキーが `tool_input` の最上位にあり、値が JSON の値として等しい（`_json_equal`）エントリだけを残す（`tool_input` の他のキーは見ない。`args` が空なら残す）
-      3. エントリの `tools`・`args`・`read_by` は見ない
+      3. `read_tool.optional_args` と、エントリの `tools`・`args`・`read_by` は見ない
       4. 同じ `location` を 1 件にまとめる（並びは保つ）
     unit_tests:
       - name: test_match_read_tool
@@ -603,6 +603,12 @@ functions:
         condition: '`read_tool` が `mcp__docs__search_docs` だけのエントリ、`mcp__docs__search_docs` と `{"id": "x"}`'
         mock: なし
         expected: そのエントリの場所 1 件
+      - name: test_match_read_tool_when_optional_args
+        case: 正常
+        summary: '`optional_args` は省いても違う値でも当てる'
+        condition: '`args` が `{"filter": {"field": "id"}}`・`optional_args` が `{"sections": ["命名"]}` のエントリ、`sections` を省いた引数と `sections` が `["例外"]` の引数'
+        mock: なし
+        expected: どちらも場所 1 件
       - name: test_match_read_tool_when_duplicate
         case: 正常
         summary: 同じルールのエントリを 1 件にまとめる
@@ -681,7 +687,7 @@ functions:
       3. `enabled` が `false` のエントリは、展開・解決・コンパイルをせずに `disabled` にする
       4. `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは `skipped`（reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）
       5. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは `skipped`（reason は `rule {展開した rule} は URL のため Read で読めない`）
-      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args` は `json.loads` で読んだ辞書）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
+      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args`・`optional_args` は `json.loads` で読んだ辞書）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
       7. 残りは、展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋めた `IndexEntry` を持つ `effective` にする
     exceptions:
       - name: IndexReadError

@@ -246,7 +246,7 @@ response:
     description: 既読にする呼び出し（`tools`・`args`）
   - name: entries[].read_tool
     type: dict[str, Any] | None
-    description: ルールを参照する MCP のツール（`tool`・`args`。索引に書いたまま）
+    description: ルールを参照する MCP のツール（`tool`・`args`・`optional_args`。索引に書いたまま）
     notes: エントリが `read_tool` を書かないときは `None`
   - name: unreadable_indexes[].index
     type: str

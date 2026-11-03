@@ -399,7 +399,7 @@ flows:
       ```
     expected:
       - '`additionalContext` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
-      - '`additionalContext` の冒頭に、ツールで参照し、使えないときは Read で読む旨が載っている'
+      - '`additionalContext` の 2 行目に、`ツール:` の行のツールで参照し、記載の引数は全て指定し、使えないときはパスを Read で参照する旨が載っている'
       - 案内済みの記録にルールの場所が 1 行ある
     test: test_normal_with_read_tool
 lead: Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）の結果に出た実在するファイルに当たるルールのうち、そのセッションで未読で未案内のものを、読むかは任意と伝えて案内する。操作はもう終わっているため止めない。
@@ -465,7 +465,7 @@ response:
     notes: 案内か知らせがあるときだけ出力する。無いときは標準出力に何も出さない
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 検索で当たったファイルに未読のルールがあること・読むかは任意であること・読み方（Read）・この案内はルールごとにセッションで 1 回だけ出ることと、ルールの場所（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。索引・記録が読めないか書けないときはその場所と理由
+    description: 検索結果のファイルに関連する未読のルールがあること・参照は任意であること・この案内はルールごとにセッションで 1 回だけ表示することと、参照の方法と、ルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。索引・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 「やり直してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
 response_example: |-
@@ -473,7 +473,7 @@ response_example: |-
   {
     "hookSpecificOutput": {
       "hookEventName": "PostToolUse",
-      "additionalContext": "検索で当たったファイルに未読のルールがあります（読むかは任意です）。読む場合は下の場所を Read で読んでください。この案内はルールごとにセッションで 1 回だけ出ます。\n- /home/user/rules/python.md"
+      "additionalContext": "検索結果のファイルに関連する未読のルールがあります（参照は任意です）。この案内はルールごとにセッションで 1 回だけ表示します。\nパスを Read で参照してください。\n- /home/user/rules/python.md"
     }
   }
   ```
@@ -524,6 +524,6 @@ constraints:
     constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
     notes: '-'
   - item: 参照するツールの案内
-    constraint: ルール案内の制約「参照するツールの案内」と同じく、`read_tool` を持つエントリのルールの場所の行の下に `ツール:` の行を置き、冒頭の文の後ろに添える文も同じにする
+    constraint: ルール案内の制約「参照するツールの案内」と同じく、`read_tool` を持つエントリのルールのパスの行の下に `ツール:` の行を置く。1 行目は「検索結果のファイルに関連する未読のルールがあります（参照は任意です）。この案内はルールごとにセッションで 1 回だけ表示します。」、2 行目（参照の方法）はルール案内の制約「案内文の構成」と同じ。載せきれなかったときは末尾に「ほか {N} 件のルールは、次に関連したときに表示します。」を置く
     notes: 書式の誤りの扱いもルール案内の制約「参照するツールの書式」と同じ
 test_file: tests/integration/plugin/test_search_guide.py
