@@ -55,4 +55,9 @@ lint: `テスト結果/20261104013227_ba53c1d_lint.log`（違反なし）
 
 ### 結合
 
-未実施（結合テスト作成の工程で実行する）
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_write_index_entry.py` | `test_normal_when_read_tool_written` | 新規 | ✅ | 既にあるエントリへ無いキーを `ENTRY_KEY_ORDER` の位置に書くよう実装を修正（`869ef02`）<br>`テスト結果/20261104021056_869ef02_結合テスト.log` |
+| `tests/integration/server/test_list_rules.py` | `test_normal_when_entry_has_read_tool` | 新規 | ✅ | |
+| `tests/integration/server/test_check_indexes.py` | `test_normal_when_read_tool_name_missing`・`test_normal_when_read_tool_violates_schema` | 新規 | ✅ | |
+| `tests/integration` のその他 | 全実行 | 実行のみ | ✅ | 計 153 テスト pass。lint は `テスト結果/20261104021555_869ef02_lint.log`（違反なし） |
