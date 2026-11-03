@@ -281,8 +281,8 @@ scenarios:
         description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
-        description: ルールを参照する MCP のツールと引数のうち、ツールの名前を欠いたエントリを 1 つ持つ YAML
-        notes: 他のキーは索引の書式どおりにする
+        description: 'ルールを参照する MCP のツールの名前と、空の引数（`args: {}`）を記載したエントリを 1 つ持つ YAML'
+        notes: 他のキーは索引の書式どおりにする。フックは読めるが、JSON Schema は引数にキーを 1 つ以上求める
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -297,10 +297,11 @@ scenarios:
         SV->>IDX: フックと同じ読み取りで読む
         IDX-->>SV: 読めた
         SV->>SC: 索引を照らす
-        SC-->>SV: 参照するツールの名前が無い
+        SC-->>SV: 参照するツールの引数が空
         SV-->>CL: 索引ごとの違反
     expected:
-      - 応答のその索引の違反に、そのエントリの位置と、参照するツールの名前が無い旨が載っている
+      - 応答のその索引の違反に、そのエントリの参照するツールの引数（`rules[0].read_tool.args`）の位置と理由が載っている
+      - 応答のその索引に、フックが読めない理由が載っていない
     test: test_normal_when_read_tool_violates_schema
 lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
 issue: 58
