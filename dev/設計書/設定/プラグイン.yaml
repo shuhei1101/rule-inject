@@ -212,7 +212,7 @@ settings:
     file: ~/.config/rule-inject/settings.yaml
     type: str
     required: false
-    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`'
+    default: '`RULE_INJECT_STATE_DIR` があればその下の `logs`、無ければ `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`'
     description: フックが失敗した操作を書く、日付ごとのログのファイルを置くフォルダ。設定ファイルが読めなかったことのログは既定値のフォルダへ書く
     reload: immediate
     allowed: 絶対パスか `~` で始まるパス

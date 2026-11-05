@@ -38,7 +38,17 @@ constraints:
     constraint: リポジトリの直下の `rules.yaml` は既定で参照するため、端末の設定へ記載しない
   - item: projects の要素
     constraint: '`match` はリポジトリの絶対パス。同じ `match` の要素があれば、その `indexes` へ追加する'
-  - item: 前提
-    constraint: 端末の設定が無いときは `global-setup` を案内して止まる。MCP サーバーへ接続できないときはサーバーの起動を案内して止まる
 refs:
   - dev/設計書/シナリオ/単一ユースケース/リポジトリの索引を登録する#
+exceptions:
+  - name: なし（正常終了）
+    condition: 索引のチェックの結果を示した
+  - name: 端末の設定が無い
+    condition: 端末の設定のファイルが無い
+    notes: 何も記載せずに止まり、`global-setup` を案内する
+  - name: 索引が無い
+    condition: '`rules.yaml` も指定した索引も無い'
+    notes: 何も記載せずに止まり、索引の書式を案内する
+  - name: サーバーへ接続できない
+    condition: '`check_indexes` を呼べない'
+    notes: 何も記載せずに止まり、`global-setup` かサーバーの起動を案内する
