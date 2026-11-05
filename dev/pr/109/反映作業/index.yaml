@@ -1,5 +1,5 @@
 連絡ボードの行の削除:
-  説明: 連絡ボードの tester のセクションから、版上げで plugin.json の version も更新させる行「版上げで plugin.json も揃える」を削除する。削除しないと、次の release のバージョンの更新で plugin.json に version が再び配置される
+  説明: 連絡ボードの tester のセクションから、版上げで plugin.json の version も更新させる行「版上げで plugin.json も揃える」を削除する。削除しないと、次の release のバージョンの更新で plugin.json に version が再び配置される。連絡ボードの行の削除は自分で行わず、起点 Issue に確認:task-planner を付けて、消す節・行のタイトルを書いたコメントで task-planner へ依頼する
   タグ: [連絡ボード]
   実行者: planner
   時期: マージの後
