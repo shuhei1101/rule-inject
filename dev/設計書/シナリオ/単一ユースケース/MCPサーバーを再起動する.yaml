@@ -16,6 +16,7 @@ scenarios:
 
         CL->>SV: 再起動
         SV-->>CL: 再起動を始めた
+        SV->>SV: 処理中の呼び出しの終わりを待つ（待ち受けは続ける）
         SV->>SV: 待ち受けを閉じる
         SV->>SV: 起動し直して同じポートで待ち受ける
         CL->>SV: 接続し直して状態の確認
@@ -30,7 +31,7 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
       - name: 処理中の呼び出し
-        description: 停止の待ちが続くよう、別の接続で応答に時間のかかるツールを呼んだままにしてから再起動を呼ぶ
+        description: 処理中の呼び出しの終わりを待つ間に 2 回目を呼べるよう、別の接続で応答に時間のかかるツールを呼んだままにしてから再起動を呼ぶ
         notes: '例: 辿るファイルの多いプロジェクトの `check_indexes`'
     flow: |-
       sequenceDiagram
@@ -39,6 +40,7 @@ scenarios:
 
         CL->>SV: 再起動
         SV-->>CL: 再起動を始めた
+        SV->>SV: 処理中の呼び出しの終わりを待つ（待ち受けは続ける）
         CL->>SV: 再起動（2 回目）
         SV-->>CL: ツールのエラー（再起動の途中）
     expected:
@@ -50,12 +52,12 @@ issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: ポートの変更やコードの更新を、端末で systemctl を打たずにサーバーへ効かせられること
+    interest: コードの更新を、端末で systemctl を打たずにサーバーへ効かせられること
   - name: 他の Claude Code のセッション
     interest: 再起動の後に、接続し直せば同じポートでツールを呼び続けられること
 trigger: Claude Code が再起動のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code からプラグインの `.mcp.json` の接続先で接続できる
-success_guarantee: 応答を返してから待ち受けを閉じ、同じポートで待ち受け直す。起動し直した後の状態の確認で、起動した時刻が再起動の前より新しい。
+success_guarantee: 応答を返し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じポートで待ち受け直す。起動し直した後の状態の確認で、起動した時刻が再起動の前より新しい。
 minimal_guarantee: 再起動の途中の再起動・更新の呼び出しは断り、起動し直すのは 1 回だけ。起動し直せないときは、サーバーの起動と同じく標準エラーに理由を書いて終わる。
 test_file: tests/e2e/単一ユースケース/test_restart_server.py
