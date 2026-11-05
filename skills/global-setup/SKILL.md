@@ -15,6 +15,7 @@ argument-hint: "[--clone パス] [--config パス] [--index パス] [--service �
 済んでいる手順は飛ばして、続きから進む。
 
 1. 依存を確認する。
+   - `command -v uv` で `uv` の絶対パスを取り出す
    - `--clone` のクローンで `uv sync --extra server` を実行する
    - `uv` が無いか失敗したら、導入の方法を示して止まる。何も記載しない
 
@@ -46,7 +47,7 @@ argument-hint: "[--clone パス] [--config パス] [--index パス] [--service �
    - ポートは手順 3 の `RULE_INJECT_PORT`、スキルの環境の `RULE_INJECT_PORT`、`8783` の順に使用する
    - `http://127.0.0.1:{ポート}/mcp` に `tools/list` を要求して応答があれば、手順 8 へ進む
    - 応答が無ければ `~/.config/systemd/user/{サービス名}.service` を配置する（サービス名の既定は `rule-inject`）
-     - `WorkingDirectory` はクローン、`ExecStart` は `uv run --extra server python -m rule_inject.server`、`SuccessExitStatus=143`
+     - `WorkingDirectory` はクローン、`ExecStart` は手順 1 の `uv` の絶対パスに続けて `run --extra server python -m rule_inject.server`、`SuccessExitStatus=143`
      - `Environment=` に、既定と違うポートの `RULE_INJECT_PORT` と、既定と違うパスの `RULE_INJECT_CONFIG` を記載する
    - `systemctl --user daemon-reload` と `systemctl --user enable --now {サービス名}` を実行する
    - もう一度 `tools/list` を要求する。`list_rules` を含む一覧が返らなければ、記載したものを残し、済んだ手順と止まった手順・`journalctl --user -u {サービス名}`・修正方法を示して止まる
