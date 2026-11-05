@@ -1,0 +1,68 @@
+title: "プラグイン / 設定の移し替え / migrations/v0_2_3.py"
+constants:
+  - name: DESCRIPTION
+    title: 手順の説明
+    container: features/migrate/migrations/v0_2_3.py
+    summary: '`steps` に並べる説明'
+    value: '`"global.server_port を削除し、env の RULE_INJECT_PORT へ移す"`'
+  - name: DEFAULT_PORT_TEXT
+    title: 既定のポートの文字列
+    container: features/migrate/migrations/v0_2_3.py
+    summary: '`env` へ移さないポート（`DEFAULT_SERVER_PORT` の文字列）'
+    value: '`str(DEFAULT_SERVER_PORT)`'
+functions:
+  - name: applies
+    title: 適用の判定
+    container: features/migrate/migrations/v0_2_3.py
+    usecase: 端末をセットアップする
+    summary: '`global.server_port` を持つかを返却する'
+    kind: 関数
+    scope: public
+    args:
+      - name: data
+        type: CommentedMap
+        required: true
+        passing: positional
+        description: 設定ファイルの中身
+    returns:
+      type: bool
+      description: '`global.server_port` があれば真'
+    process: 1. `global` の `server_port` の有無を返却する
+    unit_tests:
+      - name: test_applies
+        case: 正常
+        summary: キーの有無を返却する
+        condition: '`global.server_port` がある設定と無い設定（パラメータ展開）'
+        mock: なし
+        expected: 真と偽
+  - name: apply
+    title: ポートの移し替え
+    container: features/migrate/migrations/v0_2_3.py
+    usecase: 端末をセットアップする
+    summary: '`global.server_port` を削除し、`env` へ移す値を返却する'
+    kind: 関数
+    scope: public
+    side_effects: '`data` を書き換える'
+    args:
+      - name: data
+        type: CommentedMap
+        required: true
+        passing: positional
+        description: 設定ファイルの中身
+    returns:
+      type: dict[str, str]
+      description: '`PORT_ENV` の値。値が `DEFAULT_PORT_TEXT` のときは空'
+    process: 1. `global.server_port` を削除し、値が `DEFAULT_PORT_TEXT` なら空を、それ以外は `{PORT_ENV: 値}` を返却する
+    unit_tests:
+      - name: test_apply
+        case: 正常
+        summary: ポートの値を返却する
+        condition: '`global.server_port: 9000`'
+        mock: なし
+        expected: '`{"RULE_INJECT_PORT": "9000"}` で、キーが削除される'
+      - name: test_apply_when_default
+        case: 正常
+        summary: 既定のポートは返却しない
+        condition: '`global.server_port: 8783`'
+        mock: なし
+        expected: 空で、キーが削除される

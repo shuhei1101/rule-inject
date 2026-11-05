@@ -4,4 +4,6 @@ items:
   - page: types.py.yaml
     summary: 移し替えの結果と、設定が新しい誤りの型
   - page: service.py.yaml
-    summary: 手順の算出と適用、バージョンごとの手順
+    summary: 手順の算出と適用
+  - page: migrations/
+    summary: バージョンごとの移し替えの手順

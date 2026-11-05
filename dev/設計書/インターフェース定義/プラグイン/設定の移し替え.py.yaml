@@ -167,7 +167,7 @@ response:
     description: 設定ファイルの `version`。ファイルかキーが無いときは `None`
   - name: to
     type: str
-    description: ツールのバージョンと最新の手順のバージョンの新しいほう。移し替え後の `version`
+    description: ツールのバージョン。移し替え後の `version`
   - name: steps
     type: list[str]
     description: 手順の説明の並び。適用するときは適用した手順
@@ -189,8 +189,8 @@ constraints:
     constraint: 書き換えないキーとコメントを残す
     notes: サーバーの依存の `ruamel.yaml` を使用する
   - item: 手順の適用条件
-    constraint: 手順のバージョンが設定ファイルの `version` より新しい手順を、古い順に全て適用する
-    notes: '`version` が無い設定ファイルは全ての手順を適用し、最後に `version` を今のバージョンにする'
+    constraint: 手順が持つ判定で、設定の中身に必要な手順だけをバージョンの古い順に適用する。`version` がツールのバージョンと違うときは、最後に `version` を更新する
+    notes: '`version` は最後に移し替えたツールのバージョンで、手順の選択には使用しない'
   - item: 最初の手順
     constraint: '`global.server_port` を削除し、値を `env` の `RULE_INJECT_PORT` として返却する。`.mcp.json` の既定と同じ `8783` のときは返却しない'
 refs:
