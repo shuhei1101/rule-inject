@@ -17,3 +17,11 @@ items:
     summary: セッションの既読のルールと読んだ方法、または既読の記録のあるセッションの一覧を返す（get_read_records）
   - page: 既読の記録の削除.py.yaml
     summary: セッションの既読の記録と案内済みの記録を削除し、ルールを未読に戻す（delete_read_records）
+  - page: サーバーの状態の確認.py.yaml
+    summary: 待ち受けのポート・プロセス・バージョン・クローンの commit・設定ファイルを読めるかを返す（get_server_status）
+  - page: 設定の再読込.py.yaml
+    summary: 設定ファイルを読み直し、読めたかと読んだ値を返す（reload_settings）
+  - page: サーバーの再起動.py.yaml
+    summary: 処理中の呼び出しの終わりを待って待ち受けを閉じ、同じプロセスで起動し直す（restart_server）
+  - page: サーバーの更新.py.yaml
+    summary: クローンへ上流の commit を取り込み、依存を入れ直して再起動する（update_server）

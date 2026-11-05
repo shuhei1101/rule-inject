@@ -74,7 +74,7 @@ subsystems:
     runs_on: ユーザーの端末（Linux / WSL）
   - name: MCP サーバー
     scope: server
-    role: 効いているルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー
+    role: 効いているルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー。サーバー自身の状態の確認・設定の再読込・再起動と、クローンへ上流を取り込む更新も管理のツールで行う
     runtime: Python 3（mcp・jsonschema・ruamel.yaml）
     runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
     refs:

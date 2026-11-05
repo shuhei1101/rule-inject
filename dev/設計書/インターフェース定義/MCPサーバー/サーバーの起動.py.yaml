@@ -26,7 +26,7 @@ flows:
       ```
     expected:
       - '`127.0.0.1` の `RULE_INJECT_PORT` のポートだけで待ち受けている'
-      - '`http://127.0.0.1:{ポート}/mcp` へ MCP のクライアントで接続でき、ツールの一覧に `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry` が並ぶ'
+      - '`http://127.0.0.1:{ポート}/mcp` へ MCP のクライアントで接続でき、ツールの一覧に `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`・`get_server_status`・`reload_settings`・`restart_server`・`update_server` が並ぶ'
     test: test_normal
   - name: 正常系（止める）
     summary: SIGTERM で待ち受けを閉じて終わる
