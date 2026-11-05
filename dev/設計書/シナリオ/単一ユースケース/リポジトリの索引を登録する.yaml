@@ -97,6 +97,32 @@ scenarios:
       - 端末の設定が変わっていない
       - 結果に索引が無い旨が記載されている
     test: test_error_when_index_missing
+  - name: 異常シナリオ（サーバーにつながらない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` に、どのサーバーも待ち受けていないポートを指定する'
+      - name: 索引
+        description: 正常シナリオと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as setup
+        participant SV as MCP サーバー
+
+        U->>SK: 実行する
+        SK->>SV: 索引のチェック
+        SV-->>SK: 接続できない
+        SK-->>U: サーバーの起動の案内を示して止まる
+      ```
+    expected:
+      - 端末の設定が変わっていない
+      - 結果に `global-setup` かサーバーの起動の案内が記載されている
+    test: test_error_when_server_unreachable
 lead: 利用者が `setup` のスキルを実行し、リポジトリの索引が参照される状態にして、索引のチェックの結果を受け取る。
 issue: 105
 primary_actor: 利用者
