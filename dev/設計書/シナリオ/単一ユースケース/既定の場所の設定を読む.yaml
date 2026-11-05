@@ -1,0 +1,93 @@
+title: "既定の場所の設定を読む"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かす
+      - name: 環境変数
+        description: '`XDG_CONFIG_HOME` をテスト用のフォルダへ向け、`RULE_INJECT_CONFIG` を指定しない'
+      - name: 設定ファイル
+        description: '`{XDG_CONFIG_HOME}/rule-inject/settings.yaml` の `global.indexes` にテスト用の索引を記載する'
+      - name: 索引
+        description: '操作の対象のパスに当たり、`on: [write]` のエントリを持つ索引'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as フック
+        participant CF as 既定の場所の設定ファイル
+        participant IDX as 索引
+
+        CC->>H: ファイルを記載する操作
+        H->>CF: 参照する
+        CF-->>H: global.indexes
+        H->>IDX: 照合する
+        IDX-->>H: 当たるルール
+        H-->>CC: 操作を止めて案内する
+      ```
+    expected:
+      - 操作が止まり、案内にルールの場所が記載されている
+    test: test_normal
+  - name: 正常シナリオ（既定の場所にファイルが無い）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: '`XDG_CONFIG_HOME` をファイルの無いテスト用のフォルダへ向け、`RULE_INJECT_CONFIG` を指定しない'
+      - name: 索引
+        description: プロジェクトの直下の `rules.yaml` に、操作の対象のパスに当たるエントリを記載する
+        notes: 設定なしのときの既定の置き場所
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as フック
+        participant IDX as プロジェクトの直下の索引
+
+        CC->>H: ファイルを記載する操作
+        H->>H: 設定なし（全てのキーを既定値）で動く
+        H->>IDX: 照合する
+        IDX-->>H: 当たるルール
+        H-->>CC: 操作を止めて案内する
+      ```
+    expected:
+      - 操作が止まり、案内にルールの場所が記載されている
+      - 案内に設定ファイルの誤りが載っていない
+    test: test_normal_when_file_missing
+  - name: 異常シナリオ（既定の場所のファイルが読み取れない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 設定ファイル
+        description: '`{XDG_CONFIG_HOME}/rule-inject/settings.yaml` に知らないキーを記載する'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as フック
+        participant CF as 既定の場所の設定ファイル
+
+        CC->>H: ファイルを記載する操作
+        H->>CF: 参照する
+        CF-->>H: 読み取れない（知らないキー）
+        H-->>CC: ファイルの場所と理由を案内する
+      ```
+    expected:
+      - 案内に既定の場所のパスと読み取れない理由が記載されている
+      - ログのファイルに `read_settings` の行がある
+    test: test_error_when_unreadable
+lead: 環境変数 `RULE_INJECT_CONFIG` が無いとき、フックとサーバーは `${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` を設定ファイルとして参照する。ファイルが無ければ設定なしで動く。
+issue: 105
+primary_actor: 利用者
+stakeholders:
+  - name: 利用者
+    interest: '`env` を書かなくても、既定の場所に置いた設定が有効になること'
+trigger: '`RULE_INJECT_CONFIG` を配置せずに Claude Code を起動して、ファイルを記載する'
+preconditions:
+  - プラグインを読み込んでいる
+  - '`RULE_INJECT_CONFIG` を置いていない'
+success_guarantee: 既定の場所の設定ファイルの索引で、ルールの案内を受ける。
+minimal_guarantee: 既定の場所のファイルが読み取れないときは既定値で動かさず、ファイルの場所と理由を案内に表示する。
+test_file: tests/e2e/単一ユースケース/test_read_default_settings.py
