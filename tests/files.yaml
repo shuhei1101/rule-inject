@@ -216,6 +216,15 @@ files:
         type: tests
       - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の破棄.py
         type: see_also
+  - path: integration/plugin/test_migrate_settings.py
+    name: 設定の移し替えの結合テスト
+    description: 設定の移し替えのコマンドを子プロセスとして起動し、出力と終了コードを確かめる結合テスト。設定の移し替えを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/migrate/__main__
+        type: tests
   - path: integration/plugin/test_record_read.py
     name: 既読の記録フックの結合テスト
     description: 既読の記録のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録のフックを修正したときに流す。
