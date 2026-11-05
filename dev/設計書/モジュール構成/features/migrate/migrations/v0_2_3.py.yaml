@@ -52,7 +52,7 @@ functions:
     returns:
       type: dict[str, str]
       description: '`PORT_ENV` の値。値が `DEFAULT_PORT_TEXT` のときは空'
-    process: 1. `global.server_port` を削除し、値が `DEFAULT_PORT_TEXT` なら空を、それ以外は `{PORT_ENV: 値}` を返却する
+    process: '1. `global.server_port` を削除し、値が `DEFAULT_PORT_TEXT` なら空を、それ以外は `{PORT_ENV: 値}` を返却する'
     unit_tests:
       - name: test_apply
         case: 正常

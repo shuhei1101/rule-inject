@@ -69,7 +69,7 @@ repository:
 subsystems:
   - name: プラグイン
     scope: plugin
-    role: Claude Code の操作の対象に当たる未読のルールの案内と、既読の記録
+    role: Claude Code の操作の対象に当たる未読のルールの案内と既読の記録、セットアップのスキル
     runtime: Python 3（標準ライブラリだけ）
     runs_on: ユーザーの端末（Linux / WSL）
   - name: MCP サーバー

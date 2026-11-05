@@ -35,6 +35,12 @@ catalogs:
       - name: .claude-plugin/marketplace.json
         kind: ファイル
         purpose: リポジトリを marketplace として載せ、`/plugin marketplace add` と `/plugin install` で入れられるようにする
+      - name: .mcp.json
+        kind: ファイル
+        purpose: プラグインのルートに置き、MCP サーバーの接続先を配る。`${変数:-既定}` を展開し、`plugin:{プラグイン}:{サーバー}` の名前で接続する。`claude --plugin-dir {フォルダ} mcp list` で確認できる（2.1.318）
+      - name: skills/{名前}/SKILL.md
+        kind: ファイル
+        purpose: プラグインのスキル。`/{プラグイン}:{名前}` で呼ぶ
   - name: セッションの記録
     version: 2.1.296
     entries:
