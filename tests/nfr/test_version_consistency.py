@@ -134,7 +134,7 @@ def test_version_consistency_when_plugin_has_version(tmp_path: Path) -> None:
         tmp_path, version_ini="v0.1.1", pyproject="0.1.1", uv_lock="0.1.1", plugin="0.1.0"
     )
     # 実行・検証
-    with pytest.raises(VersionMismatchError, match="マニフェストがあります: plugin.json$"):
+    with pytest.raises(VersionMismatchError, match=r"マニフェストがあります: plugin\.json$"):
         _check_version_consistency(tmp_path)
 
 
@@ -145,5 +145,5 @@ def test_version_consistency_when_marketplace_has_version(tmp_path: Path) -> Non
         tmp_path, version_ini="v0.1.1", pyproject="0.1.1", uv_lock="0.1.1", marketplace="0.1.1"
     )
     # 実行・検証
-    with pytest.raises(VersionMismatchError, match="マニフェストがあります: marketplace.json$"):
+    with pytest.raises(VersionMismatchError, match=r"マニフェストがあります: marketplace\.json$"):
         _check_version_consistency(tmp_path)
