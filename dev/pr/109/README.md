@@ -1,0 +1,1 @@
+# plugin.json の version を削除し、版の一致の対象から外す
