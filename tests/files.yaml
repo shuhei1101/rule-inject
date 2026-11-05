@@ -116,6 +116,26 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される
         type: see_also
+  - path: e2e/単一ユースケース/test_read_default_settings.py
+    name: 「既定の場所の設定を読む」の E2E テスト
+    description: 「既定の場所の設定を読む」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既定の場所の設定を読む」を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/既定の場所の設定を読む
+        type: see_also
+  - path: e2e/単一ユースケース/test_register_repository_index.py
+    name: 「リポジトリの索引を登録する」の E2E テスト
+    description: 「リポジトリの索引を登録する」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「リポジトリの索引を登録する」を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/リポジトリの索引を登録する
+        type: see_also
   - path: e2e/単一ユースケース/test_run_resident_mcp_server.py
     name: 「MCPサーバーを常駐させる」の E2E テスト
     description: 「MCPサーバーを常駐させる」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「MCPサーバーを常駐させる」を修正したときに流す。
@@ -195,6 +215,16 @@ files:
       - tool:pytest
     related:
       - to: dev/設計書/シナリオ/複合ユースケース/ルールを読んでからファイルを触る
+        type: see_also
+  - path: e2e/単一ユースケース/test_setup_terminal.py
+    name: 「端末をセットアップする」の E2E テスト
+    description: 「端末をセットアップする」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「端末をセットアップする」を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/端末をセットアップする
         type: see_also
   - path: integration/conftest.py
     name: 結合テストの共通設定
