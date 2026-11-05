@@ -213,37 +213,36 @@ def start_server(
     started: list[RunningServer] = []
 
     def _spawn_at(
-        make_config: Callable[[int], str], port: int, attempt: int, *, port_env: bool
+        make_config: Callable[[], str], port: int, attempt: int
     ) -> tuple[subprocess.Popen[bytes], Path]:
-        """port を渡して設定ファイルを書き、起動する。port_env なら port を `RULE_INJECT_PORT` にも渡す。"""
+        """設定ファイルを書き、port を `RULE_INJECT_PORT` に渡して起動する。"""
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_path.write_text(make_config(port), encoding="utf-8")
+        config_path.write_text(make_config(), encoding="utf-8")
         env = _server_env(config_path, tmp_path / "xdg_state", tmp_path / "xdg_config")
-        if port_env:
-            env["RULE_INJECT_PORT"] = str(port)
+        env["RULE_INJECT_PORT"] = str(port)
         stderr_path = tmp_path / f"server-{len(started)}-{attempt}.stderr"
         return _spawn(env, stderr_path), stderr_path
 
     def _start(
-        make_config: Callable[[int], str],
+        make_config: Callable[[], str],
         *,
-        port_env: bool = False,
+        port: int | None = None,
         wait_ready: bool = True,
     ) -> RunningServer:
-        """空いているポートを make_config に渡して書いた設定ファイルで起動する。
+        """make_config の設定ファイルと空いているポート（port があればそのポート）で起動する。
 
         wait_ready なら待ち受けるまで待ち、待ち受けに失敗したら別のポートで起動し直す。
         wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確かめに使う）。
         """
         if wait_ready:
-            port, process, stderr_path = _launch(
-                lambda port, attempt: _spawn_at(make_config, port, attempt, port_env=port_env)
+            used, process, stderr_path = _launch(
+                lambda free, attempt: _spawn_at(make_config, free, attempt)
             )
         else:
-            port = _free_port()
-            process, stderr_path = _spawn_at(make_config, port, 0, port_env=port_env)
+            used = port if port is not None else _free_port()
+            process, stderr_path = _spawn_at(make_config, used, 0)
         server = RunningServer(
-            port=port, process=process, config_path=config_path, stderr_path=stderr_path
+            port=used, process=process, config_path=config_path, stderr_path=stderr_path
         )
         started.append(server)
         return server
@@ -263,8 +262,8 @@ def _start_shared(
     env = _server_env(config, home / "xdg_state", home / "xdg_config")
 
     def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
-        """起動し直したポートを設定ファイルの `global.server_port` と `RULE_INJECT_PORT` に揃えて起動する。"""
-        config.write_text(f"global:\n  server_port: {port}\n", encoding="utf-8")
+        """起動し直したポートを `RULE_INJECT_PORT` に渡して起動する。"""
+        config.write_text("", encoding="utf-8")
         stderr_path = home / f"server-{attempt}.stderr"
         return _spawn(
             {**env, "RULE_INJECT_PORT": str(port)}, stderr_path, limited=limited
@@ -376,18 +375,20 @@ def project_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def config_text() -> Callable[..., str]:
-    """`global.server_port` と、`global.indexes`・`projects` を持つ設定ファイルの文字列を返す factory。"""
+    """`global.indexes`・`global.dev_docs_url`・`projects` を持つ設定ファイルの文字列を返す factory。"""
 
     def _text(
-        port: int,
         *,
         global_indexes: Sequence[Path] = (),
         match: Path | None = None,
         project_indexes: Sequence[Path] = (),
         dev_docs_url: str | None = None,
     ) -> str:
-        """port のポートと、渡した索引・プロジェクトの要素・dev-docs の接続先を書いた設定ファイルの文字列を作る。"""
-        lines = ["global:", f"  server_port: {port}"]
+        """渡した索引・プロジェクトの要素・dev-docs の接続先を書いた設定ファイルの文字列を作る。"""
+        lines: list[str] = []
+        # global のキーがあるときだけ見出しを置く
+        if dev_docs_url is not None or global_indexes:
+            lines.append("global:")
         if dev_docs_url is not None:
             lines.append(f"  dev_docs_url: {dev_docs_url}")
         if global_indexes:
@@ -416,7 +417,6 @@ def running_server(
     ) -> RunningServer:
         """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に置く。"""
         text = config_text(
-            shared_server.port,
             global_indexes=global_indexes,
             match=project_dir if project_indexes else None,
             project_indexes=project_indexes,
@@ -439,7 +439,6 @@ def running_limited_server(
     def _use(*project_indexes: Path, global_indexes: Sequence[Path] = ()) -> RunningServer:
         """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に置く。"""
         text = config_text(
-            limited_server.port,
             global_indexes=global_indexes,
             match=project_dir if project_indexes else None,
             project_indexes=project_indexes,
@@ -453,7 +452,7 @@ def running_limited_server(
 @pytest.fixture
 def record_server(shared_server: RunningServer, state_dir: Path) -> RunningServer:
     """`global.state_dir` でテストの記録フォルダを指した設定ファイルを書き、共有のサーバーを返す。"""
-    text = f"global:\n  server_port: {shared_server.port}\n  state_dir: {state_dir}\n"
+    text = f"global:\n  state_dir: {state_dir}\n"
     shared_server.config_path.write_text(text, encoding="utf-8")
     return shared_server
 
