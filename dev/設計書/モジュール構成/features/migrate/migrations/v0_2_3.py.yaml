@@ -1,4 +1,6 @@
 title: "プラグイン / 設定の移し替え / migrations/v0_2_3.py"
+test_files:
+  - tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py
 constants:
   - name: DESCRIPTION
     title: 手順の説明

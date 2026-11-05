@@ -1,4 +1,6 @@
 title: "プラグイン / 移し替えの入口 / __main__.py"
+test_files:
+  - tests/unit/rule_inject/migrate/test_main.py
 constants:
   - name: NEWER_EXIT_CODE
     title: 設定が新しいときの終了コード
