@@ -16,7 +16,7 @@
 | 対象 | 方針 | 補足 |
 | --- | --- | --- |
 | 接続先 | プラグインのルート（リポジトリの直下）の `.mcp.json` に、キーを `rule-inject`、`type` を `http`、`url` を `http://127.0.0.1:${RULE_INJECT_PORT:-8783}/mcp` で記載する | `alwaysLoad` は付けない（毎ターン使うツールを持たない） |
-| サーバーの待ち受け | `RULE_INJECT_PORT`、無ければ既定の `8783` で待ち受ける | `未確定`: `global.server_port` の扱い（`要件.md` の `## 要望`） |
+| サーバーの待ち受け | `RULE_INJECT_PORT`、無ければ既定の `8783` で待ち受ける | `global.server_port` は廃止する |
 | 起動していない端末 | Claude Code は接続の失敗を表示してセッションを続ける。フックの案内は今どおり動く | サーバーの起動は `global-setup` が担う |
 | E2E | `--plugin-dir` のプラグインの `.mcp.json` で、登録せずに接続できることを確かめる | テストの空きポートは `RULE_INJECT_PORT` で渡す |
 
