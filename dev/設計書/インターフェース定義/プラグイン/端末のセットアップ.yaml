@@ -82,7 +82,7 @@ constraints:
   - item: ポートの値
     constraint: 移し替えが返却した `RULE_INJECT_PORT`、無ければスキルの環境の `RULE_INJECT_PORT`、無ければ既定のポート。待ち受けの確認と `tools/list` もこの値を使用する
   - item: ユニットの環境
-    constraint: '`Environment=` に、既定と違うポートの `RULE_INJECT_PORT` と、既定と違うパスの `RULE_INJECT_CONFIG` を記載する'
+    constraint: '`Environment=` に、端末の設定の絶対パスの `RULE_INJECT_CONFIG` と、既定と違うポートの `RULE_INJECT_PORT` を記載する。端末の設定に `global.state_dir` が無ければ、スキルの環境で解いた絶対パスの `RULE_INJECT_STATE_DIR` も記載する'
     notes: '`systemctl --user` で起動したサーバーは Claude Code のセッションの環境を引き継がない'
 refs:
   - dev/設計書/シナリオ/単一ユースケース/端末をセットアップする#

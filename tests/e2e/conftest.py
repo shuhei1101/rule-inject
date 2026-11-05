@@ -823,15 +823,15 @@ def resident_server(
     started: list[ResidentServer] = []
 
     def _spawn_at(
-        configure: Callable[[], object], port: int, attempt: int
+        configure: Callable[[], object], port: int, attempt: int, config: Path
     ) -> tuple[subprocess.Popen[bytes], Path]:
-        """configure で設定ファイルを書き、それと port の `RULE_INJECT_PORT` を指して起動する。"""
+        """configure で設定ファイルを書き、config と port の `RULE_INJECT_PORT` を指して起動する。"""
         server_config_path.parent.mkdir(parents=True, exist_ok=True)
         configure()
         env = {
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }
-        env["RULE_INJECT_CONFIG"] = str(server_config_path)
+        env["RULE_INJECT_CONFIG"] = str(config)
         env["RULE_INJECT_PORT"] = str(port)
         env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
         env["XDG_STATE_HOME"] = str(tmp_path / "xdg_state")
@@ -847,20 +847,27 @@ def resident_server(
         return process, stderr_path
 
     def _start(
-        configure: Callable[[], object], *, port: int | None = None, wait_ready: bool = True
+        configure: Callable[[], object],
+        *,
+        port: int | None = None,
+        wait_ready: bool = True,
+        config: Path | None = None,
     ) -> ResidentServer:
         """configure で設定ファイルを書かせ、空いているポート（port があればそのポート）で起動する。
+
+        config があれば、その設定ファイルを `RULE_INJECT_CONFIG` で指す。
 
         wait_ready なら待ち受けるまで待ち、待ち受けに失敗したら別のポートで起動し直す。
         wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確かめに使う）。
         """
+        target = config if config is not None else server_config_path
         if wait_ready:
             used, process, stderr_path = _launch(
-                lambda free, attempt: _spawn_at(configure, free, attempt)
+                lambda free, attempt: _spawn_at(configure, free, attempt, target)
             )
         else:
             used = port if port is not None else _free_port()
-            process, stderr_path = _spawn_at(configure, used, 0)
+            process, stderr_path = _spawn_at(configure, used, 0, target)
         server = ResidentServer(port=used, process=process, stderr_path=stderr_path)
         started.append(server)
         return server
@@ -1121,16 +1128,13 @@ def list_tool_names() -> Callable[[int], list[str]]:
 @pytest.fixture
 def resident_for_setup(
     setup_env: SetupEnv,
-    tmp_path: Path,
     resident_server: Callable[..., ResidentServer],
 ) -> Callable[[], ResidentServer]:
     """セットアップのスキルが接続するサーバーを、隔離した端末の設定で起動する関数。"""
 
     def _start() -> ResidentServer:
-        """`setup_env` の端末の設定をサーバーの設定ファイルへコピーし、待ち受けるまで待つ。"""
-        return resident_server(
-            lambda: shutil.copyfile(setup_env.config_file, tmp_path / "config" / "settings.yaml")
-        )
+        """`setup_env` の端末の設定を指して起動し、待ち受けるまで待つ。"""
+        return resident_server(lambda: None, config=setup_env.config_file)
 
     return _start
 

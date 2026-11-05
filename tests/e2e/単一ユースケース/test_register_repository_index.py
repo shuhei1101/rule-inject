@@ -39,6 +39,7 @@ def test_normal_when_custom_index(
     e2e_project: Path,
     resident_for_setup: Callable[[], Any],
     run_skill_with_mcp: Callable[[str, Any], Any],
+    tool_text: Callable[[Any], str],
 ) -> None:
     """別の場所の索引を端末の設定の `projects` に記載する（正常シナリオ）。"""
     # 準備
@@ -52,6 +53,8 @@ def test_normal_when_custom_index(
     assert str(e2e_project) in written
     assert "rules/project.yaml" in written
     assert "rules/project.yaml" in run.answer
+    listed = tool_text(server.call("list_rules", project_dir=str(e2e_project)))
+    assert str(e2e_project / "rules" / "project.yaml") in listed
 
 
 def test_error_when_settings_missing(
