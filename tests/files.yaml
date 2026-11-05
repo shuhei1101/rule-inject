@@ -512,6 +512,24 @@ files:
     related:
       - to: src/rule_inject/features/index/_yaml
         type: tests
+  - path: unit/rule_inject/features/migrate/migrations/test_v0_2_3.py
+    name: global.server_port の移し替えの手順の単体テスト
+    description: global.server_port の移し替えの手順の振る舞いを確かめる単体テスト。この手順を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/migrate/migrations/v0_2_3
+        type: tests
+  - path: unit/rule_inject/features/migrate/test_service.py
+    name: 設定の移し替えの本体の単体テスト
+    description: 設定の移し替えの手順の算出と適用の振る舞いを確かめる単体テスト。設定の移し替えを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/migrate/service
+        type: tests
   - path: unit/rule_inject/features/record/test_service.py
     name: 既読の記録ファイルの読み書きの単体テスト
     description: 既読の記録ファイルの読み書きの振る舞いを確かめる単体テスト。既読の記録ファイルの読み書きを修正したときに流す。
@@ -721,4 +739,13 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/shared/yaml_lines
+        type: tests
+  - path: unit/rule_inject/migrate/test_main.py
+    name: 設定の移し替えの入口の単体テスト
+    description: 設定の移し替えのコマンドの出力と終了コードを確かめる単体テスト。入口を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/migrate/__main__
         type: tests

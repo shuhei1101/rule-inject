@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../schemas/files.schema.yaml
+files:
+  - path: global-setup/SKILL.md
+    name: 端末のセットアップのスキル
+    description: 端末の設定の作成か移し替え、サーバーの起動、フックの確認を実行するスキルの手順。端末のセットアップを読む・修正するときに開く。
+    tags:
+      - topic:設定ファイル
+    related:
+      - to: dev/設計書/インターフェース定義/プラグイン/端末のセットアップ
+        type: implements
+  - path: setup/SKILL.md
+    name: 索引の登録のスキル
+    description: リポジトリの索引を参照できる状態にしてチェックするスキルの手順。索引の登録を読む・修正するときに開く。
+    tags:
+      - topic:設定ファイル
+    related:
+      - to: dev/設計書/インターフェース定義/プラグイン/索引の登録
+        type: implements

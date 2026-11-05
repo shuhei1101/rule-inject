@@ -83,7 +83,7 @@ root_package = "rule_inject"
 name = "hooks と server は features を使い、features は shared を使う"
 type = "layers"
 layers = [
-    "rule_inject.hooks | rule_inject.server",
+    "rule_inject.hooks | rule_inject.server | rule_inject.migrate",
     "rule_inject.features",
     "rule_inject.shared",
 ]
@@ -96,5 +96,6 @@ modules = [
     "rule_inject.features.document",
     "rule_inject.features.guidance",
     "rule_inject.features.index",
+    "rule_inject.features.migrate",
     "rule_inject.features.record",
 ]
