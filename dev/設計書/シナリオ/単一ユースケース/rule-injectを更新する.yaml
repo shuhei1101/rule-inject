@@ -1,0 +1,133 @@
+title: "rule-injectを更新する"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。テストが一時フォルダに上流の bare リポジトリと、そこから取ったサーバーのクローンを作り、そのクローンからサーバーを起動して、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+        notes: 利用者のクローンと上流（GitHub）に触らない
+      - name: 上流の commit
+        description: サーバーを起動した後に、上流へ移し替えの手順を持たない commit を 1 つ積む
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant GC as クローン
+        participant UP as 上流
+
+        CL->>SV: 更新
+        SV->>GC: 上流を取り込む
+        GC->>UP: 取得
+        UP-->>GC: 新しい commit
+        SV->>GC: 依存を入れ直す
+        SV->>GC: 移し替えの手順を確かめる
+        GC-->>SV: 手順なし
+        SV-->>CL: 取り込んだ commit・再起動を始めた
+        SV->>SV: 起動し直す
+        CL->>SV: 接続し直して状態の確認
+        SV-->>CL: 新しい commit
+    expected:
+      - 更新の応答に、更新の前と後の commit と、再起動を始めたことが載っている
+      - クローンの `HEAD` が上流の commit と同じ
+      - 接続し直した後の状態の確認の commit が上流の commit と同じで、起動した時刻が更新の前より新しい
+    test: test_normal
+  - name: 正常シナリオ（新しい commit が無い）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（一時フォルダの上流とクローン）
+      - name: 上流の commit
+        description: 上流に commit を積まない
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant GC as クローン
+        participant UP as 上流
+
+        CL->>SV: 更新
+        SV->>GC: 上流を取り込む
+        GC->>UP: 取得
+        UP-->>GC: 新しい commit なし
+        SV-->>CL: 最新のため何もしない
+    expected:
+      - 更新の応答に、最新のため何も変えなかったことが載っている
+      - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
+    test: test_normal_when_up_to_date
+  - name: 正常シナリオ（設定の移し替えが要る）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（一時フォルダの上流とクローン）
+      - name: 上流の commit
+        description: 上流へ、今の設定ファイルのバージョンに当てる移し替えの手順を持つ commit を積む
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant GC as クローン
+
+        CL->>SV: 更新
+        SV->>GC: 上流を取り込み、依存を入れ直す
+        SV->>GC: 移し替えの手順を確かめる
+        GC-->>SV: 当てる手順あり
+        SV-->>CL: 当てる手順と global-setup の案内（再起動しない）
+    expected:
+      - 更新の応答に、当てる移し替えの手順と `global-setup` の実行の案内が載っている
+      - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
+      - 設定ファイルが書き換わっていない
+    test: test_normal_when_migration_required
+  - name: 異常シナリオ（fast-forward できない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（一時フォルダの上流とクローン）
+      - name: 分かれた commit
+        description: クローンと上流のそれぞれに、別の commit を 1 つずつ積む
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant GC as クローン
+
+        CL->>SV: 更新
+        SV->>GC: 上流を取り込む
+        GC-->>SV: fast-forward できない
+        SV-->>CL: ツールのエラー（理由）
+    expected:
+      - ツールのエラーが返り、fast-forward できない旨が載っている
+      - クローンの `HEAD` がクローンに積んだ commit のまま
+      - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
+    test: test_error_when_not_fast_forward
+  - name: 異常シナリオ（commit していない変更がある）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（一時フォルダの上流とクローン）
+      - name: クローンの変更
+        description: 上流に commit を 1 つ積み、クローンの追跡しているファイルを commit せずに書き換える
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant GC as クローン
+
+        CL->>SV: 更新
+        SV->>GC: 変更を確かめる
+        GC-->>SV: commit していない変更あり
+        SV-->>CL: ツールのエラー（変更のあるファイル）
+    expected:
+      - ツールのエラーが返り、commit していない変更がある旨が載っている
+      - クローンの `HEAD` と書き換えたファイルの中身が更新の前のまま
+      - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
+    test: test_error_when_uncommitted_changes
+lead: Claude Code が常駐の MCP サーバーの更新のツールを呼び、サーバーは自分のクローンへ上流の commit を取り込んで依存を入れ直し、設定の移し替えが要らなければ起動し直す。
+issue: 107
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: 新しいバージョンを、端末でクローンの `git pull`・`uv sync`・再起動を打たずに入れられること
+  - name: 利用者のクローン
+    interest: commit していない変更と、上流から分かれた commit が消されないこと
+trigger: Claude Code が更新のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code からプラグインの `.mcp.json` の接続先で接続できる
+  - サーバーはローカルのクローンから起動しており、クローンのブランチに上流のブランチが設定されている
+success_guarantee: 上流に新しい commit があり fast-forward できるときは、クローンを上流の commit へ進めて依存を入れ直し、設定の移し替えが要らなければ起動し直す。移し替えが要るときは起動し直さず、当てる手順と `global-setup` を返す。
+minimal_guarantee: fast-forward できないとき・commit していない変更があるときは、クローンに触らず起動し直さない。上流に新しい commit が無いときは何も変えない。設定ファイルを書き換えない。
+test_file: tests/e2e/単一ユースケース/test_update_rule_inject.py
