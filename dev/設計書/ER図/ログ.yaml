@@ -13,7 +13,7 @@ tables:
     description: |-
       フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（Claude Code のデバッグのログに残る）。
 
-      `{log_dir}` は設定『プラグイン』の `global.log_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。設定ファイルが読めなかったことのログは既定のフォルダへ書く。`{yyyymmdd}` は `time` の UTC の日付。
+      `{log_dir}` は設定『プラグイン』の `global.log_dir`（既定は `RULE_INJECT_STATE_DIR` の下の `logs`、無ければ `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。設定ファイルが読めなかったことのログは既定のフォルダへ書く。`{yyyymmdd}` は `time` の UTC の日付。
     columns:
       - name: time
         title: 時刻

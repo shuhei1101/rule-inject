@@ -12,7 +12,7 @@ tables:
     deletion: 圧縮の前にファイルごと物理削除する。保持期間を過ぎたファイルは、セッションの開始時にファイルごと物理削除する
     access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
     description: |-
-      `{state_dir}` は設定『プラグイン』の `global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）。
+      `{state_dir}` は設定『プラグイン』の `RULE_INJECT_STATE_DIR`、無ければ `global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）。
       複数のフックが別のプロセスで同時に書くため、行の追記だけで完結する形式にする。フォルダが無ければ書く側が作る。
     columns:
       - name: location

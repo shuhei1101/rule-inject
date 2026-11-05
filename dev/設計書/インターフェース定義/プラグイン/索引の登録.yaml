@@ -1,0 +1,44 @@
+title: "索引の登録"
+entry:
+  kind: operation
+  value: '`/rule-inject:setup`（プラグインのスキル）'
+flows:
+  - name: 正常系
+    summary: リポジトリの索引を参照できる状態にして、チェックの結果を示す
+    setup:
+      - name: Mock
+        description: なし（手順はスキルの本文で、シナリオ『リポジトリの索引を登録する』の E2E で確認する）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as 利用者
+        participant IF as setup
+        participant SV as MCP サーバー
+
+        C->>IF: 実行する
+        IF->>SV: check_indexes
+        SV-->>IF: 参照する索引と問題
+        IF-->>C: チェックの結果
+      ```
+    expected:
+      - 結果に索引のパスとチェックの結果が記載されている
+lead: リポジトリの索引を端末の設定で参照できる状態にし、索引のチェックの結果を示す。
+identifier: setup
+idempotent: true
+side_effects: 別の場所の索引を指定したときだけ、端末の設定の `projects` に要素を追加する
+request:
+  - name: index
+    type: str
+    required: false
+    default: なし（リポジトリの直下の `rules.yaml`）
+    location: argument
+    description: 索引のパス。リポジトリの直下からの相対パス
+constraints:
+  - item: 既定の索引
+    constraint: リポジトリの直下の `rules.yaml` は既定で参照するため、端末の設定へ記載しない
+  - item: projects の要素
+    constraint: '`match` はリポジトリの絶対パス。同じ `match` の要素があれば、その `indexes` へ追加する'
+  - item: 前提
+    constraint: 端末の設定が無いときは `global-setup` を案内して止まる。MCP サーバーへ接続できないときはサーバーの起動を案内して止まる
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/リポジトリの索引を登録する#

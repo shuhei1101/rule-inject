@@ -1212,7 +1212,7 @@ exceptions:
     condition: 案内済みの記録ファイルはあるが読めない、または記録フォルダか記録ファイルに書けない（権限・容量）
     notes: 既読の記録が読めないときと揃え、操作を止めずに案内を出し、`additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` か `write_record` を書く。読めないときは未案内として扱う。ファイルが無いときは失敗ではなく未案内として扱う
   - name: OSError / 書式の誤り（設定ファイルが読めない）
-    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: フックの中で捕まえ、設定ファイルを使わず（既定値でも動かさず）索引を読まない。操作を止めずに `additionalContext` へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト
@@ -1253,7 +1253,7 @@ constraints:
     constraint: そのセッションの既読の記録に、ルールの場所と今のルールのファイルの中身の SHA-256 の組み合わせがあるときだけ既読として扱う。ハッシュが違う行・ハッシュを持たない行だけの場所と、ファイルを読めず今のハッシュを取れないルールは未読として扱う
     notes: ハッシュの取り方は既読の記録の制約「本文のハッシュ」と同じ。今のハッシュは当たったルールの分だけ取る。記録ファイルは書き換えず、読み直したときに既読の記録が新しいハッシュの行を追記する
   - item: 設定ファイル
-    constraint: 環境変数 `RULE_INJECT_CONFIG` の値（先頭の `~` はホームに展開）の YAML を読む。`RULE_INJECT_CONFIG` が無いときは読まず、設定ファイルのキーを全て既定値で扱う。`projects` の要素は `match` で当て、当たった要素を並びの順に `global` へ重ねる。`CLAUDE_PROJECT_DIR` が無いときはどの要素にも当てない
+    constraint: 環境変数 `RULE_INJECT_CONFIG` の値（先頭の `~` はホームに展開）の YAML を読む。`RULE_INJECT_CONFIG` が無いときは `${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` を読み、そのファイルも無いときは設定ファイルのキーを全て既定値で扱う。`projects` の要素は `match` で当て、当たった要素を並びの順に `global` へ重ねる。`CLAUDE_PROJECT_DIR` が無いときはどの要素にも当てない
     notes: キー・既定値・許す値・`match` の当て方は設定の設計書。標準ライブラリだけで読む
   - item: 条件の木の照合
     constraint: '`args` のキーが `{道筋}[{field}]`（例 `filter[tags]`）のときは、ドットの道筋が指す値を条件の木（`field`・`op`・`values` の条件と、`and`・`or`・`not` の束の入れ子）として読み、`and`・`or` の中を深さを問わずたどって、`field` が `{field}` と一致する条件の `values` の要素を照合する値にする。`not` の中と、`op` が `ne`・`not_contains`・`not_exists` の条件は値にしない。道筋の途中や値が配列のときは、ドットの道筋と同じく要素ごとにたどる。条件の木として読めない値（オブジェクトでない・`field` も束のキーも持たない）からは値を取らない。照合する値が 1 つも無いキーは当たらない'
