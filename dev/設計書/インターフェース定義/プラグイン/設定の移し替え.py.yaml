@@ -167,7 +167,7 @@ response:
     description: 設定ファイルの `version`。ファイルかキーが無いときは `None`
   - name: to
     type: str
-    description: ツールのバージョン
+    description: ツールのバージョンと最新の手順のバージョンの新しいほう。移し替え後の `version`
   - name: steps
     type: list[str]
     description: 手順の説明の並び。適用するときは適用した手順

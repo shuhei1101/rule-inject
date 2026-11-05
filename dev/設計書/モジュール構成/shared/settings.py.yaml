@@ -35,12 +35,12 @@ constants:
   - name: DEFAULT_SERVER_PORT
     title: MCPサーバーのポートの既定
     container: shared/settings.py
-    summary: 設定ファイルに `global.server_port` が無いときのポート
+    summary: '`RULE_INJECT_PORT` が無いときのポート'
     value: '`8783`'
   - name: PORT_ENV
     title: ポートを上書きする環境変数
     container: shared/settings.py
-    summary: '`global.server_port` をその起動だけ上書きする環境変数の名前'
+    summary: 'MCP サーバーのポートを指す環境変数の名前'
     value: '`"RULE_INJECT_PORT"`'
   - name: DEFAULT_DEV_DOCS_URL
     title: dev-docsの接続先の既定
@@ -52,12 +52,22 @@ constants:
     container: shared/settings.py
     summary: '`global.dev_docs_url` の先頭に許す文字列'
     value: '`("http://", "https://")`'
+  - name: CONFIG_FILE_DEFAULT
+    title: 設定ファイルの既定の置き場所
+    container: shared/settings.py
+    summary: '`RULE_INJECT_CONFIG` が無いときに読む設定ファイルの、設定フォルダからのパス'
+    value: '`rule-inject/settings.yaml`'
+  - name: BACKUP_DIR_DEFAULT
+    title: バックアップのフォルダ
+    container: shared/settings.py
+    summary: 設定ファイルのバックアップを配置するフォルダの、設定フォルダからのパス
+    value: '`rule-inject/bk`'
 functions:
   - name: load_settings
     title: 設定の読み込み
     container: shared/settings.py
     usecase: 共通
-    summary: '`RULE_INJECT_CONFIG` が指す設定ファイルを読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す'
+    summary: '`RULE_INJECT_CONFIG` が指す設定ファイル（無ければ既定のパス）を読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す'
     kind: 関数
     scope: public
     args:
@@ -70,12 +80,11 @@ functions:
       type: Settings
       description: フックが使う値
     process: |-
-      1. `CONFIG_ENV` が無いか空なら設定ファイルを読まず、空の設定として 4 へ進む
-      2. 先頭の `~` を展開したパスを UTF-8 で読み `parse_settings` に渡す
+      1. `config_path(env)` のパスを決める。`CONFIG_ENV` が無いか空で、既定のパスにファイルが無ければ、空の設定として 4 へ進む
+      2. パスを UTF-8 で読み `parse_settings` に渡す
       3. 値を確かめる
          - `global.indexes`・`global.state_dir`・`global.log_dir` の値は、`~` を展開して絶対パスでなければ誤り
          - `global.record_retention_days`・`global.log_retention_days` は 10 進の整数として読み、1 以上でなければ誤り
-         - `global.server_port` は 10 進の整数として読み、1024〜65535 でなければ誤り
          - `global.dev_docs_url` は `DEV_DOCS_URL_SCHEMES` のどれかで始まらなければ誤り
          - `projects` の要素が `match` を持たなければ誤り
       4. `CLAUDE_PROJECT_DIR` があれば、`_matches_project(match, CLAUDE_PROJECT_DIR)` が真の `projects` の要素を並びの順に集める（無ければどの要素も当てない）
@@ -84,7 +93,7 @@ functions:
          - 続けて、当たった要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
          - 当たった要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
          - 当たった要素とプロジェクトの既定の置き場所から並べた索引を `project_indexes` にも入れる
-      6. `state_dir`・`log_dir` は `global` の値（`~` を展開）か、無ければ `default_state_dir(env)`・`default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（3 の `global.server_port` と同じ規則で確かめる）、無ければ `global` の値、それも無ければ `DEFAULT_SERVER_PORT`。dev-docs の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`
+      6. `state_dir` は `STATE_DIR_ENV` があれば `default_state_dir(env)`、無ければ `global` の値（`~` を展開）か `default_state_dir(env)`。`log_dir` は `global` の値（`~` を展開）か `default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（1024〜65535 の整数でなければ誤り）、無ければ `DEFAULT_SERVER_PORT`。dev-docs の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`
       7. `Settings` を返す
     exceptions:
       - name: SettingsReadError
@@ -181,25 +190,26 @@ functions:
         mock: なし
         expected: SettingsReadError（path が設定ファイルの場所）
         exception: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
-      - name: test_load_settings_when_invalid_server_port
-        case: 異常
-        summary: 範囲の外のポートを拒む
-        condition: '`global.server_port` が `1023`・`65536`・`abc`（パラメータ展開）'
-        mock: なし
-        expected: SettingsReadError（reason に `global.server_port` と値）
-        exception: 3 の値の誤り
-      - name: test_load_settings_when_server_port
+      - name: test_load_settings_when_default_config
         case: 正常
-        summary: ポートを設定ファイルから読み、無ければ既定にする
-        condition: '`global.server_port: 9000` の設定ファイルと、`server_port` を書かない設定ファイル（パラメータ展開）'
+        summary: '`RULE_INJECT_CONFIG` が無ければ既定のパスの設定ファイルを読む'
+        condition: '`RULE_INJECT_CONFIG` が無い。`{XDG_CONFIG_HOME}/rule-inject/settings.yaml` に `global.log_retention_days: 5` を配置する'
         mock: なし
-        expected: '`server_port` が 9000 と 8783'
+        expected: '`log_retention_days` が 5'
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_removed_port_key
+        case: 異常
+        summary: 廃止したキーを拒む
+        condition: '`global.server_port: 9000` の設定ファイル'
+        mock: なし
+        expected: 'SettingsReadError（reason に `global.server_port` と `global-setup`）'
+        exception: '`parse_settings` が ValueError を送出する'
       - name: test_load_settings_when_port_env
         case: 正常
-        summary: 環境変数のポートが設定ファイルより優先する
-        condition: '`global.server_port: 9000` の設定ファイルと `RULE_INJECT_PORT=9100`、設定ファイル無しと `RULE_INJECT_PORT=9100`（パラメータ展開）'
+        summary: ポートを環境変数から読み、無ければ既定にする
+        condition: '`RULE_INJECT_PORT=9100` と、`RULE_INJECT_PORT` 無し（パラメータ展開）'
         mock: なし
-        expected: どちらも `server_port` が 9100
+        expected: '`server_port` が 9100 と 8783'
       - name: test_load_settings_when_invalid_port_env
         case: 異常
         summary: 許す範囲の外の環境変数のポートを拒む
@@ -225,6 +235,12 @@ functions:
         condition: '`global.dev_docs_url` が `127.0.0.1:8781/mcp`・`ftp://h/mcp`（パラメータ展開）'
         mock: なし
         expected: SettingsReadError（reason に `global.dev_docs_url` と値）。既定の接続先に置き換えない
+      - name: test_load_settings_when_state_dir_env
+        case: 正常
+        summary: 環境変数の状態の置き場所が設定ファイルより優先する
+        condition: '`global.state_dir: /a` の設定ファイルと `RULE_INJECT_STATE_DIR=/b`'
+        mock: なし
+        expected: '`state_dir` が `/b`、`log_dir` が `/b/logs`'
   - name: _matches_project
     title: プロジェクトの当て方
     container: shared/settings.py
@@ -269,6 +285,60 @@ functions:
         condition: '`project_dir` が `/w/repo/.claude/worktrees/feat`。`match` が `repo`・`/w/repo`・`feat`（パラメータ展開）'
         mock: なし
         expected: 順に真・真・偽
+  - name: config_path
+    title: 設定ファイルのパスの解決
+    container: shared/settings.py
+    usecase: 共通
+    summary: '`RULE_INJECT_CONFIG` の値（`~` を展開）か、無ければ既定のパスを返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`CONFIG_ENV`・`XDG_CONFIG_HOME` を使用する）
+    returns:
+      type: Path
+      description: 設定ファイルのパス（ファイルの有無は確かめない）
+    process: 1. `CONFIG_ENV` が空でなければ `~` を展開して返す。無ければ `{XDG_CONFIG_HOME か ~/.config}/{CONFIG_FILE_DEFAULT}` を返す
+    unit_tests:
+      - name: test_config_path
+        case: 正常
+        summary: 環境変数のパスを返す
+        condition: '`RULE_INJECT_CONFIG=~/c.yaml`'
+        mock: なし
+        expected: ホームの下の `c.yaml`
+      - name: test_config_path_when_default
+        case: 正常
+        summary: 既定のパスを返す
+        condition: '`RULE_INJECT_CONFIG` が無く `XDG_CONFIG_HOME=/x`'
+        mock: なし
+        expected: '`/x/rule-inject/settings.yaml`'
+  - name: backup_dir
+    title: バックアップのフォルダの解決
+    container: shared/settings.py
+    usecase: 端末をセットアップする
+    summary: 設定ファイルのバックアップを配置するフォルダを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`XDG_CONFIG_HOME` を使用する）
+    returns:
+      type: Path
+      description: '`{XDG_CONFIG_HOME か ~/.config}/{BACKUP_DIR_DEFAULT}`（作らない）'
+    process: 1. 設定フォルダの下の `BACKUP_DIR_DEFAULT` を返す
+    unit_tests:
+      - name: test_backup_dir
+        case: 正常
+        summary: 設定フォルダの下を返す
+        condition: '`XDG_CONFIG_HOME=/x`'
+        mock: なし
+        expected: '`/x/rule-inject/bk`'
 data_models:
   - name: Settings
     title: 設定

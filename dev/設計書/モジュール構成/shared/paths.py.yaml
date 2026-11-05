@@ -12,6 +12,11 @@ constants:
     container: shared/paths.py
     summary: 既定のログのフォルダの最後の名前（既定の記録フォルダの下）
     value: '`logs`'
+  - name: STATE_DIR_ENV
+    title: 状態の置き場所の環境変数
+    container: shared/paths.py
+    summary: 状態の置き場所を上書きする環境変数の名前
+    value: '`"RULE_INJECT_STATE_DIR"`'
 functions:
   - name: resolve_location
     title: 場所の解決
@@ -62,11 +67,13 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: positional
-        description: 環境変数（`XDG_STATE_HOME` を使う）
+        description: 環境変数（`STATE_DIR_ENV`・`XDG_STATE_HOME` を使用する）
     returns:
       type: Path
       description: 記録フォルダの絶対パス（作らない）
-    process: 1. `XDG_STATE_HOME`（無いか空なら `~/.local/state`）の `~` を展開し、その下の `STATE_DIR_NAME` を返す
+    process: |-
+      1. `STATE_DIR_ENV` が空でなければ、その値の `~` を展開して返す
+      2. `XDG_STATE_HOME`（無いか空なら `~/.local/state`）の `~` を展開し、その下の `STATE_DIR_NAME` を返す
     unit_tests:
       - name: test_default_state_dir_when_xdg_state_home
         case: 正常
@@ -80,6 +87,12 @@ functions:
         condition: '`XDG_STATE_HOME` が無い'
         mock: なし
         expected: '`~/.local/state/rule-inject` の絶対パス'
+      - name: test_default_state_dir_when_state_dir_env
+        case: 正常
+        summary: 環境変数の値を優先する
+        condition: '`RULE_INJECT_STATE_DIR=~/s`、`XDG_STATE_HOME=/x`'
+        mock: なし
+        expected: ホームの下の `s`
   - name: default_log_dir
     title: 既定のログのフォルダの解決
     container: shared/paths.py
@@ -92,7 +105,7 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: positional
-        description: 環境変数（`XDG_STATE_HOME` を使う）
+        description: 環境変数（`STATE_DIR_ENV`・`XDG_STATE_HOME` を使用する）
     returns:
       type: Path
       description: ログのフォルダの絶対パス（作らない）
@@ -110,3 +123,9 @@ functions:
         condition: '`XDG_STATE_HOME` が無い'
         mock: なし
         expected: '`~/.local/state/rule-inject/logs` の絶対パス'
+      - name: test_default_log_dir_when_state_dir_env
+        case: 正常
+        summary: 環境変数の値の下を使用する
+        condition: '`RULE_INJECT_STATE_DIR=/s`'
+        mock: なし
+        expected: '`/s/logs`'

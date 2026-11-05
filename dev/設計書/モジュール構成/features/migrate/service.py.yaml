@@ -1,0 +1,184 @@
+title: "プラグイン / 設定の移し替え / service.py"
+constants:
+  - name: PACKAGE_NAME
+    title: パッケージ名
+    container: features/migrate/service.py
+    summary: ツールのバージョンを引くパッケージの名前
+    value: '`"rule-inject"`'
+  - name: STEPS
+    title: 移し替えの手順
+    container: features/migrate/service.py
+    summary: バージョンの古い順の手順の並び
+    entries:
+      - key: '0'
+        value: '`("0.3.0", "global.server_port を削除し、env の RULE_INJECT_PORT へ移す", _move_server_port)`'
+        description: バージョンは `global.server_port` を廃止した版
+  - name: DEFAULT_PORT_TEXT
+    title: 既定のポートの文字列
+    container: features/migrate/service.py
+    summary: '`env` へ移さないポート（`DEFAULT_SERVER_PORT` の文字列）'
+    value: '`str(DEFAULT_SERVER_PORT)`'
+functions:
+  - name: plan_migration
+    title: 手順の算出
+    container: features/migrate/service.py
+    usecase: 端末をセットアップする
+    summary: 設定ファイルに適用する手順を求め、書き換えずに返す
+    kind: 関数
+    scope: public
+    args:
+      - name: path
+        type: Path
+        required: true
+        passing: positional
+        description: 設定ファイルのパス
+    returns:
+      type: MigrationResult
+      description: '`backup` が `None`、`env` が空の結果。ファイルが無ければ `steps` が空'
+    process: |-
+      1. ファイルが無ければ `source_version` が `None`、`steps` が空の結果を返す
+      2. `ruamel.yaml` で読み、最上位の `version` を取る（`_load`）
+      3. `_target_version` と比べ、`version` のほうが新しければ `SettingsNewerError` を送出する
+      4. `version` より新しいバージョンの手順の説明を `STEPS` の順に並べて返す。`version` が無ければ全ての手順を並べる
+    exceptions:
+      - name: SettingsNewerError
+        condition: '`version` が `_target_version` より新しい'
+        message: 設定のバージョンとツールのバージョンを持つ
+      - name: SettingsReadError
+        condition: ファイルが読み取れない・YAML として読み取れない
+        message: path は設定ファイルの場所、reason は `describe(exc)`
+    unit_tests:
+      - name: test_plan_migration
+        case: 正常
+        summary: 古い設定の手順を示す
+        condition: '`version` が無く `global.server_port: 9000` を持つファイル'
+        mock: なし（一時ファイル）
+        expected: '`steps` が 1 件、`source_version` が `None`、ファイルが変わっていない'
+      - name: test_plan_migration_when_missing
+        case: 正常
+        summary: ファイルが無ければ手順は無い
+        condition: 実在しないパス
+        mock: なし
+        expected: '`steps` が空'
+      - name: test_plan_migration_when_current
+        case: 正常
+        summary: 今のバージョンなら手順は無い
+        condition: '`version` が `_target_version` と同じファイル'
+        mock: なし（一時ファイル）
+        expected: '`steps` が空'
+      - name: test_plan_migration_when_newer
+        case: 異常
+        summary: 設定のほうが新しい
+        condition: '`version: 99.0.0` のファイル'
+        mock: なし（一時ファイル）
+        expected: '`SettingsNewerError`（`settings_version` が `99.0.0`）'
+        exception: '`version` が `_target_version` より新しい'
+      - name: test_plan_migration_when_unreadable
+        case: 異常
+        summary: YAML として読み取れない
+        condition: 'YAML の文法の誤りを持つファイル'
+        mock: なし（一時ファイル）
+        expected: '`SettingsReadError`（path が設定ファイルの場所）'
+        exception: ファイルが読み取れない・YAML として読み取れない
+  - name: apply_migration
+    title: 手順の適用
+    container: features/migrate/service.py
+    usecase: 端末をセットアップする
+    summary: バックアップを作成して手順を適用し、設定ファイルを書き換える
+    kind: 関数
+    scope: public
+    side_effects: '`backup_dir` にバックアップを作成し、`path` を書き換える'
+    args:
+      - name: path
+        type: Path
+        required: true
+        passing: positional
+        description: 設定ファイルのパス
+      - name: backup_dir
+        type: Path
+        required: true
+        passing: positional
+        description: バックアップを置くフォルダ
+      - name: now
+        type: datetime
+        required: true
+        passing: keyword
+        description: バックアップのファイル名の時刻
+    returns:
+      type: MigrationResult
+      description: 適用した手順・バックアップのパス・`env` の値。手順が無ければ `plan_migration` の結果
+    process: |-
+      1. `plan_migration(path)` の `steps` が空なら、その結果を返す
+      2. `backup_dir` を作り、元のファイルを `settings.{yyyymmddHHMMSS}.yaml` へコピーする
+      3. `version` より新しい手順の関数を順に呼び、返った環境変数を `env` へ重ねる
+      4. 最上位の `version` を `_target_version` にし、コメントを残して書き出す
+    unit_tests:
+      - name: test_apply_migration
+        case: 正常
+        summary: キーを移してコメントを残す
+        condition: '`version` が無く `global.server_port: 9000` とコメントを持つファイル'
+        mock: なし（一時ファイル）
+        expected: '`global.server_port` が無く、`version` があり、コメントが残り、`env` が `RULE_INJECT_PORT=9000`、`backup` のファイルが元の内容'
+      - name: test_apply_migration_when_no_steps
+        case: 正常
+        summary: 手順が無ければ書き換えない
+        condition: '`version` が `_target_version` と同じファイル'
+        mock: なし（一時ファイル）
+        expected: '`backup` が `None`、ファイルが変わっていない'
+  - name: _move_server_port
+    title: ポートの移し替え
+    container: features/migrate/service.py
+    usecase: 端末をセットアップする
+    summary: '`global.server_port` を削除し、`env` へ移す値を返す'
+    kind: 関数
+    scope: internal
+    side_effects: '`data` を書き換える'
+    args:
+      - name: data
+        type: CommentedMap
+        required: true
+        passing: positional
+        description: 設定ファイルの中身
+    returns:
+      type: dict[str, str]
+      description: '`PORT_ENV` の値。キーが無いとき・`DEFAULT_PORT_TEXT` のときは空'
+    process: |-
+      1. `global.server_port` が無ければ空を返す
+      2. 削除し、値が `DEFAULT_PORT_TEXT` なら空を返す。それ以外は `{PORT_ENV: 値}` を返す
+    unit_tests:
+      - name: test_move_server_port
+        case: 正常
+        summary: ポートの値を返す
+        condition: '`global.server_port: 9000`'
+        mock: なし
+        expected: '`{"RULE_INJECT_PORT": "9000"}` で、キーが削除される'
+      - name: test_move_server_port_when_default
+        case: 正常
+        summary: 既定のポートは返さない
+        condition: '`global.server_port: 8783`'
+        mock: なし
+        expected: 空で、キーが削除される
+      - name: test_move_server_port_when_missing
+        case: 正常
+        summary: キーが無ければ何もしない
+        condition: '`global` に `server_port` が無い'
+        mock: なし
+        expected: 空
+  - name: _target_version
+    title: 移し替え先のバージョン
+    container: features/migrate/service.py
+    usecase: 端末をセットアップする
+    summary: ツールのバージョンと最新の手順のバージョンの新しいほうを返す
+    kind: 関数
+    scope: internal
+    returns:
+      type: str
+      description: '`{major}.{minor}.{patch}`'
+    process: 1. `importlib.metadata.version(PACKAGE_NAME)` と `STEPS` の最後のバージョンを比べ、新しいほうを返す
+    unit_tests:
+      - name: test_target_version
+        case: 正常
+        summary: 新しいほうを返す
+        condition: '`importlib.metadata.version` が `0.2.3` と `9.0.0`（パラメータ展開）'
+        mock: '`importlib.metadata.version`'
+        expected: '`0.3.0` と `9.0.0`'
