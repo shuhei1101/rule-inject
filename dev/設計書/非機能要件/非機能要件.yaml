@@ -101,7 +101,7 @@ requirements:
     category: 保守性
     external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はそのバージョンに固定される（値が変わらない間、marketplace から入れた利用者へ新しいバージョンは届かない）。`plugin.json` にも marketplace の `plugins[]` にも `version` が無ければ、commit の SHA をバージョンにして更新を判定する'
     source_kind: 実行基盤の制限
-    source: https://code.claude.com/docs/en/plugins-reference
+    source: https://code.claude.com/docs/en/plugins/loading#how-claude-code-computes-the-version
     value: '`version.ini`・`pyproject.toml`・`uv.lock` の 3 つの値が全て一致し、`plugin.json` と `marketplace.json` の `plugins[]` は `version` を持たない'
     rationale: '`.claude-plugin/plugin.json` か `marketplace.json` の `plugins[]` に `version` があると、その値の更新を忘れたときにバージョンの更新が利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。規約『Claude プラグインルール』の `no-version-01` のとおり、どちらにも `version` を持たせない。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いと `version` の再追加はテストで検知する'
     measurement: '`version.ini`・`pyproject.toml`・`uv.lock`（`rule-inject` のパッケージ）の 3 つからバージョンを取り出して比べ、`.claude-plugin/plugin.json` と `.claude-plugin/marketplace.json` の `plugins[]` に `version` が無いことを確認する。食い違うときは 3 つの値を並べ、`version` があるときはそのファイルを挙げて fail する'
