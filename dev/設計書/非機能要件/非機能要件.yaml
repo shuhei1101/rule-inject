@@ -134,7 +134,7 @@ requirements:
     external_constraint: 制限なし
     source_kind: 制限なし
     value: '8783'
-    rationale: コーディング規約『MCP』のポートの台帳で rule-inject に割り当てた値。同じ端末で動く他の MCP サーバーとぶつからない。環境変数 `RULE_INJECT_PORT` と設定ファイルの `global.server_port` で変えられる（設定『プラグイン』）
+    rationale: コーディング規約『MCP』のポートの台帳で rule-inject に割り当てた値。同じ端末で動く他の MCP サーバーとぶつからない。環境変数 `RULE_INJECT_PORT` で変えられる（設定『プラグイン』）
     overflow: ポートが使われているときは起動せず、ポートと理由を標準エラーへ出して 0 以外の終了コードで終える（インターフェース定義「サーバーの起動」の異常系）
     status: planned
   - name: MCPのツールの応答の長さ

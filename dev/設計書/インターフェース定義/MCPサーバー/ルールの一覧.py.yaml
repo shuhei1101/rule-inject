@@ -205,7 +205,7 @@ response:
   - name: config_path
     type: str | None
     description: サーバーが読んだ設定ファイルの場所
-    notes: '`RULE_INJECT_CONFIG` が無いときは `None`'
+    notes: '設定ファイルを読まなかったとき（`RULE_INJECT_CONFIG` が無く、既定のパスにファイルも無いとき）は `None`'
   - name: indexes
     type: list[str]
     description: 読む索引の場所

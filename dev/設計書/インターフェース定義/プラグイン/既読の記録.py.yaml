@@ -610,7 +610,7 @@ exceptions:
     condition: 既読の記録には書けたが、既読の履歴ファイルを作れない・書けない（権限・容量・同じ名前のフォルダがある）
     notes: フックの中で捕まえ、既読の記録は残したまま、`additionalContext` へ「既読の履歴に書けなかったルールの場所と理由」を載せ、ログへ `write_history` を書いて終了コード 0 で終える。既読にはなっているため操作は止まらない
   - name: OSError / 書式の誤り（設定ファイルが読めない）
-    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: フックの中で捕まえ、既定値で動かさず何も記録しない。`additionalContext`（PostToolUse）へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト

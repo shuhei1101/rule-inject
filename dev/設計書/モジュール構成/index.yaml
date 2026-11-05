@@ -10,3 +10,5 @@ items:
     summary: フックと MCP サーバーが使う機能の物理ファイルごとのモジュール
   - page: shared/
     summary: フックが共有する設定・場所の解決・ログ・例外の物理ファイルごとのモジュール
+  - page: migrate/
+    summary: 設定の移し替えのコマンドの入口

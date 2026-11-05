@@ -116,6 +116,26 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される
         type: see_also
+  - path: e2e/単一ユースケース/test_read_default_settings.py
+    name: 「既定の場所の設定を読む」の E2E テスト
+    description: 「既定の場所の設定を読む」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既定の場所の設定を読む」を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/既定の場所の設定を読む
+        type: see_also
+  - path: e2e/単一ユースケース/test_register_repository_index.py
+    name: 「リポジトリの索引を登録する」の E2E テスト
+    description: 「リポジトリの索引を登録する」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「リポジトリの索引を登録する」を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/リポジトリの索引を登録する
+        type: see_also
   - path: e2e/単一ユースケース/test_run_resident_mcp_server.py
     name: 「MCPサーバーを常駐させる」の E2E テスト
     description: 「MCPサーバーを常駐させる」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「MCPサーバーを常駐させる」を修正したときに流す。
@@ -196,6 +216,16 @@ files:
     related:
       - to: dev/設計書/シナリオ/複合ユースケース/ルールを読んでからファイルを触る
         type: see_also
+  - path: e2e/単一ユースケース/test_setup_terminal.py
+    name: 「端末をセットアップする」の E2E テスト
+    description: 「端末をセットアップする」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「端末をセットアップする」を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/端末をセットアップする
+        type: see_also
   - path: integration/conftest.py
     name: 結合テストの共通設定
     description: フックを子プロセスとして起動し、標準入力へ JSON を渡す結合テストのフィクスチャを持つ。フックの結合テストの準備を読む・修正するときに開く。
@@ -216,6 +246,15 @@ files:
         type: tests
       - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の破棄.py
         type: see_also
+  - path: integration/plugin/test_migrate_settings.py
+    name: 設定の移し替えの結合テスト
+    description: 設定の移し替えのコマンドを子プロセスとして起動し、出力と終了コードを確かめる結合テスト。設定の移し替えを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/migrate/__main__
+        type: tests
   - path: integration/plugin/test_record_read.py
     name: 既読の記録フックの結合テスト
     description: 既読の記録のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録のフックを修正したときに流す。
@@ -512,6 +551,24 @@ files:
     related:
       - to: src/rule_inject/features/index/_yaml
         type: tests
+  - path: unit/rule_inject/features/migrate/migrations/test_v0_2_3.py
+    name: global.server_port の移し替えの手順の単体テスト
+    description: global.server_port の移し替えの手順の振る舞いを確かめる単体テスト。この手順を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/migrate/migrations/v0_2_3
+        type: tests
+  - path: unit/rule_inject/features/migrate/test_service.py
+    name: 設定の移し替えの本体の単体テスト
+    description: 設定の移し替えの手順の算出と適用の振る舞いを確かめる単体テスト。設定の移し替えを修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/migrate/service
+        type: tests
   - path: unit/rule_inject/features/record/test_service.py
     name: 既読の記録ファイルの読み書きの単体テスト
     description: 既読の記録ファイルの読み書きの振る舞いを確かめる単体テスト。既読の記録ファイルの読み書きを修正したときに流す。
@@ -721,4 +778,13 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/shared/yaml_lines
+        type: tests
+  - path: unit/rule_inject/migrate/test_main.py
+    name: 設定の移し替えの入口の単体テスト
+    description: 設定の移し替えのコマンドの出力と終了コードを確かめる単体テスト。入口を修正したときに流す。
+    tags:
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/migrate/__main__
         type: tests

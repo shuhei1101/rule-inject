@@ -52,6 +52,12 @@ SERVER_CALL_TIMEOUT_SEC = 60
 SERVER_POLL_INTERVAL_SEC = 0.1
 # 常駐の MCP サーバーを `claude` へ登録・渡すときの名前
 MCP_SERVER_NAME = "rule-inject"
+# セットアップのスキルの E2E のユニットのサービス名の接頭辞
+SERVICE_PREFIX = "rule-inject-e2e-"
+CREDENTIALS_FILE = ".credentials.json"
+# スキルの手順が使うツールと、手順を終えるのに足りるターンの上限
+SKILL_TOOLS = ("Bash", "Read", "Write", "Edit")
+SKILL_MAX_TURNS = 60
 # `/proc/net/tcp` の状態が LISTEN のときの値
 LISTEN_STATE = "0A"
 # 文書の MCP サーバーが `get_doc` で返す本文を渡す環境変数
@@ -360,8 +366,9 @@ def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
         resume: str | None = None,
         max_turns: int | None = DEFAULT_MAX_TURNS,
         mcp_config: Path | None = None,
+        extra_env: Mapping[str, str] | None = None,
     ) -> ClaudeRun:
-        """プラグインだけを読み込み、プロジェクトの設定だけを使って prompt を実行する。mcp_config があれば、その MCP サーバーも渡す。"""
+        """プラグインだけを読み込み、プロジェクトの設定だけを使って prompt を実行する。mcp_config があれば、その MCP サーバーも渡す。extra_env は環境変数に重ねる。"""
         binary = os.environ.get(CLAUDE_BIN_ENV) or shutil.which("claude")
         if binary is None:
             pytest.skip("claude が PATH に無い")
@@ -393,6 +400,7 @@ def run_claude(e2e_project: Path, plugin_dir: Path) -> Callable[..., ClaudeRun]:
         env = {
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }
+        env.update(extra_env or {})
         completed = subprocess.run(
             command,
             cwd=e2e_project,
@@ -777,10 +785,9 @@ def write_server_config(
     server_config_path: Path,
     configure_env: Callable[..., None],
 ) -> Callable[..., Path]:
-    """待ち受けのポート・`global.indexes`・起動したプロジェクトに当たる `projects` の要素の索引を書いた設定ファイルを置き、`RULE_INJECT_CONFIG` でそれを指す。"""
+    """`global.indexes`・起動したプロジェクトに当たる `projects` の要素の索引を書いた設定ファイルを置き、`RULE_INJECT_CONFIG` でそれを指す。"""
 
     def _write(
-        port: int,
         *,
         project_indexes: Sequence[Path] = (),
         global_indexes: Sequence[Path] = (),
@@ -791,7 +798,6 @@ def write_server_config(
             "global:",
             f'  state_dir: "{state_dir}"',
             f'  log_dir: "{log_folder}"',
-            f"  server_port: {port}",
         ]
         if dev_docs_url is not None:
             lines.append(f"  dev_docs_url: {dev_docs_url}")
@@ -817,15 +823,16 @@ def resident_server(
     started: list[ResidentServer] = []
 
     def _spawn_at(
-        configure: Callable[[int], object], port: int, attempt: int
+        configure: Callable[[], object], port: int, attempt: int, config: Path
     ) -> tuple[subprocess.Popen[bytes], Path]:
-        """port を configure に渡して設定ファイルを書き、それを指して起動する。"""
+        """configure で設定ファイルを書き、config と port の `RULE_INJECT_PORT` を指して起動する。"""
         server_config_path.parent.mkdir(parents=True, exist_ok=True)
-        configure(port)
+        configure()
         env = {
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }
-        env["RULE_INJECT_CONFIG"] = str(server_config_path)
+        env["RULE_INJECT_CONFIG"] = str(config)
+        env["RULE_INJECT_PORT"] = str(port)
         env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
         env["XDG_STATE_HOME"] = str(tmp_path / "xdg_state")
         stderr_path = tmp_path / f"server-{len(started)}-{attempt}.stderr"
@@ -839,20 +846,29 @@ def resident_server(
             )
         return process, stderr_path
 
-    def _start(configure: Callable[[int], object], *, wait_ready: bool = True) -> ResidentServer:
-        """空いているポートを configure に渡して設定ファイルを書かせ、起動する。
+    def _start(
+        configure: Callable[[], object],
+        *,
+        port: int | None = None,
+        wait_ready: bool = True,
+        config: Path | None = None,
+    ) -> ResidentServer:
+        """configure で設定ファイルを書かせ、空いているポート（port があればそのポート）で起動する。
+
+        config があれば、その設定ファイルを `RULE_INJECT_CONFIG` で指す。
 
         wait_ready なら待ち受けるまで待ち、待ち受けに失敗したら別のポートで起動し直す。
         wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確かめに使う）。
         """
+        target = config if config is not None else server_config_path
         if wait_ready:
-            port, process, stderr_path = _launch(
-                lambda port, attempt: _spawn_at(configure, port, attempt)
+            used, process, stderr_path = _launch(
+                lambda free, attempt: _spawn_at(configure, free, attempt, target)
             )
         else:
-            port = _free_port()
-            process, stderr_path = _spawn_at(configure, port, 0)
-        server = ResidentServer(port=port, process=process, stderr_path=stderr_path)
+            used = port if port is not None else _free_port()
+            process, stderr_path = _spawn_at(configure, used, 0, target)
+        server = ResidentServer(port=used, process=process, stderr_path=stderr_path)
         started.append(server)
         return server
 
@@ -873,7 +889,7 @@ def serve(
     write_server_config: Callable[..., Path],
     resident_server: Callable[..., ResidentServer],
 ) -> Callable[..., ResidentServer]:
-    """空いているポートを設定ファイルに書き、常駐の MCP サーバーを起動する factory。"""
+    """設定ファイルを書き、空いているポートで常駐の MCP サーバーを起動する factory。"""
 
     def _serve(
         *project_indexes: Path,
@@ -882,8 +898,7 @@ def serve(
     ) -> ResidentServer:
         """project_indexes を起動したプロジェクトに当たる要素の索引に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に置いて起動する。"""
         return resident_server(
-            lambda port: write_server_config(
-                port,
+            lambda: write_server_config(
                 project_indexes=project_indexes,
                 global_indexes=global_indexes,
                 dev_docs_url=dev_docs_url,
@@ -952,8 +967,10 @@ def run_claude_cli(
 ) -> Callable[..., subprocess.CompletedProcess[str]]:
     """利用者の設定（`~/.claude`）を使わず、一時フォルダを `CLAUDE_CONFIG_DIR` にして `claude` の CLI のコマンドを 1 回実行する関数。"""
 
-    def _run(*args: str) -> subprocess.CompletedProcess[str]:
-        """`claude {args}` を実行して結果を返す（API は呼ばない `mcp add` と `mcp list` に使う）。"""
+    def _run(
+        *args: str, extra_env: Mapping[str, str] | None = None
+    ) -> subprocess.CompletedProcess[str]:
+        """`claude {args}` を実行して結果を返す（API は呼ばない `mcp` のコマンドに使う）。"""
         binary = os.environ.get(CLAUDE_BIN_ENV) or shutil.which("claude")
         if binary is None:
             pytest.skip("claude が PATH に無い")
@@ -961,6 +978,7 @@ def run_claude_cli(
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }
         env["CLAUDE_CONFIG_DIR"] = str(tmp_path / "claude_config")
+        env.update(extra_env or {})
         return subprocess.run(
             [binary, *args],
             cwd=e2e_project,
@@ -1023,3 +1041,121 @@ def section_docs_mcp_config(tmp_path: Path) -> Callable[[Path, str], tuple[Path,
         return config, calls
 
     return _make
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SetupEnv:
+    """セットアップのスキルを動かす、隔離した環境。"""
+
+    config_file: Path
+    claude_settings: Path
+    service: str
+    port: int
+    env: dict[str, str]
+
+
+@pytest.fixture
+def setup_env(tmp_path: Path) -> Iterator[SetupEnv]:
+    """設定・状態・Claude Code の設定を一時フォルダへ向け、一意のサービス名を決める。終わったらユニットを削除する。"""
+    config_home = tmp_path / "xdg_config"
+    claude_config = tmp_path / "claude_config"
+    claude_config.mkdir()
+    # 一時の Claude Code の設定フォルダでもログインできるよう、認証のファイルをコピーする
+    source = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    credentials = source / CREDENTIALS_FILE
+    if credentials.exists():
+        shutil.copyfile(credentials, claude_config / CREDENTIALS_FILE)
+    service = f"{SERVICE_PREFIX}{uuid4().hex[:8]}"
+    port = _free_port()
+    yield SetupEnv(
+        config_file=config_home / "rule-inject" / "settings.yaml",
+        claude_settings=claude_config / "settings.json",
+        service=service,
+        port=port,
+        env={
+            "XDG_CONFIG_HOME": str(config_home),
+            "XDG_STATE_HOME": str(tmp_path / "xdg_state"),
+            "CLAUDE_CONFIG_DIR": str(claude_config),
+            "RULE_INJECT_PORT": str(port),
+        },
+    )
+    # スキルが作ったユニットを止めて削除する（作られていないときの失敗は無視する）
+    subprocess.run(
+        ["systemctl", "--user", "disable", "--now", service], capture_output=True, check=False
+    )
+    (Path.home() / ".config" / "systemd" / "user" / f"{service}.service").unlink(missing_ok=True)
+    subprocess.run(["systemctl", "--user", "daemon-reload"], capture_output=True, check=False)
+
+
+@pytest.fixture
+def run_skill(
+    setup_env: SetupEnv, run_claude: Callable[..., ClaudeRun]
+) -> Callable[[str], ClaudeRun]:
+    """隔離した環境でプラグインのスキルを実行する関数。"""
+
+    def _run(prompt: str) -> ClaudeRun:
+        """スキルの手順に要るツールを許して prompt を実行する。"""
+        return run_claude(
+            prompt, allow=SKILL_TOOLS, max_turns=SKILL_MAX_TURNS, extra_env=setup_env.env
+        )
+
+    return _run
+
+
+@pytest.fixture
+def list_tool_names() -> Callable[[int], list[str]]:
+    """ポートで待ち受ける MCP サーバーのツールの名前を返す関数。"""
+
+    def _list(port: int) -> list[str]:
+        """`tools/list` を要求して名前を返す。"""
+
+        async def _request() -> list[str]:
+            """Streamable HTTP で接続して一覧を取得する。"""
+            url = f"http://{SERVER_HOST}:{port}/mcp"
+            async with (
+                streamable_http_client(url) as (read, write),
+                ClientSession(read, write) as session,
+            ):
+                await session.initialize()
+                listed = await session.list_tools()
+            return [tool.name for tool in listed.tools]
+
+        return asyncio.run(_request())
+
+    return _list
+
+
+@pytest.fixture
+def resident_for_setup(
+    setup_env: SetupEnv,
+    resident_server: Callable[..., ResidentServer],
+) -> Callable[[], ResidentServer]:
+    """セットアップのスキルが接続するサーバーを、隔離した端末の設定で起動する関数。"""
+
+    def _start() -> ResidentServer:
+        """`setup_env` の端末の設定を指して起動し、待ち受けるまで待つ。"""
+        return resident_server(lambda: None, config=setup_env.config_file)
+
+    return _start
+
+
+@pytest.fixture
+def run_skill_with_mcp(
+    setup_env: SetupEnv,
+    run_claude: Callable[..., ClaudeRun],
+    server_mcp_config: Callable[[ResidentServer], Path],
+) -> Callable[[str, ResidentServer], ClaudeRun]:
+    """起動したサーバーの MCP のツールを渡してスキルを実行する関数。"""
+
+    def _run(prompt: str, server: ResidentServer) -> ClaudeRun:
+        """server を `--mcp-config` に指定して prompt を実行する。"""
+        tools = (*SKILL_TOOLS, f"mcp__{MCP_SERVER_NAME}__*")
+        return run_claude(
+            prompt,
+            allow=tools,
+            max_turns=SKILL_MAX_TURNS,
+            mcp_config=server_mcp_config(server),
+            extra_env=setup_env.env,
+        )
+
+    return _run

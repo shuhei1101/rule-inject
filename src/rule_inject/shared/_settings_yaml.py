@@ -13,7 +13,8 @@ from rule_inject.shared.yaml_lines import (
 
 GLOBAL_KEY = "global"
 PROJECTS_KEY = "projects"
-TOP_KEYS = (GLOBAL_KEY, PROJECTS_KEY)
+VERSION_KEY = "version"
+TOP_KEYS = (VERSION_KEY, GLOBAL_KEY, PROJECTS_KEY)
 # 値がリストのキーと、文字列のキー
 GLOBAL_LIST_KEYS = ("indexes",)
 GLOBAL_SCALAR_KEYS = (
@@ -21,15 +22,18 @@ GLOBAL_SCALAR_KEYS = (
     "log_dir",
     "record_retention_days",
     "log_retention_days",
-    "server_port",
     "dev_docs_url",
 )
+# 廃止したキーと、案内する移し替えの方法
+REMOVED_GLOBAL_KEYS = {
+    "server_port": "global.server_port は廃止した。/rule-inject:global-setup で RULE_INJECT_PORT へ移す",
+}
 PROJECT_LIST_KEYS = ("indexes",)
 PROJECT_SCALAR_KEYS = ("match",)
 EMPTY_LIST = "[]"
 
 type Table = dict[str, str | list[str]]
-type Settings = dict[str, Table | list[Table]]
+type Settings = dict[str, str | Table | list[Table]]
 
 
 def _check_value_type(
@@ -62,6 +66,9 @@ def _read_global(lines: list[Line], line: Line, next_position: int, rest: str) -
         if key_line.indent != map_indent:
             raise yaml_error(key_line.number, "global のキーは同じ桁に揃えてください")
         key, key_rest = split_key(key_line)
+        # 廃止したキーは、知らないキーとせず移し替えを案内する
+        if key in REMOVED_GLOBAL_KEYS:
+            raise yaml_error(key_line.number, REMOVED_GLOBAL_KEYS[key])
         if key not in (*GLOBAL_LIST_KEYS, *GLOBAL_SCALAR_KEYS):
             raise yaml_error(key_line.number, f"global に許さないキーです: {key}")
         if key in values:
@@ -120,7 +127,7 @@ def _read_projects(
 
 
 def parse_settings(text: str) -> Settings:
-    """設定ファイルの YAML から `global`（キー → 文字列か文字列のリスト）と `projects`（そのマップのリスト）を返す。"""
+    """設定ファイルの YAML から `version`・`global`（キー → 文字列か文字列のリスト）・`projects`（そのマップのリスト）を返す。"""
     lines = tokenize(text)
     settings: Settings = {}
     position = 0
@@ -133,8 +140,13 @@ def parse_settings(text: str) -> Settings:
             raise yaml_error(line.number, f"許さないキーです: {key}")
         if key in settings:
             raise yaml_error(line.number, f"キーが重複しています: {key}")
-        # global はブロックのマップ、projects は要素のリスト
-        if key == GLOBAL_KEY:
+        # version は文字列、global はブロックのマップ、projects は要素のリスト
+        if key == VERSION_KEY:
+            value, position = read_value(lines, line, position + 1, key, rest, 0)
+            if isinstance(value, list):
+                raise yaml_error(line.number, "version は文字列で書いてください")
+            settings[key] = value
+        elif key == GLOBAL_KEY:
             settings[key], position = _read_global(lines, line, position + 1, rest)
         else:
             settings[key], position = _read_projects(lines, line, position + 1, rest)

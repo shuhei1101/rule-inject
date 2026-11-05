@@ -97,7 +97,7 @@ exceptions:
     condition: 固定の文面を返すだけのため通常は起きない
     notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
   - name: OSError / 書式の誤り（設定ファイルが読めない）
-    condition: '`source: compact` で、`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    condition: '`source: compact` で、`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: フックの中で捕まえ、削除できずに残った記録を確かめず、作業の決まりに続けて設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト

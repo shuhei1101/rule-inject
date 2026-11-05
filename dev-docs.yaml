@@ -125,3 +125,9 @@ documents:
     schema: schemas/files.schema.yaml
     records: files
     body_file: path
+  - id: skills
+    title: スキル
+    paths: [skills/files.yaml]
+    schema: schemas/files.schema.yaml
+    records: files
+    body_file: path

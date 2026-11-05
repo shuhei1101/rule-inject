@@ -1,0 +1,110 @@
+title: "端末のセットアップ"
+entry:
+  kind: operation
+  value: '`/rule-inject:global-setup`（プラグインのスキル）'
+flows:
+  - name: 正常系
+    summary: 端末の設定を用意し、サーバーとフックを確認して結果を示す
+    setup:
+      - name: Mock
+        description: なし（手順はスキルの本文で、シナリオ『端末をセットアップする』の E2E で確認する）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant C as 利用者
+        participant IF as global-setup
+        participant MG as 設定の移し替え
+        participant SV as MCP サーバー
+
+        C->>IF: 実行する
+        IF->>MG: --plan
+        MG-->>IF: 手順
+        IF->>SV: tools/list
+        SV-->>IF: ツールの一覧
+        IF-->>C: 作ったもの・env に記載したキー・接続の結果
+      ```
+    expected:
+      - 結果に端末の設定のパスと接続の結果が記載されている
+lead: 端末ごとに、設定ファイルの作成か移し替え、`env` への記載、サーバーの起動と接続の確認、フックの確認を実行する。
+identifier: global_setup
+idempotent: true
+side_effects: 端末の設定・`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json` の `env`・`~/.config/systemd/user/{サービス名}.service` に記載し、旧い `rule-inject` の登録を削除する
+request:
+  - name: --clone
+    type: str
+    required: false
+    default: なし（質問する）
+    location: argument
+    description: サーバーを起動するローカルのクローンのパス
+    constraints: 絶対パスか `~` で始まるパス
+  - name: --config
+    type: str
+    required: false
+    default: '`RULE_INJECT_CONFIG` の値、無ければ既定のパス'
+    location: argument
+    description: 端末の設定のパス
+  - name: --index
+    type: list[str]
+    required: false
+    default: なし（質問する）
+    location: argument
+    description: 雛形から作るときに `global.indexes` へ記載する索引のパス
+  - name: --service
+    type: str
+    required: false
+    default: rule-inject
+    location: argument
+    description: systemd のユーザーのユニットのサービス名
+  - name: --yes
+    type: bool
+    required: false
+    default: 'false'
+    location: argument
+    description: 移し替えと旧い登録の削除の確認に了承として回答する
+  - name: --no
+    type: bool
+    required: false
+    default: 'false'
+    location: argument
+    description: 確認に断りとして回答する
+    constraints: '`--yes` と同時に指定しない'
+constraints:
+  - item: 確認
+    constraint: '`--yes`・`--no` が無ければ `AskUserQuestion` で既定値を推奨の選択肢にして質問する'
+  - item: サーバーの起動
+    constraint: '`RULE_INJECT_PORT` の値で MCP サーバーが待ち受けていれば起動しない。待ち受けていなければユニットを配置して `systemctl --user enable --now` で起動する'
+    notes: ポートを別のプロセスが使用していて `tools/list` が返らないときは、ログの場所と修正方法を示して止まる
+  - item: env への記載
+    constraint: 設定のパスが既定と違うときの `RULE_INJECT_CONFIG` と、移し替えが返却した `env` だけを記載する
+    notes: '`env` のほかのキーと、ファイルのほかの内容は変えない'
+  - item: 旧い登録
+    constraint: '`claude mcp get rule-inject` でユーザースコープの登録を調べ、確認してから `claude mcp remove -s user rule-inject` で削除する'
+  - item: ポートの値
+    constraint: 移し替えが返却した `RULE_INJECT_PORT`、無ければスキルの環境の `RULE_INJECT_PORT`、無ければ既定のポート。待ち受けの確認と `tools/list` もこの値を使用する
+  - item: ユニットの環境
+    constraint: '`Environment=` に、端末の設定の絶対パスの `RULE_INJECT_CONFIG` と、既定と違うポートの `RULE_INJECT_PORT` を記載する。端末の設定に `global.state_dir` が無ければ、スキルの環境で解いた絶対パスの `RULE_INJECT_STATE_DIR` も記載する'
+    notes: '`systemctl --user` で起動したサーバーは Claude Code のセッションの環境を引き継がない'
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/端末をセットアップする#
+  - dev/設計書/インターフェース定義/プラグイン/設定の移し替え.py#
+exceptions:
+  - name: なし（正常終了）
+    condition: 全ての手順を終えた
+  - name: 設定がツールより新しい
+    condition: 設定の移し替えが終了コード 6 を返却した
+    notes: 何も記載せずに止まる。両方のバージョンとプラグインの更新を示す
+  - name: 設定ファイルが読み取れない
+    condition: 設定の移し替えが終了コード 1 を返却した
+    notes: 何も記載せずに止まる。場所と理由を示す
+  - name: 利用者が断った
+    condition: '`--no`、または確認への断りの回答'
+    notes: 移し替えを断ったときは何も記載せずに止まり、適用しなかった手順を示す。旧い登録の削除を断ったときは登録を残して続ける
+  - name: 依存を導入できない
+    condition: '`uv` が無い、または `uv sync --extra server` が失敗する'
+    notes: 移し替えの前に止まり、導入の方法を示す
+  - name: サーバーを起動できない
+    condition: '`systemctl --user` が失敗する、またはポートを別のプロセスが使用していて `tools/list` が返らない'
+    notes: 記載済みの端末の設定・`env`・ユニットは残して止まり、済んだ手順と止まった手順・ログの場所・修正方法を示す。修正の後にスキルを実行し直すと、手順の済んだものは飛ばして続きから進む
+  - name: フックが案内を返さない
+    condition: 試しの入力でフックが案内を返却しない
+    notes: 記載済みのものは残して止まり、ログの場所を示す

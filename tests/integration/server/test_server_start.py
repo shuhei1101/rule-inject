@@ -30,30 +30,12 @@ def test_normal(
     config_text: Callable[..., str],
     addresses_listening: Callable[[int], set[str]],
 ) -> None:
-    """設定ファイルのポートで待ち受け、MCP のクライアントから接続できる（正常系）。"""
+    """`RULE_INJECT_PORT` のポートで待ち受け、MCP のクライアントから接続できる（正常系）。"""
     # 実行
     server = start_server(config_text)
     # 検証
     assert addresses_listening(server.port) == {LOOPBACK_HEX}
     assert sorted(server.tool_names()) == TOOL_NAMES
-
-
-def test_normal_when_port_overridden(
-    start_server: Callable[..., Any],
-    config_text: Callable[..., str],
-    addresses_listening: Callable[[int], set[str]],
-) -> None:
-    """設定ファイルのポートを他が待ち受けていても、`RULE_INJECT_PORT` のポートで待ち受ける（正常系）。"""
-    # 準備: 設定ファイルのポートは、確かめ終わるまでテストが待ち受けたままにする
-    # （上書きが効かずに設定ファイルのポートを使おうとすると、使われているとして起動に失敗する）
-    with socket.create_server((HOST, 0)) as held:
-        config_port = int(held.getsockname()[1])
-        # 実行
-        server = start_server(lambda _port: config_text(config_port), port_env=True)
-        # 検証
-        assert server.port != config_port
-        assert addresses_listening(server.port) == {LOOPBACK_HEX}
-        assert sorted(server.tool_names()) == TOOL_NAMES
 
 
 def test_normal_when_stopped(
@@ -77,11 +59,11 @@ def test_error_when_port_in_use(
     config_text: Callable[..., str],
 ) -> None:
     """ポートが使われているとき、待ち受けに失敗し、理由を書いて終わる（異常系）。"""
-    # 準備: テストがポート 0 で待ち受け、そのポートを設定ファイルに書く
+    # 準備: テストがポート 0 で待ち受け、そのポートを `RULE_INJECT_PORT` に指定する
     with socket.create_server((HOST, 0)) as held:
         port = int(held.getsockname()[1])
         # 実行
-        server = start_server(lambda _port: config_text(port), wait_ready=False)
+        server = start_server(config_text, port=port, wait_ready=False)
         server.process.wait(timeout=EXIT_TIMEOUT_SEC)
     # 検証
     assert server.process.returncode != 0
@@ -95,12 +77,25 @@ def test_error_when_settings_unreadable(
 ) -> None:
     """設定ファイルが読めないとき、待ち受ける前に理由を書いて終わる（異常系）。"""
     # 実行
-    server = start_server(
-        lambda port: f"global:\n  server_port: {port}\n  foo: 1\n", wait_ready=False
-    )
+    server = start_server(lambda: "global:\n  foo: 1\n", wait_ready=False)
     server.process.wait(timeout=EXIT_TIMEOUT_SEC)
     # 検証
     assert server.process.returncode != 0
     assert "Uvicorn running on" not in server.stderr_text()
     assert str(config_path) in server.stderr_text()
     assert "foo" in server.stderr_text()
+
+
+def test_error_when_removed_key(
+    start_server: Callable[..., Any],
+    config_path: Path,
+) -> None:
+    """`global.server_port` が残った設定ファイルでは待ち受けず、移し替えの案内を出して終わる（異常系）。"""
+    # 実行
+    server = start_server(lambda: "global:\n  server_port: 9000\n", wait_ready=False)
+    server.process.wait(timeout=EXIT_TIMEOUT_SEC)
+    # 検証
+    assert server.process.returncode != 0
+    assert str(config_path) in server.stderr_text()
+    assert "global.server_port" in server.stderr_text()
+    assert "global-setup" in server.stderr_text()

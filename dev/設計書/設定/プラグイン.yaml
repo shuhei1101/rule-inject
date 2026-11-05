@@ -7,12 +7,15 @@ files:
   - file: 索引（*.yaml）
     manages: ルールの場所と、当てるパス・ツール名・操作の種別の紐づけ
     notes: 利用者が書く。置き場所と名前は自由で、設定ファイルの `indexes` で指す。フックが標準ライブラリだけで読めるよう、YAML のうちここに挙げたキーと形式（マップ・文字列のリスト・文字列）だけを読む
-  - file: ~/.config/rule-inject/settings.yaml
-    manages: 索引の場所・既読の記録とログの置き場所・保持日数・MCP サーバーのポート（最上位の `global` と `projects`）
-    notes: 利用者が書き、`RULE_INJECT_CONFIG` で指す。`RULE_INJECT_CONFIG` が無いときは読まず、全てのキーを既定値で動かす。フックが標準ライブラリだけで読めるよう、ここに挙げたキーと形式（マップ・マップのリスト・文字列のリスト・文字列・整数）だけを読む
+  - file: ${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml
+    manages: 索引の場所・既読の記録とログの置き場所・保持日数（最上位の `version`・`global`・`projects`）
+    notes: 利用者か `global-setup` が書く。既定と違う場所に置くときは `RULE_INJECT_CONFIG` で指す。ファイルが無いときは全てのキーを既定値で動かす。フックが標準ライブラリだけで読めるよう、ここに挙げたキーと形式（マップ・マップのリスト・文字列のリスト・文字列・整数）だけを読む
   - file: settings.sample.yaml
     manages: 設定ファイルのキーの一覧（実値を入れないサンプル）
     notes: プラグインの直下に置く。フックは読まない
+  - file: .mcp.json
+    manages: Claude Code が接続する MCP サーバーの URL（`http://127.0.0.1:${RULE_INJECT_PORT:-8783}/mcp`）
+    notes: プラグインのルートに置く。`RULE_INJECT_PORT` を変えるときは `~/.claude/settings.json` の `env` に書く
 settings:
   - key: default_on
     title: 既定の必須の操作
@@ -172,9 +175,9 @@ settings:
     file: ~/.claude/settings.json
     type: str
     required: false
-    default: なし（設定ファイルを読まず、全てのキーを既定値で動かす）
+    default: '`${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml`（ファイルが無ければ全てのキーを既定値で動かす）'
     description: 設定ファイル `settings.yaml` のパス。先頭の `~` はホームに展開する
-    missing: 指したファイルが無い・YAML として読めない・知らないキーや許す値の外の値を持つときは、設定ファイルを使わず、各フックが既定のログのフォルダへ `read_settings` を書き、案内を返すフックはファイルの場所と理由を案内に載せる（既定値で動かさない）
+    missing: 指したファイルが無いときと、指したファイルか既定のパスのファイルが YAML として読めない・知らないキーや許す値の外の値を持つときは、設定ファイルを使わず、各フックが既定のログのフォルダへ `read_settings` を書き、案内を返すフックはファイルの場所と理由を案内に載せる（既定値で動かさない）
     env_var: RULE_INJECT_CONFIG
     reload: restart
     allowed: 絶対パスか `~` で始まるパス
@@ -200,7 +203,7 @@ settings:
     default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject`'
     description: セッションごとの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを置くフォルダ
     reload: immediate
-    allowed: 絶対パスか `~` で始まるパス
+    allowed: 絶対パスか `~` で始まるパス。環境変数 `RULE_INJECT_STATE_DIR` があるときはそちらを使う
     reason: 掃除は起動したプロジェクトの記録フォルダしか見ないため、`projects` で分けると開かないプロジェクトの記録が残る。そのため `global` だけに置く
     status: planned
     visibility: user
@@ -209,7 +212,7 @@ settings:
     file: ~/.config/rule-inject/settings.yaml
     type: str
     required: false
-    default: '`${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`'
+    default: '`RULE_INJECT_STATE_DIR` があればその下の `logs`、無ければ `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`'
     description: フックが失敗した操作を書く、日付ごとのログのファイルを置くフォルダ。設定ファイルが読めなかったことのログは既定値のフォルダへ書く
     reload: immediate
     allowed: 絶対パスか `~` で始まるパス
@@ -276,21 +279,6 @@ settings:
     visibility: user
     introduced:
       pr: 57
-  - key: global.server_port
-    title: MCPサーバーのポート
-    file: ~/.config/rule-inject/settings.yaml
-    type: int
-    required: false
-    default: '8783'
-    description: 常駐の MCP サーバーが 127.0.0.1 で待ち受けるポート。フックは使わない
-    env_var: RULE_INJECT_PORT
-    reload: restart
-    allowed: 1024〜65535 の整数。それ以外の値は設定ファイルの誤りとして扱う
-    refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの既定のポート]
-    status: planned
-    visibility: user
-    reason: サーバーは全てのプロジェクトで 1 つのため `global` だけに置く
   - key: global.dev_docs_url
     title: dev-docsの接続先
     file: ~/.config/rule-inject/settings.yaml
@@ -303,5 +291,42 @@ settings:
     refs:
       - dev/設計書/外部API/dev-docs#base_urls
     reason: 既定は dev-docs の既定の待ち受けに合わせる。サーバーは全てのプロジェクトで 1 つのため `global` だけに置く
+    status: planned
+    visibility: user
+  - key: version
+    title: 設定ファイルのバージョン
+    file: ${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml
+    type: str
+    required: false
+    default: なし（移し替えの前の設定として扱う）
+    description: 設定ファイルを最後に移し替えたツールのバージョン。`global-setup` が読み、フックとサーバーは読み飛ばす
+    reload: immediate
+    allowed: '`{major}.{minor}.{patch}`'
+    status: planned
+    visibility: user
+  - key: RULE_INJECT_PORT
+    title: MCP サーバーのポート
+    file: ~/.claude/settings.json
+    type: int
+    required: false
+    default: '`8783`'
+    description: MCP サーバーの待ち受けと、`.mcp.json` の接続先のポート
+    missing: 許す値の外のときは、サーバーが待ち受けずに終わる
+    env_var: RULE_INJECT_PORT
+    reload: restart
+    allowed: 1024〜65535 の整数
+    reason: '`.mcp.json` は設定ファイルを読めないため、`env` だけに置く。サーバーを起動する環境にも同じ値を渡す'
+    status: planned
+    visibility: user
+  - key: RULE_INJECT_STATE_DIR
+    title: 状態の置き場所
+    file: ~/.claude/settings.json
+    type: str
+    required: false
+    default: なし（`global.state_dir`、無ければ `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）
+    description: 既読の記録の置き場所を上書きする。既定のログのフォルダもこの下の `logs` になる
+    env_var: RULE_INJECT_STATE_DIR
+    reload: restart
+    allowed: 絶対パスか `~` で始まるパス
     status: planned
     visibility: user

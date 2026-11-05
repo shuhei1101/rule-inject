@@ -1,0 +1,50 @@
+title: "プラグイン / 移し替えの入口 / __main__.py"
+test_files:
+  - tests/unit/rule_inject/migrate/test_main.py
+constants:
+  - name: NEWER_EXIT_CODE
+    title: 設定が新しいときの終了コード
+    container: migrate/__main__.py
+    summary: インターフェース定義「設定の移し替え」の終了コード
+    value: '`6`'
+  - name: FAILURE_EXIT_CODE
+    title: 失敗の終了コード
+    container: migrate/__main__.py
+    summary: 設定ファイルが読み取れないときの終了コード
+    value: '`1`'
+functions:
+  - name: main
+    title: 移し替えの入口
+    container: migrate/__main__.py
+    usecase: 端末をセットアップする
+    summary: 引数を読み、手順の算出か適用を実行して結果を JSON で標準出力へ書く（`python -m rule_inject.migrate`）
+    kind: 関数
+    scope: public
+    returns:
+      type: None
+      description: 失敗するときは終了コードで抜ける
+    process: |-
+      1. `--plan` を読み、`config_path(os.environ)` で設定ファイルのパスを決める
+      2. `--plan` があれば `plan_migration`、無ければ `apply_migration`（バックアップのフォルダは `backup_dir(os.environ)`）を呼ぶ
+      3. 結果を JSON（`from`・`to`・`steps`・`backup`・`env`）で標準出力へ書く
+      4. `SettingsNewerError` は標準エラーへ両方のバージョンを書き、`NEWER_EXIT_CODE` で終わる
+      5. `SettingsReadError` は標準エラーへ `{path}: {reason}` を書き、`FAILURE_EXIT_CODE` で終わる
+    unit_tests:
+      - name: test_main_when_plan
+        case: 正常
+        summary: 手順を JSON で書く
+        condition: '`--plan`'
+        mock: '`plan_migration`（結果を返す）'
+        expected: 標準出力の JSON が結果の値
+      - name: test_main_when_newer
+        case: 異常
+        summary: 設定が新しい
+        condition: '`plan_migration` が `SettingsNewerError` を送出する'
+        mock: '`plan_migration`'
+        expected: '`SystemExit(6)` で、標準エラーに両方のバージョン'
+      - name: test_main_when_unreadable
+        case: 異常
+        summary: 設定ファイルが読み取れない
+        condition: '`apply_migration` が `SettingsReadError` を送出する'
+        mock: '`apply_migration`'
+        expected: '`SystemExit(1)` で、標準エラーに場所と理由'

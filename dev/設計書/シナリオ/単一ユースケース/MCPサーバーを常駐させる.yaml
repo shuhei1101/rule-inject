@@ -5,11 +5,11 @@ scenarios:
       - name: Mock
         description: なし。テストがローカルのクローンから起動のコマンドを子プロセスで実行する
       - name: 設定ファイル
-        description: 待ち受けのポートのキーに空いているポートを書いた設定ファイル
+        description: 索引を記載した設定ファイル
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: Claude Code の設定
-        description: 一時フォルダを `CLAUDE_CONFIG_DIR` にし、`claude mcp add --transport http -s user` でサーバーの接続先（`http://127.0.0.1:{ポート}/mcp`）を登録する
-        notes: 利用者の設定（`~/.claude`）を書き換えない。`claude mcp list` は API を呼ばない
+        description: 一時フォルダを `CLAUDE_CONFIG_DIR` にし、`claude --plugin-dir {プラグイン} mcp list` の環境に、サーバーと同じ空いているポートの `RULE_INJECT_PORT` を指定する
+        notes: 利用者の設定（`~/.claude`）を読まない。`claude mcp list` は API を呼ばない
     flow: |-
       sequenceDiagram
         participant U as 利用者
@@ -18,16 +18,15 @@ scenarios:
         participant CC as Claude Code
 
         U->>SV: 起動のコマンドを実行する
-        SV->>CF: 待ち受けのポートを読む
-        CF-->>SV: ポート
-        SV->>SV: 127.0.0.1 のポートで待ち受ける
-        U->>CC: claude mcp list
+        SV->>CF: 設定ファイルを読む
+        SV->>SV: 127.0.0.1 の RULE_INJECT_PORT で待ち受ける
+        U->>CC: claude --plugin-dir mcp list
         CC->>SV: 接続する
         SV-->>CC: 応答する
         CC-->>U: 接続できたことを表示する
     expected:
-      - '`127.0.0.1` の設定ファイルのポートだけで待ち受けている'
-      - '`claude mcp list` の出力で、登録したサーバーが接続できた状態になっている'
+      - '`127.0.0.1` の `RULE_INJECT_PORT` のポートだけで待ち受けている'
+      - '`claude mcp list` の出力で、`plugin:rule-inject:rule-inject` が接続できた状態になっている'
     test: test_normal
   - name: 正常シナリオ（止める）
     setup:
@@ -57,17 +56,14 @@ scenarios:
         description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）
       - name: ポートの使用
         description: テストがポート 0 で待ち受け、割り当てられたポートを待ち受けたままにする
-      - name: 設定ファイル
-        description: 待ち受けのポートのキーにテストが待ち受けているポートを書いた設定ファイル
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` にテストが待ち受けているポートを指定する'
     flow: |-
       sequenceDiagram
         participant U as 利用者
         participant SV as MCP サーバー
-        participant CF as 設定ファイル
 
         U->>SV: 起動のコマンドを実行する
-        SV->>CF: 待ち受けのポートを読む
-        CF-->>SV: ポート
         SV->>SV: 待ち受けに失敗する
         SV-->>U: 標準エラーに理由を書き、0 以外の終了コードで終わる
     expected:
@@ -95,7 +91,7 @@ scenarios:
       - プロセスが 0 以外の終了コードで終わり、標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
       - 標準エラーに、設定ファイルの場所と読めない理由が載っている
     test: test_error_when_settings_unreadable
-lead: 利用者がローカルのクローンから起動のコマンドで MCP サーバーを前面で動かし、Claude Code に HTTP の MCP サーバーとして登録して接続する。止めるときは Ctrl+C か SIGTERM で終わらせる。
+lead: 利用者がローカルのクローンから起動のコマンドで MCP サーバーを前面で動かし、Claude Code がプラグインの `.mcp.json` の接続先で接続する。止めるときは Ctrl+C か SIGTERM で終わらせる。
 issue: 58
 primary_actor: 利用者
 stakeholders:
@@ -106,7 +102,9 @@ stakeholders:
 trigger: 利用者が、ローカルのクローンで起動のコマンドを実行する
 preconditions:
   - ローカルのクローンでサーバーの依存（`mcp`・`jsonschema`・`ruamel.yaml`）を導入している
-  - 起動の側の環境変数 `RULE_INJECT_CONFIG` が、フックと同じ設定ファイルを指している
-success_guarantee: サーバーは `127.0.0.1` の、設定ファイルで指したポートだけで待ち受け、`claude mcp add --transport http -s user` で登録した Claude Code から接続できる。
+  - プラグインを読み込んでいる
+  - 既定のポートを変えるときは、起動の側と Claude Code の両方に同じ `RULE_INJECT_PORT` を配置している
+  - 起動の側の環境変数 `RULE_INJECT_CONFIG` が、フックと同じ設定ファイルを指している（既定のパスの設定ファイルは指さなくてよい）
+success_guarantee: サーバーは `127.0.0.1` の `RULE_INJECT_PORT`（無ければ既定のポート）だけで待ち受け、プラグインを読み込んだ Claude Code から接続できる。
 minimal_guarantee: 起動できないときは待ち受けずに終了し、標準エラーに理由を書く。サーバーの起動と停止は、フックの案内と既読の記録に影響しない。
 test_file: tests/e2e/単一ユースケース/test_run_resident_mcp_server.py

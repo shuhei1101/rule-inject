@@ -12,3 +12,9 @@ items:
     summary: セッションの開始時に、保持期間を過ぎた既読の記録を削除する（SessionStart）
   - page: 検索結果の案内.py.yaml
     summary: 検索の結果に出たファイルに当たる未読のルールを、止めずに案内する（PostToolUse）
+  - page: 設定の移し替え.py.yaml
+    summary: 端末の設定ファイルを今のバージョンへ移し替える（`python -m rule_inject.migrate`）
+  - page: 端末のセットアップ.yaml
+    summary: 端末の設定・サーバー・フックを用意して確認する（`/rule-inject:global-setup`）
+  - page: 索引の登録.yaml
+    summary: リポジトリの索引を参照できる状態にしてチェックする（`/rule-inject:setup`）

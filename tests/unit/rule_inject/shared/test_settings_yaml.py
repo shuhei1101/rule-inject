@@ -83,3 +83,18 @@ def test_parse_settings_when_duplicate_key() -> None:
     # 実行・検証
     with pytest.raises(ValueError, match=re.compile(r"\d+行目")):
         parse_settings("global:\n  log_dir: /a\n  log_dir: /b\n")
+
+
+def test_parse_settings_when_version() -> None:
+    """`version` を読む（正常系）。"""
+    # 実行
+    result = parse_settings("version: 0.3.0\nglobal:\n  log_dir: /a\n")
+    # 検証
+    assert result["version"] == "0.3.0"
+
+
+def test_parse_settings_when_removed_key() -> None:
+    """廃止したキーに移し替えを案内する（異常系）。"""
+    # 実行・検証
+    with pytest.raises(ValueError, match=re.compile(r"\d+行目.*global-setup")):
+        parse_settings("global:\n  server_port: 9000\n")

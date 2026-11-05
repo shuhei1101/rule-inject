@@ -143,6 +143,30 @@ files:
     related:
       - to: dev/設計書/モジュール構成/features/index/types.py
         type: implements
+  - path: rule_inject/features/migrate/migrations/v0_2_3.py
+    name: global.server_port の移し替えの手順
+    description: global.server_port を環境変数 RULE_INJECT_PORT へ移す手順を持つ。この移し替えを読む・修正するときに開く。
+    tags:
+      - topic:設定ファイル
+    related:
+      - to: dev/設計書/モジュール構成/features/migrate/migrations/v0_2_3.py
+        type: implements
+  - path: rule_inject/features/migrate/service.py
+    name: 設定の移し替えの本体
+    description: 端末の設定ファイルに適用する手順の算出と適用を受け持つ。設定の移し替えを読む・修正するときに開く。
+    tags:
+      - topic:設定ファイル
+    related:
+      - to: dev/設計書/モジュール構成/features/migrate/service.py
+        type: implements
+  - path: rule_inject/features/migrate/types.py
+    name: 設定の移し替えの型
+    description: 移し替えの結果と、設定が新しい誤りの型を持つ。設定の移し替えの結果を調べるときに開く。
+    tags:
+      - topic:設定ファイル
+    related:
+      - to: dev/設計書/モジュール構成/features/migrate/types.py
+        type: implements
   - path: rule_inject/features/record/service.py
     name: 既読の記録ファイルの読み書き
     description: セッションごとの既読の記録・案内済みの記録・既読の履歴の読み・追記・削除・掃除を受け持つ。既読の保存の仕組みを読む・修正するときに開く。
@@ -247,6 +271,14 @@ files:
       - to: dev/設計書/モジュール構成/hooks/work_rules.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/作業の決まりの注入.py
+        type: implements
+  - path: rule_inject/migrate/__main__.py
+    name: 設定の移し替えの入口
+    description: 設定の移し替えのコマンドの入口で、結果の JSON と終了コードを受け持つ。コマンドの引数や出力を読む・修正するときに開く。
+    tags:
+      - topic:設定ファイル
+    related:
+      - to: dev/設計書/モジュール構成/migrate/__main__.py
         type: implements
   - path: rule_inject/server/__main__.py
     name: サーバーの起動の入口

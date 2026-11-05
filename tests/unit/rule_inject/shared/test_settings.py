@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from rule_inject.shared.errors import SettingsReadError
-from rule_inject.shared.settings import _matches_project, load_settings
+from rule_inject.shared.settings import (
+    _matches_project,
+    backup_dir,
+    config_path,
+    load_settings,
+)
 
 
 @pytest.fixture
@@ -327,71 +332,43 @@ def test_matches_project_when_worktree(match: str, expected: bool) -> None:
     assert result is expected
 
 
-@pytest.mark.parametrize(
-    "value",
-    [
-        pytest.param("1023", id="below_range"),
-        pytest.param("65536", id="above_range"),
-        pytest.param("abc", id="not_number"),
-    ],
-)
-def test_load_settings_when_invalid_server_port(
-    make_settings: Callable[..., Path],
-    value: str,
-) -> None:
-    """範囲の外のポートを拒む（異常系）。"""
+def test_load_settings_when_default_config(tmp_path: Path) -> None:
+    """`RULE_INJECT_CONFIG` が無ければ既定のパスの設定ファイルを読む（正常系）。"""
     # 準備
-    config = make_settings(f"global:\n  server_port: {value}\n")
-    env = {"RULE_INJECT_CONFIG": str(config)}
+    config_home = tmp_path / "xdg_config"
+    config = config_home / "rule-inject" / "settings.yaml"
+    config.parent.mkdir(parents=True)
+    config.write_text("global:\n  log_retention_days: 5\n", encoding="utf-8")
+    # 実行
+    settings = load_settings({"XDG_CONFIG_HOME": str(config_home)})
+    # 検証
+    assert settings.log_retention_days == 5
+
+
+def test_load_settings_when_removed_port_key(make_settings: Callable[..., Path]) -> None:
+    """廃止したキーを拒む（異常系）。"""
+    # 準備
+    config = make_settings("global:\n  server_port: 9000\n")
     # 実行・検証
     with pytest.raises(SettingsReadError) as raised:
-        load_settings(env)
+        load_settings({"RULE_INJECT_CONFIG": str(config)})
     assert "global.server_port" in raised.value.reason
-    assert value in raised.value.reason
+    assert "global-setup" in raised.value.reason
 
 
 @pytest.mark.parametrize(
-    ("global_text", "expected"),
+    ("env", "expected"),
     [
-        pytest.param("global:\n  server_port: 9000\n", 9000, id="from_config"),
-        pytest.param("global:\n  log_retention_days: 5\n", 8783, id="default"),
+        pytest.param({"RULE_INJECT_PORT": "9100"}, 9100, id="from_env"),
+        pytest.param({}, 8783, id="default"),
     ],
 )
-def test_load_settings_when_server_port(
-    make_settings: Callable[..., Path],
-    global_text: str,
-    expected: int,
-) -> None:
-    """ポートを設定ファイルから読み、無ければ既定にする（正常系）。"""
-    # 準備
-    config = make_settings(global_text)
-    env = {"RULE_INJECT_CONFIG": str(config)}
+def test_load_settings_when_port_env(env: dict[str, str], expected: int) -> None:
+    """ポートを環境変数から読み、無ければ既定にする（正常系）。"""
     # 実行
     settings = load_settings(env)
     # 検証
     assert settings.server_port == expected
-
-
-@pytest.mark.parametrize(
-    "global_text",
-    [
-        pytest.param("global:\n  server_port: 9000\n", id="config_has_port"),
-        pytest.param(None, id="no_config"),
-    ],
-)
-def test_load_settings_when_port_env(
-    make_settings: Callable[..., Path],
-    global_text: str | None,
-) -> None:
-    """環境変数のポートが設定ファイルより優先する（正常系）。"""
-    # 準備
-    env = {"RULE_INJECT_PORT": "9100"}
-    if global_text is not None:
-        env["RULE_INJECT_CONFIG"] = str(make_settings(global_text))
-    # 実行
-    settings = load_settings(env)
-    # 検証
-    assert settings.server_port == 9100
 
 
 def test_load_settings_when_invalid_port_env() -> None:
@@ -484,3 +461,41 @@ def test_load_settings_when_project_indexes(
     # 検証
     assert result.indexes == ("/g/rules.yaml", str(project_dir / relative_index))
     assert result.project_indexes == (str(project_dir / relative_index),)
+
+
+def test_load_settings_when_state_dir_env(
+    tmp_path: Path, make_settings: Callable[..., Path]
+) -> None:
+    """環境変数の状態の置き場所が設定ファイルより優先する（正常系）。"""
+    # 準備
+    config = make_settings(f"global:\n  state_dir: {tmp_path / 'a'}\n")
+    env = {"RULE_INJECT_CONFIG": str(config), "RULE_INJECT_STATE_DIR": str(tmp_path / "b")}
+    # 実行
+    settings = load_settings(env)
+    # 検証
+    assert settings.state_dir == tmp_path / "b"
+    assert settings.log_dir == tmp_path / "b" / "logs"
+
+
+def test_config_path(isolated_home: Path) -> None:
+    """環境変数のパスを返す（正常系）。"""
+    # 実行
+    result = config_path({"RULE_INJECT_CONFIG": "~/c.yaml"})
+    # 検証
+    assert result == isolated_home / "c.yaml"
+
+
+def test_config_path_when_default() -> None:
+    """既定のパスを返す（正常系）。"""
+    # 実行
+    result = config_path({"XDG_CONFIG_HOME": "/x"})
+    # 検証
+    assert result == Path("/x/rule-inject/settings.yaml")
+
+
+def test_backup_dir() -> None:
+    """設定フォルダの下を返す（正常系）。"""
+    # 実行
+    result = backup_dir({"XDG_CONFIG_HOME": "/x"})
+    # 検証
+    assert result == Path("/x/rule-inject/bk")

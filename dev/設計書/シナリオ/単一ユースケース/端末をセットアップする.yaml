@@ -1,0 +1,259 @@
+title: "端末をセットアップする"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --plugin-dir {プラグイン}` で動かしてスキルを実行する
+      - name: 環境変数
+        description: '`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`CLAUDE_CONFIG_DIR` をテスト用のフォルダへ向け、`RULE_INJECT_PORT` に空いているポートを指定する'
+      - name: 引数
+        description: クローンのパス・索引のパス・サービス名をスキルの引数で指定する
+        notes: 引数で指定した値は質問しない。サービス名はテストごとに一意の `rule-inject-e2e-{乱数}` にし、利用者の `rule-inject` のユニットに触れない
+      - name: サーバーのユニット
+        description: スキルが `~/.config/systemd/user/{サービス名}.service` に配置し、`systemctl --user enable --now` で起動する
+        notes: テストの後始末で `disable` してユニットを削除する
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant CF as 端末の設定
+        participant SV as MCP サーバー
+        participant H as フック
+
+        U->>SK: 実行する
+        SK->>CF: 既定のパスに無いことを確認する
+        SK->>CF: 雛形から作る
+        SK->>SV: 起動する
+        SK->>SV: tools/list
+        SV-->>SK: ツールの一覧
+        SK->>H: 試しの入力で呼ぶ
+        H-->>SK: 案内
+        SK-->>U: 作ったもの・結果を示す
+      ```
+    expected:
+      - 既定のパスに、今のバージョンの `version` と指定した索引を持つ端末の設定がある
+      - '`settings.json` の `env` に `RULE_INJECT_CONFIG` が無い'
+      - サーバーが `RULE_INJECT_PORT` で待ち受け、ツールの一覧を返す
+      - 結果に、作った端末の設定のパスと接続の結果が記載されている
+    test: test_normal
+  - name: 正常シナリオ（古い設定を移し替える）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: '`version` が無く、`global.server_port` を持つ既定のパスの端末の設定'
+      - name: 引数
+        description: サービス名は正常シナリオと同じ。了承の引数 `--yes` を指定する
+        notes: '`--yes` は確認に了承として回答する。`-p` では質問できないため引数で決める'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant MG as 移し替え
+        participant CF as 端末の設定
+        participant ST as settings.json
+
+        U->>SK: 実行する
+        SK->>MG: 手順を求める
+        MG-->>SK: 手順
+        SK-->>U: 手順を示して確認する
+        U-->>SK: 了承する
+        SK->>MG: 適用する
+        MG->>CF: バックアップを作成して書き換える
+        SK->>ST: env に RULE_INJECT_PORT を記載する
+        SK-->>U: 適用した手順とバックアップのパスを示す
+      ```
+    expected:
+      - 端末の設定に `global.server_port` が無く、`version` が今のバージョンになっている
+      - '`settings.json` の `env` に、元の `global.server_port` の値の `RULE_INJECT_PORT` がある'
+      - 移し替える前の端末の設定のバックアップがある
+    test: test_normal_when_settings_old
+  - name: 正常シナリオ（既定と違う場所に設定を配置する）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 引数
+        description: 既定と違う端末の設定のパスをスキルの引数で指定する
+      - name: Claude Code の設定
+        description: '`settings.json` の `env` にほかのキーを 1 つ配置する'
+      - name: サーバーのユニット
+        description: 正常シナリオと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant CF as 端末の設定
+        participant ST as settings.json
+
+        U->>SK: 実行する（設定のパス）
+        SK->>CF: 指したパスに作る
+        SK->>ST: env に RULE_INJECT_CONFIG を記載する
+        SK-->>U: env に記載したキーを示す
+      ```
+    expected:
+      - 指したパスに端末の設定がある
+      - '`settings.json` の `env` に `RULE_INJECT_CONFIG` があり、ほかのキーが変わっていない'
+    test: test_normal_when_custom_path
+  - name: 正常シナリオ（旧い登録を削除する）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 旧い登録
+        description: '`claude mcp add --transport http -s user rule-inject {URL}` で登録する'
+      - name: 引数
+        description: サービス名は正常シナリオと同じ。了承の引数 `--yes` を指定する
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant CC as Claude Code の設定
+
+        U->>SK: 実行する
+        SK->>CC: 登録を調べる
+        CC-->>SK: ユーザースコープの rule-inject
+        SK-->>U: 削除してよいかを確認する
+        U-->>SK: 了承する
+        SK->>CC: 登録を削除する
+        SK-->>U: 削除した登録を示す
+      ```
+    expected:
+      - ユーザースコープの `rule-inject` の登録が無い
+      - 結果に削除した登録が記載されている
+    test: test_normal_when_old_registration
+  - name: 異常シナリオ（設定がツールより新しい）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: '`version` がツールのバージョンより新しい端末の設定'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant MG as 移し替え
+
+        U->>SK: 実行する
+        SK->>MG: 手順を求める
+        MG-->>SK: 設定が新しい
+        SK-->>U: 両方のバージョンとプラグインの更新を案内して止まる
+      ```
+    expected:
+      - 端末の設定と `settings.json` が変わっていない
+      - 結果に設定のバージョンとツールのバージョンが記載されている
+    test: test_error_when_settings_newer
+  - name: 異常シナリオ（ポートが使われている）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: ポートの使用
+        description: テストが `RULE_INJECT_PORT` のポートで MCP でないサーバーを待ち受ける
+      - name: 引数
+        description: サービス名は正常シナリオと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant SV as MCP サーバー
+
+        U->>SK: 実行する
+        SK->>SV: 起動する
+        SV-->>SK: 待ち受けに失敗する
+        SK-->>U: ログの場所と修正方法を示して止まる
+      ```
+    expected:
+      - 結果に、ポートが使われている旨とログの場所が記載されている
+    test: test_error_when_port_in_use
+  - name: 正常シナリオ（設定が今のバージョン）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: '`version` が今のバージョンの既定のパスの端末の設定'
+      - name: サーバー
+        description: '`RULE_INJECT_PORT` のポートで起動したサーバー'
+        notes: テストが前面で起動する
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant MG as 移し替え
+        participant SV as MCP サーバー
+        participant H as フック
+
+        U->>SK: 実行する
+        SK->>MG: 手順を求める
+        MG-->>SK: 手順なし
+        SK->>SV: tools/list
+        SV-->>SK: ツールの一覧
+        SK->>H: 試しの入力で呼ぶ
+        H-->>SK: 案内
+        SK-->>U: 接続の結果を示す
+      ```
+    expected:
+      - 端末の設定と `settings.json` が変わっていない
+      - サーバーのユニットが作られていない
+      - 結果に接続の結果が記載されている
+    test: test_normal_when_settings_current
+  - name: 異常シナリオ（変更を断る）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: 古い設定を移し替える正常シナリオと同じ
+      - name: 引数
+        description: 断る引数 `--no` を指定する
+        notes: '`--no` は確認に断りとして回答する'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        actor U as 利用者
+        participant SK as global-setup
+        participant MG as 移し替え
+
+        U->>SK: 実行する
+        SK->>MG: 手順を求める
+        MG-->>SK: 手順
+        SK-->>U: 手順を示して確認する
+        U-->>SK: 断る
+        SK-->>U: 適用しなかった手順を示して止まる
+      ```
+    expected:
+      - 端末の設定と `settings.json` が変わっていない
+      - サーバーのユニットが作られていない
+      - 結果に適用しなかった手順が記載されている
+    test: test_error_when_declined
+lead: 利用者が `global-setup` のスキルを実行し、端末の設定の作成か移し替え、サーバーの起動と接続の確認、フックの確認までを終える。端末ごとに 1 回実行し、入れ直し・端末の移行・更新の後にも実行する。
+issue: 105
+primary_actor: 利用者
+stakeholders:
+  - name: 利用者
+    interest: 端末の移行や入れ直しを同じ手順で終え、何を作って何を記載したかが分かること
+trigger: 利用者が `/rule-inject:global-setup` を実行する
+preconditions:
+  - プラグインを読み込んでいる
+  - ローカルのクローンでサーバーの依存を導入できる（`uv` がある）
+  - '`systemctl --user` が使用できる'
+success_guarantee: 端末の設定が今のバージョンになり、サーバーが待ち受け、`tools/list` でつながり、フックが案内を返す。
+minimal_guarantee: 断られた変更と、止まった手順の後の変更は書き込まない。`settings.json` の `env` のほかのキーと、ファイルのほかの内容は変えない。
+test_file: tests/e2e/単一ユースケース/test_setup_terminal.py

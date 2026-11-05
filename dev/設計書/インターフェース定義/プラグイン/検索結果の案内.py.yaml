@@ -491,7 +491,7 @@ exceptions:
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、`additionalContext` へ「検索結果の案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
   - name: OSError / 書式の誤り（設定ファイルが読めない）
-    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: ルール案内と同じく、既定値で動かさず索引を読まない。`additionalContext` へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト

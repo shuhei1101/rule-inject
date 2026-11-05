@@ -17,11 +17,11 @@ functions:
         description: 設定ファイルの中身
     returns:
       type: dict[str, dict[str, str | list[str]] | list[dict[str, str | list[str]]]]
-      description: '`global`（キー → 文字列か文字列のリスト）と `projects`（そのマップのリスト）。書かれていないキーは持たない。整数の値も文字列のまま返す'
+      description: '`version`（文字列）と `global`（キー → 文字列か文字列のリスト）と `projects`（そのマップのリスト）。書かれていないキーは持たない。整数の値も文字列のまま返す'
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす（`yaml_lines` の行の読み取り）
-      2. 最上位のキーは `global` と `projects` だけを許す
-      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`server_port`・`dev_docs_url`（文字列）だけを許す
+      2. 最上位のキーは `version`（文字列）・`global`・`projects` だけを許す
+      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url`（文字列）だけを許す。`server_port` は `/rule-inject:global-setup` での移し替えを案内する ValueError にする
       4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
       5. 文字列は引用符あり・なしを読む。リストは空の `[]` を許す
       6. 許さないキー・形式（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする
@@ -68,4 +68,17 @@ functions:
         condition: '`global` に `log_dir:` が 2 つ'
         mock: なし
         expected: 行番号つきの ValueError
+        exception: 許さないキー・形式がある
+      - name: test_parse_settings_when_version
+        case: 正常
+        summary: '`version` を読む'
+        condition: '最上位の `version: 0.3.0`'
+        mock: なし
+        expected: '`version` が文字列 `0.3.0`'
+      - name: test_parse_settings_when_removed_key
+        case: 異常
+        summary: 廃止したキーに移し替えを案内する
+        condition: '`global` の `server_port: 9000`'
+        mock: なし
+        expected: 行番号と `global-setup` を含む ValueError
         exception: 許さないキー・形式がある
