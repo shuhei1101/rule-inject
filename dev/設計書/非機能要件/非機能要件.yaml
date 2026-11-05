@@ -99,25 +99,35 @@ requirements:
   - name: バージョンの一致
     english_name: version_consistency
     category: 保守性
-    external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はそのバージョンに固定される（値が変わらない間、marketplace から入れた利用者へ新しいバージョンは届かない）'
+    external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はそのバージョンに固定される（値が変わらない間、marketplace から入れた利用者へ新しいバージョンは届かない）。`plugin.json` にも marketplace の `plugins[]` にも `version` が無ければ、commit の SHA をバージョンにして更新を判定する'
     source_kind: 実行基盤の制限
-    source: https://code.claude.com/docs/en/plugins-reference
-    value: 4 つの値が全て一致
-    rationale: '`.claude-plugin/plugin.json` の `version` が `version.ini`（先頭の `v` を除く）とずれると、バージョンの更新が利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いはテストで検知する'
-    measurement: '`version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（`rule-inject` のパッケージ）の 4 つからバージョンを取り出して比べる。食い違うときは 4 つの値を並べて fail する'
+    source: https://code.claude.com/docs/en/plugins/loading#how-claude-code-computes-the-version
+    value: '`version.ini`・`pyproject.toml`・`uv.lock` の 3 つの値が全て一致し、`plugin.json` と `marketplace.json` の `plugins[]` は `version` を持たない'
+    rationale: '`.claude-plugin/plugin.json` か `marketplace.json` の `plugins[]` に `version` があると、その値の更新を忘れたときにバージョンの更新が利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。規約『Claude プラグインルール』の `no-version-01` のとおり、どちらにも `version` を持たせない。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いと `version` の再追加はテストで検知する'
+    measurement: '`version.ini`・`pyproject.toml`・`uv.lock`（`rule-inject` のパッケージ）の 3 つからバージョンを取り出して比べ、`.claude-plugin/plugin.json` と `.claude-plugin/marketplace.json` の `plugins[]` に `version` が無いことを確認する。食い違うときは 3 つの値を並べ、`version` があるときはそのファイルを挙げて fail する'
     test_file: tests/nfr/test_version_consistency.py
-    overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`plugin.json`・`uv.lock` の 4 つの値を並べて知らせる
+    overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`uv.lock` の 3 つの値を並べて知らせる。`plugin.json` か `marketplace.json` の `plugins[]` が `version` を持つときは、そのファイルを挙げて fail する
     tests:
       - name: test_version_consistency_when_all_match
-        summary: 4 つのバージョンが一致するとき、検査が通る
-        condition: リポジトリの直下の `version.ini`・`pyproject.toml`・`.claude-plugin/plugin.json`・`uv.lock`（値は固定しない）
-        measurement: 実物の 4 つのファイルからバージョンを取り出し、`version.ini` は先頭の `v` を除いて比べる
+        summary: 3 つのバージョンが一致し、マニフェストが `version` を持たないとき、検査が通る
+        condition: リポジトリの直下の `version.ini`・`pyproject.toml`・`uv.lock`・`.claude-plugin/plugin.json`・`.claude-plugin/marketplace.json`（値は固定しない）
+        measurement: 実物のファイルからバージョンを取り出して `version.ini` は先頭の `v` を除いて比べ、マニフェストの `version` の有無を見る
         expected: 検査が通る（fail しない）
       - name: test_version_consistency_when_mismatch
-        summary: バージョンが 1 つでも食い違うとき、検査が 4 つの値を並べて fail する
-        condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.1`、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
-        measurement: 食い違うバージョンを置いた一時フォルダの 4 つのファイルを検査へ渡す
-        expected: 検査が fail し、失敗の文に 4 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
+        summary: バージョンが 1 つでも食い違うとき、検査が 3 つの値を並べて fail する
+        condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.0`。マニフェストは `version` を持たない'
+        measurement: 食い違うバージョンを置いた一時フォルダのファイルを検査へ渡す
+        expected: 検査が fail し、失敗の文に 3 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
+      - name: test_version_consistency_when_plugin_has_version
+        summary: '`plugin.json` が `version` を持つとき、検査が fail する'
+        condition: '3 つのバージョンが `0.1.1` で一致し、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
+        measurement: '`plugin.json` に `version` を置いた一時フォルダのファイルを検査へ渡す'
+        expected: 検査が fail し、失敗の文に `plugin.json` が挙がる
+      - name: test_version_consistency_when_marketplace_has_version
+        summary: '`marketplace.json` の `plugins[]` が `version` を持つとき、検査が fail する'
+        condition: 3 つのバージョンが `0.1.1` で一致し、`marketplace.json` の `plugins[]` の `rule-inject` の `version` が `0.1.1`
+        measurement: '`marketplace.json` の `plugins[]` に `version` を置いた一時フォルダのファイルを検査へ渡す'
+        expected: 検査が fail し、失敗の文に `marketplace.json` が挙がる
   - name: MCPサーバーの待ち受けのアドレス
     english_name: server_bind_address
     category: セキュリティ

@@ -3,7 +3,7 @@ lead: Claude Code が呼ぶフックの入口。標準入力の JSON を読み�
 directory: |-
   ```text
   .claude-plugin/
-  ├── plugin.json                 # プラグインの名前（rule-inject）とバージョン
+  ├── plugin.json                 # プラグインの名前（rule-inject）
   └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
   ├── hooks.json                  # 6 つのフックの matcher・timeout（1 秒）・コマンド

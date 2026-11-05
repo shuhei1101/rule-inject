@@ -25,7 +25,7 @@ catalogs:
     entries:
       - name: .claude-plugin/plugin.json
         kind: ファイル
-        purpose: プラグインの名前とバージョン
+        purpose: プラグインの名前
       - name: hooks/hooks.json
         kind: ファイル
         purpose: フックの出来事・matcher・コマンド・timeout

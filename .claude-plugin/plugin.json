@@ -1,6 +1,5 @@
 {
   "name": "rule-inject",
-  "version": "0.2.3",
   "description": "Claude Code がファイルを触る前に、そのファイルに当たるルールをコンテキストへ案内するプラグイン",
   "author": {
     "name": "shuhei1101"

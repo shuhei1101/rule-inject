@@ -1,0 +1,45 @@
+$ uv run pytest tests/nfr/test_version_consistency.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-plugin-remove-plugin-json-version
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 4 items
+
+tests/nfr/test_version_consistency.py F...                               [100%]
+
+=================================== FAILURES ===================================
+___________________ test_version_consistency_when_all_match ____________________
+
+    def test_version_consistency_when_all_match() -> None:
+        """3 つのバージョンが一致し、マニフェストが `version` を持たないとき、検査が通る（正常系）。"""
+        # 実行・検証
+>       _check_version_consistency(REPO_ROOT)
+
+tests/nfr/test_version_consistency.py:113: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-plugin-remove-plugin-json-version')
+
+    def _check_version_consistency(root: Path) -> None:
+        """3 つのバージョンの一致とマニフェストに version が無いことを確かめ、外れれば例外を投げる。"""
+        versions = _read_versions(root)
+        # version.ini だけ先頭の v を除いて比べる
+        comparable = {
+            name: value.removeprefix("v") if name == VERSION_INI else value
+            for name, value in versions.items()
+        }
+        # 値が 2 種類以上あれば食い違い
+        if len(set(comparable.values())) > 1:
+            listed = ", ".join(f"{name}={value}" for name, value in versions.items())
+            raise VersionMismatchError(f"バージョンが食い違っています: {listed}")
+        manifests = _find_manifests_with_version(root)
+        # version を持つマニフェストがあれば、そのファイルを挙げる
+        if manifests:
+>           raise VersionMismatchError(f"version を持つマニフェストがあります: {', '.join(manifests)}")
+E           tests.nfr.test_version_consistency.VersionMismatchError: version を持つマニフェストがあります: plugin.json
+
+tests/nfr/test_version_consistency.py:71: VersionMismatchError
+=========================== short test summary info ============================
+FAILED tests/nfr/test_version_consistency.py::test_version_consistency_when_all_match
+========================= 1 failed, 3 passed in 3.03s ==========================
