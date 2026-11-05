@@ -53,3 +53,19 @@ def test_default_log_dir_when_no_env(isolated_home: Path) -> None:
     result = paths.default_log_dir({})
     # 検証
     assert result == isolated_home / ".local" / "state" / "rule-inject" / "logs"
+
+
+def test_default_state_dir_when_state_dir_env(isolated_home: Path) -> None:
+    """環境変数の値を優先する（正常系）。"""
+    # 実行
+    result = paths.default_state_dir({"RULE_INJECT_STATE_DIR": "~/s", "XDG_STATE_HOME": "/x"})
+    # 検証
+    assert result == isolated_home / "s"
+
+
+def test_default_log_dir_when_state_dir_env() -> None:
+    """環境変数の値の下を使用する（正常系）。"""
+    # 実行
+    result = paths.default_log_dir({"RULE_INJECT_STATE_DIR": "/s"})
+    # 検証
+    assert result == Path("/s/logs")
