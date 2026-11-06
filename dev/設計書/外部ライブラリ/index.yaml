@@ -8,3 +8,5 @@ items:
     summary: 索引を JSON Schema で検証するライブラリ
   - page: ruamel-yaml.yaml
     summary: 索引をコメントと書式を残したまま書き換える YAML ライブラリ
+  - page: uvicorn.yaml
+    summary: 常駐の MCP サーバーを Streamable HTTP で待ち受け、再起動で待ち受けを閉じる ASGI のサーバー
