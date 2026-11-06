@@ -23,7 +23,7 @@ functions:
         description: 環境変数
     returns:
       type: dict[str, Any] | None
-      description: 起動を依頼したときだけ additionalContext に `build_server_start_notice(サービス名)`。それ以外は None（出力しない）
+      description: '起動を依頼したときだけ `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": build_server_start_notice(サービス名)}}`。それ以外は None（出力しない）'
     process: |-
       1. `payload` の `session_id` が `is_valid_session_id` に当たればログの `session_id` に使い、当たらなければ None にする（形式が外れていても補助は行う）
       2. 設定を読む（設定の読み込み）
@@ -32,14 +32,14 @@ functions:
       4. `settings.server_service` のユニットへ起動を依頼する（ユニットの起動の依頼）
          - UnitCheckError の場合、`write_log(settings.log_dir, component=START_SERVER, operation=CHECK_UNIT, ...)` を書いて None を返す
          - UnitStartError の場合、`write_log(..., operation=START_UNIT, ...)` を書いて None を返す
-      5. 戻り値が `UnitStart.REQUESTED` なら `{"additionalContext": 案内}` を返す（サーバーの起動の案内の組み立て）。`NOT_ENABLED`・`SYSTEMCTL_MISSING` なら None を返す
+      5. 戻り値が `UnitStart.REQUESTED` なら `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": 案内}}` を返す（サーバーの起動の案内の組み立て）。`NOT_ENABLED`・`SYSTEMCTL_MISSING` なら None を返す
     unit_tests:
       - name: test_start_server
         case: 正常
         summary: 起動を依頼したら案内を返す
         condition: '`server_responds` が偽、`request_unit_start` が `REQUESTED` を返す。設定ファイルに `global.server_service: rule-inject-ut`'
         mock: '`server_responds`・`request_unit_start`（monkeypatch）'
-        expected: additionalContext が `build_server_start_notice("rule-inject-ut")`。`request_unit_start` に `rule-inject-ut` が渡る
+        expected: '`hookSpecificOutput` の `hookEventName` が `SessionStart`、`additionalContext` が `build_server_start_notice("rule-inject-ut")`。`request_unit_start` に `rule-inject-ut` が渡る'
       - name: test_start_server_when_responding
         case: 正常
         summary: サーバーが応答すれば起動を依頼しない
