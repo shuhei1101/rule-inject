@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 # 偽の dev-docs が応答を返すまでの秒数（check_indexes を処理中のままにする時間）
-SLOW_DEV_DOCS_SEC = 4
+SLOW_DEV_DOCS_SEC = 10
 # 処理中の呼び出しを始めてから、再起動を呼ぶまでの秒数
 CALL_START_SEC = 1
 
