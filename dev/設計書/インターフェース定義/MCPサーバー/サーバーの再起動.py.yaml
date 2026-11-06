@@ -77,7 +77,7 @@ lead: 応答を返した後、処理中のツールの呼び出しの終わり�
 identifier: restart_server
 idempotent: false
 side_effects: 待ち受けを閉じて起動し直す（`destructiveHint`）。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書かない
-exclusivity: 再起動を始めた後の再起動・更新の呼び出しは `RestartInProgressError` で断る
+exclusivity: 再起動を始めた後の再起動・更新の呼び出しと、更新が動いている間の再起動の呼び出しは `RestartInProgressError` で断る
 request: []
 request_example: |-
   ```json
@@ -105,8 +105,8 @@ exceptions:
   - name: なし（正常終了）
     condition: 再起動を始めた
   - name: RestartInProgressError
-    condition: 前の再起動・更新の再起動がまだ待ち受けを閉じていない
-    notes: '`isError: true`。再起動の途中である旨を返す'
+    condition: 前の再起動・更新の再起動がまだ待ち受けを閉じていないか、更新が動いている
+    notes: '`isError: true`。再起動の途中か、更新が動いている旨を返す。更新が取り込みを終えて再起動するときは、更新の中から再起動を始める（インターフェース定義「サーバーの更新」）'
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 再起動の途中の呼び出し

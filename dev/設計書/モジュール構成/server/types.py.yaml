@@ -477,7 +477,7 @@ data_models:
     properties:
       - name: path
         type: str | None
-        description: 読んだ設定ファイルの場所（`tools._config_path`）
+        description: 読んだ設定ファイルの場所（`admin_tools._read_config_path`）
       - name: readable
         type: bool
         description: 読めたか

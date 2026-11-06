@@ -34,7 +34,7 @@ functions:
       type: CallToolResult
       description: '`respond(ServerStatusResult, "json")`'
     process: |-
-      1. `env` から `CLAUDE_PROJECT_DIR` を除いて `load_settings` を呼び、読めれば `ConfigState(readable=True)`、`SettingsReadError` なら `ConfigState(readable=False, error="{path}: {reason}")` にする
+      1. `_read_settings(None, env)` を呼び、読めれば `ConfigState(path=_read_config_path(env), readable=True)`、`ToolError` なら `ConfigState(readable=False, error=理由)` にする
       2. `read_version(clone)` と `head_commit(clone, run=run)` を引く。`head_commit` の `UpdateFailedError`（打ち切り）は `commit=None` にする
       3. `control` の `port`・`pid`・`started_at`・`restarting` と合わせて返す
     unit_tests:
@@ -73,8 +73,8 @@ functions:
       type: CallToolResult
       description: '`respond(ReloadSettingsResult, "json")`'
     process: |-
-      1. `project_dir` があれば `tools._project_settings(project_dir, env)`、無ければ `record_tools._record_settings(env)` で設定を読む（どちらも読めなければ `ToolError`）
-      2. `Settings` の `indexes`・`state_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url` と `tools._config_path(env)` を返す
+      1. `_read_settings(project_dir, env)` で設定を読む
+      2. `Settings` の `indexes`・`state_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url` と `_read_config_path(env)` を返す
     exceptions:
       - name: ToolError
         condition: 設定ファイルが読めない、または `project_dir` が絶対パスでない
@@ -157,7 +157,7 @@ functions:
       2. `asyncio.to_thread(pull, clone, run=run)` で取り込む。`pulled` が偽なら `state="up_to_date"` を返す
       3. `asyncio.to_thread` で `sync_dependencies(clone, env, run=run)` と `plan_migrations(clone, env, run=run)` を順に呼ぶ
       4. `migrations` が空でなければ、`state="migration_required"`・`steps`・`global-setup` の案内を `output` に載せて返す
-      5. 空なら `control.begin_restart()` を呼び、`state="restarting"` を返す
+      5. 空なら `control.finish_update_and_restart()` を呼び、`state="restarting"` を返す（更新の印を下ろすのと再起動の開始を 1 回で行い、その間に別のセッションの再起動が割り込まない）
     exceptions:
       - name: UpdateFailedError
         condition: '`pull`・`sync_dependencies`・`plan_migrations` が送出する'
@@ -191,3 +191,49 @@ functions:
         mock: '`pull`・`sync_dependencies`'
         expected: '`UpdateFailedError` が送出され、続けて `begin_update` を呼べる'
         exception: '`pull`・`sync_dependencies`・`plan_migrations` が送出する'
+  - name: _read_settings
+    title: 設定の読み取り
+    container: server/admin_tools.py
+    usecase: MCPサーバーの設定を読み直す
+    summary: フックと同じ規則で設定を読む。`project_dir` があればそのプロジェクトとして、無ければ `CLAUDE_PROJECT_DIR` 無しで読む
+    kind: 関数
+    scope: internal
+    args:
+      - name: project_dir
+        type: str | None
+        required: true
+        passing: positional
+        description: プロジェクトの直下か `None`
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+    returns:
+      type: Settings
+      description: 読んだ設定
+    process: '1. `project_dir` が絶対パスでなければ `ToolError`。`env` から `PROJECT_DIR_ENV` を除き、`project_dir` があれば `PROJECT_DIR_ENV` に入れて `load_settings` を返す。`SettingsReadError` は `ToolError`（`{path}: {reason}`）'
+    exceptions:
+      - name: ToolError
+        condition: '`project_dir` が絶対パスでない、または設定ファイルが読めない'
+        message: 絶対パスで渡す旨、または設定ファイルの場所と理由
+  - name: _read_config_path
+    title: 読んだ設定ファイルの場所
+    container: server/admin_tools.py
+    usecase: MCPサーバーの設定を読み直す
+    summary: '`shared.settings.config_path(env)` にファイルがあればその場所、無ければ `None` を返す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+    returns:
+      type: str | None
+      description: 読んだ設定ファイルの場所。既定のパスにファイルが無く読まなかったときは `None`
+notes:
+  設定の読み取りの置き場所: |-
+    `tools.py`・`record_tools.py` の内部関数は使わず、`shared.settings` の公開の `load_settings`・`config_path`・`PROJECT_DIR_ENV` で読む。
+    `tools._config_path` は `RULE_INJECT_CONFIG` が無いと既定のパスのファイルを読んでも `None` を返し、インターフェース定義の `config_path`（読まなかったときだけ `null`）と合わないため。

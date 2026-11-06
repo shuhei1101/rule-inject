@@ -167,7 +167,7 @@ classes:
             exception: '`_restarting` か `_updating` が真'
       - name: end_update
         title: 更新の終わり
-        summary: '`_updating` を下ろす'
+        summary: '`_updating` を下ろす。`finish_update_and_restart` の後に呼んでも何もしない'
         kind: メソッド
         scope: public
         thread_safe: true
@@ -176,7 +176,7 @@ classes:
           description: なし
       - name: begin_restart
         title: 再起動の開始
-        summary: 再起動の途中なら断り、`_restarting` を立てて停止を進めるタスクを作る
+        summary: 再起動の途中か更新が動いていれば断り、`_restarting` を立てて停止を進めるタスクを作る
         kind: メソッド
         scope: public
         thread_safe: true
@@ -184,12 +184,12 @@ classes:
           type: None
           description: なし
         process: |-
-          1. `_lock` の中で `_restarting` が真なら `RestartInProgressError` を送出し、偽なら立てる
-          2. `asyncio.get_running_loop().create_task(self._drain_and_stop())` を `_stop_task` に持つ
+          1. `_lock` の中で `_restarting` か `_updating` が真なら `RestartInProgressError` を送出し、偽なら `_restarting` を立てる
+          2. `_start_stop()` で停止を進めるタスクを作る
         exceptions:
           - name: RestartInProgressError
-            condition: '`_restarting` が真'
-            message: 再起動の途中である旨
+            condition: '`_restarting` か `_updating` が真'
+            message: 再起動の途中か、更新が動いている旨
         unit_tests:
           - name: test_begin_restart_when_restarting
             case: 異常
@@ -197,7 +197,41 @@ classes:
             condition: イベントループの中で `begin_restart` を 2 回呼ぶ
             mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
             expected: 2 回目が `RestartInProgressError` で、作ったタスクが 1 つ
-            exception: '`_restarting` が真'
+            exception: '`_restarting` か `_updating` が真'
+          - name: test_begin_restart_when_updating
+            case: 異常
+            summary: 更新の途中の再起動を断る
+            condition: '`begin_update` の後に、イベントループの中で `begin_restart` を呼ぶ'
+            mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+            expected: '`RestartInProgressError` で、`restarting` が偽のまま、タスクが作られない'
+            exception: '`_restarting` か `_updating` が真'
+      - name: finish_update_and_restart
+        title: 更新を終えて再起動
+        summary: '`_lock` の中で 1 回で `_updating` を下ろして `_restarting` を立て、停止を進めるタスクを作る。`update_server` が取り込みを終えたときに呼ぶ'
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        returns:
+          type: None
+          description: なし
+        process: |-
+          1. `_lock` の中で `_updating` を下ろし、`_restarting` を立てる（`_updating` を立てている間は `begin_restart` が断るため、`_restarting` は偽のまま）
+          2. `_start_stop()` で停止を進めるタスクを作る
+        unit_tests:
+          - name: test_finish_update_and_restart
+            case: 正常
+            summary: 更新の途中から再起動を始める
+            condition: '`begin_update` の後に、イベントループの中で `finish_update_and_restart` を呼ぶ'
+            mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+            expected: '`restarting` が真で、タスクが 1 つ。続けて `begin_update` を呼ぶと `RestartInProgressError`'
+      - name: _start_stop
+        title: 停止のタスクの作成
+        summary: '`asyncio.get_running_loop().create_task(self._drain_and_stop())` を `_stop_task` に持つ'
+        kind: メソッド
+        scope: internal
+        returns:
+          type: None
+          description: なし
       - name: _drain_and_stop
         title: 停止を進める
         summary: 処理中の呼び出しの終わりを `STOP_DRAIN_TIMEOUT` まで待ち、`_server.should_exit` を立てる
