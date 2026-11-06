@@ -37,6 +37,7 @@
 | モジュール構成設計 | `0988b88..c71be69` | - |
 | モジュール構成設計 | `43eae24..2c6bb17` | レビューの指摘の修正 |
 | モジュール構成設計 | `7ff80d6..32e86a3` | 合格時の任意の指摘の取り込み |
+| モジュール構成設計 | `b77c2a6..162e842` | 結合テストの作成で見つけた、更新で取り込んだ後の失敗の文面 |
 
 ## テスト結果
 
@@ -48,4 +49,15 @@
 
 ### 結合
 
-未実行（結合テスト作成の工程で回す）
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_get_server_status.py` | 全実行 | 新規 | ✅ | 3 テスト pass |
+| `tests/integration/server/test_reload_settings.py` | 全実行 | 新規 | ✅ | 3 テスト pass |
+| `tests/integration/server/test_restart_server.py` | 全実行 | 新規 | ✅ | 3 テスト pass。処理中の呼び出しは、応答を 4 秒遅らせた偽の dev-docs への `check_indexes` で作る |
+| `tests/integration/server/test_update_server.py` | 全実行 | 新規 | ✅ | 6 テスト pass。作業ブランチから作った一時フォルダの上流とクローンで、実際に取り込み・`uv sync`・再起動する |
+| `tests/integration/server/test_server_start.py` | 全実行 | 変更 | ✅ | ツールの一覧の期待値を 11 に修正 |
+| `tests/integration/server/conftest.py` | - | 変更 | ✅ | 辿る時間を 0 秒にしたサーバーの起動を `control`・`clone` を渡す形に修正し、偽の dev-docs の遅れ・再起動を待つ関数・クローンのサーバーを追加 |
+| `tests/integration/plugin/test_migrate_settings.py` | 全実行 | 変更 | ✅ | `migrations` の確かめを追加 |
+| `tests/integration/server` の既存のテスト | 全実行 | 実行のみ | ✅ | 回帰確認 |
+
+全 88 テスト pass（`テスト結果/20261106102816_162e842_結合テスト.log`）。単体テストも 524 件が全 pass のまま。lint: `テスト結果/20261106102816_249d783_lint.log`

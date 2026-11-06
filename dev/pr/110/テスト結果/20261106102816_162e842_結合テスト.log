@@ -1,0 +1,16 @@
+$ uv run pytest tests/integration/server tests/integration/plugin/test_migrate_settings.py -q -p no:cacheprovider -x --durations=10
+........................................................................ [ 81%]
+................                                                         [100%]
+============================= slowest 10 durations =============================
+28.02s call     tests/integration/server/test_restart_server.py::test_error_when_restart_in_progress
+23.83s call     tests/integration/server/test_restart_server.py::test_normal_when_call_in_flight
+22.59s setup    tests/integration/server/test_update_server.py::test_normal_when_migration_required
+21.86s setup    tests/integration/server/test_update_server.py::test_error_when_uncommitted_changes
+19.34s setup    tests/integration/server/test_update_server.py::test_normal_when_up_to_date
+18.15s setup    tests/integration/server/test_update_server.py::test_error_when_command_failed
+18.15s setup    tests/integration/server/test_update_server.py::test_error_when_not_fast_forward
+17.65s setup    tests/integration/server/test_update_server.py::test_normal
+13.28s call     tests/integration/server/test_restart_server.py::test_normal
+12.85s call     tests/integration/server/test_update_server.py::test_normal
+88 passed in 383.06s (0:06:23)
+exit=0
