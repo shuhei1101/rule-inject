@@ -569,6 +569,17 @@ files:
     related:
       - to: src/rule_inject/features/guidance/service
         type: tests
+  - path: unit/rule_inject/features/server_start/test_service.py
+    name: サーバーの応答の確認とユニットの起動の依頼の単体テスト
+    description: 応答の確認と systemctl の呼び出しの振る舞いを確かめる単体テスト。サーバーの起動の機能を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/server_start/service
+        type: tests
   - path: unit/rule_inject/features/index/check/test_scan.py
     name: 当たらないエントリの走査の単体テスト
     description: 当たらないエントリの走査の振る舞いを確かめる単体テスト。当たらないエントリの走査を修正したときに流す。
@@ -718,6 +729,17 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/hooks/search_guide
+        type: tests
+  - path: unit/rule_inject/hooks/test_start_server.py
+    name: サーバーの起動の補助の単体テスト
+    description: サーバーの起動の補助の振る舞いを確かめる単体テスト。サーバーの起動の補助を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/start_server
         type: tests
   - path: unit/rule_inject/hooks/test_sweep_read.py
     name: 既読の記録の掃除の単体テスト

@@ -66,6 +66,12 @@
             "_description": "保持期間を過ぎた別のセッションの既読の記録を削除する",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" sweep_read",
             "timeout": 1
+          },
+          {
+            "type": "command",
+            "_description": "常駐の MCP サーバーが応答しなければ、systemd --user のユニットへ起動を依頼し、/mcp で接続し直す案内を載せる",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" start_server",
+            "timeout": 1
           }
         ]
       }

@@ -25,6 +25,12 @@ WORK_RULES = (
     "新しいファイルは、まず Write で空の内容で作り、案内されたルールを読んでから Edit で中身を書いてください。"
     "空で作った時点で、そのファイルに当たるルールが案内されます。"
 )
+# サーバーの起動の補助が起動を依頼したときの文面（{service} にサービス名を入れる）
+SERVER_START_NOTICE = (
+    "rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {service} へ起動を依頼しました。"
+    "サーバーが待ち受けを始めるまで数十秒かかります。"
+    "このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に接続し直すと使用できます。"
+)
 SEARCH_HEADER = (
     "検索結果のファイルに関連する未読のルールがあります（参照は任意です）。"
     "この案内はルールごとにセッションで 1 回だけ表示します。"
@@ -124,6 +130,11 @@ def build_search_guidance(
     # 照合しなかったパスがあれば、その件数を末尾に添える
     trailer = [_unchecked_line(unchecked)] if unchecked >= 1 else []
     return _assemble(SEARCH_HEADER, rules, limit, _search_omitted_line, trailer)
+
+
+def build_server_start_notice(service: str) -> str:
+    """`SERVER_START_NOTICE` にサービス名を入れた文面を返す。"""
+    return SERVER_START_NOTICE.format(service=service)
 
 
 def build_failure_notice(

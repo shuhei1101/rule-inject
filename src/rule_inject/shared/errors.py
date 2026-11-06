@@ -45,6 +45,14 @@ class LogDeleteError(RuleInjectError):
     """削除する対象のログのファイルはあるが削除できない。"""
 
 
+class UnitCheckError(RuleInjectError):
+    """`systemctl --user is-enabled` が打ち切りの待ちを過ぎた。"""
+
+
+class UnitStartError(RuleInjectError):
+    """`systemctl --user start --no-block` が 0 以外で終わったか、打ち切りの待ちを過ぎた。"""
+
+
 def describe(exc: BaseException) -> str:
     """例外のクラス名と文面を 1 つの理由の文字列にする。"""
     return f"{type(exc).__name__}: {exc}"
