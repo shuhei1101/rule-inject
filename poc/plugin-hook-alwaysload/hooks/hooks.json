@@ -1,0 +1,1 @@
+{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py", "timeout": 1}]}]}}

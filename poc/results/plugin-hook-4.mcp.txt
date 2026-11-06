@@ -1,0 +1,71 @@
+
+ ▐▛███▛█   Claude Code v2.1.318
+▝▜██████▀  Opus 5.5 · Claude Ultra
+ ▝▝   ▝▝   /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session
+
+▎ Debug mode enabled · logging to /tmp/poc112/plugin-hook-4.debug.log
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+   Manage MCP servers
+   12 servers
+
+     Project MCPs (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/.mcp.json)
+   ❯ ✘ rule-inject
+
+     User MCPs (/home/shuhei2441/.claude.json)
+     ✔ claude-balancer                                  4 tools
+
+     claude.ai
+     ✔ claude.ai Claude Docs                            8 tools
+     ⚠ claude.ai Gmail                                  needs authentication
+     ⚠ claude.ai Google Calendar                        needs authentication
+     ⚠ claude.ai Google Drive                           needs authentication
+
+     Built-in MCPs (always available)
+     ✔ plugin:ai-monitor:ai-monitor-tools               1 tool
+     ✔ plugin:dev-docs:dev-docs                         7 tools
+     ✔ plugin:dev-docs:dev-docs-admin                   7 tools
+     ✔ plugin:mdmark:mdmark                             7 tools
+     ✔ plugin:observability-tools:observability-tools   5 tools
+     ✘ plugin:rule-inject-poc-plugin-hook:rule-inject-poc
+
+   ※ Error logs shown inline with --debug
+   https://code.claude.com/docs/en/mcp for help
+   ↑/↓ to navigate · Enter to confirm · Esc to cancel

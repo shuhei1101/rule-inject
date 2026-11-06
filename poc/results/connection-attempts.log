@@ -1,0 +1,175 @@
+2026-11-06T02:59:08.946Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:09.355Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:09.356Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T02:59:09.554Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook@inline) finis
+2026-11-06T02:59:10.357Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:10.362Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:10.363Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T02:59:12.364Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:12.371Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:12.372Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T02:59:16.374Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:16.379Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:53.845Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:53.940Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook@inline) finis
+2026-11-06T02:59:54.271Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:54.271Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T02:59:55.273Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:55.278Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:55.278Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T02:59:57.280Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:59:57.285Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:59:57.286Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:00:01.288Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:00:01.293Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:00:40.582Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:00:40.868Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:00:40.869Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:00:41.069Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook@inline) finis
+2026-11-06T03:00:41.871Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:00:41.875Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:00:41.876Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:00:43.878Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:00:43.882Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:00:43.883Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:00:47.884Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:00:47.888Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:02:13.673Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:02:13.948Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:02:13.949Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:02:14.231Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook-alwaysload@in
+2026-11-06T03:02:15.022Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:02:15.046Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:02:15.046Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:02:17.113Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:02:17.154Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:02:17.154Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:02:21.213Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:02:21.233Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:01:29.475Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:01:30.004Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:01:30.005Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:01:30.236Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook-alwaysload@in
+2026-11-06T03:01:31.007Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:01:31.018Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:01:31.020Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:01:33.021Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:01:33.025Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:01:33.025Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:01:37.027Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:01:37.032Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:04:34.337Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:04:34.573Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:04:34.574Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:04:34.820Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook-alwaysload@in
+2026-11-06T03:04:35.576Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:04:35.581Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:04:35.582Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:04:37.583Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:04:37.587Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:04:37.587Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:04:41.589Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:04:41.593Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:05:24.189Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:05:24.522Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:05:24.523Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:05:25.524Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:05:25.528Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:05:25.528Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:05:27.535Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:05:27.539Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:05:27.539Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:05:29.763Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:05:29.819Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:07:43.145Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:07:43.634Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:07:43.635Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:07:44.636Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:07:44.641Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:07:44.641Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:07:46.643Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:07:46.650Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:07:46.650Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:07:50.652Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:07:50.657Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:10.041Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:10.225Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:10.226Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:06:11.234Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:11.281Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:11.283Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:06:13.284Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:13.288Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:13.289Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:06:17.290Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:17.294Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:55.701Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:55.977Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:55.978Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:06:57.028Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:57.044Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:57.044Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:06:59.090Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:06:59.104Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:06:59.105Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:07:03.145Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:07:03.160Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:01.374Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:01.602Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:01.603Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:03:01.806Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook-alwaysload@in
+2026-11-06T03:03:02.605Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:02.611Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:02.612Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:03:04.614Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:04.618Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:04.619Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:03:08.620Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:08.625Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:57:31.983Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:57:32.541Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:57:32.542Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T02:57:32.755Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook@inline) finis
+2026-11-06T02:57:33.543Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:57:33.550Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:57:33.551Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T02:57:35.557Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:57:35.571Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:57:35.572Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T02:57:39.583Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:57:39.640Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:08:31.021Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:08:31.524Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:08:31.524Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:08:32.526Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:08:32.536Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:08:32.537Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:08:34.746Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:08:34.800Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:08:34.800Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:08:38.879Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:08:38.926Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-nohook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:58:21.442Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:58:21.919Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:58:21.920Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T02:58:22.174Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook@inline) finis
+2026-11-06T02:58:23.275Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:58:23.319Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:58:23.319Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T02:58:25.520Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:58:25.583Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T02:58:25.584Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T02:58:27.950Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T02:58:27.982Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:49.028Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:49.311Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:49.312Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 1/3 in 1000ms
+2026-11-06T03:03:49.657Z [DEBUG] Hooks: SessionStart:startup [python3 /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session/poc/start_server.py] (plugin rule-inject-poc-plugin-hook-alwaysload@in
+2026-11-06T03:03:50.313Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:50.318Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:50.319Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 2/3 in 2000ms
+2026-11-06T03:03:52.321Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:52.326Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)
+2026-11-06T03:03:52.327Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Transient ECONNREFUSED on initial connect — retry 3/3 in 4000ms
+2026-11-06T03:03:56.328Z [DEBUG] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc": Starting connection with timeout of 30000ms
+2026-11-06T03:03:56.333Z [ERROR] MCP server "plugin:rule-inject-poc-plugin-hook-alwaysload:rule-inject-poc" Connection failed (ECONNREFUSED): TypeError dialing http://127.0.0.1:57406[redacted]?poc=REDACTED (ECONNREFUSED)

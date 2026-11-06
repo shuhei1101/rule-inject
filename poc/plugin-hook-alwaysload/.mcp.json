@@ -1,0 +1,1 @@
+{"mcpServers": {"rule-inject-poc": {"type": "http", "url": "http://127.0.0.1:${RULE_INJECT_PORT:-8783}/mcp?poc=112", "alwaysLoad": true}}}

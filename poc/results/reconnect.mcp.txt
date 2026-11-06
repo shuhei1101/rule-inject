@@ -1,0 +1,12 @@
+▝▜██████▀  Opus 5.5 · Claude Ultra
+ ▝▝   ▝▝   /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session
+▎ Debug mode enabled · logging to /tmp/poc112/reconnect.debug.log
+❯ /mcp
+  ⎿  Reconnected to plugin:rule-inject-poc-plugin-hook:rule-inject-poc.
+                                                                                                                                                              ◐ medium · /effort
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   📁 poc-hooks-server-start-same-session/ | 🤖 Opus 5.5 (medium)
+   👤 claude | 📅 14% (~11/12 23:00)
+  ⏵⏵ bypass permissions on (shift+tab to cycle) · PR #113 · ← 4 agents

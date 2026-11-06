@@ -1,0 +1,12 @@
+[Unit]
+Description=rule-inject MCP server (PR #112 PoC)
+
+[Service]
+WorkingDirectory=/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/poc-hooks-server-start-same-session
+ExecStart=/home/shuhei2441/.local/bin/uv run --extra server python -m rule_inject.server
+Environment=RULE_INJECT_PORT=__PORT__
+Restart=on-failure
+SuccessExitStatus=143
+
+[Install]
+WantedBy=default.target
