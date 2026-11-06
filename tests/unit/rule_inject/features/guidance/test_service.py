@@ -10,10 +10,10 @@ import pytest
 from rule_inject.features.guidance import service
 from rule_inject.features.guidance.service import (
     BLOCKING_HEADER,
+    GUIDANCE_LIMIT,
     NON_BLOCKING_HEADER,
     READ_NOTE,
     READ_TOOL_NOTE,
-    GUIDANCE_LIMIT,
     build_failure_notice,
     build_guidance,
     build_server_start_notice,

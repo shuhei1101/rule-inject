@@ -44,7 +44,9 @@ def closed_port() -> int:
 def fake_systemctl(monkeypatch: pytest.MonkeyPatch) -> Callable[..., list[dict[str, Any]]]:
     """subprocess.run を差し替え、受け取った引数と timeout の並びを返す factory。"""
 
-    def _install(*, is_enabled: int | Exception = 0, start: int | Exception = 0) -> list[dict[str, Any]]:
+    def _install(
+        *, is_enabled: int | Exception = 0, start: int | Exception = 0
+    ) -> list[dict[str, Any]]:
         """is-enabled・start の終了コード（例外なら送出）を決める。"""
         calls: list[dict[str, Any]] = []
 

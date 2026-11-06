@@ -549,5 +549,5 @@ def test_load_settings_when_invalid_server_service(
     config = make_settings(f"global:\n  server_service: {value}\n")
     env = {"RULE_INJECT_CONFIG": str(config)}
     # 実行・検証
-    with pytest.raises(SettingsReadError, match="global.server_service"):
+    with pytest.raises(SettingsReadError, match=r"global\.server_service"):
         load_settings(env)
