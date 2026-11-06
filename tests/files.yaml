@@ -116,6 +116,26 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される
         type: see_also
+  - path: e2e/単一ユースケース/test_reload_server_settings.py
+    name: 「MCPサーバーの設定を読み直す」の E2E テスト
+    description: 「MCPサーバーの設定を読み直す」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「MCPサーバーの設定を読み直す」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーの設定を読み直す
+        type: see_also
+  - path: e2e/単一ユースケース/test_restart_server.py
+    name: 「MCPサーバーを再起動する」の E2E テスト
+    description: 「MCPサーバーを再起動する」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「MCPサーバーを再起動する」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーを再起動する
+        type: see_also
   - path: e2e/単一ユースケース/test_read_default_settings.py
     name: 「既定の場所の設定を読む」の E2E テスト
     description: 「既定の場所の設定を読む」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既定の場所の設定を読む」を修正したときに流す。
@@ -159,6 +179,16 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/操作に当たるルールを検索する
         type: see_also
+  - path: e2e/単一ユースケース/test_update_rule_inject.py
+    name: 「rule-injectを更新する」の E2E テスト
+    description: 「rule-injectを更新する」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「rule-injectを更新する」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/rule-injectを更新する
+        type: see_also
   - path: e2e/単一ユースケース/test_view_effective_rules.py
     name: 「効いているルールの一覧を見る」の E2E テスト
     description: 「効いているルールの一覧を見る」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「効いているルールの一覧を見る」を修正したときに流す。
@@ -180,6 +210,16 @@ files:
       - tool:pytest
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する
+        type: see_also
+  - path: e2e/単一ユースケース/test_view_server_status.py
+    name: 「MCPサーバーの状態を確認する」の E2E テスト
+    description: 「MCPサーバーの状態を確認する」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「MCPサーバーの状態を確認する」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーの状態を確認する
         type: see_also
   - path: e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
     name: 「既読の記録を削除して案内を受け直す」の E2E テスト
@@ -375,6 +415,19 @@ files:
         type: tests
       - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の確認.py
         type: see_also
+  - path: integration/server/test_get_server_status.py
+    name: インターフェース定義『サーバーの状態の確認』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの状態の確認」を呼んで確かめる結合テスト。「サーバーの状態の確認」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/admin_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの状態の確認.py
+        type: see_also
   - path: integration/server/test_list_rules.py
     name: インターフェース定義『ルールの一覧』の結合テスト
     description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「ルールの一覧」を呼んで確かめる結合テスト。「ルールの一覧」を修正したときに流す。
@@ -386,6 +439,32 @@ files:
       - to: src/rule_inject/server/tools
         type: tests
       - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの一覧.py
+        type: see_also
+  - path: integration/server/test_reload_settings.py
+    name: インターフェース定義『設定の再読込』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「設定の再読込」を呼んで確かめる結合テスト。「設定の再読込」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/admin_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/設定の再読込.py
+        type: see_also
+  - path: integration/server/test_restart_server.py
+    name: インターフェース定義『サーバーの再起動』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの再起動」を呼んで確かめる結合テスト。「サーバーの再起動」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/control
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
         type: see_also
   - path: integration/server/test_search_rules.py
     name: インターフェース定義『ルールの検索』の結合テスト
@@ -412,6 +491,19 @@ files:
       - to: src/rule_inject/server/app
         type: tests
       - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
+        type: see_also
+  - path: integration/server/test_update_server.py
+    name: インターフェース定義『サーバーの更新』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの更新」を呼んで確かめる結合テスト。「サーバーの更新」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/clone
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの更新.py
         type: see_also
   - path: integration/server/test_write_index_entry.py
     name: インターフェース定義『エントリの書き込み』の結合テスト
@@ -653,6 +745,16 @@ files:
       - topic:テスト補助
       - topic:MCPサーバー
       - tool:pytest
+  - path: unit/rule_inject/server/test_admin_tools.py
+    name: サーバーの管理のツールの単体テスト
+    description: サーバーの管理のツールの振る舞いを確かめる単体テスト。サーバーの管理のツールを修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/admin_tools
+        type: tests
   - path: unit/rule_inject/server/test_app.py
     name: サーバーのコンポジションルートの単体テスト
     description: サーバーのコンポジションルートの振る舞いを確かめる単体テスト。サーバーのコンポジションルートを修正したときに流す。
@@ -672,6 +774,24 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/server/check_tools
+        type: tests
+  - path: unit/rule_inject/server/test_clone.py
+    name: クローンの操作の単体テスト
+    description: クローンのバージョン・commit・上流の取り込み・移し替えの確かめを確かめる単体テスト。クローンの操作を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/clone
+        type: tests
+  - path: unit/rule_inject/server/test_control.py
+    name: サーバーの稼働の状態の単体テスト
+    description: 処理中の呼び出しの数・再起動と更新の断り方・停止の待ちを確かめる単体テスト。サーバーの稼働の状態を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/control
         type: tests
   - path: unit/rule_inject/server/test_dev_docs.py
     name: 使われているタグを引くクライアントの単体テスト

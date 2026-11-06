@@ -48,6 +48,7 @@ def main() -> None:
                 "from": result.source_version,
                 "to": result.target_version,
                 "steps": list(result.steps),
+                "migrations": list(result.migrations),
                 "backup": result.backup,
                 "env": result.env,
             },

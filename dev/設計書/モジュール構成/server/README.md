@@ -16,5 +16,8 @@
 | [record_tools.py](./record_tools.py.yaml) | 既読の記録の確認・削除のツール |
 | [types.py](./types.py.yaml) | 応答の形式の種類と応答のモデル |
 | [_format.py](./_format.py.yaml) | 応答の形式と長さの切り詰め |
+| [admin_tools.py](./admin_tools.py.yaml) | サーバーの状態の確認・設定の再読込・再起動・更新のツール |
+| [control.py](./control.py.yaml) | 処理中の呼び出しの数と再起動の状態、停止の進め方 |
+| [clone.py](./clone.py.yaml) | クローンのバージョン・commit・上流の取り込み・依存の入れ直し・移し替えの確かめ |
 
 <!-- /table -->

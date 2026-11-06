@@ -17,3 +17,9 @@ items:
     summary: 応答の形式の種類と応答のモデル
   - page: _format.py.yaml
     summary: 応答の形式と長さの切り詰め
+  - page: admin_tools.py.yaml
+    summary: サーバーの状態の確認・設定の再読込・再起動・更新のツール
+  - page: control.py.yaml
+    summary: 処理中の呼び出しの数と再起動の状態、停止の進め方
+  - page: clone.py.yaml
+    summary: クローンのバージョン・commit・上流の取り込み・依存の入れ直し・移し替えの確かめ

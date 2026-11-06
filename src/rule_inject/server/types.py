@@ -13,6 +13,8 @@ from rule_inject.features.record.types import ReadMethod, ReadState
 type ResponseFormat = Literal["markdown", "json"]
 # 使われていないタグのパターンの確かめの結果（確かめた・dev-docs に届かず飛ばした・確かめるパターンが無い）
 type TagCheckState = Literal["checked", "skipped", "no_patterns"]
+# 更新の結果（何も変えなかった・取り込んで再起動を始めた・取り込んだが移し替えが要るため再起動しなかった）
+type UpdateState = Literal["up_to_date", "restarting", "migration_required"]
 
 
 class RuleEntry(BaseModel):
@@ -220,3 +222,65 @@ class DeleteRecordsResult(BaseModel):
     state_dir: str
     session_id: str
     locations: list[str]
+
+
+class ConfigState(BaseModel):
+    """設定ファイルを読めるか。"""
+
+    # 読んだ設定ファイルの場所。既定のパスにファイルが無く読まなかったときは None
+    path: str | None
+    readable: bool
+    # 読めなかった理由（場所と理由）
+    error: str | None
+
+
+class ServerStatusResult(BaseModel):
+    """サーバーの状態の確認の応答。"""
+
+    success: bool
+    output: str
+    port: int
+    pid: int
+    # 待ち受けを始めた時刻（UTC の ISO 8601）。再起動のたびに新しくなる
+    started_at: str
+    version: str | None
+    clone: str
+    # クローンの HEAD。git のリポジトリでないときは None
+    commit: str | None
+    config: ConfigState
+    # 再起動を始めた後で、まだ待ち受けを閉じていないか
+    restarting: bool
+
+
+class ReloadSettingsResult(BaseModel):
+    """設定の再読込の応答。"""
+
+    success: bool
+    output: str
+    config_path: str | None
+    indexes: list[str]
+    state_dir: str
+    record_retention_days: int
+    log_retention_days: int
+    dev_docs_url: str
+
+
+class RestartResult(BaseModel):
+    """サーバーの再起動の応答。"""
+
+    success: bool
+    output: str
+    pid: int
+    restarting: bool
+
+
+class UpdateResult(BaseModel):
+    """サーバーの更新の応答。"""
+
+    success: bool
+    output: str
+    state: UpdateState
+    before: str
+    after: str
+    # 当てる移し替えの手順。migration_required 以外は空
+    steps: list[str]

@@ -34,3 +34,11 @@ items:
     summary: global-setup のスキルで、端末の設定・サーバー・フックを用意して確認する
   - page: リポジトリの索引を登録する.yaml
     summary: setup のスキルで、リポジトリの索引が参照される状態にしてチェックの結果を受け取る
+  - page: MCPサーバーの状態を確認する.yaml
+    summary: MCP サーバーのツールで、待ち受け・バージョン・クローンの commit・設定ファイルを読めるかを受け取る
+  - page: MCPサーバーの設定を読み直す.yaml
+    summary: MCP サーバーのツールで、直した設定ファイルを読めたかと読んだ値を受け取る
+  - page: MCPサーバーを再起動する.yaml
+    summary: MCP サーバーのツールで、サーバーを起動し直し、接続し直して確かめる
+  - page: rule-injectを更新する.yaml
+    summary: MCP サーバーのツールで、クローンへ上流の commit を取り込み、依存を入れ直して起動し直す

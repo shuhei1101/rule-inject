@@ -571,12 +571,15 @@ def marker() -> Callable[[str], str]:
 # 偽の dev-docs が返す応答の JSON を渡す環境変数と、待ち受けるポートを渡す環境変数
 DEV_DOCS_BODY_ENV = "E2E_DEV_DOCS_BODY"
 DEV_DOCS_PORT_ENV = "E2E_DEV_DOCS_PORT"
+# 偽の dev-docs が応答を返すまで待つ秒数
+DEV_DOCS_DELAY_ENV = "E2E_DEV_DOCS_DELAY"
 # 偽の dev-docs のスクリプト。`search_docs` が引数に関わらず決めた応答の JSON を返す Streamable HTTP の MCP サーバー
 DEV_DOCS_SERVER_SCRIPT = f'''"""E2E テストが使う、使われているタグを返す偽の dev-docs。"""
 
 from __future__ import annotations
 
 import os
+import time
 
 from mcp.server.mcpserver import MCPServer
 
@@ -588,6 +591,7 @@ def search_docs(
     source: str = "", group_by: str = "", format: str = "markdown", cwd: str = ""
 ) -> str:
     """使われているタグを件数つきで返す。"""
+    time.sleep(float(os.environ.get("{DEV_DOCS_DELAY_ENV}", "0")))
     return os.environ["{DEV_DOCS_BODY_ENV}"]
 
 
@@ -909,12 +913,12 @@ def serve(
 
 
 @pytest.fixture
-def start_dev_docs(tmp_path: Path) -> Iterator[Callable[[Mapping[str, Any]], str]]:
+def start_dev_docs(tmp_path: Path) -> Iterator[Callable[..., str]]:
     """`search_docs` が決めた応答を返す偽の dev-docs を子プロセスとして立て、その接続先を返す factory。終わったら止める。"""
     processes: list[subprocess.Popen[bytes]] = []
 
-    def _start(response: Mapping[str, Any]) -> str:
-        """response の JSON を返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ（失敗したら別のポートで立て直す）。"""
+    def _start(response: Mapping[str, Any], *, delay: float = 0) -> str:
+        """response の JSON を delay 秒待ってから返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ（失敗したら別のポートで立て直す）。"""
         script = tmp_path / "dev_docs_server.py"
         script.write_text(DEV_DOCS_SERVER_SCRIPT, encoding="utf-8")
 
@@ -923,6 +927,7 @@ def start_dev_docs(tmp_path: Path) -> Iterator[Callable[[Mapping[str, Any]], str
             env = dict(os.environ)
             env[DEV_DOCS_BODY_ENV] = json.dumps(response, ensure_ascii=False)
             env[DEV_DOCS_PORT_ENV] = str(port)
+            env[DEV_DOCS_DELAY_ENV] = str(delay)
             stderr_path = tmp_path / f"dev-docs-{len(processes)}-{attempt}.stderr"
             with stderr_path.open("wb") as stderr_file:
                 process = subprocess.Popen(
@@ -1159,3 +1164,127 @@ def run_skill_with_mcp(
         )
 
     return _run
+
+
+# テストの commit の作者（利用者の git の設定を読まない）
+GIT_IDENTITY = ("-c", "user.name=test", "-c", "user.email=test@example.com")
+
+
+def _call_or_none(server: ResidentServer, name: str) -> CallToolResult | None:
+    """ツールを呼び、接続できない・接続が切れたときは None を返す。"""
+    # 接続の失敗は SDK が ExceptionGroup に包んで送出する（mcp の外部ライブラリの設計書）
+    try:
+        return server.call(name)
+    except (ExceptionGroup, OSError, TimeoutError):
+        return None
+
+
+@pytest.fixture
+def wait_restarted() -> Callable[[ResidentServer, str], dict[str, Any]]:
+    """`get_server_status` の `started_at` が before より新しくなるまで接続し直し、その応答を返す関数。"""
+
+    def _wait(server: ResidentServer, before: str) -> dict[str, Any]:
+        """再起動の後に接続し直せるまで待つ。起動を待つ上限を過ぎたら失敗にする。"""
+        deadline = time.monotonic() + SERVER_START_TIMEOUT_SEC
+        while time.monotonic() < deadline:
+            result = _call_or_none(server, "get_server_status")
+            # 接続でき、起動した時刻が新しくなった: 起動し直した
+            if result is not None and result.structured_content["started_at"] > before:
+                return dict(result.structured_content)
+            time.sleep(0.1)
+        pytest.fail(f"{SERVER_START_TIMEOUT_SEC} 秒で起動し直さなかった: {server.stderr_text()}")
+
+    return _wait
+
+
+def git(cwd: Path, *args: str) -> str:
+    """cwd で git を実行し、標準出力を返す。"""
+    completed = subprocess.run(
+        ["git", *GIT_IDENTITY, *args], cwd=cwd, capture_output=True, text=True, check=True
+    )
+    return completed.stdout.strip()
+
+
+@dataclass
+class CloneRepos:
+    """このリポジトリから作った上流の bare リポジトリと、サーバーを動かすクローンと、上流へ commit を積むクローン。"""
+
+    clone: Path
+    pusher: Path
+
+    def push(self, name: str, text: str = "x\n") -> str:
+        """上流へ commit を積むクローンにファイルを 1 つ足して commit し、push して commit を返す。"""
+        (self.pusher / name).write_text(text, encoding="utf-8")
+        git(self.pusher, "add", "-A")
+        git(self.pusher, "commit", "-m", name)
+        git(self.pusher, "push", "-q", "origin", "HEAD")
+        return git(self.pusher, "rev-parse", "HEAD")
+
+    def head(self) -> str:
+        """サーバーを動かすクローンの HEAD を返す。"""
+        return git(self.clone, "rev-parse", "HEAD")
+
+
+@pytest.fixture
+def clone_repos(tmp_path: Path) -> CloneRepos:
+    """このリポジトリの HEAD から、上流の bare リポジトリと 2 つのクローンを一時フォルダに作る（利用者のクローンと GitHub に触らない）。"""
+    upstream = tmp_path / "upstream.git"
+    subprocess.run(
+        ["git", "clone", "-q", "--bare", "--no-hardlinks", str(PROJECT_ROOT), str(upstream)],
+        check=True,
+    )
+    branch = git(PROJECT_ROOT, "rev-parse", "--abbrev-ref", "HEAD")
+    clone = tmp_path / "clone"
+    pusher = tmp_path / "pusher"
+    for target in (clone, pusher):
+        subprocess.run(
+            ["git", "clone", "-q", "--branch", branch, str(upstream), str(target)], check=True
+        )
+    return CloneRepos(clone=clone, pusher=pusher)
+
+
+@pytest.fixture
+def serve_from_clone(
+    tmp_path: Path,
+    clone_repos: CloneRepos,
+    server_config_path: Path,
+) -> Iterator[Callable[[], ResidentServer]]:
+    """クローンの `src` を `PYTHONPATH` に置いて `python -m rule_inject.server` を起動する factory。終わったら止める。"""
+    started: list[ResidentServer] = []
+    server_config_path.parent.mkdir(parents=True, exist_ok=True)
+    server_config_path.write_text("", encoding="utf-8")
+
+    def _start() -> ResidentServer:
+        """クローンのコードで起動し、待ち受けるまで待つ。"""
+
+        def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
+            """port を `RULE_INJECT_PORT` に渡して起動する。"""
+            env = {
+                name: value
+                for name, value in os.environ.items()
+                if not name.startswith("RULE_INJECT_")
+            }
+            env["RULE_INJECT_CONFIG"] = str(server_config_path)
+            env["RULE_INJECT_PORT"] = str(port)
+            env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
+            env["XDG_STATE_HOME"] = str(tmp_path / "xdg_state")
+            env["PYTHONPATH"] = str(clone_repos.clone / "src")
+            stderr_path = tmp_path / f"clone-server-{len(started)}-{attempt}.stderr"
+            with stderr_path.open("wb") as stderr_file:
+                process = subprocess.Popen(
+                    [sys.executable, "-m", "rule_inject.server"],
+                    cwd=tmp_path,
+                    env=env,
+                    stdout=subprocess.DEVNULL,
+                    stderr=stderr_file,
+                )
+            return process, stderr_path
+
+        port, process, stderr_path = _launch(_spawn_at)
+        server = ResidentServer(port=port, process=process, stderr_path=stderr_path)
+        started.append(server)
+        return server
+
+    yield _start
+    for server in started:
+        _stop_server(server)

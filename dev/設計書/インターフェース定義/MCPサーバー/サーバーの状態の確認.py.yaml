@@ -1,0 +1,161 @@
+title: "サーバーの状態の確認"
+entry:
+  kind: mcp_tool
+  value: get_server_status
+flows:
+  - name: 正常系
+    summary: 待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit・設定ファイルを返す
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: 索引を記載した設定ファイル
+        notes: '`RULE_INJECT_CONFIG` で指し、`RULE_INJECT_PORT` に空いているポートを指定する'
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_server_status
+        participant CF as 設定ファイル
+        participant GC as クローン
+
+        C->>IF: 引数なし
+        IF->>CF: 読む
+        CF-->>IF: 読めた
+        IF->>GC: version.ini と HEAD を読む
+        GC-->>IF: バージョンと commit
+        IF-->>C: port・pid・started_at・version・clone・commit・config
+    expected:
+      - '`port` が `RULE_INJECT_PORT` と同じで、`pid` が子プロセスの PID と同じ'
+      - '`version` がクローンの `version.ini` と同じで、`commit` が `git rev-parse HEAD` と同じ'
+      - '`config.path` が `RULE_INJECT_CONFIG` と同じで、`config.readable` が `true`、`config.error` が `null`'
+      - '`restarting` が `false`'
+    test: test_normal
+  - name: 正常系（設定ファイルが読めない）
+    summary: 設定ファイルが読めなくてもエラーにせず、読めない理由を載せて返す
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: サーバーを起動した後に、`global` に知らないキーを書き足す
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_server_status
+        participant CF as 設定ファイル
+
+        C->>IF: 引数なし
+        IF->>CF: 読む
+        CF-->>IF: 読めない（知らないキー）
+        IF-->>C: 状態と config.error
+    expected:
+      - 結果が `isError` でなく、`port`・`pid`・`version` が載っている
+      - '`config.readable` が `false` で、`config.error` に知らないキーの名前が載っている'
+    test: test_normal_when_settings_unreadable
+  - name: 正常系（クローンが git のリポジトリでない）
+    summary: commit を引けないときは `commit` を `null` にして返す
+    setup:
+      - name: Mock
+        description: なし（`build_server` の `clone` に、`version.ini` だけを置いた一時フォルダを渡し、関数として呼ぶ）
+    flow: |-
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as get_server_status
+        participant GC as クローン
+
+        C->>IF: 引数なし
+        IF->>GC: HEAD を読む
+        GC-->>IF: git のリポジトリでない
+        IF-->>C: commit が null
+    expected:
+      - 結果が `isError` でなく、`commit` が `null`
+      - '`version` が置いた `version.ini` の値'
+    test: test_normal_when_not_git_clone
+lead: サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・ツールのバージョン・クローンの場所と commit・設定ファイルを読めるかを返す。
+identifier: get_server_status
+idempotent: true
+side_effects: なし（`readOnlyHint`）
+request: []
+request_example: |-
+  ```json
+  {}
+  ```
+response:
+  - name: success
+    type: bool
+    description: 状態を取れたか
+    notes: 設定ファイルが読めなくても `true`
+  - name: output
+    type: str
+    description: バージョン・commit・ポートの 1 行
+  - name: port
+    type: int
+    description: 待ち受けているポート
+    notes: 起動時に読んだ値。動いているプロセスでは変わらない
+  - name: pid
+    type: int
+    description: サーバーのプロセス ID
+    notes: 再起動の後も同じ（インターフェース定義「サーバーの再起動」の制約「起動し直す方法」）
+  - name: started_at
+    type: str
+    format: date-time
+    description: 今のプロセスのイメージで待ち受けを始めた時刻（UTC）
+    notes: 再起動のたびに新しくなる
+  - name: version
+    type: str | None
+    description: クローンの `version.ini` の値
+    notes: ファイルが無いときは `null`
+  - name: clone
+    type: str
+    description: サーバーのパッケージを読んでいるクローンの直下
+  - name: commit
+    type: str | None
+    description: クローンの `HEAD` の commit
+    notes: git のリポジトリでないとき・git が無いときは `null`
+  - name: config.path
+    type: str | None
+    description: 読んだ設定ファイルの場所
+    notes: 既定のパスにファイルが無く読まなかったときは `null`
+  - name: config.readable
+    type: bool
+    description: 設定ファイルを読めたか
+  - name: config.error
+    type: str | None
+    description: 読めなかった理由（場所と理由）
+  - name: restarting
+    type: bool
+    description: 再起動・更新の再起動を始めた後で、まだ待ち受けを閉じていないか
+response_example: |-
+  ```json
+  {
+    "success": true,
+    "output": "rule-inject v0.2.4（a1b2c3d）を 127.0.0.1:8783 で待ち受けています",
+    "port": 8783,
+    "pid": 4242,
+    "started_at": "2026-11-06T09:00:00+00:00",
+    "version": "v0.2.4",
+    "clone": "/home/user/repo/rule-inject",
+    "commit": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    "config": {"path": "/home/user/.config/rule-inject/settings.yaml", "readable": true, "error": null},
+    "restarting": false
+  }
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: 状態を取れた
+    notes: 設定ファイルが読めないときも、`config.error` に理由を載せて正常に返す
+error_format: インターフェース定義「ルールの一覧」と同じ
+constraints:
+  - item: 再起動の途中の呼び出し
+    constraint: 再起動の途中でも断らずに返す
+    notes: 再起動の途中に他のツールは断る（インターフェース定義「サーバーの再起動」）。状態の確認だけは、再起動の途中かを確かめるために受け付ける
+  - item: クローン
+    constraint: サーバーのパッケージ（`rule_inject`）の場所から上へ辿った、`version.ini` を持つフォルダ
+    notes: 起動の作業ディレクトリに依存しない（規約『MCP サーバー作成ルール』の `structure-02`）
+  - item: git の呼び出し
+    constraint: '`git -C {clone} rev-parse HEAD` を 1 回呼ぶ。上限はインターフェース定義「サーバーの更新」の git と同じ'
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[更新のコマンドの打ち切り]
+  - item: 認可
+    constraint: 制限なし
+refs:
+  - dev/設計書/シナリオ/単一ユースケース/MCPサーバーの状態を確認する#
+test_file: tests/integration/server/test_get_server_status.py

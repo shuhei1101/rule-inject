@@ -1,0 +1,63 @@
+title: "MCPサーバーを再起動する"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。テストがローカルのクローンから常駐の MCP サーバーを起動し、MCP の Python SDK のクライアント（Streamable HTTP）でツールを呼ぶ
+      - name: 設定ファイル
+        description: 索引を記載した設定ファイル
+        notes: '`RULE_INJECT_PORT` に空いているポートを指定する'
+      - name: 再起動の前の状態
+        description: 再起動を呼ぶ前に状態の確認を呼び、起動した時刻を控える
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+
+        CL->>SV: 再起動
+        SV-->>CL: 再起動を始めた
+        SV->>SV: 処理中の呼び出しの終わりを待つ（待ち受けは続ける）
+        SV->>SV: 待ち受けを閉じる
+        SV->>SV: 起動し直して同じポートで待ち受ける
+        CL->>SV: 接続し直して状態の確認
+        SV-->>CL: 新しい起動した時刻
+    expected:
+      - 再起動の応答に、再起動を始めたことが載っている
+      - 接続し直した後の状態の確認のポートが再起動の前と同じで、起動した時刻が再起動の前より新しい
+      - テストが起動したサーバーのプロセスが、再起動の後も終わっていない
+    test: test_normal
+  - name: 異常シナリオ（再起動の途中で呼ばれる）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: 処理中の呼び出し
+        description: 処理中の呼び出しの終わりを待つ間に 2 回目を呼べるよう、別の接続で応答に時間のかかるツールを呼んだままにしてから再起動を呼ぶ
+        notes: '例: 辿るファイルの多いプロジェクトの `check_indexes`'
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+
+        CL->>SV: 再起動
+        SV-->>CL: 再起動を始めた
+        SV->>SV: 処理中の呼び出しの終わりを待つ（待ち受けは続ける）
+        CL->>SV: 再起動（2 回目）
+        SV-->>CL: ツールのエラー（再起動の途中）
+    expected:
+      - 2 回目の呼び出しがツールのエラーになり、再起動の途中であることが載っている
+      - 接続し直した後の状態の確認で、起動し直したのが 1 回だけ
+    test: test_error_when_restart_in_progress
+lead: Claude Code が常駐の MCP サーバーの再起動のツールを呼び、サーバーは応答を返した後に待ち受けを閉じて起動し直す。Claude Code は接続し直し、状態の確認で起動し直したことを確かめる。
+issue: 107
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: コードの更新を、端末で systemctl を打たずにサーバーへ効かせられること
+  - name: 他の Claude Code のセッション
+    interest: 再起動の後に、接続し直せば同じポートでツールを呼び続けられること
+trigger: Claude Code が再起動のツールを呼ぶ
+preconditions:
+  - MCP サーバーが常駐し、Claude Code からプラグインの `.mcp.json` の接続先で接続できる
+success_guarantee: 応答を返し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じポートで待ち受け直す。起動し直した後の状態の確認で、起動した時刻が再起動の前より新しい。
+minimal_guarantee: 再起動の途中の再起動・更新の呼び出しは断り、起動し直すのは 1 回だけ。起動し直せないときは、サーバーの起動と同じく標準エラーに理由を書いて終わる。
+test_file: tests/e2e/単一ユースケース/test_restart_server.py

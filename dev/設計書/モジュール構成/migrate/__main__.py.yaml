@@ -26,7 +26,7 @@ functions:
     process: |-
       1. `--plan` を読み、`config_path(os.environ)` で設定ファイルのパスを決める
       2. `--plan` があれば `plan_migration`、無ければ `apply_migration`（バックアップのフォルダは `backup_dir(os.environ)`）を呼ぶ
-      3. 結果を JSON（`from`・`to`・`steps`・`backup`・`env`）で標準出力へ書く
+      3. 結果を JSON（`from`・`to`・`steps`・`migrations`・`backup`・`env`）で標準出力へ書く
       4. `SettingsNewerError` は標準エラーへ両方のバージョンを書き、`NEWER_EXIT_CODE` で終わる
       5. `SettingsReadError` は標準エラーへ `{path}: {reason}` を書き、`FAILURE_EXIT_CODE` で終わる
     unit_tests:
@@ -35,7 +35,7 @@ functions:
         summary: 手順を JSON で書く
         condition: '`--plan`'
         mock: '`plan_migration`（結果を返す）'
-        expected: 標準出力の JSON が結果の値
+        expected: 標準出力の JSON が結果の値（`migrations` を含む）
       - name: test_main_when_newer
         case: 異常
         summary: 設定が新しい

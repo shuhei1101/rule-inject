@@ -1,0 +1,467 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-server-admin-tools
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 524 items
+
+tests/unit/hooks/test_run.py ...                                         [  0%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  3%]
+................                                                         [  6%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [  8%]
+tests/unit/rule_inject/features/guidance/test_service.py ..............  [ 11%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 12%]
+tests/unit/rule_inject/features/index/check/test_service.py ...........  [ 14%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 15%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 17%]
+.................                                                        [ 21%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 21%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ...              [ 21%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 25%]
+...............................................................          [ 37%]
+tests/unit/rule_inject/features/index/test_yaml.py ....................  [ 41%]
+tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py .....  [ 42%]
+tests/unit/rule_inject/features/migrate/test_service.py F..F....         [ 43%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 46%]
+.............................                                            [ 52%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 53%]
+tests/unit/rule_inject/hooks/test_record_read.py .................       [ 56%]
+tests/unit/rule_inject/hooks/test_rule_guide.py ................         [ 59%]
+tests/unit/rule_inject/hooks/test_runner.py .....                        [ 60%]
+tests/unit/rule_inject/hooks/test_search_guide.py ........               [ 62%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 63%]
+tests/unit/rule_inject/hooks/test_work_rules.py ....                     [ 64%]
+tests/unit/rule_inject/migrate/test_main.py F..                          [ 64%]
+tests/unit/rule_inject/server/test_admin_tools.py EEFFEEEEE              [ 66%]
+tests/unit/rule_inject/server/test_app.py FF                             [ 66%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 69%]
+tests/unit/rule_inject/server/test_clone.py FFFFFFFEFF                   [ 70%]
+tests/unit/rule_inject/server/test_control.py FFFFFFFFF                  [ 72%]
+tests/unit/rule_inject/server/test_dev_docs.py ........                  [ 74%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 75%]
+tests/unit/rule_inject/server/test_main.py ..FF                          [ 75%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 76%]
+tests/unit/rule_inject/server/test_tools.py .............                [ 79%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 82%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 83%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 88%]
+....................                                                     [ 92%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ..........           [ 94%]
+tests/unit/rule_inject/shared/test_variables.py .....                    [ 95%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ....................... [ 99%]
+...                                                                      [100%]
+
+==================================== ERRORS ====================================
+___________________ ERROR at setup of test_get_server_status ___________________
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+______ ERROR at setup of test_get_server_status_when_settings_unreadable _______
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+____________________ ERROR at setup of test_restart_server _____________________
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+_____________________ ERROR at setup of test_update_server _____________________
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+_____________ ERROR at setup of test_update_server_when_up_to_date _____________
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+_________ ERROR at setup of test_update_server_when_migration_required _________
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+_______________ ERROR at setup of test_update_server_when_failed _______________
+
+    @pytest.fixture
+    def control() -> Any:
+        """`should_exit` だけを持つ代わりのサーバーを受け取った `ServerControl`。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_admin_tools.py:48: ModuleNotFoundError
+____________________ ERROR at setup of test_pull_when_dirty ____________________
+
+    @pytest.fixture
+    def recording_run() -> tuple[Callable[..., object], list[list[str]]]:
+        """`run_command` を呼びつつ、呼ばれたコマンドを記録する `RunCommand`。"""
+>       from rule_inject.server.clone import CommandResult, run_command
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:69: ModuleNotFoundError
+=================================== FAILURES ===================================
+_____________________________ test_plan_migration ______________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_plan_migration0')
+
+    def test_plan_migration(tmp_path: Path) -> None:
+        """古い設定の手順を示す（正常系）。"""
+        # 準備
+        text = "global:\n  server_port: 9000\n"
+        path = _write(tmp_path / "settings.yaml", text)
+        # 実行
+        result = plan_migration(path)
+        # 検証
+        assert len(result.steps) == 2
+        assert "server_port" in result.steps[0]
+        assert "1.2.3" in result.steps[1]
+>       assert len(result.migrations) == 1
+                   ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'MigrationResult' object has no attribute 'migrations'
+
+tests/unit/rule_inject/features/migrate/test_service.py:43: AttributeError
+__________________ test_plan_migration_when_old_version_only ___________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_plan_migration_when_old_v0')
+
+    def test_plan_migration_when_old_version_only(tmp_path: Path) -> None:
+        """手順が無くても古いバージョンなら更新する（正常系）。"""
+        # 準備
+        path = _write(tmp_path / "settings.yaml", "version: 0.0.1\nglobal:\n  log_dir: /a\n")
+        # 実行
+        result = plan_migration(path)
+        # 検証
+        assert len(result.steps) == 1
+        assert "1.2.3" in result.steps[0]
+>       assert result.migrations == ()
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'MigrationResult' object has no attribute 'migrations'
+
+tests/unit/rule_inject/features/migrate/test_service.py:76: AttributeError
+_____________________________ test_main_when_plan ______________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7a6459d1e0f0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7a6459d1cda0>
+
+    def test_main_when_plan(
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """手順を JSON で書く（正常系）。"""
+        # 準備
+>       result = MigrationResult(
+            source_version=None,
+            target_version="1.2.3",
+            steps=("手順", "version を 1.2.3 にする"),
+            migrations=("手順",),
+            backup=None,
+            env={},
+        )
+E       TypeError: MigrationResult.__init__() got an unexpected keyword argument 'migrations'
+
+tests/unit/rule_inject/migrate/test_main.py:21: TypeError
+_____________________________ test_reload_settings _____________________________
+
+server_env = <function server_env.<locals>._make at 0x7a6459da25c0>
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_reload_settings0')
+
+    def test_reload_settings(server_env: Callable[..., dict[str, str]], tmp_path: Path) -> None:
+        """読んだ値を返す（正常系）。"""
+>       from rule_inject.server.admin_tools import reload_settings
+E       ModuleNotFoundError: No module named 'rule_inject.server.admin_tools'
+
+tests/unit/rule_inject/server/test_admin_tools.py:132: ModuleNotFoundError
+_____________________ test_reload_settings_when_unreadable _____________________
+
+server_env = <function server_env.<locals>._make at 0x7a6459da1b20>
+
+    def test_reload_settings_when_unreadable(server_env: Callable[..., dict[str, str]]) -> None:
+        """読めない設定ファイル（異常系）。"""
+>       from rule_inject.server.admin_tools import reload_settings
+E       ModuleNotFoundError: No module named 'rule_inject.server.admin_tools'
+
+tests/unit/rule_inject/server/test_admin_tools.py:151: ModuleNotFoundError
+______________________________ test_build_server _______________________________
+
+clone_dir = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_build_server0')
+
+    def test_build_server(clone_dir: Path) -> None:
+        """11 のツールを依存の引数なしで登録する（正常系）。"""
+        from rule_inject.server.app import build_server
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_app.py:49: ModuleNotFoundError
+______________________ test_build_server_when_restarting _______________________
+
+clone_dir = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_build_server_when_restart0')
+
+    def test_build_server_when_restarting(clone_dir: Path) -> None:
+        """再起動の途中は状態の確認だけを受け付ける（異常系）。"""
+        from rule_inject.server.app import build_server
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_app.py:73: ModuleNotFoundError
+_______________________________ test_find_clone ________________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_find_clone0')
+
+    def test_find_clone(tmp_path: Path) -> None:
+        """version.ini を持つフォルダを返す（正常系）。"""
+>       from rule_inject.server.clone import find_clone
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:106: ModuleNotFoundError
+________________________ test_read_version_when_missing ________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_read_version_when_missing0')
+
+    def test_read_version_when_missing(tmp_path: Path) -> None:
+        """ファイルが無ければ None（正常系）。"""
+>       from rule_inject.server.clone import read_version
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:120: ModuleNotFoundError
+________________________ test_head_commit_when_not_git _________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_head_commit_when_not_git0')
+
+    def test_head_commit_when_not_git(tmp_path: Path) -> None:
+        """git のリポジトリでなければ None（正常系）。"""
+>       from rule_inject.server.clone import head_commit
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:130: ModuleNotFoundError
+________________________ test_run_command_when_timeout _________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_run_command_when_timeout0')
+
+    def test_run_command_when_timeout(tmp_path: Path) -> None:
+        """上限を超えたら打ち切る（異常系）。"""
+>       from rule_inject.server.clone import UpdateFailedError, run_command
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:140: ModuleNotFoundError
+__________________________________ test_pull ___________________________________
+
+repos = Repos(upstream=PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_pull0/upstream.git'), clone=PosixPath('/tmp/pytes...shuhei2441/pytest-6528/test_pull0/clone'), pusher=PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_pull0/pusher'))
+push_commit = <function push_commit.<locals>._push at 0x7a6459c50fe0>
+
+    def test_pull(repos: Repos, push_commit: Callable[..., str]) -> None:
+        """上流の commit を取り込む（正常系）。"""
+>       from rule_inject.server.clone import pull, run_command
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:151: ModuleNotFoundError
+_____________________________ test_pull_when_ahead _____________________________
+
+repos = Repos(upstream=PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_pull_when_ahead0/upstream.git'), clone=PosixPath(.../test_pull_when_ahead0/clone'), pusher=PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_pull_when_ahead0/pusher'))
+push_commit = <function push_commit.<locals>._push at 0x7a6459c51620>
+
+    def test_pull_when_ahead(repos: Repos, push_commit: Callable[..., str]) -> None:
+        """クローンが先に進んでいるだけなら取り込まない（正常系）。"""
+>       from rule_inject.server.clone import pull, run_command
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:165: ModuleNotFoundError
+___________________________ test_pull_when_diverged ____________________________
+
+repos = Repos(upstream=PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_pull_when_diverged0/upstream.git'), clone=PosixPa...pull_when_diverged0/clone'), pusher=PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_pull_when_diverged0/pusher'))
+push_commit = <function push_commit.<locals>._push at 0x7a6459c50220>
+
+    def test_pull_when_diverged(repos: Repos, push_commit: Callable[..., str]) -> None:
+        """分かれていれば断る（異常系）。"""
+>       from rule_inject.server.clone import UpdateFailedError, pull, run_command
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:179: ModuleNotFoundError
+_____________________________ test_plan_migrations _____________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_plan_migrations0')
+
+    def test_plan_migrations(tmp_path: Path) -> None:
+        """migrations を返す（正常系）。"""
+>       from rule_inject.server.clone import plan_migrations
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:210: ModuleNotFoundError
+_______________________ test_plan_migrations_when_newer ________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-shuhei2441/pytest-6528/test_plan_migrations_when_newe0')
+
+    def test_plan_migrations_when_newer(tmp_path: Path) -> None:
+        """設定がツールより新しい（異常系）。"""
+>       from rule_inject.server.clone import UpdateFailedError, plan_migrations
+E       ModuleNotFoundError: No module named 'rule_inject.server.clone'
+
+tests/unit/rule_inject/server/test_clone.py:222: ModuleNotFoundError
+__________________________________ test_guard __________________________________
+
+    def test_guard() -> None:
+        """呼び出しの間だけ処理中の数が増える（正常系）。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:23: ModuleNotFoundError
+__________________________ test_guard_when_restarting __________________________
+
+    def test_guard_when_restarting() -> None:
+        """再起動を始めた後は断る（異常系）。"""
+>       from rule_inject.server.control import RestartInProgressError, ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:51: ModuleNotFoundError
+____________________________ test_guard_when_raises ____________________________
+
+    def test_guard_when_raises() -> None:
+        """包んだ関数が例外を送出しても処理中の数を戻す（異常系）。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:75: ModuleNotFoundError
+_______________________ test_begin_update_when_updating ________________________
+
+    def test_begin_update_when_updating() -> None:
+        """更新の途中の 2 回目を断る（異常系）。"""
+>       from rule_inject.server.control import RestartInProgressError, ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:92: ModuleNotFoundError
+______________________ test_begin_restart_when_restarting ______________________
+
+    def test_begin_restart_when_restarting() -> None:
+        """再起動の途中の 2 回目を断る（異常系）。"""
+>       from rule_inject.server.control import RestartInProgressError, ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:104: ModuleNotFoundError
+_______________________ test_begin_restart_when_updating _______________________
+
+    def test_begin_restart_when_updating() -> None:
+        """更新の途中の再起動を断る（異常系）。"""
+>       from rule_inject.server.control import RestartInProgressError, ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:130: ModuleNotFoundError
+________________________ test_finish_update_and_restart ________________________
+
+    def test_finish_update_and_restart() -> None:
+        """更新の途中から再起動を始める（正常系）。"""
+>       from rule_inject.server.control import RestartInProgressError, ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:157: ModuleNotFoundError
+_____________________________ test_drain_and_stop ______________________________
+
+    def test_drain_and_stop() -> None:
+        """処理中の呼び出しが終わってから止める（正常系）。"""
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_control.py:181: ModuleNotFoundError
+_______________________ test_drain_and_stop_when_timeout _______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7a6459c7db20>
+
+    def test_drain_and_stop_when_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+        """上限を過ぎたら待つのをやめて止める（正常系）。"""
+>       from rule_inject.server import control as control_module
+E       ImportError: cannot import name 'control' from 'rule_inject.server' (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-server-admin-tools/src/rule_inject/server/__init__.py)
+
+tests/unit/rule_inject/server/test_control.py:212: ImportError
+_______________________ test_main_when_restart_requested _______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7a6459d1df70>
+free_port_env = 58426, run_spy = [], execv_spy = []
+
+    def test_main_when_restart_requested(
+        monkeypatch: pytest.MonkeyPatch,
+        free_port_env: int,
+        run_spy: list[Any],
+        execv_spy: list[tuple[str, list[str]]],
+    ) -> None:
+        """再起動で待ち受けを閉じたら同じプロセスで起動し直す（正常系）。"""
+        from rule_inject.server.__main__ import main
+>       from rule_inject.server.control import ServerControl
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_main.py:102: ModuleNotFoundError
+____________________________ test_main_when_stopped ____________________________
+
+free_port_env = 57104, run_spy = [], execv_spy = []
+
+    def test_main_when_stopped(
+        free_port_env: int,
+        run_spy: list[Any],
+        execv_spy: list[tuple[str, list[str]]],
+    ) -> None:
+        """Ctrl+C・SIGTERM で終わったときは起動し直さない（正常系）。"""
+        from rule_inject.server.__main__ import main
+>       from rule_inject.server.control import GRACEFUL_SHUTDOWN_TIMEOUT
+E       ModuleNotFoundError: No module named 'rule_inject.server.control'
+
+tests/unit/rule_inject/server/test_main.py:120: ModuleNotFoundError
+=========================== short test summary info ============================
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_get_server_status
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_get_server_status_when_settings_unreadable
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_restart_server
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_update_server
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_update_server_when_up_to_date
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_update_server_when_migration_required
+ERROR tests/unit/rule_inject/server/test_admin_tools.py::test_update_server_when_failed
+ERROR tests/unit/rule_inject/server/test_clone.py::test_pull_when_dirty - Mod...
+FAILED tests/unit/rule_inject/features/migrate/test_service.py::test_plan_migration
+FAILED tests/unit/rule_inject/features/migrate/test_service.py::test_plan_migration_when_old_version_only
+FAILED tests/unit/rule_inject/migrate/test_main.py::test_main_when_plan - Typ...
+FAILED tests/unit/rule_inject/server/test_admin_tools.py::test_reload_settings
+FAILED tests/unit/rule_inject/server/test_admin_tools.py::test_reload_settings_when_unreadable
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server - ModuleN...
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server_when_restarting
+FAILED tests/unit/rule_inject/server/test_clone.py::test_find_clone - ModuleN...
+FAILED tests/unit/rule_inject/server/test_clone.py::test_read_version_when_missing
+FAILED tests/unit/rule_inject/server/test_clone.py::test_head_commit_when_not_git
+FAILED tests/unit/rule_inject/server/test_clone.py::test_run_command_when_timeout
+FAILED tests/unit/rule_inject/server/test_clone.py::test_pull - ModuleNotFoun...
+FAILED tests/unit/rule_inject/server/test_clone.py::test_pull_when_ahead - Mo...
+FAILED tests/unit/rule_inject/server/test_clone.py::test_pull_when_diverged
+FAILED tests/unit/rule_inject/server/test_clone.py::test_plan_migrations - Mo...
+FAILED tests/unit/rule_inject/server/test_clone.py::test_plan_migrations_when_newer
+FAILED tests/unit/rule_inject/server/test_control.py::test_guard - ModuleNotF...
+FAILED tests/unit/rule_inject/server/test_control.py::test_guard_when_restarting
+FAILED tests/unit/rule_inject/server/test_control.py::test_guard_when_raises
+FAILED tests/unit/rule_inject/server/test_control.py::test_begin_update_when_updating
+FAILED tests/unit/rule_inject/server/test_control.py::test_begin_restart_when_restarting
+FAILED tests/unit/rule_inject/server/test_control.py::test_begin_restart_when_updating
+FAILED tests/unit/rule_inject/server/test_control.py::test_finish_update_and_restart
+FAILED tests/unit/rule_inject/server/test_control.py::test_drain_and_stop - M...
+FAILED tests/unit/rule_inject/server/test_control.py::test_drain_and_stop_when_timeout
+FAILED tests/unit/rule_inject/server/test_main.py::test_main_when_restart_requested
+FAILED tests/unit/rule_inject/server/test_main.py::test_main_when_stopped - M...
+================== 27 failed, 489 passed, 8 errors in 20.29s ===================

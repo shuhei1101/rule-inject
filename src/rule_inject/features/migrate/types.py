@@ -14,6 +14,8 @@ class MigrationResult:
     # ツールのバージョン。移し替え後の `version`
     target_version: str
     steps: tuple[str, ...]
+    # `steps` のうち、`version` の更新を除いた移し替えの手順。`version` だけが古いときは空
+    migrations: tuple[str, ...] = ()
     # 書き換えなかったときは None
     backup: str | None
     # `settings.json` の `env` へ移す環境変数の名前と値

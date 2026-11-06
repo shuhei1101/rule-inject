@@ -218,4 +218,66 @@ requirements:
         value: 207 秒
         notes: 137.6 + 68.8 = 206.4 を秒に切り上げ
     status: planned
+  - name: 再起動の停止の待ち
+    english_name: restart_drain_timeout
+    category: 可用性
+    external_constraint: 未確定（Claude Code が HTTP の MCP のツールの呼び出しを待つ時間の既定値は公開されていない）
+    source_kind: 制限なし
+    value: '356'
+    unit: 秒
+    rationale: '`restart_server`・`update_server` が、待ち受けを閉じる前に処理中のツールの呼び出しの終わりを待つ上限。規約『資源の値の決め方』の「入れ子の待ち」で、待つ相手のうち最も長い `check_indexes` の内側の待ちの合計に余裕を足す。内側の待ち以外の処理の実測が無いため、余裕は規約の既定の 50% を仮に置き、測る作業を残す（内訳）'
+    measurement: 辿るファイルの多いプロジェクトの `check_indexes` を呼んだまま `restart_server` を呼び、`check_indexes` の応答が返ってから待ち受けを閉じることと、`check_indexes` の内側の待ち以外の処理の時間を 1,000 回測る
+    overflow: 上限を超えたら待つのをやめて待ち受けを閉じ、残った呼び出しの接続は非機能要件「待ち受けを閉じた後の接続の待ち」で切って起動し直す（インターフェース定義「サーバーの再起動」の制約「停止の待ち」「待ち受けの閉じ方」）。切られた呼び出しは接続の失敗になる
+    breakdown:
+      - part: プロジェクトのファイルを辿る時間
+        value: 30 秒
+        notes: 非機能要件「プロジェクトのファイルを辿る時間」
+      - part: dev-docs への問い合わせの待ち時間
+        value: 207 秒
+        notes: 非機能要件「dev-docs への問い合わせの待ち時間」
+      - part: 余裕
+        value: 118.5 秒
+        notes: 内側の待ちの合計 237 秒の 50%（実測が無いときの規約の既定）
+      - part: 決定値
+        value: 356 秒
+        notes: 237 + 118.5 = 355.5 を秒に切り上げ
+    status: planned
+    introduced:
+      pr: 110
+  - name: 待ち受けを閉じた後の接続の待ち
+    english_name: graceful_shutdown_timeout
+    category: 可用性
+    external_constraint: uvicorn は `timeout_graceful_shutdown` が無い（既定 `None`）と、待ち受けを閉じた後に全ての接続が閉じるまで待つ。Streamable HTTP のクライアントは `GET /mcp` の SSE のストリームを開いたままにする
+    source_kind: 実行基盤の制限
+    source: https://www.uvicorn.org/settings/#timeouts
+    value: '3'
+    unit: 秒
+    rationale: 再起動・更新・Ctrl+C・SIGTERM で待ち受けを閉じた後、残った接続を切るまでの上限（`uvicorn.Config` の `timeout_graceful_shutdown`）。再起動・更新では処理中のツールの呼び出しを非機能要件「再起動の停止の待ち」で待ち終えているため、残るのは終わらない SSE のストリームと、送り終えていない応答だけになる。自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の 10 倍にする。ループバックで応答を送り終える時間の実測が無いため、仮に 3 秒を置き、測る作業を残す
+    measurement: 再起動の応答を返した直後に待ち受けを閉じ、接続が全て閉じるか切られるまでの時間を、SSE のストリームを開いたクライアントがある状態と無い状態で 1,000 回測る
+    overflow: 上限を超えた接続は uvicorn が切り、停止を続ける。SSE のストリームを持つクライアントは接続し直す
+    status: planned
+    introduced:
+      pr: 110
+  - name: 更新のコマンドの打ち切り
+    english_name: update_command_timeout
+    category: 可用性
+    external_constraint: 制限なし
+    source_kind: 制限なし
+    value: git の各コマンド 49 秒・`uv sync` 864 秒・`migrate --plan` 57 秒
+    rationale: '`update_server`・`get_server_status` が子プロセスで呼ぶコマンドの上限。自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の最大の 10 倍を秒に切り上げた（内訳）。`uv sync` は `.venv` を作り直すときが最も長い'
+    measurement: クローンで `git fetch`・`uv sync --extra server`（`.venv` が無い状態とある状態）・`python -m rule_inject.migrate --plan` をそれぞれ測り、最大を取る
+    overflow: 上限を超えたコマンドは止め、`UpdateFailedError` でコマンドとその時点の `HEAD` を返して再起動しない（インターフェース定義「サーバーの更新」）。`get_server_status` の `git rev-parse` が超えたときは `commit` を `null` にする
+    breakdown:
+      - part: git fetch
+        value: 最大 4.84 秒 → 49 秒
+        notes: rule-inject の worktree で GitHub から 3 回（3.84・4.43・4.84 秒、2026-11-06、WSL の `/mnt/c`）。git の各コマンドに同じ上限を置く
+      - part: uv sync --extra server
+        value: 最大 86.36 秒 → 864 秒
+        notes: '`.venv` が無い状態で 86.36 秒、ある状態で 1.30・1.10 秒（同日、同じ worktree）'
+      - part: migrate --plan
+        value: 最大 5.66 秒 → 57 秒
+        notes: '`uv run --extra server python -m rule_inject.migrate --plan` を 3 回（5.66・2.47・4.05 秒、同日）'
+    status: planned
+    introduced:
+      pr: 110
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。

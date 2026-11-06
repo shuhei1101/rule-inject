@@ -22,6 +22,9 @@ data_models:
       - name: env
         type: dict[str, str]
         description: '`settings.json` の `env` へ移す環境変数の名前と値'
+      - name: migrations
+        type: tuple[str, ...]
+        description: '`steps` のうち、`version` の更新を除いた移し替えの手順の説明。`version` だけが古いときは空'
 classes:
   - name: SettingsNewerError
     title: 設定が新しい誤り

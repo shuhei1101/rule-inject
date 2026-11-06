@@ -19,6 +19,7 @@ from typing import Any
 import pytest
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+from mcp.shared.exceptions import MCPError
 from mcp.types import CallToolResult
 
 HOST = "127.0.0.1"
@@ -159,9 +160,19 @@ def _launch(
 # 辿る時間の上限を 0 秒に差し替えてサーバーを起動するコード（`python -m rule_inject.server` は上限を差し替えられない）
 LIMITED_SERVER_CODE = (
     "import os\n"
+    "from pathlib import Path\n"
+    "import rule_inject.server as package\n"
     "from rule_inject.server.app import build_server\n"
-    "server = build_server(os.environ, scan_time_limit=0)\n"
-    f"server.run('streamable-http', host='{HOST}', port=int(os.environ['RULE_INJECT_PORT']))\n"
+    "from rule_inject.server.clone import find_clone\n"
+    "from rule_inject.server.control import ServerControl\n"
+    "port = int(os.environ['RULE_INJECT_PORT'])\n"
+    "server = build_server(\n"
+    "    os.environ,\n"
+    "    control=ServerControl(port=port),\n"
+    "    clone=find_clone(Path(package.__file__).parent),\n"
+    "    scan_time_limit=0,\n"
+    ")\n"
+    f"server.run('streamable-http', host='{HOST}', port=port)\n"
 )
 
 
@@ -289,9 +300,9 @@ def limited_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Running
     _stop(server)
 
 
-# 偽の dev-docs を立てるコード。`search_docs` が受けた引数を 1 行ずつ記録し、決めた応答の文字列を返す
+# 偽の dev-docs を立てるコード。`search_docs` が受けた引数を 1 行ずつ記録し、`FAKE_DELAY` 秒待ってから決めた応答の文字列を返す
 FAKE_DEV_DOCS_CODE = (
-    "import json, os\n"
+    "import json, os, time\n"
     "from mcp.server.mcpserver import MCPServer\n"
     "server = MCPServer('dev-docs')\n"
     "@server.tool()\n"
@@ -301,6 +312,7 @@ FAKE_DEV_DOCS_CODE = (
     "    arguments = {'source': source, 'group_by': group_by, 'format': format, 'cwd': cwd}\n"
     "    with open(os.environ['FAKE_CALLS'], 'a', encoding='utf-8') as calls:\n"
     "        calls.write(json.dumps(arguments) + '\\n')\n"
+    "    time.sleep(float(os.environ.get('FAKE_DELAY', '0')))\n"
     "    with open(os.environ['FAKE_RESPONSE'], encoding='utf-8') as response:\n"
     "        return response.read()\n"
     f"server.run('streamable-http', host='{HOST}', port=int(os.environ['FAKE_PORT']))\n"
@@ -323,12 +335,12 @@ class FakeDevDocs:
 
 
 @pytest.fixture
-def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[[Mapping[str, Any]], FakeDevDocs]]:
+def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[..., FakeDevDocs]]:
     """`search_docs` が決めた応答を返す偽の dev-docs を子プロセスとして立てる factory。終わったら止める。"""
     processes: list[subprocess.Popen[bytes]] = []
 
-    def _start(response: Mapping[str, Any]) -> FakeDevDocs:
-        """response の JSON を返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ。"""
+    def _start(response: Mapping[str, Any], *, delay: float = 0) -> FakeDevDocs:
+        """response の JSON を delay 秒待ってから返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ。"""
         directory = tmp_path / "fake_dev_docs"
         directory.mkdir(exist_ok=True)
         response_path = directory / "response.json"
@@ -339,7 +351,10 @@ def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[[Mapping[str, Any]]
             """port で偽の dev-docs を起動する（標準エラーは起動の確かめのためファイルへ書く）。"""
             env = dict(os.environ)
             env.update(
-                FAKE_PORT=str(port), FAKE_RESPONSE=str(response_path), FAKE_CALLS=str(calls_path)
+                FAKE_PORT=str(port),
+                FAKE_RESPONSE=str(response_path),
+                FAKE_CALLS=str(calls_path),
+                FAKE_DELAY=str(delay),
             )
             stderr_path = directory / f"fake-{len(processes)}-{attempt}.stderr"
             with stderr_path.open("wb") as stderr_file:
@@ -530,3 +545,156 @@ def text_of() -> Callable[[CallToolResult], str]:
         return "\n".join(getattr(content, "text", "") for content in result.content)
 
     return _text
+
+
+# 再起動の後に接続し直せるようになるまで、状態の確認を呼び直す上限（秒）。起動を待つ上限と同じ
+RESTART_WAIT_SEC = START_TIMEOUT_SEC
+
+
+def call_quietly(server: RunningServer, name: str, **arguments: Any) -> CallToolResult | None:
+    """ツールを呼び、接続できない・接続が切れたときは None を返す。"""
+    # 接続の失敗は SDK が ExceptionGroup に包んで送出する（mcp の外部ライブラリの設計書）
+    try:
+        return server.call(name, **arguments)
+    except (ExceptionGroup, OSError, TimeoutError, MCPError):
+        return None
+
+
+@pytest.fixture
+def wait_restarted() -> Callable[[RunningServer, str], dict[str, Any]]:
+    """`get_server_status` の `started_at` が before より新しくなるまで呼び直し、その応答を返す関数。"""
+
+    def _wait(server: RunningServer, before: str) -> dict[str, Any]:
+        """再起動の後に接続し直せるまで待つ。上限を過ぎたら失敗にする。"""
+        deadline = time.monotonic() + RESTART_WAIT_SEC
+        while time.monotonic() < deadline:
+            result = call_quietly(server, "get_server_status")
+            # 接続でき、起動した時刻が新しくなった: 起動し直した
+            if result is not None and result.structured_content["started_at"] > before:
+                return dict(result.structured_content)
+            time.sleep(POLL_INTERVAL_SEC)
+        pytest.fail(f"{RESTART_WAIT_SEC} 秒で起動し直さなかった: {server.stderr_text()}")
+
+    return _wait
+
+
+# テストの commit の作者（利用者の git の設定を読まない）
+GIT_IDENTITY = ("-c", "user.name=test", "-c", "user.email=test@example.com")
+
+
+def git(cwd: Path, *args: str) -> str:
+    """cwd で git を実行し、標準出力を返す。"""
+    completed = subprocess.run(
+        ["git", *GIT_IDENTITY, *args], cwd=cwd, capture_output=True, text=True, check=True
+    )
+    return completed.stdout.strip()
+
+
+@dataclass
+class CloneRepos:
+    """作業ブランチから作った上流の bare リポジトリと、サーバーを動かすクローンと、上流へ commit を積む作業用のクローン。"""
+
+    upstream: Path
+    clone: Path
+    pusher: Path
+
+    def push(self, name: str, text: str = "x\n") -> str:
+        """作業用のクローンにファイルを 1 つ足して commit し、上流へ push して commit を返す。"""
+        (self.pusher / name).write_text(text, encoding="utf-8")
+        git(self.pusher, "add", name)
+        git(self.pusher, "commit", "-m", name)
+        git(self.pusher, "push", "-q", "origin", "HEAD")
+        return git(self.pusher, "rev-parse", "HEAD")
+
+    def head(self) -> str:
+        """サーバーを動かすクローンの HEAD を返す。"""
+        return git(self.clone, "rev-parse", "HEAD")
+
+
+@pytest.fixture
+def clone_repos(tmp_path: Path) -> CloneRepos:
+    """作業ブランチの HEAD から、上流の bare リポジトリと 2 つのクローンを一時フォルダに作る。"""
+    source = Path(git(Path(__file__).parent, "rev-parse", "--show-toplevel"))
+    upstream = tmp_path / "upstream.git"
+    subprocess.run(
+        ["git", "clone", "-q", "--bare", "--no-hardlinks", str(source), str(upstream)], check=True
+    )
+    branch = git(source, "rev-parse", "--abbrev-ref", "HEAD")
+    clone = tmp_path / "clone"
+    pusher = tmp_path / "pusher"
+    for target in (clone, pusher):
+        subprocess.run(
+            ["git", "clone", "-q", "--branch", branch, str(upstream), str(target)], check=True
+        )
+    return CloneRepos(upstream=upstream, clone=clone, pusher=pusher)
+
+
+# クローンのコードを読む起動の入口。FAIL_UV が立っていれば、uv sync だけ終了コード 1 を返す run_command で組み立てる
+CLONE_SERVER_CODE = (
+    "import os, sys\n"
+    "from pathlib import Path\n"
+    "import uvicorn\n"
+    "import rule_inject.server as package\n"
+    "from rule_inject.server import __main__ as entry\n"
+    "from rule_inject.server.app import build_server\n"
+    "from rule_inject.server.clone import CommandResult, find_clone, run_command\n"
+    "from rule_inject.server.control import GRACEFUL_SHUTDOWN_TIMEOUT, ServerControl\n"
+    "def failing_uv(args, *, cwd, timeout, env=None):\n"
+    "    if 'sync' in args:\n"
+    "        return CommandResult(returncode=1, stdout='', stderr='error: uv sync に失敗した')\n"
+    "    return run_command(args, cwd=cwd, timeout=timeout, env=env)\n"
+    "if not os.environ.get('FAIL_UV'):\n"
+    "    entry.main()\n"
+    "    sys.exit(0)\n"
+    "port = int(os.environ['RULE_INJECT_PORT'])\n"
+    "control = ServerControl(port=port)\n"
+    "clone = find_clone(Path(package.__file__).parent)\n"
+    "app = build_server(os.environ, control=control, clone=clone, run_command=failing_uv)\n"
+    f"server = uvicorn.Server(uvicorn.Config(app.streamable_http_app(host='{HOST}'), "
+    f"host='{HOST}', port=port, timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_TIMEOUT))\n"
+    "control.attach(server)\n"
+    "server.run()\n"
+)
+
+
+@pytest.fixture
+def start_clone_server(
+    tmp_path: Path, clone_repos: CloneRepos
+) -> Iterator[Callable[..., RunningServer]]:
+    """クローンの `src` を `PYTHONPATH` に置いてサーバーを子プロセスとして起動する factory。終わったら止める。"""
+    started: list[RunningServer] = []
+    config = tmp_path / "clone_config" / "settings.yaml"
+    config.parent.mkdir()
+    config.write_text("", encoding="utf-8")
+
+    def _start(*, fail_uv: bool = False) -> RunningServer:
+        """クローンのコードで起動し、待ち受けるまで待つ。fail_uv なら uv sync だけ失敗させる。"""
+
+        def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
+            """port を `RULE_INJECT_PORT` に渡して起動する。"""
+            env = _server_env(config, tmp_path / "xdg_state", tmp_path / "xdg_config")
+            env["RULE_INJECT_PORT"] = str(port)
+            env["PYTHONPATH"] = str(clone_repos.clone / "src")
+            if fail_uv:
+                env["FAIL_UV"] = "1"
+            stderr_path = tmp_path / f"clone-server-{len(started)}-{attempt}.stderr"
+            with stderr_path.open("wb") as stderr_file:
+                process = subprocess.Popen(
+                    [sys.executable, "-c", CLONE_SERVER_CODE],
+                    env=env,
+                    cwd=tmp_path,
+                    stdout=subprocess.DEVNULL,
+                    stderr=stderr_file,
+                )
+            return process, stderr_path
+
+        port, process, stderr_path = _launch(_spawn_at)
+        server = RunningServer(
+            port=port, process=process, config_path=config, stderr_path=stderr_path
+        )
+        started.append(server)
+        return server
+
+    yield _start
+    for server in started:
+        _stop(server)

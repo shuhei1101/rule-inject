@@ -13,8 +13,12 @@ TOOL_NAMES = [
     "delete_index_entry",
     "delete_read_records",
     "get_read_records",
+    "get_server_status",
     "list_rules",
+    "reload_settings",
+    "restart_server",
     "search_rules",
+    "update_server",
     "write_index_entry",
 ]
 HOST = "127.0.0.1"

@@ -40,6 +40,8 @@ def test_plan_migration(tmp_path: Path) -> None:
     assert len(result.steps) == 2
     assert "server_port" in result.steps[0]
     assert "1.2.3" in result.steps[1]
+    assert len(result.migrations) == 1
+    assert "server_port" in result.migrations[0]
     assert result.source_version is None
     assert path.read_text(encoding="utf-8") == text
 
@@ -71,6 +73,7 @@ def test_plan_migration_when_old_version_only(tmp_path: Path) -> None:
     # 検証
     assert len(result.steps) == 1
     assert "1.2.3" in result.steps[0]
+    assert result.migrations == ()
 
 
 def test_plan_migration_when_newer(tmp_path: Path) -> None:
