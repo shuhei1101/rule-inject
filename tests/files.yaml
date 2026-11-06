@@ -375,6 +375,19 @@ files:
         type: tests
       - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の確認.py
         type: see_also
+  - path: integration/server/test_get_server_status.py
+    name: インターフェース定義『サーバーの状態の確認』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの状態の確認」を呼んで確かめる結合テスト。「サーバーの状態の確認」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/admin_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの状態の確認.py
+        type: see_also
   - path: integration/server/test_list_rules.py
     name: インターフェース定義『ルールの一覧』の結合テスト
     description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「ルールの一覧」を呼んで確かめる結合テスト。「ルールの一覧」を修正したときに流す。
@@ -386,6 +399,32 @@ files:
       - to: src/rule_inject/server/tools
         type: tests
       - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの一覧.py
+        type: see_also
+  - path: integration/server/test_reload_settings.py
+    name: インターフェース定義『設定の再読込』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「設定の再読込」を呼んで確かめる結合テスト。「設定の再読込」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/admin_tools
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/設定の再読込.py
+        type: see_also
+  - path: integration/server/test_restart_server.py
+    name: インターフェース定義『サーバーの再起動』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの再起動」を呼んで確かめる結合テスト。「サーバーの再起動」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/control
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
         type: see_also
   - path: integration/server/test_search_rules.py
     name: インターフェース定義『ルールの検索』の結合テスト
@@ -412,6 +451,19 @@ files:
       - to: src/rule_inject/server/app
         type: tests
       - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
+        type: see_also
+  - path: integration/server/test_update_server.py
+    name: インターフェース定義『サーバーの更新』の結合テスト
+    description: MCP サーバーを子プロセスとして起動し、MCP の Streamable HTTP のクライアントで「サーバーの更新」を呼んで確かめる結合テスト。「サーバーの更新」を修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/clone
+        type: tests
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの更新.py
         type: see_also
   - path: integration/server/test_write_index_entry.py
     name: インターフェース定義『エントリの書き込み』の結合テスト
