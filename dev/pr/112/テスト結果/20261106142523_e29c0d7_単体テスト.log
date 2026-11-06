@@ -1,0 +1,44 @@
+$ uv run pytest tests/unit
+Using CPython 3.12.13
+Creating virtual environment at: .venv
+   Building rule-inject @ file:///mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist
+      Built rule-inject @ file:///mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 47 packages in 1m 08s
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 517 items / 3 errors
+
+==================================== ERRORS ====================================
+__ ERROR collecting tests/unit/rule_inject/features/guidance/test_service.py ___
+ImportError while importing test module '/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist/tests/unit/rule_inject/features/guidance/test_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/features/guidance/test_service.py:11: in <module>
+    from rule_inject.features.guidance.service import (
+E   ImportError: cannot import name 'build_server_start_notice' from 'rule_inject.features.guidance.service' (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist/src/rule_inject/features/guidance/service.py)
+_ ERROR collecting tests/unit/rule_inject/features/server_start/test_service.py _
+ImportError while importing test module '/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist/tests/unit/rule_inject/features/server_start/test_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/features/server_start/test_service.py:12: in <module>
+    from rule_inject.features.server_start import service
+E   ModuleNotFoundError: No module named 'rule_inject.features.server_start'
+______ ERROR collecting tests/unit/rule_inject/hooks/test_start_server.py ______
+ImportError while importing test module '/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist/tests/unit/rule_inject/hooks/test_start_server.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_start_server.py:10: in <module>
+    from rule_inject.features.guidance import build_server_start_notice
+E   ImportError: cannot import name 'build_server_start_notice' from 'rule_inject.features.guidance' (/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/feat-hooks-server-start-assist/src/rule_inject/features/guidance/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/unit/rule_inject/features/guidance/test_service.py
+ERROR tests/unit/rule_inject/features/server_start/test_service.py
+ERROR tests/unit/rule_inject/hooks/test_start_server.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 3 errors in 25.89s ==============================
