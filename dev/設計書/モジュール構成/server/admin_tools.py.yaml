@@ -34,7 +34,7 @@ functions:
       type: CallToolResult
       description: '`respond(ServerStatusResult, "json")`'
     process: |-
-      1. `_read_settings(None, env)` を呼び、読めれば `ConfigState(path=_read_config_path(env), readable=True)`、`ToolError` なら `ConfigState(readable=False, error=理由)` にする
+      1. `_read_settings(None, env)` を呼び、読めれば `ConfigState(path=_read_config_path(env), readable=True)`、`ToolError` なら `ConfigState(path=_read_config_path(env), readable=False, error=理由)` にする
       2. `read_version(clone)` と `head_commit(clone, run=run)` を引く。`head_commit` の `UpdateFailedError`（打ち切り）は `commit=None` にする
       3. `control` の `port`・`pid`・`started_at`・`restarting` と合わせて返す
     unit_tests:
