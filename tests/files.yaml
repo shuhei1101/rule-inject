@@ -334,6 +334,20 @@ files:
         type: tests
       - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
         type: see_also
+  - path: integration/plugin/test_start_server.py
+    name: サーバーの起動の補助フックの結合テスト
+    description: サーバーの起動の補助のフックを子プロセスとして起動し、systemctl を差し替えて標準入力の JSON から出力とログまでを確かめる結合テスト。サーバーの起動の補助のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/start_server
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/サーバーの起動の補助.py
+        type: tests
   - path: integration/plugin/test_sweep_read.py
     name: 既読の記録の掃除フックの結合テスト
     description: 既読の記録の掃除のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録の掃除のフックを修正したときに流す。
