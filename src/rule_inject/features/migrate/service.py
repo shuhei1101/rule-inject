@@ -46,18 +46,18 @@ def _load(path: Path) -> tuple[YAML, CommentedMap]:
     return yaml, data if data is not None else CommentedMap()
 
 
-def _steps(path: Path, data: CommentedMap) -> tuple[str, ...]:
-    """適用する手順の説明を並べる。"""
+def _steps(path: Path, data: CommentedMap) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """適用する手順の説明と、そのうち `version` の更新を除いた移し替えの手順を並べる。"""
     version = data.get(VERSION_KEY)
     tool_version = _tool_version()
     # 設定のほうが新しければ、手順を求めずに止める
     if version is not None and _version_key(path, str(version)) > _version_key(path, tool_version):
         raise SettingsNewerError(settings_version=str(version), tool_version=tool_version)
-    steps = [step.DESCRIPTION for step in MIGRATIONS if step.applies(data)]
+    migrations = tuple(step.DESCRIPTION for step in MIGRATIONS if step.applies(data))
     # 手順の有無によらず、古いバージョンは更新する
     if str(version) != tool_version:
-        steps.append(f"version を {tool_version} にする")
-    return tuple(steps)
+        return (*migrations, f"version を {tool_version} にする"), migrations
+    return migrations, migrations
 
 
 def plan_migration(path: Path) -> MigrationResult:
@@ -69,10 +69,12 @@ def plan_migration(path: Path) -> MigrationResult:
         )
     _, data = _load(path)
     version = data.get(VERSION_KEY)
+    steps, migrations = _steps(path, data)
     return MigrationResult(
         source_version=None if version is None else str(version),
         target_version=tool_version,
-        steps=_steps(path, data),
+        steps=steps,
+        migrations=migrations,
         backup=None,
         env={},
     )
@@ -103,6 +105,7 @@ def apply_migration(path: Path, backup_dir: Path, *, now: datetime) -> Migration
         source_version=plan.source_version,
         target_version=plan.target_version,
         steps=plan.steps,
+        migrations=plan.migrations,
         backup=str(backup),
         env=env,
     )
