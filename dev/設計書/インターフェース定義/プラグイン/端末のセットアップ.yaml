@@ -55,6 +55,7 @@ request:
     default: rule-inject
     location: argument
     description: systemd のユーザーのユニットのサービス名
+    constraints: 1〜64 文字の英数字 / `_` / `-`（`.service` を付けない。設定『プラグイン』の `global.server_service` と同じ許す値）
   - name: --yes
     type: bool
     required: false
@@ -111,3 +112,6 @@ exceptions:
   - name: フックが案内を返さない
     condition: 試しの入力でフックが案内を返却しない
     notes: 記載済みのものは残して止まり、ログの場所を示す
+  - name: サービス名が許す値の外
+    condition: '`--service`（質問への回答を含む）が 1〜64 文字の英数字 / `_` / `-` でない'
+    notes: 依存の確認の前に止まり、何も記載しない（ユニットも端末の設定も書かない）。許す値と受け取った値を示す
