@@ -42,8 +42,10 @@
 
 ### 単体
 
-なし（ドキュメント修正の工程は利用者向けのドキュメントだけを変え、規約『V字モデル』の対応表で対応する単体テストが無い）
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit` | 全実行 | 変更 | ✅ | 524 テスト pass（新規 `test_control.py`・`test_clone.py`・`test_admin_tools.py`、改修 `test_app.py`・`test_main.py`・`features/migrate/test_service.py`・`migrate/test_main.py`）<br>`テスト結果/20261106100353_ac05655_単体テスト.log`<br>lint: `テスト結果/20261106100419_ac05655_lint.log` |
 
 ### 結合
 
-なし（同上。結合テストの対応も無い）
+未実行（結合テスト作成の工程で回す）
