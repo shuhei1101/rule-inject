@@ -116,6 +116,26 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される
         type: see_also
+  - path: e2e/単一ユースケース/test_reload_server_settings.py
+    name: 「MCPサーバーの設定を読み直す」の E2E テスト
+    description: 「MCPサーバーの設定を読み直す」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「MCPサーバーの設定を読み直す」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーの設定を読み直す
+        type: see_also
+  - path: e2e/単一ユースケース/test_restart_server.py
+    name: 「MCPサーバーを再起動する」の E2E テスト
+    description: 「MCPサーバーを再起動する」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「MCPサーバーを再起動する」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーを再起動する
+        type: see_also
   - path: e2e/単一ユースケース/test_read_default_settings.py
     name: 「既定の場所の設定を読む」の E2E テスト
     description: 「既定の場所の設定を読む」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「既定の場所の設定を読む」を修正したときに流す。
@@ -159,6 +179,16 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/操作に当たるルールを検索する
         type: see_also
+  - path: e2e/単一ユースケース/test_update_rule_inject.py
+    name: 「rule-injectを更新する」の E2E テスト
+    description: 「rule-injectを更新する」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「rule-injectを更新する」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/rule-injectを更新する
+        type: see_also
   - path: e2e/単一ユースケース/test_view_effective_rules.py
     name: 「効いているルールの一覧を見る」の E2E テスト
     description: 「効いているルールの一覧を見る」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「効いているルールの一覧を見る」を修正したときに流す。
@@ -180,6 +210,16 @@ files:
       - tool:pytest
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する
+        type: see_also
+  - path: e2e/単一ユースケース/test_view_server_status.py
+    name: 「MCPサーバーの状態を確認する」の E2E テスト
+    description: 「MCPサーバーの状態を確認する」のシナリオを、ローカルのクローンから常駐させた MCP サーバーへ MCP の Python SDK のクライアントで通して確かめる E2E テスト。「MCPサーバーの状態を確認する」を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:mcp
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/MCPサーバーの状態を確認する
         type: see_also
   - path: e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
     name: 「既読の記録を削除して案内を受け直す」の E2E テスト
