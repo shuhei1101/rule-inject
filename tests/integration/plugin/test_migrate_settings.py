@@ -62,6 +62,7 @@ def test_normal(
     # 検証
     assert completed.returncode == 0
     assert json.loads(completed.stdout)["steps"]
+    assert len(json.loads(completed.stdout)["migrations"]) == 1
     assert settings_file.read_text(encoding="utf-8") == OLD_SETTINGS
 
 
