@@ -54,5 +54,7 @@ def start_server(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
     # 5. 起動を依頼したときだけ、接続し直す案内を返す（有効でない・systemctl が無いときは何もしない）
     if result is UnitStart.REQUESTED:
         notice = build_server_start_notice(settings.server_service)
-        return {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": notice}}
+        return {
+            "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": notice}
+        }
     return None
