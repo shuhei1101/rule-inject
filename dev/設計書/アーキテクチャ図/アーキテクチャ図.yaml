@@ -55,6 +55,9 @@ overview:
     - from: SRV
       to: DD
       label: 使われているタグの問い合わせ（HTTP）
+    - from: HOOK
+      to: SRV
+      label: 応答しないときの起動の依頼（systemd --user）
   subgraphs:
     - id: SYS
       label: rule-inject

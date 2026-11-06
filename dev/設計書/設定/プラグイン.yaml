@@ -330,3 +330,15 @@ settings:
     allowed: 絶対パスか `~` で始まるパス
     status: planned
     visibility: user
+  - key: global.server_service
+    title: サーバーのサービス名
+    file: ~/.config/rule-inject/settings.yaml
+    type: str
+    required: false
+    default: '`rule-inject`'
+    description: セッションの開始時に応答しない MCP サーバーを起動する、systemd --user のユニットのサービス名。`global-setup` がユニットを配置したときに `--service` の値を記載する
+    reload: immediate
+    allowed: 1〜64 文字の英数字 / `_` / `-`（`.service` を付けない）。それ以外の値は設定ファイルの誤りとして扱う
+    reason: サーバーは端末に 1 つだけ常駐させるため、`projects` で分けない。そのため `global` だけに置く
+    status: planned
+    visibility: user

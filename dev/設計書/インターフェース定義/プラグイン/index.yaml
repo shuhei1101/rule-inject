@@ -18,3 +18,5 @@ items:
     summary: 端末の設定・サーバー・フックを用意して確認する（`/rule-inject:global-setup`）
   - page: 索引の登録.yaml
     summary: リポジトリの索引を参照できる状態にしてチェックする（`/rule-inject:setup`）
+  - page: サーバーの起動の補助.py.yaml
+    summary: セッションの開始時に、応答しない MCP サーバーのユニットへ起動を依頼し、`/mcp` で接続し直す案内を載せる（SessionStart）

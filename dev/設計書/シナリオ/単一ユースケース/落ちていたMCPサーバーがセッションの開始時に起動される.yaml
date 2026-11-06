@@ -35,7 +35,7 @@ scenarios:
       ```
     expected:
       - セッションの記録（transcript）に、`/mcp` で接続し直す案内の文面が載っている
-      - セッションの開始から 60 秒以内に、サーバーが `RULE_INJECT_PORT` で待ち受けている
+      - 'セッションの開始から 40 秒以内（PR #112 の PoC 検証の最大 26.0 秒に余裕 50% を加えて切り上げた値）に、サーバーが `RULE_INJECT_PORT` で待ち受けている'
       - ユニットが `active` になっている
     test: test_normal
   - name: 正常シナリオ（サーバーが応答する）
@@ -96,7 +96,7 @@ scenarios:
       ```
     expected:
       - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
-      - ユニットが `inactive` のまま
+      - 'ユニットが `inactive` のままで、ログに `component: start_server` の行が無い'
     test: test_normal_when_unit_disabled
   - name: 正常シナリオ（ユニットが無い）
     setup:
@@ -125,7 +125,7 @@ scenarios:
       ```
     expected:
       - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
-      - セッションが回答を返して終わっている
+      - 'セッションが回答を返して終わり、ログに `component: start_server` の行が無い'
     test: test_normal_when_no_unit
 lead: セッションの開始時に `SessionStart` フックが常駐の MCP サーバーの応答を確認し、応答しないときは systemd --user のユニットへ起動を依頼して、`/mcp` で接続し直す旨をコンテキストへ載せる。次に開くセッションは最初から接続できる。
 issue: 111
@@ -137,7 +137,7 @@ stakeholders:
     interest: サーバーの起動を待たずにセッションが始まり、フックの案内と既読の記録が今どおり動くこと
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 preconditions:
-  - 端末の設定のサービス名のユニットが `~/.config/systemd/user/` にあり、有効（`systemctl --user is-enabled`）になっている
+  - プラグインを読み込んでいる
   - '`systemctl --user` が使用できる'
 success_guarantee: サーバーが応答しないときだけユニットへ起動を依頼し、起動を依頼したセッションに `/mcp` で接続し直す旨を載せる。サーバーの待ち受けの開始は待たない。
 minimal_guarantee: どの経路でもセッションの開始を止めない。応答するサーバー・有効でないユニット・無いユニットは起動しない。
