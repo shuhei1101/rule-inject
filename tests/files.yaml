@@ -653,6 +653,16 @@ files:
       - topic:テスト補助
       - topic:MCPサーバー
       - tool:pytest
+  - path: unit/rule_inject/server/test_admin_tools.py
+    name: サーバーの管理のツールの単体テスト
+    description: サーバーの管理のツールの振る舞いを確かめる単体テスト。サーバーの管理のツールを修正したときに流す。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/admin_tools
+        type: tests
   - path: unit/rule_inject/server/test_app.py
     name: サーバーのコンポジションルートの単体テスト
     description: サーバーのコンポジションルートの振る舞いを確かめる単体テスト。サーバーのコンポジションルートを修正したときに流す。
@@ -672,6 +682,24 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/server/check_tools
+        type: tests
+  - path: unit/rule_inject/server/test_clone.py
+    name: クローンの操作の単体テスト
+    description: クローンのバージョン・commit・上流の取り込み・移し替えの確かめを確かめる単体テスト。クローンの操作を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/clone
+        type: tests
+  - path: unit/rule_inject/server/test_control.py
+    name: サーバーの稼働の状態の単体テスト
+    description: 処理中の呼び出しの数・再起動と更新の断り方・停止の待ちを確かめる単体テスト。サーバーの稼働の状態を修正したときに流す。
+    tags:
+      - topic:MCPサーバー
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/control
         type: tests
   - path: unit/rule_inject/server/test_dev_docs.py
     name: 使われているタグを引くクライアントの単体テスト

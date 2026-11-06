@@ -48,7 +48,8 @@ def control() -> Any:
     from rule_inject.server.control import ServerControl
 
     server_control = ServerControl(port=PORT)
-    server_control.attach(SimpleNamespace(should_exit=False))
+    fake_server: Any = SimpleNamespace(should_exit=False)
+    server_control.attach(fake_server)
     return server_control
 
 

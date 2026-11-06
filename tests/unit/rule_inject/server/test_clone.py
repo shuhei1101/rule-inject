@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from rule_inject.server.clone import RunCommand
+
 # テストの commit の作者（利用者の git の設定を読まない）
 GIT_IDENTITY = ["-c", "user.name=test", "-c", "user.email=test@example.com"]
 
@@ -66,7 +68,7 @@ def push_commit() -> Callable[[Path, str], str]:
 
 
 @pytest.fixture
-def recording_run() -> tuple[Callable[..., object], list[list[str]]]:
+def recording_run() -> tuple[RunCommand, list[list[str]]]:
     """`run_command` を呼びつつ、呼ばれたコマンドを記録する `RunCommand`。"""
     from rule_inject.server.clone import CommandResult, run_command
 
@@ -86,7 +88,7 @@ def recording_run() -> tuple[Callable[..., object], list[list[str]]]:
     return _run, calls
 
 
-def _stub_run(returncode: int, stdout: str = "", stderr: str = "") -> Callable[..., object]:
+def _stub_run(returncode: int, stdout: str = "", stderr: str = "") -> RunCommand:
     """常に同じ結果を返す `RunCommand`。"""
     from rule_inject.server.clone import CommandResult
 
@@ -192,7 +194,7 @@ def test_pull_when_diverged(repos: Repos, push_commit: Callable[..., str]) -> No
 def test_pull_when_dirty(
     repos: Repos,
     push_commit: Callable[..., str],
-    recording_run: tuple[Callable[..., object], list[list[str]]],
+    recording_run: tuple[RunCommand, list[list[str]]],
 ) -> None:
     """commit していない変更があれば取得もしない（異常系）。"""
     from rule_inject.server.clone import UpdateFailedError, pull

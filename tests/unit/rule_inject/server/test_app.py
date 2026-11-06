@@ -74,7 +74,8 @@ def test_build_server_when_restarting(clone_dir: Path) -> None:
 
     # 準備
     control = ServerControl(port=8783)
-    control.attach(SimpleNamespace(should_exit=False))
+    fake_server: Any = SimpleNamespace(should_exit=False)
+    control.attach(fake_server)
     server = build_server({}, control=control, clone=clone_dir)
 
     async def scenario() -> Any:
