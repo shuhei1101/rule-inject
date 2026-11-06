@@ -1,0 +1,146 @@
+title: "落ちていたMCPサーバーがセッションの開始時に起動される"
+scenarios:
+  - name: 正常シナリオ
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` に空いているポート、`RULE_INJECT_CONFIG` にテストの端末の設定を指定する'
+      - name: 端末の設定
+        description: サービス名にテストごとに一意の `rule-inject-e2e-{乱数}` を記載する
+        notes: 利用者の `rule-inject` のユニットに触れない
+      - name: サーバーのユニット
+        description: テストが `~/.config/systemd/user/{サービス名}.service` にクローンから `RULE_INJECT_PORT` で起動するユニットを配置し、`systemctl --user enable` で有効にする。起動はしない
+        notes: テストの後始末で `disable` してユニットを削除する
+      - name: 操作
+        description: プロンプトで、ツールを呼ばずに 1 語で回答するよう指示する
+        notes: '`--max-turns 1`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as SessionStart フック
+        participant SD as systemd --user
+        participant SV as MCP サーバー
+
+        CC->>S: セッションの開始
+        S->>SV: 応答を確認する
+        SV--xS: 応答しない
+        S->>SD: ユニットが有効かを確認する
+        SD-->>S: 有効
+        S->>SD: 起動を依頼する（待たない）
+        S-->>CC: /mcp で接続し直す案内（additionalContext）
+        SD->>SV: 起動する
+        SV->>SV: RULE_INJECT_PORT で待ち受ける
+      ```
+    expected:
+      - セッションの記録（transcript）に、`/mcp` で接続し直す案内の文面が載っている
+      - セッションの開始から 60 秒以内に、サーバーが `RULE_INJECT_PORT` で待ち受けている
+      - ユニットが `active` になっている
+    test: test_normal
+  - name: 正常シナリオ（サーバーが応答する）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: 正常シナリオと同じ
+      - name: サーバーのユニット
+        description: 正常シナリオと同じユニットを `systemctl --user enable --now` で起動し、待ち受けを確認しておく
+      - name: 操作
+        description: 正常シナリオと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as SessionStart フック
+        participant SV as MCP サーバー
+
+        CC->>S: セッションの開始
+        S->>SV: 応答を確認する
+        SV-->>S: 応答する
+        S-->>CC: 何も返さない
+      ```
+    expected:
+      - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
+      - ユニットの起動の時刻（`ActiveEnterTimestamp`）がセッションの開始の前のまま
+    test: test_normal_when_server_responding
+  - name: 正常シナリオ（ユニットが有効でない）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: 正常シナリオと同じ
+      - name: サーバーのユニット
+        description: 正常シナリオと同じユニットを配置し、有効にしない
+        notes: 利用者が `disable` で常駐をやめた状態
+      - name: 操作
+        description: 正常シナリオと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as SessionStart フック
+        participant SD as systemd --user
+        participant SV as MCP サーバー
+
+        CC->>S: セッションの開始
+        S->>SV: 応答を確認する
+        SV--xS: 応答しない
+        S->>SD: ユニットが有効かを確認する
+        SD-->>S: 有効でない
+        S-->>CC: 何も返さない
+      ```
+    expected:
+      - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
+      - ユニットが `inactive` のまま
+    test: test_normal_when_unit_disabled
+  - name: 正常シナリオ（ユニットが無い）
+    setup:
+      - name: Mock
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: 正常シナリオと同じ（そのサービス名のユニットを配置しない）
+      - name: 操作
+        description: 正常シナリオと同じ
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as SessionStart フック
+        participant SD as systemd --user
+        participant SV as MCP サーバー
+
+        CC->>S: セッションの開始
+        S->>SV: 応答を確認する
+        SV--xS: 応答しない
+        S->>SD: ユニットが有効かを確認する
+        SD-->>S: ユニットが無い
+        S-->>CC: 何も返さない
+      ```
+    expected:
+      - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
+      - セッションが回答を返して終わっている
+    test: test_normal_when_no_unit
+lead: セッションの開始時に `SessionStart` フックが常駐の MCP サーバーの応答を確認し、応答しないときは systemd --user のユニットへ起動を依頼して、`/mcp` で接続し直す旨をコンテキストへ載せる。次に開くセッションは最初から接続できる。
+issue: 111
+primary_actor: Claude Code のセッション
+stakeholders:
+  - name: 利用者
+    interest: サーバーが落ちていても、セッションを開くだけでサーバーが起動し、`/mcp` の接続し直しか次のセッションからツールを使用できること
+  - name: Claude Code のセッション
+    interest: サーバーの起動を待たずにセッションが始まり、フックの案内と既読の記録が今どおり動くこと
+trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
+preconditions:
+  - 端末の設定のサービス名のユニットが `~/.config/systemd/user/` にあり、有効（`systemctl --user is-enabled`）になっている
+  - '`systemctl --user` が使用できる'
+success_guarantee: サーバーが応答しないときだけユニットへ起動を依頼し、起動を依頼したセッションに `/mcp` で接続し直す旨を載せる。サーバーの待ち受けの開始は待たない。
+minimal_guarantee: どの経路でもセッションの開始を止めない。応答するサーバー・有効でないユニット・無いユニットは起動しない。
+notes:
+  同じセッションで接続し直す理由: Claude Code は接続を拒まれると 1 秒・2 秒・4 秒の間隔で 3 回だけ接続し直し、セッションの開始から 8〜11 秒で諦める。サーバーの待ち受けの開始はそれより遅く（9.3〜26.0 秒）、起動を依頼したセッションの最初の接続には間に合わない（PR #112 の PoC 検証）。そのため `/mcp` で接続し直す旨を案内する
+test_file: tests/e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
