@@ -7,10 +7,12 @@ from rule_inject.features.guidance.service import (
     READ_NOTE,
     READ_TOOL_NOTE,
     SEARCH_HEADER,
+    SERVER_START_NOTICE,
     WORK_RULES,
     build_failure_notice,
     build_guidance,
     build_search_guidance,
+    build_server_start_notice,
 )
 from rule_inject.features.guidance.types import Guidance, GuidedReadTool, GuidedRule
 
@@ -21,6 +23,7 @@ __all__ = [
     "READ_NOTE",
     "READ_TOOL_NOTE",
     "SEARCH_HEADER",
+    "SERVER_START_NOTICE",
     "WORK_RULES",
     "Guidance",
     "GuidedReadTool",
@@ -28,4 +31,5 @@ __all__ = [
     "build_failure_notice",
     "build_guidance",
     "build_search_guidance",
+    "build_server_start_notice",
 ]

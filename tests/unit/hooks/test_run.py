@@ -122,3 +122,28 @@ def test_main_when_python_too_old_and_sweep_read(
     today_log = default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log"
     assert len(read_lines(today_log)) == 1
     assert not (xdg_state_home / "rule-inject" / "rule-inject.log").exists()
+
+
+def test_main_when_python_too_old_and_start_server(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    run_module: ModuleType,
+    xdg_state_home: Path,
+    default_log_folder: Path,
+    hook_payload: Callable[..., dict[str, Any]],
+    read_lines: Callable[[Path], list[str]],
+    without_rule_inject: None,
+) -> None:
+    """サーバーの起動の補助もバージョンが足りなくても知らせを重ねない（正常系）。"""
+    # 準備
+    monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
+    payload = hook_payload("SessionStart", source="startup")
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+    monkeypatch.setattr(sys, "version_info", (3, 11, 0, "final", 0))
+    # 実行
+    code = run_module.main(["start_server"])
+    # 検証
+    assert code == 0
+    assert capsys.readouterr().out == ""
+    today_log = default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log"
+    assert len(read_lines(today_log)) == 1

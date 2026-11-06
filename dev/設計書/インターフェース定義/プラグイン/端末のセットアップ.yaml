@@ -28,7 +28,7 @@ flows:
 lead: 端末ごとに、設定ファイルの作成か移し替え、`env` への記載、サーバーの起動と接続の確認、フックの確認を実行する。
 identifier: global_setup
 idempotent: true
-side_effects: 端末の設定・`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json` の `env`・`~/.config/systemd/user/{サービス名}.service` に記載し、旧い `rule-inject` の登録を削除する
+side_effects: 端末の設定（`global.server_service` を含む）・`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json` の `env`・`~/.config/systemd/user/{サービス名}.service` に記載し、旧い `rule-inject` の登録を削除する
 request:
   - name: --clone
     type: str
@@ -55,6 +55,7 @@ request:
     default: rule-inject
     location: argument
     description: systemd のユーザーのユニットのサービス名
+    constraints: 1〜64 文字の英数字 / `_` / `-`（`.service` を付けない。設定『プラグイン』の `global.server_service` と同じ許す値）
   - name: --yes
     type: bool
     required: false
@@ -84,6 +85,9 @@ constraints:
   - item: ユニットの環境
     constraint: '`Environment=` に、端末の設定の絶対パスの `RULE_INJECT_CONFIG` と、既定と違うポートの `RULE_INJECT_PORT` を記載する。端末の設定に `global.state_dir` が無ければ、スキルの環境で解いた絶対パスの `RULE_INJECT_STATE_DIR` も記載する'
     notes: '`systemctl --user` で起動したサーバーは Claude Code のセッションの環境を引き継がない'
+  - item: サービス名の記載
+    constraint: ユニットを配置したとき、端末の設定の `global.server_service` にサービス名を記載する。既定の `rule-inject` と同じでも記載する
+    notes: インターフェース定義「サーバーの起動の補助」がこの名前のユニットを起動する。端末の設定のほかのキーとコメントは変えない
 refs:
   - dev/設計書/シナリオ/単一ユースケース/端末をセットアップする#
   - dev/設計書/インターフェース定義/プラグイン/設定の移し替え.py#
@@ -108,3 +112,6 @@ exceptions:
   - name: フックが案内を返さない
     condition: 試しの入力でフックが案内を返却しない
     notes: 記載済みのものは残して止まり、ログの場所を示す
+  - name: サービス名が許す値の外
+    condition: '`--service`（質問への回答を含む）が 1〜64 文字の英数字 / `_` / `-` でない'
+    notes: 依存の確認の前に止まり、何も記載しない（ユニットも端末の設定も書かない）。許す値と受け取った値を示す

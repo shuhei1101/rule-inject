@@ -21,7 +21,7 @@ functions:
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす（`yaml_lines` の行の読み取り）
       2. 最上位のキーは `version`（文字列）・`global`・`projects` だけを許す
-      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url`（文字列）だけを許す。`server_port` は `/rule-inject:global-setup` での移し替えを案内する ValueError にする
+      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url`・`server_service`（文字列）だけを許す。`server_port` は `/rule-inject:global-setup` での移し替えを案内する ValueError にする
       4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
       5. 文字列は引用符あり・なしを読む。リストは空の `[]` を許す
       6. 許さないキー・形式（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする

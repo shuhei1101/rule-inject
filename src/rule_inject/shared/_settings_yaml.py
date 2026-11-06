@@ -23,6 +23,7 @@ GLOBAL_SCALAR_KEYS = (
     "record_retention_days",
     "log_retention_days",
     "dev_docs_url",
+    "server_service",
 )
 # 廃止したキーと、案内する移し替えの方法
 REMOVED_GLOBAL_KEYS = {

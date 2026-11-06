@@ -16,8 +16,8 @@ from pathlib import Path
 MIN_PYTHON = (3, 12)
 # バージョンが足りないことを知らせられる出来事（ほかの出来事は additionalContext を持たない）
 NOTICE_EVENTS = ("PreToolUse", "PostToolUse", "SessionStart")
-# バージョンが足りなくても知らせを返さないフック
-SILENT_HOOK = "sweep_read"
+# バージョンが足りなくても知らせを返さないフック（同じ SessionStart の work_rules が知らせる）
+SILENT_HOOKS = ("sweep_read", "start_server")
 LOG_FILE_SUFFIX = "_rule-inject.log"
 
 
@@ -63,8 +63,8 @@ def _report_old_python(hook_name: str) -> int:
     except OSError:
         print(line, file=sys.stderr)
     # additionalContext を持てる出来事にだけ知らせる（PreCompact などは黙って終える）
-    # sweep_read は同じ SessionStart の work_rules が知らせるため、知らせを重ねない
-    if event in NOTICE_EVENTS and hook_name != SILENT_HOOK:
+    # sweep_read・start_server は同じ SessionStart の work_rules が知らせるため、知らせを重ねない
+    if event in NOTICE_EVENTS and hook_name not in SILENT_HOOKS:
         output = {
             "hookSpecificOutput": {"hookEventName": event, "additionalContext": reason + "。"}
         }

@@ -43,6 +43,26 @@ files:
     related:
       - to: dev/設計書/モジュール構成/features/guidance/types.py
         type: implements
+  - path: rule_inject/features/server_start/service.py
+    name: サーバーの応答の確認とユニットの起動の依頼
+    description: 常駐の MCP サーバーのポートへ接続できるかを確かめ、systemd --user のユニットへ起動を依頼する。応答の確認と起動の依頼の待ちを読む・修正するときに開く。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+    related:
+      - to: dev/設計書/モジュール構成/features/server_start/service.py
+        type: implements
+  - path: rule_inject/features/server_start/types.py
+    name: 起動の依頼の結果の型
+    description: ユニットへ起動を依頼したか、依頼しなかった理由を表す型を持つ。起動の依頼の結果を調べるときに開く。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+    related:
+      - to: dev/設計書/モジュール構成/features/server_start/types.py
+        type: implements
   - path: rule_inject/features/index/_yaml.py
     name: 索引の YAML の読み取り
     description: 索引の YAML のうち、設定の設計書に挙げたキーと形式だけを標準ライブラリで読む。索引の読み込みで読めるキーを変えるときに開く。
@@ -248,6 +268,19 @@ files:
       - to: dev/設計書/モジュール構成/hooks/search_guide.py
         type: implements
       - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
+        type: implements
+  - path: rule_inject/hooks/start_server.py
+    name: サーバーの起動の補助
+    description: セッションの開始時（SessionStart）に、応答しない MCP サーバーのユニットへ起動を依頼し、`/mcp` で接続し直す案内を返す。起動の補助の流れを読む・修正するときに開く。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:claude-code
+    related:
+      - to: dev/設計書/モジュール構成/hooks/start_server.py
+        type: implements
+      - to: dev/設計書/インターフェース定義/プラグイン/サーバーの起動の補助.py
         type: implements
   - path: rule_inject/hooks/sweep_read.py
     name: 既読の記録の掃除

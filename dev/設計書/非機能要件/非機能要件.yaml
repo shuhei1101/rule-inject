@@ -280,4 +280,52 @@ requirements:
     status: planned
     introduced:
       pr: 110
+  - name: サーバーの応答の確認の待ち
+    english_name: server_probe_timeout
+    category: 性能
+    external_constraint: フックの実行時間（1 秒）
+    source_kind: 実行基盤の制限
+    source: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    value: '0.1'
+    unit: 秒
+    rationale: サーバーの起動の補助が `127.0.0.1` の待ち受けのポートへ TCP で接続を試みるときの待ち。待ち受けていればカーネルが接続を受け、待ち受けていなければすぐに拒まれるため、待ちが届くのは応答しない相手がポートを取っているときだけ。規約『資源の値の決め方』の入れ子の待ちで、外側のフックの実行時間（1 秒）に、フックの起動・`systemctl` の 2 回の呼び出しと合わせて収める。接続だけの実測が 1,000 回に満たないため仮の値で、非機能要件テストで測り直す
+    breakdown:
+      - part: 外側の待ち
+        value: 1 秒
+        notes: 非機能要件「フックの実行時間」
+      - part: フックの起動と応答する経路
+        value: 296 ms
+        notes: 'PR #112 の PoC 検証の応答する経路の 1,000 回の p99.9（197 ms）に余裕 50% を加えた値'
+      - part: systemctl の呼び出し
+        value: 600 ms
+        notes: 非機能要件「ユニットの確認と起動の依頼の待ち」の 0.3 秒 × 2 回
+      - part: 応答の確認の待ち
+        value: 100 ms
+        notes: 残りの 104 ms の内で切り下げた値
+    overflow: 待ちを過ぎたら応答しないものとして扱い、ユニットの確認へ進む。ポートを取っているのがサーバーでなければ、起動したサービスは待ち受けに失敗して終わる（インターフェース定義「サーバーの起動」の異常系）
+    measurement: 待ち受けているポートと待ち受けていないポートのそれぞれへ、接続の試みを 1,000 回行い、接続が決まるまでの時間の p99.9 を求める
+  - name: ユニットの確認と起動の依頼の待ち
+    english_name: systemctl_timeout
+    category: 性能
+    external_constraint: フックの実行時間（1 秒）
+    source_kind: 実行基盤の制限
+    source: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    value: '0.3'
+    unit: 秒
+    rationale: 'サーバーの起動の補助が実行する `systemctl --user is-enabled` と `systemctl --user start --no-block` のそれぞれの打ち切り。起動を依頼する経路のフック全体（PR #112 の PoC 検証で 1,000 回の p99.9 が 369 ms、余裕 50% を加えて 553 ms）から応答する経路（同じく 296 ms）を差し引いた 257 ms が 2 回の呼び出しの合計で、それを上回る 1 回 0.3 秒を決定値にする。フックの実行時間（1 秒）の内訳は非機能要件「サーバーの応答の確認の待ち」'
+    breakdown:
+      - part: 起動を依頼する経路
+        value: 553 ms
+        notes: PoC 検証の 1,000 回の p99.9（369 ms）に余裕 50% を加えた値
+      - part: 応答する経路
+        value: 296 ms
+        notes: フックの起動と応答の確認の分
+      - part: 2 回の呼び出しの合計
+        value: 257 ms
+        notes: 差し引き
+      - part: 1 回の打ち切り
+        value: 300 ms
+        notes: 合計を上回るように切り上げた値
+    overflow: 打ち切ったら起動を依頼しないまま終え、ER 図「ログ」へ記載する。次のセッションの開始でまた確認する
+    measurement: 有効なユニットへ `is-enabled` と `start --no-block` を 1,000 回ずつ実行し、それぞれの p99.9 を求める
 lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。

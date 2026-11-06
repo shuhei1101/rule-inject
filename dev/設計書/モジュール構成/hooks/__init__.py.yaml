@@ -17,3 +17,5 @@ constants:
         value: '`("sweep_read", sweep_read, 出力しない)`'
       - key: search_guide
         value: '`("search_guide", search_guide, additionalContext で知らせる)`'
+      - key: start_server
+        value: '`("start_server", start_server, 出力しない)`'

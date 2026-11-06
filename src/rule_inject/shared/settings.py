@@ -44,6 +44,10 @@ MIN_SERVER_PORT = 1024
 MAX_SERVER_PORT = 65535
 # MCP サーバーのポートを指す環境変数
 PORT_ENV = "RULE_INJECT_PORT"
+# 設定ファイルに `global.server_service` が無いときの、サーバーを起動するユニットのサービス名
+DEFAULT_SERVER_SERVICE = "rule-inject"
+# `global.server_service` に許す値（`fullmatch` で照合する）
+SERVICE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,64}")
 # 設定ファイルに `global.dev_docs_url` が無いときの dev-docs の接続先
 DEFAULT_DEV_DOCS_URL = "http://127.0.0.1:8781/mcp"
 # `global.dev_docs_url` の先頭に許す文字列
@@ -61,10 +65,12 @@ class Settings:
     log_dir: Path
     record_retention_days: int
     log_retention_days: int
-    # MCP サーバーが待ち受けるポート（フックは使わない）
+    # MCP サーバーが待ち受けるポート（フックはサーバーの起動の補助だけが使う）
     server_port: int
     # `check_indexes` が使われているタグを引く dev-docs の MCP サーバーの URL（フックは使わない）
     dev_docs_url: str
+    # 応答しない MCP サーバーを起動する systemd --user のユニットのサービス名
+    server_service: str
 
 
 def _matches_project(match: str, project_dir: str) -> bool:
@@ -130,6 +136,18 @@ def _resolve_dev_docs_url(config: str, global_values: Mapping[str, object]) -> s
     if not url.startswith(DEV_DOCS_URL_SCHEMES):
         raise _value_error(config, "global.dev_docs_url", url, "http か https で始まる URL")
     return url
+
+
+def _resolve_server_service(config: str, global_values: Mapping[str, object]) -> str:
+    """設定ファイルのサービス名、無ければ既定のサービス名を返す。"""
+    written = global_values.get("server_service")
+    if written is None:
+        return DEFAULT_SERVER_SERVICE
+    service = str(written)
+    # systemctl の引数に渡すため、英数字・`_`・`-` の 1〜64 文字だけを許す
+    if not SERVICE_NAME_PATTERN.fullmatch(service):
+        raise _value_error(config, "global.server_service", service, "1〜64 文字の英数字・_・-")
+    return service
 
 
 def _config_home(env: Mapping[str, str]) -> Path:
@@ -215,6 +233,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
     )
     server_port = _resolve_server_port(env)
     dev_docs_url = _resolve_dev_docs_url(config, global_values)
+    server_service = _resolve_server_service(config, global_values)
     # 起動したプロジェクトの直下に当たる要素を、並びの順に集める
     project_dir = env.get(PROJECT_DIR_ENV)
     matched = (
@@ -245,4 +264,5 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         log_retention_days=log_days,
         server_port=server_port,
         dev_docs_url=dev_docs_url,
+        server_service=server_service,
     )

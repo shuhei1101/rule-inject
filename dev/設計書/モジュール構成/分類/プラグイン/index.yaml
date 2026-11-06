@@ -15,3 +15,5 @@ items:
     summary: MCP のツールの結果から文書の場所と範囲を取り出す
   - page: コマンドの解析.yaml
     summary: Bash のコマンドから読むファイルのパスを取り出す
+  - page: サーバーの起動.yaml
+    summary: サーバーの応答の確認とユニットの起動の依頼

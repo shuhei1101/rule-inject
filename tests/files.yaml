@@ -40,6 +40,18 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/索引のエントリを編集する
         type: see_also
+  - path: e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
+    name: 落ちていたMCPサーバーがセッションの開始時に起動されるの E2E テスト
+    description: 実の Claude Code を起動し、セッションの開始でサーバーのユニットが起動され、`/mcp` で接続し直す案内が記録に載るかを確かめる E2E テスト。サーバーの起動の補助を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/落ちていたMCPサーバーがセッションの開始時に起動される
+        type: see_also
   - path: e2e/単一ユースケース/test_ended_session_records_cleaned.py
     name: 「終わったセッションの既読の記録が掃除される」の E2E テスト
     description: 「終わったセッションの既読の記録が掃除される」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「終わったセッションの既読の記録が掃除される」を修正したときに流す。
@@ -334,6 +346,20 @@ files:
         type: tests
       - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
         type: see_also
+  - path: integration/plugin/test_start_server.py
+    name: サーバーの起動の補助フックの結合テスト
+    description: サーバーの起動の補助のフックを子プロセスとして起動し、systemctl を差し替えて標準入力の JSON から出力とログまでを確かめる結合テスト。サーバーの起動の補助のフックを修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/start_server
+        type: tests
+      - to: dev/設計書/インターフェース定義/プラグイン/サーバーの起動の補助.py
+        type: tests
   - path: integration/plugin/test_sweep_read.py
     name: 既読の記録の掃除フックの結合テスト
     description: 既読の記録の掃除のフックを子プロセスとして起動し、標準入力の JSON から出力までを確かめる結合テスト。既読の記録の掃除のフックを修正したときに流す。
@@ -569,6 +595,17 @@ files:
     related:
       - to: src/rule_inject/features/guidance/service
         type: tests
+  - path: unit/rule_inject/features/server_start/test_service.py
+    name: サーバーの応答の確認とユニットの起動の依頼の単体テスト
+    description: 応答の確認と systemctl の呼び出しの振る舞いを確かめる単体テスト。サーバーの起動の機能を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/server_start/service
+        type: tests
   - path: unit/rule_inject/features/index/check/test_scan.py
     name: 当たらないエントリの走査の単体テスト
     description: 当たらないエントリの走査の振る舞いを確かめる単体テスト。当たらないエントリの走査を修正したときに流す。
@@ -718,6 +755,17 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/hooks/search_guide
+        type: tests
+  - path: unit/rule_inject/hooks/test_start_server.py
+    name: サーバーの起動の補助の単体テスト
+    description: サーバーの起動の補助の振る舞いを確かめる単体テスト。サーバーの起動の補助を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/start_server
         type: tests
   - path: unit/rule_inject/hooks/test_sweep_read.py
     name: 既読の記録の掃除の単体テスト

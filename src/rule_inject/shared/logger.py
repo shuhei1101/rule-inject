@@ -31,6 +31,7 @@ class Component(StrEnum):
     WORK_RULES = "work_rules"
     SWEEP_READ = "sweep_read"
     SEARCH_GUIDE = "search_guide"
+    START_SERVER = "start_server"
 
 
 class LogOperation(StrEnum):
@@ -44,6 +45,8 @@ class LogOperation(StrEnum):
     DELETE_RECORD = "delete_record"
     UNEXPECTED = "unexpected"
     DELETE_LOG = "delete_log"
+    CHECK_UNIT = "check_unit"
+    START_UNIT = "start_unit"
 
 
 def _utc_now() -> datetime:

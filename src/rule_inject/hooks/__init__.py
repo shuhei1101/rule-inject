@@ -10,6 +10,7 @@ from rule_inject.hooks.discard_read import discard_read
 from rule_inject.hooks.record_read import record_read
 from rule_inject.hooks.rule_guide import guide_rules
 from rule_inject.hooks.search_guide import search_guide
+from rule_inject.hooks.start_server import start_server
 from rule_inject.hooks.sweep_read import sweep_read
 from rule_inject.hooks.work_rules import work_rules
 from rule_inject.shared.logger import Component
@@ -45,4 +46,5 @@ HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
     "discard_read": (Component.DISCARD_READ, discard_read, _silent),
     "work_rules": (Component.WORK_RULES, work_rules, _silent),
     "sweep_read": (Component.SWEEP_READ, sweep_read, _silent),
+    "start_server": (Component.START_SERVER, start_server, _silent),
 }

@@ -15,6 +15,7 @@ argument-hint: "[--clone パス] [--config パス] [--index パス] [--service �
 済んでいる手順は飛ばして、続きから進む。
 
 1. 依存を確認する。
+   - `--service`（質問への回答を含む）が 1〜64 文字の英数字・`_`・`-`（`.service` を付けない）でなければ、許す値と受け取った値を示して止まる。何も記載しない
    - `command -v uv` で `uv` の絶対パスを取り出す
    - `--clone` のクローンで `uv sync --extra server` を実行する
    - `uv` が無いか失敗したら、導入の方法を示して止まる。何も記載しない
@@ -51,6 +52,7 @@ argument-hint: "[--clone パス] [--config パス] [--index パス] [--service �
      - `Environment=` に、手順 2 の絶対パスの `RULE_INJECT_CONFIG` を記載する
      - 既定と違うポートの `RULE_INJECT_PORT` を記載する
      - 端末の設定に `global.state_dir` が無ければ、スキルの環境で解いた絶対パスの `RULE_INJECT_STATE_DIR`（`${RULE_INJECT_STATE_DIR:-${XDG_STATE_HOME:-~/.local/state}/rule-inject}`）を記載する
+   - 端末の設定の `global.server_service` に、サービス名を記載する（既定の `rule-inject` と同じでも記載する。ほかのキーとコメントは変えない）
    - `systemctl --user daemon-reload` と `systemctl --user enable --now {サービス名}` を実行する
    - もう一度 `tools/list` を要求する。`list_rules` を含む一覧が返らなければ、記載したものを残し、済んだ手順と止まった手順・`journalctl --user -u {サービス名}`・修正方法を示して止まる
 

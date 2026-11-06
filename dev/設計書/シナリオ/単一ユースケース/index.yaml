@@ -42,3 +42,5 @@ items:
     summary: MCP サーバーのツールで、サーバーを起動し直し、接続し直して確かめる
   - page: rule-injectを更新する.yaml
     summary: MCP サーバーのツールで、クローンへ上流の commit を取り込み、依存を入れ直して起動し直す
+  - page: 落ちていたMCPサーバーがセッションの開始時に起動される.yaml
+    summary: セッションの開始時に、応答しない MCP サーバーを systemd --user のユニットで起動し、`/mcp` で接続し直す案内を受け取る

@@ -10,11 +10,13 @@ import pytest
 from rule_inject.features.guidance import service
 from rule_inject.features.guidance.service import (
     BLOCKING_HEADER,
+    GUIDANCE_LIMIT,
     NON_BLOCKING_HEADER,
     READ_NOTE,
     READ_TOOL_NOTE,
     build_failure_notice,
     build_guidance,
+    build_server_start_notice,
 )
 from rule_inject.features.index.types import MatchedRule, ReadTool
 from rule_inject.shared.errors import IndexReadError
@@ -258,3 +260,13 @@ def test_build_search_guidance_when_read_tools() -> None:
         "- /r/a.md",
         '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}',
     ]
+
+
+def test_build_server_start_notice() -> None:
+    """サービス名と接続し直す方法を載せる（正常系）。"""
+    # 実行
+    notice = build_server_start_notice("rule-inject-ut")
+    # 検証
+    assert "rule-inject-ut" in notice
+    assert "/mcp" in notice
+    assert len(notice) <= GUIDANCE_LIMIT
