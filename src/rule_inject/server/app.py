@@ -150,9 +150,7 @@ def build_server(
 
     def get_server_status() -> CallToolResult:
         """サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返す。再起動の途中でも答える。"""
-        return admin_tools.get_server_status(
-            env=env, control=control, clone=clone, run=run_command
-        )
+        return admin_tools.get_server_status(env=env, control=control, clone=clone, run=run_command)
 
     def reload_settings(project_dir: str | None = None) -> CallToolResult:
         """設定ファイルを読み直し、読めたかと読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）を返す。project_dir を渡すと、そのプロジェクトで読む索引を返す。"""

@@ -111,7 +111,9 @@ def run_command(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise UpdateFailedError(f"{command} が上限の {timeout} 秒を過ぎたため打ち切りました") from exc
+        raise UpdateFailedError(
+            f"{command} が上限の {timeout} 秒を過ぎたため打ち切りました"
+        ) from exc
     except FileNotFoundError as exc:
         raise UpdateFailedError(f"{command} のコマンドが見つかりません") from exc
     return CommandResult(

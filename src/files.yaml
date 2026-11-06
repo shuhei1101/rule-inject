@@ -292,6 +292,24 @@ files:
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
         type: see_also
+  - path: rule_inject/server/admin_tools.py
+    name: サーバーの管理のツール
+    description: サーバー自身の状態の確認・設定の再読込・再起動・更新のツールの本体を受け持つ。サーバーの管理を MCP から扱う処理を読む・修正するときに開く。
+    tags:
+      - topic:MCPツール
+      - topic:MCPサーバー
+      - tool:mcp
+    related:
+      - to: dev/設計書/モジュール構成/server/admin_tools.py
+        type: implements
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの状態の確認.py
+        type: implements
+      - to: dev/設計書/インターフェース定義/MCPサーバー/設定の再読込.py
+        type: implements
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
+        type: implements
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの更新.py
+        type: implements
   - path: rule_inject/server/_format.py
     name: 応答の形式と長さの切り詰め
     description: ツールの応答を JSON か Markdown に整え、長いときは切り詰める。ツールの応答の見た目を変えるときに開く。
@@ -324,6 +342,25 @@ files:
       - to: dev/設計書/モジュール構成/server/check_tools.py
         type: implements
       - to: dev/設計書/インターフェース定義/MCPサーバー/索引のチェック.py
+        type: implements
+  - path: rule_inject/server/clone.py
+    name: クローンの操作
+    description: サーバーが動いているクローンのバージョン・commit・上流の取り込み・依存の入れ直し・移し替えの確かめを受け持つ。更新の git・uv の呼び方を読む・修正するときに開く。
+    tags:
+      - topic:MCPサーバー
+    related:
+      - to: dev/設計書/モジュール構成/server/clone.py
+        type: implements
+  - path: rule_inject/server/control.py
+    name: サーバーの稼働の状態
+    description: 処理中の呼び出しの数と再起動・更新の状態を持ち、再起動の停止を進める。再起動の待ちと断り方を読む・修正するときに開く。
+    tags:
+      - topic:MCPサーバー
+      - topic:起動
+    related:
+      - to: dev/設計書/モジュール構成/server/control.py
+        type: implements
+      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
         type: implements
   - path: rule_inject/server/dev_docs.py
     name: 使われているタグを引くクライアント

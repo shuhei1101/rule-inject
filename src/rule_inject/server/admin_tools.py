@@ -26,6 +26,7 @@ from rule_inject.server.types import (
     RestartResult,
     ServerStatusResult,
     UpdateResult,
+    UpdateState,
 )
 from rule_inject.shared.errors import SettingsReadError
 from rule_inject.shared.settings import PROJECT_DIR_ENV, Settings, config_path, load_settings
@@ -61,9 +62,7 @@ def get_server_status(
     return respond(result, "json")
 
 
-def reload_settings(
-    *, project_dir: str | None = None, env: Mapping[str, str]
-) -> CallToolResult:
+def reload_settings(*, project_dir: str | None = None, env: Mapping[str, str]) -> CallToolResult:
     """設定ファイルを読み直し、読めたかと読んだ値を返す。"""
     settings = _read_settings(project_dir, env)
     path = _read_config_path(env)
@@ -132,7 +131,7 @@ async def update_server(
 
 
 def _update_result(
-    state: str, before: str, after: str, steps: list[str], output: str
+    state: UpdateState, before: str, after: str, steps: list[str], output: str
 ) -> CallToolResult:
     """更新の応答を作る。"""
     result = UpdateResult(
