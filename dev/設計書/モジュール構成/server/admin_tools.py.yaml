@@ -1,0 +1,193 @@
+title: "MCP サーバー / サーバー / admin_tools.py"
+test_files:
+  - tests/unit/rule_inject/server/test_admin_tools.py
+functions:
+  - name: get_server_status
+    title: サーバーの状態の確認
+    container: server/admin_tools.py
+    usecase: MCPサーバーの状態を確認する
+    summary: インターフェース定義「サーバーの状態の確認」のツールの本体
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+      - name: control
+        type: ServerControl
+        required: true
+        passing: injected
+        description: サーバーの稼働の状態
+      - name: clone
+        type: Path
+        required: true
+        passing: injected
+        description: クローンの直下（`find_clone`）
+      - name: run
+        type: RunCommand
+        required: true
+        passing: injected
+        description: コマンドの実行
+    returns:
+      type: CallToolResult
+      description: '`respond(ServerStatusResult, "json")`'
+    process: |-
+      1. `env` から `CLAUDE_PROJECT_DIR` を除いて `load_settings` を呼び、読めれば `ConfigState(readable=True)`、`SettingsReadError` なら `ConfigState(readable=False, error="{path}: {reason}")` にする
+      2. `read_version(clone)` と `head_commit(clone, run=run)` を引く。`head_commit` の `UpdateFailedError`（打ち切り）は `commit=None` にする
+      3. `control` の `port`・`pid`・`started_at`・`restarting` と合わせて返す
+    unit_tests:
+      - name: test_get_server_status
+        case: 正常
+        summary: 稼働の状態とクローンを返す
+        condition: '`version.ini` を置いた一時フォルダ、`run` が commit を返す、読める設定ファイル'
+        mock: '`run`'
+        expected: '`version`・`commit`・`port`・`pid` が渡した値で、`config.readable` が真'
+      - name: test_get_server_status_when_settings_unreadable
+        case: 正常
+        summary: 設定ファイルが読めなくてもエラーにしない
+        condition: '`global` に知らないキーを持つ設定ファイル'
+        mock: '`run`'
+        expected: '`isError` でなく、`config.readable` が偽で `config.error` に場所と理由'
+  - name: reload_settings
+    title: 設定の再読込
+    container: server/admin_tools.py
+    usecase: MCPサーバーの設定を読み直す
+    summary: インターフェース定義「設定の再読込」のツールの本体
+    kind: 関数
+    scope: public
+    args:
+      - name: project_dir
+        type: str | None
+        required: false
+        default: None
+        passing: keyword
+        description: 読む索引を決めるプロジェクトの直下
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+    returns:
+      type: CallToolResult
+      description: '`respond(ReloadSettingsResult, "json")`'
+    process: |-
+      1. `project_dir` があれば `tools._project_settings(project_dir, env)`、無ければ `record_tools._record_settings(env)` で設定を読む（どちらも読めなければ `ToolError`）
+      2. `Settings` の `indexes`・`state_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url` と `tools._config_path(env)` を返す
+    exceptions:
+      - name: ToolError
+        condition: 設定ファイルが読めない、または `project_dir` が絶対パスでない
+        message: 設定ファイルの場所と理由、または絶対パスで渡す旨
+    unit_tests:
+      - name: test_reload_settings
+        case: 正常
+        summary: 読んだ値を返す
+        condition: '`global.indexes` に 2 つ、`log_retention_days: 7` の設定ファイル'
+        mock: なし
+        expected: '`indexes` が 2 つ、`log_retention_days` が 7'
+      - name: test_reload_settings_when_unreadable
+        case: 異常
+        summary: 読めない設定ファイル
+        condition: '`global` に知らないキー'
+        mock: なし
+        expected: '`ToolError` に設定ファイルの場所'
+        exception: 設定ファイルが読めない、または `project_dir` が絶対パスでない
+  - name: restart_server
+    title: サーバーの再起動
+    container: server/admin_tools.py
+    usecase: MCPサーバーを再起動する
+    summary: インターフェース定義「サーバーの再起動」のツールの本体（`async def`）
+    kind: 関数
+    scope: public
+    args:
+      - name: control
+        type: ServerControl
+        required: true
+        passing: injected
+        description: サーバーの稼働の状態
+    returns:
+      type: CallToolResult
+      description: '`respond(RestartResult, "json")`'
+    process: '1. `control.begin_restart()` を呼び、`pid` と `restarting=True` を返す。停止は `begin_restart` が作ったタスクが、この応答を返し終えた後に進める'
+    exceptions:
+      - name: RestartInProgressError
+        condition: 再起動の途中
+        message: 再起動の途中である旨
+    unit_tests:
+      - name: test_restart_server
+        case: 正常
+        summary: 再起動を始める
+        condition: イベントループの中で呼ぶ
+        mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+        expected: '`restarting` が真で、`control.restarting` が真'
+  - name: update_server
+    title: サーバーの更新
+    container: server/admin_tools.py
+    usecase: rule-injectを更新する
+    summary: インターフェース定義「サーバーの更新」のツールの本体（`async def`）
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: injected
+        description: サーバーを起動した環境変数
+      - name: control
+        type: ServerControl
+        required: true
+        passing: injected
+        description: サーバーの稼働の状態
+      - name: clone
+        type: Path
+        required: true
+        passing: injected
+        description: クローンの直下
+      - name: run
+        type: RunCommand
+        required: true
+        passing: injected
+        description: コマンドの実行
+    returns:
+      type: CallToolResult
+      description: '`respond(UpdateResult, "json")`'
+    process: |-
+      1. `control.begin_update()` を呼ぶ。以降は `try` の `finally` で `control.end_update()` を呼ぶ
+      2. `asyncio.to_thread(pull, clone, run=run)` で取り込む。`pulled` が偽なら `state="up_to_date"` を返す
+      3. `asyncio.to_thread` で `sync_dependencies(clone, env, run=run)` と `plan_migrations(clone, env, run=run)` を順に呼ぶ
+      4. `migrations` が空でなければ、`state="migration_required"`・`steps`・`global-setup` の案内を `output` に載せて返す
+      5. 空なら `control.begin_restart()` を呼び、`state="restarting"` を返す
+    exceptions:
+      - name: UpdateFailedError
+        condition: '`pull`・`sync_dependencies`・`plan_migrations` が送出する'
+        message: インターフェース定義「サーバーの更新」の例外の notes のとおり
+      - name: RestartInProgressError
+        condition: 再起動の途中か、別の更新が動いている
+        message: 再起動の途中か、別の更新が動いている旨
+    unit_tests:
+      - name: test_update_server
+        case: 正常
+        summary: 取り込んで再起動を始める
+        condition: '`pull` が `pulled=True`、`plan_migrations` が空を返す'
+        mock: '`pull`・`sync_dependencies`・`plan_migrations`（`monkeypatch`）、`uvicorn.Server` の代わり'
+        expected: '`state` が `restarting` で、`control.restarting` が真'
+      - name: test_update_server_when_up_to_date
+        case: 正常
+        summary: 新しい commit が無ければ何もしない
+        condition: '`pull` が `pulled=False`'
+        mock: '`pull`・`sync_dependencies`'
+        expected: '`state` が `up_to_date` で、`sync_dependencies` が呼ばれず、`control.restarting` が偽'
+      - name: test_update_server_when_migration_required
+        case: 正常
+        summary: 移し替えが要れば再起動しない
+        condition: '`plan_migrations` が 1 件を返す'
+        mock: '`pull`・`sync_dependencies`・`plan_migrations`'
+        expected: '`state` が `migration_required`、`output` に `global-setup`、`control.restarting` が偽'
+      - name: test_update_server_when_failed
+        case: 異常
+        summary: 失敗したら更新の印を下ろす
+        condition: '`sync_dependencies` が `UpdateFailedError` を送出する'
+        mock: '`pull`・`sync_dependencies`'
+        expected: '`UpdateFailedError` が送出され、続けて `begin_update` を呼べる'
+        exception: '`pull`・`sync_dependencies`・`plan_migrations` が送出する'

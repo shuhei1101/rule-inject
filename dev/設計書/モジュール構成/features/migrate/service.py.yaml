@@ -36,7 +36,7 @@ functions:
       2. `ruamel.yaml` で読み取り、最上位の `version` を取り出す（`_load`）
       3. `version` が `_tool_version` より新しければ `SettingsNewerError` を送出する
       4. `MIGRATIONS` の順に、`applies(data)` が真の手順の `DESCRIPTION` を並べる
-      5. `version` が `_tool_version` と違えば、`version` を更新する手順を末尾に加えて返却する
+      5. 4 の並びを `migrations` にし、`version` が `_tool_version` と違えば、`version` を更新する手順を末尾に加えた並びを `steps` にして返却する
     exceptions:
       - name: SettingsNewerError
         condition: '`version` が `_tool_version` より新しい'
@@ -50,7 +50,7 @@ functions:
         summary: 古い設定の手順を示す
         condition: '`version` が無く `global.server_port: 9000` を持つファイル'
         mock: なし（一時ファイル）
-        expected: '`steps` がポートの移し替えと `version` の更新の 2 件、`source_version` が `None`、ファイルが変わっていない'
+        expected: '`steps` がポートの移し替えと `version` の更新の 2 件、`migrations` がポートの移し替えの 1 件、`source_version` が `None`、ファイルが変わっていない'
       - name: test_plan_migration_when_missing
         case: 正常
         summary: ファイルが無ければ手順は無い
@@ -68,7 +68,7 @@ functions:
         summary: 手順が無くても古いバージョンなら更新する
         condition: '`version: 0.0.1` で `global.server_port` が無いファイル'
         mock: なし（一時ファイル）
-        expected: '`steps` が `version` の更新の 1 件'
+        expected: '`steps` が `version` の更新の 1 件で、`migrations` が空'
       - name: test_plan_migration_when_newer
         case: 異常
         summary: 設定のほうが新しい

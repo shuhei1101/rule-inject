@@ -1,0 +1,386 @@
+title: "MCP サーバー / サーバー / clone.py"
+test_files:
+  - tests/unit/rule_inject/server/test_clone.py
+constants:
+  - name: VERSION_FILE
+    title: バージョンのファイル名
+    container: server/clone.py
+    summary: クローンの直下のバージョンのファイル
+    value: '`"version.ini"`'
+  - name: GIT_TIMEOUT
+    title: git のコマンドの打ち切り
+    container: server/clone.py
+    summary: 非機能要件「更新のコマンドの打ち切り」の git の各コマンドの決定値（秒）
+    value: '`49`'
+  - name: UV_SYNC_TIMEOUT
+    title: uv sync の打ち切り
+    container: server/clone.py
+    summary: 非機能要件「更新のコマンドの打ち切り」の `uv sync` の決定値（秒）
+    value: '`864`'
+  - name: MIGRATE_PLAN_TIMEOUT
+    title: migrate --plan の打ち切り
+    container: server/clone.py
+    summary: 非機能要件「更新のコマンドの打ち切り」の `migrate --plan` の決定値（秒）
+    value: '`57`'
+  - name: STDERR_TAIL_LINES
+    title: 標準エラーの末尾の行数
+    container: server/clone.py
+    summary: 失敗したコマンドの標準エラーから、エラーに載せる末尾の行数。git・uv は原因を最後の数行に書く
+    value: '`20`'
+function_types:
+  - name: RunCommand
+    title: コマンドの実行
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    summary: コマンドを上限つきで実行し、終了コードと出力を返す。実装は `run_command`。結合テストが差し替える
+    args:
+      - name: args
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: コマンドと引数
+      - name: cwd
+        type: Path
+        required: true
+        passing: keyword
+        description: 実行するフォルダ
+      - name: timeout
+        type: float
+        required: true
+        passing: keyword
+        description: 打ち切りの上限（秒）
+      - name: env
+        type: Mapping[str, str] | None
+        required: false
+        default: None
+        passing: keyword
+        description: 子プロセスの環境変数。`None` はサーバーの環境のまま
+    returns:
+      type: CommandResult
+      description: 終了コードと出力
+data_models:
+  - name: CommandResult
+    title: コマンドの結果
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    role: DTO
+    summary: '`RunCommand` の結果（`@dataclass(frozen=True, slots=True, kw_only=True)`）'
+    properties:
+      - name: returncode
+        type: int
+        description: 終了コード
+      - name: stdout
+        type: str
+        description: 標準出力
+      - name: stderr
+        type: str
+        description: 標準エラー
+  - name: PullOutcome
+    title: 取り込みの結果
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    role: DTO
+    summary: '`pull` の結果'
+    properties:
+      - name: before
+        type: str
+        description: 取り込む前の `HEAD`
+      - name: after
+        type: str
+        description: 取り込んだ後の `HEAD`。取り込まなかったときは `before` と同じ
+      - name: pulled
+        type: bool
+        description: 取り込んだか。偽なら `up_to_date`
+classes:
+  - name: UpdateFailedError
+    title: 更新の失敗
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    role: 例外
+    summary: 'インターフェース定義「サーバーの更新」の `UpdateFailedError`。`ToolError` を継ぐため、ツールの結果は `isError: true` になる'
+    kind: クラス
+    inherits: ToolError
+functions:
+  - name: find_clone
+    title: クローンの場所
+    container: server/clone.py
+    usecase: MCPサーバーの状態を確認する
+    summary: パッケージの場所から上へ辿り、`VERSION_FILE` を持つ最初のフォルダを返す
+    kind: 関数
+    scope: public
+    args:
+      - name: start
+        type: Path
+        required: true
+        passing: positional
+        description: 辿り始める場所（`rule_inject` パッケージの `__file__` のフォルダ）
+    returns:
+      type: Path
+      description: クローンの直下
+    process: 1. `start` とその親を順に見て、`VERSION_FILE` を持つ最初のフォルダを返す。無ければ `FileNotFoundError`（辿り始めた場所）を送出する
+    exceptions:
+      - name: FileNotFoundError
+        condition: どの親にも `VERSION_FILE` が無い
+        message: 辿り始めた場所
+    unit_tests:
+      - name: test_find_clone
+        case: 正常
+        summary: version.ini を持つフォルダを返す
+        condition: '一時フォルダに `version.ini` と `src/rule_inject/server/` を置き、`src/rule_inject/server` から辿る'
+        mock: なし
+        expected: 一時フォルダ
+  - name: read_version
+    title: バージョンの読み取り
+    container: server/clone.py
+    usecase: MCPサーバーの状態を確認する
+    summary: クローンの `VERSION_FILE` の 1 行目を返す
+    kind: 関数
+    scope: public
+    args:
+      - name: clone
+        type: Path
+        required: true
+        passing: positional
+        description: クローンの直下
+    returns:
+      type: str | None
+      description: 前後の空白を除いた 1 行目。ファイルが無いときは `None`
+    unit_tests:
+      - name: test_read_version_when_missing
+        case: 正常
+        summary: ファイルが無ければ None
+        condition: 空の一時フォルダ
+        mock: なし
+        expected: '`None`'
+  - name: head_commit
+    title: HEAD の commit
+    container: server/clone.py
+    usecase: MCPサーバーの状態を確認する
+    summary: '`git rev-parse HEAD` の結果を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: clone
+        type: Path
+        required: true
+        passing: positional
+        description: クローンの直下
+      - name: run
+        type: RunCommand
+        required: true
+        passing: keyword
+        description: コマンドの実行
+    returns:
+      type: str | None
+      description: commit。0 以外の終了コード・打ち切り・git が無いときは `None`
+    unit_tests:
+      - name: test_head_commit_when_not_git
+        case: 正常
+        summary: git のリポジトリでなければ None
+        condition: '`run` が終了コード 128 を返す'
+        mock: '`run`'
+        expected: '`None`'
+  - name: run_command
+    title: コマンドの実行
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    summary: '`RunCommand` の実装。`subprocess.run` を `timeout` つきで呼ぶ（外部コマンドとの境界のアダプター）'
+    kind: 関数
+    scope: public
+    args:
+      - name: args
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: コマンドと引数
+      - name: cwd
+        type: Path
+        required: true
+        passing: keyword
+        description: 実行するフォルダ
+      - name: timeout
+        type: float
+        required: true
+        passing: keyword
+        description: 打ち切りの上限（秒）
+      - name: env
+        type: Mapping[str, str] | None
+        required: false
+        default: None
+        passing: keyword
+        description: 子プロセスの環境変数
+    returns:
+      type: CommandResult
+      description: 終了コードと出力
+    process: '1. `subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, check=False)` を `CommandResult` にして返す。`TimeoutExpired` は `UpdateFailedError`（コマンドと上限の秒数）、`FileNotFoundError` は `UpdateFailedError`（コマンドが見つからない旨）'
+    exceptions:
+      - name: UpdateFailedError
+        condition: 上限を超えた、またはコマンドが見つからない
+        message: コマンドと、上限の秒数か見つからない旨
+    unit_tests:
+      - name: test_run_command_when_timeout
+        case: 異常
+        summary: 上限を超えたら打ち切る
+        condition: '`[sys.executable, "-c", "import time; time.sleep(5)"]` を `timeout=0.2` で呼ぶ'
+        mock: なし
+        expected: '`UpdateFailedError` に上限の秒数'
+        exception: 上限を超えた、またはコマンドが見つからない
+  - name: pull
+    title: 上流の取り込み
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    summary: commit していない変更を確かめ、上流を取得し、前後を確かめて fast-forward で取り込む
+    kind: 関数
+    scope: public
+    side_effects: クローンの作業ツリーを上流の commit へ進める
+    args:
+      - name: clone
+        type: Path
+        required: true
+        passing: positional
+        description: クローンの直下
+      - name: run
+        type: RunCommand
+        required: true
+        passing: keyword
+        description: コマンドの実行
+    returns:
+      type: PullOutcome
+      description: 取り込みの前後の commit と、取り込んだか
+    process: |-
+      1. `git status --porcelain --untracked-files=no` が空でなければ `UpdateFailedError`（変更のあるファイル）
+      2. `git rev-parse --abbrev-ref --symbolic-full-name @{u}` が失敗すれば `UpdateFailedError`（上流のブランチが無い）
+      3. `git fetch` の後、`HEAD` と `@{u}` の commit を引く
+      4. 同じか、`git merge-base --is-ancestor @{u} HEAD` が 0 なら `pulled=False` を返す
+      5. `git merge-base --is-ancestor HEAD @{u}` が 0 でなければ `UpdateFailedError`（fast-forward できない・両方の commit）
+      6. `git merge --ff-only @{u}` の後の `HEAD` を `after` にして `pulled=True` を返す
+      git の各コマンドは `GIT_TIMEOUT` で呼び、0 以外の終了コード（4・5 の祖先の確かめを除く）は `_failed` で `UpdateFailedError` にする
+    exceptions:
+      - name: UpdateFailedError
+        condition: commit していない変更がある・上流のブランチが無い・fast-forward できない・コマンドが失敗した
+        message: インターフェース定義「サーバーの更新」の例外の notes のとおり
+    unit_tests:
+      - name: test_pull
+        case: 正常
+        summary: 上流の commit を取り込む
+        condition: 一時フォルダの bare の上流と、そこから取ったクローン。上流に commit を 1 つ積む
+        mock: なし（`run_command`）
+        expected: '`pulled` が真で、`after` が上流の commit、クローンの `HEAD` が `after`'
+      - name: test_pull_when_ahead
+        case: 正常
+        summary: クローンが先に進んでいるだけなら取り込まない
+        condition: クローンにだけ commit を 1 つ積む
+        mock: なし（`run_command`）
+        expected: '`pulled` が偽で、`before` と `after` がクローンの commit'
+      - name: test_pull_when_diverged
+        case: 異常
+        summary: 分かれていれば断る
+        condition: クローンと上流のそれぞれに別の commit を積む
+        mock: なし（`run_command`）
+        expected: '`UpdateFailedError` に両方の commit。クローンの `HEAD` が変わらない'
+        exception: commit していない変更がある・上流のブランチが無い・fast-forward できない・コマンドが失敗した
+      - name: test_pull_when_dirty
+        case: 異常
+        summary: commit していない変更があれば取得もしない
+        condition: 追跡しているファイルを書き換える
+        mock: '`run`（呼ばれたコマンドを記録する `run_command` の包み）'
+        expected: '`UpdateFailedError` にファイル名。`git fetch` が呼ばれていない'
+        exception: commit していない変更がある・上流のブランチが無い・fast-forward できない・コマンドが失敗した
+  - name: sync_dependencies
+    title: 依存の入れ直し
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    summary: クローンで `uv sync --extra server` を `UV_SYNC_TIMEOUT` で実行する
+    kind: 関数
+    scope: public
+    side_effects: クローンの `.venv` を書き換える
+    args:
+      - name: clone
+        type: Path
+        required: true
+        passing: positional
+        description: クローンの直下
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+      - name: run
+        type: RunCommand
+        required: true
+        passing: keyword
+        description: コマンドの実行
+    returns:
+      type: None
+      description: なし
+    process: '1. `uv` を `env["UV"]`、無ければ `shutil.which("uv")` から引く。どちらも無ければ `UpdateFailedError`。0 以外の終了コードは `_failed`'
+    exceptions:
+      - name: UpdateFailedError
+        condition: '`uv` が無い・0 以外の終了コード・打ち切り'
+        message: コマンド・終了コード・標準エラーの末尾
+  - name: plan_migrations
+    title: 移し替えの手順の確かめ
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    summary: 'クローンの `.venv` の Python で `migrate --plan` を実行し、`migrations` を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: clone
+        type: Path
+        required: true
+        passing: positional
+        description: クローンの直下
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数（`RULE_INJECT_CONFIG` を引き継ぐ）
+      - name: run
+        type: RunCommand
+        required: true
+        passing: keyword
+        description: コマンドの実行
+    returns:
+      type: list[str]
+      description: '`version` の更新を除いた移し替えの手順。空なら要らない'
+    process: '1. `[{clone}/.venv/bin/python, "-m", "rule_inject.migrate", "--plan"]` を `MIGRATE_PLAN_TIMEOUT` と `env` で呼ぶ。0 以外の終了コード（6 を含む）は `_failed`。標準出力の JSON の `migrations` を返す'
+    exceptions:
+      - name: UpdateFailedError
+        condition: 0 以外の終了コード・打ち切り・JSON に `migrations` が無い
+        message: コマンド・終了コード・標準エラーの末尾
+    unit_tests:
+      - name: test_plan_migrations
+        case: 正常
+        summary: migrations を返す
+        condition: '`run` が `{"steps": ["version を 0.2.5 にする"], "migrations": []}` を返す'
+        mock: '`run`'
+        expected: 空のリスト
+      - name: test_plan_migrations_when_newer
+        case: 異常
+        summary: 設定がツールより新しい
+        condition: '`run` が終了コード 6 を返す'
+        mock: '`run`'
+        expected: '`UpdateFailedError` に終了コード 6'
+        exception: 0 以外の終了コード・打ち切り・JSON に `migrations` が無い
+  - name: _failed
+    title: コマンドの失敗
+    container: server/clone.py
+    usecase: rule-injectを更新する
+    summary: 失敗したコマンドを `UpdateFailedError` にする
+    kind: 関数
+    scope: internal
+    args:
+      - name: args
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: コマンドと引数
+      - name: result
+        type: CommandResult
+        required: true
+        passing: positional
+        description: コマンドの結果
+    returns:
+      type: UpdateFailedError
+      description: コマンド・終了コード・標準エラーの末尾 `STDERR_TAIL_LINES` 行を持つ誤り

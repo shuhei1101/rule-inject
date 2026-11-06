@@ -1,0 +1,228 @@
+title: "MCP サーバー / サーバー / control.py"
+test_files:
+  - tests/unit/rule_inject/server/test_control.py
+constants:
+  - name: STOP_DRAIN_TIMEOUT
+    title: 再起動の停止の待ち
+    container: server/control.py
+    summary: 非機能要件「再起動の停止の待ち」の決定値（秒）
+    value: '`356`'
+  - name: GRACEFUL_SHUTDOWN_TIMEOUT
+    title: 待ち受けを閉じた後の接続の待ち
+    container: server/control.py
+    summary: 非機能要件「待ち受けを閉じた後の接続の待ち」の決定値（秒）。`uvicorn.Config` の `timeout_graceful_shutdown`
+    value: '`3`'
+  - name: DRAIN_POLL_INTERVAL
+    title: 処理中の呼び出しを見る間隔
+    container: server/control.py
+    summary: 停止の待ちで処理中の呼び出しの数を見直す間隔（秒）。uvicorn が接続の終わりを見る間隔と同じ
+    value: '`0.1`'
+classes:
+  - name: RestartInProgressError
+    title: 再起動の途中の誤り
+    container: server/control.py
+    usecase: MCPサーバーを再起動する
+    role: 例外
+    summary: '再起動を始めた後のツールの呼び出しを断る。`ToolError` を継ぐため、ツールの結果は `isError: true` になる'
+    kind: クラス
+    inherits: ToolError
+  - name: ServerControl
+    title: サーバーの稼働の状態
+    container: server/control.py
+    usecase: MCPサーバーを再起動する
+    summary: 待ち受けのポート・起動した時刻・処理中の呼び出しの数・再起動を始めたかを持ち、再起動の停止を進める。起動の入口が 1 つ作ってツールへ渡す（モジュール変数に状態を持たない）
+    kind: クラス
+    properties:
+      - name: port
+        type: int
+        access: 公開
+        description: 待ち受けているポート
+      - name: pid
+        type: int
+        access: 公開
+        description: '`os.getpid()`'
+      - name: started_at
+        type: datetime
+        access: 公開
+        description: このプロセスのイメージで作った時刻（UTC）
+      - name: _lock
+        type: threading.Lock
+        access: 内部 (_)
+        description: '`_in_flight`・`_restarting`・`_updating` の読み書きを 1 つずつ行うロック（同期のツールはスレッドで動く）'
+      - name: _in_flight
+        type: int
+        access: 内部 (_)
+        description: '`guard` を通った処理中のツールの呼び出しの数'
+      - name: _restarting
+        type: bool
+        access: 内部 (_)
+        description: 再起動を始めたか
+      - name: _updating
+        type: bool
+        access: 内部 (_)
+        description: 更新が動いているか
+      - name: _server
+        type: uvicorn.Server | None
+        access: 内部 (_)
+        description: '`attach` で受けた待ち受けのサーバー'
+      - name: _stop_task
+        type: asyncio.Task[None] | None
+        access: 内部 (_)
+        description: 停止を進めるタスク（参照を持って捨てられないようにする）
+    methods:
+      - name: attach
+        title: 待ち受けのサーバーの受け取り
+        summary: 停止に使う `uvicorn.Server` を受け取る
+        kind: メソッド
+        scope: public
+        args:
+          - name: server
+            type: uvicorn.Server
+            required: true
+            passing: positional
+            description: 起動の入口が作ったサーバー
+        returns:
+          type: None
+          description: なし
+      - name: restarting
+        title: 再起動を始めたか
+        summary: '`_restarting` を返す（`@property`。`get_server_status` の `restarting`）'
+        kind: メソッド
+        scope: public
+        returns:
+          type: bool
+          description: 再起動を始めたか
+      - name: restart_requested
+        title: 起動し直すか
+        summary: '`serve` が返った後に起動し直すかを返す（`@property`）。`_restarting` が真なら真'
+        kind: メソッド
+        scope: public
+        returns:
+          type: bool
+          description: 再起動を始めていれば真（Ctrl+C・SIGTERM で終わったときは偽）
+      - name: guard
+        title: 呼び出しの見張り
+        summary: ツールの関数を包み、再起動の途中なら `RestartInProgressError` で断り、それ以外は処理中の数を増やして呼び、終わったら減らす
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        args:
+          - name: function
+            type: Callable[..., Any]
+            required: true
+            passing: positional
+            description: 包むツールの関数（同期か `async def`）
+        returns:
+          type: Callable[..., Any]
+          description: '同じ引数の Schema を持つ関数（`functools.wraps`）。`async def` は `async def` で包む'
+        process: |-
+          1. `_lock` の中で、`_restarting` なら `RestartInProgressError` を送出し、そうでなければ `_in_flight` を 1 増やす
+          2. 包んだ関数を呼ぶ（`async def` は await する）
+          3. 例外の有無によらず、`_lock` の中で `_in_flight` を 1 減らす
+        exceptions:
+          - name: RestartInProgressError
+            condition: 再起動を始めた後に呼ばれた
+            message: 再起動の途中である旨と、接続し直してから `get_server_status` で確かめる旨
+        unit_tests:
+          - name: test_guard
+            case: 正常
+            summary: 呼び出しの間だけ処理中の数が増える
+            condition: 包んだ関数の中で処理中の数を読む同期の関数と `async def` の関数
+            mock: なし
+            expected: 関数の中で 1、呼んだ後に 0。戻り値がそのまま返る
+          - name: test_guard_when_restarting
+            case: 異常
+            summary: 再起動を始めた後は断る
+            condition: '`begin_restart` の後に包んだ関数を呼ぶ'
+            mock: なし
+            expected: '`RestartInProgressError` で、包んだ関数が呼ばれない'
+            exception: 再起動を始めた後に呼ばれた
+          - name: test_guard_when_raises
+            case: 異常
+            summary: 包んだ関数が例外を送出しても処理中の数を戻す
+            condition: '`ToolError` を送出する関数'
+            mock: なし
+            expected: '`ToolError` がそのまま送出され、処理中の数が 0'
+            exception: 再起動を始めた後に呼ばれた
+      - name: begin_update
+        title: 更新の開始
+        summary: 再起動の途中か別の更新が動いていれば断り、`_updating` を立てる
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        returns:
+          type: None
+          description: なし
+        exceptions:
+          - name: RestartInProgressError
+            condition: '`_restarting` か `_updating` が真'
+            message: 再起動の途中か、別の更新が動いている旨
+        unit_tests:
+          - name: test_begin_update_when_updating
+            case: 異常
+            summary: 更新の途中の 2 回目を断る
+            condition: '`begin_update` を 2 回呼ぶ'
+            mock: なし
+            expected: 2 回目が `RestartInProgressError`
+            exception: '`_restarting` か `_updating` が真'
+      - name: end_update
+        title: 更新の終わり
+        summary: '`_updating` を下ろす'
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        returns:
+          type: None
+          description: なし
+      - name: begin_restart
+        title: 再起動の開始
+        summary: 再起動の途中なら断り、`_restarting` を立てて停止を進めるタスクを作る
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        returns:
+          type: None
+          description: なし
+        process: |-
+          1. `_lock` の中で `_restarting` が真なら `RestartInProgressError` を送出し、偽なら立てる
+          2. `asyncio.get_running_loop().create_task(self._drain_and_stop())` を `_stop_task` に持つ
+        exceptions:
+          - name: RestartInProgressError
+            condition: '`_restarting` が真'
+            message: 再起動の途中である旨
+        unit_tests:
+          - name: test_begin_restart_when_restarting
+            case: 異常
+            summary: 再起動の途中の 2 回目を断る
+            condition: イベントループの中で `begin_restart` を 2 回呼ぶ
+            mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+            expected: 2 回目が `RestartInProgressError` で、作ったタスクが 1 つ
+            exception: '`_restarting` が真'
+      - name: _drain_and_stop
+        title: 停止を進める
+        summary: 処理中の呼び出しの終わりを `STOP_DRAIN_TIMEOUT` まで待ち、`_server.should_exit` を立てる
+        kind: メソッド
+        scope: internal
+        returns:
+          type: None
+          description: なし
+        process: |-
+          1. `async with asyncio.timeout(STOP_DRAIN_TIMEOUT)` の中で、`_in_flight` が 0 になるまで `DRAIN_POLL_INTERVAL` ごとに見直す。上限を過ぎたら待つのをやめる（`TimeoutError` を捕まえ、残った数をログに書く）
+          2. `_server.should_exit = True` を立てる。`uvicorn.Server.serve` は待ち受けを閉じ、残った接続を `GRACEFUL_SHUTDOWN_TIMEOUT` で切って返る
+        unit_tests:
+          - name: test_drain_and_stop
+            case: 正常
+            summary: 処理中の呼び出しが終わってから止める
+            condition: '`guard` で包んだ、0.3 秒かかる `async def` を呼んでいる間に `begin_restart`'
+            mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+            expected: 呼び出しが終わる前は `should_exit` が偽、終わった後に真
+          - name: test_drain_and_stop_when_timeout
+            case: 正常
+            summary: 上限を過ぎたら待つのをやめて止める
+            condition: '`STOP_DRAIN_TIMEOUT` を 0.2 に差し替え、終わらない呼び出しを処理中にしたまま `begin_restart`'
+            mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+            expected: 約 0.2 秒で `should_exit` が真
+notes:
+  停止の 2 段: |-
+    処理中のツールの呼び出しは `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
+    SSE のストリームは終わらないため、1 段目の上限を `timeout_graceful_shutdown` に渡すと再起動のたびに上限まで待つことになる。
