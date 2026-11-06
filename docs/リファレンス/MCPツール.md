@@ -7,7 +7,7 @@
 
 ## 共通
 
-`get_read_records`・`delete_read_records` 以外の全てのツールが `project_dir` を受ける。
+`get_read_records`・`delete_read_records` と管理のツール（`get_server_status`・`reload_settings`・`restart_server`・`update_server`）以外の全てのツールが `project_dir` を受ける。`reload_settings` は `project_dir` を省いてもよい。
 フックの `CLAUDE_PROJECT_DIR` に当たる値で、`projects[].match` を当てて索引を決め、`projects[].indexes` の相対パスを解く（[設定ファイル](./設定ファイル.md)）。
 
 | 引数 | 型 | 必須 | 既定値 | 内容 |
@@ -15,12 +15,13 @@
 | `project_dir` | 文字列 | ✅ | - | プロジェクトの直下。絶対パス |
 | `format` | `markdown` / `json` | - | `markdown` | 応答の形式。`json` は structuredContent と text に同じ JSON を入れる。`markdown` は同じ項目を Markdown の表で text に入れる |
 
-`format` は編集のツールと `delete_read_records` にはない。
+`format` は編集のツールと `delete_read_records` と管理のツールにはない。
 
 次のときは、ツールの結果が `isError: true` になり、text に理由が入る。
 
 - `project_dir` が絶対パスでない
 - 呼び出しの時点で設定ファイルが読めない（場所と理由を返す。既定値では動かさない）
+- 再起動か更新の再起動を始めた後で、まだ待ち受けを閉じていない（`get_server_status` だけは受け付ける）
 
 読む索引と `rule` の変数参照は、フックと同じ規則で決まる。
 変数参照は、サーバーを起動した環境の環境変数で展開する。
@@ -316,3 +317,106 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 
 - `session_id` が記録ファイル名に使えない形式（受けた値と、形式が誤っている旨を返す）
 - 呼び出しの時点で設定ファイルが読めない（場所と理由を返す）
+
+## get_server_status
+
+サーバー自身の待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返す。
+引数は無い。
+再起動の途中でも受け付ける。
+
+<!-- table: data -->
+
+| 応答のキー | 型 | 内容 |
+| --- | --- | --- |
+| `success` | 真偽値 | 状態を取れたか。設定ファイルが読めなくても `true` |
+| `output` | 文字列 | バージョン・commit・ポートの 1 行 |
+| `port` | 整数 | 待ち受けているポート。起動時に読んだ `RULE_INJECT_PORT`（無ければ既定のポート） |
+| `pid` | 整数 | サーバーのプロセス ID。再起動の後も変わらない |
+| `started_at` | 文字列 | 待ち受けを始めた時刻（UTC の ISO 8601）。再起動のたびに新しくなる |
+| `version` | 文字列 / `null` | クローンの `version.ini` の値 |
+| `clone` | 文字列 | サーバーが動いているクローンの直下 |
+| `commit` | 文字列 / `null` | クローンの `HEAD` の commit。git のリポジトリでないときは `null` |
+| `config.path` | 文字列 / `null` | 読んだ設定ファイルの場所。既定のパスにファイルが無く読まなかったときは `null` |
+| `config.readable` | 真偽値 | 設定ファイルを読めたか |
+| `config.error` | 文字列 / `null` | 読めなかった理由（場所と理由） |
+| `restarting` | 真偽値 | 再起動を始めた後で、まだ待ち受けを閉じていないか |
+
+<!-- /table -->
+
+## reload_settings
+
+設定ファイルを読み直し、読めたかと、読んだ値を返す。
+設定ファイルはどのツールも呼び出しのたびに読み直しているため、直した値は次の呼び出しから効く。
+待ち受けのポートは起動したプロセスの環境変数だけから読むため返さない（変えたときは、サーバーを起動する環境の `RULE_INJECT_PORT` を変えて起動し直す）。
+
+| 引数 | 型 | 必須 | 既定値 | 内容 |
+| --- | --- | --- | --- | --- |
+| `project_dir` | 文字列 | - | 省くと `global.indexes`（無ければユーザーの既定の索引）だけを返す | 読む索引を決めるプロジェクトの直下。絶対パス |
+
+<!-- table: data -->
+
+| 応答のキー | 型 | 内容 |
+| --- | --- | --- |
+| `success` | 真偽値 | 読めたか |
+| `output` | 文字列 | 設定ファイルの場所と読む索引の数の 1 行 |
+| `config_path` | 文字列 / `null` | 読んだ設定ファイルの場所 |
+| `indexes` | 文字列のリスト | 読む索引の場所。フックが読む順 |
+| `state_dir` | 文字列 | 既読の記録とログを置く記録フォルダ |
+| `record_retention_days` | 整数 | 既読の記録の保持期間（日） |
+| `log_retention_days` | 整数 | ログの保持日数 |
+| `dev_docs_url` | 文字列 | `check_indexes` が問い合わせる dev-docs の接続先 |
+
+<!-- /table -->
+
+設定ファイルが読めないときは `isError: true` になり、場所と理由を返す。
+待ち受けは止めない。
+
+## restart_server
+
+応答を返した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま起動し直す。
+引数は無い。
+再起動の結果は、接続し直してから `get_server_status` の `started_at` で確かめる。
+
+| 応答のキー | 型 | 内容 |
+| --- | --- | --- |
+| `success` | 真偽値 | 再起動を始めたか |
+| `output` | 文字列 | 再起動を始めた旨の 1 行 |
+| `pid` | 整数 | 起動し直した後も変わらないプロセス ID |
+| `restarting` | 真偽値 | 常に `true` |
+
+- 処理中の呼び出しを待つのは最大 356 秒。待つ間も待ち受けを続け、`get_server_status` 以外のツールの呼び出しは断る
+- 待ち受けを閉じた後に残った接続は 3 秒で切る。Claude Code の接続は切れるので、`/mcp` で接続し直す
+- 環境変数は起動時の値を引き継ぐ。`RULE_INJECT_PORT`・`RULE_INJECT_CONFIG` を変えても、この再起動では変わらない
+- 再起動の途中か、`update_server` が動いている間は `isError: true` になる
+
+## update_server
+
+サーバーのクローンで上流の commit を fast-forward で取り込み、依存を入れ直し、設定の移し替えが要らなければ再起動する。
+引数は無い。
+
+<!-- table: data -->
+
+| 応答のキー | 型 | 内容 |
+| --- | --- | --- |
+| `success` | 真偽値 | 更新を終えたか |
+| `output` | 文字列 | 結果の 1 行。`migration_required` のときは `global-setup` の実行の案内を含む |
+| `state` | `up_to_date` / `restarting` / `migration_required` | 何も変えなかった・取り込んで再起動を始めた・取り込んだが移し替えが要るため再起動しなかった |
+| `before` | 文字列 | 更新の前の `HEAD` |
+| `after` | 文字列 | 更新の後の `HEAD` |
+| `steps` | 文字列のリスト | 当てる移し替えの手順。`migration_required` 以外は空 |
+
+<!-- /table -->
+
+- 順に、commit していない変更の確認・`git fetch`・前後の確認・`git merge --ff-only`・`uv sync --extra server`・`python -m rule_inject.migrate --plan` を実行する
+- クローンが上流と同じか、上流より先に進んでいるだけのときは `up_to_date` で、何も変えない
+- 設定ファイルの `version` だけが古いときは移し替えが要らないものとして再起動する。設定ファイルは書き換えない
+- `migration_required` のときは、`/rule-inject:global-setup` で手順を確かめてから当て、続けて `restart_server` を呼ぶ
+- コマンドの上限は、git の各コマンド 49 秒・`uv sync` 864 秒・`migrate --plan` 57 秒
+
+次のときは `isError: true` になり、再起動しない。
+
+- 追跡しているファイルに commit していない変更がある（変更のあるファイルを返し、取得もしない）
+- クローンと上流が分かれていて fast-forward できない（両方の commit を返し、クローンに触らない）
+- クローンのブランチに上流が設定されていない
+- コマンドが失敗したか上限を超えた（コマンド・終了コード・標準エラーの末尾と、その時点の `HEAD` を返す）
+- 再起動の途中か、別の `update_server` が動いている
