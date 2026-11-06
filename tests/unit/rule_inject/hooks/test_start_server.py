@@ -59,7 +59,12 @@ def test_start_server(
     # 実行
     output = start_server(payload, env)
     # 検証
-    assert output == {"additionalContext": build_server_start_notice("rule-inject-ut")}
+    assert output == {
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": build_server_start_notice("rule-inject-ut"),
+        }
+    }
     assert requested == ["rule-inject-ut"]
 
 
