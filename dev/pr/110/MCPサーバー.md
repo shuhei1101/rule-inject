@@ -53,7 +53,7 @@
 | --- | --- | --- | --- | --- |
 | `tests/integration/server/test_get_server_status.py` | 全実行 | 新規 | ✅ | 3 テスト pass |
 | `tests/integration/server/test_reload_settings.py` | 全実行 | 新規 | ✅ | 3 テスト pass |
-| `tests/integration/server/test_restart_server.py` | 全実行 | 新規 | ✅ | 3 テスト pass。処理中の呼び出しは、応答を 4 秒遅らせた偽の dev-docs への `check_indexes` で作る |
+| `tests/integration/server/test_restart_server.py` | 全実行 | 新規 | ✅ | 3 テスト pass。処理中の呼び出しは、応答を遅らせた偽の dev-docs への `check_indexes` で作る。遅れを 4 秒から 10 秒にした後も 3 テスト pass（ログは置いていない） |
 | `tests/integration/server/test_update_server.py` | 全実行 | 新規 | ✅ | 6 テスト pass。作業ブランチから作った一時フォルダの上流とクローンで、実際に取り込み・`uv sync`・再起動する |
 | `tests/integration/server/test_server_start.py` | 全実行 | 変更 | ✅ | ツールの一覧の期待値を 11 に修正 |
 | `tests/integration/server/conftest.py` | - | 変更 | ✅ | 辿る時間を 0 秒にしたサーバーの起動を `control`・`clone` を渡す形に修正し、偽の dev-docs の遅れ・再起動を待つ関数・クローンのサーバーを追加 |
