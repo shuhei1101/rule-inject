@@ -212,7 +212,7 @@ def test_error_when_start_failed(
     assert len(logs) == 1
     assert logs[0]["component"] == "start_server"
     assert logs[0]["operation"] == "start_unit"
-    assert "5" in logs[0]["reason"]
+    assert logs[0]["reason"] == "終了コード 5"
     assert completed.returncode == 0
 
 
