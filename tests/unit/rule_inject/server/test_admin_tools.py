@@ -95,7 +95,9 @@ def test_get_server_status(
     # 準備
     env = server_env("global:\n  indexes: []\n")
     # 実行
-    result = get_server_status(env=env, control=control, clone=clone_dir, run=_commit_run(COMMIT_BEFORE))
+    result = get_server_status(
+        env=env, control=control, clone=clone_dir, run=_commit_run(COMMIT_BEFORE)
+    )
     # 検証
     content = result.structured_content
     assert result.is_error is False
@@ -117,7 +119,9 @@ def test_get_server_status_when_settings_unreadable(
     # 準備
     env = server_env("global:\n  unknown_key: 1\n")
     # 実行
-    result = get_server_status(env=env, control=control, clone=clone_dir, run=_commit_run(COMMIT_BEFORE))
+    result = get_server_status(
+        env=env, control=control, clone=clone_dir, run=_commit_run(COMMIT_BEFORE)
+    )
     # 検証
     content = result.structured_content
     assert result.is_error is False
@@ -153,7 +157,7 @@ def test_reload_settings_when_unreadable(server_env: Callable[..., dict[str, str
     # 準備
     env = server_env("global:\n  unknown_key: 1\n")
     # 実行・検証
-    with pytest.raises(ToolError, match="settings.yaml"):
+    with pytest.raises(ToolError, match=r"settings\.yaml"):
         reload_settings(env=env)
 
 
@@ -215,7 +219,9 @@ def test_update_server_when_migration_required(
     from rule_inject.server.admin_tools import update_server
 
     # 準備
-    stub_update(pulled=True, migrations=["global.server_port を削除し、env の RULE_INJECT_PORT へ移す"])
+    stub_update(
+        pulled=True, migrations=["global.server_port を削除し、env の RULE_INJECT_PORT へ移す"]
+    )
     # 実行
     result = asyncio.run(
         update_server(env={}, control=control, clone=clone_dir, run=_commit_run(COMMIT_AFTER))

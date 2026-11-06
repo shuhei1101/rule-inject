@@ -37,7 +37,9 @@ def repos(tmp_path: Path) -> Repos:
     upstream = tmp_path / "upstream.git"
     pusher = tmp_path / "pusher"
     clone = tmp_path / "clone"
-    subprocess.run(["git", "init", "--bare", "-b", "main", str(upstream)], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "init", "--bare", "-b", "main", str(upstream)], check=True, capture_output=True
+    )
     subprocess.run(["git", "clone", str(upstream), str(pusher)], check=True, capture_output=True)
     (pusher / "version.ini").write_text("v0.2.4\n", encoding="utf-8")
     _git(pusher, "add", "version.ini")
@@ -142,7 +144,7 @@ def test_run_command_when_timeout(tmp_path: Path) -> None:
     # 準備
     args = [sys.executable, "-c", "import time; time.sleep(5)"]
     # 実行・検証
-    with pytest.raises(UpdateFailedError, match="0.2"):
+    with pytest.raises(UpdateFailedError, match=r"0\.2"):
         run_command(args, cwd=tmp_path, timeout=0.2)
 
 
@@ -200,7 +202,7 @@ def test_pull_when_dirty(
     (repos.clone / "version.ini").write_text("changed\n", encoding="utf-8")
     run, calls = recording_run
     # 実行・検証
-    with pytest.raises(UpdateFailedError, match="version.ini"):
+    with pytest.raises(UpdateFailedError, match=r"version\.ini"):
         pull(repos.clone, run=run)
     assert ["git", "fetch"] not in calls
 
