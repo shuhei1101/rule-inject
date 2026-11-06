@@ -40,6 +40,18 @@ files:
     related:
       - to: dev/設計書/シナリオ/単一ユースケース/索引のエントリを編集する
         type: see_also
+  - path: e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
+    name: 落ちていたMCPサーバーがセッションの開始時に起動されるの E2E テスト
+    description: 実の Claude Code を起動し、セッションの開始でサーバーのユニットが起動され、`/mcp` で接続し直す案内が記録に載るかを確かめる E2E テスト。サーバーの起動の補助を修正したときに流す。
+    tags:
+      - topic:フック
+      - topic:MCPサーバー
+      - topic:起動
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: dev/設計書/シナリオ/単一ユースケース/落ちていたMCPサーバーがセッションの開始時に起動される
+        type: see_also
   - path: e2e/単一ユースケース/test_ended_session_records_cleaned.py
     name: 「終わったセッションの既読の記録が掃除される」の E2E テスト
     description: 「終わったセッションの既読の記録が掃除される」のシナリオを、実の Claude Code を起動して通して確かめる E2E テスト。「終わったセッションの既読の記録が掃除される」を修正したときに流す。
