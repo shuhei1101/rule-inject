@@ -165,6 +165,10 @@ constraints:
   - item: 設定ファイルの読み直し
     constraint: 起動時に読み、待ち受けのポート以外は各ツールの呼び出しのたびに読み直す
     notes: 索引と設定ファイルを直した結果を、再起動せずに次のツールの呼び出しに効かせる
+  - item: 待ち受けの方法
+    constraint: '`MCPServer.streamable_http_app()` のアプリを、`timeout_graceful_shutdown` を渡した `uvicorn.Config` の `uvicorn.Server` で待ち受ける'
+    decided_by: dev/設計書/非機能要件/非機能要件#requirements[待ち受けを閉じた後の接続の待ち]
+    notes: '`MCPServer.run` は `uvicorn.Server` と `timeout_graceful_shutdown` を外へ出さないため使わない。インターフェース定義「サーバーの再起動」が `should_exit` で閉じる。Ctrl+C・SIGTERM でも、SSE のストリームを持つ接続は同じ上限で切って終わる'
   - item: 状態
     constraint: ツールの呼び出しをまたぐ状態をプロセスに持たない
     notes: 1 プロセスを複数のセッションが共有するため

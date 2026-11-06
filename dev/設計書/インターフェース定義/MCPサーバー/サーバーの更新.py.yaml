@@ -25,7 +25,7 @@ flows:
         IF->>GC: git merge --ff-only
         IF->>GC: uv sync --extra server
         IF->>GC: python -m rule_inject.migrate --plan
-        GC-->>IF: steps が空
+        GC-->>IF: migrations が空
         IF-->>C: state restarting・before・after
         IF->>IF: サーバーの再起動と同じ順で起動し直す
     expected:
@@ -70,7 +70,7 @@ flows:
         C->>IF: 引数なし
         IF->>GC: git merge --ff-only と uv sync
         IF->>GC: python -m rule_inject.migrate --plan
-        GC-->>IF: steps あり
+        GC-->>IF: migrations あり
         IF-->>C: state migration_required・steps
     expected:
       - '`state` が `migration_required` で、`steps` に移し替えの手順が載り、`output` に `global-setup` の実行の案内がある'
@@ -91,8 +91,8 @@ flows:
         participant GC as クローン
 
         C->>IF: 引数なし
-        IF->>GC: HEAD が上流の祖先かを確かめる
-        GC-->>IF: 祖先でない
+        IF->>GC: HEAD と上流の commit の前後を確かめる
+        GC-->>IF: どちらも相手の祖先でない
         IF-->>C: isError: true（fast-forward できない）
     expected:
       - '結果が `isError: true` で、fast-forward できない旨と両方の commit が載っている'
@@ -169,8 +169,8 @@ response:
     description: 更新の後の `HEAD`
   - name: steps
     type: list[str]
-    description: '`migrate --plan` が返した移し替えの手順'
-    notes: '`migration_required` 以外は空'
+    description: '`migrate --plan` が返した移し替えの手順（`migrations`）'
+    notes: '`migration_required` 以外は空。`version` の更新だけの手順は含めない'
 response_example: |-
   ```json
   {
@@ -190,7 +190,7 @@ exceptions:
     condition: '`git status --porcelain --untracked-files=no` が空でない'
     notes: '`isError: true`。変更のあるファイルを返し、取得もしない'
   - name: UpdateFailedError（fast-forward できない）
-    condition: '`HEAD` が上流のブランチ（`@{u}`）の祖先でない'
+    condition: '`HEAD` と上流のブランチ（`@{u}`）が分かれている（どちらも相手の祖先でない）'
     notes: '`isError: true`。両方の commit を返し、クローンに触らない'
   - name: UpdateFailedError（上流のブランチが無い）
     condition: クローンのブランチに上流が設定されていない、またはクローンが git のリポジトリでない
@@ -206,14 +206,16 @@ constraints:
   - item: クローン
     constraint: インターフェース定義「サーバーの状態の確認」の `clone`
   - item: コマンドの順
-    constraint: '`git status` → `git fetch` → 祖先の確かめ（`git merge-base --is-ancestor HEAD @{u}`）→ `git merge --ff-only @{u}` → `uv sync --extra server` → `{clone}/.venv/bin/python -m rule_inject.migrate --plan`'
+    constraint: '`git status` → `git fetch` → 前後の確かめ → `git merge --ff-only @{u}` → `uv sync --extra server` → `{clone}/.venv/bin/python -m rule_inject.migrate --plan`'
     notes: '`uv` は環境変数 `UV`（`uv run` が置く）、無ければ `PATH` から引く'
+  - item: 前後の確かめ
+    constraint: '`HEAD` と `@{u}` が同じか、`@{u}` が `HEAD` の祖先（`git merge-base --is-ancestor @{u} HEAD`。クローンが上流より先に進んでいるだけ）なら `up_to_date` を返し、クローンに触らない。`HEAD` が `@{u}` の祖先なら取り込む。どちらでもなければ `UpdateFailedError`（fast-forward できない）'
   - item: 打ち切りの上限
     constraint: git の各コマンド・`uv sync`・`migrate --plan` のそれぞれに、非機能要件の決定値の上限を置く
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[更新のコマンドの打ち切り]
   - item: 移し替えの確かめ
-    constraint: '`migrate --plan` はサーバーと同じ環境（`RULE_INJECT_CONFIG`）で実行し、標準出力の JSON の `steps` が空でなければ要るとする'
-    notes: 設定ファイルは書き換えない。移し替えは利用者が `global-setup` で確認してから当てる
+    constraint: '`migrate --plan` はサーバーと同じ環境（`RULE_INJECT_CONFIG`）で実行し、標準出力の JSON の `migrations`（`version` の更新を除いた、当たった移し替えの手順）が空でなければ要るとする'
+    notes: '`steps` は設定の `version` がツールと違えば `version を … にする` を必ず含むため、判定に使わない。`version` だけが古い設定はサーバーが読めるため、再起動する。設定ファイルは書き換えない。移し替えは利用者が `global-setup` で確認してから当てる'
   - item: 再起動
     constraint: インターフェース定義「サーバーの再起動」の制約と同じ
   - item: 認可

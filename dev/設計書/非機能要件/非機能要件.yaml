@@ -227,7 +227,7 @@ requirements:
     unit: 秒
     rationale: '`restart_server`・`update_server` が、待ち受けを閉じる前に処理中のツールの呼び出しの終わりを待つ上限。規約『資源の値の決め方』の「入れ子の待ち」で、待つ相手のうち最も長い `check_indexes` の内側の待ちの合計に余裕を足す。内側の待ち以外の処理の実測が無いため、余裕は規約の既定の 50% を仮に置き、測る作業を残す（内訳）'
     measurement: 辿るファイルの多いプロジェクトの `check_indexes` を呼んだまま `restart_server` を呼び、`check_indexes` の応答が返ってから待ち受けを閉じることと、`check_indexes` の内側の待ち以外の処理の時間を 1,000 回測る
-    overflow: 上限を超えたら残りの呼び出しを切って待ち受けを閉じ、起動し直す（インターフェース定義「サーバーの再起動」の制約「停止の待ち」）。切られた呼び出しは接続の失敗になる
+    overflow: 上限を超えたら待つのをやめて待ち受けを閉じ、残った呼び出しの接続は非機能要件「待ち受けを閉じた後の接続の待ち」で切って起動し直す（インターフェース定義「サーバーの再起動」の制約「停止の待ち」「待ち受けの閉じ方」）。切られた呼び出しは接続の失敗になる
     breakdown:
       - part: プロジェクトのファイルを辿る時間
         value: 30 秒
@@ -241,6 +241,20 @@ requirements:
       - part: 決定値
         value: 356 秒
         notes: 237 + 118.5 = 355.5 を秒に切り上げ
+    status: planned
+    introduced:
+      pr: 110
+  - name: 待ち受けを閉じた後の接続の待ち
+    english_name: graceful_shutdown_timeout
+    category: 可用性
+    external_constraint: uvicorn は `timeout_graceful_shutdown` が無い（既定 `None`）と、待ち受けを閉じた後に全ての接続が閉じるまで待つ。Streamable HTTP のクライアントは `GET /mcp` の SSE のストリームを開いたままにする
+    source_kind: 実行基盤の制限
+    source: https://www.uvicorn.org/settings/#timeouts
+    value: '3'
+    unit: 秒
+    rationale: 再起動・更新・Ctrl+C・SIGTERM で待ち受けを閉じた後、残った接続を切るまでの上限（`uvicorn.Config` の `timeout_graceful_shutdown`）。再起動・更新では処理中のツールの呼び出しを非機能要件「再起動の停止の待ち」で待ち終えているため、残るのは終わらない SSE のストリームと、送り終えていない応答だけになる。自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の 10 倍にする。ループバックで応答を送り終える時間の実測が無いため、仮に 3 秒を置き、測る作業を残す
+    measurement: 再起動の応答を返した直後に待ち受けを閉じ、接続が全て閉じるか切られるまでの時間を、SSE のストリームを開いたクライアントがある状態と無い状態で 1,000 回測る
+    overflow: 上限を超えた接続は uvicorn が切り、停止を続ける。SSE のストリームを持つクライアントは接続し直す
     status: planned
     introduced:
       pr: 110
