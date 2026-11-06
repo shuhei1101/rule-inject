@@ -146,9 +146,7 @@ def _resolve_server_service(config: str, global_values: Mapping[str, object]) ->
     service = str(written)
     # systemctl の引数に渡すため、英数字・`_`・`-` の 1〜64 文字だけを許す
     if not SERVICE_NAME_PATTERN.fullmatch(service):
-        raise _value_error(
-            config, "global.server_service", service, "1〜64 文字の英数字・_・-"
-        )
+        raise _value_error(config, "global.server_service", service, "1〜64 文字の英数字・_・-")
     return service
 
 
