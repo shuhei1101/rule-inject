@@ -499,3 +499,55 @@ def test_backup_dir() -> None:
     result = backup_dir({"XDG_CONFIG_HOME": "/x"})
     # 検証
     assert result == Path("/x/rule-inject/bk")
+
+
+@pytest.mark.parametrize(
+    ("global_text", "expected"),
+    [
+        pytest.param(
+            "global:\n  server_service: rule-inject-ut\n",
+            "rule-inject-ut",
+            id="from_config",
+        ),
+        pytest.param(
+            "global:\n  log_retention_days: 5\n",
+            "rule-inject",
+            id="default",
+        ),
+    ],
+)
+def test_load_settings_when_server_service(
+    make_settings: Callable[..., Path],
+    global_text: str,
+    expected: str,
+) -> None:
+    """サービス名を設定ファイルから読み、無ければ既定にする（正常系）。"""
+    # 準備
+    config = make_settings(global_text)
+    env = {"RULE_INJECT_CONFIG": str(config)}
+    # 実行
+    settings = load_settings(env)
+    # 検証
+    assert settings.server_service == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param('"a b"', id="space"),
+        pytest.param("x.service", id="suffix"),
+        pytest.param('""', id="empty"),
+        pytest.param("a" * 65, id="too_long"),
+    ],
+)
+def test_load_settings_when_invalid_server_service(
+    make_settings: Callable[..., Path],
+    value: str,
+) -> None:
+    """許す値の外のサービス名を拒む（異常系）。"""
+    # 準備
+    config = make_settings(f"global:\n  server_service: {value}\n")
+    env = {"RULE_INJECT_CONFIG": str(config)}
+    # 実行・検証
+    with pytest.raises(SettingsReadError, match="global.server_service"):
+        load_settings(env)
