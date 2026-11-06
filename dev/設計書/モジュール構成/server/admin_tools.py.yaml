@@ -155,7 +155,7 @@ functions:
     process: |-
       1. `control.begin_update()` を呼ぶ。以降は `try` の `finally` で `control.end_update()` を呼ぶ
       2. `asyncio.to_thread(pull, clone, run=run)` で取り込む。`pulled` が偽なら `state="up_to_date"` を返す
-      3. `asyncio.to_thread` で `sync_dependencies(clone, env, run=run)` と `plan_migrations(clone, env, run=run)` を順に呼ぶ
+      3. `asyncio.to_thread` で `sync_dependencies(clone, env, run=run)` と `plan_migrations(clone, env, run=run)` を順に呼ぶ。どちらかの `UpdateFailedError` は、文面に取り込んだ commit（`outcome.after`）を添えて送出し直す
       4. `migrations` が空でなければ、`state="migration_required"`・`steps`・`global-setup` の案内を `output` に載せて返す
       5. 空なら `control.finish_update_and_restart()` を呼び、`state="restarting"` を返す（更新の印を下ろすのと再起動の開始を 1 回で行い、その間に別のセッションの再起動が割り込まない）
     exceptions:
