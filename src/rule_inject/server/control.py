@@ -148,7 +148,8 @@ class ServerControl:
         try:
             async with asyncio.timeout(STOP_DRAIN_TIMEOUT):
                 # 処理中の呼び出しが残っている間は待つ（新しい呼び出しは guard が断る）
-                while self._in_flight > 0:
+                # 数は同期のツールのスレッドからも減るため、asyncio.Event でなく間隔を置いて見直す
+                while self._in_flight > 0:  # noqa: ASYNC110
                     await asyncio.sleep(DRAIN_POLL_INTERVAL)
         except TimeoutError:
             # 上限を過ぎた: 待つのをやめ、残った呼び出しは uvicorn が上限で切る
