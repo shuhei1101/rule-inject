@@ -13,6 +13,7 @@ from mcp.types import CallToolResult
 from rule_inject.server._format import respond
 from rule_inject.server.clone import (
     RunCommand,
+    UpdateFailedError,
     head_commit,
     plan_migrations,
     pull,
@@ -104,8 +105,12 @@ async def update_server(
             return _update_result(
                 "up_to_date", outcome.before, outcome.after, [], "最新のため何も変えませんでした"
             )
-        await asyncio.to_thread(sync_dependencies, clone, env, run=run)
-        migrations = await asyncio.to_thread(plan_migrations, clone, env, run=run)
+        # 取り込んだ後の失敗は、クローンが進んだことが分かるよう取り込んだ commit を添える
+        try:
+            await asyncio.to_thread(sync_dependencies, clone, env, run=run)
+            migrations = await asyncio.to_thread(plan_migrations, clone, env, run=run)
+        except UpdateFailedError as exc:
+            raise UpdateFailedError(f"{exc}（取り込んだ commit: {outcome.after}）") from exc
         # 移し替えが要る: 再起動せず、手順と global-setup を案内する
         if migrations:
             return _update_result(
