@@ -13,3 +13,5 @@ items:
     summary: Bash のコマンドから読むファイルのパスを取り出す
   - page: migrate/
     summary: 端末の設定ファイルの移し替え
+  - page: server_start/
+    summary: 応答しない MCP サーバーのユニットへの起動の依頼

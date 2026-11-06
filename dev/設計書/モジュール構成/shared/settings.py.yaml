@@ -62,6 +62,16 @@ constants:
     container: shared/settings.py
     summary: 設定ファイルのバックアップを配置するフォルダの、設定フォルダからのパス
     value: '`rule-inject/bk`'
+  - name: DEFAULT_SERVER_SERVICE
+    title: サーバーのサービス名の既定
+    container: shared/settings.py
+    summary: 設定ファイルに `global.server_service` が無いときのサービス名
+    value: '`"rule-inject"`'
+  - name: SERVICE_NAME_PATTERN
+    title: サービス名の書き方
+    container: shared/settings.py
+    summary: '`global.server_service` に許す値'
+    value: '`re.compile(r"[A-Za-z0-9_-]{1,64}")`（`fullmatch` で照合する）'
 functions:
   - name: load_settings
     title: 設定の読み込み
@@ -86,6 +96,7 @@ functions:
          - `global.indexes`・`global.state_dir`・`global.log_dir` の値は、`~` を展開して絶対パスでなければ誤り
          - `global.record_retention_days`・`global.log_retention_days` は 10 進の整数として読み、1 以上でなければ誤り
          - `global.dev_docs_url` は `DEV_DOCS_URL_SCHEMES` のどれかで始まらなければ誤り
+         - `global.server_service` は `SERVICE_NAME_PATTERN` に全体が当たらなければ誤り
          - `projects` の要素が `match` を持たなければ誤り
       4. `CLAUDE_PROJECT_DIR` があれば、`_matches_project(match, CLAUDE_PROJECT_DIR)` が真の `projects` の要素を並びの順に集める（無ければどの要素も当てない）
       5. 索引の並びを作る
@@ -93,7 +104,7 @@ functions:
          - 続けて、当たった要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
          - 当たった要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
          - 当たった要素とプロジェクトの既定の置き場所から並べた索引を `project_indexes` にも入れる
-      6. `state_dir` は `STATE_DIR_ENV` があれば `default_state_dir(env)`、無ければ `global` の値（`~` を展開）か `default_state_dir(env)`。`log_dir` は `global` の値（`~` を展開）か `default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（1024〜65535 の整数でなければ誤り）、無ければ `DEFAULT_SERVER_PORT`。dev-docs の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`
+      6. `state_dir` は `STATE_DIR_ENV` があれば `default_state_dir(env)`、無ければ `global` の値（`~` を展開）か `default_state_dir(env)`。`log_dir` は `global` の値（`~` を展開）か `default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（1024〜65535 の整数でなければ誤り）、無ければ `DEFAULT_SERVER_PORT`。dev-docs の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`。サービス名は `global` の値か、無ければ `DEFAULT_SERVER_SERVICE`
       7. `Settings` を返す
     exceptions:
       - name: SettingsReadError
@@ -241,6 +252,19 @@ functions:
         condition: '`global.state_dir: /a` の設定ファイルと `RULE_INJECT_STATE_DIR=/b`'
         mock: なし
         expected: '`state_dir` が `/b`、`log_dir` が `/b/logs`'
+      - name: test_load_settings_when_server_service
+        case: 正常
+        summary: サービス名を設定ファイルから読み、無ければ既定にする
+        condition: '`global.server_service: rule-inject-ut` と、キー無し（パラメータ展開）'
+        mock: なし
+        expected: '`server_service` が `rule-inject-ut` と `rule-inject`'
+      - name: test_load_settings_when_invalid_server_service
+        case: 異常
+        summary: 許す値の外のサービス名を拒む
+        condition: '`global.server_service` が `a b`・`x.service`・空文字・65 文字（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason に `global.server_service` と値）
+        exception: 3 の値の誤り
   - name: _matches_project
     title: プロジェクトの当て方
     container: shared/settings.py
@@ -364,10 +388,13 @@ data_models:
         description: ログの保持日数（1 以上）
       - name: server_port
         type: int
-        description: MCP サーバーが待ち受けるポート（1024〜65535）。フックは使わない
+        description: MCP サーバーが待ち受けるポート（1024〜65535）。フックはサーバーの起動の補助だけが使う
       - name: project_indexes
         type: tuple[str, ...]
         description: '`indexes` のうち、当たった `projects` の要素の `indexes` とプロジェクトの既定の置き場所から入ったもの（`indexes` と同じ順）。フックは使わない'
       - name: dev_docs_url
         type: str
         description: '`check_indexes` が使われているタグを引く dev-docs の MCP サーバーの URL。フックは使わない'
+      - name: server_service
+        type: str
+        description: 応答しない MCP サーバーを起動する systemd --user のユニットのサービス名（`SERVICE_NAME_PATTERN`）

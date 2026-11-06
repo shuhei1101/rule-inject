@@ -70,3 +70,17 @@ classes:
     summary: 索引が YAML として読めない・エントリの位置が無い・バージョンが合わない・書いた後の索引がチェックに通らない。`path` は索引の場所、`reason` はツールの結果にそのまま載せる文言
     kind: クラス
     inherits: RuleInjectError
+  - name: UnitCheckError
+    title: ユニットを確認できない
+    container: shared/errors.py
+    usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
+    summary: '`systemctl --user is-enabled` が打ち切りの待ちを過ぎた。`path` は実行したコマンド'
+    kind: クラス
+    inherits: RuleInjectError
+  - name: UnitStartError
+    title: ユニットの起動を依頼できない
+    container: shared/errors.py
+    usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
+    summary: '`systemctl --user start --no-block` が 0 以外で終わったか、打ち切りの待ちを過ぎた。`path` は実行したコマンド'
+    kind: クラス
+    inherits: RuleInjectError

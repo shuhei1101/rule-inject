@@ -17,5 +17,6 @@ Claude Code が呼ぶフックの入口と共通の実行処理の物理ファ�
 | [discard_read.py](./discard_read.py.yaml) | 既読の記録の破棄（PreCompact） |
 | [sweep_read.py](./sweep_read.py.yaml) | 既読の記録の掃除（SessionStart） |
 | [work_rules.py](./work_rules.py.yaml) | 作業の決まりの注入（SessionStart） |
+| [start_server.py](./start_server.py.yaml) | サーバーの起動の補助（SessionStart） |
 
 <!-- /table -->

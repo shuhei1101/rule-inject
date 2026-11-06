@@ -19,3 +19,5 @@ items:
     summary: 既読の記録の掃除（SessionStart）
   - page: work_rules.py.yaml
     summary: 作業の決まりの注入（SessionStart）
+  - page: start_server.py.yaml
+    summary: サーバーの起動の補助（SessionStart）

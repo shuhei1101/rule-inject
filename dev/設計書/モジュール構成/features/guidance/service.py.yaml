@@ -44,6 +44,11 @@ constants:
     container: features/guidance/service.py
     summary: 場所の行の下に置く行の頭
     value: '`"  ツール: "`'
+  - name: SERVER_START_NOTICE
+    title: サーバーの起動の案内
+    container: features/guidance/service.py
+    summary: サーバーの起動の補助が起動を依頼したときに載せる文面（`{service}` にサービス名を入れる）
+    value: '`rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {service} へ起動を依頼しました。サーバーが待ち受けを始めるまで数十秒かかります。このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に接続し直すと使用できます。`'
 functions:
   - name: build_guidance
     title: 案内文の組み立て
@@ -241,3 +246,26 @@ functions:
         condition: '`mcp__docs__search_docs` と、`sections` を先に書いた `{"sections": ["命名"], "filter": {"field": "id"}}`。別に `args` が空。別に `args` が `{"filter": {"field": "id"}}`・`optional_args` が `{"sections": ["命名"]}`'
         mock: なし
         expected: '`  ツール: mcp__docs__search_docs {"sections": ["命名"], "filter": {"field": "id"}}` と `  ツール: mcp__docs__search_docs {}` と `  ツール: mcp__docs__search_docs {"filter": {"field": "id"}}（省略可: {"sections": ["命名"]}）`'
+  - name: build_server_start_notice
+    title: サーバーの起動の案内の組み立て
+    container: features/guidance/service.py
+    usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
+    summary: '`SERVER_START_NOTICE` にサービス名を入れた文面を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: service
+        type: str
+        required: true
+        passing: positional
+        description: 起動を依頼したユニットのサービス名
+    returns:
+      type: str
+      description: '`SERVER_START_NOTICE.format(service=service)`'
+    unit_tests:
+      - name: test_build_server_start_notice
+        case: 正常
+        summary: サービス名と接続し直す方法を載せる
+        condition: '`service` が `rule-inject-ut`'
+        mock: なし
+        expected: '`rule-inject-ut` と `/mcp` を含み、`GUIDANCE_LIMIT` 以内'

@@ -264,10 +264,13 @@ exceptions:
     notes: フックの中で捕まえ、`is-enabled` ならログへ `check_unit`、`start` なら `start_unit` を書いて終了コード 0 で終える
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ。`RULE_INJECT_PORT` が許す値の外'
-    notes: フックの中で捕まえ、応答も確かめずに何もせず、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える。設定ファイルの場所と理由は、操作の前にルール案内が載せる
+    notes: '`systemctl` の呼び出しで出た FileNotFoundError（`systemctl` が見つからない）はこの行に当てず、ログに書かずに何もしない。設定ファイルが読めないときは、フックの中で捕まえ、応答も確かめずに何もせず、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える。設定ファイルの場所と理由は、操作の前にルール案内が載せる'
   - name: Exception（想定外の例外）
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
+  - name: TimeoutError（応答の確認の待ちを過ぎる）
+    condition: ポートへの接続が非機能要件「サーバーの応答の確認の待ち」を過ぎた
+    notes: 応答しないものとして扱い、ログに書かずにユニットの確認へ進む
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
