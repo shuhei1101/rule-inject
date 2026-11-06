@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable
 from typing import Any
 
@@ -9,9 +10,11 @@ import pytest
 
 from rule_inject.features.guidance import build_server_start_notice
 from rule_inject.features.server_start import UnitStart
-from rule_inject.hooks import start_server as hook_module
 from rule_inject.hooks.start_server import start_server
 from rule_inject.shared.errors import UnitCheckError, UnitStartError
+
+# パッケージ `rule_inject.hooks` は同じ名前の関数を公開するため、モジュールは import_module で取る
+hook_module = importlib.import_module("rule_inject.hooks.start_server")
 
 
 @pytest.fixture
