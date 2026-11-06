@@ -19,7 +19,12 @@ def test_main_when_plan(
     """手順を JSON で書く（正常系）。"""
     # 準備
     result = MigrationResult(
-        source_version=None, target_version="1.2.3", steps=("手順",), backup=None, env={}
+        source_version=None,
+        target_version="1.2.3",
+        steps=("手順", "version を 1.2.3 にする"),
+        migrations=("手順",),
+        backup=None,
+        env={},
     )
     monkeypatch.setattr(sys, "argv", ["migrate", "--plan"])
     monkeypatch.setattr(entry, "plan_migration", lambda _path: result)
@@ -29,7 +34,8 @@ def test_main_when_plan(
     assert json.loads(capsys.readouterr().out) == {
         "from": None,
         "to": "1.2.3",
-        "steps": ["手順"],
+        "steps": ["手順", "version を 1.2.3 にする"],
+        "migrations": ["手順"],
         "backup": None,
         "env": {},
     }
