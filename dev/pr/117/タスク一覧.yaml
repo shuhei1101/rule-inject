@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-08T21:14:15.384108+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: '#52 の 反映作業/index.yaml の 説明・確認方法'
+    updated_by: planner
+    updated_at: '2026-11-08T21:18:30.421919+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: 反映作業のスクリプトは tests の対象外で、dry-run.log で確かめる

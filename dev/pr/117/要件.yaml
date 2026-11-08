@@ -2,7 +2,9 @@ docs:
   - page: dev/pr/52/反映作業/index.yaml
     new: false
     change: 利用者の設定ファイルへの移行の説明・確認方法を、settings.yaml が既にある端末では env の旧キーを削除するだけにする内容へ書き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-08T21:18:28.407998+00:00'
 scope_out:
   - item: global-setup で env の RULE_INJECT_INDEXES_USER を削除する処理（Issue の対策の候補の 2 つ目）
     reason: 反映作業のスクリプトの修正（候補の 1 つ目）で、この端末に残った旧キーを削除できる。プラグインは RULE_INJECT_INDEXES_USER を参照しないため、残っていても振る舞いは変わらない
