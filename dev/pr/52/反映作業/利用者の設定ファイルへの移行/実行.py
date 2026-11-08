@@ -25,6 +25,8 @@ from _migration import (
     collect_values,
     list_targets,
     migrated,
+    missing_values,
+    read_existing_global,
     read_json,
     render_json,
     render_settings,
@@ -35,11 +37,13 @@ CONFIG_STEP = "settings.yaml の作成"
 
 
 def _already_migrated() -> bool:
-    """settings.yaml があり、settings.json のどれかが RULE_INJECT_CONFIG でそれを指しているか。"""
+    """settings.yaml があり、settings.json のどれかが RULE_INJECT_CONFIG でそれを指しているか、バックアップを持つか。"""
     if not CONFIG_PATH.is_file():
         return False
-    pointed = [read_json(path).get("env", {}).get(CONFIG_ENV) for path in settings_files()]
-    return str(CONFIG_PATH) in pointed
+    files = settings_files()
+    pointed = [read_json(path).get("env", {}).get(CONFIG_ENV) for path in files]
+    # 既にあった settings.yaml へ移した端末は RULE_INJECT_CONFIG を持たないため、バックアップでも判定する
+    return str(CONFIG_PATH) in pointed or any(backup_path(path).is_file() for path in files)
 
 
 def _diff(before: str, after: str, before_name: str, after_name: str) -> str:
@@ -71,11 +75,15 @@ def _write_verified(path: Path, content: str, verify: str) -> None:
         temp.unlink(missing_ok=True)
 
 
-def _check_prerequisites(targets: list[Target], settings_text: str) -> None:
+def _check_prerequisites(targets: list[Target], values: dict[str, str], settings_text: str) -> None:
     """既存の settings.yaml・バックアップと計画が食い違っていれば止める。"""
-    # 利用者が置いた別の内容の settings.yaml は上書きしない
+    # 利用者が置いた別の内容の settings.yaml は上書きしない。env の値が入っていなければ止める
     if CONFIG_PATH.exists() and CONFIG_PATH.read_text(encoding="utf-8") != settings_text:
-        raise MigrationError(f"{CONFIG_PATH} が既にあり、移す内容と異なります")
+        missing = missing_values(values, read_existing_global())
+        if missing:
+            raise MigrationError(
+                f"{CONFIG_PATH} が既にあり、次の値が global に入っていません: {', '.join(missing)}"
+            )
     for target in targets:
         # 前のバックアップを上書きすると元に戻せなくなる
         if backup_path(target.path).exists():
@@ -88,9 +96,9 @@ def _apply_settings(settings_text: str) -> None:
     _write_verified(CONFIG_PATH, settings_text, settings_text)
 
 
-def _apply_target(target: Target, original: str, new_text: str) -> None:
+def _apply_target(target: Target, original: str, new_text: str, *, add_config: bool) -> None:
     """settings.json をバックアップしてから書き換える。"""
-    if json.loads(new_text) != migrated(target.data):
+    if json.loads(new_text) != migrated(target.data, add_config=add_config):
         raise MigrationError(f"{target.path} の新しい内容が JSON として計画と一致しません")
     backup = backup_path(target.path)
     shutil.copy2(target.path, backup)
@@ -116,8 +124,9 @@ def main() -> int:
                 print(f"{CONFIG_STEP}: skipped")
                 return 0
             raise MigrationError("RULE_INJECT_ の環境変数を持つ settings.json がありません")
-        settings_text = render_settings(collect_values(targets))
-        _check_prerequisites(targets, settings_text)
+        values = collect_values(targets)
+        settings_text = render_settings(values)
+        _check_prerequisites(targets, values, settings_text)
     except MigrationError as error:
         print(f"前提確認: failed（{error}）")
         return 1
@@ -125,12 +134,14 @@ def main() -> int:
 
     # 計画（--dry-run もここを通る）
     config_exists = CONFIG_PATH.exists()
+    # 移行で作る（作った）settings.yaml のときだけ RULE_INJECT_CONFIG を入れる。切り戻しはこの有無で削除を決める
+    add_config = not config_exists or CONFIG_PATH.read_text(encoding="utf-8") == settings_text
     if not config_exists:
         print(_diff("", settings_text, "/dev/null", str(CONFIG_PATH)), end="")
     plans: list[tuple[Target, str, str]] = []
     for target in targets:
         original = target.path.read_text(encoding="utf-8")
-        new_text = render_json(migrated(target.data))
+        new_text = render_json(migrated(target.data, add_config=add_config))
         print(_diff(original, new_text, str(target.path), str(target.path)), end="")
         plans.append((target, original, new_text))
     if dry_run:
@@ -151,7 +162,7 @@ def main() -> int:
         return 1
     for target, original, new_text in plans:
         try:
-            _apply_target(target, original, new_text)
+            _apply_target(target, original, new_text, add_config=add_config)
         except (OSError, MigrationError) as error:
             print(f"{target.path} の書き換え: failed（{error}）")
             return 1

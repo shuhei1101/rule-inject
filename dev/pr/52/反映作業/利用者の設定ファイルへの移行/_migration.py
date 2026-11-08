@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+# 既にある settings.yaml は、プラグインの設定ファイルの読み取りで読む（リポジトリの直下の src）
+REPO_ROOT = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from rule_inject.shared._settings_yaml import parse_settings  # noqa: E402
 
 HOME = Path.home()
 CONFIG_PATH = HOME / ".config" / "rule-inject" / "settings.yaml"
@@ -128,12 +134,56 @@ def render_settings(values: dict[str, str]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def migrated(data: dict[str, Any]) -> dict[str, Any]:
-    """env から移す対象のキーを除き、`RULE_INJECT_CONFIG` を入れた settings.json の内容を返す。"""
+def migrated(data: dict[str, Any], *, add_config: bool = True) -> dict[str, Any]:
+    """env から移す対象のキーを除き、`add_config` なら `RULE_INJECT_CONFIG` を入れた settings.json の内容を返す。"""
     removed = set(old_env_keys(data))
     env = {key: value for key, value in data["env"].items() if key not in removed}
-    env[CONFIG_ENV] = str(CONFIG_PATH)
+    if add_config:
+        env[CONFIG_ENV] = str(CONFIG_PATH)
     return {**data, "env": env}
+
+
+def read_existing_global() -> dict[str, str | list[str]]:
+    """既にある settings.yaml の `global` を読む（`global` が無ければ空）。"""
+    try:
+        settings = parse_settings(CONFIG_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise MigrationError(f"{CONFIG_PATH} を読めません: {error}") from error
+    table = settings.get("global", {})
+    # parse_settings は global をマップで返す。型の絞り込みのために確かめる
+    if not isinstance(table, dict):
+        raise MigrationError(f"{CONFIG_PATH} の global がマップではありません")
+    return table
+
+
+def missing_values(values: dict[str, str], table: dict[str, str | list[str]]) -> list[str]:
+    """env の値のうち、settings.yaml の global の対応するキーに入っていないものを `キー=値` で返す。"""
+    missing: list[str] = []
+    for env_key, value in values.items():
+        key = ENV_TO_KEY[env_key]
+        current = table.get(key)
+        if key in LIST_KEYS:
+            # リストは、カンマ区切りの要素が全て global のリストに含まれていればよい
+            present = current if isinstance(current, list) else []
+            missing.extend(
+                f"{env_key}={item}"
+                for item in (part.strip() for part in value.split(","))
+                if item and item not in present
+            )
+        elif key in INTEGER_KEYS:
+            # 保持日数は整数として比べる（YAML の表記の違いを吸収する）
+            matched = (
+                isinstance(current, str)
+                and current.strip().isdigit()
+                and value.strip().isdigit()
+                and int(current) == int(value)
+            )
+            if not matched:
+                missing.append(f"{env_key}={value}")
+        elif current != value:
+            # 文字列は完全に一致すればよい
+            missing.append(f"{env_key}={value}")
+    return missing
 
 
 def render_json(data: dict[str, Any]) -> str:
