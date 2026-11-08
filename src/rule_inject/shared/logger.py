@@ -36,6 +36,7 @@ class Component(StrEnum):
 class LogOperation(StrEnum):
     """ログの `operation` の値（失敗した操作）。"""
 
+    READ_SETTINGS = "read_settings"
     READ_INDEX = "read_index"
     READ_RECORD = "read_record"
     WRITE_RECORD = "write_record"

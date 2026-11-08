@@ -10,10 +10,10 @@ flows:
         description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ一時ファイル'
-        notes: '`RULE_INJECT_INDEXES_PROJECT` で指す'
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global.indexes` で指す'
       - name: 既読の記録
         description: 空の一時フォルダ
-        notes: '`RULE_INJECT_STATE_DIR` で指す'
+        notes: '同じ設定ファイルの `global.state_dir` で指す'
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
@@ -246,7 +246,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`RULE_INJECT_INDEXES_PROJECT` が実在しないパスと、書式に合わないファイルの 2 つを指す'
+        description: '設定ファイルの `global.indexes` が実在しないパスと、書式に合わないファイルの 2 つを指す'
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -382,17 +382,20 @@ flows:
       - 案内済みの記録ファイルが無い
     test: test_normal_when_blocked_twice
   - name: 正常系（既定の置き場所の索引）
-    summary: 索引の環境変数が無いとき、既定の置き場所の索引で案内する
+    summary: 設定ファイルが無いとき、既定の置き場所の索引で案内する
     setup:
       - name: Mock
         description: なし
+        notes: '-'
       - name: 索引
         description: 止めて案内するフローと同じエントリを、`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` に置く
-        notes: '`RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` を渡さない。`XDG_CONFIG_HOME` は索引の無い空の一時フォルダを指す'
+        notes: '`RULE_INJECT_CONFIG` を渡さない。`XDG_CONFIG_HOME` は索引の無い空の一時フォルダを指す'
       - name: 既読の記録
         description: 空
+        notes: '-'
       - name: 入力
         description: 止めて案内するフローと同じ
+        notes: '-'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -401,7 +404,7 @@ flows:
         participant IDX as 既定の置き場所の索引
 
         CC->>H: 標準入力（Write・対象のパス）
-        H->>H: 環境変数が無いため既定の置き場所を索引にする
+        H->>H: 設定ファイルが無いため既定の置き場所を索引にする
         H->>IDX: 読む（ユーザーの既定は無いため読まない）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
@@ -410,16 +413,18 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載り、索引が読めなかった知らせが載っていない'
       - ログのファイルが無い
     test: test_normal_when_default_index
-  - name: 正常系（索引の環境変数が空）
-    summary: 環境変数を空の文字列にしたとき、既定の置き場所の索引を読まない
+  - name: 正常系（索引の並びが空）
+    summary: 当たった `projects` の要素の `indexes` を空の並びにしたとき、プロジェクトの既定の置き場所の索引を読まない
     setup:
       - name: Mock
         description: なし
+        notes: '-'
       - name: 索引
         description: 既定の置き場所のフローと同じ `rules.yaml` を置く
-        notes: '`RULE_INJECT_INDEXES_PROJECT` を空の文字列で渡す'
+        notes: '設定ファイルの `projects` に、`CLAUDE_PROJECT_DIR` のフォルダ名を `match` に持ち `indexes: []` の要素を置く'
       - name: 入力
         description: 止めて案内するフローと同じ
+        notes: '-'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -427,13 +432,13 @@ flows:
         participant H as ルール案内
 
         CC->>H: 標準入力（Write・対象のパス）
-        H->>H: 空の環境変数の索引は読まない
+        H->>H: 空の並びのため既定の置き場所を読まない
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
     expected:
       - 標準出力が空
       - 終了コードが `0`
-    test: test_normal_when_index_env_empty
+    test: test_normal_when_indexes_empty
   - name: 正常系（ルールの場所に変数参照がある）
     summary: '`rule` の `!{名前}` を環境変数で展開した場所で案内する'
     setup:
@@ -705,6 +710,118 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
+  - name: 正常系（当たったプロジェクトの索引を足す）
+    summary: '`match` が当たった `projects` の要素の索引だけを、並びの順に足して案内する'
+    setup:
+      - name: Mock
+        description: なし
+        notes: '-'
+      - name: 設定ファイル
+        description: '`global.indexes: []` と、`projects` に 3 つの要素を持つ'
+        notes: '1 つ目は `match` が `CLAUDE_PROJECT_DIR` のフォルダ名で `indexes: [rules/a.yaml]`、2 つ目は `match` が `CLAUDE_PROJECT_DIR` の絶対パスで `indexes: [{索引 b の絶対パス}]`、3 つ目は `match: other-project` で `indexes: [{索引 c の絶対パス}]`'
+      - name: 索引
+        description: '`{CLAUDE_PROJECT_DIR}/rules/a.yaml`・索引 b・索引 c が、それぞれ別のルールを指す `paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つずつ持つ'
+        notes: '-'
+      - name: 既読の記録
+        description: 空
+        notes: '-'
+      - name: 入力
+        description: 止めて案内するフローと同じ
+        notes: '-'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant CFG as 設定ファイル
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>CFG: 読む
+        H->>H: match が当たる要素（1 つ目・2 つ目）を選び、<br>相対パスを CLAUDE_PROJECT_DIR から解く
+        H->>IDX: 索引 a・索引 b を順に読む
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` に索引 a と索引 b のルールの場所が載っている'
+      - '`permissionDecisionReason` に索引 c のルールの場所が載っていない'
+      - 終了コードが `0`
+    test: test_normal_when_projects_matched
+  - name: 正常系（worktreeを本体のフォルダ名で当てる）
+    summary: '`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を当てる'
+    setup:
+      - name: Mock
+        description: なし
+        notes: '-'
+      - name: 設定ファイル
+        description: '`global.indexes: []` と、`match` が本体のフォルダ名で `indexes: [{索引の絶対パス}]` の `projects` の要素を 1 つ持つ'
+        notes: '-'
+      - name: 索引
+        description: 止めて案内するフローと同じ
+        notes: '-'
+      - name: CLAUDE_PROJECT_DIR
+        description: '`{本体のフォルダ}/.claude/worktrees/feature`'
+        notes: フォルダ名 `feature` は `match` と一致しない
+      - name: 入力
+        description: 止めて案内するフローと同じ
+        notes: '-'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant CFG as 設定ファイル
+        participant IDX as 索引
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>CFG: 読む
+        H->>H: worktree のため本体のフォルダ名で match と比べる
+        H->>IDX: 読む
+        H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が `deny`'
+      - '`permissionDecisionReason` にルールの場所が載っている'
+    test: test_normal_when_worktree_matched
+  - name: 異常系（設定ファイルが読めない・止めずに理由を載せる）
+    summary: 設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+        notes: '-'
+      - name: 設定ファイル
+        description: '`RULE_INJECT_CONFIG` が指すファイルが、`projects` の要素に知らないキー `index` を持つ'
+        notes: '`indexes` の書き誤り'
+      - name: 索引
+        description: 既定の置き場所のフローと同じ `rules.yaml` を `CLAUDE_PROJECT_DIR` の直下に置く
+        notes: 既定値で動かさないことを見る
+      - name: ログ
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+        notes: '-'
+      - name: 入力
+        description: 止めて案内するフローと同じ
+        notes: '-'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant CFG as 設定ファイル
+        participant LOG as ログ
+
+        CC->>H: 標準入力（Write・対象のパス）
+        H->>CFG: 読む（知らないキー）
+        H->>LOG: 既定のログのフォルダへ read_settings を追記する
+        H-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に設定ファイルの場所と知らないキー `index` が載っている'
+      - '`additionalContext` に既定の置き場所の索引のルールの場所が載っていない'
+      - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_settings_unreadable
 lead: 操作の対象のパスかツール名に当たるルールのうち、そのセッションで未読のものを案内する。操作の種別がエントリの `on` に当たるルールがあれば操作を止め、無ければ止めずに案内する。止めない案内は、そのセッションで案内済みのルールを除き、ルールごとに 1 回だけ出す。
 idempotent: false
 side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -719,7 +836,7 @@ request:
     type: str
     required: true
     description: セッションの作業フォルダ
-    notes: Bash のコマンドの相対パスを解く基準。プロジェクトの索引の相対パスは `cwd` ではなく環境変数 `CLAUDE_PROJECT_DIR` から解く
+    notes: Bash のコマンドの相対パスを解く基準。設定ファイルの `projects` の索引の相対パスは `cwd` ではなく環境変数 `CLAUDE_PROJECT_DIR` から解く
   - name: '`tool_name`'
     type: str
     required: true
@@ -782,7 +899,7 @@ response:
     notes: '`permissionDecision` を載せたときだけ載せる。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 止めない案内。未読で未案内のルールの場所と読み方。索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
+    description: 止めない案内。未読で未案内のルールの場所と読み方。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
     constraints: 10,000 字以内
     notes: 操作を止めないときだけ載せる。「やり直してください」は含めない
 response_example: |-
@@ -811,6 +928,9 @@ exceptions:
   - name: OSError（案内済みの記録が読めない・書けない）
     condition: 案内済みの記録ファイルはあるが読めない、または記録フォルダか記録ファイルに書けない（権限・容量）
     notes: 既読の記録が読めないときと揃え、操作を止めずに案内を出し、`additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` か `write_record` を書く。読めないときは未案内として扱う。ファイルが無いときは失敗ではなく未案内として扱う
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    notes: フックの中で捕まえ、設定ファイルを使わず（既定値でも動かさず）索引を読まない。操作を止めずに `additionalContext` へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -819,8 +939,8 @@ constraints:
     constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を載せて残りの件数を添える
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
   - item: 索引
-    constraint: '環境変数 `RULE_INJECT_INDEXES_USER` / `RULE_INJECT_INDEXES_PROJECT` のカンマ区切りのパスを順に読み、全てのエントリを合わせて当てる。環境変数が無いときは既定の置き場所（ユーザー: `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`、プロジェクト: `${CLAUDE_PROJECT_DIR}/rules.yaml`）を読み、既定のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。環境変数が空の文字列のときは、その索引を読まない'
-    notes: 書式は設定の設計書。標準ライブラリだけで読む。プロジェクトの索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の文字列を既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
+    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に足したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
+    notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
     constraint: 同じルールの場所（解決後の絶対パス）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
   - item: 読むコマンド
@@ -834,7 +954,7 @@ constraints:
   - item: ルールの場所の変数参照
     constraint: エントリの `rule` の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックが受け取った環境変数の値に置き換えてから場所を解く。空の値は空文字に置き換える。未設定の名前が残ったエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・展開できない名前を載せ、ログへ `read_index` を書く
   - item: 案内済みの記録
-    constraint: 止めない案内（`additionalContext`）に載せたルールの場所を `{RULE_INJECT_STATE_DIR}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に載せない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
+    constraint: 止めない案内（`additionalContext`）に載せたルールの場所を `{state_dir}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に載せない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
     notes: 書式は ER 図「既読の記録」の案内済みの記録。止める案内は読むまで毎回出す。案内文の長さに収まらず載せなかった場所は記録しない
   - item: 引数の照合
     constraint: '`tools` に当たったエントリのうち `args` を持つものは、書いた全てのキーの値がどれかのパターンに当たるときだけ当てる。キーが引数に無いとき・値がオブジェクトのときは当てない。値が配列のとき、およびドット区切りのキーの途中が配列のときは要素ごとにたどり、どれか 1 つが当たれば当てる。文字列以外のスカラーは JSON の表記（`true`・`null`・`1.5`）で文字列にして照合する'
@@ -849,5 +969,8 @@ constraints:
   - item: 既読の判定
     constraint: そのセッションの既読の記録に、ルールの場所と今のルールのファイルの中身の SHA-256 の組み合わせがあるときだけ既読として扱う。ハッシュが違う行・ハッシュを持たない行だけの場所と、ファイルを読めず今のハッシュを取れないルールは未読として扱う
     notes: ハッシュの取り方は既読の記録の制約「本文のハッシュ」と同じ。今のハッシュは当たったルールの分だけ取る。記録ファイルは書き換えず、読み直したときに既読の記録が新しいハッシュの行を追記する
+  - item: 設定ファイル
+    constraint: 環境変数 `RULE_INJECT_CONFIG` の値（先頭の `~` はホームに展開）の YAML を読む。`RULE_INJECT_CONFIG` が無いときは読まず、設定ファイルのキーを全て既定値で扱う。`projects` の要素は `match` で当て、当たった要素を並びの順に `global` へ重ねる。`CLAUDE_PROJECT_DIR` が無いときはどの要素にも当てない
+    notes: キー・既定値・許す値・`match` の当て方は設定の設計書。標準ライブラリだけで読む
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py

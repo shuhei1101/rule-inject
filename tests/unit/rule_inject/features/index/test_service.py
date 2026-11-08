@@ -31,21 +31,16 @@ def test_load_indexes(
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
 ) -> None:
-    """ユーザーとプロジェクトの索引を合わせて読む（正常系）。"""
+    """渡された索引を順に読む（正常系）。"""
     # 準備
-    user_index = make_index(index_text("./u.md"), "user/index.yaml")
-    make_index(index_text("../r/p.md"), "proj/idx.yaml")
-    absolute_index = make_index(index_text("/rules/abs.md"), "abs.yaml")
-    env = {
-        "RULE_INJECT_INDEXES_USER": str(user_index),
-        "RULE_INJECT_INDEXES_PROJECT": f"proj/idx.yaml, {absolute_index}",
-        "CLAUDE_PROJECT_DIR": str(tmp_path),
-    }
+    first = make_index(index_text("./u.md"), "first/index.yaml")
+    second = make_index(index_text("../r/p.md"), "second/idx.yaml")
+    third = make_index(index_text("/rules/abs.md"), "third.yaml")
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(first), str(second), str(third)], {})
     # 検証
     assert [entry.location for entry in result.entries] == [
-        str(tmp_path / "user" / "u.md"),
+        str(tmp_path / "first" / "u.md"),
         str(tmp_path / "r" / "p.md"),
         "/rules/abs.md",
     ]
@@ -60,9 +55,8 @@ def test_load_indexes_when_on_missing(
     # 準備
     with_default = make_index(index_text("/r/a.md", default_on=["write"]), "a.yaml")
     without_default = make_index(index_text("/r/b.md"), "b.yaml")
-    env = {"RULE_INJECT_INDEXES_PROJECT": f"{with_default},{without_default}"}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(with_default), str(without_default)], {})
     # 検証
     assert result.entries[0].on == frozenset({"write"})
     assert result.entries[1].on == frozenset({"read", "write", "mcp"})
@@ -78,85 +72,11 @@ def test_load_indexes_when_unreadable(
     missing = tmp_path / "missing.yaml"
     broken = make_index("rules:\n  - foo: bar\n", "broken.yaml")
     valid = make_index(index_text("/r/ok.md"), "valid.yaml")
-    env = {"RULE_INJECT_INDEXES_PROJECT": f"{missing},{broken},{valid}"}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(missing), str(broken), str(valid)], {})
     # 検証
     assert {failure.path for failure in result.failures} == {str(missing), str(broken)}
     assert [entry.location for entry in result.entries] == ["/r/ok.md"]
-
-
-def test_load_indexes_when_no_env(tmp_path: Path) -> None:
-    """環境変数が無く、既定の置き場所にも索引が無ければ何も読まない（正常系）。"""
-    # 準備
-    config_home = tmp_path / "config"
-    project = tmp_path / "project"
-    config_home.mkdir()
-    project.mkdir()
-    env = {"XDG_CONFIG_HOME": str(config_home), "CLAUDE_PROJECT_DIR": str(project)}
-    # 実行
-    result = load_indexes(env)
-    # 検証
-    assert not result.entries
-    assert not result.failures
-
-
-def test_load_indexes_when_default(
-    tmp_path: Path,
-    make_index: Callable[..., Path],
-    index_text: Callable[..., str],
-) -> None:
-    """環境変数が無ければ既定の置き場所を読む（正常系）。"""
-    # 準備
-    make_index(index_text("/r/user.md"), "config/rule-inject/rules.yaml")
-    make_index(index_text("/r/project.md"), "project/rules.yaml")
-    env = {
-        "XDG_CONFIG_HOME": str(tmp_path / "config"),
-        "CLAUDE_PROJECT_DIR": str(tmp_path / "project"),
-    }
-    # 実行
-    result = load_indexes(env)
-    # 検証
-    assert [entry.location for entry in result.entries] == ["/r/user.md", "/r/project.md"]
-    assert not result.failures
-
-
-def test_load_indexes_when_default_config_home(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    make_index: Callable[..., Path],
-    index_text: Callable[..., str],
-) -> None:
-    """`XDG_CONFIG_HOME` が無ければ `~/.config` の下を読む（正常系）。"""
-    # 準備
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
-    make_index(index_text("/r/home.md"), "home/.config/rule-inject/rules.yaml")
-    # 実行
-    result = load_indexes({})
-    # 検証
-    assert [entry.location for entry in result.entries] == ["/r/home.md"]
-    assert not result.failures
-
-
-def test_load_indexes_when_env_empty(
-    tmp_path: Path,
-    make_index: Callable[..., Path],
-    index_text: Callable[..., str],
-) -> None:
-    """空の文字列の環境変数は既定の置き場所も読まない（正常系）。"""
-    # 準備
-    make_index(index_text("/r/user.md"), "config/rule-inject/rules.yaml")
-    make_index(index_text("/r/project.md"), "project/rules.yaml")
-    env = {
-        "XDG_CONFIG_HOME": str(tmp_path / "config"),
-        "CLAUDE_PROJECT_DIR": str(tmp_path / "project"),
-        "RULE_INJECT_INDEXES_PROJECT": "",
-    }
-    # 実行
-    result = load_indexes(env)
-    # 検証
-    assert [entry.location for entry in result.entries] == ["/r/user.md"]
-    assert not result.failures
 
 
 def test_load_indexes_when_rule_has_variable(
@@ -166,13 +86,9 @@ def test_load_indexes_when_rule_has_variable(
     """`rule` の変数参照を展開してから解く（正常系）。"""
     # 準備
     index = make_index('rules:\n  - rule: "!{RULES}/a.md"\n  - rule: "./!{SUB}/b.md"\n')
-    env = {
-        "RULE_INJECT_INDEXES_PROJECT": str(index),
-        "RULES": "/r",
-        "SUB": "s",
-    }
+    env = {"RULES": "/r", "SUB": "s"}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(index)], env)
     # 検証
     assert [entry.location for entry in result.entries] == ["/r/a.md", str(tmp_path / "s" / "b.md")]
     assert not result.failures
@@ -184,9 +100,8 @@ def test_load_indexes_when_rule_variable_unset(
     """展開できないエントリだけを読み飛ばす（正常系）。"""
     # 準備
     index = make_index('rules:\n  - rule: "!{UNSET}/a.md"\n  - rule: /r/ok.md\n')
-    env = {"RULE_INJECT_INDEXES_PROJECT": str(index)}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(index)], {})
     # 検証
     assert [entry.location for entry in result.entries] == ["/r/ok.md"]
     assert len(result.failures) == 1
@@ -212,9 +127,8 @@ def test_load_indexes_when_regex_unreadable(
         "      kind:\n"
         "        - rule\n"
     )
-    env = {"RULE_INJECT_INDEXES_PROJECT": str(index)}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(index)], {})
     # 検証
     assert [entry.location for entry in result.entries] == ["/r/ok.md"]
     assert result.entries[0].paths[0].regex.pattern == "\\.py$"
@@ -239,9 +153,8 @@ def test_load_indexes_when_read_by(
         "a.yaml",
     )
     without_read_by = make_index(index_text("/r/b.md"), "b.yaml")
-    env = {"RULE_INJECT_INDEXES_PROJECT": f"{with_read_by},{without_read_by}"}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(with_read_by), str(without_read_by)], {})
     # 検証
     assert len(result.entries[0].read_by) == 1
     condition = result.entries[0].read_by[0]
@@ -261,15 +174,24 @@ def test_load_indexes_when_rule_is_url(
     index = make_index(
         'rules:\n  - rule: https://example.com/a.md\n  - rule: "!{BASE}/b.md"\n  - rule: /r/ok.md\n'
     )
-    env = {"RULE_INJECT_INDEXES_PROJECT": str(index), "BASE": "http://example.com"}
+    env = {"BASE": "http://example.com"}
     # 実行
-    result = load_indexes(env)
+    result = load_indexes([str(index)], env)
     # 検証
     assert [entry.location for entry in result.entries] == ["/r/ok.md"]
     assert len(result.failures) == 2
     assert all(failure.path == str(index) for failure in result.failures)
     assert "https://example.com/a.md" in result.failures[0].reason
     assert "http://example.com/b.md" in result.failures[1].reason
+
+
+def test_load_indexes_when_empty() -> None:
+    """索引が無ければ何も読まない（正常系）。"""
+    # 実行
+    result = load_indexes([], {})
+    # 検証
+    assert not result.entries
+    assert not result.failures
 
 
 def test_match_path(make_entry: Callable[..., Any]) -> None:

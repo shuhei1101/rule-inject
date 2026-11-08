@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import fnmatch
 import json
-import os
 import re
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -25,16 +24,6 @@ from rule_inject.shared.errors import IndexReadError, describe
 from rule_inject.shared.paths import resolve_location
 from rule_inject.shared.variables import expand_variables
 
-# 読む順に並べた、索引を指す環境変数の名前
-INDEX_ENV_NAMES = ("RULE_INJECT_INDEXES_USER", "RULE_INJECT_INDEXES_PROJECT")
-USER_INDEX_ENV, PROJECT_INDEX_ENV = INDEX_ENV_NAMES
-# 環境変数が無いときに読む索引の、設定フォルダと `CLAUDE_PROJECT_DIR` からのパス
-USER_INDEX_DEFAULT = "rule-inject/rules.yaml"
-PROJECT_INDEX_DEFAULT = "rules.yaml"
-CONFIG_HOME_ENV = "XDG_CONFIG_HOME"
-DEFAULT_CONFIG_HOME = "~/.config"
-PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
-INDEX_SEPARATOR = ","
 NAME_SEPARATOR = "、"
 # 先頭がこの文字列のパターンは、残りを正規表現として読む
 REGEX_PREFIX = "re:"
@@ -42,39 +31,6 @@ REGEX_PREFIX = "re:"
 ARG_KEY_SEPARATOR = "."
 # Read で読めないため読み飛ばす `rule` の頭
 URL_SCHEMES = ("http://", "https://")
-
-
-def _default_index_path(name: str, env: Mapping[str, str]) -> str | None:
-    """環境変数が無いときに読む索引の既定のパスを返す。置き場所が決まらないか、ファイルが無ければ None。"""
-    if name == USER_INDEX_ENV:
-        # 設定フォルダは XDG_CONFIG_HOME（無いか空なら ~/.config）
-        config_home = env.get(CONFIG_HOME_ENV) or DEFAULT_CONFIG_HOME
-        candidate = Path(config_home).expanduser() / USER_INDEX_DEFAULT
-    else:
-        project_dir = env.get(PROJECT_DIR_ENV)
-        # プロジェクトの直下が分からなければ、既定の置き場所も決まらない
-        if not project_dir:
-            return None
-        candidate = Path(project_dir) / PROJECT_INDEX_DEFAULT
-    # 既定の置き場所にファイルが無いのは失敗ではなく、索引を置いていない状態
-    return str(candidate) if candidate.exists() else None
-
-
-def _index_paths(env: Mapping[str, str]) -> list[str]:
-    """環境変数か既定の置き場所が指す索引のパスを、読む順に並べる。"""
-    paths: list[str] = []
-    for name in INDEX_ENV_NAMES:
-        # 環境変数が無ければ既定の置き場所を読む
-        if name not in env:
-            default_path = _default_index_path(name, env)
-            if default_path is not None:
-                paths.append(default_path)
-            continue
-        # カンマで分けて前後の空白を落とし、空の項目は読まない（空の文字列は何も読まない）
-        for item in env[name].split(INDEX_SEPARATOR):
-            if item.strip():
-                paths.append(item.strip())
-    return paths
 
 
 def _compile_pattern(source: str) -> MatchPattern:
@@ -127,15 +83,10 @@ def _build_entry(
 
 
 def _load_index(
-    index_path: str, project_dir: str | None, env: Mapping[str, str]
+    index_path: str, env: Mapping[str, str]
 ) -> tuple[tuple[IndexEntry, ...], tuple[IndexReadError, ...]]:
     """索引 1 つを読んでエントリにし、展開できずに読み飛ばしたエントリの理由を添える。読めなければ IndexReadError を送出する。"""
-    # 相対パスの索引は、プロジェクトの直下が分かるときだけ解ける
-    if not os.path.isabs(os.path.expanduser(index_path)) and project_dir is None:
-        raise IndexReadError(
-            path=index_path, reason="環境変数 CLAUDE_PROJECT_DIR が無く、相対パスを解けません"
-        )
-    resolved = Path(resolve_location(index_path, Path(project_dir or "/")))
+    resolved = Path(index_path)
     try:
         default_on, raw_entries = parse_index(resolved.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
@@ -176,15 +127,14 @@ def _load_index(
     return tuple(entries), tuple(skipped)
 
 
-def load_indexes(env: Mapping[str, str]) -> IndexLoadResult:
-    """環境変数か既定の置き場所が指す全ての索引を読み、読めたエントリと読めなかった索引・読み飛ばしたエントリを返す。"""
-    project_dir = env.get(PROJECT_DIR_ENV)
+def load_indexes(index_paths: Sequence[str], env: Mapping[str, str]) -> IndexLoadResult:
+    """設定が決めた索引を渡された順に読み、読めたエントリと読めなかった索引・読み飛ばしたエントリを返す。"""
     entries: list[IndexEntry] = []
     failures: list[IndexReadError] = []
-    for index_path in _index_paths(env):
+    for index_path in index_paths:
         # 読めない索引は集めて、次の索引へ進む
         try:
-            loaded, skipped = _load_index(index_path, project_dir, env)
+            loaded, skipped = _load_index(index_path, env)
         except IndexReadError as exc:
             failures.append(exc)
             continue

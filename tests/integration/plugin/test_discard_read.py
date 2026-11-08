@@ -70,3 +70,27 @@ def test_error_when_record_undeletable(
     assert '"operation": "delete_record"' in completed.stderr
     assert record_file.exists()
     assert completed.returncode == 0
+
+
+def test_error_when_settings_unreadable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    default_state_folder: Path,
+    session_id: str,
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """設定ファイルが読めないとき、何も消さずにログに書く（異常系）。"""
+    # 準備
+    record_file = default_state_folder / f"{session_id}.txt"
+    record_file.parent.mkdir(parents=True)
+    record_file.write_text("/r/a.md\n", encoding="utf-8")
+    payload = hook_payload("PreCompact", trigger="auto")
+    # 実行
+    completed = run_hook("discard_read", payload, config_text="global: {state_dir: /s}\n")
+    # 検証
+    assert record_file.exists()
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
+    assert completed.stdout == ""
+    assert completed.returncode == 0

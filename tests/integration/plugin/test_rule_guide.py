@@ -236,7 +236,7 @@ def test_error_when_index_unreadable(
     missing = tmp_path / "missing.yaml"
     broken = make_index("rules:\n  - foo: bar\n", "broken.yaml")
     # 実行
-    completed = run_hook("rule_guide", write_payload(), index=f"{missing},{broken}")
+    completed = run_hook("rule_guide", write_payload(), index=[missing, broken])
     # 検証
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert "permissionDecision" not in output
@@ -349,46 +349,136 @@ def test_normal_when_blocked_twice(
 
 
 def test_normal_when_default_index(
-    log_folder: Path,
+    default_log_folder: Path,
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """索引の環境変数が無いとき、既定の置き場所の索引で案内する（正常系）。"""
+    """設定ファイルが無いとき、既定の置き場所の索引で案内する（正常系）。"""
     # 準備
     make_index(
         index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
         "rules.yaml",
     )
     # 実行
-    completed = run_hook("rule_guide", write_payload())
+    completed = run_hook("rule_guide", write_payload(), no_config=True)
     # 検証
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert output["permissionDecision"] == "deny"
     assert RULE in output["permissionDecisionReason"]
     assert "索引を読めませんでした" not in output["permissionDecisionReason"]
-    assert not log_folder.exists()
+    assert not default_log_folder.exists()
 
 
-def test_normal_when_index_env_empty(
+def test_normal_when_indexes_empty(
+    tmp_path: Path,
     run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    settings_text: Callable[..., str],
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """索引の環境変数が空の文字列のとき、既定の置き場所の索引を読まない（正常系）。"""
+    """当たった `projects` の要素の `indexes` が空の並びのとき、プロジェクトの既定の置き場所の索引を読まない（正常系）。"""
     # 準備
     make_index(
         index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
         "rules.yaml",
     )
+    config_text = settings_text() + f"projects:\n  - match: {tmp_path.name}\n    indexes: []\n"
     # 実行
-    completed = run_hook(
-        "rule_guide", write_payload(), extra_env={"RULE_INJECT_INDEXES_PROJECT": ""}
-    )
+    completed = run_hook("rule_guide", write_payload(), config_text=config_text)
     # 検証
     assert completed.stdout == ""
+    assert completed.returncode == 0
+
+
+def test_normal_when_projects_matched(
+    tmp_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    settings_text: Callable[..., str],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`match` が当たった `projects` の要素の索引だけを、並びの順に足して案内する（正常系）。"""
+    # 準備
+    entry = {"paths": ["**/*.py"], "on": ["write"]}
+    make_index(index_text({"rule": "/r/a.md", **entry}), "rules/a.yaml")
+    index_b = make_index(index_text({"rule": "/r/b.md", **entry}), "b.yaml")
+    index_c = make_index(index_text({"rule": "/r/c.md", **entry}), "c.yaml")
+    config_text = settings_text(indexes=[]) + (
+        "projects:\n"
+        f"  - match: {tmp_path.name}\n"
+        "    indexes: [rules/a.yaml]\n"
+        f"  - match: {tmp_path}\n"
+        f'    indexes: ["{index_b}"]\n'
+        "  - match: other-project\n"
+        f'    indexes: ["{index_c}"]\n'
+    )
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), config_text=config_text)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert "/r/a.md" in output["permissionDecisionReason"]
+    assert "/r/b.md" in output["permissionDecisionReason"]
+    assert "/r/c.md" not in output["permissionDecisionReason"]
+    assert completed.returncode == 0
+
+
+def test_normal_when_worktree_matched(
+    tmp_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    settings_text: Callable[..., str],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+) -> None:
+    """`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を当てる（正常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
+    worktree = tmp_path / "repo" / ".claude" / "worktrees" / "feature"
+    worktree.mkdir(parents=True)
+    config_text = settings_text(indexes=[]) + (
+        f'projects:\n  - match: repo\n    indexes: ["{index}"]\n'
+    )
+    # 実行
+    completed = run_hook(
+        "rule_guide", write_payload(), config_text=config_text, project_dir=worktree
+    )
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert RULE in output["permissionDecisionReason"]
+    assert completed.returncode == 0
+
+
+def test_error_when_settings_unreadable(
+    config_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    write_payload: Callable[..., dict[str, Any]],
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を載せる（異常系）。"""
+    # 準備
+    make_index(
+        index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
+        "rules.yaml",
+    )
+    config_text = "projects:\n  - match: repo\n    index:\n      - /a.yaml\n"
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), config_text=config_text)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert str(config_path) in output["additionalContext"]
+    assert "index" in output["additionalContext"]
+    assert RULE not in output["additionalContext"]
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
     assert completed.returncode == 0
 
 

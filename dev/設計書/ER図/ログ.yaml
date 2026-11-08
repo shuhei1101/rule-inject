@@ -1,7 +1,7 @@
 title: "ER 図: ログ"
 lead: フックが、失敗した操作を後から追えるように書き出すログ。
 tables:
-  - name: '{RULE_INJECT_LOG_DIR}/{yyyymmdd}_rule-inject.log'
+  - name: '{log_dir}/{yyyymmdd}_rule-inject.log'
     title: ログ
     datastore: JSON Lines（UTF-8、1 行 = 1 件）
     summary: 失敗した操作とその理由
@@ -13,7 +13,7 @@ tables:
     description: |-
       フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（Claude Code のデバッグのログに残る）。
 
-      `{RULE_INJECT_LOG_DIR}` は設定『プラグイン』の `RULE_INJECT_LOG_DIR`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。`{yyyymmdd}` は `time` の UTC の日付。
+      `{log_dir}` は設定『プラグイン』の `global.log_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。設定ファイルが読めなかったことのログは既定のフォルダへ書く。`{yyyymmdd}` は `time` の UTC の日付。
     columns:
       - name: time
         title: 時刻
@@ -34,7 +34,7 @@ tables:
         title: 失敗した操作
         type: string
         not_null: true
-        description: '`read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `unexpected` のいずれか'
+        description: '`read_settings` / `read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `unexpected` のいずれか'
       - name: path
         title: 対象のパス
         type: string

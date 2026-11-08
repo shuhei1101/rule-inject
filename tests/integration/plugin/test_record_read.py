@@ -404,3 +404,40 @@ def test_normal_when_mcp_document_unclosed(
     assert not (state_dir / f"{session_id}.txt").exists()
     assert not (state_dir / f"{session_id}.history.jsonl").exists()
     assert completed.returncode == 0
+
+
+def test_error_when_settings_unreadable(
+    tmp_path: Path,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    make_index: Callable[..., Path],
+    index_text: Callable[..., str],
+    rule_file: Callable[..., Path],
+    default_state_folder: Path,
+    session_id: str,
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """設定ファイルが読めないとき、何も記録せずに理由を載せる（異常系）。"""
+    # 準備
+    rule = rule_file("python.md")
+    make_index(index_text({"rule": str(rule), "paths": ["**/*.py"]}), "rules.yaml")
+    missing = tmp_path / "config" / "missing.yaml"
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=WHOLE_READ,
+    )
+    # 実行
+    completed = run_hook(
+        "record_read", payload, no_config=True, extra_env={"RULE_INJECT_CONFIG": str(missing)}
+    )
+    # 検証
+    context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert str(missing) in context
+    assert "FileNotFoundError" in context
+    assert not (default_state_folder / f"{session_id}.txt").exists()
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"
+    assert completed.returncode == 0

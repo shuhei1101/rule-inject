@@ -19,10 +19,17 @@ from rule_inject.features.record import (
     hash_locations,
     is_valid_session_id,
 )
+from rule_inject.hooks._runner import settings_failure_notice
 from rule_inject.hooks.rule_guide import MCP_TOOL_PREFIX
-from rule_inject.shared.errors import HistoryWriteError, RecordWriteError, RuleInjectError
+from rule_inject.shared.errors import (
+    HistoryWriteError,
+    RecordWriteError,
+    RuleInjectError,
+    SettingsReadError,
+)
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
-from rule_inject.shared.paths import log_dir, resolve_location, state_dir
+from rule_inject.shared.paths import resolve_location
+from rule_inject.shared.settings import load_settings
 
 URL_SCHEMES = ("http://", "https://")
 
@@ -97,14 +104,20 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if not is_valid_session_id(session_id):
         return None
     tool_name = payload["tool_name"]
-    locations, method = _locations_and_method(payload, load_indexes(env).entries)
+    # 設定ファイルが読めなければ、既定値でも動かさず、記録せずに知らせだけを返す
+    try:
+        settings = load_settings(env)
+    except SettingsReadError as exc:
+        notice = settings_failure_notice(Component.RECORD_READ, exc, env, session_id)
+        return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": notice}}
+    locations, method = _locations_and_method(payload, load_indexes(settings.indexes, env).entries)
     # 本文のハッシュを取れない場所は既読にしない
     read_entries = hash_locations(locations)
     if not read_entries:
         return None
     locations = [entry.location for entry in read_entries]
-    folder = state_dir(env)
-    log_folder = log_dir(env)
+    folder = settings.state_dir
+    log_folder = settings.log_dir
     try:
         append_record(folder, session_id, read_entries)
     except RecordWriteError as exc:

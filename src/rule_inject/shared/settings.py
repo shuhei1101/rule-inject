@@ -1,26 +1,167 @@
-"""保持の日数の環境変数の読み取り。"""
+"""設定ファイルの読み取りと、`projects` の当て方。"""
 
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 
-# 既読の記録の保持日数を上書きする環境変数と、無いときの日数
-RECORD_RETENTION_DAYS_ENV = "RULE_INJECT_RECORD_RETENTION_DAYS"
+from rule_inject.shared._settings_yaml import parse_settings
+from rule_inject.shared.errors import SettingsReadError, describe
+from rule_inject.shared.paths import default_log_dir, default_state_dir, resolve_location
+
+# 設定ファイルの場所を指す環境変数
+CONFIG_ENV = "RULE_INJECT_CONFIG"
+PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
+CONFIG_HOME_ENV = "XDG_CONFIG_HOME"
+DEFAULT_CONFIG_HOME = "~/.config"
+# `global.indexes` が無いときに読む索引の、設定フォルダからのパス
+USER_INDEX_DEFAULT = "rule-inject/rules.yaml"
+# 当たった `projects` の要素のどれも `indexes` を持たないときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス
+PROJECT_INDEX_DEFAULT = "rules.yaml"
+# `projects[].match` を当てるとき、この下を本体のリポジトリとして見るフォルダ
+WORKTREES_DIR = ".claude/worktrees"
+# 設定ファイルに保持日数が無いときの日数
 DEFAULT_RECORD_RETENTION_DAYS = 30
-# ログの保持日数を上書きする環境変数と、無いときの日数
-LOG_RETENTION_DAYS_ENV = "RULE_INJECT_LOG_RETENTION_DAYS"
 DEFAULT_LOG_RETENTION_DAYS = 3
 # 10 進の整数の書き方（符号は付けてよい）
 INTEGER_PATTERN = re.compile(r"[+-]?[0-9]+")
+MIN_RETENTION_DAYS = 1
 
 
-def read_retention_days(env: Mapping[str, str], name: str, default: int) -> int:
-    """環境変数から 1 以上の保持の日数を読み、読めなければ既定の日数を返す。"""
-    text = env.get(name, "").strip()
-    # 無い・空・整数として読めない値は、利用者が決めた扱いで既定の日数にする
-    if not INTEGER_PATTERN.fullmatch(text):
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Settings:
+    """設定ファイルと既定値から決めた、フックが使う値。"""
+
+    indexes: tuple[str, ...]
+    state_dir: Path
+    log_dir: Path
+    record_retention_days: int
+    log_retention_days: int
+
+
+def _matches_project(match: str, project_dir: str) -> bool:
+    """`projects[].match` が起動したプロジェクトに当たるかを返す。"""
+    # worktree は本体のパスで見る
+    normalized = os.path.normpath(project_dir)
+    marker = f"/{WORKTREES_DIR}/"
+    base = normalized[: normalized.index(marker)] if marker in normalized else normalized
+    expanded = os.path.expanduser(match)
+    # 絶対パスは、そのパスかその配下に当てる
+    if os.path.isabs(expanded):
+        target = os.path.normpath(expanded)
+        return base == target or base.startswith(target.rstrip("/") + "/")
+    # それ以外はプロジェクト名として、リポジトリのフォルダ名に当てる
+    return os.path.basename(base) == match
+
+
+def _value_error(config: str, key: str, written: str, allowed: str) -> SettingsReadError:
+    """値が許す範囲の外のときの SettingsReadError を作る。"""
+    return SettingsReadError(path=config, reason=f"{key}: {written} は {allowed}ではない")
+
+
+def _absolute_path(config: str, key: str, written: str) -> str:
+    """`~` を展開した絶対パスを返し、絶対パスでなければ SettingsReadError を送出する。"""
+    expanded = os.path.expanduser(written)
+    if not os.path.isabs(expanded):
+        raise _value_error(config, key, written, "絶対パス")
+    return expanded
+
+
+def _retention_days(config: str, key: str, written: str | None, default: int) -> int:
+    """保持日数を 1 以上の整数として読み、無ければ既定の日数を返す。"""
+    if written is None:
         return default
-    days = int(text)
-    # 0 以下は保持の日数にならないため既定の日数にする
-    return days if days >= 1 else default
+    if not INTEGER_PATTERN.fullmatch(written) or int(written) < MIN_RETENTION_DAYS:
+        raise _value_error(config, key, written, "1 以上の整数")
+    return int(written)
+
+
+def _read_config(env: Mapping[str, str]) -> tuple[str, dict[str, object]]:
+    """`RULE_INJECT_CONFIG` が指す設定ファイルを読み、場所と読み取った値を返す。指していなければ空の値を返す。"""
+    configured = env.get(CONFIG_ENV)
+    if not configured:
+        return "", {}
+    config = os.path.expanduser(configured)
+    try:
+        text = Path(config).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise SettingsReadError(path=config, reason=describe(exc)) from exc
+    try:
+        return config, dict(parse_settings(text))
+    except ValueError as exc:
+        raise SettingsReadError(path=config, reason=describe(exc)) from exc
+
+
+def _default_user_index(env: Mapping[str, str]) -> list[str]:
+    """ユーザーの既定の置き場所の索引を、ファイルがあるときだけ返す。"""
+    # 設定フォルダは XDG_CONFIG_HOME（無いか空なら ~/.config）
+    config_home = env.get(CONFIG_HOME_ENV) or DEFAULT_CONFIG_HOME
+    candidate = Path(config_home).expanduser() / USER_INDEX_DEFAULT
+    return [str(candidate)] if candidate.is_file() else []
+
+
+def load_settings(env: Mapping[str, str]) -> Settings:
+    """設定ファイルを読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す。"""
+    config, parsed = _read_config(env)
+    global_values = dict(parsed.get("global", {}))
+    projects = list(parsed.get("projects", []))
+    # 値を確かめる
+    for number, project in enumerate(projects):
+        if "match" not in project:
+            raise SettingsReadError(
+                path=config, reason=f"projects[{number}].match: 必須のキーが無い"
+            )
+    global_indexes = [
+        _absolute_path(config, "global.indexes", written)
+        for written in global_values.get("indexes", [])
+    ]
+    state_dir = (
+        Path(_absolute_path(config, "global.state_dir", global_values["state_dir"]))
+        if "state_dir" in global_values
+        else default_state_dir(env)
+    )
+    log_dir = (
+        Path(_absolute_path(config, "global.log_dir", global_values["log_dir"]))
+        if "log_dir" in global_values
+        else default_log_dir(env)
+    )
+    record_days = _retention_days(
+        config,
+        "global.record_retention_days",
+        global_values.get("record_retention_days"),
+        DEFAULT_RECORD_RETENTION_DAYS,
+    )
+    log_days = _retention_days(
+        config,
+        "global.log_retention_days",
+        global_values.get("log_retention_days"),
+        DEFAULT_LOG_RETENTION_DAYS,
+    )
+    # 起動したプロジェクトの直下に当たる要素を、並びの順に集める
+    project_dir = env.get(PROJECT_DIR_ENV)
+    matched = (
+        [project for project in projects if _matches_project(project["match"], project_dir)]
+        if project_dir
+        else []
+    )
+    # 索引の並び: global（無ければユーザーの既定）、続けて当たった要素の indexes
+    indexes = global_indexes if "indexes" in global_values else _default_user_index(env)
+    for project in matched:
+        indexes.extend(
+            resolve_location(written, Path(project_dir)) for written in project.get("indexes", [])
+        )
+    # 当たった要素のどれも indexes を持たなければ、プロジェクトの既定の置き場所を読む
+    if project_dir and not any("indexes" in project for project in matched):
+        default_project_index = Path(project_dir) / PROJECT_INDEX_DEFAULT
+        if default_project_index.is_file():
+            indexes.append(str(default_project_index))
+    return Settings(
+        indexes=tuple(indexes),
+        state_dir=state_dir,
+        log_dir=log_dir,
+        record_retention_days=record_days,
+        log_retention_days=log_days,
+    )

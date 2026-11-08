@@ -22,9 +22,10 @@ from rule_inject.features.record import (
     read_guided,
     read_record,
 )
-from rule_inject.shared.errors import RecordReadError, RecordWriteError
+from rule_inject.hooks._runner import settings_failure_notice
+from rule_inject.shared.errors import RecordReadError, RecordWriteError, SettingsReadError
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
-from rule_inject.shared.paths import log_dir, state_dir
+from rule_inject.shared.settings import load_settings
 
 # 結果を Grep・Glob の形（ファイル名の一覧と一致した行）で受けるツール
 SEARCH_TOOLS = ("Grep", "Glob")
@@ -96,12 +97,18 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
     found = extract_result_paths(lines, base)
     if not found.paths:
         return None
-    folder = state_dir(env)
-    log_folder = log_dir(env)
+    # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに知らせだけを返す
+    try:
+        settings = load_settings(env)
+    except SettingsReadError as exc:
+        notice = settings_failure_notice(Component.SEARCH_GUIDE, exc, env, session_id)
+        return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": notice}}
+    folder = settings.state_dir
+    log_folder = settings.log_dir
     log_path = log_file_path(log_folder, datetime.now(UTC).date())
     notices: list[str] = []
     # 読めない索引と読み飛ばしたエントリは、ログと知らせの文に回して、読めたエントリでの案内は続ける
-    loaded = load_indexes(env)
+    loaded = load_indexes(settings.indexes, env)
     for failure in loaded.failures:
         write_log(
             log_folder,

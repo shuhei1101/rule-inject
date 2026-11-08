@@ -103,9 +103,9 @@ flows:
       - name: 索引
         description: ルールの場所を持つエントリを 1 つ持つ
       - name: 既読の記録
-        description: '`RULE_INJECT_STATE_DIR` を書き込み権限の無いフォルダ（`chmod 555`）にする'
+        description: '設定ファイルの `global.state_dir` を書き込み権限の無いフォルダ（`chmod 555`）にする'
       - name: ログのフォルダ
-        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+        description: '設定ファイルの `global.log_dir` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
         description: 'Read で読むフローと同じ（`tool_name: Read`、ルールの場所、全体を読んだ `tool_response.file`）'
     flow: |-
@@ -198,7 +198,7 @@ flows:
         description: 記録フォルダに `{session_id}.history.jsonl` という名前のフォルダを置く
         notes: 既読の記録ファイルは書け、既読の履歴だけが開けない状態にする
       - name: ログのフォルダ
-        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+        description: '設定ファイルの `global.log_dir` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
         description: 'Read で読むフローと同じ（`tool_name: Read`、ルールの場所、全体を読んだ `tool_response.file`）'
     flow: |-
@@ -372,6 +372,43 @@ flows:
       - 既読の履歴ファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_mcp_document_unclosed
+  - name: 異常系（設定ファイルが読めない・理由を載せる）
+    summary: 設定ファイルが読めないとき、何も記録せずに理由を載せる
+    setup:
+      - name: Mock
+        description: なし
+        notes: '-'
+      - name: 設定ファイル
+        description: '`RULE_INJECT_CONFIG` が実在しないパスを指す'
+        notes: '-'
+      - name: 索引
+        description: '`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` にルールのエントリを 1 つ持つ'
+        notes: 既定値で動かさないことを見る
+      - name: 既読の記録
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+        notes: '-'
+      - name: 入力
+        description: '`tool_name: Read` でルールのファイル全体を読んだ結果'
+        notes: '-'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant R as 既読の記録
+        participant CFG as 設定ファイル
+        participant LOG as ログ
+
+        CC->>R: 標準入力（Read・ルールの場所）
+        R->>CFG: 読む（無い）
+        R->>LOG: 既定のログのフォルダへ read_settings を追記する
+        R-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
+      ```
+    expected:
+      - '`additionalContext` に設定ファイルの場所と理由が載っている'
+      - 既定の記録フォルダに既読の記録ファイルが無い
+      - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_settings_unreadable
 lead: Read か Bash の読むコマンドで全体を読んだパスのうち索引に載ったルールの場所と、MCP のツールの結果に載ったルールの文書の場所（書式に従う文書が無いときは索引の `read_by` に当たったエントリのルールの場所）を、本文のハッシュと一緒にそのセッションの既読として記録し、既読の履歴へ 1 行ずつ残す。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルへルールの場所と本文のハッシュを 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
@@ -424,7 +461,7 @@ exceptions:
   - name: なし（正常終了）
     condition: 記録できたとき・記録する場所が無いときは、標準出力に何も出さず終了コード 0 で終える
   - name: OSError（既読の記録に書けない）
-    condition: '`RULE_INJECT_STATE_DIR` が作れない・書けない（権限・容量）'
+    condition: '記録フォルダ（設定ファイルの `global.state_dir`）が作れない・書けない（権限・容量）'
     notes: フックの中で捕まえ、`hookSpecificOutput.additionalContext`（PostToolUse）へ「既読にできなかったルールの場所と理由」を載せ、ログへ `write_record` を書いて終了コード 0 で終える。既読にならず書く操作が止まり続ける理由が、モデルと利用者に見える
   - name: Exception（想定外の例外）
     condition: 上のどれにも当たらない例外
@@ -432,12 +469,15 @@ exceptions:
   - name: OSError（既読の履歴に書けない）
     condition: 既読の記録には書けたが、既読の履歴ファイルを作れない・書けない（権限・容量・同じ名前のフォルダがある）
     notes: フックの中で捕まえ、既読の記録は残したまま、`additionalContext` へ「既読の履歴に書けなかったルールの場所と理由」を載せ、ログへ `write_history` を書いて終了コード 0 で終える。既読にはなっているため操作は止まらない
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    notes: フックの中で捕まえ、既定値で動かさず何も記録しない。`additionalContext`（PostToolUse）へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
   - item: 記録の置き場所
-    constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.txt`（1 行 = 場所とハッシュの組）'
+    constraint: '`{state_dir}/{session_id}.txt`（1 行 = 場所とハッシュの組）'
     notes: 書式は ER 図「既読の記録」
   - item: 記録する場所
     constraint: Read・Bash は、索引に載ったルールの場所と同じパス（解決後の絶対パス）だけ。Read は全体を読んだときだけ（制約「Read の全体の判定」）。MCP のツールは、結果に書式に従う文書が 1 つでもあれば、`scope` が `full` の文書の場所のうち索引に載ったルールの場所と同じものだけ（制約「MCP の結果の文書」）。書式に従う文書が無いときは、`read_by` のどれか 1 つの要素の `tools` にツールの完全名が当たり、その要素の `args` に書いた全てのキーの値が当たるエントリのルールの場所だけ。案内用の `tools`・`args` に当たっただけのエントリは記録しない。変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、記録しない。読み飛ばしの理由は載せず、ログにも書かない
@@ -446,7 +486,7 @@ constraints:
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
     notes: 記録にもログにも書けないときも `additionalContext` で理由が見える
   - item: 既読の履歴の置き場所
-    constraint: '`{RULE_INJECT_STATE_DIR}/{session_id}.history.jsonl`（1 行 = 1 回の既読の JSON）'
+    constraint: '`{state_dir}/{session_id}.history.jsonl`（1 行 = 1 回の既読の JSON）'
     notes: 書式は ER 図「既読の記録」。既読の記録へ書いた後に書く。読み方は Read が `read`、Bash が `bash`、MCP のツールが `mcp`
   - item: Read の全体の判定
     constraint: '`tool_response.file.startLine` が 1 で、`numLines` が `totalLines` と同じときだけ全体を読んだと判定する'
@@ -457,6 +497,9 @@ constraints:
   - item: 本文のハッシュ
     constraint: 記録する時点のルールのファイルの中身（バイト列）の SHA-256 を `sha256:{16 進数}` の形で場所と一緒に書く。ファイルを読めずハッシュを取れない場所は記録しない
     notes: 書式は ER 図「既読の記録」。ルール案内・検索結果の案内が同じ方法で今のハッシュを取って比べる
+  - item: 設定ファイル
+    constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
+    notes: '-'
 identifier: record_read
 response:
   - name: '`hookSpecificOutput.hookEventName`'

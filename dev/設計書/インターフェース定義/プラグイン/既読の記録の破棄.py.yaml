@@ -65,7 +65,7 @@ flows:
       - name: 既読の記録
         description: 対象のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
       - name: ログのフォルダ
-        description: '`RULE_INJECT_LOG_DIR` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+        description: '設定ファイルの `global.log_dir` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
       - name: 入力
         description: '`trigger: manual`'
     flow: |-
@@ -86,6 +86,36 @@ flows:
       - 記録ファイルが残っている（圧縮の後の作業の決まりの注入が知らせる）
       - 終了コードが `0`
     test: test_error_when_record_undeletable
+  - name: 異常系（設定ファイルが読めない・ログに書く）
+    summary: 設定ファイルが読めないとき、何も消さずにログに書く
+    setup:
+      - name: Mock
+        description: なし
+      - name: 設定ファイル
+        description: '`RULE_INJECT_CONFIG` が YAML として読めないファイルを指す'
+      - name: 既読の記録
+        description: '`XDG_STATE_HOME` の既定の記録フォルダに、そのセッションの記録ファイルを置く'
+      - name: 入力
+        description: '`trigger: auto`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant D as 既読の記録の破棄
+        participant CFG as 設定ファイル
+        participant LOG as ログ
+
+        CC->>D: 標準入力（session_id・trigger）
+        D->>CFG: 読む（読めない）
+        D->>LOG: 既定のログのフォルダへ read_settings を追記する
+        D-->>CC: 終了コード 0
+      ```
+    expected:
+      - 既定の記録フォルダの記録ファイルが残っている
+      - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_error_when_settings_unreadable
 lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルと案内済みの記録ファイルを消す。既読の履歴ファイルは消さない。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイル（`{session_id}.txt`）と案内済みの記録ファイル（`{session_id}.guided.txt`）を消す。片方を消せなくてももう片方は消す。既読の履歴ファイル（`{session_id}.history.jsonl`）は消さない
@@ -111,11 +141,16 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 上のどれにも当たらない例外
     notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える。記録ファイルが残れば、記録を消せないときと同じく圧縮の後に知らせる
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
+    notes: フックの中で捕まえ、既定値で動かさず何も消さない。既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える（圧縮は止めない）。圧縮の後の作業の決まりの注入が、設定ファイルの場所と理由を載せる
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形で 1 行書く。書けないときは標準エラー出力へ出す
+  - item: 設定ファイル
+    constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.state_dir`・`global.log_dir`
 identifier: discard_read
 test_file: tests/integration/plugin/test_discard_read.py

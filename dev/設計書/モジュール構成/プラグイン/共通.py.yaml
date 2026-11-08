@@ -1,16 +1,18 @@
 title: "プラグイン / 共通"
-lead: フックが共有する、記録フォルダ・ログのフォルダ・場所の解決・保持の日数の読み取り・変数参照の展開・ログ・例外。標準ライブラリだけで書く。
+lead: フックが共有する、設定ファイルの読み取り・既定の記録フォルダとログのフォルダ・場所の解決・変数参照の展開・ログ・例外。標準ライブラリだけで書く。
 directory: |-
   ```text
   src/rule_inject/
   ├── __init__.py
   └── shared/
       ├── __init__.py
-      ├── errors.py     # 索引・既読の記録・既読の履歴・ログの例外
-      ├── paths.py      # 記録フォルダ・ログのフォルダとルールの場所の解決
-      ├── settings.py   # 保持の日数の環境変数の読み取り
-      ├── variables.py  # `!{名前}` を環境変数の値へ展開する
-      └── logger.py     # 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを消す
+      ├── errors.py          # 設定ファイル・索引・既読の記録・既読の履歴・ログの例外
+      ├── paths.py           # 既定の記録フォルダ・ログのフォルダとルールの場所の解決
+      ├── settings.py        # 設定ファイルの読み取りと `projects` の当て方
+      ├── _settings_yaml.py  # 設定ファイルの YAML の一部だけを読む
+      ├── yaml_lines.py      # 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り
+      ├── variables.py       # `!{名前}` を環境変数の値へ展開する
+      └── logger.py          # 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを消す
   ```
 classes:
   - name: RuleInjectError
@@ -69,6 +71,13 @@ classes:
     summary: 記録フォルダが作れない・既読の履歴ファイルに追記できない
     kind: クラス
     inherits: RuleInjectError
+  - name: SettingsReadError
+    title: 設定ファイルが読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: 設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。`path` は設定ファイルの場所
+    kind: クラス
+    inherits: RuleInjectError
 enums:
   - name: LogOperation
     title: 失敗した操作
@@ -97,6 +106,9 @@ enums:
       - value: write_history
         title: 既読の履歴の追記
         description: 既読の履歴に書けない
+      - value: read_settings
+        title: 設定ファイルの読み取り
+        description: 設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。既定のログのフォルダへ書く
   - name: Component
     title: 出した元
     container: shared/logger.py
@@ -142,70 +154,42 @@ constants:
     container: shared/logger.py
     summary: 記録フォルダの直下に残った変更前のログの名前
     value: '`rule-inject.log`'
-  - name: RECORD_RETENTION_DAYS_ENV
-    title: 既読の記録の保持日数の環境変数
-    container: shared/settings.py
-    summary: 既読の記録の保持日数を上書きする環境変数の名前
-    value: '`RULE_INJECT_RECORD_RETENTION_DAYS`'
   - name: DEFAULT_RECORD_RETENTION_DAYS
     title: 既読の記録の保持日数の既定
     container: shared/settings.py
-    summary: 環境変数が無いときの既読の記録の保持日数
+    summary: 設定ファイルに `global.record_retention_days` が無いときの既読の記録の保持日数
     value: '`30`'
-  - name: LOG_RETENTION_DAYS_ENV
-    title: ログの保持日数の環境変数
-    container: shared/settings.py
-    summary: ログの保持日数を上書きする環境変数の名前
-    value: '`RULE_INJECT_LOG_RETENTION_DAYS`'
   - name: DEFAULT_LOG_RETENTION_DAYS
     title: ログの保持日数の既定
     container: shared/settings.py
-    summary: 環境変数が無いときのログの保持日数
+    summary: 設定ファイルに `global.log_retention_days` が無いときのログの保持日数
     value: '`3`'
   - name: VARIABLE_PATTERN
     title: 変数参照の形
     container: shared/variables.py
     summary: '`!{名前}` の正規表現。名前をグループで取る'
     value: '`!\{([A-Za-z_][A-Za-z0-9_]*)\}`'
+  - name: CONFIG_ENV
+    title: 設定ファイルの環境変数
+    container: shared/settings.py
+    summary: 設定ファイルの場所を指す環境変数の名前
+    value: '`RULE_INJECT_CONFIG`'
+  - name: USER_INDEX_DEFAULT
+    title: ユーザーの索引の既定の置き場所
+    container: shared/settings.py
+    summary: '`global.indexes` が無いときに読む索引の、設定フォルダからのパス。設定フォルダは `XDG_CONFIG_HOME`（無いか空なら `~/.config`）'
+    value: '`rule-inject/rules.yaml`'
+  - name: PROJECT_INDEX_DEFAULT
+    title: プロジェクトの索引の既定の置き場所
+    container: shared/settings.py
+    summary: 当たった `projects` の要素のどれも `indexes` を持たないときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス
+    value: '`rules.yaml`'
+  - name: WORKTREES_DIR
+    title: worktree の置き場所
+    container: shared/settings.py
+    summary: '`projects[].match` を当てるとき、この下を本体のリポジトリとして見るフォルダの、リポジトリの直下からのパス'
+    value: '`.claude/worktrees`'
 functions:
-  - name: state_dir
-    title: 記録フォルダの解決
-    container: shared/paths.py
-    usecase: 共通
-    summary: 環境変数から既読の記録を置くフォルダを決める
-    kind: 関数
-    scope: public
-    args:
-      - name: env
-        type: Mapping[str, str]
-        required: true
-        passing: positional
-        description: 環境変数
-    returns:
-      type: Path
-      description: 記録フォルダの絶対パス（作らない）
-    process: |-
-      1. `RULE_INJECT_STATE_DIR` があれば `~` を展開して返す
-      2. 無ければ `XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `STATE_DIR_NAME` を返す
-    unit_tests:
-      - name: test_state_dir_when_env_set
-        case: 正常
-        summary: 環境変数の値を使う
-        condition: '`RULE_INJECT_STATE_DIR=~/x`'
-        mock: なし
-        expected: '`~` を展開した `x` の絶対パス'
-      - name: test_state_dir_when_xdg_state_home
-        case: 正常
-        summary: XDG_STATE_HOME の下を使う
-        condition: '`RULE_INJECT_STATE_DIR` なし、`XDG_STATE_HOME=/s`'
-        mock: なし
-        expected: '`/s/rule-inject`'
-      - name: test_state_dir_when_no_env
-        case: 正常
-        summary: 既定の場所を使う
-        condition: どちらの環境変数も無い
-        mock: なし
-        expected: '`~/.local/state/rule-inject` の絶対パス'
   - name: resolve_location
     title: 場所の解決
     container: shared/paths.py
@@ -256,7 +240,7 @@ functions:
         type: Path
         required: true
         passing: positional
-        description: ログのフォルダ（呼び出し元は `log_dir(env)` を渡す）
+        description: ログのフォルダ（呼び出し元は `Settings.log_dir` を、設定ファイルが読めないときは `default_log_dir(env)` を渡す）
       - name: component
         type: Component
         required: true
@@ -316,92 +300,6 @@ functions:
         condition: '`now` を 2026-09-29T23:59:59+00:00 と 2026-09-30T00:00:00+00:00 にして 1 回ずつ呼ぶ'
         mock: なし
         expected: '`20260929_rule-inject.log` と `20260930_rule-inject.log` に 1 行ずつある'
-  - name: log_dir
-    title: ログのフォルダの解決
-    container: shared/paths.py
-    usecase: 共通
-    summary: 環境変数からログを置くフォルダを決める
-    kind: 関数
-    scope: public
-    args:
-      - name: env
-        type: Mapping[str, str]
-        required: true
-        passing: positional
-        description: 環境変数
-    returns:
-      type: Path
-      description: ログのフォルダの絶対パス（作らない）
-    process: |-
-      1. `RULE_INJECT_LOG_DIR` があれば `~` を展開して返す
-      2. 無ければ `XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `{STATE_DIR_NAME}/{LOG_DIR_NAME}` を返す（`RULE_INJECT_STATE_DIR` には従わない）
-    unit_tests:
-      - name: test_log_dir_when_env_set
-        case: 正常
-        summary: 環境変数の値を使う
-        condition: '`RULE_INJECT_LOG_DIR=~/x`'
-        mock: なし
-        expected: '`~` を展開した `x` の絶対パス'
-      - name: test_log_dir_when_xdg_state_home
-        case: 正常
-        summary: XDG_STATE_HOME の下を使う
-        condition: '`RULE_INJECT_LOG_DIR` なし、`XDG_STATE_HOME=/s`、`RULE_INJECT_STATE_DIR=/r`'
-        mock: なし
-        expected: '`/s/rule-inject/logs`'
-      - name: test_log_dir_when_no_env
-        case: 正常
-        summary: 既定の場所を使う
-        condition: どの環境変数も無い
-        mock: なし
-        expected: '`~/.local/state/rule-inject/logs` の絶対パス'
-  - name: read_retention_days
-    title: 保持の日数の読み取り
-    container: shared/settings.py
-    usecase: 共通
-    summary: 環境変数から保持の日数を読む
-    kind: 関数
-    scope: public
-    args:
-      - name: env
-        type: Mapping[str, str]
-        required: true
-        passing: positional
-        description: 環境変数
-      - name: name
-        type: str
-        required: true
-        passing: positional
-        description: 環境変数の名前（`RECORD_RETENTION_DAYS_ENV` か `LOG_RETENTION_DAYS_ENV`）
-      - name: default
-        type: int
-        required: true
-        passing: positional
-        description: 環境変数が無いか、1 以上の整数として読めないときの日数
-    returns:
-      type: int
-      description: 1 以上の日数
-    process: |-
-      1. 前後の空白を落として 10 進の整数として読む。1 以上なら返す
-      2. 環境変数が無い・空・整数として読めない・1 未満のときは `default` を返す（利用者が決めた扱い。PR #12 の確認ログ）
-    unit_tests:
-      - name: test_read_retention_days
-        case: 正常
-        summary: 環境変数の整数を返す
-        condition: 値が `7`、`default` が 3
-        mock: なし
-        expected: '7'
-      - name: test_read_retention_days_when_missing
-        case: 正常
-        summary: 環境変数が無いか空なら既定を返す
-        condition: 環境変数が無い場合と、値が空文字の場合（パラメータ展開）、`default` が 3
-        mock: なし
-        expected: '3'
-      - name: test_read_retention_days_when_invalid
-        case: 正常
-        summary: 1 以上の整数でなければ既定を返す
-        condition: 値が `0`・`-1`・`abc`・`1.5`（パラメータ展開）、`default` が 3
-        mock: なし
-        expected: '3'
   - name: log_file_path
     title: ログのファイルのパス
     container: shared/logger.py
@@ -426,7 +324,7 @@ functions:
     process: |-
       1. `day` を `%Y%m%d` で文字にし、`LOG_FILE_SUFFIX` を続けた名前を `log_folder` と結ぶ
 
-      案内文で利用者に見せるログの場所は、`log_file_path(log_dir(env), 今日（UTC）)` を渡す
+      案内文で利用者に見せるログの場所は、`log_file_path(Settings.log_dir, 今日（UTC）)`（設定ファイルが読めないときは `default_log_dir(env)`）を渡す
     unit_tests:
       - name: test_log_file_path
         case: 正常
@@ -598,10 +496,307 @@ functions:
         condition: '`!{X}`、`env` に `X=!{Y}` と `Y=2`'
         mock: なし
         expected: '`text` が `!{Y}`'
+  - name: default_state_dir
+    title: 既定の記録フォルダの解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: 設定ファイルに `global.state_dir` が無いときの記録フォルダを決める
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`XDG_STATE_HOME` を使う）
+    returns:
+      type: Path
+      description: 記録フォルダの絶対パス（作らない）
+    process: 1. `XDG_STATE_HOME`（無いか空なら `~/.local/state`）の `~` を展開し、その下の `STATE_DIR_NAME` を返す
+    unit_tests:
+      - name: test_default_state_dir_when_xdg_state_home
+        case: 正常
+        summary: XDG_STATE_HOME の下を使う
+        condition: '`XDG_STATE_HOME=/s`'
+        mock: なし
+        expected: '`/s/rule-inject`'
+      - name: test_default_state_dir_when_no_env
+        case: 正常
+        summary: 既定の場所を使う
+        condition: '`XDG_STATE_HOME` が無い'
+        mock: なし
+        expected: '`~/.local/state/rule-inject` の絶対パス'
+  - name: default_log_dir
+    title: 既定のログのフォルダの解決
+    container: shared/paths.py
+    usecase: 共通
+    summary: 設定ファイルに `global.log_dir` が無いとき・設定ファイルが読めないときのログのフォルダを決める
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`XDG_STATE_HOME` を使う）
+    returns:
+      type: Path
+      description: ログのフォルダの絶対パス（作らない）
+    process: 1. `default_state_dir(env)` の下の `LOG_DIR_NAME` を返す（設定ファイルの `global.state_dir` には従わない）
+    unit_tests:
+      - name: test_default_log_dir_when_xdg_state_home
+        case: 正常
+        summary: XDG_STATE_HOME の下を使う
+        condition: '`XDG_STATE_HOME=/s`'
+        mock: なし
+        expected: '`/s/rule-inject/logs`'
+      - name: test_default_log_dir_when_no_env
+        case: 正常
+        summary: 既定の場所を使う
+        condition: '`XDG_STATE_HOME` が無い'
+        mock: なし
+        expected: '`~/.local/state/rule-inject/logs` の絶対パス'
+  - name: load_settings
+    title: 設定の読み込み
+    container: shared/settings.py
+    usecase: 共通
+    summary: '`RULE_INJECT_CONFIG` が指す設定ファイルを読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す'
+    kind: 関数
+    scope: public
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`CONFIG_ENV`・`CLAUDE_PROJECT_DIR`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` を使う）
+    returns:
+      type: Settings
+      description: フックが使う値
+    process: |-
+      1. `CONFIG_ENV` が無いか空なら設定ファイルを読まず、空の設定として 4 へ進む
+      2. 先頭の `~` を展開したパスを UTF-8 で読み `parse_settings` に渡す
+      3. 値を確かめる
+         - `global.indexes`・`global.state_dir`・`global.log_dir` の値は、`~` を展開して絶対パスでなければ誤り
+         - `global.record_retention_days`・`global.log_retention_days` は 10 進の整数として読み、1 以上でなければ誤り
+         - `projects` の要素が `match` を持たなければ誤り
+      4. `CLAUDE_PROJECT_DIR` があれば、`_matches_project(match, CLAUDE_PROJECT_DIR)` が真の `projects` の要素を並びの順に集める（無ければどの要素も当てない）
+      5. 索引の並びを作る
+         - `global.indexes` があればその値（`~` を展開）を並べる。無ければ `{XDG_CONFIG_HOME か ~/.config}/{USER_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる
+         - 続けて、当たった要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
+         - 当たった要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
+      6. `state_dir`・`log_dir` は `global` の値（`~` を展開）か、無ければ `default_state_dir(env)`・`default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`
+      7. `Settings` を返す
+    exceptions:
+      - name: SettingsReadError
+        condition: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
+        message: path は設定ファイルの場所、reason は `describe(exc)`
+      - name: SettingsReadError
+        condition: '`parse_settings` が ValueError を送出する（YAML の書式・知らないキー・許さない形）'
+        message: path は設定ファイルの場所、reason は `describe(exc)`（行番号を含む）
+      - name: SettingsReadError
+        condition: 3 の値の誤り
+        message: 'path は設定ファイルの場所、reason は `{キー}: {書かれた値} は {許す値}ではない`（例 `global.log_retention_days: 0 は 1 以上の整数ではない`）'
+    unit_tests:
+      - name: test_load_settings
+        case: 正常
+        summary: 設定ファイルの値を使う
+        condition: '`global` に全てのキー（`indexes` は絶対パス 1 つ）、`projects` に `CLAUDE_PROJECT_DIR` のフォルダ名を `match` に持ち `indexes` に相対パス `rules/a.yaml` を持つ要素。`CLAUDE_PROJECT_DIR` の直下にも `rules.yaml` を置く'
+        mock: なし（設定ファイルは一時ファイル）
+        expected: '`indexes` が `global` の索引、`{CLAUDE_PROJECT_DIR}/rules/a.yaml` の順の 2 つ（直下の `rules.yaml` は入らない）。`state_dir`・`log_dir`・保持日数が設定ファイルの値'
+      - name: test_load_settings_when_no_config
+        case: 正常
+        summary: '`RULE_INJECT_CONFIG` が無ければ既定値を使う'
+        condition: '`RULE_INJECT_CONFIG` が無い。`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`CLAUDE_PROJECT_DIR` は一時フォルダで、`{XDG_CONFIG_HOME}/rule-inject/rules.yaml` と `{CLAUDE_PROJECT_DIR}/rules.yaml` を置く'
+        mock: なし
+        expected: '`indexes` がユーザー、プロジェクトの既定の索引の順の 2 つ。`state_dir` が `{XDG_STATE_HOME}/rule-inject`、`log_dir` が `{XDG_STATE_HOME}/rule-inject/logs`、保持日数が 30 と 3'
+      - name: test_load_settings_when_default_missing
+        case: 正常
+        summary: 既定の置き場所に索引が無ければ並べない
+        condition: '`RULE_INJECT_CONFIG` が無い。`XDG_CONFIG_HOME` と `CLAUDE_PROJECT_DIR` は空の一時フォルダ'
+        mock: なし
+        expected: '`indexes` が空'
+      - name: test_load_settings_when_projects_order
+        case: 正常
+        summary: 当たった要素を並びの順に重ねる
+        condition: '`projects` に、フォルダ名で当たる要素 A（`indexes: [/a.yaml]`）、当たらない要素 B（`indexes: [/b.yaml]`）、絶対パスで当たる要素 C（`indexes: [/c.yaml]`）。`global.indexes: [/g.yaml]`'
+        mock: なし
+        expected: '`indexes` が `/g.yaml`・`/a.yaml`・`/c.yaml` の順'
+      - name: test_load_settings_when_indexes_empty
+        case: 正常
+        summary: 空の並びは既定の置き場所も読まない
+        condition: '`global.indexes: []` と、当たる要素の `indexes: []`。両方の既定の置き場所に索引を置く'
+        mock: なし
+        expected: '`indexes` が空'
+      - name: test_load_settings_when_no_project_dir
+        case: 正常
+        summary: '`CLAUDE_PROJECT_DIR` が無ければどの要素も当てない'
+        condition: '`CLAUDE_PROJECT_DIR` が無い。`projects` に絶対パスとフォルダ名の要素'
+        mock: なし
+        expected: '`indexes` が `global` の索引だけ'
+      - name: test_load_settings_when_home
+        case: 正常
+        summary: '`RULE_INJECT_CONFIG` の `~` を展開する'
+        condition: '`HOME` を一時フォルダに向け、`RULE_INJECT_CONFIG=~/c/settings.yaml` に `global.log_retention_days: 5` を置く'
+        mock: '`HOME`（monkeypatch）'
+        expected: '`log_retention_days` が 5'
+      - name: test_load_settings_when_missing
+        case: 異常
+        summary: 指したファイルが無い
+        condition: '`RULE_INJECT_CONFIG` が実在しないパス'
+        mock: なし
+        expected: SettingsReadError（path がそのパス、reason に `FileNotFoundError`）
+        exception: 設定ファイルが無い・読めない
+      - name: test_load_settings_when_unknown_key
+        case: 異常
+        summary: 知らないキーを拒む
+        condition: '`projects` の要素に `index:` がある'
+        mock: なし
+        expected: SettingsReadError（reason に行番号と `index`）
+        exception: '`parse_settings` が ValueError を送出する'
+      - name: test_load_settings_when_relative_global_path
+        case: 異常
+        summary: '`global` の相対パスを拒む'
+        condition: '`global.indexes: [rules.yaml]`、`global.state_dir: state`、`global.log_dir: logs` のどれか 1 つ（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason にキーと値）
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_invalid_retention
+        case: 異常
+        summary: 1 以上の整数でない保持日数を拒む
+        condition: '`global.record_retention_days` か `global.log_retention_days` が `0`・`-1`・`abc`・`1.5`（パラメータ展開）'
+        mock: なし
+        expected: SettingsReadError（reason にキーと値）。既定の日数に置き換えない
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_match_missing
+        case: 異常
+        summary: '`match` の無い要素を拒む'
+        condition: '`projects` の要素が `indexes` だけを持つ'
+        mock: なし
+        expected: SettingsReadError（reason に `projects[0].match`）
+        exception: 3 の値の誤り
+      - name: test_load_settings_when_not_utf8
+        case: 異常
+        summary: UTF-8 として読めない設定ファイル
+        condition: '`RULE_INJECT_CONFIG` が UTF-8 でないバイト列（`b"\xff\xfe"`）のファイルを指す'
+        mock: なし
+        expected: SettingsReadError（path が設定ファイルの場所）
+        exception: 設定ファイルが無い・読めない・UTF-8 として読めない（OSError・UnicodeDecodeError）
+  - name: _matches_project
+    title: プロジェクトの当て方
+    container: shared/settings.py
+    usecase: 共通
+    summary: '`projects[].match` が起動したプロジェクトに当たるかを返す'
+    kind: 関数
+    scope: internal
+    args:
+      - name: match
+        type: str
+        required: true
+        passing: positional
+        description: '`projects[].match` の値（絶対パス・`~` で始まるパス・プロジェクト名）'
+      - name: project_dir
+        type: str
+        required: true
+        passing: positional
+        description: '`CLAUDE_PROJECT_DIR` の値'
+    returns:
+      type: bool
+      description: 当たるとき真
+    process: |-
+      1. `project_dir` を `os.path.normpath` で畳み、`/{WORKTREES_DIR}/` を含むならその前までを本体のパスとする（含まなければ畳んだパスが本体）
+      2. `match` の `~` を展開して絶対パスなら、畳んだ `match` と本体のパスが同じか、本体のパスが `{match}/` で始まるとき真
+      3. 絶対パスでなければプロジェクト名として、本体のパスの最後のフォルダ名と一致するとき真
+    unit_tests:
+      - name: test_matches_project_when_absolute
+        case: 正常
+        summary: 絶対パスはそのパスと配下に当てる
+        condition: '`match` が `/w/repo`。`project_dir` が `/w/repo`・`/w/repo/sub`・`/w/repo2`（パラメータ展開）'
+        mock: なし
+        expected: 順に真・真・偽
+      - name: test_matches_project_when_name
+        case: 正常
+        summary: プロジェクト名はフォルダ名で当てる
+        condition: '`match` が `repo`。`project_dir` が `/w/repo`・`/w/other`（パラメータ展開）'
+        mock: なし
+        expected: 順に真・偽
+      - name: test_matches_project_when_worktree
+        case: 正常
+        summary: worktree は本体で当てる
+        condition: '`project_dir` が `/w/repo/.claude/worktrees/feat`。`match` が `repo`・`/w/repo`・`feat`（パラメータ展開）'
+        mock: なし
+        expected: 順に真・真・偽
+  - name: parse_settings
+    title: 設定ファイルの YAML の読み取り
+    container: shared/_settings_yaml.py
+    usecase: 共通
+    summary: 設定ファイルの YAML のうち設定の設計書に挙げたキーと形だけを読む
+    kind: 関数
+    scope: public
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: 設定ファイルの中身
+    returns:
+      type: dict[str, dict[str, str | list[str]] | list[dict[str, str | list[str]]]]
+      description: '`global`（キー → 文字列か文字列のリスト）と `projects`（そのマップのリスト）。書かれていないキーは持たない。整数の値も文字列のまま返す'
+    process: |-
+      1. コメント（`#` から行末。引用符の中を除く）と空行を落とす（`yaml_lines` の行の読み取り）
+      2. 最上位のキーは `global` と `projects` だけを許す
+      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`（文字列）だけを許す
+      4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
+      5. 文字列は引用符あり・なしを読む。リストは空の `[]` を許す
+      6. 許さないキー・形（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする
+    exceptions:
+      - name: ValueError
+        condition: 許さないキー・形がある
+        message: '`{行番号}行目: {理由}`'
+    unit_tests:
+      - name: test_parse_settings
+        case: 正常
+        summary: '`global` と `projects` を読む'
+        condition: '`global` に `indexes`（ブロックのリスト）・引用符つきの `state_dir`・`log_retention_days: 5`。`projects` に `match` と `indexes`（フローのリスト）を持つ要素と `match` だけの要素。行末にコメント'
+        mock: なし
+        expected: '`global` と 2 要素の `projects` のキーと値（`log_retention_days` は文字列 `5`）'
+      - name: test_parse_settings_when_empty
+        case: 正常
+        summary: 空の設定ファイル
+        condition: コメントだけの中身
+        mock: なし
+        expected: 空の dict
+      - name: test_parse_settings_when_empty_lists
+        case: 正常
+        summary: 空のリストを読む
+        condition: '`global.indexes: []` と `projects: []`'
+        mock: なし
+        expected: '`indexes` と `projects` が空のリスト'
+      - name: test_parse_settings_when_unknown_key
+        case: 異常
+        summary: 許さないキーを拒む
+        condition: 最上位の `foo:`・`global` の `index:`・`projects` の要素の `state_dir:`（パラメータ展開）
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形がある
+      - name: test_parse_settings_when_flow_map
+        case: 異常
+        summary: フローのマップを拒む
+        condition: '`global: {state_dir: /s}`'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形がある
+      - name: test_parse_settings_when_duplicate_key
+        case: 異常
+        summary: キーの重複を拒む
+        condition: '`global` に `log_dir:` が 2 つ'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形がある
 test_files:
   - tests/unit/rule_inject/shared/test_paths.py
   - tests/unit/rule_inject/shared/test_logger.py
   - tests/unit/rule_inject/shared/test_settings.py
+  - tests/unit/rule_inject/shared/test_settings_yaml.py
   - tests/unit/rule_inject/shared/test_variables.py
 data_models:
   - name: Expansion
@@ -617,3 +812,25 @@ data_models:
       - name: unresolved
         type: tuple[str, ...]
         description: 未設定の名前。重なりを落とし、出た順に並べる
+  - name: Settings
+    title: 設定
+    container: shared/settings.py
+    usecase: 共通
+    role: DTO
+    summary: 設定ファイルと既定値から決めた、フックが使う値
+    properties:
+      - name: indexes
+        type: tuple[str, ...]
+        description: 読む索引の絶対パス。`global.indexes`（無ければユーザーの既定の置き場所）の後に、当たった `projects` の要素の `indexes`（どれも持たなければプロジェクトの既定の置き場所）を並べる。既定の置き場所はファイルがあるときだけ入る
+      - name: state_dir
+        type: Path
+        description: 記録フォルダの絶対パス（作らない）
+      - name: log_dir
+        type: Path
+        description: ログのフォルダの絶対パス（作らない）
+      - name: record_retention_days
+        type: int
+        description: 既読の記録の保持日数（1 以上）
+      - name: log_retention_days
+        type: int
+        description: ログの保持日数（1 以上）

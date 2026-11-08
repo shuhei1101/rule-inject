@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from rule_inject.features.guidance.service import SEARCH_HEADER
+from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.search_guide import search_guide
 
 RULE = "/r/python.md"
@@ -19,14 +21,14 @@ HASH_TEST = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f0
 
 @pytest.fixture
 def guide_env(
-    hook_env: dict[str, str],
+    settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
 ) -> Callable[[str], dict[str, str]]:
-    """索引の文字列を書き、プロジェクトの索引として指す環境変数を返す factory。"""
+    """索引の文字列を書き、設定ファイルの `global.indexes` で指す環境変数を返す factory。"""
 
     def _env(text: str) -> dict[str, str]:
-        """text を索引として置き、hook_env に索引の環境変数を足す。"""
-        return {**hook_env, "RULE_INJECT_INDEXES_PROJECT": str(make_index(text))}
+        """text を索引として置き、その索引を指す設定ファイルを `RULE_INJECT_CONFIG` で指す。"""
+        return settings_env(indexes=[str(make_index(text))])
 
     return _env
 
@@ -198,3 +200,34 @@ def test_search_guide_when_rule_changed(
     result = search_guide(payload, env)
     # 検証
     assert str(rule) in result["hookSpecificOutput"]["additionalContext"]
+
+
+def test_search_guide_when_settings_unreadable(
+    xdg_state_home: Path,
+    session_id: str,
+    python_file: Path,
+    unreadable_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    default_log_folder: Path,
+    read_default_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """設定ファイルが読めないときは照合せずに知らせる（正常系）。"""
+    # 準備
+    env = unreadable_env("broken")
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Grep",
+        tool_input={"pattern": "print", "path": str(python_file.parent)},
+        tool_response={"mode": "files_with_matches", "filenames": [python_file.name]},
+    )
+    # 実行
+    result = search_guide(payload, env)
+    # 検証
+    context = result["hookSpecificOutput"]["additionalContext"]
+    assert SETTINGS_FAILURE_SUMMARY in context
+    assert env["RULE_INJECT_CONFIG"] in context
+    assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
+    assert not (xdg_state_home / "rule-inject" / f"{session_id}.guided.txt").exists()
+    logged = read_default_log()
+    assert len(logged) == 1
+    assert logged[0]["operation"] == "read_settings"

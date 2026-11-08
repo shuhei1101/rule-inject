@@ -5,8 +5,8 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: ログのフォルダ
-        description: '`RULE_INJECT_LOG_DIR` でテスト用のフォルダを指す'
-        notes: '`RULE_INJECT_LOG_RETENTION_DAYS` は置かず、既定の 3 日で動かす'
+        description: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global` のログのフォルダで、テスト用のフォルダを指す'
+        notes: '設定ファイルにログの保持日数は書かず、既定の 3 日で動かす'
       - name: 古いログ
         description: 日付が 3 日前（UTC）のログのファイルを置く
       - name: 新しいログ
