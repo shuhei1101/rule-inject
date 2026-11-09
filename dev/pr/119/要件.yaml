@@ -177,3 +177,6 @@ scope_out:
   - item: pyproject.toml の mcp の依存
     reason: 常駐の MCP サーバー（src/rule_inject/server）が使用しており、E2E だけの依存ではない
     plan: none
+  - item: 設計書の検証が、シナリオ 25 件の test_file（tests/e2e/）の参照先が無いことを「対応テストファイルがありません」として誤りにする
+    reason: D-311 で test_file は残すため、検証の側（AI Monitor の check_tests）で許す。この PR では 25 件を既知の指摘として扱う
+    plan: shuhei1101/ai-monitor#3330

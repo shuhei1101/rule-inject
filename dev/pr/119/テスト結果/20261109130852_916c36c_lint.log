@@ -1,0 +1,31 @@
+$ (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; for d in dev/pr/*/反映作業/*/; do uv run mypy "$d"*.py || rc=1; done; uv run lint-imports || rc=1; exit $rc)
+All checks passed!
+359 files already formatted
+Success: no issues found in 132 source files
+Success: no issues found in 5 source files
+Success: no issues found in 4 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 65 files, 175 dependencies.
+------------------------------------
+
+hooks と server は features を使い、features は shared を使う KEPT
+features の機能どうしは import しない KEPT
+
+Contracts: 2 kept, 0 broken.
+exit=0
