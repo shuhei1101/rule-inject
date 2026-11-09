@@ -1,0 +1,167 @@
+use_cases:
+  - kind: composite
+    scenario: dev/設計書/シナリオ/複合ユースケース/ルールを読んでからファイルを触る.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: composite
+    scenario: dev/設計書/シナリオ/複合ユースケース/既読の記録を削除して案内を受け直す.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: composite
+    scenario: dev/設計書/シナリオ/複合ユースケース/索引のエントリを直して案内を確かめる.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/MCPサーバーの状態を確認する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/MCPサーバーの設定を読み直す.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/MCPサーバーを再起動する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/MCPサーバーを常駐させる.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/rule-injectを更新する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/セッションの開始時に作業の決まりを受け取る.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/リポジトリの索引を登録する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/ルールを読んだことが記録される.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/効いているルールの一覧を見る.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/古いログが掃除される.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/圧縮で既読の記録が捨てられる.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/操作に当たるルールを検索する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/既定の場所の設定を読む.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/既読の記録を削除する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/未読のルールの案内を受ける.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/検索の結果に出たファイルのルールの案内を受ける.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/端末をセットアップする.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/索引のエントリを編集する.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/索引をチェックする.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/終わったセッションの既読の記録が掃除される.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/落ちていたMCPサーバーがセッションの開始時に起動される.yaml
+    impact: none
+    detail: シナリオと test_file は残し、test_file が指す E2E のテストを削除する
+    depends_on: []
+docs:
+  - page: dev/設計書/テスト/テスト実行方法.yaml
+    new: false
+    change: E2E テストの行（起動コマンド・前提条件・引き継ぎ・費用・起動し直す回数の補足）を削除する
+    status: todo
+  - page: dev/設計書/外部ライブラリ/mcp.yaml
+    new: false
+    change: used_in の tests/e2e/conftest.py と、E2E テストの文書の MCP サーバーだけが使うとする記述を削除する
+    status: todo
+  - page: dev/設計書/外部ライブラリ/index.yaml
+    new: false
+    change: mcp の行の概要から E2E テストの文書の MCP サーバーを外す（README.md は index.yaml から生成し直す）
+    status: todo
+  - page: dev/設計書/外部ライブラリ/claude-code.yaml
+    new: false
+    change: E2E テストを指す記述があれば修正する（動作確認の履歴の記述は残す）
+    status: todo
+  - page: dev/設計書/インターフェース定義/プラグイン/端末のセットアップ.yaml
+    new: false
+    change: Mock の「シナリオ『端末をセットアップする』の E2E で確認する」の記述を、E2E を削除した後の記述に修正する
+    status: todo
+  - page: dev/設計書/インターフェース定義/プラグイン/索引の登録.yaml
+    new: false
+    change: Mock の「シナリオ『リポジトリの索引を登録する』の E2E で確認する」の記述を、E2E を削除した後の記述に修正する
+    status: todo
+scope_out:
+  - item: シナリオの記述と test_file（`端末をセットアップする` の `rule-inject-e2e-{乱数}` のサービス名の注記を含む）
+    reason: D-311 でシナリオは残し、test_file は作り直すときの対応の印として残すと決まった
+    plan: none
+  - item: 設計書の目次の「シナリオ（E2E テストの元）」の概要
+    reason: シナリオは作り直す E2E の元であり続け、記述は削除後も正しい
+    plan: none
+  - item: dev/テンプレート/ の E2E の記述（シナリオ・テスト実行方法の Schema）
+    reason: AI Monitor から配布されたテンプレートで、このリポジトリの E2E のテストではない
+    plan: none
+  - item: docs/はじめに/変更履歴.md の過去の E2E の修正の行
+    reason: 過去の版の変更の記録で、削除後も事実として正しい
+    plan: none
+  - item: pyproject.toml の mcp の依存
+    reason: 常駐の MCP サーバー（src/rule_inject/server）が使用しており、E2E だけの依存ではない
+    plan: none
