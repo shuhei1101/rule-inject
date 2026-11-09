@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-09T03:46:16.129504+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: 要件.yaml の docs の行（テスト実行方法・外部ライブラリ・インターフェース定義の E2E の記述）
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:40.508128+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: テストを追加しない。既存の単体テストを回して通ることを実装で確かめる

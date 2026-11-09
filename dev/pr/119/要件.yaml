@@ -128,27 +128,39 @@ docs:
   - page: dev/設計書/テスト/テスト実行方法.yaml
     new: false
     change: E2E テストの行（起動コマンド・前提条件・引き継ぎ・費用・起動し直す回数の補足）を削除する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:37.290297+00:00'
   - page: dev/設計書/外部ライブラリ/mcp.yaml
     new: false
     change: used_in の tests/e2e/conftest.py と、E2E テストの文書の MCP サーバーだけが使うとする記述を削除する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:37.290297+00:00'
   - page: dev/設計書/外部ライブラリ/index.yaml
     new: false
     change: mcp の行の概要から E2E テストの文書の MCP サーバーを外す（README.md は index.yaml から生成し直す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:37.290297+00:00'
   - page: dev/設計書/外部ライブラリ/claude-code.yaml
     new: false
-    change: E2E テストを指す記述があれば修正する（動作確認の履歴の記述は残す）
-    status: todo
+    change: E2E テストを指す記述を確認した。used_in に E2E は無く、verification の動作確認の履歴は過去の事実のため変更しない
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:37.290297+00:00'
   - page: dev/設計書/インターフェース定義/プラグイン/端末のセットアップ.yaml
     new: false
     change: Mock の「シナリオ『端末をセットアップする』の E2E で確認する」の記述を、E2E を削除した後の記述に修正する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:37.290297+00:00'
   - page: dev/設計書/インターフェース定義/プラグイン/索引の登録.yaml
     new: false
     change: Mock の「シナリオ『リポジトリの索引を登録する』の E2E で確認する」の記述を、E2E を削除した後の記述に修正する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-09T03:56:37.290297+00:00'
 scope_out:
   - item: シナリオの記述と test_file（`端末をセットアップする` の `rule-inject-e2e-{乱数}` のサービス名の注記を含む）
     reason: D-311 でシナリオは残し、test_file は作り直すときの対応の印として残すと決まった
