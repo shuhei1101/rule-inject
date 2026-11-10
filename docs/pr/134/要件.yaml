@@ -2,103 +2,153 @@ docs:
   - page: docs/scenario/SC-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-2.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-3.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-4.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-5.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-6.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-7.yaml
     new: false
-    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    change: 移行する箇所が無いことを確認した（変更なし）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-8.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-9.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-10.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-11.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-12.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-13.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-14.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-15.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-16.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-17.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-18.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-19.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-20.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-21.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-22.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-23.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-24.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
   - page: docs/scenario/SC-122-25.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する（Mermaid は残す）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:28:34.584701+00:00'
 scope_out:
   - item: シナリオの Mermaid の図を mdmark の図へ書き換える
     reason: 起点 Issue の本文で、図は別の Issue で扱うと決めている
@@ -109,3 +159,9 @@ scope_out:
   - item: シナリオ以外の設計書（インターフェース定義・モジュール構成・その他）の本文
     reason: '設計書の分類ごとの Issue に分けている（インターフェース定義 #128・モジュール構成 #129・その他 #130）'
     plan: '#128'
+  - item: シナリオ名（`scenarios[].name`）の AI slop の単語の置き換え
+    reason: シナリオ名は `uses`・図の `click`・インターフェース定義から `{ID}#scenarios[{名前}]` で参照されるキーで、変えると参照が切れる。参照する側（インターフェース定義・複合ユースケースの図）と一緒に変える必要がある
+    plan: to_file
+  - item: 「読む」と「書く操作」の置き換え
+    reason: '「読む」は既読の記録の仕組みそのもの、「書く操作」は索引の操作の種別（`on: [read, write]`）を指すこのプラグインの語で、「参照」「記載」へ置き換えると意味がずれる（PR #125 の公開ドキュメントと同じ扱い）'
+    plan: none
