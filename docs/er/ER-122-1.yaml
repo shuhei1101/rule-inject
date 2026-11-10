@@ -10,12 +10,16 @@ tables:
     scale: '1 日 1 ファイル。失敗が続いても 1 ファイル数 MB で、残るのは非機能要件「ログの保持日数」の分のファイル'
     growth: 失敗のたびに、その時刻（UTC）の日付のファイルへ 1 行追記する。ファイルが無ければ作る
     retention: 'ファイル名の日付が今日（UTC）から非機能要件「ログの保持日数」以上前になったら、次のセッションの開始で削除する'
-    deletion: ファイルごとの物理削除。利用者が手で削除してもよい
-    access: 追記（O_APPEND）だけで書く。プラグインは読まない
+    deletion: ファイルごとの物理削除。利用者が手動で削除してもよい
+    access: 追記（O_APPEND）だけで書き込む。プラグインは読み込まない
     description: |-
-      フックの標準出力は Claude Code へ返す JSON だけにするため、失敗はこのファイルへ書く。このファイルにも書けないときは、同じ 1 行を標準エラー出力へ出す（Claude Code のデバッグのログに残る）。
+      フックの標準出力は Claude Code への応答の JSON だけにし、失敗はこのファイルへ書き込む。
+      このファイルにも書き込めないときは、同じ 1 行を標準エラー出力へ出力する（Claude Code のデバッグのログに記録される）。
 
-      `{log_dir}` は設定『プラグイン』の `global.log_dir`（既定は `RULE_INJECT_STATE_DIR` の下の `logs`、無ければ `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`）。設定ファイルが読めなかったことのログは既定のフォルダへ書く。`{yyyymmdd}` は `time` の UTC の日付。
+      | 記号 | 値 |
+      | --- | --- |
+      | `{log_dir}` | [設定: プラグイン](id:CFG-122-1) の `global.log_dir`。既定は `RULE_INJECT_STATE_DIR` の下の `logs`、無ければ `${XDG_STATE_HOME:-~/.local/state}/rule-inject/logs`。設定ファイルを読み込めなかったことのログは既定のフォルダへ書き込む |
+      | `{yyyymmdd}` | `time` の UTC の日付 |
     columns:
       - name: time
         title: 時刻
