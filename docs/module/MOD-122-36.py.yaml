@@ -236,7 +236,7 @@ functions:
       type: str | None
       description: 読み込んだ設定ファイルの場所。既定のパスにファイルが無く読み込まなかったときは `None`
 notes:
-  設定の読み取りの置き場所: |-
+  設定の読み取りの配置場所: |-
     `tools.py`・`record_tools.py` の内部関数は使用せず、`shared.settings` の公開の `load_settings`・`config_path`・`PROJECT_DIR_ENV` で読み込む。
     `tools._config_path` は `RULE_INJECT_CONFIG` が無いと既定のパスのファイルを読み込んでも `None` を返却し、インターフェース定義の `config_path`（読み込まなかったときだけ `null`）と合わないため。
 lead: サーバーの状態の確認・設定の再読込・再起動・更新のツールを定め、サーバーを管理するツールを修正するときに参照する。

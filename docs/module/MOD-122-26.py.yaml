@@ -31,7 +31,7 @@ functions:
       2. 既読にする場所を決める。`load_indexes` の `failures`（URL のためにスキップしたエントリを含む）は通知せず、ログにも書き込まない
          - Read の場合、`tool_response.file` の `startLine` が 1 で `numLines` が `totalLines` と同じときだけ（3 つとも bool でない整数のときだけ）、`file_path` のうち `rule_locations` にあるもの
          - Bash の場合、`extract_read_paths(FULL_READ_COMMANDS)` のうち `rule_locations` にあるもの
-         - `mcp__` で始まるツールで、`extract_documents(tool_response)` が 1 件以上返す場合、`scope` が `DocumentScope.FULL` で `path` が `http://`・`https://` で始まらない文書の `path` を `resolve_location(path, cwd)` で解いたうち `rule_locations` にあるもの（`read_by` は照合しない）
+         - `mcp__` で始まるツールで、`extract_documents(tool_response)` が 1 件以上返却する場合、`scope` が `DocumentScope.FULL` で `path` が `http://`・`https://` で始まらない文書の `path` を `resolve_location(path, cwd)` で解いたうち `rule_locations` にあるもの（`read_by` は照合しない）
          - `mcp__` で始まるツールで、文書が 0 件の場合、`match_read_by(entries, tool_name, tool_input)`
          - `mcp__` で始まるツールは、上の 2 つのどちらの場合も、`match_read_tool(entries, tool_name, tool_input)` の場所を後ろに加える（文書の `scope` と `read_by` によらない）
       3. 場所の重なりを除き、`hash_locations` で本文のハッシュを付ける。読み込めずハッシュを取れない場所は記録しない（通知しない。ログにも書き込まない）

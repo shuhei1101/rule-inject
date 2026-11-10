@@ -57,7 +57,7 @@ functions:
       - name: test_get_read_records
         case: 正常
         summary: 既読のルールごとに状態と参照方法のまとめを返却する
-        condition: 本文が同じルールと本文を変えたルールの既読の記録と、`mcp` で 2 回読んだ履歴
+        condition: 本文が同じルールと本文を変えたルールの既読の記録と、`mcp` で 2 回読み込んだ履歴
         mock: なし
         expected: '`state` が `current` と `changed`、`mcp` の行の `count` が 2'
       - name: test_get_read_records_when_sessions

@@ -29,7 +29,7 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. 冒頭で `sys.version_info` を確認する。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart ならバージョンが足りないことを additionalContext で返却し（`sweep_read`・`start_server` は同じ SessionStart の `work_rules` が通知するため返却しない）、既定のログのフォルダ（`XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`。設定ファイルは読み込まない）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書いて 0 を返却する（この分岐は古いバージョンでも読み込める記載方法にするため、`default_log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
+      1. 冒頭で `sys.version_info` を確認する。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart ならバージョンが足りないことを additionalContext で返却し（`sweep_read`・`start_server` は同じ SessionStart の `work_rules` が通知するため返却しない）、既定のログのフォルダ（`XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`。設定ファイルは読み込まない）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書き込んで 0 を返却する（この分岐は古いバージョンでも読み込める構文にするため、`default_log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
       2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に追加する
       3. `HOOKS[argv[0]]` の出した元・処理・通知方法を `run_hook` に引き渡す
     unit_tests:

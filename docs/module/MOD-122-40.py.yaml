@@ -308,7 +308,7 @@ classes:
             expected: '`RuntimeError` がそのまま送出され、処理中の要求が 0'
             exception: 包んだアプリが例外を送出した
 notes:
-  停止の 2 段: |-
+  停止の 2 工程: |-
     処理中のツールの呼び出しと POST の要求の応答は `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は sse-starlette が取り消し、SSE でない接続は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
     `should_exit` を設定すると sse-starlette が送信中の POST の応答も取り消すため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
 lead: 処理中の呼び出しの数と再起動の状態、停止の進め方を定め、サーバーの再起動や停止を修正するときに参照する。

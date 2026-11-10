@@ -691,7 +691,7 @@ functions:
     title: 既読の履歴の読み込み
     container: features/record/service.py
     usecase: 既読の記録を確認する
-    summary: そのセッションの既読の履歴を全行読み、読み込めた行を行の順に返却する（ファイルが無ければ空）
+    summary: そのセッションの既読の履歴を全行読み込み、読み込めた行を行の順に返却する（ファイルが無ければ空）
     kind: 関数
     scope: public
     args:

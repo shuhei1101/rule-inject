@@ -24,7 +24,7 @@ functions:
     title: サーバーの組み立て
     container: server/app.py
     usecase: MCPサーバーを常駐させる
-    summary: コンポジションルート。依存を作ってツールへ引き渡し、`MCPServer` に 11 のツールを登録する
+    summary: コンポジションルート。依存を作ってツールへ引き渡し、`MCPServer` にツールを登録する
     kind: 関数
     scope: public
     args:
@@ -73,7 +73,7 @@ functions:
     unit_tests:
       - name: test_build_server
         case: 正常
-        summary: 11 のツールを依存の引数なしで登録する
+        summary: 全てのツールを依存の引数なしで登録する
         condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
         mock: なし
         expected: '`list_tools` が 11 の名前を返却し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command` が無く、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` だけが `destructiveHint: true`'

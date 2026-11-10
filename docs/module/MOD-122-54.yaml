@@ -14,7 +14,7 @@ directory: |-
   ```
 notes:
   索引の JSON Schema: |-
-    `index.schema.yaml` は JSON Schema 2020-12 を YAML で記載し、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを通す。
+    `index.schema.yaml` は JSON Schema 2020-12 を YAML で記載し、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを許可する。
 
     | 場所 | 許可する値 |
     | --- | --- |
