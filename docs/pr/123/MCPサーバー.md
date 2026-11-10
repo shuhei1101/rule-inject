@@ -4,8 +4,9 @@
 
 | 分類 | ページ / ファイル | 概要 | 補足 |
 | --- | --- | --- | --- |
-| ドキュメント | [docs/interface/IF-122-3.py.yaml](https://github.com/shuhei1101/rule-inject/blob/163a05f/docs/interface/IF-122-3.py.yaml) | インターフェース定義『サーバーの再起動』 | 制約「待ち受けの閉じ方」の `notes` を修正する |
+| ドキュメント | [docs/interface/IF-122-3.py.yaml](https://github.com/shuhei1101/rule-inject/blob/163a05f/docs/interface/IF-122-3.py.yaml) | インターフェース定義『サーバーの再起動』 | 制約「再起動の途中の呼び出し」「停止の待ち」「待ち受けの閉じ方」を修正する |
 | ドキュメント | [docs/interface/IF-122-4.py.yaml](https://github.com/shuhei1101/rule-inject/blob/163a05f/docs/interface/IF-122-4.py.yaml) | インターフェース定義『サーバーの更新』 | 制約「再起動」が『サーバーの再起動』を指すため追随だけ |
+| ドキュメント | `docs/library/LIB-122-6.yaml` | 外部ライブラリ『sse-starlette』 | 新規。停止を検知すると送信中の SSE の応答を取り消す挙動の動作確認を記録する |
 | ドキュメント | [docs/module/MOD-122-40.py.yaml](https://github.com/shuhei1101/rule-inject/blob/163a05f/docs/module/MOD-122-40.py.yaml) | モジュール構成『control.py』 | 処理中の数え方・停止の待ち・単体テストの行を修正する |
 | ドキュメント | [docs/module/MOD-122-34.py.yaml](https://github.com/shuhei1101/rule-inject/blob/163a05f/docs/module/MOD-122-34.py.yaml) | モジュール構成『__main__.py』 | 応答の送信の終わりを数える箇所を起動の入口に配置する場合に修正する |
 | 実装 | [src/rule_inject/server/control.py](https://github.com/shuhei1101/rule-inject/blob/163a05f/src/rule_inject/server/control.py) | 処理中の呼び出しの数と停止の待ち | `_in_flight` は `guard` の `finally` で減る |

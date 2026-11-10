@@ -4,6 +4,8 @@
 
 ## 目次
 
+<!-- table: data -->
+
 | ページ | 概要 |
 | --- | --- |
 | [claude-code](./LIB-122-1.yaml) | フックを呼ぶ Claude Code の CLI |
@@ -11,3 +13,6 @@
 | [jsonschema](./LIB-122-2.yaml) | 索引を JSON Schema で検証するライブラリ |
 | [ruamel.yaml](./LIB-122-4.yaml) | 索引をコメントと書式を残したまま書き換える YAML ライブラリ |
 | [uvicorn](./LIB-122-5.yaml) | 常駐の MCP サーバーを Streamable HTTP で待ち受け、再起動で待ち受けを閉じる ASGI のサーバー |
+| [sse-starlette](./LIB-122-6.yaml) | Streamable HTTP の応答を SSE で返し、サーバーの停止を検知すると送信中のストリームを取り消すライブラリ |
+
+<!-- /table -->

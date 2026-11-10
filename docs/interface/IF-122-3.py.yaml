@@ -113,14 +113,14 @@ error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 再起動の途中の呼び出し
     constraint: 再起動を始めてから待ち受けを閉じるまでは待ち受けを続け、`get_server_status` 以外のツールの呼び出しを `ToolError`（再起動の途中）で断る
-    notes: 新しい呼び出しを受け付け続けると、処理中の呼び出しが尽きずに待ちが終わらないため
+    notes: 新しい呼び出しを受け付け続けると、処理中の呼び出しが尽きずに待ちが終わらないため。断った要求と `get_server_status`・`initialize` などツールの呼び出しでない要求は、すぐに応答を送信して終わるため、停止の待ちで数えても待ちを延ばし続けない
   - item: 停止の待ち
-    constraint: 処理中のツールの呼び出しの終わり（応答を送信し終えるまで。この再起動・更新の呼び出し自身の応答を含む）を待つ上限は非機能要件の決定値。過ぎたら待つのをやめて待ち受けを閉じる
+    constraint: 処理中の `/mcp` への POST の要求（ツールの呼び出しと、この再起動・更新の呼び出し自身を含む）が応答を送信し終えるまで待つ。上限は非機能要件の決定値。過ぎたら待つのをやめて待ち受けを閉じる
     decided_by: NFR-122-1#requirements[再起動の停止の待ち]
   - item: 待ち受けの閉じ方
-    constraint: インターフェース定義「サーバーの起動」が作った `uvicorn.Server` の `should_exit` を立てて閉じる。`uvicorn.Config` の `timeout_graceful_shutdown` に非機能要件の決定値を渡し、閉じた後も残る接続（`GET /mcp` の SSE のストリームと、停止の待ちを過ぎた呼び出し）は、その上限で切る
+    constraint: インターフェース定義「サーバーの起動」が作った `uvicorn.Server` の `should_exit` を立てて閉じる。`uvicorn.Config` の `timeout_graceful_shutdown` に非機能要件の決定値を渡し、SSE のストリーム（`GET /mcp` のストリームと、停止の待ちを過ぎた呼び出しの POST の応答）は、外部ライブラリ [sse-starlette](id:LIB-122-6) が `should_exit` に気づいた時点で取り消す。`timeout_graceful_shutdown` は、SSE でない残りの接続とタスクが閉じないときの上限にする
     decided_by: NFR-122-1#requirements[待ち受けを閉じた後の接続の待ち]
-    notes: uvicorn は `timeout_graceful_shutdown` が無いと全ての接続が閉じるまで待ち、Claude Code のセッションが開いたままにする SSE のストリームで停止が終わらない。処理中の呼び出しは停止の待ちで応答を送信し終えるまで待っているため、閉じた後に残るのは SSE のストリームと、停止の待ちを過ぎた呼び出しだけ
+    notes: 上限を指定するのは、クライアントが閉じない接続で停止が終わらなくなるのを防ぐため。処理中の呼び出しは停止の待ちで応答を送信し終えるまで待っているため、閉じた後に残るのは SSE のストリームと、停止の待ちを過ぎた呼び出しだけ
   - item: 起動し直す方法
     constraint: '`uvicorn.Server.serve` が返った後、`os.execv(sys.executable, [sys.executable, "-m", "rule_inject.server"])` で同じプロセスを置き換える'
     notes: 'systemd --user の unit・`uv run`・前面のどれで起動したプロセスでも、PID と親を変えずに続く。環境変数は引き継ぐため、`RULE_INJECT_PORT` と `RULE_INJECT_CONFIG` は起動時の値のまま'
@@ -134,4 +134,5 @@ constraints:
     constraint: 制限なし
 refs:
   - SC-122-3#
+  - LIB-122-6#
 test_file: tests/integration/server/test_restart_server.py

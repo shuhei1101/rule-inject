@@ -11,5 +11,5 @@ use_cases:
     depends_on: []
 scope_out:
   - item: 待ち受けを閉じた後の接続の待ち（GRACEFUL_SHUTDOWN_TIMEOUT）の値の変更
-    reason: 応答を送信し終えてから待ち受けを閉じれば、閉じた後に残るのは SSE のストリームだけになり、値を広げても事象は直らないため
+    reason: 応答が届かないのは、`should_exit` を立てた後に sse-starlette が送信中の POST の応答のストリームを取り消すためで、この上限は応答を切っていない（外部ライブラリ『sse-starlette』の動作確認）。値を広げても事象は直らない
     plan: none
