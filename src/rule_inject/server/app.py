@@ -18,6 +18,12 @@ from rule_inject.server.types import ResponseFormat
 
 # MCPServer の名前
 SERVER_NAME = "rule-inject"
+# 接続時の initialize の応答で返す instructions（新しいファイルの作り方の決まり）
+SERVER_INSTRUCTIONS = (
+    "rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。"
+    "新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、"
+    "案内されたルールを参照してから Edit で中身を記載する。"
+)
 # `check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）
 UNMATCHED_SCAN_TIME_LIMIT = 30
 # `check_indexes` が dev-docs への問い合わせの応答を待つ時間の上限（秒）
@@ -40,7 +46,7 @@ def build_server(
     validator = load_validator()
     locks = IndexLocks()
     check = partial(check_change, env=env, validator=validator)
-    server = MCPServer(SERVER_NAME)
+    server = MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
 
     # 依存（env・validator・locks・check_change・scan_time_limit・dev_docs_timeout・control・clone・run_command）を閉じ込め、引数をツールの引数だけにした関数を登録する
     # （partial で渡すと、依存の引数がツールの引数の Schema に残るため）

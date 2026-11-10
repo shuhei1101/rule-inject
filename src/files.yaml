@@ -29,7 +29,7 @@ files:
         type: implements
   - path: rule_inject/features/guidance/service.py
     name: 案内文の組み立て
-    description: フックが返却する案内文（止める案内・止めない案内・検索結果の案内・失敗の通知・作業の決まり）を組み立て、案内の文面を変えるときに参照する。
+    description: フックが返却する案内文（止める案内・止めない案内・検索結果の案内・失敗の通知）を組み立て、案内の文面を変えるときに参照する。
     tags:
       - topic:ルールの案内
     related:
@@ -295,8 +295,8 @@ files:
       - to: IF-122-17
         type: implements
   - path: rule_inject/hooks/work_rules.py
-    name: 作業の決まりの注入
-    description: セッションの開始時（SessionStart）に、新しいファイルは空で作ってから書き込む決まりをコンテキストへ追加し、作業の決まりを修正するときに参照する。
+    name: 圧縮の後の通知
+    description: 圧縮の後に始まったセッション（SessionStart）へ、削除できずに残った既読の記録と設定ファイルが読めない理由を通知し、圧縮の後の通知を修正するときに参照する。
     tags:
       - topic:フック
       - tool:claude-code
@@ -354,7 +354,7 @@ files:
         type: implements
   - path: rule_inject/server/app.py
     name: サーバーのコンポジションルート
-    description: 依存を作ってツールへ指定し、MCP サーバーへ全てのツールを登録して、ツールを追加するときに参照する。
+    description: 依存を作ってツールへ指定し、MCP サーバーへ全てのツールと接続時の instructions を登録して、ツールや instructions を追加・修正するときに参照する。
     tags:
       - topic:MCPサーバー
       - topic:MCPツール
