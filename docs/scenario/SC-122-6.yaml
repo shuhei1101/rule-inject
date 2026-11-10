@@ -65,7 +65,7 @@ scenarios:
 lead: Claude Code のセッションとサブエージェントが MCP サーバーへの接続時に instructions で作業の決まりを受け取る流れを示し、作業の決まりの届け方を変えるときに参照する。
 issue: 124
 primary_actor: Claude Code のセッション（サブエージェントを含む）
-trigger: MCP サーバーへの接続（セッションの開始・`/mcp` での接続し直し）
+trigger: MCP サーバーへの接続（セッションの開始・`/mcp` での再接続）
 test_file: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py
 notes:
   接続の状態の確認先: '`--output-format stream-json --verbose` の最初の `system`（`subtype: init`）の行は、`mcp_servers` に接続先ごとの `name` と `status`（`connected` / `failed` ほか）を持つ（[Agent SDK reference: TypeScript](https://code.claude.com/docs/en/agent-sdk/typescript) の `SDKSystemMessage`）。接続先の名前と応答しないときの失敗は、Claude Code 2.1.322 で `RULE_INJECT_PORT=59999 claude --setting-sources project --plugin-dir {プラグイン} mcp list` が `plugin:rule-inject:rule-inject: http://127.0.0.1:59999/mcp (HTTP) - ✘ Failed to connect` を出力することで実測した'

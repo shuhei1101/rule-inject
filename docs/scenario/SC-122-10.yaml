@@ -8,13 +8,13 @@ scenarios:
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: ログのフォルダ
         description: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global` のログのフォルダで、テスト用のフォルダを指す'
-        notes: '設定ファイルにログの保持日数は書かず、既定の 3 日で動かす'
+        notes: '設定ファイルにログの保持日数は記載せず、既定の 3 日で動かす'
       - name: 古いログ
-        description: 日付が 3 日前（UTC）のログのファイルを置く
+        description: 日付が 3 日前（UTC）のログのファイルを配置する
       - name: 新しいログ
-        description: 日付が 2 日前（UTC）のログのファイルを置く
+        description: 日付が 2 日前（UTC）のログのファイルを配置する
       - name: 操作
-        description: プロンプトで、ツールを呼ばずに 1 語で回答するよう指示する
+        description: プロンプトで、ツールを呼ばずに 1 単語で回答するよう指示する
         notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
     flow: |-
       ```mermaid
@@ -37,5 +37,5 @@ issue: 11
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 notes:
-  日付で分ける理由: '削除するのは追記されなくなった過去の日付のファイルだけなので、削除している間に別のセッションが書いた行を失わない。中身を読まずにファイル名だけで決まるため、フックの実行時間にも効かない（PR #12 の確認事項で利用者が決めた方式）'
+  日付で分ける理由: '削除するのは追記されなくなった過去の日付のファイルだけなので、削除している間に別のセッションが書き込んだ行を失わない。中身を読まずにファイル名だけで決まるため、フックの実行時間にも影響しない（[PR #12「プラグインのログ（rule-inject.log）を掃除する」](https://github.com/shuhei1101/rule-inject/pull/12) の確認事項で利用者が決めた方式）'
 test_file: tests/e2e/単一ユースケース/test_old_log_cleaned.py

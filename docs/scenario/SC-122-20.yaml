@@ -11,7 +11,7 @@ scenarios:
         description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
-        description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文があり、各 `paths` がプロジェクトのファイルのどれかに当たる YAML
+        description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文があり、各 `paths` がプロジェクトのファイルのどれかにヒットする YAML
         notes: '-'
     flow: |-
       sequenceDiagram
@@ -34,7 +34,7 @@ scenarios:
         SV-->>CL: 索引ごとに違反なし
     expected:
       - 応答に、チェックした索引の場所と、読んだ設定ファイルの場所が載っている
-      - 応答のどの索引にも、違反とファイルが無いエントリと `paths` の当たらないエントリが無い
+      - 応答のどの索引にも、違反とファイルが無いエントリと `paths` のヒットしないエントリが無い
     test: test_normal_when_no_violation
   - name: 正常シナリオ（Schemaに違反する）
     setup:
@@ -43,7 +43,7 @@ scenarios:
       - name: 設定ファイル
         description: 違反が無いシナリオと同じ
       - name: 索引
-        description: フックは読めるが、索引の書式の値の範囲を外れるエントリを 1 つ持つ YAML
+        description: フックは読めるが、索引の書式の値の範囲外のエントリを 1 つ持つ YAML
         notes: '例: `paths: []`（フックは読めるが、Schema は要素が 1 つ以上のリストを求める）'
     flow: |-
       sequenceDiagram
@@ -128,13 +128,13 @@ scenarios:
         description: 違反が無いシナリオの設定に、`global.indexes` でユーザー全体の索引を指す
         notes: '-'
       - name: プロジェクトのファイル
-        description: プロジェクトの直下に置いた数個のファイル
-        notes: '例: `src/app.py` だけを置く'
+        description: プロジェクトの直下に配置した数個のファイル
+        notes: '例: `src/app.py` だけを配置する'
       - name: 索引
-        description: '`paths` がプロジェクトのファイルに当たるエントリと、どのファイルにも当たらないエントリを 1 つずつ持ち、各 `rule` の場所にルールの本文がある YAML'
-        notes: '例: 当たる `**/*.py` と、当たらない `**/*.rs`'
+        description: '`paths` がプロジェクトのファイルにヒットするエントリと、どのファイルにもヒットしないエントリを 1 つずつ持ち、各 `rule` の場所にルールの本文がある YAML'
+        notes: '例: ヒットする `**/*.py` と、ヒットしない `**/*.rs`'
       - name: ユーザー全体の索引
-        description: '`paths` がプロジェクトのどのファイルにも当たらないエントリを 1 つ持ち、`rule` の場所にルールの本文がある YAML'
+        description: '`paths` がプロジェクトのどのファイルにもヒットしないエントリを 1 つ持ち、`rule` の場所にルールの本文がある YAML'
         notes: '例: `**/*.go`'
     flow: |-
       sequenceDiagram
@@ -157,9 +157,9 @@ scenarios:
         SV->>SV: プロジェクトの索引の効いているエントリの paths と exclude を各パスに当てる
         SV-->>CL: paths の当たらないエントリ
     expected:
-      - 応答の `paths` の当たらないエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
-      - '`paths` がファイルに当たるエントリは、`paths` の当たらないエントリに載っていない'
-      - ユーザー全体の索引のエントリは、`paths` の当たらないエントリに載っていない
+      - 応答の `paths` のヒットしないエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
+      - '`paths` がファイルにヒットするエントリは、`paths` のヒットしないエントリに載っていない'
+      - ユーザー全体の索引のエントリは、`paths` のヒットしないエントリに載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_paths_unmatched
   - name: 正常シナリオ（ユーザー全体の索引も確かめる）
@@ -168,19 +168,19 @@ scenarios:
         description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
         notes: '-'
       - name: 設定ファイル
-        description: paths がどのファイルにも当たらないシナリオと同じ
+        description: paths がどのファイルにもヒットしないシナリオと同じ
         notes: '-'
       - name: プロジェクトのファイル
-        description: paths がどのファイルにも当たらないシナリオと同じ
+        description: paths がどのファイルにもヒットしないシナリオと同じ
         notes: '-'
       - name: 索引
-        description: paths がどのファイルにも当たらないシナリオと同じ
+        description: paths がどのファイルにもヒットしないシナリオと同じ
         notes: '-'
       - name: ユーザー全体の索引
-        description: paths がどのファイルにも当たらないシナリオと同じ
+        description: paths がどのファイルにもヒットしないシナリオと同じ
         notes: '-'
       - name: ツールの引数
-        description: ユーザー全体の索引も確かめる引数をオンにする
+        description: ユーザー全体の索引も確認する引数をオンにする
         notes: '-'
     flow: |-
       sequenceDiagram
@@ -203,21 +203,21 @@ scenarios:
         SV->>SV: 全ての索引の効いているエントリの paths と exclude を各パスに当てる
         SV-->>CL: paths の当たらないエントリ（プロジェクトの索引・ユーザー全体の索引を分けて）
     expected:
-      - 応答のプロジェクトの索引の `paths` の当たらないエントリに、プロジェクトの索引の当たらないエントリだけが載っている
-      - 応答に、ユーザー全体の索引の当たらないエントリが、索引の場所・エントリの位置・解決したルールの場所つきで分けて載っている
-      - '`problem_count` にユーザー全体の索引の当たらないエントリが数えられていない'
+      - 応答のプロジェクトの索引の `paths` のヒットしないエントリに、プロジェクトの索引のヒットしないエントリだけが載っている
+      - 応答に、ユーザー全体の索引のヒットしないエントリが、索引の場所・エントリの位置・解決したルールの場所つきで分けて載っている
+      - '`problem_count` にユーザー全体の索引のヒットしないエントリが数えられていない'
       - 索引のファイルが書き換わっていない
     test: test_normal_when_global_included
   - name: 正常シナリオ（タグのパターンが使われているどのタグにも当たらない）
     setup:
       - name: Mock
-        description: '違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は、テストが起動した文書の MCP サーバーに差し替え、`search_docs` の `group_by: tags` に決まったタグの一覧を返させる'
-        notes: '例: `python`・`mcp` の 2 つのタグを返す'
+        description: '違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は、テストが起動した文書の MCP サーバーに差し替え、`search_docs` の `group_by: tags` に決まったタグの一覧を返却させる'
+        notes: '例: `python`・`mcp` の 2 つのタグを返却する'
       - name: 設定ファイル
         description: 違反が無いシナリオの設定に、dev-docs の接続先として差し替えた文書の MCP サーバーを指す
       - name: 索引
-        description: 'MCP のツールの引数の条件の木の `field: tags` の値に当てるエントリを 2 つ持ち、各 `rule` の場所にルールの本文があり、各 `paths` を持たない YAML'
-        notes: '例: 使われているタグに当たる `re:^python` と、どのタグにも当たらない `re:^rust`'
+        description: 'MCP のツールの引数の条件の木の `field: tags` の値に適用するエントリを 2 つ持ち、各 `rule` の場所にルールの本文があり、各 `paths` を持たない YAML'
+        notes: '例: 使用されているタグにヒットする `re:^python` と、どのタグにもヒットしない `re:^rust`'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -236,9 +236,9 @@ scenarios:
         SV->>SV: 効いているエントリのタグのパターンを各タグに当てる
         SV-->>CL: 使われているどのタグにも当たらないタグのパターン
     expected:
-      - 応答の使われていないタグのパターンに、索引の場所・エントリの位置・どのタグにも当たらないパターンが載っている
-      - 使われているタグに当たるパターンは、使われていないタグのパターンに載っていない
-      - 応答に、タグの確かめを飛ばしたことが載っていない
+      - 応答の使用されていないタグのパターンに、索引の場所・エントリの位置・どのタグにもヒットしないパターンが載っている
+      - 使用されているタグにヒットするパターンは、使用されていないタグのパターンに載っていない
+      - 応答に、タグの確認を飛ばしたことが載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_tag_pattern_unused
   - name: 異常シナリオ（dev-docsに届かない）
@@ -248,8 +248,8 @@ scenarios:
       - name: 設定ファイル
         description: 違反が無いシナリオの設定に、dev-docs の接続先として待ち受けていないポートを指す
       - name: 索引
-        description: タグのパターンが使われているどのタグにも当たらないシナリオと同じ YAML に、`rule` の場所にファイルが無いエントリを 1 つ加えたもの
-        notes: タグの確かめを飛ばしても、ほかの問題を返すことを見分ける
+        description: タグのパターンが使用されているどのタグにもヒットしないシナリオと同じ YAML に、`rule` の場所にファイルが無いエントリを 1 つ加えたもの
+        notes: タグの確認を飛ばしても、ほかの問題を返却することを見分ける
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -270,10 +270,10 @@ scenarios:
         DD--xSV: 接続できない
         SV-->>CL: ファイルが無いエントリと、タグの確かめを飛ばしたこと
     expected:
-      - 応答に、タグの確かめを飛ばしたことと、dev-docs に接続できなかった理由が載っている
-      - 応答の使われていないタグのパターンに、どのエントリも載っていない
+      - 応答に、タグの確認を飛ばしたことと、dev-docs に接続できなかった理由が載っている
+      - 応答の使用されていないタグのパターンに、どのエントリも載っていない
       - 応答に、`rule` の場所にファイルが無いエントリが載っている
-      - ツールはエラーを返さない
+      - ツールはエラーを返却しない
     test: test_error_when_dev_docs_unreachable
   - name: 正常シナリオ（参照するツールの記載がSchemaに違反する）
     setup:
@@ -310,7 +310,7 @@ issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: 手で書いた索引の誤りを、案内が出なくなってからではなく、書いた直後に場所つきで知れること
+    interest: 手で記載した索引の誤りを、案内が出なくなってからではなく、書き込んだ直後に場所つきで知れること
 trigger: Claude Code がチェックのツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている

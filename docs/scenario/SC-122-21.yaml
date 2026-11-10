@@ -7,22 +7,22 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: 古い既読の記録
-        description: 終わったセッションの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日前にする
+        description: 終わったセッションの記録ファイルを 1 つ配置し、最終更新を保持期間より 1 日前にする
         notes: 最終更新は `os.utime` で戻す
       - name: 新しい既読の記録
-        description: 別のセッションの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日新しく（保持期間の内側に）する
+        description: 別のセッションの記録ファイルを 1 つ配置し、最終更新を保持期間より 1 日新しく（保持期間の内側に）する
       - name: 古い案内済みの記録
-        description: 古い既読の記録と同じセッションの案内済みの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日前にする
+        description: 古い既読の記録と同じセッションの案内済みの記録ファイルを 1 つ配置し、最終更新を保持期間より 1 日前にする
         notes: 最終更新は `os.utime` で戻す
       - name: 新しい案内済みの記録
-        description: 新しい既読の記録と同じセッションの案内済みの記録ファイルを 1 つ置き、最終更新を保持期間より 1 日新しくする
+        description: 新しい既読の記録と同じセッションの案内済みの記録ファイルを 1 つ配置し、最終更新を保持期間より 1 日新しくする
       - name: 古い既読の履歴
-        description: 古い既読の記録と同じセッションの既読の履歴ファイルを 1 つ置き、最終更新を保持期間より 1 日前にする
+        description: 古い既読の記録と同じセッションの既読の履歴ファイルを 1 つ配置し、最終更新を保持期間より 1 日前にする
         notes: 最終更新は `os.utime` で戻す
       - name: 新しい既読の履歴
-        description: 新しい既読の記録と同じセッションの既読の履歴ファイルを 1 つ置き、最終更新を保持期間より 1 日新しくする
+        description: 新しい既読の記録と同じセッションの既読の履歴ファイルを 1 つ配置し、最終更新を保持期間より 1 日新しくする
       - name: 操作
-        description: プロンプトで、ツールを呼ばずに 1 語で回答するよう指示する
+        description: プロンプトで、ツールを呼ばずに 1 単語で回答するよう指示する
         notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
     flow: |-
       ```mermaid
@@ -57,5 +57,5 @@ issue: 5
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 notes:
-  終わりで削除しない理由: 'Claude Code は会話を保持期間（`cleanupPeriodDays`、既定 30 日）のあいだ残し、`/exit` や `/clear` で終えたセッションも `--resume` か `/resume` で再開できる。再開したセッションは同じ `session_id` で続き、読んだルールの本文も文脈に残る（PR #9 の PoC 検証の回 4）。セッションの終わり（`SessionEnd`）で記録を削除すると、再開したときに読んだルールがまた案内されるため、終わりでは削除せず、保持期間で削除する'
+  終わりで削除しない理由: 'Claude Code は会話を保持期間（`cleanupPeriodDays`、既定 30 日）のあいだ残し、`/exit` や `/clear` で終えたセッションも `--resume` か `/resume` で再開できる。再開したセッションは同じ `session_id` で続き、読んだルールの本文も文脈に残る（[PR #9「圧縮しないまま終わったセッションの既読の記録を掃除する」](https://github.com/shuhei1101/rule-inject/pull/9) の PoC 検証の回 4）。セッションの終わり（`SessionEnd`）で記録を削除すると、再開したときに読んだルールがまた案内されるため、終わりでは削除せず、保持期間で削除する'
 test_file: tests/e2e/単一ユースケース/test_ended_session_records_cleaned.py

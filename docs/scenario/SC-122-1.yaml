@@ -34,7 +34,7 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（SDK のクライアントでツールを呼ぶ）
       - name: 設定ファイル
-        description: サーバーを起動した後に、`global` に知らないキーを書き足す
+        description: サーバーを起動した後に、`global` に知らないキーを追記する
         notes: 起動時は読めるファイルにしておく
     flow: |-
       sequenceDiagram
@@ -60,6 +60,6 @@ trigger: Claude Code が状態の確認のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code からプラグインの `.mcp.json` の接続先で接続できる
   - サーバーはローカルのクローンから起動している
-success_guarantee: 待ち受けのポート・プロセス ID・起動した時刻・ツールのバージョン・クローンの場所と commit・設定ファイルの場所と読めるかを返す。
-minimal_guarantee: 設定ファイル・索引・既読の記録・クローンを書き換えない。設定ファイルが読めなくても、状態の確認はエラーにせず読めない理由を返す。
+success_guarantee: 待ち受けのポート・プロセス ID・起動した時刻・ツールのバージョン・クローンの場所と commit・設定ファイルの場所と読めるかを返却する。
+minimal_guarantee: 設定ファイル・索引・既読の記録・クローンを書き換えない。設定ファイルが読めなくても、状態の確認はエラーにせず読めない理由を返却する。
 test_file: tests/e2e/単一ユースケース/test_view_server_status.py
