@@ -1,7 +1,0 @@
-summary: "応答しない MCP サーバーのユニットへの起動の依頼"
-docs_index: true
-items:
-  - page: types.py.yaml
-    summary: 起動の依頼の結果
-  - page: service.py.yaml
-    summary: サーバーの応答の確認とユニットの起動の依頼

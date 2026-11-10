@@ -1,0 +1,22 @@
+summary: rule-inject の使い方（はじめに・使い方・リファレンス）
+items:
+  - page: 変更履歴.md
+    summary: バージョンごとの変更の一覧
+  - page: コアコンセプト-ルールの案内.md
+    summary: 未読のルールの案内・既読の記録・既読の履歴・圧縮での破棄の仕組み
+  - page: コアコンセプト-MCPサーバー.md
+    summary: ローカルで常駐させる MCP サーバーの役割と、フックとの関係
+  - page: セットアップ.md
+    summary: プラグインを読み込み、設定ファイルを置いて環境変数で指すまでの手順
+  - page: ルールにするか文書にするかを決める.md
+    summary: 規約・手順を rules.yaml へ登録して注入するか、dev-docs の文書にしてタグで読ませるかを決める判定フローチャート
+  - page: 環境変数.md
+    summary: 設定ファイルを指す環境変数と、索引の変数参照の値
+  - page: 設定ファイル.md
+    summary: 設定ファイルのキーと、global・projects の当て方と重ね方
+  - page: 索引の書式.md
+    summary: ルール索引の YAML のキー
+  - page: MCPの結果の書式.md
+    summary: 文書を返す MCP のツールが、結果に文書の場所と範囲を載せる書式
+  - page: MCPツール.md
+    summary: 常駐の MCP サーバーが持つツールの引数と応答

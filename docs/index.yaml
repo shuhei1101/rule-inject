@@ -1,9 +1,25 @@
 title: rule-inject
-summary: rule-inject の公開ドキュメント全体の目次
+summary: rule-inject のドキュメント全体の目次
 items:
-  - page: はじめに/
-    summary: 概要・コアコンセプト・変更履歴
-  - page: 使い方/
-    summary: セットアップと日々の操作
-  - page: リファレンス/
-    summary: 環境変数・設定ファイル・索引の書式
+  - page: guide/
+    summary: 使い方（はじめに・使い方・リファレンス）
+  - page: scenario/
+    summary: 単一 / 複合ユースケースの業務フロー設計（E2E テストの元）
+  - page: interface/
+    summary: サブシステムの外部インターフェースと処理フロー（サブシステム結合テストの元）
+  - page: module/
+    summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
+  - page: config/
+    summary: 設定と環境変数のキー定義
+  - page: er/
+    summary: データストア（テキストファイル）の定義
+  - page: architecture/
+    summary: システム全体構成（Claude Code・フック・索引の関係）
+  - page: nonfunctional/
+    summary: 外部の制約から逆算したアプリ側の決定値（非機能要件テストの元）
+  - page: test-procedure/
+    summary: プロジェクト固有のテスト起動コマンドと前提条件
+  - page: external-api/
+    summary: 採用済みの外部 API のリファレンス
+  - page: library/
+    summary: 採用済みの外部ライブラリ / 外部ツールのリファレンス

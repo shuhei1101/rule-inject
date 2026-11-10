@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../schemas/files.schema.yaml
+files:
+  - path: ../rules.yaml
+    name: このリポジトリのルール索引
+    description: 環境変数が指す 2 つめのルール索引で、今は空（このリポジトリのルールは直下の rules.yaml に載せる）。索引の書式の置き場所を確かめるときに開く。
+    tags:
+      - topic:ルール索引
+    visibility: internal

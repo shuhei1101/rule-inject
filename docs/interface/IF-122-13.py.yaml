@@ -1,0 +1,299 @@
+id: IF-122-13
+visibility: internal
+title: "サーバーの起動の補助"
+entry:
+  kind: trigger
+  value: '`SessionStart` フック（timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: サーバーが応答せずユニットが有効なとき、起動を依頼して `/mcp` で接続し直す案内を返す
+    setup:
+      - name: Mock
+        description: '`systemctl` を、受け取った引数をファイルへ追記して終了コードを返すスクリプトに差し替え、`PATH` の先頭に置く（フックを子プロセスとして起動し、標準入力へ JSON を渡す）'
+        notes: '`is-enabled` と `start` のどちらも終了コード 0'
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` に、どのプロセスも待ち受けていない空いているポートを指定する'
+      - name: 設定ファイル
+        description: '`global.server_service: rule-inject-it` を持つ設定ファイル'
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant SV as RULE_INJECT_PORT
+        participant SD as systemctl --user
+
+        CC->>S: 標準入力（session_id・source）
+        S->>SV: TCP で接続する
+        SV-->>S: 拒まれる
+        S->>SD: is-enabled --quiet -- rule-inject-it
+        SD-->>S: 終了コード 0
+        S->>SD: start --no-block -- rule-inject-it
+        SD-->>S: 終了コード 0
+        S-->>CC: additionalContext（/mcp で接続し直す案内）<br>終了コード 0
+      ```
+    expected:
+      - '`systemctl` が `--user is-enabled --quiet -- rule-inject-it`、`--user start --no-block -- rule-inject-it` の順に 1 回ずつ呼ばれている'
+      - '`additionalContext` に、サービス名と、`/mcp` で `rule-inject` に接続し直す旨が載っている'
+      - '`hookSpecificOutput.hookEventName` が `SessionStart`'
+      - 終了コードが `0`
+    test: test_normal
+  - name: 正常系（サーバーが応答する）
+    summary: ポートへ接続できたら、systemctl を呼ばずに何も返さない
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: ポートの待ち受け
+        description: テストが `RULE_INJECT_PORT` のポートで待ち受ける
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 入力
+        description: '`source: resume`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant SV as RULE_INJECT_PORT
+
+        CC->>S: 標準入力（session_id・source）
+        S->>SV: TCP で接続する
+        SV-->>S: 接続できる
+        S-->>CC: 終了コード 0
+      ```
+    expected:
+      - '`systemctl` が呼ばれていない'
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_server_responding
+  - name: 正常系（ユニットが有効でない）
+    summary: ユニットが有効でない・無いときは、起動を依頼せず何も返さない
+    setup:
+      - name: Mock
+        description: 正常系と同じスクリプトで、`is-enabled` だけ終了コード 1 を返す
+        notes: ユニットが無いときと、ユーザーの systemd に接続できないときも `is-enabled` は 0 以外を返し、同じ経路になる
+      - name: 環境変数
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant SV as RULE_INJECT_PORT
+        participant SD as systemctl --user
+
+        CC->>S: 標準入力（session_id・source）
+        S->>SV: TCP で接続する
+        SV-->>S: 拒まれる
+        S->>SD: is-enabled --quiet -- rule-inject-it
+        SD-->>S: 終了コード 1
+        S-->>CC: 終了コード 0
+      ```
+    expected:
+      - '`systemctl` が `is-enabled` の 1 回だけ呼ばれている'
+      - 標準出力が空
+      - ログのファイルが無い
+      - 終了コードが `0`
+    test: test_normal_when_unit_disabled
+  - name: 正常系（systemctl が使用できない）
+    summary: '`systemctl` が `PATH` に無い端末では、起動を依頼せず何も返さない'
+    setup:
+      - name: Mock
+        description: '`PATH` を、`python3` だけを置いた一時フォルダにする'
+        notes: systemd を使用しない WSL の端末の状態
+      - name: 環境変数
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant SV as RULE_INJECT_PORT
+
+        CC->>S: 標準入力（session_id・source）
+        S->>SV: TCP で接続する
+        SV-->>S: 拒まれる
+        S->>S: systemctl が見つからない
+        S-->>CC: 終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - ログのファイルが無い
+      - 終了コードが `0`
+    test: test_normal_when_systemctl_missing
+  - name: 異常系（起動の依頼が失敗する・CalledProcessError）
+    summary: '`start --no-block` が 0 以外で終わったら、案内を返さずログへ記載する'
+    setup:
+      - name: Mock
+        description: 正常系と同じスクリプトで、`start` だけ終了コード 5 を返す
+      - name: 環境変数
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant SD as systemctl --user
+        participant LG as ログ
+
+        CC->>S: 標準入力（session_id・source）
+        S->>SD: is-enabled（0）
+        S->>SD: start --no-block（5）
+        S->>LG: start_unit を追記する
+        S-->>CC: 終了コード 0
+      ```
+    expected:
+      - 標準出力が空
+      - '今日のログのファイルに `component: start_server`・`operation: start_unit` の行が 1 行あり、`reason` に終了コード 5 が載っている'
+      - 終了コードが `0`
+    test: test_error_when_start_failed
+  - name: 異常系（systemctl が打ち切られる・TimeoutExpired）
+    summary: '`is-enabled` が非機能要件の待ちを過ぎたら打ち切り、起動を依頼せずログへ記載する'
+    setup:
+      - name: Mock
+        description: 正常系と同じスクリプトで、`is-enabled` だけ 2 秒待ってから終わる
+      - name: 環境変数
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: 正常系と同じ
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant SD as systemctl --user
+        participant LG as ログ
+
+        CC->>S: 標準入力（session_id・source）
+        S->>SD: is-enabled
+        S->>S: 0.3 秒で打ち切る
+        S->>LG: check_unit を追記する
+        S-->>CC: 終了コード 0
+      ```
+    expected:
+      - '`systemctl` の `start` が呼ばれていない'
+      - 標準出力が空
+      - '今日のログのファイルに `component: start_server`・`operation: check_unit` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_systemctl_timed_out
+  - name: 異常系（設定ファイルが読めない・SettingsReadError）
+    summary: 設定ファイルが読めないときは、応答も確かめずに何もせず、既定のログのフォルダへ記載する
+    setup:
+      - name: Mock
+        description: 正常系と同じ
+      - name: 設定ファイル
+        description: '`global.server_service: "a b"`（許す値の外）'
+      - name: ログ
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+      - name: 入力
+        description: '`source: startup`'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant CFG as 設定ファイル
+        participant LG as ログ
+
+        CC->>S: 標準入力（session_id・source）
+        S->>CFG: 読む（許す値の外）
+        S->>LG: 既定のログのフォルダへ read_settings を追記する
+        S-->>CC: 終了コード 0
+      ```
+    expected:
+      - '`systemctl` が呼ばれていない'
+      - 標準出力が空
+      - '既定のログのフォルダのログに `component: start_server`・`operation: read_settings` の行が 1 行ある'
+      - 終了コードが `0`
+    test: test_error_when_settings_unreadable
+lead: セッションの開始時に、常駐の MCP サーバーのポートへ接続できず、設定ファイルのサービス名の systemd --user のユニットが有効なときだけ、ユニットへ起動を依頼して、`/mcp` で接続し直す旨を `additionalContext` で返す。待ち受けの開始は待たない。
+identifier: start_server
+idempotent: false
+side_effects: '`systemctl --user start --no-block` でユニットの起動を依頼する。失敗したときだけログへ追記する。索引・既読の記録には書かない'
+exclusivity: 複数のセッションが同時に始まって起動を 2 回依頼しても、systemd は起動中のユニットを 1 つだけ起動する。2 つ目のセッションも案内を返す
+request:
+  - name: '`session_id`'
+    type: str
+    required: true
+    description: 始まったセッションの識別子
+    constraints: 1〜128 文字の英数字 / `_` / `-`
+    notes: ログの `session_id` にだけ使う。形式が外れた値のときもサーバーの起動の補助は行う
+  - name: '`source`'
+    type: Literal['startup', 'resume', 'clear', 'compact']
+    required: true
+    description: セッションが始まったきっかけ
+    notes: どれでも同じように確かめる
+  - name: RULE_INJECT_PORT
+    type: str
+    required: false
+    default: なし（非機能要件「MCPサーバーの既定のポート」）
+    description: 応答を確かめるポート（フックの環境変数）
+    constraints: 1024〜65535 の整数。外れた値は設定ファイルが読めないときと同じ扱い
+    notes: '`.mcp.json` の接続先と同じ値。Claude Code の `env` に置く'
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['SessionStart']
+    description: フックの種類
+  - name: '`hookSpecificOutput.additionalContext`'
+    type: str
+    description: 'rule-inject の MCP サーバーが応答しなかったため systemd --user のユニット `{サービス名}` へ起動を依頼したこと、サーバーが待ち受けを始めるまで数十秒かかること、このセッションで MCP のツールを使用するときは `/mcp` で `rule-inject` に接続し直すこと'
+    constraints: 起動を依頼したときだけ返す。10,000 字以内
+exceptions:
+  - name: なし（正常終了）
+    condition: 起動を依頼した・サーバーが応答した・ユニットが有効でない・`systemctl` が無い
+    notes: 終了コード 0。起動を依頼したときだけ標準出力へ JSON を返す
+  - name: CalledProcessError（起動の依頼が失敗する）
+    condition: '`systemctl --user start --no-block` が 0 以外の終了コードで終わった'
+    notes: フックの中で捕まえ、ログへ `start_unit` を書いて終了コード 0 で終える（セッションの開始は止めない）
+  - name: TimeoutExpired（systemctl が打ち切られる）
+    condition: '`is-enabled` か `start --no-block` が非機能要件「ユニットの確認と起動の依頼の待ち」を過ぎた'
+    notes: フックの中で捕まえ、`is-enabled` ならログへ `check_unit`、`start` なら `start_unit` を書いて終了コード 0 で終える
+  - name: OSError / 書式の誤り（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ。`RULE_INJECT_PORT` が許す値の外'
+    notes: '`systemctl` の呼び出しで出た FileNotFoundError（`systemctl` が見つからない）はこの行に当てず、ログに書かずに何もしない。設定ファイルが読めないときは、フックの中で捕まえ、応答も確かめずに何もせず、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える。設定ファイルの場所と理由は、操作の前にルール案内が載せる'
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも当たらない例外
+    notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
+  - name: TimeoutError（応答の確認の待ちを過ぎる）
+    condition: ポートへの接続が非機能要件「サーバーの応答の確認の待ち」を過ぎた
+    notes: 応答しないものとして扱い、ログに書かずにユニットの確認へ進む
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: NFR-122-1#requirements[フックの実行時間]
+  - item: 応答の確認
+    constraint: '`127.0.0.1` の `RULE_INJECT_PORT`（無ければ既定のポート）へ TCP で接続し、接続できればサーバーが応答するとみなす。待ちの上限は非機能要件の決定値'
+    decided_by: NFR-122-1#requirements[サーバーの応答の確認の待ち]
+    notes: MCP の `initialize` は送らない。ポートを取っているのがサーバーでないときの扱いは、インターフェース定義「サーバーの起動」の異常系（ポートが使われている）
+  - item: systemctl の呼び出し
+    constraint: '`systemctl --user is-enabled --quiet -- {サービス名}` が 0 のときだけ `systemctl --user start --no-block -- {サービス名}` を実行する。それぞれの打ち切りは非機能要件の決定値'
+    decided_by: NFR-122-1#requirements[ユニットの確認と起動の依頼の待ち]
+    notes: '`is-enabled` が 0 以外（有効でない・ユニットが無い・ユーザーの systemd に接続できない）と、`systemctl` が見つからないときは、ログに書かずに何もしない。標準入力は渡さず、標準出力と標準エラー出力は捨てる'
+  - item: サービス名
+    constraint: 設定ファイルの `global.server_service`（無ければ `rule-inject`）
+    notes: 端末のセットアップがユニットを配置したときに記載する
+  - item: 文面
+    constraint: 特定の開発基盤や作者の環境を思わせる語を含めない
+  - item: ログ
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。書けないときは標準エラー出力へ出す
+  - item: 依存
+    constraint: 標準ライブラリだけで動く（サーバーの依存を読み込まない）
+refs:
+  - SC-122-22#
+test_file: tests/integration/plugin/test_start_server.py

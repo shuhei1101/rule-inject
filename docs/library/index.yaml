@@ -1,0 +1,12 @@
+summary: 採用済みの外部ライブラリ / 外部ツールのリファレンス
+items:
+  - page: LIB-122-1.yaml
+    summary: フックを呼ぶ Claude Code の CLI
+  - page: LIB-122-3.yaml
+    summary: 常駐の MCP サーバーを書く公式の Python SDK
+  - page: LIB-122-2.yaml
+    summary: 索引を JSON Schema で検証するライブラリ
+  - page: LIB-122-4.yaml
+    summary: 索引をコメントと書式を残したまま書き換える YAML ライブラリ
+  - page: LIB-122-5.yaml
+    summary: 常駐の MCP サーバーを Streamable HTTP で待ち受け、再起動で待ち受けを閉じる ASGI のサーバー

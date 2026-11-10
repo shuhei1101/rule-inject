@@ -3,7 +3,7 @@
 # 設計書の Schema は AI Monitor の rules.global.yaml が案内する。knowledge の rules.yaml にある規約は載せない
 default_on: ["write"]
 rules:
-  - rule: docs/リファレンス/索引の書式.md
+  - rule: docs/guide/索引の書式.md
     paths:
       - "**/rules.yaml"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-naming.yaml"

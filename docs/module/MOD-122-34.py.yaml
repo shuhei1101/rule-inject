@@ -1,0 +1,52 @@
+id: MOD-122-34
+visibility: internal
+title: "MCP サーバー / サーバー / __main__.py"
+test_files:
+  - tests/unit/rule_inject/server/test_main.py
+constants:
+  - name: HOST
+    title: 待ち受けのアドレス
+    container: server/__main__.py
+    summary: 非機能要件「MCPサーバーの待ち受けのアドレス」の決定値
+    value: '`"127.0.0.1"`'
+functions:
+  - name: main
+    title: 起動の入口
+    container: server/__main__.py
+    usecase: MCPサーバーを常駐させる
+    summary: 設定ファイルとポートを確かめ、`HOST` のポートで Streamable HTTP として待ち受ける。再起動で待ち受けを閉じたら、同じプロセスで起動し直す（`python -m rule_inject.server`）
+    kind: 関数
+    scope: public
+    returns:
+      type: None
+      description: 終わるときは終了コードで抜ける
+    process: |-
+      1. `env = os.environ` として `load_settings(env)` で設定ファイルと `RULE_INJECT_PORT` を確かめる。`SettingsReadError` は標準エラーへ `{path}: {reason}` を書き、終了コード 1 で終わる
+      2. `socket.create_server((HOST, settings.server_port))` で待ち受けられるか確かめて閉じる。OSError は標準エラーへポートの番号と「別のプロセスが使っている」旨を書き、終了コード 1 で終わる（uvicorn は待ち受けの失敗を自分のログに書いて終わるため、先に確かめる）
+      3. `control = ServerControl(port=settings.server_port)` と `clone = find_clone(Path(__file__).parent)` を作り、`build_server(env, control=control, clone=clone).streamable_http_app()` のアプリを `uvicorn.Config(app, host=HOST, port=settings.server_port, timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_TIMEOUT)` の `uvicorn.Server` で待ち受ける（`control.attach(server)` の後に `server.run()`）。Ctrl+C・SIGTERM は uvicorn が待ち受けを閉じ、残った接続を上限で切ってから終わる
+      4. `server.run()` が返ったとき `control.restart_requested` が真なら、`os.execv(sys.executable, [sys.executable, "-m", "rule_inject.server"])` で同じプロセスを置き換える（戻らない）。偽ならそのまま終わる
+    unit_tests:
+      - name: test_main_when_settings_unreadable
+        case: 異常
+        summary: 設定ファイルが読めなければ待ち受けずに終わる
+        condition: '`RULE_INJECT_CONFIG` が無いファイルを指す'
+        mock: '`MCPServer.run`（呼ばれないことを確かめる）'
+        expected: '`SystemExit(1)` で、標準エラーに設定ファイルの場所'
+      - name: test_main_when_port_in_use
+        case: 異常
+        summary: ポートが使われていれば待ち受けずに終わる
+        condition: テストが同じポートで待ち受けておき、`RULE_INJECT_PORT` にそのポート
+        mock: '`MCPServer.run`（呼ばれないことを確かめる）'
+        expected: '`SystemExit(1)` で、標準エラーにポートの番号'
+      - name: test_main_when_restart_requested
+        case: 正常
+        summary: 再起動で待ち受けを閉じたら同じプロセスで起動し直す
+        condition: 読める設定ファイルと空いているポート。`uvicorn.Server.run` の中で `begin_restart` を呼んだことにする
+        mock: '`uvicorn.Server.run`・`os.execv`（呼ばれた引数を記録する）'
+        expected: '`os.execv` が `sys.executable` と `[sys.executable, "-m", "rule_inject.server"]` で 1 回呼ばれる'
+      - name: test_main_when_stopped
+        case: 正常
+        summary: Ctrl+C・SIGTERM で終わったときは起動し直さない
+        condition: '`uvicorn.Server.run` がそのまま返る'
+        mock: '`uvicorn.Server.run`・`os.execv`'
+        expected: '`os.execv` が呼ばれない。`uvicorn.Config` の `timeout_graceful_shutdown` が `GRACEFUL_SHUTDOWN_TIMEOUT`'

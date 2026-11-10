@@ -1,6 +1,6 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 title: 管理用の YAML
-description: 'ソースコードなど YAML でない文書のメタデータを持つ YAML。文書の行の `records: files`・`body_file: path` で指す。'
+description: 'ソースコードなど YAML でない文書のメタデータを持つ YAML。文書の行の `records: files`・`body_file: path` で指す。行の `schema` にはこのファイル全体のスキーマを指し、1 行ずつの検査には `files.items` を当てる。'
 type: object
 required:
   - files
@@ -54,6 +54,15 @@ properties:
               source:
                 type: string
                 title: 関連先の配信元の ID
+        visibility:
+          type: string
+          title: 公開範囲
+          description: '文書を Pages に出すか。`public`（出す）/ `internal`（出さない）。書かなければ `internal` として扱う。'
+          enum: [public, internal]
+        category:
+          type: string
+          title: 分類
+          description: '公開ドキュメント（`docs/guide/`）の分類（はじめに・使い方・リファレンス）。上タブ・分類のトップページ・README の `分類` の列になる。'
         status:
           type: string
           title: 状態

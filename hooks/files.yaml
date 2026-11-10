@@ -7,7 +7,7 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/分類/プラグイン/フック
+      - to: MOD-122-58
         type: implements
   - path: run.py
     name: フックの起動スクリプト
@@ -16,5 +16,5 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/run.py
+      - to: MOD-122-28
         type: implements
