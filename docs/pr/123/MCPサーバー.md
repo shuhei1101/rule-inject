@@ -38,4 +38,18 @@
 
 ## テスト結果
 
-なし
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/unit/rule_inject/server/test_control.py](https://github.com/shuhei1101/rule-inject/blob/163a05f/tests/unit/rule_inject/server/test_control.py) | 全実行 | 変更 | ✅ | `test_track`・`test_track_when_get`・`test_track_when_raises`・`test_drain_and_stop_when_request_in_flight` を追加<br>`テスト結果/20261110164517_6e374fa_単体テスト.log` |
+| [tests/unit/rule_inject/server/test_main.py](https://github.com/shuhei1101/rule-inject/blob/163a05f/tests/unit/rule_inject/server/test_main.py) | 全実行 | 変更 | ✅ | `test_main_when_stopped` に、`control.track` で包んだアプリを指定することの確認を追加 |
+| `tests/unit` のほかのファイル | 全実行 | 実行のみ | ✅ | 553 テスト pass |
+
+実装の後に、追加したテストの ASGI のアプリの呼び出しを、mypy の型検査に通る形（`_call` を経由し、`send` の引数を `MutableMapping` にする）へ修正した（期待値は変えていない）。
+
+lint: `テスト結果/20261110164517_6e374fa_lint.log`（違反なし）
+
+### 結合
+
+なし（結合テスト作成で実行する）
