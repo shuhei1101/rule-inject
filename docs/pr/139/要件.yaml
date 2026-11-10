@@ -2,9 +2,9 @@ docs:
   - page: docs/guide/mdmark.config.yaml
     new: true
     change: スキル mdmark:setup でキーをユーザーに確認しながら、公開ドキュメントのフォルダの mdmark の設定を作る
-    status: todo
+    status: done
     updated_by: planner
-    updated_at: '2026-11-10T21:05:58.281115+00:00'
+    updated_at: '2026-11-10T22:41:47.358523+00:00'
 scope_out:
   - item: 公開ドキュメントの Mermaid の図を mdmark の図へ書き換えること
     reason: check で出た問題の修正と目的が異なり、図の書き換えは別の Issue が扱う

@@ -1,0 +1,25 @@
+confirmations:
+  - topic: mdmark.config.yaml のキー index
+    decision: 書かない（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/139#discussion_r4530530194
+  - topic: mdmark.config.yaml のキー theme
+    decision: 書かない（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/139#discussion_r4530531268
+  - topic: mdmark.config.yaml のキー build
+    decision: 'include: ["**/*.md"]・out: ../generated/guide.html で、exclude は書かない（推奨案 A）'
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/139#discussion_r4530532168
+  - topic: mdmark.config.yaml の index・theme・build 以外のキー
+    decision: version だけを書き、残りは mdmark の既定に任せる（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/139#discussion_r4530533075
