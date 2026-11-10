@@ -28,4 +28,12 @@
 
 ## テスト結果
 
-なし
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/d47281d/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | `test_build_server_instructions` を追加<br>`テスト結果/20261111061135_d47281d_単体テスト.log` |
+
+### 結合
+
+結合テスト作成の工程で記入する。

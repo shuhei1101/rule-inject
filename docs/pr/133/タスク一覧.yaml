@@ -70,7 +70,9 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-10T21:05:50.813227+00:00'
   - process: 実装
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:12:23.711865+00:00'
   - process: 結合テスト作成
     status: todo
   - process: E2E テスト作成
