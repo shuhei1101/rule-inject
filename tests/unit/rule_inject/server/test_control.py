@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import MutableMapping
 from types import SimpleNamespace
 from typing import Any
 
@@ -251,6 +252,11 @@ async def _receive() -> dict[str, Any]:
     return {"type": "http.request", "body": b"", "more_body": False}
 
 
+async def _call(app: Any, method: str, send: Any) -> None:
+    """ASGI のアプリを `/mcp` への要求で呼ぶ。"""
+    await app(_http_scope(method), _receive, send)
+
+
 def test_drain_and_stop_when_request_in_flight() -> None:
     """要求の応答を送信し終えてから止める（正常系）。"""
     from rule_inject.server.control import ServerControl
@@ -260,7 +266,7 @@ def test_drain_and_stop_when_request_in_flight() -> None:
     server = _fake_server()
     control.attach(server)
     observed: list[bool] = []
-    sent: list[dict[str, Any]] = []
+    sent: list[MutableMapping[str, Any]] = []
 
     async def slow_app(scope: Any, receive: Any, send: Any) -> None:
         """0.3 秒待ってから応答を送信する。送信の前に止める合図が出ていないかを控える。"""
@@ -268,13 +274,13 @@ def test_drain_and_stop_when_request_in_flight() -> None:
         observed.append(server.should_exit)
         await send({"type": "http.response.body", "body": b"done", "more_body": False})
 
-    async def send(message: dict[str, Any]) -> None:
+    async def send(message: MutableMapping[str, Any]) -> None:
         """送信した応答を控える。"""
         sent.append(message)
 
     async def scenario() -> None:
         """要求の応答を送信している間に再起動を始め、停止のタスクの終わりを待つ。"""
-        request = asyncio.create_task(control.track(slow_app)(_http_scope("POST"), _receive, send))
+        request = asyncio.create_task(_call(control.track(slow_app), "POST", send))
         await asyncio.sleep(0.05)
         control.begin_restart()
         await request
@@ -296,7 +302,7 @@ def test_track() -> None:
     # 準備
     control = ServerControl(port=PORT)
     seen: list[int] = []
-    sent: list[dict[str, Any]] = []
+    sent: list[MutableMapping[str, Any]] = []
     response = {"type": "http.response.body", "body": b"ok", "more_body": False}
 
     async def app(scope: Any, receive: Any, send: Any) -> None:
@@ -305,12 +311,12 @@ def test_track() -> None:
         seen.append(control._requests)
         await send(response)
 
-    async def send(message: dict[str, Any]) -> None:
+    async def send(message: MutableMapping[str, Any]) -> None:
         """送信した応答を控える。"""
         sent.append(message)
 
     # 実行
-    asyncio.run(control.track(app)(_http_scope("POST"), _receive, send))
+    asyncio.run(_call(control.track(app), "POST", send))
     # 検証
     assert seen == [1]
     assert control._requests == 0
@@ -329,11 +335,11 @@ def test_track_when_get() -> None:
         """処理中の要求の数を控える。"""
         seen.append(control._requests)
 
-    async def send(message: dict[str, Any]) -> None:
+    async def send(message: MutableMapping[str, Any]) -> None:
         """何もしない。"""
 
     # 実行
-    asyncio.run(control.track(app)(_http_scope("GET"), _receive, send))
+    asyncio.run(_call(control.track(app), "GET", send))
     # 検証
     assert seen == [0]
     assert control._requests == 0
@@ -350,10 +356,10 @@ def test_track_when_raises() -> None:
         """RuntimeError を送出する。"""
         raise RuntimeError("失敗")
 
-    async def send(message: dict[str, Any]) -> None:
+    async def send(message: MutableMapping[str, Any]) -> None:
         """何もしない。"""
 
     # 実行・検証
     with pytest.raises(RuntimeError, match="失敗"):
-        asyncio.run(control.track(app)(_http_scope("POST"), _receive, send))
+        asyncio.run(_call(control.track(app), "POST", send))
     assert control._requests == 0
