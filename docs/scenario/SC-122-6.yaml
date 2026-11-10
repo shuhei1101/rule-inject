@@ -1,28 +1,51 @@
 id: SC-122-6
 visibility: internal
-title: "セッションの開始時に作業の決まりを受け取る"
+title: "MCPサーバーへの接続時に作業の決まりを受け取る"
 scenarios:
   - name: 正常シナリオ
     setup:
       - name: Mock
-        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+        description: なし。MCP サーバーを起動しておき、実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: 操作
-        description: プロンプトで、新しいファイルを作るときの手順を設定から読み取って回答するよう指示する
+        description: プロンプトで、新しいファイルを作るときの手順を、接続している MCP サーバーの instructions から読み取って回答するよう指示する
         notes: ツールは呼ばせない（`--max-turns 1`）
     flow: |-
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
-        participant S as SessionStart フック
+        participant SV as MCP サーバー
 
-        CC->>S: セッションの開始
-        S-->>CC: 空で作ってから書く決まり（additionalContext）
+        CC->>SV: initialize
+        SV-->>CC: instructions（空で作ってから書く決まり）
       ```
     expected:
-      - セッションの記録（transcript）に、空で作ってから書く決まりの文面が載っている
+      - 回答に、Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する手順が載っている
+      - SessionStart のフックの `additionalContext` に、空で作ってから書く決まりが載っていない
     test: test_normal
-lead: セッションの開始時にフックが作業の決まりをコンテキストへ追加する流れを示し、作業の決まりの注入を変えるときに参照する。
-issue: 2
-primary_actor: Claude Code のセッション
-trigger: セッションの開始（新規・再開・圧縮の後）
-test_file: tests/e2e/単一ユースケース/test_receive_work_rules_at_session_start.py
+  - name: 異常シナリオ（MCP サーバーが応答しない）
+    setup:
+      - name: Mock
+        description: なし。MCP サーバーを起動しない
+      - name: 操作
+        description: 正常シナリオと同じプロンプト
+        notes: ツールは呼ばせない（`--max-turns 1`）
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant SV as MCP サーバー
+
+        CC->>SV: initialize
+        SV--xCC: 接続できない
+      ```
+    expected:
+      - Claude Code が rule-inject の MCP サーバーへの接続の失敗を示し、作業の決まりは届かない
+      - セッションは続けられる（フックのルール案内は MCP サーバーに依存せず動く）
+    test: test_error_when_server_unavailable
+    refs:
+      - SC-122-22#
+lead: Claude Code のセッションとサブエージェントが MCP サーバーへの接続時に instructions で作業の決まりを受け取る流れを示し、作業の決まりの届け方を変えるときに参照する。
+issue: 124
+primary_actor: Claude Code のセッション（サブエージェントを含む）
+trigger: MCP サーバーへの接続（セッションの開始・`/mcp` での接続し直し）
+test_file: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py
