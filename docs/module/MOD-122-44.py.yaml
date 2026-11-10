@@ -6,28 +6,28 @@ enums:
     title: 応答の形式
     container: server/types.py
     usecase: 共通
-    summary: 読むツールの `format`（Literal）
+    summary: 読み込むツールの `format`（Literal）
     values:
       - value: markdown
         title: Markdown
-        description: 同じ項目を Markdown の表で text に入れ、structuredContent を返さない
+        description: 同じ項目を Markdown の表で text に入れ、structuredContent を返却しない
       - value: json
         title: JSON
         description: structuredContent と text に同じ JSON を入れる
   - name: TagCheckState
-    title: タグの確かめの結果
+    title: タグの確認の結果
     container: server/types.py
     usecase: 索引をチェックする
     summary: インターフェース定義「索引のチェック」の `tag_check.state`（Literal）
     values:
       - value: checked
-        title: 確かめた
+        title: 確認した
         description: dev-docs のタグに照らした
       - value: skipped
         title: 飛ばした
-        description: dev-docs に届かず、または読める文書が 0 件で飛ばした
+        description: dev-docs に届かず、または読み込める文書が 0 件で飛ばした
       - value: no_patterns
-        title: 確かめるパターンが無い
+        title: 確認するパターンが無い
         description: タグのパターンが無く、dev-docs に問い合わせなかった
   - name: UpdateState
     title: 更新の結果
@@ -46,7 +46,7 @@ enums:
         description: 取り込んだが、設定の移し替えが要るため再起動しなかった
 data_models:
   - name: RuleEntry
-    title: 効いているエントリ
+    title: 有効なエントリ
     container: server/types.py
     usecase: 効いているルールの一覧を見る
     role: DTO
@@ -66,7 +66,7 @@ data_models:
         description: 解いたルールの場所
       - name: paths
         type: list[str]
-        description: 索引に書いたままのパターン
+        description: 索引に記載したままのパターン
       - name: exclude
         type: list[str]
         description: 同上
@@ -81,10 +81,10 @@ data_models:
         description: '`default_on` を埋めた操作の種別（`OPERATIONS` の順）'
       - name: read_by
         type: list[dict[str, Any]]
-        description: 索引に書いたままの `read_by`
+        description: 索引に記載したままの `read_by`
       - name: read_tool
         type: dict[str, Any] | None
-        description: 索引に書いたままの `read_tool`。書かないエントリは None
+        description: 索引に記載したままの `read_tool`。記載しないエントリは None
   - name: IndexIssue
     title: 索引ごとの理由
     container: server/types.py
@@ -94,12 +94,12 @@ data_models:
     properties:
       - name: index
         type: str
-        description: 読めない索引の場所
+        description: 読み込めない索引の場所
       - name: reason
         type: str
-        description: フックが案内に載せる理由
+        description: フックが案内に記載する理由
   - name: EntryIssue
-    title: 照合に使わないエントリ
+    title: 照合に使用しないエントリ
     container: server/types.py
     usecase: 効いているルールの一覧を見る
     role: DTO
@@ -116,10 +116,10 @@ data_models:
         description: バージョン
       - name: rule
         type: str
-        description: 索引に書いたままの `rule`
+        description: 索引に記載したままの `rule`
       - name: reason
         type: str | None
-        description: 読み飛ばした理由。`disabled_entries` では応答に含めない（`exclude_none`）
+        description: スキップした理由。`disabled_entries` では応答に含めない（`exclude_none`）
   - name: ListRulesResult
     title: ルールの一覧の応答
     container: server/types.py
@@ -138,10 +138,10 @@ data_models:
         description: 設定ファイルの場所
       - name: indexes
         type: list[str]
-        description: 読む索引の場所
+        description: 読み込む索引の場所
       - name: entries
         type: list[RuleEntry]
-        description: 効いているエントリのこのページ
+        description: 有効なエントリのこのページ
       - name: unreadable_indexes
         type: list[IndexIssue]
         description: 先頭のページだけ
@@ -153,12 +153,12 @@ data_models:
         description: 先頭のページだけ
       - name: total
         type: int
-        description: 効いているエントリの総数
+        description: 有効なエントリの総数
       - name: next_cursor
         type: str | None
         description: 続きの位置
   - name: RuleMatch
-    title: 当たったルール
+    title: ヒットしたルール
     container: server/types.py
     usecase: 操作に当たるルールを検索する
     role: DTO
@@ -172,7 +172,7 @@ data_models:
         description: 未読のときに操作を止めるか
       - name: entries
         type: list[EntryRef]
-        description: 当たったエントリ（`index`・`position`）
+        description: ヒットしたエントリ（`index`・`position`）
   - name: EntryRef
     title: エントリの場所
     container: server/types.py
@@ -198,22 +198,22 @@ data_models:
         description: 常に `True`
       - name: output
         type: str
-        description: 当たったルールと止めるルールの件数の 1 行
+        description: ヒットしたルールと止めるルールの件数の 1 行
       - name: config_path
         type: str | None
         description: 設定ファイルの場所
       - name: operation
         type: Operation
-        description: 照合に使った操作の種別
+        description: 照合に使用した操作の種別
       - name: matched
         type: list[RuleMatch]
-        description: 当たったルール
+        description: ヒットしたルール
       - name: unreadable_indexes
         type: list[IndexIssue]
-        description: 読めない索引
+        description: 読み込めない索引
       - name: skipped_entries
         type: list[EntryIssue]
-        description: 読み飛ばしたエントリ
+        description: スキップしたエントリ
   - name: IndexReport
     title: 索引ごとのチェックの結果
     container: server/types.py
@@ -244,7 +244,7 @@ data_models:
         description: '`unmatched_path` の `position`・`rev`・`rule`（理由に入れた解いた場所）'
       - name: unused_tag_patterns
         type: list[dict[str, Any]]
-        description: 使われていないタグのパターンの `position`・`rev`・`location`・`key`・`pattern`（`TagPattern.pattern.source`）
+        description: 使用されていないタグのパターンの `position`・`rev`・`location`・`key`・`pattern`（`TagPattern.pattern.source`）
         default: 空のリスト
   - name: CheckIndexesResult
     title: 索引のチェックの応答
@@ -267,13 +267,13 @@ data_models:
         description: 問題の件数の合計
       - name: indexes
         type: list[IndexReport]
-        description: 索引ごとの結果（フックが読む順）
+        description: 索引ごとの結果（フックが読み込む順）
       - name: unmatched_scan
         type: UnmatchedScanReport
-        description: '`paths` の当たらないエントリの検出の状態'
+        description: '`paths` のヒットしないエントリの検出の状態'
       - name: tag_check
         type: TagCheckReport
-        description: 使われていないタグのパターンの確かめの結果
+        description: 使用されていないタグのパターンの確認の結果
         default: '`TagCheckReport(state="no_patterns", reason=None)`'
   - name: WriteEntryResult
     title: エントリの書き込みの応答
@@ -284,7 +284,7 @@ data_models:
     properties:
       - name: success
         type: bool
-        description: 常に `True`（書けないときは ToolError）
+        description: 常に `True`（書き込めないときは ToolError）
       - name: output
         type: str
         description: 書き込んだ索引と位置の 1 行
@@ -329,7 +329,7 @@ data_models:
         type: str
         description: '`EditResult.diff`'
   - name: UnmatchedScanReport
-    title: paths の当たらないエントリの検出の状態
+    title: paths のヒットしないエントリの検出の状態
     container: server/types.py
     usecase: 索引をチェックする
     role: DTO
@@ -343,12 +343,12 @@ data_models:
         description: 最初の呼び出しから辿ったファイルの数
       - name: reason
         type: str | None
-        description: 終えられなかった理由（上限の秒数と `cursor` の使い方）
+        description: 終えられなかった理由（上限の秒数と `cursor` の使用方法）
       - name: next_cursor
         type: str | None
         description: '`_encode_scan_cursor` の文字列'
   - name: ReadSummary
-    title: 読み方ごとの既読のまとめ
+    title: 参照方法ごとの既読のまとめ
     container: server/types.py
     usecase: 既読の記録を確かめる
     role: DTO
@@ -356,16 +356,16 @@ data_models:
     properties:
       - name: method
         type: ReadMethod
-        description: 既読の履歴に残る読み方
+        description: 既読の履歴に残る参照方法
       - name: tool
         type: str
         description: 既読にしたツールの名前
       - name: last_time
         type: str
-        description: その読み方とツールで最後に既読にした時刻（履歴の `time` のまま）
+        description: その参照方法とツールで最後に既読にした時刻（履歴の `time` のまま）
       - name: count
         type: int
-        description: その読み方とツールで既読にした回数
+        description: その参照方法とツールで既読にした回数
   - name: RuleRead
     title: 既読のルール
     container: server/types.py
@@ -381,7 +381,7 @@ data_models:
         description: 今の本文と既読にした時点の本文の関係
       - name: reads
         type: list[ReadSummary]
-        description: 読み方とツール名の組ごとのまとめ（最後に既読にした時刻の古い順）
+        description: 参照方法とツール名の組ごとのまとめ（最後に既読にした時刻の古い順）
   - name: RecordSessionItem
     title: 既読の記録のあるセッション
     container: server/types.py
@@ -416,10 +416,10 @@ data_models:
         description: 設定ファイルの場所
       - name: state_dir
         type: str
-        description: 読んだ記録フォルダ
+        description: 読み込んだ記録フォルダ
       - name: session_id
         type: str | None
-        description: 確かめたセッション
+        description: 確認したセッション
       - name: rules
         type: list[RuleRead]
         description: 既読のルール（セッションを省いたときは空）
@@ -431,7 +431,7 @@ data_models:
         description: ルールまたはセッションの総数
       - name: next_cursor
         type: str | None
-        description: 続きを取るときに `cursor` へ渡す値
+        description: 続きを取るときに `cursor` へ引き渡す値
   - name: DeleteRecordsResult
     title: 既読の記録の削除の応答
     container: server/types.py
@@ -458,7 +458,7 @@ data_models:
         type: list[str]
         description: 削除する前に既読だったルールの場所（初めて現れた順）
   - name: TagCheckReport
-    title: タグの確かめの結果
+    title: タグの確認の結果
     container: server/types.py
     usecase: 索引をチェックする
     role: DTO
@@ -466,7 +466,7 @@ data_models:
     properties:
       - name: state
         type: TagCheckState
-        description: 確かめの結果
+        description: 確認の結果
       - name: reason
         type: str | None
         description: '`skipped` のときの `UsedTags.reason`。それ以外は `None`'
@@ -479,13 +479,13 @@ data_models:
     properties:
       - name: path
         type: str | None
-        description: 読んだ設定ファイルの場所（`admin_tools._read_config_path`）
+        description: 読み込んだ設定ファイルの場所（`admin_tools._read_config_path`）
       - name: readable
         type: bool
-        description: 読めたか
+        description: 読み込めたか
       - name: error
         type: str | None
-        description: '読めなかった理由（`{path}: {reason}`）'
+        description: '読み込めなかった理由（`{path}: {reason}`）'
   - name: ServerStatusResult
     title: サーバーの状態の応答
     container: server/types.py
@@ -535,7 +535,7 @@ data_models:
         description: 常に `True`
       - name: output
         type: str
-        description: 設定ファイルの場所と読む索引の数の 1 行
+        description: 設定ファイルの場所と読み込む索引の数の 1 行
       - name: config_path
         type: str | None
         description: 設定ファイルの場所
@@ -566,7 +566,7 @@ data_models:
         description: 常に `True`
       - name: output
         type: str
-        description: 再起動を始めた旨と、接続し直して確かめる旨の 1 行
+        description: 再起動を始めた旨と、再接続して確認する旨の 1 行
       - name: pid
         type: int
         description: '`ServerControl.pid`'
@@ -598,3 +598,4 @@ data_models:
       - name: steps
         type: list[str]
         description: '`plan_migrations` の結果。`migration_required` 以外は空'
+lead: ツールの応答の形式の種類と、各ツールの応答のモデルを定め、ツールの応答の項目を修正するときに参照する。

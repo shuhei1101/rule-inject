@@ -7,16 +7,16 @@ directory: |-
   src/rule_inject/features/index/check/
   ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change / scan_unmatched / tag_patterns / unused_tag_patterns）
   ├── types.py            # ProblemKind・IndexProblem・IndexCheck・ScanCursor・UnmatchedScan・TagPattern
-  ├── service.py          # 索引のチェックと、書く前と書いた後の問題の比較
-  ├── scan.py             # プロジェクトのファイルを辿り、paths の当たらないエントリを返す
-  ├── tags.py             # タグのパターンを集め、使われているタグに当たらないものを返す
+  ├── service.py          # 索引のチェックと、書き込む前と書き込んだ後の問題の比較
+  ├── scan.py             # プロジェクトのファイルを辿り、paths のヒットしないエントリを返却する
+  ├── tags.py             # タグのパターンを集め、使用されているタグにヒットしないものを返却する
   └── index.schema.yaml   # 索引の JSON Schema（2020-12）
   ```
 notes:
   索引の JSON Schema: |-
-    `index.schema.yaml` は JSON Schema 2020-12 を YAML で書き、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを通す。
+    `index.schema.yaml` は JSON Schema 2020-12 を YAML で記載し、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを許可する。
 
-    | 場所 | 通す値 |
+    | 場所 | 許可する値 |
     | --- | --- |
     | 最上位 | マップ。キーは `default_on`・`rules` だけ |
     | `default_on`・`rules[].on` | `read`・`write`・`mcp` のどれかを 1 つ以上、重なりなく並べたリスト |

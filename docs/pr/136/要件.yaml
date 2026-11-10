@@ -1,0 +1,20 @@
+docs:
+  - page: docs/module/index.yaml
+    new: false
+    change: フォルダの個別の設計書（MOD-122-1〜62）の本文（lead 以外）を要件.md の工程 1〜3・5 で移行し、MOD-122-1〜51 に lead を工程 4 で記載する（index.yaml 自体は変えない）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:33:57.016062+00:00'
+scope_out:
+  - item: MOD-122-52〜62 の lead と、docs/module/index.yaml の目次の概要
+    reason: 'lead は PR #125 で移行済み。目次の概要は本文でない'
+    plan: none
+  - item: シナリオの本文の移行
+    reason: 設計書の分類ごとの Issue で行う
+    plan: '#127'
+  - item: インターフェース定義の本文の移行
+    reason: 設計書の分類ごとの Issue で行う
+    plan: '#128'
+  - item: シナリオ・インターフェース定義・モジュール構成以外の設計書の本文の移行
+    reason: 設計書の分類ごとの Issue で行う
+    plan: '#130'

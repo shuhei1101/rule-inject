@@ -5,7 +5,7 @@ constants:
   - name: HOOKS
     title: フックの対応表
     container: hooks/__init__.py
-    summary: run.py の引数の名前から、出した元・処理・想定外の例外の知らせ方を引く
+    summary: run.py の引数の名前から、出した元・処理・想定外の例外の通知方法を取得する
     entries:
       - key: rule_guide
         value: '`("rule_guide", guide_rules, 止めずに additionalContext で知らせる)`'
@@ -21,3 +21,4 @@ constants:
         value: '`("search_guide", search_guide, additionalContext で知らせる)`'
       - key: start_server
         value: '`("start_server", start_server, 出力しない)`'
+lead: フックの名前と、その処理の関数の対応表を定め、フックを追加・削除するときに参照する。

@@ -8,11 +8,11 @@ functions:
     title: 検索結果の案内の処理
     container: hooks/search_guide.py
     usecase: 検索の結果に出たファイルのルールの案内を受ける
-    summary: 検索の結果に出た実在するファイルに当たる未読・未案内のルールを案内する PostToolUse の出力を作る
+    summary: 検索の結果に出た実在するファイルにヒットする未読・未案内のルールを案内する PostToolUse の出力を作る
     kind: フック
     scope: public
     inherits: HookHandler
-    side_effects: 案内に載せた場所を案内済みの記録へ追記する
+    side_effects: 案内に記載した場所を案内済みの記録へ追記する
     args:
       - name: payload
         type: dict[str, Any]
@@ -26,27 +26,27 @@ functions:
         description: 環境変数
     returns:
       type: dict[str, Any] | None
-      description: additionalContext（案内と知らせ）か、無ければ None
+      description: additionalContext（案内と通知）か、無ければ None
     process: |-
       1. session_id の形式が外れていれば None
       2. 結果の行と基準を決める。Grep・Glob は `tool_response.filenames` と `tool_response.content` の各行、基準は `cwd`。Bash は `search_output_base(command, cwd)` が None なら None、あれば `tool_response.stdout` の各行とその基準
-      3. `extract_result_paths(lines, base)` で照合するパスを拾う。無ければ None
-      4. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返す（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
-      5. `load_indexes(settings.indexes, env)` で索引を読む。読めない索引と読み飛ばしたエントリはログ（`read_index`）と知らせの文に回す
-      6. パスごとに `match_path(entries, path, "read")` で当て、`merge_matched` でルールの場所ごとに 1 件へまとめる（出た順。`read_tools` も合わせる）
-      7. `read_record` の既読の行で `current_read_locations` が返す場所と、`read_guided` の案内済みを除く。読めない記録は空として扱い、ログ（`read_record`）と知らせの文に回す
-      8. 残ったルールがあれば `build_search_guidance(rules, unchecked=...)` で案内にし、`shown` を `append_guided` で案内済みにする。書けなければログ（`write_record`）と知らせの文に回す
-      9. 案内と知らせを `hookSpecificOutput.additionalContext`（`hookEventName: PostToolUse`）にする。どちらも無ければ None
+      3. `extract_result_paths(lines, base)` で照合するパスを取得する。無ければ None
+      4. `load_settings(env)` で設定を読み込む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き込み、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返却する（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
+      5. `load_indexes(settings.indexes, env)` で索引を読み込む。読み込めない索引とスキップしたエントリはログ（`read_index`）と通知の文に回す
+      6. パスごとに `match_path(entries, path, "read")` で適用し、`merge_matched` でルールの場所ごとに 1 件へまとめる（出た順。`read_tools` も合わせる）
+      7. `read_record` の既読の行で `current_read_locations` が返却する場所と、`read_guided` の案内済みを除く。読み込めない記録は空として扱い、ログ（`read_record`）と通知の文に回す
+      8. 残ったルールがあれば `build_search_guidance(rules, unchecked=...)` で案内にし、`shown` を `append_guided` で案内済みにする。書き込めなければログ（`write_record`）と通知の文に回す
+      9. 案内と通知を `hookSpecificOutput.additionalContext`（`hookEventName: PostToolUse`）にする。どちらも無ければ None
     unit_tests:
       - name: test_search_guide
         case: 正常
-        summary: Grep の結果に当たるルールを案内する
+        summary: Grep の結果にヒットするルールを案内する
         condition: '`**/*.py` のエントリ、`tool_response.filenames` に実在する `.py`'
         mock: なし（索引と記録フォルダは一時ファイル）
         expected: additionalContext が `SEARCH_HEADER` で始まり場所が載る。案内済みの記録に 1 行
       - name: test_search_guide_when_not_search
         case: 正常
-        summary: 検索でない Bash は見ない
+        summary: 検索でない Bash は確認しない
         condition: '`git merge main`、`stdout` に実在する `.py`'
         mock: なし
         expected: None
@@ -64,20 +64,20 @@ functions:
         expected: None
       - name: test_search_guide_when_guided_unwritable
         case: 正常
-        summary: 案内済みに書けなくても案内を出す
+        summary: 案内済みに記載できなくても案内を出す
         condition: 書き込み権限の無い記録フォルダ
         mock: なし
         expected: additionalContext に場所と記録ファイルの理由、ログに `write_record`
       - name: test_search_guide_when_rule_changed
         case: 正常
-        summary: 読んだ後に変わったルールを案内する
+        summary: 読み込んだ後に変わったルールを案内する
         condition: '`**/*.py` のエントリ、`tool_response.filenames` に実在する `.py`。記録に場所と書き換える前のハッシュの行があり、ルールの中身を書き換える'
         mock: なし（索引と記録フォルダは一時ファイル）
         expected: additionalContext に場所が載る
       - name: test_search_guide_when_settings_unreadable
         case: 正常
-        summary: 設定ファイルが読めないときは照合せずに知らせる
-        condition: '`RULE_INJECT_CONFIG` が YAML として読めないファイルを指す。`XDG_STATE_HOME` は一時フォルダ。`tool_response.filenames` に実在する `.py`'
+        summary: 設定ファイルが読み込めないときは照合せずに通知する
+        condition: '`RULE_INJECT_CONFIG` が YAML として解釈できないファイルを指す。`XDG_STATE_HOME` は一時フォルダ。`tool_response.filenames` に実在する `.py`'
         mock: なし
         expected: 案内済みの記録が無い。additionalContext に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由。ログに `read_settings` が 1 行
       - name: test_search_guide_when_read_tool
@@ -86,3 +86,4 @@ functions:
         condition: '`**/*.py`・`read_tool` に `tool: mcp__docs__search_docs` を持つエントリ、`tool_response.filenames` に実在する `.py`'
         mock: なし（索引と記録フォルダは一時ファイル）
         expected: 'additionalContext の 1 行目が `SEARCH_HEADER`、2 行目が `READ_TOOL_NOTE`、パスの次の行が `  ツール: mcp__docs__search_docs {}`'
+lead: 検索の結果に出たファイルにヒットする未読のルールを案内するフックの処理を定め、検索結果の案内を修正するときに参照する。

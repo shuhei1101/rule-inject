@@ -5,9 +5,9 @@ test_files:
   - tests/unit/rule_inject/features/index/edit/test_yaml.py
 constants:
   - name: YAML_WIDTH
-    title: 折り返さない行の長さ
+    title: 折り返却しない行の長さ
     container: features/index/edit/_yaml.py
-    summary: 1 行のフロー形式のリストを折り返さないための `YAML.width`（PoC の結果）
+    summary: 1 行のフロー形式のリストを折り返却しないための `YAML.width`（PoC の結果）
     value: '`4096`'
   - name: MAPPING_INDENT
     title: マップの字下げ
@@ -29,20 +29,20 @@ functions:
     title: round-trip の YAML
     container: features/index/edit/_yaml.py
     usecase: 索引のエントリを編集する
-    summary: フックの読み取りが受け付ける書式で書き戻す `YAML` を作る
+    summary: フックの読み取りが受け付ける書式で書き込む `YAML` を作る
     kind: 関数
     scope: public
     returns:
       type: ruamel.yaml.YAML
       description: round-trip の `YAML`
-    process: '`YAML()` に `width = YAML_WIDTH`、`indent(mapping=MAPPING_INDENT, sequence=SEQUENCE_INDENT, offset=SEQUENCE_OFFSET)`、`preserve_quotes = True` を設定して返す。呼ぶたびに作る（`YAML` はスレッドをまたいで共有しない）'
+    process: '`YAML()` に `width = YAML_WIDTH`、`indent(mapping=MAPPING_INDENT, sequence=SEQUENCE_INDENT, offset=SEQUENCE_OFFSET)`、`preserve_quotes = True` を設定して返却する。呼ぶたびに作る（`YAML` はスレッドをまたいで共有しない）'
     unit_tests:
       - name: test_round_trip_yaml
         case: 正常
-        summary: 書き換えない索引は 1 バイトも変わらずに書き戻る
+        summary: 書き換えない索引は 1 バイトも変わらずに書き込まれる
         condition: コメント・単一引用符・二重引用符・80 字を超える 1 行のフロー形式のリスト・`  - rule:` の字下げを持つ索引
         mock: なし
-        expected: 読んでそのまま書いた内容が元の内容と同じ
+        expected: 読み込んでそのまま書き込んだ内容が元の内容と同じ
   - name: to_yaml_value
     title: 書き込む値
     container: features/index/edit/_yaml.py
@@ -67,19 +67,20 @@ functions:
     process: |-
       1. 文字列のリストは 1 行のフロー形式（`fa.set_flow_style()`）の `CommentedSeq` にする（`paths`・`exclude`・`tools`・`on`）
       2. `args` のマップはブロックの `CommentedMap` にし、各値を手順 1 のフロー形式にする
-      3. `read_by` のリストはブロックの `CommentedSeq` にし、各要素のマップに手順 1・2 を当てる
+      3. `read_by` のリストはブロックの `CommentedSeq` にし、各要素のマップに手順 1・2 を適用する
       4. `read_tool` のマップはブロックの `CommentedMap` にし、`tool`・`args`・`optional_args` の順に並べ、`args`・`optional_args` の文字列は単一引用符の文字列（`SingleQuotedScalarString`）にする
-      5. それ以外（`rule` の文字列・`enabled` の真偽値・型の合わない値）はそのまま返す。型の合わない値は書き込みのチェックが JSON Schema の違反として断る
+      5. それ以外（`rule` の文字列・`enabled` の真偽値・型の合わない値）はそのまま返却する。型の合わない値は書き込みのチェックが JSON Schema の違反として断る
     unit_tests:
       - name: test_to_yaml_value
         case: 正常
         summary: キーごとの書式で書き出す
         condition: '`paths: ["**/*.py"]`・`args: {doc_path: ["dev/**"]}`・`read_by: [{tools: ["mcp__a"], args: {path: ["x"]}}]` を新しいエントリとして書き出す'
         mock: なし
-        expected: "`paths` は 1 行の `['**/*.py']`、`args` と `read_by` はブロックで、その中のリストは 1 行。書き出した内容を `parse_index` が読める"
+        expected: "`paths` は 1 行の `['**/*.py']`、`args` と `read_by` はブロックで、その中のリストは 1 行。書き出した内容を `parse_index` が読み込める"
       - name: test_to_yaml_value_when_read_tool
         case: 正常
         summary: '`read_tool` をブロックのマップで書き出す'
         condition: '`read_tool: {args: <JSON の文字列 {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}>, tool: "mcp__docs__search_docs"}` を新しいエントリとして書き出す'
         mock: なし
-        expected: '`read_tool` の下に `tool`・`args` の順でブロックのマップ、`args` は単一引用符で囲んだ 1 行の文字列。書き出した内容を `parse_index` が読める'
+        expected: '`read_tool` の下に `tool`・`args` の順でブロックのマップ、`args` は単一引用符で囲んだ 1 行の文字列。書き出した内容を `parse_index` が読み込める'
+lead: 索引を round-trip で読み込み・書き込みする YAML の設定と、書き込む値の書式を定め、エントリの書き込みの書式を修正するときに参照する。
