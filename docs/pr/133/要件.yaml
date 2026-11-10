@@ -8,11 +8,15 @@ docs:
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
     change: 新しいファイルは空で作る決まりを記載するのを、SessionStart フックから MCP サーバーの instructions に修正する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:45:39.448298+00:00'
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
     change: サーバーが接続時に instructions で新しいファイルの作り方の決まりを渡すことと、サーバーが止まっているとその決まりは届かないことを `## フックとの関係` に追加する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:45:39.448298+00:00'
 scope_out:
   - item: knowledge の判定フローチャート『エージェントに渡す文・処理の置き場所』の ※3 が、MCP を持たないプラグインの例に rule-inject の新しいファイルの作り方を挙げていること
     reason: 別のリポジトリ（knowledge）の文書で、この作業 PR がマージされて初めて例が実体と合わなくなる
