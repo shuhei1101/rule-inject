@@ -1,0 +1,21 @@
+docs:
+  - page: docs/interface/index.yaml
+    new: false
+    change: フォルダの個別の設計書（IF-122-1〜22）の本文（lead 以外）を要件.md の工程 1〜4 で移行する（index.yaml 自体は変えない）
+    status: todo
+scope_out:
+  - item: インターフェース定義の Mermaid の図を mdmark の図へ書き換える
+    reason: 図の工程は別の Issue で扱う（起点 Issue の要望）
+    plan: '#126'
+  - item: インターフェース定義の lead と、docs/interface/index.yaml の目次の概要
+    reason: 'lead は PR #125 で移行済み。目次の概要は本文でない'
+    plan: none
+  - item: シナリオの本文の移行
+    reason: 設計書の分類ごとの Issue で行う
+    plan: '#127'
+  - item: モジュール構成の本文の移行
+    reason: 設計書の分類ごとの Issue で行う
+    plan: '#129'
+  - item: シナリオ・インターフェース定義・モジュール構成以外の設計書の本文の移行
+    reason: 設計書の分類ごとの Issue で行う
+    plan: '#130'
