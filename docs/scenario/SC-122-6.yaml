@@ -5,7 +5,16 @@ scenarios:
   - name: 正常シナリオ
     setup:
       - name: Mock
-        description: なし。MCP サーバーを起動しておき、実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン} --output-format stream-json --verbose` で動かし、利用者の設定のフック・プラグインを読み込ませない
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` に空いているポート、`RULE_INJECT_CONFIG` にテストの端末の設定を指定する'
+        notes: 利用者の常駐サーバー（既定のポート）に接続させない
+      - name: 端末の設定
+        description: サービス名にテストごとに一意の `rule-inject-e2e-{乱数}` を記載する
+        notes: 利用者の `rule-inject` のユニットに触れない
+      - name: MCP サーバー
+        description: 作業ブランチのクローンから `RULE_INJECT_PORT` で起動し、待ち受けを確認しておく
+        notes: テストの後始末で止める
       - name: 操作
         description: プロンプトで、新しいファイルを作るときの手順を、接続している MCP サーバーの instructions から読み取って回答するよう指示する
         notes: ツールは呼ばせない（`--max-turns 1`）
@@ -16,16 +25,24 @@ scenarios:
         participant SV as MCP サーバー
 
         CC->>SV: initialize
-        SV-->>CC: instructions（空で作ってから書く決まり）
+        SV-->>CC: instructions（空で作ってから記載する決まり）
       ```
     expected:
+      - '`system` の `init` の行の `mcp_servers` で、`plugin:rule-inject:rule-inject` の `status` が `connected`'
       - 回答に、Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する手順が載っている
-      - SessionStart のフックの `additionalContext` に、空で作ってから書く決まりが載っていない
+      - セッションの記録（transcript）の `hook_additional_context` の行に、空で作ってから記載する決まりの文面が載っていない
     test: test_normal
   - name: 異常シナリオ（MCP サーバーが応答しない）
     setup:
       - name: Mock
-        description: なし。MCP サーバーを起動しない
+        description: 正常シナリオと同じ
+      - name: 環境変数
+        description: 正常シナリオと同じ
+      - name: 端末の設定
+        description: 正常シナリオと同じ（そのサービス名のユニットを配置しない）
+        notes: SessionStart の起動の補助が起動を依頼しない
+      - name: MCP サーバー
+        description: 起動しない（`RULE_INJECT_PORT` で何も待ち受けていない）
       - name: 操作
         description: 正常シナリオと同じプロンプト
         notes: ツールは呼ばせない（`--max-turns 1`）
@@ -39,8 +56,9 @@ scenarios:
         SV--xCC: 接続できない
       ```
     expected:
-      - Claude Code が rule-inject の MCP サーバーへの接続の失敗を示し、作業の決まりは届かない
-      - セッションは続けられる（フックのルール案内は MCP サーバーに依存せず動く）
+      - '`system` の `init` の行の `mcp_servers` で、`plugin:rule-inject:rule-inject` の `status` が `failed`'
+      - 回答に、空で作ってから記載する手順が載っていない
+      - セッションが回答して終わる（終了コード 0）
     test: test_error_when_server_unavailable
     refs:
       - SC-122-22#
@@ -49,3 +67,5 @@ issue: 124
 primary_actor: Claude Code のセッション（サブエージェントを含む）
 trigger: MCP サーバーへの接続（セッションの開始・`/mcp` での接続し直し）
 test_file: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py
+notes:
+  接続の状態の確認先: '`--output-format stream-json --verbose` の最初の `system`（`subtype: init`）の行は、`mcp_servers` に接続先ごとの `name` と `status`（`connected` / `failed` ほか）を持つ（[Agent SDK reference: TypeScript](https://code.claude.com/docs/en/agent-sdk/typescript) の `SDKSystemMessage`）。接続先の名前と応答しないときの失敗は、Claude Code 2.1.322 で `RULE_INJECT_PORT=59999 claude --setting-sources project --plugin-dir {プラグイン} mcp list` が `plugin:rule-inject:rule-inject: http://127.0.0.1:59999/mcp (HTTP) - ✘ Failed to connect` を出力することで実測した'
