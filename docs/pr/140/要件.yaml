@@ -1,0 +1,29 @@
+use_cases: []
+docs:
+  - page: schemas/glossary.schema.yaml
+    new: true
+    change: '用語集の種類（x-kind: glossary・x-folder: docs/glossary・x-id-prefix: GLO）の Schema を新設する。用語は id・name・description・aliases・avoid を持つ（voice-paste の schemas/glossary.schema.yaml と同じ構成）'
+    status: todo
+  - page: docs/glossary/GLO-122-1.yaml
+    new: true
+    change: 用語集を新設し、判定フローチャート『用語の登録』でこのリポジトリに登録すると判定した語（既読の記録・案内済みの記録・ルール索引・作業の決まり 等）を登録し、言い換えを aliases・avoid に入れる
+    status: todo
+  - page: docs/glossary/index.yaml
+    new: true
+    change: 用語集のフォルダの目次を新設する（README.md は目次から生成する）
+    status: todo
+  - page: dev-docs.yaml
+    new: false
+    change: 'documents[] に用語集の行（paths: docs/glossary/*.yaml・schema: schemas/glossary.schema.yaml・records: terms・alias_type: term）を追加する'
+    status: todo
+  - page: docs/index.yaml
+    new: false
+    change: items に glossary/ の行を追加し、docs/README.md を生成し直す
+    status: todo
+scope_out:
+  - item: 既存の文書に出る、用語集の avoid に入れた言い方の置き換え
+    reason: 要望は用語集の新設と用語の登録まで。置き換えはこの作業 PR で決める avoid を前提にする
+    plan: to_file
+  - item: 公開ドキュメント（docs/guide/ のリファレンス）への用語集のページの追加
+    reason: '要望は dev-docs の配信元の alias_type: term の用語集で、用語集は先例（voice-paste）と同じ internal で置く。利用者向けに公開するかは判断が分かれるため、レビューで確定する（現時点の判断: 要望に含まれないため対応しない）'
+    plan: none
