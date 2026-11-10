@@ -1,0 +1,1 @@
+# mdmark.config.yaml を作り、公開ドキュメントに mdmark の check を実行できるようにする
