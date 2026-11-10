@@ -180,3 +180,6 @@ scope_out:
   - item: 設計書の検証が、シナリオ 25 件の test_file（tests/e2e/）の参照先が無いことを「対応テストファイルがありません」として誤りにする
     reason: D-311 で test_file は残すため、検証の側（AI Monitor の check_tests）で許す。この PR では 25 件を既知の指摘として扱う
     plan: shuhei1101/ai-monitor#3330
+  - item: 結合テスト `test_update_server.py::test_normal` が、更新のツールの応答を受け取る前にサーバーが停止し、ときどき失敗する
+    reason: '`src/rule_inject/server` の停止の順序の不具合で、E2E の削除の要望に含まれない'
+    plan: '#121'

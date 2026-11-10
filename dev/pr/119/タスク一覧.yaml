@@ -75,8 +75,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-09T03:46:16.129504+00:00'
   - process: 実装
-    status: todo
+    status: done
     note: tests/e2e/ と tests/files.yaml の E2E の行の削除。単体テストと結合テストが通ることを確かめる
+    updated_by: planner
+    updated_at: '2026-11-10T05:20:00+00:00'
   - process: 結合テスト作成
     status: skipped
     reason: テストを追加しない。既存の結合テストは実装で回して通ることを確かめる

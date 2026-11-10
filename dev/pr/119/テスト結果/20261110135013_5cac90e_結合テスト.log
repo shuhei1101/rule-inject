@@ -1,0 +1,98 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 181 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  2%]
+tests/integration/plugin/test_migrate_settings.py ......                 [  5%]
+tests/integration/plugin/test_record_read.py ...................         [ 16%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 31%]
+.........                                                                [ 36%]
+tests/integration/plugin/test_search_guide.py ..............             [ 44%]
+tests/integration/plugin/test_start_server.py .......                    [ 48%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 53%]
+tests/integration/plugin/test_work_rules.py ...                          [ 54%]
+tests/integration/server/test_check_indexes.py .................         [ 64%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 70%]
+tests/integration/server/test_delete_read_records.py ...                 [ 71%]
+tests/integration/server/test_get_read_records.py .....                  [ 74%]
+tests/integration/server/test_get_server_status.py ...                   [ 76%]
+tests/integration/server/test_list_rules.py ......                       [ 79%]
+tests/integration/server/test_reload_settings.py ...                     [ 81%]
+tests/integration/server/test_restart_server.py ...                      [ 82%]
+tests/integration/server/test_search_rules.py .....                      [ 85%]
+tests/integration/server/test_server_start.py .....                      [ 88%]
+tests/integration/server/test_update_server.py F.....                    [ 91%]
+tests/integration/server/test_write_index_entry.py ...............       [100%]
+
+=================================== FAILURES ===================================
+_________________________________ test_normal __________________________________
+  + Exception Group Traceback (most recent call last):
+  |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/tests/integration/server/test_update_server.py", line 67, in test_normal
+  |     result = server.call("update_server")
+  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/tests/integration/server/conftest.py", line 68, in call
+  |     return asyncio.run(asyncio.wait_for(_call(), CALL_TIMEOUT_SEC))
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/shuhei2441/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 195, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/home/shuhei2441/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/shuhei2441/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/home/shuhei2441/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+  |     return await fut
+  |            ^^^^^^^^^
+  |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/tests/integration/server/conftest.py", line 62, in _call
+  |     streamable_http_client(self.url) as (read, write),
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/shuhei2441/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/streamable_http.py", line 736, in streamable_http_client
+  |     anyio.create_task_group() as tg,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/streamable_http.py", line 753, in streamable_http_client
+    |     yield read_stream, write_stream
+    |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/tests/integration/server/conftest.py", line 63, in _call
+    |     ClientSession(read, write) as session,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/tests/integration/server/conftest.py", line 66, in _call
+      |     return await session.call_tool(name, arguments)
+      |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 1102, in call_tool
+      |     await self.validate_tool_result(name, result)
+      |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 1127, in validate_tool_result
+      |     await self.list_tools()
+      |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 1284, in list_tools
+      |     result = await self.send_request(
+      |              ^^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 586, in send_request
+      |     raw = await self._dispatcher.send_raw_request(method, data.get("params"), opts)
+      |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/test-e2e-remove-e2e-tests/.venv/lib/python3.12/site-packages/mcp/shared/jsonrpc_dispatcher.py", line 444, in send_raw_request
+      |     raise MCPError(code=outcome.code, message=outcome.message, data=outcome.data)
+      | mcp.shared.exceptions.MCPError: SSE stream ended without a response
+      +------------------------------------
+=========================== short test summary info ============================
+FAILED tests/integration/server/test_update_server.py::test_normal - MCPError...
+================== 1 failed, 180 passed in 369.10s (0:06:09) ===================
+exit=1
