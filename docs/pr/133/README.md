@@ -1,0 +1,1 @@
+# 新しいファイルの作り方の決まりを SessionStart の注入から MCP サーバーの instructions へ移す
