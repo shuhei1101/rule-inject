@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-10T21:12:05.418501+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: schemas/glossary.schema.yaml・docs/glossary/（用語集と目次）・dev-docs.yaml・docs/index.yaml
+    updated_by: planner
+    updated_at: '2026-11-10T21:25:30.247335+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えない
