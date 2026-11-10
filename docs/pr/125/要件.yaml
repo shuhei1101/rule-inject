@@ -1,13 +1,13 @@
 docs:
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
-    change: AI slop の語を対応表の語へ置き換える（Mermaid は残す。工程 2 の表にする箇所は該当なし）
+    change: AI slop の語を対応表の語へ置き換え、不要な語（今までどおり）を削る（Mermaid は残す。工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
-    change: AI slop の語を対応表の語へ置き換える（Mermaid は残す。工程 2 の表にする箇所は該当なし）
+    change: AI slop の語を対応表の語へ置き換え、理由の説明・言い直しの文を 5 つ削る（Mermaid は残す。工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
@@ -19,43 +19,43 @@ docs:
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/MCPの結果の書式.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える
+    change: AI slop の語を対応表の語へ置き換える（工程 2 の表にする箇所と、工程 3 の削る文は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/MCPツール.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える
+    change: AI slop の語を対応表の語へ置き換える（工程 2 の表にする箇所と、工程 3 の削る文は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/セットアップ.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える
+    change: AI slop の語を対応表の語へ置き換え、当たり前の注意・理由の説明を 3 箇所削る（工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/環境変数.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える
+    change: AI slop の語を対応表の語へ置き換える（工程 2 の表にする箇所と、工程 3 の削る文は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/索引の書式.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える
+    change: AI slop の語を対応表の語へ置き換え、理由の説明・言い直し・「今までどおり」を削り、索引を指すのが設定ファイルであることに合わせる（工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/設定ファイル.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換え、冒頭の 1 行を目次の概要と合わせる
+    change: AI slop の語を対応表の語へ置き換え、理由の説明と既定値の言い直しを削り、冒頭の 1 行を目次の概要と合わせる（工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/変更履歴.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える
+    change: AI slop の語を対応表の語へ置き換える（各バージョンの変更の記録のため、工程 2・3 は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
@@ -169,7 +169,7 @@ docs:
     updated_at: '2026-11-10T17:19:16.445692+00:00'
 scope_out:
   - item: Mermaid の図を mdmark の map のマーカーで囲んで補足を付ける
-    reason: 'mdmark#324（新しい図 map）が open で、計画の依存に置かれていない。Issue #99 の範囲を減らすため、別の Issue へ回すかをユーザーへ確認する（確認事項の回答で plan を確定する）'
+    reason: mdmark#324（新しい図 map）が open のため、完了後に図の工程だけの Issue で行う（ユーザーが推奨案 A を承認。確認ログ）
     plan: to_file
   - item: schemas/ の Mermaid（common・interface・scenario の 3 件）
     reason: AI Monitor から配布された Schema で、このリポジトリでは書き換えない
@@ -178,10 +178,10 @@ scope_out:
     reason: 配布された Schema が設計書のタグのキーを持たない。Schema が持つようになったら AI Monitor の配布物への追従で付ける
     plan: none
   - item: 過去の PR ドキュメント（docs/pr/）の文を表へ・文の削減
-    reason: '完了した作業の記録で、書き換えると当時の判断の記録が変わる。Issue #99 は docs/pr/ も範囲に含めると明記しているため、外すかをユーザーへ確認する（確認事項の回答で plan を確定する）'
-    plan: to_file
+    reason: 完了した作業の記録で、書き換えると当時の判断の記録が変わるため書き換えない（ユーザーが推奨案 A を承認。確認ログ）
+    plan: none
   - item: 設計書の本文（lead 以外）の文を表へ・文の削減・AI slop の修正と、モジュール構成のファイル単位の文書（MOD-122-1〜51）の空の lead
-    reason: '設計書は 120 件あり、1 つの PR でレビューしきれない。Issue #99 の範囲を減らすため、分類ごとの別の Issue へ分けるかをユーザーへ確認する（確認事項の回答で plan を確定する）'
+    reason: 設計書は 120 件あり、1 つの PR でレビューしきれないため、設計書の分類（シナリオ・インターフェース定義・モジュール構成・その他）ごとの Issue で行う（ユーザーが推奨案 A を承認。確認ログ）
     plan: to_file
   - item: 管理用の YAML のタグへの main と、管理用の YAML・設計書への aliases の登録
     reason: 配布された Schema では管理用の YAML のタグが文字列の並びで main を持てず、aliases も管理用の YAML と設計書の最上位には無い。Schema が持つようになったら AI Monitor の配布物への追従で付ける
