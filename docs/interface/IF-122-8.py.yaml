@@ -161,7 +161,7 @@ request:
   - name: operation
     type: Literal['read', 'write']
     required: false
-    default: なし（`path` を渡すときは必須）
+    default: なし（`path` を指定するときは必須）
     location: argument
     description: パスへの操作の種別
     notes: '`read` は Read・Grep・Bash の読み取り、`write` は Edit・Write・NotebookEdit に該当する。ツールの呼び出しのときは `mcp` として照合する'

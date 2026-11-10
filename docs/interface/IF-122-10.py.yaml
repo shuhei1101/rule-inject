@@ -143,7 +143,7 @@ request:
   - name: session_id
     type: str | None
     required: false
-    default: なし（セッションの一覧を返す）
+    default: なし（セッションの一覧を返却する）
     location: argument
     description: 確認するセッションの識別子
     constraints: フックが記録ファイル名に使用する形式（`is_valid_session_id`）
@@ -159,7 +159,7 @@ request:
   - name: cursor
     type: str | None
     required: false
-    default: なし（先頭から返す）
+    default: なし（先頭から返却する）
     location: argument
     description: 前の応答の `next_cursor`
   - name: format

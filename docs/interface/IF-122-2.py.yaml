@@ -467,14 +467,14 @@ request:
   - name: expected_rev
     type: str
     required: false
-    default: なし（`position` を渡すときは必須）
+    default: なし（`position` を指定するときは必須）
     location: argument
     description: 書き換える前のエントリのバージョン
     notes: インターフェース定義「ルールの一覧」の `rev`
   - name: remove_keys
     type: list[str]
     required: false
-    default: なし（キーを消さない）
+    default: なし（キーを削除しない）
     location: argument
     description: エントリから削除するキー
     notes: '`position` を指定するときだけ使用する。`entry` と同じキーは指定できない'

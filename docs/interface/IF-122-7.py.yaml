@@ -182,7 +182,7 @@ request:
   - name: cursor
     type: str
     required: false
-    default: なし（先頭から返す）
+    default: なし（先頭から返却する）
     location: argument
     description: 前の応答の `next_cursor`
   - name: format

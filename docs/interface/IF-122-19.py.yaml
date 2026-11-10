@@ -434,7 +434,7 @@ request:
   - name: '`tool_response.filenames`'
     type: list[str]
     required: false
-    default: なし（`content` から拾う）
+    default: なし（`content` から取得する）
     description: 'Grep（`mode: files_with_matches`）と Glob が該当したファイルのパス'
     notes: 'Grep の `mode: content` では空で届く'
   - name: '`tool_response.content`'

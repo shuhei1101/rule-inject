@@ -78,7 +78,7 @@ request:
   - name: project_dir
     type: str | None
     required: false
-    default: なし（`global.indexes`（無ければユーザーの既定の索引）だけを返す）
+    default: なし（`global.indexes`（無ければユーザーの既定の索引）だけを返却する）
     location: argument
     description: 読む索引を決めるプロジェクトの直下
     constraints: 絶対パス

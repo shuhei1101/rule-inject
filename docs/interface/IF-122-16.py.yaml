@@ -584,7 +584,7 @@ request:
   - name: '`tool_input`'
     type: dict[str, Any]
     required: false
-    default: なし（`read_by` の `args` を書いたエントリには当てない）
+    default: なし（`read_by` の `args` を記載したエントリとは照合しない）
     description: MCP のツールに指定された引数
     notes: '`tool_name` が MCP のツールのときだけ使用する。`read_by` の `args` を、ルール案内の `args` と同じ規則（ドット区切りのキー・`{道筋}[{field}]` のキーは条件の木の中の `field` の条件の `values`・配列は要素ごと・文字列以外のスカラーは JSON の表記）で照合する'
   - name: '`tool_response.file`'
@@ -635,7 +635,7 @@ constraints:
     notes: '[既読の判定の PoC 結果](https://github.com/shuhei1101/rule-inject/blob/030498155ed0d1b11c6d2d338c28e1ab817a10db/dev/pr/47/%E3%83%97%E3%83%A9%E3%82%B0%E3%82%A4%E3%83%B3.md#poc-%E7%B5%90%E6%9E%9C) で、`offset`・`limit` の指定・ファイルの長さ・長い行によらず、この値で判定できることを確認した'
   - item: MCP の結果の文書
     constraint: 結果の中の全ての文字列の値から、閉じタグ `</document>` までそろった `<document path="..." scope="...">` を取り出し、あわせて結果の中の全てのオブジェクトのうち文字列の `path` と `scope` を持つものを取り出す。`path` は Read・Bash と同じ規則（`~` の展開・`cwd` から解く・`..` を畳む。シンボリックリンクは辿らない）で解く。`scope` が `full` 以外の文書・`path` が `http://` か `https://` で始まる文書は記録しない
-    notes: 書式の原本は公開ドキュメント「MCPの結果の書式」。閉じタグの無い `<document>` は書式に従う文書として数えない。JSON として読めない文字列は、そのままテキストとして `<document>` を探す
+    notes: 書式の原本は [MCPの結果の書式](https://github.com/shuhei1101/rule-inject/blob/414968d45c8be48737ececadf2396491a5486ba4/docs/guide/MCP%E3%81%AE%E7%B5%90%E6%9E%9C%E3%81%AE%E6%9B%B8%E5%BC%8F.md)。閉じタグの無い `<document>` は書式に従う文書として数えない。JSON として読めない文字列は、そのままテキストとして `<document>` を探す
   - item: 本文のハッシュ
     constraint: 記録する時点のルールのファイルの中身（バイト列）の SHA-256 を `sha256:{16 進数}` の形式で場所と一緒に記載する。ファイルを読めずハッシュを取れない場所は記録しない
     notes: 書式は ER 図「既読の記録」。ルール案内・検索結果の案内が同じ方法で今のハッシュを取って比べる
