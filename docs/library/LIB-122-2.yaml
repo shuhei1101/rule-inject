@@ -26,7 +26,7 @@ catalogs:
           - name: '-'
             type: '`Iterator[ValidationError]`'
             description: 違反ごとの `ValidationError`。`absolute_path` が値の中の場所、`validator` が違反したキーワード、`message` が理由
-lead: JSON Schema で Python の値を検証し、違反を場所と理由つきで返すライブラリ。
+lead: JSON Schema で値を検証して違反を場所と理由つきで返却する jsonschema の利用方法を定め、索引のスキーマの検査を修正するときに参照する。
 purl: pkg:pypi/jsonschema
 upstream: python-jsonschema/jsonschema
 verification:

@@ -10,6 +10,7 @@ instructions: |-
 documents:
   - id: architecture
     title: アーキテクチャ図
+    alias_type: doc
     paths: ["docs/architecture/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/architecture.schema.yaml
@@ -19,6 +20,7 @@ documents:
       visibility: visibility
   - id: nonfunctional
     title: 非機能要件
+    alias_type: doc
     paths: ["docs/nonfunctional/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/nonfunctional.schema.yaml
@@ -28,6 +30,7 @@ documents:
       visibility: visibility
   - id: scenario
     title: シナリオ
+    alias_type: doc
     paths: ["docs/scenario/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/scenario.schema.yaml
@@ -37,6 +40,7 @@ documents:
       visibility: visibility
   - id: interface
     title: インターフェース定義
+    alias_type: doc
     paths: ["docs/interface/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/interface.schema.yaml
@@ -46,6 +50,7 @@ documents:
       visibility: visibility
   - id: module
     title: モジュール構成
+    alias_type: doc
     paths: ["docs/module/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/module.schema.yaml
@@ -55,6 +60,7 @@ documents:
       visibility: visibility
   - id: config
     title: 設定
+    alias_type: doc
     paths: ["docs/config/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/config.schema.yaml
@@ -64,6 +70,7 @@ documents:
       visibility: visibility
   - id: er
     title: ER図
+    alias_type: doc
     paths: ["docs/er/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/er.schema.yaml
@@ -73,6 +80,7 @@ documents:
       visibility: visibility
   - id: external_api
     title: 外部API
+    alias_type: doc
     paths: ["docs/external-api/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/external-api.schema.yaml
@@ -82,6 +90,7 @@ documents:
       visibility: visibility
   - id: library
     title: 外部ライブラリ
+    alias_type: doc
     paths: ["docs/library/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/library.schema.yaml
@@ -91,6 +100,7 @@ documents:
       visibility: visibility
   - id: test_procedure
     title: テスト実行方法
+    alias_type: doc
     paths: ["docs/test-procedure/*.yaml"]
     exclude: [index.yaml]
     schema: schemas/test-procedure.schema.yaml
@@ -107,6 +117,7 @@ documents:
       description: summary
   - id: docs
     title: 公開ドキュメント
+    alias_type: doc
     paths: [docs/guide/files.yml, docs/_root/files.yml]
     exclude: ["*.yaml", "*.yml", README.md, index.md, はじめに.md, 使い方.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
     schema: schemas/files.schema.yaml

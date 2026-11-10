@@ -430,7 +430,7 @@ flows:
       - '`read_tool` がブロックのマップで、`args` が単一引用符で囲んだ 1 行の文字列'
       - インターフェース定義「ルールの一覧」で読むと、そのエントリの `read_tool` が渡した値
     test: test_normal_when_read_tool_written
-lead: 設定ファイルで読む索引に、エントリを末尾へ新規作成するか、位置で指したエントリのキーを書き換える。書いた後の索引に新しい問題が出るときは書き込まない。
+lead: 設定ファイルで読み込む索引へエントリを新規作成・書き換えするツールの入出力を定め、エントリの書き込みを修正するときに参照する。
 identifier: write_index_entry
 idempotent: false
 side_effects: 索引のファイルを書き換える（`dry_run` のときとエラーのときは書き換えない）

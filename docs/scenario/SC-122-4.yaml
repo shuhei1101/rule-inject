@@ -93,7 +93,7 @@ scenarios:
       - プロセスが 0 以外の終了コードで終わり、標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
       - 標準エラーに、設定ファイルの場所と読めない理由が載っている
     test: test_error_when_settings_unreadable
-lead: 利用者がローカルのクローンから起動のコマンドで MCP サーバーを前面で動かし、Claude Code がプラグインの `.mcp.json` の接続先で接続する。止めるときは Ctrl+C か SIGTERM で終わらせる。
+lead: 利用者がローカルのクローンから MCP サーバーを起動して Claude Code が接続する流れを示し、サーバーの常駐のさせ方を変えるときに参照する。
 issue: 58
 primary_actor: 利用者
 stakeholders:

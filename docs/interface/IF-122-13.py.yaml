@@ -222,7 +222,7 @@ flows:
       - '既定のログのフォルダのログに `component: start_server`・`operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
-lead: セッションの開始時に、常駐の MCP サーバーのポートへ接続できず、設定ファイルのサービス名の systemd --user のユニットが有効なときだけ、ユニットへ起動を依頼して、`/mcp` で接続し直す旨を `additionalContext` で返す。待ち受けの開始は待たない。
+lead: セッションの開始時に応答しない MCP サーバーのユニットへ起動を依頼するフックの入出力を定め、サーバーの起動の補助を修正するときに参照する。
 identifier: start_server
 idempotent: false
 side_effects: '`systemctl --user start --no-block` でユニットの起動を依頼する。失敗したときだけログへ追記する。索引・既読の記録には書かない'

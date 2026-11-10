@@ -165,7 +165,7 @@ scenarios:
       - セッションの記録（transcript）の検索結果の案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
       - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
     test: test_normal_with_read_tool
-lead: Claude Code が Grep・Glob・検索の Bash（`grep` `rg` `find` `ls`）を呼んだ直後に、`PostToolUse` フックが結果に出た実在するファイルに当たる、未読で未案内のルールを止めずに案内する。読むかは任意と伝える。
+lead: 検索のツールを呼んだ直後にフックが結果に出たファイルのルールを止めずに案内する流れを示し、検索結果の案内を変えるときに参照する。
 issue: 16
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Grep・Glob・検索の Bash を呼び、結果が返る

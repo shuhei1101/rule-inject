@@ -44,7 +44,7 @@ scenarios:
       - ツールのエラーが返り、設定ファイルの場所と読めない理由が載っている
       - サーバーは待ち受けたまま、続けて呼んだ状態の確認が応答する
     test: test_error_when_settings_unreadable
-lead: 利用者が設定ファイルを直した後、Claude Code が常駐の MCP サーバーの再読込のツールを呼び、直した設定を読めたかと、読んだ値を受け取る。
+lead: 設定ファイルを修正した後に MCP サーバーの再読込のツールで読み込んだ値を受け取る流れを示し、設定の再読込を変えるときに参照する。
 issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:

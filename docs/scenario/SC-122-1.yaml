@@ -50,7 +50,7 @@ scenarios:
       - ツールのエラーにならず、ポート・プロセス ID・バージョンが載っている
       - 応答の設定ファイルに、読めないことと理由（知らないキー）が載っている
     test: test_normal_when_settings_unreadable
-lead: Claude Code が常駐の MCP サーバーの状態の確認のツールを呼び、待ち受けのポート・プロセス・起動した時刻・ツールのバージョン・クローンの commit・設定ファイルを読めるかを受け取る。
+lead: Claude Code が常駐の MCP サーバーの状態の確認のツールを呼び出して状態を受け取る流れを示し、状態の確認を変えるときに参照する。
 issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:

@@ -80,7 +80,7 @@ scenarios:
       - 案内に既定の場所のパスと読み取れない理由が記載されている
       - ログのファイルに `read_settings` の行がある
     test: test_error_when_unreadable
-lead: 環境変数 `RULE_INJECT_CONFIG` が無いとき、フックとサーバーは `${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` を設定ファイルとして参照する。ファイルが無ければ設定なしで動く。
+lead: 環境変数が無いときにフックとサーバーが既定の場所の設定ファイルを読み込む流れを示し、設定ファイルの場所の決め方を変えるときに参照する。
 issue: 105
 primary_actor: 利用者
 stakeholders:

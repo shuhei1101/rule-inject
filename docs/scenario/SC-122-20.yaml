@@ -305,7 +305,7 @@ scenarios:
       - 応答のその索引の違反に、そのエントリの参照するツールの引数（`rules[0].read_tool.args`）の位置と理由が載っている
       - 応答のその索引に、フックが読めない理由が載っていない
     test: test_normal_when_read_tool_violates_schema
-lead: Claude Code が常駐の MCP サーバーのチェックのツールにプロジェクトの直下を渡し、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリを受け取る。
+lead: Claude Code が MCP サーバーのチェックのツールで索引ごとの問題を受け取る流れを示し、索引のチェックを変えるときに参照する。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:

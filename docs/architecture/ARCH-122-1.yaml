@@ -80,7 +80,7 @@ subsystems:
     refs:
       - IF-122-6#
     status: planned
-lead: rule-inject のサブシステムと、Claude Code・ルールの置き場所との境界。
+lead: rule-inject のサブシステムと、Claude Code・ルールの配置場所との境界を示し、機能をどのサブシステムに配置するかを決めるときに参照する。
 external_systems:
   - name: Claude Code
     purpose: フックの呼び出し

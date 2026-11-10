@@ -122,7 +122,7 @@ flows:
       - 終了コードが 0 以外
       - 標準エラーに、設定ファイルの場所と `global.server_port`・`global-setup` が記載されている
     test: test_error_when_removed_key
-lead: 設定ファイルを読み、`127.0.0.1` のポートで Streamable HTTP の MCP サーバーとして待ち受ける。Ctrl+C か SIGTERM で待ち受けを閉じて終わる。
+lead: 設定ファイルを読み込んで Streamable HTTP の MCP サーバーとして待ち受ける起動の手順を定め、サーバーの起動や停止を修正するときに参照する。
 identifier: server_start
 idempotent: false
 side_effects: '`127.0.0.1` のポートで待ち受ける。索引・既読の記録・ログには書かない'

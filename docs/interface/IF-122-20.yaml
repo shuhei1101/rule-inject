@@ -27,7 +27,7 @@ flows:
       ```
     expected:
       - 結果に端末の設定のパスと接続の結果が記載されている
-lead: 端末ごとに、設定ファイルの作成か移し替え、`env` への記載、サーバーの起動と接続の確認、フックの確認を実行する。
+lead: 端末ごとの設定ファイルの作成か移し替え・サーバーの起動と接続の確認・フックの確認の手順を定め、端末のセットアップを修正するときに参照する。
 identifier: global_setup
 idempotent: true
 side_effects: 端末の設定（`global.server_service` を含む）・`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json` の `env`・`~/.config/systemd/user/{サービス名}.service` に記載し、旧い `rule-inject` の登録を削除する

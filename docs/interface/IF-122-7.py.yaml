@@ -160,7 +160,7 @@ flows:
       - '1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が書いた JSON の文字列のまま'
       - 2 つ目のエントリの `read_tool` が `None`
     test: test_normal_when_entry_has_read_tool
-lead: プロジェクトの直下を受け、フックがそのプロジェクトで読む索引と、効いているエントリを返す。読めない索引・読み飛ばしたエントリ・無効のエントリも理由とともに返す。
+lead: プロジェクトで読み込む索引と有効なエントリを、読めない索引や無効のエントリの理由と一緒に返却するツールを定め、ルールの一覧を修正するときに参照する。
 identifier: list_rules
 idempotent: true
 side_effects: なし（`readOnlyHint`）

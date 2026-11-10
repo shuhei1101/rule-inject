@@ -70,7 +70,7 @@ flows:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの名前が載っている'
       - 続けて呼んだ `get_server_status` が応答する
     test: test_error_when_settings_unreadable
-lead: 設定ファイルを読み直し、読めたかと、読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）を返す。プロセスの中の状態は変えない。
+lead: 設定ファイルを読み直して、読めたかと読み込んだ値を返却するツールの入出力を定め、設定の再読込を修正するときに参照する。
 identifier: reload_settings
 idempotent: true
 side_effects: なし（`readOnlyHint`）。設定ファイルは各ツールの呼び出しのたびに読み直しているため、プロセスの中に持つ値を入れ替えない

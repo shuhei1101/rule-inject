@@ -230,7 +230,7 @@ scenarios:
       - そのセッションの既読の記録に、ルールの場所と、読んだ時点のルールの本文のハッシュが載っている
       - そのセッションの既読の履歴に、読み方が `mcp` でツール名 `mcp__docs__search_docs` とルールの場所を持つ行がある
     test: test_normal_when_read_by_guided_tool
-lead: Claude Code が Read か Bash（`cat` など）でルールの本文のファイルを読むか、MCP のツールでルールの文書を受け取った後、`PostToolUse` フックがその場所をそのセッションの既読として記録し、既読の履歴にも残す。
+lead: ルールの本文を読んだ後にフックがその場所を既読として記録する流れを示し、既読の記録の判定を変えるときに参照する。
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、MCP のツールの呼び出しが終わる

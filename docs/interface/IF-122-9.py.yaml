@@ -77,7 +77,7 @@ flows:
       - '結果が `isError: true` で、受けた値と形式が誤っている旨が載っている'
       - 記録フォルダのファイルが削除されていない
     test: test_error_when_session_id_invalid
-lead: セッションを受け、そのセッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返す。削除したルールは、フックの次の案内で未読として扱われる。
+lead: セッションの既読の記録と案内済みの記録を削除して既読だったルールを返却するツールの入出力を定め、既読の記録の削除を修正するときに参照する。
 identifier: delete_read_records
 idempotent: true
 side_effects: 記録フォルダの `{session_id}.txt` と `{session_id}.guided.txt` を削除する（`destructiveHint`）。既読の履歴（`{session_id}.history.jsonl`）とほかのセッションの記録は残す

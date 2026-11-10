@@ -119,7 +119,7 @@ scenarios:
       - クローンの `HEAD` と書き換えたファイルの中身が更新の前のまま
       - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
     test: test_error_when_uncommitted_changes
-lead: Claude Code が常駐の MCP サーバーの更新のツールを呼び、サーバーは自分のクローンへ上流の commit を取り込んで依存を入れ直し、設定の移し替えが要らなければ起動し直す。
+lead: Claude Code が MCP サーバーの更新のツールで上流の commit を取り込んで起動し直す流れを示し、rule-inject の更新を変えるときに参照する。
 issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:

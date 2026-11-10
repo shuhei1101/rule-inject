@@ -1,7 +1,7 @@
 id: ER-122-1
 visibility: internal
 title: "ER 図: ログ"
-lead: フックが、失敗した操作を後から追えるように書き出すログ。
+lead: フックが失敗した操作を後から追えるように書き出すログの構造を定め、ログの項目や保持を変えるときに参照する。
 tables:
   - name: '{log_dir}/{yyyymmdd}_rule-inject.log'
     title: ログ

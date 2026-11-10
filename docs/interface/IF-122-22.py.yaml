@@ -144,7 +144,7 @@ flows:
       - 終了コードが 1
       - 標準エラーに設定ファイルの場所と理由が記載されている
     test: test_error_when_unreadable
-lead: 端末の設定ファイルを今のバージョンへ移し替える。`--plan` は手順を示すだけで書き換えない。
+lead: 端末の設定ファイルを今のバージョンへ移し替えるコマンドの入出力を定め、設定の移し替えを修正するときに参照する。
 test_file: tests/integration/plugin/test_migrate_settings.py
 identifier: migrate_settings
 idempotent: true

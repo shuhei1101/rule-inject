@@ -138,7 +138,7 @@ flows:
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
-lead: プロジェクトの直下と、ファイルのパスと操作の種別か MCP のツールの呼び出しを受け、フックと同じ照合で当たるルールと、未読のときに操作を止めるかを返す。
+lead: ファイルのパスと操作の種別かツールの呼び出しにヒットするルールと、操作を止めるかを返却するツールを定め、ルールの検索を修正するときに参照する。
 identifier: search_rules
 idempotent: true
 side_effects: なし（`readOnlyHint`。既読の記録も読まない）
