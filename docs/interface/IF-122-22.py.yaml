@@ -176,7 +176,7 @@ response:
   - name: migrations
     type: list[str]
     description: '`steps` のうち、`version` の更新を除いた移し替えの手順の説明'
-    notes: '`version` だけが古いときは空。インターフェース定義「サーバーの更新」が、移し替えが要るかの判定に使う'
+    notes: '`version` だけが古いときは空。インターフェース定義「サーバーの更新」が、移し替えが要るかの判定に使用する'
   - name: backup
     type: str | None
     description: バックアップのパス。書き換えなかったときは `None`

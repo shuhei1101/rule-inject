@@ -30,7 +30,7 @@ flows:
 lead: 端末ごとの設定ファイルの作成か移し替え・サーバーの起動と接続の確認・フックの確認の手順を定め、端末のセットアップを修正するときに参照する。
 identifier: global_setup
 idempotent: true
-side_effects: 端末の設定（`global.server_service` を含む）・`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json` の `env`・`~/.config/systemd/user/{サービス名}.service` に記載し、旧い `rule-inject` の登録を削除する
+side_effects: 端末の設定（`global.server_service` を含む）・`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json` の `env`・`~/.config/systemd/user/{サービス名}.service` に記載し、古い `rule-inject` の登録を削除する
 request:
   - name: --clone
     type: str
@@ -63,7 +63,7 @@ request:
     required: false
     default: 'false'
     location: argument
-    description: 移し替えと旧い登録の削除の確認に了承として回答する
+    description: 移し替えと古い登録の削除の確認に了承として回答する
   - name: --no
     type: bool
     required: false
@@ -80,7 +80,7 @@ constraints:
   - item: env への記載
     constraint: 設定のパスが既定と違うときの `RULE_INJECT_CONFIG` と、移し替えが返却した `env` だけを記載する
     notes: '`env` のほかのキーと、ファイルのほかの内容は変えない'
-  - item: 旧い登録
+  - item: 古い登録
     constraint: '`claude mcp get rule-inject` でユーザースコープの登録を調べ、確認してから `claude mcp remove -s user rule-inject` で削除する'
   - item: ポートの値
     constraint: 移し替えが返却した `RULE_INJECT_PORT`、無ければスキルの環境の `RULE_INJECT_PORT`、無ければ既定のポート。待ち受けの確認と `tools/list` もこの値を使用する
@@ -104,16 +104,16 @@ exceptions:
     notes: 何も記載せずに止まる。場所と理由を示す
   - name: 利用者が断った
     condition: '`--no`、または確認への断りの回答'
-    notes: 移し替えを断ったときは何も記載せずに止まり、適用しなかった手順を示す。旧い登録の削除を断ったときは登録を残して続ける
+    notes: 移し替えを断ったときは何も記載せずに止まり、適用しなかった手順を示す。古い登録の削除を断ったときは登録を残して続ける
   - name: 依存を導入できない
     condition: '`uv` が無い、または `uv sync --extra server` が失敗する'
     notes: 移し替えの前に止まり、導入の方法を示す
   - name: サーバーを起動できない
     condition: '`systemctl --user` が失敗する、またはポートを別のプロセスが使用していて `tools/list` が返らない'
-    notes: 記載済みの端末の設定・`env`・ユニットは残して止まり、済んだ手順と止まった手順・ログの場所・修正方法を示す。修正の後にスキルを実行し直すと、手順の済んだものは飛ばして続きから進む
+    notes: 記載済みの端末の設定・`env`・ユニットは残して止まり、済んだ手順と止まった手順・ログの場所・修正方法を示す。修正の後にスキルを再実行すると、手順の済んだものは飛ばして続きから進む
   - name: フックが案内を返さない
     condition: 試しの入力でフックが案内を返却しない
     notes: 記載済みのものは残して止まり、ログの場所を示す
   - name: サービス名が許す値の外
     condition: '`--service`（質問への回答を含む）が 1〜64 文字の英数字 / `_` / `-` でない'
-    notes: 依存の確認の前に止まり、何も記載しない（ユニットも端末の設定も書かない）。許す値と受け取った値を示す
+    notes: 依存の確認の前に止まり、何も記載しない（ユニットも端末の設定も記載しない）。許す値と受け取った値を示す
