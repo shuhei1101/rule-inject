@@ -2,55 +2,81 @@ docs:
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/nonfunctional/NFR-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/config/CFG-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/er/ER-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/er/ER-122-2.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/external-api/API-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/library/LIB-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/library/LIB-122-2.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/library/LIB-122-3.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/library/LIB-122-4.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/library/LIB-122-5.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/library/LIB-122-6.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
   - page: docs/test-procedure/TP-122-1.yaml
     new: false
     change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:39:00.388896+00:00'
 scope_out:
   - item: 対象の設計書の lead と管理用の YAML（index.yaml）
     reason: 'PR #125 で移行済み'
