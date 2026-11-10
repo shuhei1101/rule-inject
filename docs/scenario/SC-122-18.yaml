@@ -103,7 +103,7 @@ scenarios:
       - 指したパスに端末の設定がある
       - '`settings.json` の `env` に `RULE_INJECT_CONFIG` があり、ほかのキーが変わっていない'
     test: test_normal_when_custom_path
-  - name: 正常シナリオ（旧い登録を削除する）
+  - name: 正常シナリオ（旧登録を削除する）
     setup:
       - name: Mock
         description: 正常シナリオと同じ
@@ -156,7 +156,7 @@ scenarios:
       - 端末の設定と `settings.json` が変わっていない
       - 結果に設定のバージョンとツールのバージョンが記載されている
     test: test_error_when_settings_newer
-  - name: 異常シナリオ（ポートが使われている）
+  - name: 異常シナリオ（ポートが使用中）
     setup:
       - name: Mock
         description: 正常シナリオと同じ

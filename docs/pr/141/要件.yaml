@@ -1,0 +1,99 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: none
+    detail: 異常シナリオ（ポートが使われている）の名前を変える。流れと期待値は変えない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-12.yaml
+    impact: none
+    detail: 正常シナリオ（当たるルールが無い）・異常シナリオ（パスとツール名の両方を渡す）の名前を変える。流れと期待値は変えない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-16.yaml
+    impact: none
+    detail: 正常シナリオ（Bashで読む対象に当たる）・正常シナリオ（既定の置き場所の索引）・正常シナリオ（無効のエントリに当たる）の名前を変え、本文の「配置場所」と図の「置き場所」を統一する。流れと期待値は変えない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: none
+    detail: 正常シナリオ（旧い登録を削除する）・異常シナリオ（ポートが使われている）の名前を変える。流れと期待値は変えない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-19.yaml
+    impact: none
+    detail: 異常シナリオ（書いた後の索引がチェックに通らない）の名前を変える。流れと期待値は変えない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-20.yaml
+    impact: none
+    detail: 正常シナリオ（pathsがどのファイルにも当たらない）・正常シナリオ（ユーザー全体の索引も確かめる）・正常シナリオ（タグのパターンが使われているどのタグにも当たらない）の名前を変える。流れと期待値は変えない
+    depends_on: []
+  - kind: composite
+    scenario: docs/scenario/SC-122-23.yaml
+    impact: none
+    detail: 正常シナリオ（案内されたツールが使えずReadで読む）の名前を変える。流れと期待値は変えない
+    depends_on: []
+  - kind: composite
+    scenario: docs/scenario/SC-122-25.yaml
+    impact: following
+    detail: SC-122-12・SC-122-16 の名前の変更に合わせて、uses・図の click とノードのラベルを書き換える
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+      - docs/scenario/SC-122-16.yaml
+scope_out:
+  - item: シナリオ名の「読む」「書く操作」
+    reason: 'このプラグインが案内と既読の対象にする操作の語で、Issue #138 の終わりの条件で残すと決めている'
+    plan: none
+  - item: インターフェース定義のフロー名（IF-122-2・6・8・11・14・19 の「正常系（当たるルールが無い）」など）・テストの docstring・コードの文言にある同じ語句
+    reason: 'シナリオ名を `{ID}#scenarios[{名前}]` で参照しておらず、シナリオ名を変えても参照は切れない。起点 Issue の終わりの条件はシナリオ名とその参照に限るため、reviewer の回答で別の Issue に切り出した。SC-122-19・20 の図のメッセージに残る同じ語句も #143 に含めた'
+    plan: '#143'
+docs:
+  - page: docs/scenario/SC-122-4.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-12.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-16.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にし、図の「置き場所」を本文の「配置場所」に統一する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-18.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-19.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-20.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にし、図のメッセージの「確かめる」を「確認する」にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-23.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
+  - page: docs/scenario/SC-122-25.yaml
+    new: false
+    change: SC-122-12・16 の新しい名前に合わせて、uses・図の click とノードのラベルを書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
