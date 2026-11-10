@@ -36,7 +36,7 @@ scenarios:
     expected:
       - 既定のパスに、今のバージョンの `version` と指定した索引と指定したサービス名を持つ端末の設定がある
       - '`settings.json` の `env` に `RULE_INJECT_CONFIG` が無い'
-      - サーバーが `RULE_INJECT_PORT` で待ち受け、ツールの一覧を返す
+      - サーバーが `RULE_INJECT_PORT` で待ち受け、ツールの一覧を返却する
       - 結果に、作った端末の設定のパスと接続の結果が記載されている
     test: test_normal
   - name: 正常シナリオ（古い設定を移し替える）
@@ -109,7 +109,7 @@ scenarios:
         description: 正常シナリオと同じ
       - name: 環境変数
         description: 正常シナリオと同じ
-      - name: 旧い登録
+      - name: 古い登録
         description: '`claude mcp add --transport http -s user rule-inject {URL}` で登録する'
       - name: 引数
         description: サービス名は正常シナリオと同じ。了承の引数 `--yes` を指定する
@@ -179,7 +179,7 @@ scenarios:
         SK-->>U: ログの場所と修正方法を示して止まる
       ```
     expected:
-      - 結果に、ポートが使われている旨とログの場所が記載されている
+      - 結果に、ポートが使用されている旨とログの場所が記載されている
     test: test_error_when_port_in_use
   - name: 正常シナリオ（設定が今のバージョン）
     setup:
@@ -250,12 +250,12 @@ issue: 105
 primary_actor: 利用者
 stakeholders:
   - name: 利用者
-    interest: 端末の移行や入れ直しを同じ手順で終え、何を作って何を記載したかが分かること
+    interest: 端末の移行や再インストールを同じ手順で終え、何を作って何を記載したかが分かること
 trigger: 利用者が `/rule-inject:global-setup` を実行する
 preconditions:
   - プラグインを読み込んでいる
   - ローカルのクローンでサーバーの依存を導入できる（`uv` がある）
   - '`systemctl --user` が使用できる'
-success_guarantee: 端末の設定が今のバージョンになり、サーバーが待ち受け、`tools/list` でつながり、フックが案内を返す。
+success_guarantee: 端末の設定が今のバージョンになり、サーバーが待ち受け、`tools/list` でつながり、フックが案内を返却する。
 minimal_guarantee: 断られた変更と、止まった手順の後の変更は書き込まない。`settings.json` の `env` のほかのキーと、ファイルのほかの内容は変えない。
 test_file: tests/e2e/単一ユースケース/test_setup_terminal.py

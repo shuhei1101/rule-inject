@@ -12,7 +12,7 @@ scenarios:
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 記録
         description: 削除するセッションの既読の記録・案内済みの記録・既読の履歴と、別のセッションの既読の記録がある
-        notes: ER 図『既読の記録』の書式でテストが置く
+        notes: ER 図『既読の記録』の書式でテストが用意する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -63,7 +63,7 @@ scenarios:
       - name: 設定ファイル
         description: 正常シナリオと同じ
       - name: セッション
-        description: 記録ファイル名に使えない文字を含む値
+        description: 記録ファイル名に使用できない文字を含む値
         notes: '例: `../other`'
     flow: |-
       sequenceDiagram
@@ -81,7 +81,7 @@ issue: 65
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: ルールを読み直させたいときに、会話を圧縮せずにルールを未読へ戻せること
+    interest: ルールを再度読ませたいときに、会話を圧縮せずにルールを未読へ戻せること
 trigger: Claude Code が既読の記録の削除のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている

@@ -11,9 +11,9 @@ scenarios:
         notes: 以降の実行はこのセッションを `--resume {session_id}` で続ける
       - name: 案内済みの記録
         description: 同じセッションで別のルールを止めずに案内され、案内済みの記録に場所が載っている
-        notes: 読む操作を必須にしないエントリに当たるファイルを Read で読ませる
+        notes: 読む操作を必須にしないエントリにヒットするファイルを Read で読ませる
       - name: 圧縮
-        description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を起こす'
+        description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を発生させる'
         notes: '`-p` の `--resume` でも同じ session_id に `PreCompact`（`trigger: manual`）が走る（2026-09-29、Claude Code 2.1.284 で確認）'
     flow: |-
       ```mermaid

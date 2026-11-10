@@ -12,7 +12,7 @@ scenarios:
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 既読の記録
         description: 1 つのセッションの既読の記録に 2 つのルールの場所と今の本文のハッシュがある
-        notes: ER 図『既読の記録』の書式でテストが置く
+        notes: ER 図『既読の記録』の書式でテストが用意する
       - name: 既読の履歴
         description: 同じセッションの既読の履歴に、片方のルールを Read、もう片方を MCP のツールで既読にした行がある
         notes: '`method` が `read` と `mcp`'
@@ -49,7 +49,7 @@ scenarios:
         description: 正常シナリオと同じ
       - name: 既読の記録
         description: 1 つのルールの場所と、書き換える前の本文のハッシュがある
-        notes: 記録を置いた後にルールの本文を書き換える
+        notes: 記録を配置した後にルールの本文を書き換える
       - name: 既読の履歴
         description: そのルールを Read で既読にした行がある
     flow: |-
@@ -76,7 +76,7 @@ scenarios:
         description: 正常シナリオと同じ
       - name: 既読の記録
         description: 2 つのセッションの既読の記録がある
-        notes: 最終更新の時刻をずらして置く
+        notes: 最終更新の時刻をずらして配置する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -101,7 +101,7 @@ scenarios:
       - name: 設定ファイル
         description: 正常シナリオと同じ
       - name: セッション
-        description: 記録ファイル名に使えない文字を含む値
+        description: 記録ファイル名に使用できない文字を含む値
         notes: '例: `../other`'
     flow: |-
       sequenceDiagram
@@ -124,6 +124,6 @@ trigger: Claude Code が既読の記録の確認のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
   - フックとサーバーが同じ設定ファイルを読む
-success_guarantee: 既読のルールごとに、今の本文が既読にした時点と同じかと、既読の履歴に残る読んだ方法を返す。本文が変わったルールは、案内では未読として扱われることが分かる。
+success_guarantee: 既読のルールごとに、今の本文が既読にした時点と同じかと、既読の履歴に残る読んだ方法を返却する。本文が変わったルールは、案内では未読として扱われることが分かる。
 minimal_guarantee: 既読の記録・案内済みの記録・既読の履歴を書き換えない。
 test_file: tests/e2e/単一ユースケース/test_view_read_records.py

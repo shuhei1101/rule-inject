@@ -7,12 +7,12 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: そのルールの場所を持つエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、ルールの本文のファイルを Bash の `cat` で読むよう指示する
-        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で除外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -40,12 +40,12 @@ scenarios:
       - name: Mock
         description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: そのルールの場所を持つエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、ルールの本文のファイルを Read で読むよう指示する
-        notes: Bash を `--disallowedTools` で外して読み方を 1 つに定める
+        notes: Bash を `--disallowedTools` で除外して読み方を 1 つに定める
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -71,15 +71,15 @@ scenarios:
   - name: 正常シナリオ（MCPのツールで読む）
     setup:
       - name: Mock
-        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
-        notes: MCP サーバーは `--mcp-config` で渡す。ツール `get_doc` は引数 `id` を受け、ルールの本文を `<document>` で包まずに返す
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返却する MCP のツールは、テストが用意する stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で指定する。ツール `get_doc` は引数 `id` を受け、ルールの本文を `<document>` で包まずに返却する
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 'そのルールの場所を持ち、`read_by` に `tools: [mcp__docs__get_doc]` と `args: {id: [python]}` を書いたエントリを 1 つ持つ YAML'
+        description: 'そのルールの場所を持ち、`read_by` に `tools: [mcp__docs__get_doc]` と `args: {id: [python]}` を記載したエントリを 1 つ持つ YAML'
       - name: 操作
         description: 'プロンプトで、`get_doc` を `id: python` で 1 回呼ぶよう指示する'
-        notes: '`--allowedTools` で `mcp__docs__get_doc` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で `mcp__docs__get_doc` を許可し、Read と Bash を `--disallowedTools` で除外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -107,15 +107,15 @@ scenarios:
   - name: 正常シナリオ（文書のMCPの結果で読む）
     setup:
       - name: Mock
-        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
-        notes: MCP サーバーは `--mcp-config` で渡す。ツール `search_docs` は、ルールの本文を `<document path="{ルールの場所}" scope="full">` で包んで返す
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返却する MCP のツールは、テストが用意する stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で指定する。ツール `search_docs` は、ルールの本文を `<document path="{ルールの場所}" scope="full">` で包んで返却する
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: そのルールの場所を持ち、`read_by` を持たないエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、`search_docs` を 1 回呼ぶよう指示する
-        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で除外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -145,12 +145,12 @@ scenarios:
       - name: Mock
         description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いた、10 行以上あるルールの Markdown
+        description: ローカルに配置した、10 行以上あるルールの Markdown
       - name: 索引
         description: そのルールの場所を持つエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、ルールの本文のファイルを Read で `offset` 3・`limit` 2 を指定して読むよう指示する
-        notes: Bash を `--disallowedTools` で外して読み方を 1 つに定める
+        notes: Bash を `--disallowedTools` で除外して読み方を 1 つに定める
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -170,9 +170,9 @@ scenarios:
   - name: 正常シナリオ（文書のMCPの結果が全文でない）
     setup:
       - name: Mock
-        description: 文書の MCP の結果で読むシナリオと同じ。ツール `search_docs` は、ルールの説明だけを `<document path="{ルールの場所}" scope="summary">` で包んで返す
+        description: 文書の MCP の結果で読むシナリオと同じ。ツール `search_docs` は、ルールの説明だけを `<document path="{ルールの場所}" scope="summary">` で包んで返却する
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 文書の MCP の結果で読むシナリオと同じエントリを 1 つ持つ YAML
       - name: 操作
@@ -198,15 +198,15 @@ scenarios:
   - name: 正常シナリオ（案内されたツールと引数で読む）
     setup:
       - name: Mock
-        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
-        notes: MCP サーバーは `--mcp-config` で渡す。ツール `search_docs` は、`sections` を含む引数を受けたら、ルールの本文のうちそのセクションだけを `<document path="{ルールの場所}" scope="section">` で包んで返す
+        description: Bash で読むシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返却する MCP のツールは、テストが用意する stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で指定する。ツール `search_docs` は、`sections` を含む引数を受けたら、ルールの本文のうちそのセクションだけを `<document path="{ルールの場所}" scope="section">` で包んで返却する
       - name: ルールの本文
-        description: ローカルに置いた、セクションを 2 つ以上持つルールの Markdown
+        description: ローカルに配置した、セクションを 2 つ以上持つルールの Markdown
       - name: 索引
         description: そのルールの場所に、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と `sections` を含む引数を記載し、`read_by` を持たないエントリを 1 つ持つ YAML
       - name: 操作
         description: プロンプトで、`search_docs` を索引に記載した引数で 1 回呼ぶよう指示する
-        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で除外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -236,7 +236,7 @@ primary_actor: Claude Code のセッション
 trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、MCP のツールの呼び出しが終わる
 test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py
 notes:
-  結合テストで確かめる要望: |-
-    次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
+  結合テストで確認する要望: |-
+    次の要望は、E2E ではなくインターフェース定義（結合テスト）で確認する。
 
-    - 無効のエントリだけが指すルールを Read・Bash・そのエントリの `read_by` に当たる MCP のツールで読んでも、既読にしないこと
+    - 無効のエントリだけが指すルールを Read・Bash・そのエントリの `read_by` に該当する MCP のツールで読んでも、既読にしないこと
