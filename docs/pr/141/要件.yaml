@@ -52,32 +52,48 @@ docs:
   - page: docs/scenario/SC-122-4.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-12.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-16.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にし、図の「置き場所」を本文の「配置場所」に統一する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-18.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-19.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-20.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にし、図のメッセージの「確かめる」を「確認する」にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-23.yaml
     new: false
     change: シナリオ名を要件.md の表の新しい名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
   - page: docs/scenario/SC-122-25.yaml
     new: false
     change: SC-122-12・16 の新しい名前に合わせて、uses・図の click とノードのラベルを書き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:33:10.987014+00:00'
