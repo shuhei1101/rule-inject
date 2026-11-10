@@ -3,20 +3,20 @@ visibility: internal
 title: "プラグイン / 既読の記録 / types.py"
 enums:
   - name: ReadMethod
-    title: 読み方
+    title: 参照方法
     container: features/record/types.py
     usecase: ルールを読んだことが記録される
     summary: 既読の履歴の `method` の値（StrEnum）
     values:
       - value: read
         title: Read
-        description: Read で読んだ
+        description: Read で読み込んだ
       - value: bash
         title: Bash
-        description: Bash の読むコマンドで読んだ
+        description: Bash の読み込むコマンドで読み込んだ
       - value: mcp
         title: MCP のツール
-        description: MCP のツールの結果の文書か、`read_by` に当たった MCP のツールの呼び出しで読んだ
+        description: MCP のツールの結果の文書か、`read_by` にヒットした MCP のツールの呼び出しで読み込んだ
   - name: ReadState
     title: 既読の状態
     container: features/record/types.py
@@ -31,7 +31,7 @@ enums:
         description: どの行のハッシュとも違う（案内では未読）
       - value: missing
         title: ファイルが無い
-        description: その場所にファイルが無いか読めない
+        description: その場所にファイルが無いか読み込めない
 data_models:
   - name: ReadEntry
     title: 既読の行
@@ -45,7 +45,7 @@ data_models:
         description: ルールの場所（解決後の絶対パス。改行とタブを含まない）
       - name: hash
         type: str
-        description: 既読にした時点のルールのファイルの中身の SHA-256（`sha256:{16 進数}`）。`list_read_entries` が読んだハッシュを持たない行は空文字
+        description: 既読にした時点のルールのファイルの中身の SHA-256（`sha256:{16 進数}`）。`list_read_entries` が読み込んだハッシュを持たない行は空文字
   - name: HistoryEntry
     title: 既読の履歴の行
     container: features/record/types.py
@@ -58,7 +58,7 @@ data_models:
         description: 既読にした時刻（`HISTORY_TIME_FORMAT` の UTC）
       - name: method
         type: ReadMethod
-        description: 読み方
+        description: 参照方法
       - name: tool
         type: str
         description: 既読にしたツールの名前
@@ -81,3 +81,4 @@ data_models:
       - name: rule_count
         type: int
         description: 既読のルールの場所の数（重なりを落とす）
+lead: 既読の記録と既読の履歴の行・参照方法・既読の状態・記録のあるセッションの型を定め、既読の記録の形式を修正するときに参照する。

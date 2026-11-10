@@ -27,14 +27,14 @@ constants:
   - name: STDERR_TAIL_LINES
     title: 標準エラーの末尾の行数
     container: server/clone.py
-    summary: 失敗したコマンドの標準エラーから、エラーに載せる末尾の行数。git・uv は原因を最後の数行に書く
+    summary: 失敗したコマンドの標準エラーから、エラーに記載する末尾の行数。git・uv は原因を最後の数行に記載する
     value: '`20`'
 function_types:
   - name: RunCommand
     title: コマンドの実行
     container: server/clone.py
     usecase: rule-injectを更新する
-    summary: コマンドを上限つきで実行し、終了コードと出力を返す。実装は `run_command`。結合テストが差し替える
+    summary: コマンドを上限つきで実行し、終了コードと出力を返却する。実装は `run_command`。結合テストが差し替える
     args:
       - name: args
         type: Sequence[str]
@@ -107,7 +107,7 @@ functions:
     title: クローンの場所
     container: server/clone.py
     usecase: MCPサーバーの状態を確認する
-    summary: パッケージの場所から上へ辿り、`VERSION_FILE` を持つ最初のフォルダを返す
+    summary: パッケージの場所から上へ辿り、`VERSION_FILE` を持つ最初のフォルダを返却する
     kind: 関数
     scope: public
     args:
@@ -119,7 +119,7 @@ functions:
     returns:
       type: Path
       description: クローンの直下
-    process: 1. `start` とその親を順に見て、`VERSION_FILE` を持つ最初のフォルダを返す。無ければ `FileNotFoundError`（辿り始めた場所）を送出する
+    process: 1. `start` とその親を順に確認して、`VERSION_FILE` を持つ最初のフォルダを返却する。無ければ `FileNotFoundError`（辿り始めた場所）を送出する
     exceptions:
       - name: FileNotFoundError
         condition: どの親にも `VERSION_FILE` が無い
@@ -127,15 +127,15 @@ functions:
     unit_tests:
       - name: test_find_clone
         case: 正常
-        summary: version.ini を持つフォルダを返す
-        condition: '一時フォルダに `version.ini` と `src/rule_inject/server/` を置き、`src/rule_inject/server` から辿る'
+        summary: version.ini を持つフォルダを返却する
+        condition: '一時フォルダに `version.ini` と `src/rule_inject/server/` を配置し、`src/rule_inject/server` から辿る'
         mock: なし
         expected: 一時フォルダ
   - name: read_version
     title: バージョンの読み取り
     container: server/clone.py
     usecase: MCPサーバーの状態を確認する
-    summary: クローンの `VERSION_FILE` の 1 行目を返す
+    summary: クローンの `VERSION_FILE` の 1 行目を返却する
     kind: 関数
     scope: public
     args:
@@ -158,7 +158,7 @@ functions:
     title: HEAD の commit
     container: server/clone.py
     usecase: MCPサーバーの状態を確認する
-    summary: '`git rev-parse HEAD` の結果を返す'
+    summary: '`git rev-parse HEAD` の結果を返却する'
     kind: 関数
     scope: public
     args:
@@ -179,7 +179,7 @@ functions:
       - name: test_head_commit_when_not_git
         case: 正常
         summary: git のリポジトリでなければ None
-        condition: '`run` が終了コード 128 を返す'
+        condition: '`run` が終了コード 128 を返却する'
         mock: '`run`'
         expected: '`None`'
   - name: run_command
@@ -214,7 +214,7 @@ functions:
     returns:
       type: CommandResult
       description: 終了コードと出力
-    process: '1. `subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, check=False)` を `CommandResult` にして返す。`TimeoutExpired` は `UpdateFailedError`（コマンドと上限の秒数）、`FileNotFoundError` は `UpdateFailedError`（コマンドが見つからない旨）'
+    process: '1. `subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, check=False)` を `CommandResult` にして返却する。`TimeoutExpired` は `UpdateFailedError`（コマンドと上限の秒数）、`FileNotFoundError` は `UpdateFailedError`（コマンドが見つからない旨）'
     exceptions:
       - name: UpdateFailedError
         condition: 上限を超えた、またはコマンドが見つからない
@@ -231,7 +231,7 @@ functions:
     title: 上流の取り込み
     container: server/clone.py
     usecase: rule-injectを更新する
-    summary: commit していない変更を確かめ、上流を取得し、前後を確かめて fast-forward で取り込む
+    summary: commit していない変更を確認し、上流を取得し、前後を確認して fast-forward で取り込む
     kind: 関数
     scope: public
     side_effects: クローンの作業ツリーを上流の commit へ進める
@@ -252,11 +252,11 @@ functions:
     process: |-
       1. `git status --porcelain --untracked-files=no` が空でなければ `UpdateFailedError`（変更のあるファイル）
       2. `git rev-parse --abbrev-ref --symbolic-full-name @{u}` が失敗すれば `UpdateFailedError`（上流のブランチが無い）
-      3. `git fetch` の後、`HEAD` と `@{u}` の commit を引く
-      4. 同じか、`git merge-base --is-ancestor @{u} HEAD` が 0 なら `pulled=False` を返す
+      3. `git fetch` の後、`HEAD` と `@{u}` の commit を取得する
+      4. 同じか、`git merge-base --is-ancestor @{u} HEAD` が 0 なら `pulled=False` を返却する
       5. `git merge-base --is-ancestor HEAD @{u}` が 0 でなければ `UpdateFailedError`（fast-forward できない・両方の commit）
-      6. `git merge --ff-only @{u}` の後の `HEAD` を `after` にして `pulled=True` を返す
-      git の各コマンドは `GIT_TIMEOUT` で呼び、0 以外の終了コード（4・5 の祖先の確かめを除く）は `_failed` で `UpdateFailedError` にする
+      6. `git merge --ff-only @{u}` の後の `HEAD` を `after` にして `pulled=True` を返却する
+      git の各コマンドは `GIT_TIMEOUT` で呼び、0 以外の終了コード（4・5 の祖先の確認を除く）は `_failed` で `UpdateFailedError` にする
     exceptions:
       - name: UpdateFailedError
         condition: commit していない変更がある・上流のブランチが無い・fast-forward できない・コマンドが失敗した
@@ -265,19 +265,19 @@ functions:
       - name: test_pull
         case: 正常
         summary: 上流の commit を取り込む
-        condition: 一時フォルダの bare の上流と、そこから取ったクローン。上流に commit を 1 つ積む
+        condition: 一時フォルダの bare の上流と、そこから取ったクローン。上流に commit を 1 つ追加する
         mock: なし（`run_command`）
         expected: '`pulled` が真で、`after` が上流の commit、クローンの `HEAD` が `after`'
       - name: test_pull_when_ahead
         case: 正常
         summary: クローンが先に進んでいるだけなら取り込まない
-        condition: クローンにだけ commit を 1 つ積む
+        condition: クローンにだけ commit を 1 つ追加する
         mock: なし（`run_command`）
         expected: '`pulled` が偽で、`before` と `after` がクローンの commit'
       - name: test_pull_when_diverged
         case: 異常
         summary: 分かれていれば断る
-        condition: クローンと上流のそれぞれに別の commit を積む
+        condition: クローンと上流のそれぞれに別の commit を追加する
         mock: なし（`run_command`）
         expected: '`UpdateFailedError` に両方の commit。クローンの `HEAD` が変わらない'
         exception: commit していない変更がある・上流のブランチが無い・fast-forward できない・コマンドが失敗した
@@ -289,7 +289,7 @@ functions:
         expected: '`UpdateFailedError` にファイル名。`git fetch` が呼ばれていない'
         exception: commit していない変更がある・上流のブランチが無い・fast-forward できない・コマンドが失敗した
   - name: sync_dependencies
-    title: 依存の入れ直し
+    title: 依存の再インストール
     container: server/clone.py
     usecase: rule-injectを更新する
     summary: クローンで `uv sync --extra server` を `UV_SYNC_TIMEOUT` で実行する
@@ -315,16 +315,16 @@ functions:
     returns:
       type: None
       description: なし
-    process: '1. `uv` を `env["UV"]`、無ければ `shutil.which("uv")` から引く。どちらも無ければ `UpdateFailedError`。0 以外の終了コードは `_failed`'
+    process: '1. `uv` を `env["UV"]`、無ければ `shutil.which("uv")` から取得する。どちらも無ければ `UpdateFailedError`。0 以外の終了コードは `_failed`'
     exceptions:
       - name: UpdateFailedError
         condition: '`uv` が無い・0 以外の終了コード・打ち切り'
         message: コマンド・終了コード・標準エラーの末尾
   - name: plan_migrations
-    title: 移し替えの手順の確かめ
+    title: 移し替えの手順の確認
     container: server/clone.py
     usecase: rule-injectを更新する
-    summary: 'クローンの `.venv` の Python で `migrate --plan` を実行し、`migrations` を返す'
+    summary: 'クローンの `.venv` の Python で `migrate --plan` を実行し、`migrations` を返却する'
     kind: 関数
     scope: public
     args:
@@ -346,7 +346,7 @@ functions:
     returns:
       type: list[str]
       description: '`version` の更新を除いた移し替えの手順。空なら要らない'
-    process: '1. `[{clone}/.venv/bin/python, "-m", "rule_inject.migrate", "--plan"]` を `MIGRATE_PLAN_TIMEOUT` と `env` で呼ぶ。0 以外の終了コード（6 を含む）は `_failed`。標準出力の JSON の `migrations` を返す'
+    process: '1. `[{clone}/.venv/bin/python, "-m", "rule_inject.migrate", "--plan"]` を `MIGRATE_PLAN_TIMEOUT` と `env` で呼ぶ。0 以外の終了コード（6 を含む）は `_failed`。標準出力の JSON の `migrations` を返却する'
     exceptions:
       - name: UpdateFailedError
         condition: 0 以外の終了コード・打ち切り・JSON に `migrations` が無い
@@ -354,14 +354,14 @@ functions:
     unit_tests:
       - name: test_plan_migrations
         case: 正常
-        summary: migrations を返す
-        condition: '`run` が `{"steps": ["version を 0.2.5 にする"], "migrations": []}` を返す'
+        summary: migrations を返却する
+        condition: '`run` が `{"steps": ["version を 0.2.5 にする"], "migrations": []}` を返却する'
         mock: '`run`'
         expected: 空のリスト
       - name: test_plan_migrations_when_newer
         case: 異常
         summary: 設定がツールより新しい
-        condition: '`run` が終了コード 6 を返す'
+        condition: '`run` が終了コード 6 を返却する'
         mock: '`run`'
         expected: '`UpdateFailedError` に終了コード 6'
         exception: 0 以外の終了コード・打ち切り・JSON に `migrations` が無い
@@ -386,3 +386,4 @@ functions:
     returns:
       type: UpdateFailedError
       description: コマンド・終了コード・標準エラーの末尾 `STDERR_TAIL_LINES` 行を持つ誤り
+lead: サーバーのクローンのバージョン・commit の読み取り、上流の取り込み、依存の再インストール、移し替えの確認を定め、サーバーの更新を修正するときに参照する。

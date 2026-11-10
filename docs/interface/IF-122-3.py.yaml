@@ -6,12 +6,12 @@ entry:
   value: restart_server
 flows:
   - name: 正常系
-    summary: 応答を返し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスで起動し直す
+    summary: 応答を返却し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスで再起動する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 再起動の前の状態
-        description: '`get_server_status` を呼び、`pid` と `started_at` を控える'
+        description: '`get_server_status` を呼び、`pid` と `started_at` を記録する'
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -27,18 +27,18 @@ flows:
         C->>SV: 接続し直して get_server_status
         SV-->>C: 新しい started_at
     expected:
-      - 再起動の応答の `restarting` が `true` で、`pid` が控えた値と同じ
-      - 接続し直した後の `get_server_status` の `pid`・`port` が控えた値と同じで、`started_at` が控えた値より新しい
+      - 再起動の応答の `restarting` が `true` で、`pid` が記録した値と同じ
+      - 再接続した後の `get_server_status` の `pid`・`port` が記録した値と同じで、`started_at` が記録した値より新しい
       - 子プロセスが終わっていない
     test: test_normal
   - name: 正常系（処理中の呼び出しがある）
-    summary: 処理中の呼び出しの応答を返し終えてから待ち受けを閉じる
+    summary: 処理中の呼び出しの応答を返却し終えてから待ち受けを閉じる
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 処理中の呼び出し
         description: 別の接続で、応答に時間のかかる `check_indexes` を呼んだままにする
-        notes: 辿るファイルの多いプロジェクトを `project_dir` に渡す
+        notes: 辿るファイルの多いプロジェクトを `project_dir` に指定する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -50,8 +50,8 @@ flows:
         IF-->>C: check_indexes の応答
         IF->>IF: 待ち受けを閉じて起動し直す
     expected:
-      - 処理中だった `check_indexes` が、`isError` でない応答を返している
-      - 接続し直した後の `get_server_status` の `started_at` が新しい
+      - 処理中だった `check_indexes` が、`isError` でない応答を返却している
+      - 再接続した後の `get_server_status` の `started_at` が新しい
     test: test_normal_when_call_in_flight
   - name: 異常系（再起動の途中で呼ばれる・RestartInProgressError）
     summary: 処理中の呼び出しを待つ間の 2 回目の再起動を断る
@@ -73,12 +73,12 @@ flows:
     expected:
       - '2 回目の結果が `isError: true` で、再起動の途中である旨が載っている'
       - '待つ間に呼んだ `list_rules` も `isError: true` で、再起動の途中である旨が載っている'
-      - 接続し直した後の `get_server_status` の `started_at` が、1 回目の再起動の後に 1 回だけ新しくなっている
+      - 再接続した後の `get_server_status` の `started_at` が、1 回目の再起動の後に 1 回だけ新しくなっている
     test: test_error_when_restart_in_progress
 lead: 処理中の呼び出しの終わりを待って同じプロセスのまま起動し直すツールの入出力を定め、サーバーの再起動を修正するときに参照する。
 identifier: restart_server
 idempotent: false
-side_effects: 待ち受けを閉じて起動し直す（`destructiveHint`）。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書かない
+side_effects: 待ち受けを閉じて再起動する（`destructiveHint`）。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書き込まない
 exclusivity: 再起動を始めた後の再起動・更新の呼び出しと、更新が動いている間の再起動の呼び出しは `RestartInProgressError` で断る
 request: []
 request_example: |-
@@ -91,10 +91,10 @@ response:
     description: 再起動を始めたか
   - name: output
     type: str
-    description: 再起動を始めた旨と、接続し直してから `get_server_status` で確かめる旨の 1 行
+    description: 再起動を始めた旨と、再接続してから `get_server_status` で確認する旨の 1 行
   - name: pid
     type: int
-    description: 起動し直した後も変わらないプロセス ID
+    description: 再起動した後も変わらないプロセス ID
   - name: restarting
     type: bool
     description: 常に `true`
@@ -102,13 +102,13 @@ response_example: |-
   ```json
   {"success": true, "output": "再起動を始めました。接続し直してから get_server_status で確かめてください", "pid": 4242, "restarting": true}
   ```
-response_notes: 応答を返し終えてから停止を始める。再起動の結果は、接続し直した後の `get_server_status` の `started_at` で確かめる。
+response_notes: 応答を返却し終えてから停止を始める。再起動の結果は、再接続した後の `get_server_status` の `started_at` で確認する。
 exceptions:
   - name: なし（正常終了）
     condition: 再起動を始めた
   - name: RestartInProgressError
     condition: 前の再起動・更新の再起動がまだ待ち受けを閉じていないか、更新が動いている
-    notes: '`isError: true`。再起動の途中か、更新が動いている旨を返す。更新が取り込みを終えて再起動するときは、更新の中から再起動を始める（インターフェース定義「サーバーの更新」）'
+    notes: '`isError: true`。再起動の途中か、更新が動いている旨を返却する。更新が取り込みを終えて再起動するときは、更新の中から再起動を始める（インターフェース定義「サーバーの更新」）'
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 再起動の途中の呼び出し
@@ -118,15 +118,15 @@ constraints:
     constraint: 処理中の `/mcp` への POST の要求（ツールの呼び出しと、この再起動・更新の呼び出し自身を含む）が応答を送信し終えるまで待つ。上限は非機能要件の決定値。過ぎたら待つのをやめて待ち受けを閉じる
     decided_by: NFR-122-1#requirements[再起動の停止の待ち]
   - item: 待ち受けの閉じ方
-    constraint: インターフェース定義「サーバーの起動」が作った `uvicorn.Server` の `should_exit` を立てて閉じる。`uvicorn.Config` の `timeout_graceful_shutdown` に非機能要件の決定値を渡し、SSE のストリーム（`GET /mcp` のストリームと、停止の待ちを過ぎた呼び出しの POST の応答）は、外部ライブラリ [sse-starlette](id:LIB-122-6) が `should_exit` に気づいた時点で取り消す。`timeout_graceful_shutdown` は、SSE でない残りの接続とタスクが閉じないときの上限にする
+    constraint: インターフェース定義「サーバーの起動」が作った `uvicorn.Server` の `should_exit` を `True` にして閉じる。`uvicorn.Config` の `timeout_graceful_shutdown` に非機能要件の決定値を指定し、SSE のストリーム（`GET /mcp` のストリームと、停止の待ちを過ぎた呼び出しの POST の応答）は、外部ライブラリ [sse-starlette](id:LIB-122-6) が `should_exit` に気づいた時点でキャンセルする。`timeout_graceful_shutdown` は、SSE でない残りの接続とタスクが閉じないときの上限にする
     decided_by: NFR-122-1#requirements[待ち受けを閉じた後の接続の待ち]
     notes: 上限を指定するのは、クライアントが閉じない接続で停止が終わらなくなるのを防ぐため。処理中の呼び出しは停止の待ちで応答を送信し終えるまで待っているため、閉じた後に残るのは SSE のストリームと、停止の待ちを過ぎた呼び出しだけ
   - item: 起動し直す方法
     constraint: '`uvicorn.Server.serve` が返った後、`os.execv(sys.executable, [sys.executable, "-m", "rule_inject.server"])` で同じプロセスを置き換える'
-    notes: 'systemd --user の unit・`uv run`・前面のどれで起動したプロセスでも、PID と親を変えずに続く。環境変数は引き継ぐため、`RULE_INJECT_PORT` と `RULE_INJECT_CONFIG` は起動時の値のまま'
+    notes: systemd --user の unit・`uv run`・前面のどれで起動したプロセスでも、PID と親を変えずに続く。環境変数は引き継ぐため、`RULE_INJECT_PORT` と `RULE_INJECT_CONFIG` は起動時の値のまま
   - item: 起動し直した後
-    constraint: インターフェース定義「サーバーの起動」と同じ順（設定ファイルとポートを確かめてから待ち受ける）で起動する
-    notes: 起動に失敗したときは、サーバーの起動と同じく標準エラーへ理由を書いて 0 以外の終了コードで終わる
+    constraint: インターフェース定義「サーバーの起動」と同じ順（設定ファイルとポートを確認してから待ち受ける）で起動する
+    notes: 起動に失敗したときは、サーバーの起動と同じく標準エラーへ理由を書き込んで 0 以外の終了コードで終わる
   - item: 状態
     constraint: 再起動を始めたかと処理中の呼び出しの数は `build_server` が作るオブジェクトに持ち、モジュール変数に持たない
     notes: 規約『MCP サーバー作成ルール』の `sdk-transport-07`

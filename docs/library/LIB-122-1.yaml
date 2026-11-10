@@ -12,16 +12,16 @@ catalogs:
     entries:
       - name: PreToolUse
         kind: フック
-        purpose: ツールを呼ぶ直前に、案内（`permissionDecision` / `permissionDecisionReason` / `additionalContext`）と引数の置き換え（`updatedInput`）を返す
+        purpose: ツールの呼び出しの直前に、案内（`permissionDecision` / `permissionDecisionReason` / `additionalContext`）と引数の置き換え（`updatedInput`）を返却する
       - name: PostToolUse
         kind: フック
-        purpose: ツールを呼んだ後に、読んだ場所を既読として記録する
+        purpose: ツールの呼び出しの後に、参照した場所を既読として記録する
       - name: PreCompact
         kind: フック
-        purpose: 圧縮の前に既読の記録を捨てる
+        purpose: 圧縮の前に既読の記録を削除する
       - name: SessionStart
         kind: フック
-        purpose: セッションの開始時に作業の決まりを載せ、保持期間を過ぎた既読の記録を削除する
+        purpose: セッションの開始時に作業の決まりをコンテキストへ追加し、保持期間を過ぎた既読の記録を削除する
   - name: プラグインのファイル
     version: 2.1.284
     entries:
@@ -36,19 +36,19 @@ catalogs:
         purpose: フックの中でプラグインの場所を指す
       - name: .claude-plugin/marketplace.json
         kind: ファイル
-        purpose: リポジトリを marketplace として載せ、`/plugin marketplace add` と `/plugin install` で入れられるようにする
+        purpose: リポジトリを marketplace として公開し、`/plugin marketplace add` と `/plugin install` でインストールできるようにする
       - name: .mcp.json
         kind: ファイル
-        purpose: プラグインのルートに置き、MCP サーバーの接続先を配る。`${変数:-既定}` を展開し、`plugin:{プラグイン}:{サーバー}` の名前で接続する。`claude --plugin-dir {フォルダ} mcp list` で確認できる（2.1.318）
+        purpose: プラグインのルートに配置し、MCP サーバーの接続先を配布する。`${変数:-既定}` を展開し、`plugin:{プラグイン}:{サーバー}` の名前で接続する。`claude --plugin-dir {フォルダ} mcp list` で確認できる（2.1.318）
       - name: skills/{名前}/SKILL.md
         kind: ファイル
-        purpose: プラグインのスキル。`/{プラグイン}:{名前}` で呼ぶ
+        purpose: プラグインのスキル。`/{プラグイン}:{名前}` で呼び出す
   - name: セッションの記録
     version: 2.1.296
     entries:
       - name: attachment.type が hook_additional_context の行
         kind: 記録の行
-        purpose: フックが返した案内の文面を載せる、セッションの記録（`.jsonl`）の行。案内の回数はこの行の数で数える
+        purpose: フックが返却した案内の文面を記録する、セッションの記録（`.jsonl`）の行。案内の回数はこの行の数で数える
         description: '`type` が `attachment`、`attachment.type` が `hook_additional_context`。`attachment.content` は文字列の配列で、行の直下の `rendered[].content` に `<system-reminder>` で包んだコピーを持つ。'
 lead: プラグインのフックと MCP サーバーを読み込む Claude Code の CLI の利用方法を定め、フックの登録や出来事ごとの呼び出しを調べるときに参照する。
 dependency_scope: 必須
@@ -59,4 +59,7 @@ docs_url: https://code.claude.com/docs/en/hooks
 verification:
   state: 未確認
   date: '2026-09-29'
-  detail: PoC 検証（#4）と設計の工程で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確かめた。本実装のフックは、入力の JSON を標準入力へ渡す単体テストで確かめ、`claude plugin validate` でプラグインと marketplace のマニフェストを通した。実際の Claude Code に本実装のフックを動かさせる確認は API の利用（課金）が要り、E2E テストの実行を担う tester が行うため、この工程では動かせない
+  detail: |-
+    [PoC 検証](https://github.com/shuhei1101/rule-inject/pull/4) と設計の工程で、`-p` での `updatedInput` の注入・`permissionDecisionReason` の長さ・`/compact` での `PreCompact` を確認した。
+    本実装のフックは、入力の JSON を標準入力へ指定する単体テストで確認し、`claude plugin validate` でプラグインと marketplace のマニフェストの検査に合格した。
+    実際の Claude Code で本実装のフックを動かす確認は API の利用（課金）が要るため、E2E テストで tester が実施する

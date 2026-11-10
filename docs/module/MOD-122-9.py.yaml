@@ -7,7 +7,7 @@ constants:
   - name: TAG_FIELD
     title: タグの条件の field
     container: features/index/check/tags.py
-    summary: 使われていないかを確かめる、条件の木のキーの `field`（`ArgCondition.field`）
+    summary: 使用されていないかを確認する、条件の木のキーの `field`（`ArgCondition.field`）
     value: '`"tags"`'
   - name: TAG_NORMALIZATION_FORM
     title: タグの正規化の形式
@@ -19,7 +19,7 @@ functions:
     title: タグのパターンの収集
     container: features/index/check/tags.py
     usecase: 索引をチェックする
-    summary: 索引の効いているエントリの `args` と `read_by[].args` から、`field` が `TAG_FIELD` の条件のパターンを集める
+    summary: 索引の有効なエントリの `args` と `read_by[].args` から、`field` が `TAG_FIELD` の条件のパターンを集める
     kind: 関数
     scope: public
     args:
@@ -27,13 +27,13 @@ functions:
         type: Sequence[IndexContent]
         required: true
         passing: positional
-        description: 確かめる索引の読み取り結果（フックが読めた `global` と `project` の全ての索引）
+        description: 確認する索引の読み取り結果（フックが読み込めた `global` と `project` の全ての索引）
     returns:
       type: tuple[TagPattern, ...]
-      description: 索引の順・エントリの位置の順・`args` の後に `read_by` の要素の順・書いた順のパターン
+      description: 索引の順・エントリの位置の順・`args` の後に `read_by` の要素の順・記載した順のパターン
     process: |-
-      1. 状態が `effective` のエントリだけを見る（`enabled: false`・読み飛ばすエントリは見ない）
-      2. `entry.args` の `ArgCondition` で `field` が `TAG_FIELD` のもののパターンを、場所 `args` で並べる。ドットの道筋のキー（`field` が `None`）は見ない
+      1. 状態が `effective` のエントリだけを確認する（`enabled: false`・スキップするエントリは確認しない）
+      2. `entry.args` の `ArgCondition` で `field` が `TAG_FIELD` のもののパターンを、場所 `args` で並べる。ドットの道筋のキー（`field` が `None`）は確認しない
       3. `entry.read_by` の要素ごとに、同じく場所 `read_by[{要素の位置}].args` で並べる
     unit_tests:
       - name: test_tag_patterns
@@ -44,15 +44,15 @@ functions:
         expected: '`a`・`b`（場所 `args`・キー `filter[tags]`）、`d`（場所 `read_by[0].args`・キー `q[tags]`）の 3 件。`position`・`rev` がエントリのもの'
       - name: test_tag_patterns_when_not_effective
         case: 正常
-        summary: 効いていないエントリは集めない
-        condition: '`enabled: false` のエントリと、変数参照を解けず読み飛ばすエントリが `filter[tags]` を持つ'
+        summary: 無効なエントリは集めない
+        condition: '`enabled: false` のエントリと、変数参照を解けずスキップするエントリが `filter[tags]` を持つ'
         mock: なし
         expected: 空
   - name: unused_tag_patterns
-    title: 使われていないタグのパターンの検出
+    title: 使用されていないタグのパターンの検出
     container: features/index/check/tags.py
     usecase: 索引をチェックする
-    summary: 使われているタグのどれにも当たらないタグのパターンを返す
+    summary: 使用されているタグのどれにもヒットしないタグのパターンを返却する
     kind: 関数
     scope: public
     args:
@@ -65,23 +65,24 @@ functions:
         type: Sequence[str]
         required: true
         passing: positional
-        description: dev-docs が返した使われているタグ（`groups[].value`）
+        description: dev-docs が返却した使用されているタグ（`groups[].value`）
     returns:
       type: tuple[TagPattern, ...]
-      description: 当たらないパターン（`patterns` の順）
+      description: ヒットしないパターン（`patterns` の順）
     process: |-
       1. 照らす値を、`tags` そのものと、各タグを `unicodedata.normalize(TAG_NORMALIZATION_FORM, tag).casefold()` したものの和にする
-      2. パターンごとに、照らす値のどれかに `match_arg_pattern` で当たるかを確かめ、どれにも当たらないものを返す（パターンの側は正規化しない）
+      2. パターンごとに、照らす値のどれかに `match_arg_pattern` でヒットするかを確認し、どれにもヒットしないものを返却する（パターンの側は正規化しない）
     unit_tests:
       - name: test_unused_tag_patterns
         case: 正常
-        summary: 返ったタグか正規化したタグに当たらないパターンだけを返す
+        summary: 返ったタグか正規化したタグにヒットしないパターンだけを返却する
         condition: パターン `python`・`Python`・`pyhton`・`m*`・`re:^kotlin$` と、タグ `Python`・`mcp`
         mock: なし
-        expected: '`pyhton` と `re:^kotlin$` の 2 件（`python` は正規化した `python` に、`Python` は返ったタグに当たる）'
+        expected: '`pyhton` と `re:^kotlin$` の 2 件（`python` は正規化した `python` に、`Python` は返ったタグにヒットする）'
       - name: test_unused_tag_patterns_when_fullwidth
         case: 正常
-        summary: NFKC で揃うタグに当てる
+        summary: NFKC で一致するタグに適用する
         condition: パターン `python3` と、タグ `Ｐｙｔｈｏｎ３`（全角）
         mock: なし
         expected: 空
+lead: 索引のタグのパターンを集め、dev-docs で使用されているタグにヒットしないものを検出する関数を定め、タグのチェックを修正するときに参照する。

@@ -52,7 +52,7 @@ scenarios:
       - プロセスが SIGTERM で終わり、標準エラーに `Application shutdown complete.` が出ている
       - 標準エラーに `Finished server process` が出ている
     test: test_normal_when_stopped
-  - name: 異常シナリオ（ポートが使われている）
+  - name: 異常シナリオ（ポートが使用中）
     setup:
       - name: Mock
         description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）

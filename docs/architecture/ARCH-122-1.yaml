@@ -52,7 +52,7 @@ overview:
       label: 照合・書き込み
     - from: SRV
       to: DD
-      label: 使われているタグの問い合わせ（HTTP）
+      label: 使用されているタグの問い合わせ（HTTP）
     - from: HOOK
       to: SRV
       label: 応答しないときの起動の依頼（systemd --user）
@@ -69,12 +69,12 @@ repository:
 subsystems:
   - name: プラグイン
     scope: plugin
-    role: Claude Code の操作の対象に当たる未読のルールの案内と既読の記録、セットアップのスキル
+    role: Claude Code の操作の対象に該当する未読のルールの案内と既読の記録、セットアップのスキル
     runtime: Python 3（標準ライブラリだけ）
     runs_on: ユーザーの端末（Linux / WSL）
   - name: MCP サーバー
     scope: server
-    role: 効いているルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー。サーバー自身の状態の確認・設定の再読込・再起動と、クローンへ上流を取り込む更新も管理のツールで行う
+    role: 有効なルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー。サーバーの状態の確認・設定の再読込・再起動と、クローンへ上流を取り込む更新は管理のツールで提供する
     runtime: Python 3（mcp・jsonschema・ruamel.yaml）
     runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
     refs:
@@ -87,15 +87,15 @@ external_systems:
     direction: 双方向
     protocol: フックの JSON（標準入出力）
     notes:
-      事前確認: 不要。Claude Code がフックを起動する側のため、呼ばれた時点で到達している。
+      事前確認: 不要（Claude Code がフックを起動する）
     detail: LIB-122-1#
   - name: dev-docs
-    purpose: '`check_indexes` で使われているタグを引く'
+    purpose: '`check_indexes` で、使用されているタグを取得する'
     direction: 双方向
     protocol: MCP（Streamable HTTP）
     detail: API-122-1#
     status: planned
 constraints: |-
-  - フックは Python の標準ライブラリだけで書く
-  - 動かす場所はユーザーの端末（Linux / WSL）で、フックは MCP サーバーが動いていなくても案内できる
-  - 特定の開発基盤に依存する処理と、特定の開発基盤や作者の環境を思わせる語を持たない
+  - フックは Python の標準ライブラリだけで実装する
+  - フックは MCP サーバーが停止していても案内できる
+  - 特定の開発基盤に依存する処理と、特定の開発基盤や作者の環境を連想させる単語を持たない

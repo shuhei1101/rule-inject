@@ -6,10 +6,10 @@ entry:
   value: get_server_status
 flows:
   - name: 正常系
-    summary: 待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit・設定ファイルを返す
+    summary: 待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit・設定ファイルを返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 索引を記載した設定ファイル
         notes: '`RULE_INJECT_CONFIG` で指し、`RULE_INJECT_PORT` に空いているポートを指定する'
@@ -33,12 +33,12 @@ flows:
       - '`restarting` が `false`'
     test: test_normal
   - name: 正常系（設定ファイルが読めない）
-    summary: 設定ファイルが読めなくてもエラーにせず、読めない理由を載せて返す
+    summary: 設定ファイルが読めなくてもエラーにせず、読めない理由を記載して返却する
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 設定ファイル
-        description: サーバーを起動した後に、`global` に知らないキーを書き足す
+        description: サーバーを起動した後に、`global` に知らないキーを追加する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -54,10 +54,10 @@ flows:
       - '`config.readable` が `false` で、`config.error` に知らないキーの名前が載っている'
     test: test_normal_when_settings_unreadable
   - name: 正常系（クローンが git のリポジトリでない）
-    summary: commit を引けないときは `commit` を `null` にして返す
+    summary: commit を取得できないときは `commit` を `null` にして返却する
     setup:
       - name: Mock
-        description: なし（`build_server` の `clone` に、`version.ini` だけを置いた一時フォルダを渡し、関数として呼ぶ）
+        description: なし（`build_server` の `clone` に、`version.ini` だけを配置した一時フォルダを指定し、関数として呼ぶ）
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -70,7 +70,7 @@ flows:
         IF-->>C: commit が null
     expected:
       - 結果が `isError` でなく、`commit` が `null`
-      - '`version` が置いた `version.ini` の値'
+      - '`version` が配置した `version.ini` の値'
     test: test_normal_when_not_git_clone
 lead: サーバー自身の待ち受け・バージョン・クローン・設定ファイルの状態を返却するツールの入出力を定め、サーバーの状態の確認を修正するときに参照する。
 identifier: get_server_status
@@ -144,12 +144,12 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 状態を取れた
-    notes: 設定ファイルが読めないときも、`config.error` に理由を載せて正常に返す
+    notes: 設定ファイルが読めないときも、`config.error` に理由を記載して正常に返却する
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 再起動の途中の呼び出し
-    constraint: 再起動の途中でも断らずに返す
-    notes: 再起動の途中に他のツールは断る（インターフェース定義「サーバーの再起動」）。状態の確認だけは、再起動の途中かを確かめるために受け付ける
+    constraint: 再起動の途中でも断らずに返却する
+    notes: 再起動の途中に他のツールは断る（インターフェース定義「サーバーの再起動」）。状態の確認だけは、再起動の途中かを確認するために受け付ける
   - item: クローン
     constraint: サーバーのパッケージ（`rule_inject`）の場所から上へ辿った、`version.ini` を持つフォルダ
     notes: 起動の作業ディレクトリに依存しない（規約『MCP サーバー作成ルール』の `structure-02`）

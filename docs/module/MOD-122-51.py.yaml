@@ -18,9 +18,9 @@ constants:
     summary: 開き引用符と閉じ引用符を合わせた最短の字数
     value: '`2`'
   - name: RESERVED_HEADS
-    title: 引用符なしで置けない先頭の文字
+    title: 引用符なしで配置できない先頭の文字
     container: shared/yaml_lines.py
-    summary: 引用符なしの値の先頭に置けない、YAML では別の意味になる文字
+    summary: 引用符なしの値の先頭に配置できない、YAML では別の意味になる文字
     value: '`"{|>&!%@`*"`'
 data_models:
   - name: Line
@@ -44,7 +44,7 @@ functions:
     title: 行番号つきのエラーの作成
     container: shared/yaml_lines.py
     usecase: 共通
-    summary: 行番号つきの ValueError を作って返す（送出は呼び出し元）
+    summary: 行番号つきの ValueError を作って返却する（送出は呼び出し元）
     kind: 関数
     scope: public
     args:
@@ -85,9 +85,9 @@ functions:
       type: str
       description: コメントを落とした文字列
     process: |-
-      1. 先頭から走査し、引用符（`QUOTE_CHARS`）の中は閉じるまで読み進める
-      2. 引用符の外で、行頭か空白・タブの直後にある `#` の手前までを返す
-      3. 当たる `#` が無ければそのまま返す
+      1. 先頭から走査し、引用符（`QUOTE_CHARS`）の中は閉じるまで読み込み進める
+      2. 引用符の外で、行頭か空白・タブの直後にある `#` の手前までを返却する
+      3. ヒットする `#` が無ければそのまま返却する
   - name: tokenize
     title: 行の読み取り
     container: shared/yaml_lines.py
@@ -122,7 +122,7 @@ functions:
         expected: "`Line(number=1, indent=0, text=\"a: 1\")`・`Line(number=3, indent=2, text='- \"#x\"')` の 2 件（引用符の中の `#` は残る）"
       - name: test_tokenize_when_hash_in_word
         case: 正常
-        summary: 語の途中の `#` はコメントにしない
+        summary: 単語の途中の `#` はコメントにしない
         condition: '`a: b#c`'
         mock: なし
         expected: '`text` が `a: b#c`'
@@ -137,7 +137,7 @@ functions:
     title: 文字列の読み取り
     container: shared/yaml_lines.py
     usecase: 共通
-    summary: 引用符あり・なしの文字列 1 つを読む
+    summary: 引用符あり・なしの文字列 1 つを読み込む
     kind: 関数
     scope: public
     args:
@@ -150,15 +150,15 @@ functions:
         type: int
         required: true
         passing: positional
-        description: エラーに載せる行番号
+        description: エラーに記載する行番号
     returns:
       type: str
-      description: 引用符を外した文字列
+      description: 引用符を除外した文字列
     process: |-
       1. 前後の空白を落とし、空なら ValueError
-      2. 先頭が引用符なら、長さが `MIN_QUOTED_LENGTH` 以上で末尾が同じ引用符であることを確かめて中身を返す。一重引用符は `''` を `'` に、二重引用符は `\"` を `"`・`\\` を `\` に戻す
+      2. 先頭が引用符なら、長さが `MIN_QUOTED_LENGTH` 以上で末尾が同じ引用符であることを確認して中身を返却する。一重引用符は `''` を `'` に、二重引用符は `\"` を `"`・`\\` を `\` に戻す
       3. 引用符なしで先頭が `RESERVED_HEADS` の文字なら ValueError
-      4. それ以外はそのまま返す
+      4. それ以外はそのまま返却する
     exceptions:
       - name: ValueError
         condition: 値が空
@@ -172,7 +172,7 @@ functions:
     unit_tests:
       - name: test_parse_scalar
         case: 正常
-        summary: 引用符あり・なしを読む
+        summary: 引用符あり・なしを読み込む
         condition: "` abc `・`\"a\\\"b\"`・`'it''s'`"
         mock: なし
         expected: "`abc`・`a\"b`・`it's`"
@@ -209,12 +209,12 @@ functions:
         type: str
         required: true
         passing: positional
-        description: '`[` と `]` を外した中身'
+        description: '`[` と `]` を除外した中身'
       - name: number
         type: int
         required: true
         passing: positional
-        description: エラーに載せる行番号
+        description: エラーに記載する行番号
     returns:
       type: list[str]
       description: 分けた要素の文字列（空白は落とさない）
@@ -230,7 +230,7 @@ functions:
     title: フローのリストの読み取り
     container: shared/yaml_lines.py
     usecase: 共通
-    summary: '`[a, b]` の形式のリストを読む'
+    summary: '`[a, b]` の形式のリストを読み込む'
     kind: 関数
     scope: public
     args:
@@ -243,14 +243,14 @@ functions:
         type: int
         required: true
         passing: positional
-        description: エラーに載せる行番号
+        description: エラーに記載する行番号
     returns:
       type: list[str]
       description: 要素の文字列のリスト。`[]` は空のリスト
     process: |-
       1. 末尾が `]` でなければ ValueError
-      2. 中身が空白だけなら空のリストを返す
-      3. `_split_flow_items` で分けた要素を、それぞれ `parse_scalar` で読む
+      2. 中身が空白だけなら空のリストを返却する
+      3. `_split_flow_items` で分けた要素を、それぞれ `parse_scalar` で読み込む
     exceptions:
       - name: ValueError
         condition: 末尾が `]` でない
@@ -261,7 +261,7 @@ functions:
     unit_tests:
       - name: test_parse_flow_list
         case: 正常
-        summary: 要素を読む
+        summary: 要素を読み込む
         condition: "`[a, \"b, c\", 'd']`"
         mock: なし
         expected: '`["a", "b, c", "d"]`（引用符の中のカンマで分けない）'
@@ -296,7 +296,7 @@ functions:
     title: ブロックのリストの読み取り
     container: shared/yaml_lines.py
     usecase: 共通
-    summary: '`- a` の行が続く限りブロックのリストを読み、次に読む行の位置を返す'
+    summary: '`- a` の行が続く限りブロックのリストを読み込み、次に読み込む行の位置を返却する'
     kind: 関数
     scope: public
     args:
@@ -309,7 +309,7 @@ functions:
         type: int
         required: true
         passing: positional
-        description: 読み始める行の位置
+        description: 読み込み始める行の位置
       - name: min_indent
         type: int
         required: true
@@ -317,19 +317,19 @@ functions:
         description: 要素の行に求める最小のインデント
     returns:
       type: tuple[list[str], int]
-      description: 要素の文字列のリストと、次に読む行の位置
+      description: 要素の文字列のリストと、次に読み込む行の位置
     process: |-
-      1. `start` から、インデントが `min_indent` 以上で `LIST_ITEM_MARK` で始まる行を読み進める
-      2. 各行の `LIST_ITEM_MARK` の後ろを `parse_scalar` で読む
-      3. 当たらない行に来たら、その位置を返す
+      1. `start` から、インデントが `min_indent` 以上で `LIST_ITEM_MARK` で始まる行を読み込み進める
+      2. 各行の `LIST_ITEM_MARK` の後ろを `parse_scalar` で読み込む
+      3. ヒットしない行に来たら、その位置を返却する
     exceptions:
       - name: ValueError
-        condition: 要素の値が `parse_scalar` で読めない
+        condition: 要素の値が `parse_scalar` で読み込めない
         message: '`parse_scalar` のメッセージ'
     unit_tests:
       - name: test_read_block_list
         case: 正常
-        summary: 続く要素の行を読み、次の位置を返す
+        summary: 続く要素の行を読み込み、次の位置を返却する
         condition: '`tokenize` した `a:` / `  - x` / `  - "y"` / `b: 1` を `start=1`・`min_indent=1` で'
         mock: なし
         expected: '`(["x", "y"], 3)`'
@@ -374,13 +374,13 @@ functions:
         summary: キーの形式でない行を拒む
         condition: '`abc`・`: x`・`a b: x`'
         mock: なし
-        expected: '`キー: 値` の形式で書いてください の ValueError'
+        expected: '`キー: 値` の形式で記載してください の ValueError'
         exception: '`:` が無い・キーが空・キーに半角スペースを含む'
   - name: read_value
     title: キーの値の読み取り
     container: shared/yaml_lines.py
     usecase: 共通
-    summary: キーの値を読み、次に読む行の位置を返す。同じ行に値が無ければ続く行のブロックのリストを読む
+    summary: キーの値を読み込み、次に読み込む行の位置を返却する。同じ行に値が無ければ続く行のブロックのリストを読み込む
     kind: 関数
     scope: public
     args:
@@ -403,7 +403,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: エラーに載せるキー
+        description: エラーに記載するキー
       - name: rest
         type: str
         required: true
@@ -416,29 +416,29 @@ functions:
         description: ブロックのリストの要素の行に求める最小のインデント
     returns:
       type: tuple[str | list[str], int]
-      description: 値（文字列か文字列のリスト）と、次に読む行の位置
+      description: 値（文字列か文字列のリスト）と、次に読み込む行の位置
     process: |-
       1. `rest` の前後の空白を落とす
-      2. `[` で始まれば `parse_flow_list` で読み、`next_position` を返す
-      3. 空でなければ `parse_scalar` で読み、`next_position` を返す
-      4. 空なら `next_position` から `read_block_list` で読む。要素が無ければ ValueError
+      2. `[` で始まれば `parse_flow_list` で読み込み、`next_position` を返却する
+      3. 空でなければ `parse_scalar` で読み込み、`next_position` を返却する
+      4. 空なら `next_position` から `read_block_list` で読み込む。要素が無ければ ValueError
     exceptions:
       - name: ValueError
         condition: 同じ行に値が無く、続くブロックのリストも無い
         message: '`{行番号}行目: {キー} の値がありません`'
       - name: ValueError
-        condition: 値が `parse_scalar`・`parse_flow_list` で読めない
+        condition: 値が `parse_scalar`・`parse_flow_list` で読み込めない
         message: '`parse_scalar`・`parse_flow_list` のメッセージ'
     unit_tests:
       - name: test_read_value
         case: 正常
-        summary: 同じ行の文字列とフローのリストを読む
+        summary: 同じ行の文字列とフローのリストを読み込む
         condition: '`rest` が ` abc` と ` [a, b]`'
         mock: なし
         expected: '`("abc", next_position)` と `(["a", "b"], next_position)`'
       - name: test_read_value_when_block_list
         case: 正常
-        summary: 続く行のブロックのリストを読む
+        summary: 続く行のブロックのリストを読み込む
         condition: '`rest` が空、続く行が `  - x` / `  - y`'
         mock: なし
         expected: '`(["x", "y"], ブロックの次の位置)`'
@@ -451,3 +451,4 @@ functions:
         exception: 同じ行に値が無く、続くブロックのリストも無い
 test_files:
   - tests/unit/rule_inject/shared/test_yaml_lines.py
+lead: 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取りとエラーの作成を定め、YAML の読み取りを修正するときに参照する。

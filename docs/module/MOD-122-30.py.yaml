@@ -8,7 +8,7 @@ functions:
     title: サーバーの起動の補助の処理
     container: hooks/start_server.py
     usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
-    summary: サーバーが応答せずユニットが有効なときだけ起動を依頼し、`/mcp` で接続し直す案内を返す。失敗をログへ書く
+    summary: サーバーが応答せずユニットが有効なときだけ起動を依頼し、`/mcp` で再接続する案内を返却する。失敗をログへ書き込む
     kind: フック
     scope: public
     inherits: HookHandler
@@ -27,19 +27,19 @@ functions:
       type: dict[str, Any] | None
       description: '起動を依頼したときだけ `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": build_server_start_notice(サービス名)}}`。それ以外は None（出力しない）'
     process: |-
-      1. `payload` の `session_id` が `is_valid_session_id` に当たればログの `session_id` に使い、当たらなければ None にする（形式が外れていても補助は行う）
-      2. 設定を読む（設定の読み込み）
-         - SettingsReadError の場合、`log_settings_failure(Component.START_SERVER, ...)` でログ（`read_settings`）へ書いて None を返す
-      3. `settings.server_port` へ接続できれば None を返す（サーバーの応答の確認）
+      1. `payload` の `session_id` が `is_valid_session_id` にヒットすればログの `session_id` に使用し、ヒットしなければ None にする（形式が外れていても補助はする）
+      2. 設定を読み込む（設定の読み込み）
+         - SettingsReadError の場合、`log_settings_failure(Component.START_SERVER, ...)` でログ（`read_settings`）へ書き込んで None を返却する
+      3. `settings.server_port` へ接続できれば None を返却する（サーバーの応答の確認）
       4. `settings.server_service` のユニットへ起動を依頼する（ユニットの起動の依頼）
-         - UnitCheckError の場合、`write_log(settings.log_dir, component=START_SERVER, operation=CHECK_UNIT, ...)` を書いて None を返す
-         - UnitStartError の場合、`write_log(..., operation=START_UNIT, ...)` を書いて None を返す
-      5. 戻り値が `UnitStart.REQUESTED` なら `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": 案内}}` を返す（サーバーの起動の案内の組み立て）。`NOT_ENABLED`・`SYSTEMCTL_MISSING` なら None を返す
+         - UnitCheckError の場合、`write_log(settings.log_dir, component=START_SERVER, operation=CHECK_UNIT, ...)` を記載して None を返却する
+         - UnitStartError の場合、`write_log(..., operation=START_UNIT, ...)` を記載して None を返却する
+      5. 戻り値が `UnitStart.REQUESTED` なら `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": 案内}}` を返却する（サーバーの起動の案内の組み立て）。`NOT_ENABLED`・`SYSTEMCTL_MISSING` なら None を返却する
     unit_tests:
       - name: test_start_server
         case: 正常
-        summary: 起動を依頼したら案内を返す
-        condition: '`server_responds` が偽、`request_unit_start` が `REQUESTED` を返す。設定ファイルに `global.server_service: rule-inject-ut`'
+        summary: 起動を依頼したら案内を返却する
+        condition: '`server_responds` が偽、`request_unit_start` が `REQUESTED` を返却する。設定ファイルに `global.server_service: rule-inject-ut`'
         mock: '`server_responds`・`request_unit_start`（monkeypatch）'
         expected: '`hookSpecificOutput` の `hookEventName` が `SessionStart`、`additionalContext` が `build_server_start_notice("rule-inject-ut")`。`request_unit_start` に `rule-inject-ut` が渡る'
       - name: test_start_server_when_responding
@@ -50,31 +50,32 @@ functions:
         expected: None。`request_unit_start` が呼ばれない
       - name: test_start_server_when_not_requested
         case: 正常
-        summary: 起動を依頼しなかったら何も返さない
+        summary: 起動を依頼しなかったら何も返却しない
         condition: '`request_unit_start` が `NOT_ENABLED` と `SYSTEMCTL_MISSING`（パラメータ展開）'
         mock: '`server_responds`・`request_unit_start`'
         expected: None。ログのファイルが無い
       - name: test_start_server_when_check_failed
         case: 正常
-        summary: ユニットの確認の失敗をログへ書く
+        summary: ユニットの確認の失敗をログへ書き込む
         condition: '`request_unit_start` が UnitCheckError を送出する'
         mock: '`server_responds`・`request_unit_start`'
         expected: 'None。ログに `component: start_server`・`operation: check_unit` が 1 行'
       - name: test_start_server_when_start_failed
         case: 正常
-        summary: 起動の依頼の失敗をログへ書く
+        summary: 起動の依頼の失敗をログへ書き込む
         condition: '`request_unit_start` が UnitStartError を送出する'
         mock: '`server_responds`・`request_unit_start`'
         expected: 'None。ログに `component: start_server`・`operation: start_unit` が 1 行'
       - name: test_start_server_when_settings_unreadable
         case: 正常
-        summary: 設定ファイルが読めなければ何も確かめずにログへ書く
+        summary: 設定ファイルが読み込めなければ何も確認せずにログへ書き込む
         condition: '`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ'
         mock: '`server_responds`・`request_unit_start`'
         expected: 'None。どちらも呼ばれず、既定のログのフォルダに `read_settings` が 1 行'
       - name: test_start_server_when_invalid_session_id
         case: 正常
-        summary: session_id の形式が外れていても補助を行う
+        summary: session_id の形式が外れていても補助をする
         condition: '`session_id` が `../x`、`request_unit_start` が UnitStartError を送出する'
         mock: '`server_responds`・`request_unit_start`'
         expected: ログの `session_id` が null の行が 1 行
+lead: セッションの開始時に応答しない MCP サーバーの起動を依頼するフックの処理を定め、サーバーの起動の補助を修正するときに参照する。

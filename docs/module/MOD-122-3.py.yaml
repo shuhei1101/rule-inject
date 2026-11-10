@@ -24,10 +24,11 @@ enums:
     values:
       - value: full
         title: 全文
-        description: 文書の全文を載せた。既読になる
+        description: 文書の全文を記載した。既読になる
       - value: section
         title: 一部の見出し
-        description: 文書の一部の見出しだけを載せた
+        description: 文書の一部の見出しだけを記載した
       - value: summary
         title: 説明だけ
-        description: 文書の説明だけを載せた
+        description: 文書の説明だけを記載した
+lead: MCP のツールの結果から取り出した文書と、その範囲のデータモデルを定め、結果の文書の取り出しを修正するときに参照する。

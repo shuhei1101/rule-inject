@@ -6,9 +6,9 @@ directory: |-
   ```text
   .claude-plugin/
   ├── plugin.json                 # プラグインの名前（rule-inject）
-  └── marketplace.json            # このリポジトリを marketplace（rule-inject）として載せる定義。プラグインはリポジトリの直下（`./`）の 1 つ
+  └── marketplace.json            # このリポジトリを marketplace（rule-inject）として記載する定義。プラグインはリポジトリの直下（`./`）の 1 つ
   hooks/
-  ├── hooks.json                  # 7 つのフックの matcher・timeout（1 秒）・コマンド
+  ├── hooks.json                  # フックの matcher・timeout（1 秒）・コマンド
   └── run.py                      # src/ を sys.path に追加して引数のフックを動かす
   src/rule_inject/hooks/
   ├── __init__.py
@@ -22,5 +22,14 @@ directory: |-
   └── start_server.py             # サーバーの起動の補助（SessionStart）
   ```
 notes:
-  hooks.json: '7 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入・既読の記録の掃除・サーバーの起動の補助の 3 つのコマンドを並べる'
-  Python のバージョン: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`
+  hooks.json: |-
+    どのフックも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。
+
+    | イベント | フック | matcher |
+    | --- | --- | --- |
+    | PreToolUse | ルール案内 | `Read\|Grep\|Edit\|Write\|NotebookEdit\|Bash\|mcp__.*` |
+    | PostToolUse | 既読の記録 | `Read\|Bash\|mcp__.*` |
+    | PostToolUse | 検索結果の案内 | `Grep\|Glob\|Bash` |
+    | PreCompact | 既読の記録の破棄 | なし |
+    | SessionStart | 作業の決まりの注入・既読の記録の掃除・サーバーの起動の補助（この順に並べる） | なし |
+  Python のバージョン: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい構文・標準ライブラリを使用しない。`pyproject.toml` の `requires-python` は `>=3.12`

@@ -6,16 +6,16 @@ tables:
   - name: '{state_dir}/{session_id}.txt'
     title: 既読の記録
     datastore: テキストファイル（UTF-8、1 行 = 1 場所とハッシュをタブで区切った組）
-    summary: そのセッションで本文を読んだルールの場所と、読んだ時点の本文のハッシュ
+    summary: そのセッションで本文を参照したルールの場所と、参照した時点の本文のハッシュ
     primary_key: (location, hash)
     scale: 1 セッション ~1,000 行
-    growth: ルールを読むたびに 1 行ずつ追記する。同じ場所とハッシュの組が重なっても削除せず、読む側が集合として扱う。本文が変わった後に読み直したときは、古い行を残したまま新しいハッシュの行を追記する
+    growth: ルールを参照するたびに 1 行ずつ追記する。同じ場所とハッシュの組が重なっても削除せず、読み込む側が集合として扱う。本文が変わった後に再度参照したときは、古い行を維持したまま新しいハッシュの行を追記する
     retention: そのセッションの次の圧縮まで。圧縮せずに終わったセッションのファイルは、最終更新から非機能要件「既読の記録の保持期間」まで
     deletion: 圧縮の前にファイルごと物理削除する。保持期間を過ぎたファイルは、セッションの開始時にファイルごと物理削除する
-    access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
+    access: セッションのファイルを全行読み込む。書き込みは追記（O_APPEND）だけ
     description: |-
-      `{state_dir}` は設定『プラグイン』の `RULE_INJECT_STATE_DIR`、無ければ `global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）。
-      複数のフックが別のプロセスで同時に書くため、行の追記だけで完結する形式にする。フォルダが無ければ書く側が作る。
+      `{state_dir}` は [設定: プラグイン](id:CFG-122-1) の `RULE_INJECT_STATE_DIR`、無ければ `global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）。
+      複数のフックが別のプロセスで同時に書き込むため、行の追記だけで完結する形式にする。フォルダが無ければ書き込む側が作成する。
     columns:
       - name: location
         title: ルールの場所
@@ -34,11 +34,11 @@ tables:
     summary: そのセッションで止めずに案内したルールの場所
     primary_key: location
     scale: 1 セッション ~1,000 行
-    growth: 止めない案内を出すたびに、載せた場所を 1 行ずつ追記する。同じ場所が重なっても削除せず、読む側が集合として扱う
-    retention: 既読の記録と同じ。そのセッションの次の圧縮まで。圧縮せずに終わったセッションのファイルは、最終更新から非機能要件「既読の記録の保持期間」まで
+    growth: 止めない案内を出すたびに、案内した場所を 1 行ずつ追記する。同じ場所が重なっても削除せず、読み込む側が集合として扱う
+    retention: 既読の記録と同じ
     deletion: 圧縮の前に既読の記録と一緒にファイルごと物理削除する。保持期間を過ぎたファイルは、セッションの開始時にファイルごと物理削除する
-    access: セッションのファイルを全行読む。書くときは追記（O_APPEND）だけ
-    description: ルール案内（PreToolUse）と検索結果の案内（PostToolUse）が共有する。既読の記録と同じく行の追記だけで完結する形式にし、フォルダが無ければ書く側が作る。止める案内に載せた場所は記録しない。
+    access: セッションのファイルを全行読み込む。書き込みは追記（O_APPEND）だけ
+    description: ルール案内（PreToolUse）と検索結果の案内（PostToolUse）が共有する。形式とフォルダの作成は既読の記録と同じ。止める案内で案内した場所は記録しない。
     columns:
       - name: location
         title: ルールの場所
@@ -49,13 +49,13 @@ tables:
   - name: '{state_dir}/{session_id}.history.jsonl'
     title: 既読の履歴
     datastore: JSON Lines（UTF-8、1 行 = 1 回の既読）
-    summary: そのセッションでいつ・どの読み方でどのルールを既読にしたか。関連する文書の推薦などほかの仕組みが読む
+    summary: そのセッションでいつ・どの方法でどのルールを既読にしたか。関連する文書の推薦などほかの仕組みが参照する
     scale: 1 セッション ~10,000 行
-    growth: 既読の記録へ書くたびに、同じ場所の行を 1 行ずつ追記する。同じ場所を何度読んでもそのたびに残す
+    growth: 既読の記録へ書き込むたびに、同じ場所の行を 1 行ずつ追記する。同じ場所を何度参照しても毎回追記する
     retention: 最終更新から非機能要件「既読の記録の保持期間」まで。圧縮では削除しない
     deletion: 保持期間を過ぎたファイルを、セッションの開始時にファイルごと物理削除する
-    access: フックは追記（O_APPEND）だけで読まない。MCP サーバーの既読の記録の確認（`get_read_records`）と、ほかの仕組みが全行読む
-    description: 既読の記録と同じく、フック（Read・Bash・MCP のツール）が別のプロセスで同時に書くため、行の追記だけで完結する形式にする。フォルダが無ければ書く側が作る。1 行は改行を含まない JSON のオブジェクト。
+    access: フックは追記（O_APPEND）だけで読み込まない。MCP サーバーの既読の記録の確認（`get_read_records`）と、ほかの仕組みが全行読み込む
+    description: 形式とフォルダの作成は既読の記録と同じ（書き込むのは Read・Bash・MCP のツールのフック）。1 行は改行を含まない JSON のオブジェクト。
     columns:
       - name: time
         title: 時刻
@@ -69,11 +69,11 @@ tables:
         not_null: true
         description: 既読にしたセッションの識別子。ファイル名の `session_id` と同じ
       - name: method
-        title: 読み方
+        title: 既読の方法
         type: string
         not_null: true
-        description: 既読にした読み方
-        enum_values: "'read'（Read）/ 'bash'（Bash の読むコマンド）/ 'mcp'（MCP のツールの結果に載った文書か、read_by に当たった MCP のツール）"
+        description: 既読にした方法
+        enum_values: "'read'（Read）/ 'bash'（Bash の読み込みのコマンド）/ 'mcp'（MCP のツールの結果に含まれた文書か、read_by にヒットした MCP のツール）"
       - name: tool
         title: ツール名
         type: string
@@ -84,5 +84,5 @@ tables:
         title: ルールの場所
         type: string
         not_null: true
-        description: 既読にしたルールの場所。既読の記録に書いた値と同じ
+        description: 既読にしたルールの場所。既読の記録の値と同じ
     status: planned
