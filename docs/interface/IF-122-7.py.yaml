@@ -6,15 +6,15 @@ entry:
   value: '`list_rules`'
 flows:
   - name: 正常系
-    summary: ユーザーの索引とプロジェクトの索引のエントリを、フックが読む順に返す
+    summary: ユーザーの索引とプロジェクトの索引のエントリを、フックが読む順に返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global.indexes` にユーザーの索引、`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
-        description: 'ユーザーの索引とプロジェクトの索引に、`on` を書かないエントリと `on: [write]` のエントリを 1 つずつ'
+        description: 'ユーザーの索引とプロジェクトの索引に、`on` を記載しないエントリと `on: [write]` のエントリを 1 つずつ'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -33,19 +33,19 @@ flows:
     expected:
       - '`config_path` が `RULE_INJECT_CONFIG` の場所'
       - '`indexes` がユーザーの索引・プロジェクトの索引の順'
-      - '`entries` の 4 件がそれぞれ解いたルールの場所を持ち、`on` を書かないエントリの `on` が `[read, write, mcp]`'
+      - '`entries` の 4 件がそれぞれ解いたルールの場所を持ち、`on` を記載しないエントリの `on` が `[read, write, mcp]`'
       - '`total` が 4 で `next_cursor` が `None`'
     test: test_normal
   - name: 正常系（読めない索引と除いたエントリがある）
-    summary: 読めない索引・読み飛ばしたエントリ・無効のエントリを分けて返す
+    summary: 読めない索引・読み飛ばしたエントリ・無効のエントリを分けて返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系の `projects[].indexes` に無い索引の場所を 1 つ追加する
       - name: 索引
         description: 'プロジェクトの索引に、展開できない `!{名前}` を `rule` に持つエントリと `enabled: false` のエントリを追加する'
-        notes: 変数参照の名前は環境変数に置かない
+        notes: 変数参照の名前は環境変数に設定しない
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -70,11 +70,11 @@ flows:
     summary: '`limit` を超えた分を `next_cursor` で続けて取る'
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 引数
-        description: '`limit: 3` で呼び、返った `next_cursor` を `cursor` に渡してもう 1 回呼ぶ'
+        description: '`limit: 3` で呼び、返った `next_cursor` を `cursor` に指定してもう 1 回呼ぶ'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -98,9 +98,9 @@ flows:
     summary: 相対パスの `project_dir` をエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
-        description: '`project_dir` に相対パスを渡す'
+        description: '`project_dir` に相対パスを指定する'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -111,13 +111,13 @@ flows:
         IF-->>C: isError: true（絶対パスで渡す旨）
       ```
     expected:
-      - '結果が `isError: true` で、絶対パスで渡す旨が載っている'
+      - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
     test: test_error_when_project_dir_not_absolute
   - name: 異常系（設定ファイルが読めない・ToolError）
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
     flow: |-
@@ -136,14 +136,14 @@ flows:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
   - name: 正常系（参照するツールを書いたエントリがある）
-    summary: '`read_tool` を書いたエントリは索引に書いたままの値を、書かないエントリは `None` を返す'
+    summary: '`read_tool` を記載したエントリは索引に記載したままの値を、記載しないエントリは `None` を返却する'
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
-        description: '`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を書いたエントリと、書かないエントリを 1 つずつ'
+        description: '`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を記載したエントリと、記載しないエントリを 1 つずつ'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -157,7 +157,7 @@ flows:
         IF-->>C: entries
       ```
     expected:
-      - '1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が書いた JSON の文字列のまま'
+      - 1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が記載した JSON の文字列のまま
       - 2 つ目のエントリの `read_tool` が `None`
     test: test_normal_when_entry_has_read_tool
 lead: プロジェクトで読み込む索引と有効なエントリを、読めない索引や無効のエントリの理由と一緒に返却するツールを定め、ルールの一覧を修正するときに参照する。
@@ -171,18 +171,18 @@ request:
     location: argument
     description: プロジェクトの直下
     constraints: 絶対パス
-    notes: フックの `CLAUDE_PROJECT_DIR` に当たる値。この値で `projects[].match` を当て、`projects[].indexes` の相対パスを解く
+    notes: フックの `CLAUDE_PROJECT_DIR` に該当する値。この値で `projects[].match` を当て、`projects[].indexes` の相対パスを解く
   - name: limit
     type: int
     required: false
     default: '100'
     location: argument
-    description: 返す効いているエントリの件数の上限
+    description: 返却する有効なエントリの件数の上限
     constraints: 1〜500
   - name: cursor
     type: str
     required: false
-    default: なし（先頭から返す）
+    default: なし（先頭から返却する）
     location: argument
     description: 前の応答の `next_cursor`
   - name: format
@@ -191,7 +191,7 @@ request:
     default: markdown
     location: argument
     description: 応答の形式
-    notes: '`json` のときは structuredContent と text に同じ JSON を入れる。`markdown` のときは同じ項目を Markdown の表で text に入れ、structuredContent を返さない'
+    notes: '`json` のときは structuredContent と text に同じ JSON を入れる。`markdown` のときは同じ項目を Markdown の表で text に入れ、structuredContent を返却しない'
 request_example: |-
   ```json
   {"project_dir": "/home/user/project", "format": "json"}
@@ -207,7 +207,7 @@ response:
   - name: config_path
     type: str | None
     description: サーバーが読んだ設定ファイルの場所
-    notes: '設定ファイルを読まなかったとき（`RULE_INJECT_CONFIG` が無く、既定のパスにファイルも無いとき）は `None`'
+    notes: 設定ファイルを読まなかったとき（`RULE_INJECT_CONFIG` が無く、既定のパスにファイルも無いとき）は `None`
   - name: indexes
     type: list[str]
     description: 読む索引の場所
@@ -219,44 +219,44 @@ response:
     type: int
     description: 索引の `rules` の中の位置
     constraints: 0 始まり
-    notes: 書き込み・削除のツールの `position` に渡す
+    notes: 書き込み・削除のツールの `position` に指定する
   - name: entries[].rev
     type: str
     description: エントリのバージョン
-    notes: 書き込み・削除のツールの `expected_rev` に渡す。求め方は制約「エントリのバージョン」
+    notes: 書き込み・削除のツールの `expected_rev` に指定する。求め方は制約「エントリのバージョン」
   - name: entries[].rule
     type: str
     description: 変数参照を展開し、索引のフォルダから解いたルールの場所
   - name: entries[].paths
     type: list[str]
-    description: 当てるパスのパターン（索引に書いたまま）
+    description: 照合するパスのパターン（索引に記載したまま）
   - name: entries[].exclude
     type: list[str]
-    description: 外すパスのパターン
+    description: 除外するパスのパターン
   - name: entries[].tools
     type: list[str]
-    description: 当てるツール名のパターン
+    description: 照合するツール名のパターン
   - name: entries[].args
     type: dict[str, list[str]]
-    description: 当てる引数のパターン
+    description: 照合する引数のパターン
   - name: entries[].on
     type: list[Literal['read', 'write', 'mcp']]
     description: 止める操作の種別
-    notes: エントリが `on` を書かないときは、索引の `default_on`（それも無ければ 3 つ全て）を埋めた値
+    notes: エントリが `on` を記載しないときは、索引の `default_on`（それも無ければ 3 つ全て）を埋めた値
   - name: entries[].read_by
     type: list[dict]
     description: 既読にする呼び出し（`tools`・`args`）
   - name: entries[].read_tool
     type: dict[str, Any] | None
-    description: ルールを参照する MCP のツール（`tool`・`args`・`optional_args`。索引に書いたまま）
-    notes: エントリが `read_tool` を書かないときは `None`
+    description: ルールを参照する MCP のツール（`tool`・`args`・`optional_args`。索引に記載したまま）
+    notes: エントリが `read_tool` を記載しないときは `None`
   - name: unreadable_indexes[].index
     type: str
     description: 読めない索引の場所
   - name: unreadable_indexes[].reason
     type: str
     description: 読めない理由
-    notes: フックが案内に載せる理由と同じ文言
+    notes: フックが案内に記載する理由と同じ文言
   - name: skipped_entries[].index
     type: str
     description: 読み飛ばしたエントリを持つ索引の場所
@@ -268,11 +268,11 @@ response:
     description: エントリのバージョン
   - name: skipped_entries[].rule
     type: str
-    description: 索引に書いたままの `rule`
+    description: 索引に記載したままの `rule`
   - name: skipped_entries[].reason
     type: str
     description: 読み飛ばした理由
-    notes: 展開できない変数参照の名前・URL の `rule`・コンパイルできない正規表現。フックが案内に載せる理由と同じ文言
+    notes: 展開できない変数参照の名前・URL の `rule`・コンパイルできない正規表現。フックが案内に記載する理由と同じ文言
   - name: disabled_entries[].index
     type: str
     description: '`enabled: false` のエントリを持つ索引の場所'
@@ -284,13 +284,13 @@ response:
     description: エントリのバージョン
   - name: disabled_entries[].rule
     type: str
-    description: 索引に書いたままの `rule`
+    description: 索引に記載したままの `rule`
   - name: total
     type: int
-    description: 効いているエントリの総数
+    description: 有効なエントリの総数
   - name: next_cursor
     type: str | None
-    description: 続きを取るときに `cursor` へ渡す値
+    description: 続きを取るときに `cursor` へ指定する値
     notes: 続きが無いときは `None`
 response_example: |-
   ```json
@@ -323,28 +323,28 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 一覧を作れた
-    notes: 読めない索引・読み飛ばしたエントリはエラーにせず応答に載せる
+    notes: 読めない索引・読み飛ばしたエントリはエラーにせず応答に記載する
   - name: ToolError（絶対パスでない）
     condition: '`project_dir` が絶対パスでない'
-    notes: 'ツールの結果を `isError: true` にし、絶対パスで渡す旨を返す'
+    notes: 'ツールの結果を `isError: true` にし、絶対パスで指定する旨を返却する'
   - name: ToolError（設定ファイルが読めない）
     condition: 呼び出しの時点で設定ファイルが無い・読めない・書式に合わない・知らないキーか許す値の外の値を持つ
-    notes: 'ツールの結果を `isError: true` にし、設定ファイルの場所と理由を返す（既定値では動かさない）'
-error_format: 'MCP のツールの結果を `isError: true` にし、text に理由を 1 行で入れる。structuredContent は返さない'
+    notes: 'ツールの結果を `isError: true` にし、設定ファイルの場所と理由を返却する（既定値では動かさない）'
+error_format: 'MCP のツールの結果を `isError: true` にし、text に理由を 1 行で入れる。structuredContent は返却しない'
 constraints:
   - item: 読む索引
-    constraint: フックと同じ規則（設定ファイルの `global.indexes`・当たった `projects[].indexes`・既定の置き場所）を、`project_dir` を `CLAUDE_PROJECT_DIR` として当てる
+    constraint: フックと同じ規則（設定ファイルの `global.indexes`・該当した `projects[].indexes`・既定の置き場所）を、`project_dir` を `CLAUDE_PROJECT_DIR` として適用する
     notes: 規則はインターフェース定義「ルール案内」の制約「索引」。フックと同じコードで読む
   - item: 変数参照
     constraint: '`rule` の `!{名前}` はサーバーを起動した環境の環境変数で展開する'
-    notes: フックと同じ結果にするには、起動の側にも同じ環境変数を置く
+    notes: フックと同じ結果にするには、起動の側にも同じ環境変数を配置する
   - item: エントリのバージョン
-    constraint: エントリのキーと値（索引に書いたまま）をキーの順に並べた JSON の SHA-256 の先頭 12 文字
+    constraint: エントリのキーと値（索引に記載したまま）をキーの順に並べた JSON の SHA-256 の先頭 12 文字
     notes: コメント・引用符・字下げだけの違いでは変わらない
   - item: 応答の長さ
-    constraint: 効いているエントリを `limit` 件まで返し、応答が上限を超えるときはその手前で切って `next_cursor` を返す
+    constraint: 有効なエントリを `limit` 件まで返却し、応答が上限を超えるときはその手前で切って `next_cursor` を返却する
     decided_by: NFR-122-1#requirements[MCPのツールの応答の長さ]
-    notes: 読めない索引・読み飛ばしたエントリ・無効のエントリは先頭のページだけに載せる
+    notes: 読めない索引・読み飛ばしたエントリ・無効のエントリは先頭のページだけに記載する
   - item: 認可
     constraint: 制限なし
 refs:

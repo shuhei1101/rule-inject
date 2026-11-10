@@ -9,12 +9,12 @@ flows:
     summary: 位置で指したエントリを削除し、他のエントリとコメントを残す
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
         description: コメントを持つエントリを 2 つ持つ
-        notes: 削除の前の内容を控える
+        notes: 削除の前の内容を記録する
       - name: 引数
         description: '`position: 0` と 1 つ目のエントリの `expected_rev`'
     flow: |-
@@ -39,15 +39,15 @@ flows:
       - 応答の `rule` が削除したエントリの `rule` で、`written` が `true`
     test: test_normal
   - name: 正常系（書き込まずに確かめる）
-    summary: '`dry_run` で差分だけを返す'
+    summary: '`dry_run` で差分だけを返却する'
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
         description: 正常系と同じ
-        notes: 削除の前のバイト列を控える
+        notes: 削除の前のバイト列を記録する
       - name: 引数
         description: '正常系と同じ引数と `dry_run: true`'
     flow: |-
@@ -71,7 +71,7 @@ flows:
     summary: 他のエントリにもとから問題が残っていても削除する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
@@ -100,9 +100,9 @@ flows:
     summary: 相対パスの `project_dir` をエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
-        description: '`project_dir` に相対パスを渡す'
+        description: '`project_dir` に相対パスを指定する'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -113,18 +113,18 @@ flows:
         IF-->>C: isError: true（絶対パスで渡す旨）
       ```
     expected:
-      - '結果が `isError: true` で、絶対パスで渡す旨が載っている'
+      - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
     test: test_error_when_project_dir_not_absolute
   - name: 異常系（設定ファイルが読めない・ToolError）
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
       - name: 索引
         description: エントリを 1 つ持つ
-        notes: 削除の前のバイト列を控える
+        notes: 削除の前のバイト列を記録する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -145,12 +145,12 @@ flows:
     summary: 設定ファイルで読まないファイルからの削除を断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 対象のファイル
-        description: 設定ファイルで読まない場所に置いた、索引の書式の YAML
-        notes: 削除の前のバイト列を控える
+        description: 設定ファイルで読まない場所に配置した、索引の書式の YAML
+        notes: 削除の前のバイト列を記録する
       - name: 引数
         description: '`index` に対象のファイル、`position: 0` とそのエントリの `expected_rev`'
     flow: |-
@@ -173,12 +173,12 @@ flows:
     summary: YAML として読めない索引からの削除を断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
         description: 閉じていないフロー形式のリストを持ち、YAML として読めない
-        notes: 削除の前のバイト列を控える
+        notes: 削除の前のバイト列を記録する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -199,12 +199,12 @@ flows:
     summary: エントリの数以上の位置の削除を断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
         description: エントリを 1 つ持つ
-        notes: 削除の前のバイト列を控える
+        notes: 削除の前のバイト列を記録する
       - name: 引数
         description: '`position: 1` と任意の `expected_rev`'
     flow: |-
@@ -227,12 +227,12 @@ flows:
     summary: 一覧を取った後に書き換えられたエントリの削除を断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
         description: エントリを 1 つ持ち、一覧で `rev` を取った後にテストがそのエントリの `paths` を直接書き換える
-        notes: 書き換えた後のバイト列を控える
+        notes: 書き換えた後のバイト列を記録する
       - name: 引数
         description: '`position: 0` と、書き換える前に取った `expected_rev`'
     flow: |-
@@ -248,19 +248,19 @@ flows:
         IF-->>C: isError: true（今のバージョンと取り直す旨）
       ```
     expected:
-      - '結果が `isError: true` で、今のバージョンと一覧を取り直す旨が載っている'
+      - '結果が `isError: true` で、今のバージョンと一覧を再取得する旨が載っている'
       - 索引のファイルがテストが書き換えた後のバイト列のまま
     test: test_error_when_rev_mismatch
   - name: 異常系（フックが読めない索引・ToolError）
     summary: フックが読めない索引からの削除を断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 索引
         description: YAML としては読めるがフックが読めない索引
-        notes: 'エントリに `on: [foo]` を持つ索引と、`rules: [{rule: a.md}, {rule: b.md}]` の索引（パラメータ展開）。書き込みの前のバイト列を控える'
+        notes: 'エントリに `on: [foo]` を持つ索引と、`rules: [{rule: a.md}, {rule: b.md}]` の索引（パラメータ展開）。書き込みの前のバイト列を記録する'
       - name: 引数
         description: '`position: 0` と任意の `expected_rev`'
     flow: |-
@@ -276,14 +276,14 @@ flows:
         IF-->>C: isError: true（フックが読めない理由と手で直す旨）
       ```
     expected:
-      - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で直す旨が載っている'
+      - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_hook_unreadable
 lead: 設定ファイルで読み込む索引から位置で指したエントリを削除するツールの入出力を定め、エントリの削除を修正するときに参照する。
 identifier: delete_index_entry
 idempotent: false
 side_effects: 索引のファイルを書き換える（`dry_run` のときとエラーのときは書き換えない）。`destructiveHint`
-exclusivity: インターフェース定義「エントリの書き込み」と同じロックを使う
+exclusivity: インターフェース定義「エントリの書き込み」と同じロックを使用する
 request:
   - name: project_dir
     type: str
@@ -315,7 +315,7 @@ request:
     required: false
     default: 'false'
     location: argument
-    description: 書き込まずに差分だけを返すか
+    description: 書き込まずに差分だけを返却するか
 request_example: |-
   ```json
   {
@@ -337,7 +337,7 @@ response:
     description: 削除した索引の場所（`~` を展開した後）
   - name: rule
     type: str
-    description: 削除したエントリの `rule`（索引に書いたまま）
+    description: 削除したエントリの `rule`（索引に記載したまま）
   - name: written
     type: bool
     description: 索引のファイルを書き換えたか
@@ -346,31 +346,31 @@ response:
     type: str
     description: 索引のファイルの書き換えの前後の unified diff
     notes: 前後 3 行を添える
-response_notes: 削除した位置より後ろのエントリは位置が 1 つずつ前へずれる。続けて書き込むときは一覧を取り直す
+response_notes: 削除した位置より後ろのエントリは位置が 1 つずつ前へずれる。続けて書き込むときは一覧を再取得する
 exceptions:
   - name: なし（正常終了）
-    condition: エントリを除いて書き込んだ（`dry_run` のときは書き込まずに返した）
+    condition: エントリを除いて書き込んだ（`dry_run` のときは書き込まずに返却した）
   - name: ToolError（絶対パスでない）
     condition: '`project_dir` が絶対パスでない'
     notes: インターフェース定義「ルールの一覧」と同じ
   - name: ToolError（設定ファイルが読めない）
     condition: インターフェース定義「ルールの一覧」と同じ
-    notes: 設定ファイルの場所と理由を返す
+    notes: 設定ファイルの場所と理由を返却する
   - name: ToolError（設定ファイルで読む索引でない）
     condition: インターフェース定義「エントリの書き込み」と同じ
-    notes: 設定ファイルで読む索引でない旨と、読む索引の場所を返す
+    notes: 設定ファイルで読む索引でない旨と、読む索引の場所を返却する
   - name: ToolError（索引が YAML として読めない）
     condition: インターフェース定義「エントリの書き込み」と同じ
-    notes: 索引の場所と理由を返す
+    notes: 索引の場所と理由を返却する
   - name: ToolError（エントリの位置が無い）
     condition: '`position` が索引のエントリの数以上'
-    notes: 位置が無い旨と索引のエントリの数を返す
+    notes: 位置が無い旨と索引のエントリの数を返却する
   - name: ToolError（バージョンが合わない）
     condition: '`expected_rev` が今のエントリのバージョンと違う'
-    notes: 今のバージョンと、一覧を取り直してから呼び直す旨を返す
+    notes: 今のバージョンと、一覧を再取得してから再度呼び出す旨を返却する
   - name: ToolError（フックが読めない索引）
-    condition: 索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない。`rules` をフロー形式で書いた索引も含む）
-    notes: 削除せずに、フックが読めない理由（行の番号を含む）と、索引を手で直す旨を返す
+    condition: 索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない。`rules` をフロー形式で記載した索引も含む）
+    notes: 削除せずに、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨を返却する
 error_format: インターフェース定義「エントリの書き込み」と同じ
 constraints:
   - item: 書き込める索引
@@ -382,7 +382,7 @@ constraints:
     notes: エントリを除くだけでは、フックが読めなくなることも新しい問題が出ることも無い。もとからある問題で削除を止めない（インターフェース定義「エントリの書き込み」の制約「チェック」）
   - item: 書式の維持
     constraint: 対象のエントリの行と、そのエントリに付いたコメントだけを除き、他の行を変えない
-    notes: 次のエントリの直前に置いたコメントは次のエントリに付くものとして残す
+    notes: 次のエントリの直前に配置したコメントは次のエントリに付くものとして残す
   - item: エントリのバージョン
     constraint: インターフェース定義「ルールの一覧」の制約「エントリのバージョン」と同じ求め方
   - item: 認可
