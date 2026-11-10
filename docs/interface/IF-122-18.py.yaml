@@ -9,13 +9,13 @@ flows:
     summary: そのセッションの既読の記録ファイルと案内済みの記録ファイルだけを削除する
     setup:
       - name: Mock
-        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
       - name: 既読の記録
-        description: 対象のセッションと別のセッションの記録ファイルを 1 つずつ置く
+        description: 対象のセッションと別のセッションの記録ファイルを 1 つずつ配置する
       - name: 案内済みの記録
-        description: 対象のセッションと別のセッションの `{session_id}.guided.txt` を 1 つずつ置く
+        description: 対象のセッションと別のセッションの `{session_id}.guided.txt` を 1 つずつ配置する
       - name: 既読の履歴
-        description: 対象のセッションの `{session_id}.history.jsonl` を 1 行の中身で置く
+        description: 対象のセッションの `{session_id}.history.jsonl` を 1 行の中身で配置する
       - name: 入力
         description: '`session_id` は対象のセッション、`trigger: manual`'
     flow: |-
@@ -60,14 +60,14 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_no_record
   - name: 異常系（記録を削除できない・ログに書く）
-    summary: 記録ファイルを削除できないとき、圧縮は止めずにログと標準エラー出力に書く
+    summary: 記録ファイルを削除できないとき、圧縮は止めずにログと標準エラー出力に書き込む
     setup:
       - name: Mock
         description: なし
       - name: 既読の記録
-        description: 対象のセッションの記録ファイルを置き、フォルダを書き込み権限なし（`chmod 555`）にする
+        description: 対象のセッションの記録ファイルを配置し、フォルダを書き込み権限なし（`chmod 555`）にする
       - name: ログのフォルダ
-        description: '設定ファイルの `global.log_dir` を書き込み権限の無い空のフォルダ（`chmod 555`）にする'
+        description: 設定ファイルの `global.log_dir` を書き込み権限の無い空のフォルダ（`chmod 555`）にする
       - name: 入力
         description: '`trigger: manual`'
     flow: |-
@@ -85,18 +85,18 @@ flows:
     expected:
       - 標準出力が空
       - '標準エラー出力に `operation: delete_record` の 1 行がある'
-      - 記録ファイルが残っている（圧縮の後の作業の決まりの注入が知らせる）
+      - 記録ファイルが残っている（圧縮の後の作業の決まりの注入が通知する）
       - 終了コードが `0`
     test: test_error_when_record_undeletable
   - name: 異常系（設定ファイルが読めない・ログに書く）
-    summary: 設定ファイルが読めないとき、何も削除せずにログに書く
+    summary: 設定ファイルが読めないとき、何も削除せずにログに書き込む
     setup:
       - name: Mock
         description: なし
       - name: 設定ファイル
         description: '`RULE_INJECT_CONFIG` が YAML として読めないファイルを指す'
       - name: 既読の記録
-        description: '`XDG_STATE_HOME` の既定の記録フォルダに、そのセッションの記録ファイルを置く'
+        description: '`XDG_STATE_HOME` の既定の記録フォルダに、そのセッションの記録ファイルを配置する'
       - name: 入力
         description: '`trigger: auto`'
     flow: |-
@@ -127,7 +127,7 @@ request:
     required: true
     description: 圧縮するセッションの識別子
     constraints: 1〜128 文字の英数字 / `_` / `-`
-    notes: 形式が外れた値のときは何も削除しない
+    notes: 形式に合わない値のときは何も削除しない
   - name: '`trigger`'
     type: Literal['manual', 'auto']
     required: true
@@ -136,23 +136,23 @@ request:
 exceptions:
   - name: なし（正常終了）
     condition: 終了コード 0 で終え、標準出力には何も出さない
-    notes: 終了コード 2 は圧縮を止める合図になるため使わない
+    notes: 終了コード 2 は圧縮を止める合図になるため使用しない
   - name: OSError（記録を削除できない）
     condition: 記録ファイルはあるが削除できない（権限など）
-    notes: 'フックの中で捕まえ、ログへ `delete_record` を書いて終了コード 0 で終える（圧縮は止めない）。PreCompact の `systemMessage` は Claude Code が捨てるため、利用者とモデルへは圧縮の後の作業の決まりの注入（`source: compact`）が、削除できずに残った記録ファイルを見つけて知らせる'
+    notes: 'フックの中で捕まえ、ログへ `delete_record` を書き込んで終了コード 0 で終える（圧縮は止めない）。PreCompact の `systemMessage` は Claude Code が捨てるため、利用者とモデルへは圧縮の後の作業の決まりの注入（`source: compact`）が、削除できずに残った記録ファイルを見つけて通知する'
   - name: Exception（想定外の例外）
-    condition: 上のどれにも当たらない例外
-    notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える。記録ファイルが残れば、記録を削除できないときと同じく圧縮の後に知らせる
+    condition: 上のどれにも該当しない例外
+    notes: 最上位で捕まえ、ログへ `unexpected` を書き込んで終了コード 0 で終える。記録ファイルが残れば、記録を削除できないときと同じく圧縮の後に通知する
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
-    notes: フックの中で捕まえ、既定値で動かさず何も削除しない。既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える（圧縮は止めない）。圧縮の後の作業の決まりの注入が、設定ファイルの場所と理由を載せる
+    notes: フックの中で捕まえ、既定値で動かさず何も削除しない。既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える（圧縮は止めない）。圧縮の後の作業の決まりの注入が、設定ファイルの場所と理由を記載する
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。書けないときは標準エラー出力へ出す
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。書き込めないときは標準エラー出力へ出す
   - item: 設定ファイル
-    constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.state_dir`・`global.log_dir`
+    constraint: ルール案内の制約「設定ファイル」と同じく読む。使用するキーは `global.state_dir`・`global.log_dir`
 identifier: discard_read
 test_file: tests/integration/plugin/test_discard_read.py

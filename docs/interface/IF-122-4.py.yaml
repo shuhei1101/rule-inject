@@ -6,12 +6,12 @@ entry:
   value: update_server
 flows:
   - name: 正常系
-    summary: 上流の commit を fast-forward で取り込み、依存を入れ直し、移し替えが要らなければ再起動する
+    summary: 上流の commit を fast-forward で取り込み、依存を再インストールし、移し替えが要らなければ再起動する
     setup:
       - name: Mock
-        description: なし（一時フォルダに上流の bare リポジトリと、そこから取ったクローンを作り、そのクローンから `127.0.0.1` の空いているポートで子プロセスとしてサーバーを立て、MCP の Python SDK の Streamable HTTP のクライアントでツールを呼ぶ）
+        description: なし（一時フォルダに上流の bare リポジトリと、そこから取ったクローンを作り、そのクローンから `127.0.0.1` の空いているポートで子プロセスとしてサーバーを起動し、MCP の Python SDK の Streamable HTTP のクライアントでツールを呼ぶ）
       - name: 上流の commit
-        description: サーバーを起動した後に、上流へ移し替えの手順を持たない commit を 1 つ積む
+        description: サーバーを起動した後に、上流へ移し替えの手順を持たない commit を 1 つ追加する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -33,7 +33,7 @@ flows:
     expected:
       - '`state` が `restarting` で、`before` が更新の前の `HEAD`、`after` が上流の commit'
       - クローンの `HEAD` が上流の commit と同じ
-      - 接続し直した後の `get_server_status` の `commit` が上流の commit で、`started_at` が新しい
+      - 再接続した後の `get_server_status` の `commit` が上流の commit で、`started_at` が新しい
     test: test_normal
   - name: 正常系（新しい commit が無い）
     summary: 上流に新しい commit が無いときは、クローンにも依存にも触らず再起動もしない
@@ -41,7 +41,7 @@ flows:
       - name: Mock
         description: 正常系と同じ
       - name: 上流の commit
-        description: 上流に commit を積まない
+        description: 上流に commit を追加しない
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -57,12 +57,12 @@ flows:
       - 続けて呼んだ `get_server_status` の `started_at` が更新の前と同じ
     test: test_normal_when_up_to_date
   - name: 正常系（設定の移し替えが要る）
-    summary: 移し替えの手順があるときは再起動せず、手順と global-setup を返す
+    summary: 移し替えの手順があるときは再起動せず、手順と global-setup を返却する
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 上流の commit
-        description: 上流へ、テストの設定ファイルの `version` に当てる移し替えの手順を持つ commit を積む
+        description: 上流へ、テストの設定ファイルの `version` に適用する移し替えの手順を持つ commit を追加する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -85,7 +85,7 @@ flows:
       - name: Mock
         description: 正常系と同じ
       - name: 分かれた commit
-        description: クローンと上流のそれぞれに、別の commit を 1 つずつ積む
+        description: クローンと上流のそれぞれに、別の commit を 1 つずつ追加する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -98,7 +98,7 @@ flows:
         IF-->>C: isError: true（fast-forward できない）
     expected:
       - '結果が `isError: true` で、fast-forward できない旨と両方の commit が載っている'
-      - クローンの `HEAD` がクローンに積んだ commit のまま
+      - クローンの `HEAD` がクローンに追加した commit のまま
     test: test_error_when_not_fast_forward
   - name: 異常系（commit していない変更がある・UpdateFailedError）
     summary: 追跡しているファイルに commit していない変更があるときは、取得もせずに断る
@@ -106,7 +106,7 @@ flows:
       - name: Mock
         description: 正常系と同じ
       - name: クローンの変更
-        description: 上流に commit を 1 つ積み、クローンの追跡しているファイルを commit せずに書き換える
+        description: 上流に commit を 1 つ追加し、クローンの追跡しているファイルを commit せずに書き換える
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -122,10 +122,10 @@ flows:
       - クローンの `HEAD` と書き換えたファイルの中身が更新の前のまま
     test: test_error_when_uncommitted_changes
   - name: 異常系（コマンドが失敗する・UpdateFailedError）
-    summary: '`uv sync` が失敗・打ち切られたときは、取り込んだ commit を返して再起動しない'
+    summary: '`uv sync` が失敗・打ち切られたときは、取り込んだ commit を返却して再起動しない'
     setup:
       - name: Mock
-        description: '`build_server` の `run_command` を差し替え、`uv sync` だけ終了コード 1 を返す'
+        description: '`build_server` の `run_command` を差し替え、`uv sync` だけ終了コード 1 を返却する'
       - name: 上流の commit
         description: 正常系と同じ
     flow: |-
@@ -171,7 +171,7 @@ response:
     description: 更新の後の `HEAD`
   - name: steps
     type: list[str]
-    description: '`migrate --plan` が返した移し替えの手順（`migrations`）'
+    description: '`migrate --plan` が返却した移し替えの手順（`migrations`）'
     notes: '`migration_required` 以外は空。`version` の更新だけの手順は含めない'
 response_example: |-
   ```json
@@ -184,22 +184,22 @@ response_example: |-
     "steps": []
   }
   ```
-response_notes: '`restarting` のときは、応答を返し終えてからインターフェース定義「サーバーの再起動」と同じ順で起動し直す。'
+response_notes: '`restarting` のときは、応答を返却し終えてからインターフェース定義「サーバーの再起動」と同じ順で再起動する。'
 exceptions:
   - name: なし（正常終了）
     condition: 何も変えなかった・再起動を始めた・移し替えが要るため再起動しなかった
   - name: UpdateFailedError（commit していない変更がある）
     condition: '`git status --porcelain --untracked-files=no` が空でない'
-    notes: '`isError: true`。変更のあるファイルを返し、取得もしない'
+    notes: '`isError: true`。変更のあるファイルを返却し、取得もしない'
   - name: UpdateFailedError（fast-forward できない）
     condition: '`HEAD` と上流のブランチ（`@{u}`）が分かれている（どちらも相手の祖先でない）'
-    notes: '`isError: true`。両方の commit を返し、クローンに触らない'
+    notes: '`isError: true`。両方の commit を返却し、クローンに触らない'
   - name: UpdateFailedError（上流のブランチが無い）
     condition: クローンのブランチに上流が設定されていない、またはクローンが git のリポジトリでない
     notes: '`isError: true`'
   - name: UpdateFailedError（コマンドが失敗する）
     condition: '`git fetch`・`git merge --ff-only`・`uv sync`・`migrate --plan` が 0 以外の終了コードで終わるか、打ち切りの上限を超えた'
-    notes: '`isError: true`。コマンド・終了コード・標準エラーの末尾と、その時点の `HEAD` を返し、再起動しない。`migrate --plan` の終了コード 6（設定がツールより新しい）もここに入る'
+    notes: '`isError: true`。コマンド・終了コード・標準エラーの末尾と、その時点の `HEAD` を返却し、再起動しない。`migrate --plan` の終了コード 6（設定がツールより新しい）もここに入る'
   - name: RestartInProgressError
     condition: 前の再起動・更新の再起動がまだ待ち受けを閉じていないか、別の更新が動いている
     notes: '`isError: true`'
@@ -208,16 +208,16 @@ constraints:
   - item: クローン
     constraint: インターフェース定義「サーバーの状態の確認」の `clone`
   - item: コマンドの順
-    constraint: '`git status` → `git fetch` → 前後の確かめ → `git merge --ff-only @{u}` → `uv sync --extra server` → `{clone}/.venv/bin/python -m rule_inject.migrate --plan`'
-    notes: '`uv` は環境変数 `UV`（`uv run` が置く）、無ければ `PATH` から引く'
+    constraint: '`git status` → `git fetch` → 前後の確認し → `git merge --ff-only @{u}` → `uv sync --extra server` → `{clone}/.venv/bin/python -m rule_inject.migrate --plan`'
+    notes: '`uv` は環境変数 `UV`（`uv run` が配置する）、無ければ `PATH` から検索する'
   - item: 前後の確かめ
-    constraint: '`HEAD` と `@{u}` が同じか、`@{u}` が `HEAD` の祖先（`git merge-base --is-ancestor @{u} HEAD`。クローンが上流より先に進んでいるだけ）なら `up_to_date` を返し、クローンに触らない。`HEAD` が `@{u}` の祖先なら取り込む。どちらでもなければ `UpdateFailedError`（fast-forward できない）'
+    constraint: '`HEAD` と `@{u}` が同じか、`@{u}` が `HEAD` の祖先（`git merge-base --is-ancestor @{u} HEAD`。クローンが上流より先に進んでいるだけ）なら `up_to_date` を返却し、クローンに触らない。`HEAD` が `@{u}` の祖先なら取り込む。どちらでもなければ `UpdateFailedError`（fast-forward できない）'
   - item: 打ち切りの上限
-    constraint: git の各コマンド・`uv sync`・`migrate --plan` のそれぞれに、非機能要件の決定値の上限を置く
+    constraint: git の各コマンド・`uv sync`・`migrate --plan` のそれぞれに、非機能要件の決定値の上限を配置する
     decided_by: NFR-122-1#requirements[更新のコマンドの打ち切り]
   - item: 移し替えの確かめ
-    constraint: '`migrate --plan` はサーバーと同じ環境（`RULE_INJECT_CONFIG`）で実行し、標準出力の JSON の `migrations`（`version` の更新を除いた、当たった移し替えの手順）が空でなければ要るとする'
-    notes: '`steps` は設定の `version` がツールと違えば `version を … にする` を必ず含むため、判定に使わない。`version` だけが古い設定はサーバーが読めるため、再起動する。設定ファイルは書き換えない。移し替えは利用者が `global-setup` で確認してから当てる'
+    constraint: '`migrate --plan` はサーバーと同じ環境（`RULE_INJECT_CONFIG`）で実行し、標準出力の JSON の `migrations`（`version` の更新を除いた、該当した移し替えの手順）が空でなければ要るとする'
+    notes: '`steps` は設定の `version` がツールと違えば `version を … にする` を必ず含むため、判定に使用しない。`version` だけが古い設定はサーバーが読めるため、再起動する。設定ファイルは書き換えない。移し替えは利用者が `global-setup` で確認してから適用する'
   - item: 再起動
     constraint: インターフェース定義「サーバーの再起動」の制約と同じ
   - item: 認可

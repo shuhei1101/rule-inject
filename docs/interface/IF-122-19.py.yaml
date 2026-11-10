@@ -6,16 +6,16 @@ entry:
   value: '`PostToolUse` フック（matcher `Grep|Glob|Bash`、timeout 1 秒）'
 flows:
   - name: 正常系
-    summary: Grep のファイル名の結果に当たる未読のルールを案内し、案内済みにする
+    summary: Grep のファイル名の結果に該当する未読のルールを案内し、案内済みにする
     setup:
       - name: Mock
-        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ一時ファイル'
         notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global.indexes` で指す'
       - name: 既読の記録
         description: 空の一時フォルダ
-        notes: '同じ設定ファイルの `global.state_dir` で指す'
+        notes: 同じ設定ファイルの `global.state_dir` で指す
       - name: 入力
         description: '`tool_name: Grep`、`tool_response.filenames` に `cwd` からの相対パスで実在する `.py` を 1 つ'
     flow: |-
@@ -42,7 +42,7 @@ flows:
       - 終了コードが `0`
     test: test_normal
   - name: 正常系（Grepの一致した行）
-    summary: Grep の `content` の各行の最初の `:` より前から拾ったパスで案内する
+    summary: Grep の `content` の各行の最初の `:` より前から取得したパスで案内する
     setup:
       - name: Mock
         description: なし
@@ -66,7 +66,7 @@ flows:
       - '`additionalContext` にルールの場所が載っている'
     test: test_normal_when_grep_content
   - name: 正常系（Globの結果）
-    summary: Glob の `filenames` から拾ったパスで案内する
+    summary: Glob の `filenames` から取得したパスで案内する
     setup:
       - name: Mock
         description: なし
@@ -90,17 +90,17 @@ flows:
       - '`additionalContext` にルールの場所が載っている'
     test: test_normal_when_glob
   - name: 正常系（Bashの検索のコマンド）
-    summary: '`find` と `grep -n` の標準出力から拾ったパスで案内する'
+    summary: '`find` と `grep -n` の標準出力から取得したパスで案内する'
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
+        description: '`**/*.py` と `**/*.md` に該当する、別のルールを指すエントリを 1 つずつ持つ'
       - name: 既読の記録
         description: 空
       - name: 入力
         description: '`tool_name: Bash`、`tool_input.command: find src -type f | head`、`stdout` に `.py` のパスの行と `{.md のパス}:3:needle` の行'
-        notes: 1 本のテストで 2 つの出力の形式を拾えることを見る
+        notes: 1 本のテストで 2 つの出力の形式を取得できることを確認する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -168,7 +168,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
+        description: '`**/*.py` と `**/*.md` に該当する、別のルールを指すエントリを 1 つずつ持つ'
       - name: 既読の記録
         description: '`.py` のルールの場所と、今のルールのファイルの SHA-256 の行がある'
       - name: 案内済みの記録
@@ -198,7 +198,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`**/*.py` と `**/*.md` に当たる、別のルールを指すエントリを 1 つずつ持つ'
+        description: '`**/*.py` と `**/*.md` に該当する、別のルールを指すエントリを 1 つずつ持つ'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -220,12 +220,12 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_too_many_paths
   - name: 異常系（索引が読めない・理由を載せる）
-    summary: 索引が読めないとき、読めた索引で案内を続け、理由を載せる
+    summary: 索引が読めないとき、読めた索引で案内を続け、理由を記載する
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '設定ファイルの `global.indexes` が、正常系と同じ索引と、書式に合わないファイルの 2 つを指す'
+        description: 設定ファイルの `global.indexes` が、正常系と同じ索引と、書式に合わないファイルの 2 つを指す
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -249,14 +249,14 @@ flows:
       - 終了コードが `0`
     test: test_error_when_index_unreadable
   - name: 異常系（案内済みの記録に書けない・理由を載せる）
-    summary: 案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く
+    summary: 案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む
     setup:
       - name: Mock
         description: なし
       - name: 索引
         description: 正常系と同じ
       - name: 案内済みの記録
-        description: 記録フォルダを書き込み権限なし（`chmod 500`）で置く
+        description: 記録フォルダを書き込み権限なし（`chmod 500`）で配置する
       - name: 入力
         description: 正常系と同じ
     flow: |-
@@ -283,7 +283,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`**/*.py` に当たるエントリを 1 つ持つ'
+        description: '`**/*.py` に該当するエントリを 1 つ持つ'
       - name: 既読の記録
         description: '`.py` のルールの場所と、書き換える前のルールのファイルの SHA-256 の行だけがある'
         notes: 記録を作った後に、テストがルールのファイルに 1 行を追記する
@@ -312,7 +312,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
   - name: 異常系（設定ファイルが読めない・理由を載せる）
-    summary: 設定ファイルが読めないとき、案内せずに理由を載せる
+    summary: 設定ファイルが読めないとき、案内せずに理由を記載する
     setup:
       - name: Mock
         description: なし
@@ -322,7 +322,7 @@ flows:
         notes: 許す値の外の値
       - name: 索引
         description: '`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` に `paths: ["**/*.py"]` のエントリを 1 つ持つ'
-        notes: 既定値で動かさないことを見る
+        notes: 既定値で動かさないことを確認する
       - name: ログ
         description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
         notes: '-'
@@ -349,7 +349,7 @@ flows:
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
   - name: 正常系（無効のエントリに当たる）
-    summary: '検索の結果に出たファイルが `enabled: false` のエントリにだけ当たるとき、案内せず案内済みにもしない'
+    summary: '検索の結果に出たファイルが `enabled: false` のエントリにだけ該当するとき、案内せず案内済みにもしない'
     setup:
       - name: Mock
         description: なし
@@ -376,10 +376,10 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_entry_disabled
   - name: 正常系（参照するツールを添えて案内する）
-    summary: 検索の結果に出たファイルに当たる `read_tool` を持つエントリのルールを、ツールの名前と引数を添えて案内する
+    summary: 検索の結果に出たファイルに該当する `read_tool` を持つエントリのルールを、ツールの名前と引数を添えて案内する
     setup:
       - name: Mock
-        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
       - name: 索引
         description: '`paths: ["**/*.py"]`・`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` を持つエントリを 1 つ持つ'
       - name: 既読の記録
@@ -401,21 +401,21 @@ flows:
       ```
     expected:
       - '`additionalContext` の場所の行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
-      - '`additionalContext` の 2 行目に、`ツール:` の行のツールで参照し、記載の引数は全て指定し、使えないときはパスを Read で参照する旨が載っている'
+      - '`additionalContext` の 2 行目に、`ツール:` の行のツールで参照し、記載の引数は全て指定し、使用できないときはパスを Read で参照する旨が載っている'
       - 案内済みの記録にルールの場所が 1 行ある
     test: test_normal_with_read_tool
 lead: 検索の結果に出たファイルにヒットする未読・未案内のルールを止めずに案内するフックの入出力を定め、検索結果の案内を修正するときに参照する。
 identifier: search_guide
 idempotent: false
-side_effects: 案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
-exclusivity: 追記（O_APPEND）だけで書くため、ルール案内と同時に書いても行が混ざらない。同じ場所が 2 行入っても読む側が集合として扱う
+side_effects: 案内に記載したルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
+exclusivity: 追記（O_APPEND）だけで書き込むため、ルール案内と同時に書き込んでも行が混ざらない。同じ場所が 2 行入っても読む側が集合として扱う
 request:
   - name: '`session_id`'
     type: str
     required: true
     description: 呼び出し元のセッションの識別子
     constraints: 1〜128 文字の英数字 / `_` / `-`
-    notes: 形式が外れた値のときは何も出さない（案内済みを記録できず、毎回同じ案内が出るため）
+    notes: 形式に合わない値のときは何も出さない（案内済みを記録できず、毎回同じ案内が出るため）
   - name: '`cwd`'
     type: str
     required: true
@@ -435,20 +435,20 @@ request:
     type: list[str]
     required: false
     default: なし（`content` から拾う）
-    description: 'Grep（`mode: files_with_matches`）と Glob が当たったファイルのパス'
+    description: 'Grep（`mode: files_with_matches`）と Glob が該当したファイルのパス'
     notes: 'Grep の `mode: content` では空で届く'
   - name: '`tool_response.content`'
     type: str
     required: false
     default: なし
     description: 'Grep（`mode: content` / `count`）の結果。各行が `{パス}:{行番号}:{行}` か `{パス}:{件数}`'
-    notes: 各行の最初の `:` より前をパスとして拾う
+    notes: 各行の最初の `:` より前をパスとして取得する
   - name: '`tool_response.stdout`'
     type: str
     required: false
     default: なし
     description: Bash の標準出力
-    notes: 各行を、行全体が実在するファイルを指せばそのパス、指さなければ最初の `:` より前をパスとして拾う（`find` の 1 行 1 パスと、`grep -n` の `{パス}:{行番号}:{行}` の両方を拾う）
+    notes: 各行を、行全体が実在するファイルを指せばそのパス、指さなければ最初の `:` より前をパスとして取得する（`find` の 1 行 1 パスと、`grep -n` の `{パス}:{行番号}:{行}` の両方を取得する）
 request_example: |-
   ```json
   {
@@ -464,10 +464,10 @@ response:
   - name: '`hookSpecificOutput.hookEventName`'
     type: Literal['PostToolUse']
     description: フックの種類
-    notes: 案内か知らせがあるときだけ出力する。無いときは標準出力に何も出さない
+    notes: 案内か通知があるときだけ出力する。無いときは標準出力に何も出さない
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 検索結果のファイルに関連する未読のルールがあること・参照は任意であること・この案内はルールごとにセッションで 1 回だけ表示することと、参照の方法と、ルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。索引・記録が読めないか書けないときはその場所と理由
+    description: 検索結果のファイルに関連する未読のルールがあること・参照は任意であること・この案内はルールごとにセッションで 1 回だけ表示することと、参照の方法と、ルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。索引・記録が読めないか書き込めないときはその場所と理由
     constraints: 10,000 字以内
     notes: 「やり直してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
 response_example: |-
@@ -482,50 +482,50 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 案内の有無に関わらず終了コード 0 で終える
-    notes: 終了コード 2 は標準エラー出力をモデルへエラーとして渡す合図になるため使わない
+    notes: 終了コード 2 は標準エラー出力をモデルへエラーとして指定する合図になるため使用しない
   - name: OSError / 書式の誤り（索引が読めない）
     condition: 索引が無い・読めない・書式に合わない、または `rule` の変数参照を展開できないか読めない正規表現を持つエントリがある
-    notes: ルール案内と同じく、`additionalContext` へ索引の場所と理由を載せ、ログへ `read_index` を書いて終了コード 0 で終える。読めた索引のエントリでの案内は続ける
+    notes: ルール案内と同じく、`additionalContext` へ索引の場所と理由を記載し、ログへ `read_index` を書き込んで終了コード 0 で終える。読めた索引のエントリでの案内は続ける
   - name: OSError（記録が読めない・書けない）
-    condition: 既読の記録か案内済みの記録のファイルはあるが読めない、または案内済みの記録に書けない（権限・容量）
-    notes: 読めない記録は空として扱って案内を出し、`additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` か `write_record` を書く。ファイルが無いときは失敗ではなく空として扱う
+    condition: 既読の記録か案内済みの記録のファイルはあるが読めない、または案内済みの記録に書き込めない（権限・容量）
+    notes: 読めない記録は空として扱って案内を出し、`additionalContext` へ記録ファイルの場所と理由を記載し、ログへ `read_record` か `write_record` を書き込む。ファイルが無いときは失敗ではなく空として扱う
   - name: Exception（想定外の例外）
-    condition: 上のどれにも当たらない例外
-    notes: 最上位で捕まえ、`additionalContext` へ「検索結果の案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
+    condition: 上のどれにも該当しない例外
+    notes: 最上位で捕まえ、`additionalContext` へ「検索結果の案内が動かなかったこと」とログの場所を記載し、ログへ `unexpected` を書き込んで終了コード 0 で終える
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
-    notes: ルール案内と同じく、既定値で動かさず索引を読まない。`additionalContext` へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
+    notes: ルール案内と同じく、既定値で動かさず索引を読まない。`additionalContext` へ設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 案内文の長さ
-    constraint: 10,000 字。超えるときは収まるところまで場所を載せて残りの件数を添える
+    constraint: 10,000 字。超えるときは収まるところまで場所を記載して残りの件数を添える
     decided_by: NFR-122-1#requirements[フックの案内文の長さ]
   - item: 検索のコマンド
     constraint: Bash のコマンドを `&&` / `||` / `;` / `|` で区切った、`cd` を除く最初のコマンドの名前（パスの最後の要素）が `grep` / `rg` / `find` / `ls` のときだけ対象にする
     notes: 名前の部分一致にしない（`git merge` を `rg` と取り違えない）。出力の相対パスは、それまでの `cd` で動かした `cwd` から解く。`ls` は、`-` で始まらない引数が実在するフォルダ 1 つだけならそのフォルダから解く
   - item: 照合するパス
-    constraint: 結果から拾ったパスを `cwd` から絶対パスに解き、実在するファイルだけを、出た順に重なりを除いて照合する。フォルダ・実在しないパスは捨てる
+    constraint: 結果から取得したパスを `cwd` から絶対パスに解き、実在するファイルだけを、出た順に重なりを除いて照合する。フォルダ・実在しないパスは捨てる
   - item: 照合するパスの数
     constraint: 先頭から 100 件まで。超えた分は照合せず、案内を出すときに照合しなかった件数を添える
     decided_by: NFR-122-1#requirements[検索結果から照合するパスの数]
   - item: 当てる操作
-    constraint: 読む操作（`read`）としてエントリに当てる。エントリの `on` によらず止めない
+    constraint: 読む操作（`read`）としてエントリと照合する。エントリの `on` によらず止めない
     notes: 索引の読み方・既定の置き場所・`rule` の変数参照の展開はルール案内と同じ
   - item: 案内済みの記録
-    constraint: 既読の場所と、`{state_dir}/{session_id}.guided.txt` に載った場所を案内から除く。案内に載せた場所を同じファイルへ 1 行ずつ追記する
-    notes: ルール案内と同じ記録を共有する。案内文の長さに収まらず載せなかった場所は記録しない
+    constraint: 既読の場所と、`{state_dir}/{session_id}.guided.txt` に載った場所を案内から除く。案内に記載した場所を同じファイルへ 1 行ずつ追記する
+    notes: ルール案内と同じ記録を共有する。案内文の長さに収まらず記載しなかった場所は記録しない
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。標準出力には JSON 以外を出さない
-    notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。標準出力には JSON 以外を出さない
+    notes: ログに書き込めないときは同じ 1 行を標準エラー出力へ出す
   - item: 既読の判定
     constraint: ルール案内の制約「既読の判定」と同じ。既読の記録のハッシュが今のルールのファイルの SHA-256 と違うルールは未読として案内する
     notes: 案内済みの記録に載った場所は、本文が変わっても案内から除く
   - item: 設定ファイル
-    constraint: ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
+    constraint: ルール案内の制約「設定ファイル」と同じく読む。使用するキーは `global.indexes`・`global.state_dir`・`global.log_dir` と `projects`
     notes: '-'
   - item: 参照するツールの案内
-    constraint: ルール案内の制約「参照するツールの案内」と同じく、`read_tool` を持つエントリのルールのパスの行の下に `ツール:` の行を置く。1 行目は「検索結果のファイルに関連する未読のルールがあります（参照は任意です）。この案内はルールごとにセッションで 1 回だけ表示します。」、2 行目（参照の方法）はルール案内の制約「案内文の構成」と同じ。載せきれなかったときは末尾に「ほか {N} 件のルールは、次に関連したときに表示します。」を置く
+    constraint: ルール案内の制約「参照するツールの案内」と同じく、`read_tool` を持つエントリのルールのパスの行の下に `ツール:` の行を配置する。1 行目は「検索結果のファイルに関連する未読のルールがあります（参照は任意です）。この案内はルールごとにセッションで 1 回だけ表示します。」、2 行目（参照の方法）はルール案内の制約「案内文の構成」と同じ。記載しきれなかったときは末尾に「ほか {N} 件のルールは、次に関連したときに表示します。」を配置する
     notes: 書式の誤りの扱いもルール案内の制約「参照するツールの書式」と同じ
 test_file: tests/integration/plugin/test_search_guide.py

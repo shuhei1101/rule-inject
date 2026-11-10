@@ -6,12 +6,12 @@ entry:
   value: reload_settings
 flows:
   - name: 正常系
-    summary: 設定ファイルを読み直し、読んだ値を返す
+    summary: 設定ファイルを再度読み込み、読んだ値を返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
-        description: サーバーを起動した後に、`global.indexes` へ索引を 1 つ書き足し、`global.log_retention_days` を 7 にする
+        description: サーバーを起動した後に、`global.indexes` へ索引を 1 つ追加し、`global.log_retention_days` を 7 にする
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -24,16 +24,16 @@ flows:
         IF-->>C: config_path・indexes・state_dir・保持日数・dev_docs_url
     expected:
       - '`config_path` が `RULE_INJECT_CONFIG` と同じ'
-      - '`indexes` に書き足した索引が載り、`log_retention_days` が 7'
+      - '`indexes` に追加した索引が載り、`log_retention_days` が 7'
       - 設定ファイルが書き換わっていない
     test: test_normal
   - name: 正常系（プロジェクトを指す）
-    summary: '`project_dir` を受けると、そのプロジェクトで読む索引を返す'
+    summary: '`project_dir` を受けると、そのプロジェクトで読む索引を返却する'
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 設定ファイル
-        description: '`projects[]` に `match` がテストのプロジェクトに当たる要素があり、その `indexes` に索引が 1 つある'
+        description: '`projects[]` に `match` がテストのプロジェクトに該当する要素があり、その `indexes` に索引が 1 つある'
       - name: 引数
         description: '`project_dir` にテストのプロジェクトの直下'
     flow: |-
@@ -50,12 +50,12 @@ flows:
       - '`indexes` に、`global.indexes` に続けて `projects[]` の索引が載っている'
     test: test_normal_when_project_given
   - name: 異常系（設定ファイルが読めない・ToolError）
-    summary: 読めない設定ファイルは場所と理由をエラーで返し、待ち受けは続ける
+    summary: 読めない設定ファイルは場所と理由をエラーで返却し、待ち受けは続ける
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 設定ファイル
-        description: サーバーを起動した後に、`global` に知らないキーを書き足す
+        description: サーバーを起動した後に、`global` に知らないキーを追加する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -73,7 +73,7 @@ flows:
 lead: 設定ファイルを読み直して、読めたかと読み込んだ値を返却するツールの入出力を定め、設定の再読込を修正するときに参照する。
 identifier: reload_settings
 idempotent: true
-side_effects: なし（`readOnlyHint`）。設定ファイルは各ツールの呼び出しのたびに読み直しているため、プロセスの中に持つ値を入れ替えない
+side_effects: なし（`readOnlyHint`）。設定ファイルは各ツールの呼び出しのたびに再度読み込んでいるため、プロセスの中に持つ値を入れ替えない
 request:
   - name: project_dir
     type: str | None
@@ -97,13 +97,13 @@ response:
   - name: config_path
     type: str | None
     description: 読んだ設定ファイルの場所
-    notes: 既定のパスにファイルが無く読まなかったときは `null`（全てのキーを既定値で返す）
+    notes: 既定のパスにファイルが無く読まなかったときは `null`（全てのキーを既定値で返却する）
   - name: indexes
     type: list[str]
     description: 読む索引の場所。フックが読む順
   - name: state_dir
     type: str
-    description: 既読の記録とログを置く記録フォルダ
+    description: 既読の記録とログを配置する記録フォルダ
   - name: record_retention_days
     type: int
     description: 既読の記録の保持期間（日）
@@ -126,13 +126,13 @@ response_example: |-
     "dev_docs_url": "http://127.0.0.1:8781/mcp"
   }
   ```
-response_notes: '待ち受けのポートは起動したプロセスの環境変数 `RULE_INJECT_PORT` だけから読み、動いているプロセスでは変わらないため返さない（`get_server_status` の `port`）。'
+response_notes: '待ち受けのポートは起動したプロセスの環境変数 `RULE_INJECT_PORT` だけから読み、動いているプロセスでは変わらないため返却しない（`get_server_status` の `port`）。'
 exceptions:
   - name: なし（正常終了）
     condition: 設定ファイルを読めた
   - name: ToolError（設定ファイルが読めない）
     condition: 設定ファイルが読めない・書式に合わない・知らないキーか許す値の外の値を持つ
-    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返す
+    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返却する
   - name: ToolError（project_dir が絶対パスでない）
     condition: '`project_dir` が絶対パスでない'
     notes: インターフェース定義「ルールの一覧」と同じ

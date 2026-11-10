@@ -6,10 +6,10 @@ entry:
   value: '`search_rules`'
 flows:
   - name: 正常系（ファイルのパスで検索する）
-    summary: パスに当たる 2 つのルールを、止めるかとともに返す
+    summary: パスに該当する 2 つのルールを、止めるかとともに返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
@@ -39,16 +39,16 @@ flows:
       - '`operation` が `write`'
     test: test_normal_when_searched_by_path
   - name: 正常系（MCPのツールの呼び出しで検索する）
-    summary: ツール名と引数に当たるルールを返す
+    summary: ツール名と引数に該当するルールを返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: ファイルのパスで検索するフローと同じ
       - name: 索引
         description: '`tools: ["mcp__*__write_*"]`・`args: {doc_path: ["dev/**"]}`・`on: [mcp]` のエントリ'
       - name: 引数
-        description: パターンに当たる `tool_name` と、`doc_path` が `dev/` で始まる `arguments`
+        description: パターンに該当する `tool_name` と、`doc_path` が `dev/` で始まる `arguments`
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -70,14 +70,14 @@ flows:
       - '`operation` が `mcp`'
     test: test_normal_when_searched_by_tool
   - name: 正常系（当たるルールが無い）
-    summary: 無効のエントリだけが当たるときは空で返す
+    summary: 無効のエントリだけが該当するときは空で返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: ファイルのパスで検索するフローと同じ
       - name: 索引
-        description: '対象のパスに当たる `enabled: false` のエントリだけ'
+        description: '対象のパスに該当する `enabled: false` のエントリだけ'
       - name: 引数
         description: ファイルのパスで検索するフローと同じ
     flow: |-
@@ -99,9 +99,9 @@ flows:
     summary: 引数の組み合わせの誤りをエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
-        description: '`project_dir` に加え、`path`・`operation` と `tool_name` を渡す'
+        description: '`project_dir` に加え、`path`・`operation` と `tool_name` を指定する'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -112,13 +112,13 @@ flows:
         IF-->>C: isError: true（どちらか 1 つを渡す旨）
       ```
     expected:
-      - '結果が `isError: true` で、`path` か `tool_name` のどちらか 1 つを渡す旨が載っている'
+      - '結果が `isError: true` で、`path` か `tool_name` のどちらか 1 つを指定する旨が載っている'
     test: test_error_when_both_path_and_tool
   - name: 異常系（設定ファイルが読めない・ToolError）
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
       - name: 引数
@@ -164,7 +164,7 @@ request:
     default: なし（`path` を渡すときは必須）
     location: argument
     description: パスへの操作の種別
-    notes: '`read` は Read・Grep・Bash の読み取り、`write` は Edit・Write・NotebookEdit に当たる。ツールの呼び出しのときは `mcp` として照合する'
+    notes: '`read` は Read・Grep・Bash の読み取り、`write` は Edit・Write・NotebookEdit に該当する。ツールの呼び出しのときは `mcp` として照合する'
   - name: tool_name
     type: str
     required: false
@@ -178,7 +178,7 @@ request:
     default: なし（引数を持たない呼び出しとして照合する）
     location: argument
     description: MCP のツールの引数
-    notes: '`tool_name` を渡すときだけ使う。エントリの `args` と照合する'
+    notes: '`tool_name` を指定するときだけ使用する。エントリの `args` と照合する'
   - name: format
     type: Literal['markdown', 'json']
     required: false
@@ -199,27 +199,27 @@ response:
   - name: success
     type: bool
     description: 照合できたか
-    notes: 当たるルールが無くても `true`
+    notes: 該当するルールが無くても `true`
   - name: output
     type: str
-    description: 当たったルールの件数と、止めるルールの件数の 1 行
+    description: 該当したルールの件数と、止めるルールの件数の 1 行
   - name: config_path
     type: str | None
     description: サーバーが読んだ設定ファイルの場所
   - name: operation
     type: Literal['read', 'write', 'mcp']
-    description: 照合に使った操作の種別
+    description: 照合に使用した操作の種別
   - name: matched[].rule
     type: str
-    description: 当たったルールの場所（解いた後）
-    notes: 同じ場所に当たったエントリは 1 件にまとめる
+    description: 該当したルールの場所（解いた後）
+    notes: 同じ場所に該当したエントリは 1 件にまとめる
   - name: matched[].blocking
     type: bool
     description: 未読のときに操作を止めるか
-    notes: 当たったエントリのどれか 1 つでも `operation` が `on` に入っていれば `true`
+    notes: 該当したエントリのどれか 1 つでも `operation` が `on` に入っていれば `true`
   - name: matched[].entries[].index
     type: str
-    description: 当たったエントリを持つ索引の場所
+    description: 該当したエントリを持つ索引の場所
   - name: matched[].entries[].position
     type: int
     description: 索引の `rules` の中の位置
@@ -229,7 +229,7 @@ response:
     notes: インターフェース定義「ルールの一覧」の `unreadable_indexes` と同じ項目
   - name: skipped_entries[]
     type: list[object]
-    description: 読み飛ばして照合に使わなかったエントリと理由
+    description: 読み飛ばして照合に使用しなかったエントリと理由
     notes: インターフェース定義「ルールの一覧」の `skipped_entries` と同じ項目
 response_example: |-
   ```json
@@ -249,18 +249,18 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 照合できた
-    notes: 当たるルールが無いときは `matched` を空で返す
+    notes: 該当するルールが無いときは `matched` を空で返却する
   - name: ToolError（引数の組み合わせが誤り）
-    condition: '`path` と `tool_name` の両方を渡した、どちらも渡さない、`path` を渡して `operation` を渡さない、`project_dir` か `path` が絶対パスでない'
-    notes: 'ツールの結果を `isError: true` にし、渡し方を返す'
+    condition: '`path` と `tool_name` の両方を指定した、どちらも指定しない、`path` を指定して `operation` を指定しない、`project_dir` か `path` が絶対パスでない'
+    notes: 'ツールの結果を `isError: true` にし、指定方法を返却する'
   - name: ToolError（設定ファイルが読めない）
     condition: インターフェース定義「ルールの一覧」と同じ
-    notes: 設定ファイルの場所と理由を返す
+    notes: 設定ファイルの場所と理由を返却する
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 照合
-    constraint: フックの `PreToolUse`（インターフェース定義「ルール案内」）と同じ索引・同じコードで当て、既読の記録を見ずに未読とみなした結果を返す
-    notes: '`enabled: false` のエントリは照合に使わない。パターンの正規表現・引数の照合の規則も「ルール案内」と同じ'
+    constraint: フックの `PreToolUse`（インターフェース定義「ルール案内」）と同じ索引・同じコードで当て、既読の記録を確認せずに未読とみなした結果を返却する
+    notes: '`enabled: false` のエントリは照合に使用しない。パターンの正規表現・引数の照合の規則も「ルール案内」と同じ'
   - item: 読む索引
     constraint: インターフェース定義「ルールの一覧」の制約「読む索引」「変数参照」と同じ
   - item: 認可

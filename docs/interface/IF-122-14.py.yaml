@@ -6,16 +6,16 @@ entry:
   value: '`PreToolUse` フック（matcher `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、timeout 1 秒）'
 flows:
   - name: 正常系（止めて案内する）
-    summary: 書く操作が必須の未読のルールで Write を止める
+    summary: 書き込む操作が必須の未読のルールで Write を止める
     setup:
       - name: Mock
-        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ一時ファイル'
         notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global.indexes` で指す'
       - name: 既読の記録
         description: 空の一時フォルダ
-        notes: '同じ設定ファイルの `global.state_dir` で指す'
+        notes: 同じ設定ファイルの `global.state_dir` で指す
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
@@ -38,7 +38,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_blocked
   - name: 正常系（既読のため案内しない）
-    summary: 当たるルールが既読なら何も出さない
+    summary: 該当するルールが既読なら何も出さない
     setup:
       - name: Mock
         description: なし
@@ -67,7 +67,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_already_read
   - name: 正常系（止めずに案内する）
-    summary: 操作の種別が `on` に当たらない未読のルールは止めずに案内する
+    summary: 操作の種別が `on` に該当しない未読のルールは止めずに案内する
     setup:
       - name: Mock
         description: なし
@@ -111,7 +111,7 @@ flows:
         description: 空
       - name: 入力
         description: '`tool_name: Bash`、`tool_input.command` は `cd src && cat app.py | head -n 5`'
-        notes: 実在する `.py` を `cwd` の下に置く
+        notes: 実在する `.py` を `cwd` の下に配置する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -131,12 +131,12 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_read_by_bash
   - name: 正常系（MCPのツールに当たる）
-    summary: '`tools` の glob に当たる MCP のツールの呼び出しを止める'
+    summary: '`tools` の glob に該当する MCP のツールの呼び出しを止める'
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`tools: ["mcp__*__create_*"]` のエントリを 1 つ持ち、`on` を書かない（`default_on` の既定で `mcp` を含む）'
+        description: '`tools: ["mcp__*__create_*"]` のエントリを 1 つ持ち、`on` を記載しない（`default_on` の既定で `mcp` を含む）'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -165,7 +165,7 @@ flows:
       - name: Mock
         description: なし
       - name: 索引
-        description: '同じルールを指す 2 つのエントリ（`on: [read]` と `on: [write]`、どちらも `**/*.py` に当たる）'
+        description: '同じルールを指す 2 つのエントリ（`on: [read]` と `on: [write]`、どちらも `**/*.py` に該当する）'
         notes: 片方は絶対パス、片方は索引からの相対パスで同じファイルを指す
       - name: 既読の記録
         description: 空
@@ -188,7 +188,7 @@ flows:
       - '`permissionDecisionReason` にルールの場所が 1 回だけ載っている'
     test: test_normal_when_duplicate_entries
   - name: 正常系（外すパスに当たる）
-    summary: '`exclude` に当たるパスには案内しない'
+    summary: '`exclude` に該当するパスには案内しない'
     setup:
       - name: Mock
         description: なし
@@ -215,12 +215,12 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_excluded
   - name: 正常系（案内が長い）
-    summary: 案内が 10,000 字を超えるとき、収まる分だけ載せて残りの件数を添える
+    summary: 案内が 10,000 字を超えるとき、収まる分だけ記載して残りの件数を添える
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`**/*.py` に当たるエントリ 100 件（場所のパスは 1 件 150 字前後、半数は `on: [write]`、半数は `on: [read]`）'
+        description: '`**/*.py` に該当するエントリ 100 件（場所のパスは 1 件 150 字前後、半数は `on: [write]`、半数は `on: [read]`）'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -240,15 +240,15 @@ flows:
     expected:
       - '`permissionDecisionReason` が 10,000 字以内'
       - 止めるルールが止めないルールより前に並んでいる
-      - 載せきれなかったルールの件数が末尾に載っている
+      - 記載しきれなかったルールの件数が末尾に載っている
     test: test_normal_when_guidance_too_long
   - name: 異常系（索引が読めない・止めずに理由を載せる）
-    summary: 索引が無いか書式に合わないとき、操作を止めずに理由を載せる
+    summary: 索引が無いか書式に合わないとき、操作を止めずに理由を記載する
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '設定ファイルの `global.indexes` が実在しないパスと、書式に合わないファイルの 2 つを指す'
+        description: 設定ファイルの `global.indexes` が実在しないパスと、書式に合わないファイルの 2 つを指す
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -268,14 +268,14 @@ flows:
       - 終了コードが `0`
     test: test_error_when_index_unreadable
   - name: 異常系（既読の記録が読めない・止めずに理由を載せる）
-    summary: 記録ファイルが読めないとき、操作を止めずに理由を載せ、ログに書く
+    summary: 記録ファイルが読めないとき、操作を止めずに理由を記載し、ログに書き込む
     setup:
       - name: Mock
         description: なし
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ'
       - name: 既読の記録
-        description: そのセッションの記録ファイルを読み取り権限なし（`chmod 000`）で置く
+        description: そのセッションの記録ファイルを読み取り権限なし（`chmod 000`）で配置する
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -326,7 +326,7 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_read_by_grep
   - name: 正常系（案内済みのため案内しない）
-    summary: 止めない案内に当たるルールが案内済みなら何も出さない
+    summary: 止めない案内に該当するルールが案内済みなら何も出さない
     setup:
       - name: Mock
         description: なし
@@ -366,7 +366,7 @@ flows:
       - name: 既読の記録
         description: 空
       - name: 入力
-        description: 止めて案内するフローと同じ入力を 2 回続けて渡す
+        description: 止めて案内するフローと同じ入力を 2 回続けて指定する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -390,8 +390,8 @@ flows:
         description: なし
         notes: '-'
       - name: 索引
-        description: 止めて案内するフローと同じエントリを、`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` に置く
-        notes: '`RULE_INJECT_CONFIG` を渡さない。`XDG_CONFIG_HOME` は索引の無い空の一時フォルダを指す'
+        description: 止めて案内するフローと同じエントリを、`CLAUDE_PROJECT_DIR` の直下の `rules.yaml` に配置する
+        notes: '`RULE_INJECT_CONFIG` を指定しない。`XDG_CONFIG_HOME` は索引の無い空の一時フォルダを指す'
       - name: 既読の記録
         description: 空
         notes: '-'
@@ -412,18 +412,18 @@ flows:
       ```
     expected:
       - '`permissionDecision` が `deny`'
-      - '`permissionDecisionReason` にルールの場所が載り、索引が読めなかった知らせが載っていない'
+      - '`permissionDecisionReason` にルールの場所が載り、索引が読めなかった通知が記載されていない'
       - ログのファイルが無い
     test: test_normal_when_default_index
   - name: 正常系（索引の並びが空）
-    summary: 当たった `projects` の要素の `indexes` を空の並びにしたとき、プロジェクトの既定の置き場所の索引を読まない
+    summary: 該当した `projects` の要素の `indexes` を空の並びにしたとき、プロジェクトの既定の置き場所の索引を読まない
     setup:
       - name: Mock
         description: なし
         notes: '-'
       - name: 索引
-        description: 既定の置き場所のフローと同じ `rules.yaml` を置く
-        notes: '設定ファイルの `projects` に、`CLAUDE_PROJECT_DIR` のフォルダ名を `match` に持ち `indexes: []` の要素を置く'
+        description: 既定の置き場所のフローと同じ `rules.yaml` を配置する
+        notes: '設定ファイルの `projects` に、`CLAUDE_PROJECT_DIR` のフォルダ名を `match` に持ち `indexes: []` の要素を配置する'
       - name: 入力
         description: 止めて案内するフローと同じ
         notes: '-'
@@ -448,7 +448,7 @@ flows:
         description: なし
       - name: 索引
         description: '`rule: "!{RULES_DIR}/python.md"`・`paths: ["**/*.py"]`・`on: [write]` のエントリを 1 つ持つ'
-        notes: 環境変数 `RULES_DIR` にルールのフォルダを渡す
+        notes: 環境変数 `RULES_DIR` にルールのフォルダを指定する
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -470,13 +470,13 @@ flows:
       - '`permissionDecisionReason` に展開したルールの場所（`{RULES_DIR の値}/python.md`）が載り、`!{RULES_DIR}` が載っていない'
     test: test_normal_when_rule_has_variable
   - name: 異常系（ルールの場所の変数参照を展開できない・止めずに理由を載せる）
-    summary: 未設定の名前が残ったエントリを読み飛ばし、理由を載せる
+    summary: 未設定の名前が残ったエントリを読み飛ばし、理由を記載する
     setup:
       - name: Mock
         description: なし
       - name: 索引
         description: '`rule: "!{UNSET_DIR}/python.md"`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` の通常のエントリを 1 つずつ持つ'
-        notes: '`UNSET_DIR` を渡さない。通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る'
+        notes: '`UNSET_DIR` を指定しない。通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを確認する'
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -501,14 +501,14 @@ flows:
       - 終了コードが `0`
     test: test_error_when_rule_variable_unset
   - name: 異常系（案内済みの記録に書けない・止めずに理由を載せる）
-    summary: 案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く
+    summary: 案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む
     setup:
       - name: Mock
         description: なし
       - name: 索引
         description: 止めずに案内するフローと同じ
       - name: 案内済みの記録
-        description: 記録フォルダを書き込み権限なし（`chmod 500`）で置く
+        description: 記録フォルダを書き込み権限なし（`chmod 500`）で配置する
       - name: 入力
         description: 止めずに案内するフローと同じ
     flow: |-
@@ -531,18 +531,18 @@ flows:
       - 終了コードが `0`
     test: test_error_when_guided_record_unwritable
   - name: 正常系（MCPのツールの引数に当たる）
-    summary: '`args` のパターンに引数の値が当たる MCP のツールの呼び出しを止める'
+    summary: '`args` のパターンに引数の値が該当する MCP のツールの呼び出しを止める'
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`tools: ["mcp__*__search_*"]` と、`args` に `tags: ["re:^python$"]` と `filter.kind: ["rule"]` をブロックのマップで書いたエントリを 1 つ持つ'
-        notes: '`on` を書かない（`default_on` の既定で `mcp` を含む）'
+        description: '`tools: ["mcp__*__search_*"]` と、`args` に `tags: ["re:^python$"]` と `filter.kind: ["rule"]` をブロックのマップで記載したエントリを 1 つ持つ'
+        notes: '`on` を記載しない（`default_on` の既定で `mcp` を含む）'
       - name: 既読の記録
         description: 空
       - name: 入力
         description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{query: "x", tags: ["go", "python"], filter: {kind: "rule"}}`'
-        notes: 配列の 2 つ目の要素とオブジェクトの子で当たる
+        notes: 配列の 2 つ目の要素とオブジェクトの子で該当する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -562,17 +562,17 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_mcp_args_match
   - name: 正常系（MCPのツールの引数に当たらない）
-    summary: ツール名に当たっても、`args` のキーが無いか値が当たらなければ案内しない
+    summary: ツール名に該当しても、`args` のキーが無いか値が該当しなければ案内しない
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: 引数に当たるフローと同じ
+        description: 引数に該当するフローと同じ
       - name: 既読の記録
         description: 空
       - name: 入力
         description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{query: "x", tags: ["go"]}`'
-        notes: '`tags` の値が当たらず、`filter.kind` のキーが無い'
+        notes: '`tags` の値が該当せず、`filter.kind` のキーが無い'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -600,7 +600,7 @@ flows:
         description: 空
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `{一時フォルダ}/src/app.py`'
-        notes: パスの先頭はパターンに無く、部分一致で当たる
+        notes: パスの先頭はパターンに無く、部分一致で該当する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -620,13 +620,13 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_regex_path
   - name: 異常系（読めない正規表現・止めずに理由を載せる）
-    summary: コンパイルできない正規表現を持つエントリを読み飛ばし、理由を載せる
+    summary: コンパイルできない正規表現を持つエントリを読み飛ばし、理由を記載する
     setup:
       - name: Mock
         description: なし
       - name: 索引
         description: '`paths: ["re:["]`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` の通常のエントリを 1 つずつ持つ'
-        notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る
+        notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを確認する
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -651,13 +651,13 @@ flows:
       - 終了コードが `0`
     test: test_error_when_regex_unreadable
   - name: 異常系（URLのルール・止めずに理由を載せる）
-    summary: '`rule` が URL のエントリを読み飛ばし、理由を載せる'
+    summary: '`rule` が URL のエントリを読み飛ばし、理由を記載する'
     setup:
       - name: Mock
         description: なし
       - name: 索引
         description: '`rule: https://example.com/python.md`・`paths: ["**/*.py"]`・`on: [write]` のエントリと、`paths: ["**/*.py"]`・`on: [read]` の通常のエントリを 1 つずつ持つ'
-        notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを見る
+        notes: 通常のエントリは入力のパスに当て、読み飛ばしの後もその案内が出ることを確認する
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
@@ -713,7 +713,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
   - name: 正常系（当たったプロジェクトの索引を追加する）
-    summary: '`match` が当たった `projects` の要素の索引だけを、並びの順に追加して案内する'
+    summary: '`match` が該当した `projects` の要素の索引だけを、並びの順に追加して案内する'
     setup:
       - name: Mock
         description: なし
@@ -751,7 +751,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_projects_matched
   - name: 正常系（worktreeを本体のフォルダ名で当てる）
-    summary: '`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を当てる'
+    summary: '`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を適用する'
     setup:
       - name: Mock
         description: なし
@@ -787,17 +787,17 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_worktree_matched
   - name: 異常系（設定ファイルが読めない・止めずに理由を載せる）
-    summary: 設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を載せる
+    summary: 設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を記載する
     setup:
       - name: Mock
         description: なし
         notes: '-'
       - name: 設定ファイル
         description: '`RULE_INJECT_CONFIG` が指すファイルが、`projects` の要素に知らないキー `index` を持つ'
-        notes: '`indexes` の書き誤り'
+        notes: '`indexes` の記載の誤り'
       - name: 索引
-        description: 既定の置き場所のフローと同じ `rules.yaml` を `CLAUDE_PROJECT_DIR` の直下に置く
-        notes: 既定値で動かさないことを見る
+        description: 既定の置き場所のフローと同じ `rules.yaml` を `CLAUDE_PROJECT_DIR` の直下に配置する
+        notes: 既定値で動かさないことを確認する
       - name: ログ
         description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
         notes: '-'
@@ -825,13 +825,13 @@ flows:
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
   - name: 正常系（無効のエントリに当たる）
-    summary: '`enabled: false` のエントリにだけ当たる MCP のツールの呼び出しでは、止めずに何も出さない'
+    summary: '`enabled: false` のエントリにだけ該当する MCP のツールの呼び出しでは、止めずに何も出さない'
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`tools: ["mcp__*__create_*"]`・`enabled: false` のエントリを 1 つ持ち、`on` を書かない'
-        notes: '`enabled` を外すと `default_on` の既定で止めるエントリ'
+        description: '`tools: ["mcp__*__create_*"]`・`enabled: false` のエントリを 1 つ持ち、`on` を記載しない'
+        notes: '`enabled` を除外すると `default_on` の既定で止めるエントリ'
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -858,7 +858,7 @@ flows:
         description: なし
       - name: 索引
         description: '同じルールを指す 2 つのエントリ（`paths: ["**/*.py"]`・`on: [write]`・`enabled: false` と、`paths: ["**/*.py"]`・`on: [read]`）'
-        notes: 無効のエントリを照合に使うと Write を止める組み合わせ
+        notes: 無効のエントリを照合に使用すると Write を止める組み合わせ
       - name: 既読の記録
         description: 空
       - name: 入力
@@ -884,7 +884,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_disabled_and_enabled_entries
   - name: 異常系（enabledが真偽値でない・止めずに理由を載せる）
-    summary: '`enabled` が `true` / `false` 以外の索引は読めない索引として扱い、操作を止めずに場所と理由を載せる'
+    summary: '`enabled` が `true` / `false` 以外の索引は読めない索引として扱い、操作を止めずに場所と理由を記載する'
     setup:
       - name: Mock
         description: なし
@@ -910,18 +910,18 @@ flows:
       - 終了コードが `0`
     test: test_error_when_enabled_not_boolean
   - name: 正常系（MCPのツールの引数の条件の木に当たる）
-    summary: '`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が当たる MCP のツールの呼び出しを止める'
+    summary: '`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が該当する MCP のツールの呼び出しを止める'
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: '`tools: ["mcp__*__search_docs"]` と、`args` に `filter[tags]: ["re:^python$"]` と `filter[kind]: ["rule"]` をブロックのマップで書いたエントリを 1 つ持つ'
-        notes: '`on` を書かない（`default_on` の既定で `mcp` を含む）'
+        description: '`tools: ["mcp__*__search_docs"]` と、`args` に `filter[tags]: ["re:^python$"]` と `filter[kind]: ["rule"]` をブロックのマップで記載したエントリを 1 つ持つ'
+        notes: '`on` を記載しない（`default_on` の既定で `mcp` を含む）'
       - name: 既読の記録
         description: 空
       - name: 入力
         description: '`tool_name: mcp__dev-docs__search_docs`、`tool_input` は `{filter: {and: [{field: "kind", op: "eq", values: ["rule"]}, {or: [{field: "tags", op: "eq", values: ["go"]}, {field: "tags", op: "eq", values: ["python"]}]}]}}`'
-        notes: '`tags` は `and` の中の `or` の 2 つ目の条件で当たる'
+        notes: '`tags` は `and` の中の `or` の 2 つ目の条件で該当する'
     flow: |-
       sequenceDiagram
         participant CC as Claude Code
@@ -939,17 +939,17 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_mcp_filter_tree_match
   - name: 正常系（条件の木の否定の中だけに当たる）
-    summary: パターンに当たる値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない
+    summary: パターンに該当する値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない
     setup:
       - name: Mock
         description: なし
       - name: 索引
-        description: 条件の木に当たるフローと同じ
+        description: 条件の木に該当するフローと同じ
       - name: 既読の記録
         description: 空
       - name: 入力
         description: '`tool_name: mcp__dev-docs__search_docs`、`tool_input` は `{filter: {and: [{field: "kind", op: "eq", values: ["rule"]}, {not: {field: "tags", op: "eq", values: ["python"]}}, {field: "tags", op: "ne", values: ["python"]}]}}`'
-        notes: '`filter[kind]` は当たるが、`filter[tags]` の照合する値が無い'
+        notes: '`filter[kind]` は該当するが、`filter[tags]` の照合する値が無い'
     flow: |-
       sequenceDiagram
         participant CC as Claude Code
@@ -965,10 +965,10 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_mcp_filter_tree_negated
   - name: 正常系（参照するツールを添えて止めて案内する）
-    summary: '`read_tool` を持つエントリの未読のルールで Write を止め、場所の下にツールの名前と引数を載せる'
+    summary: '`read_tool` を持つエントリの未読のルールで Write を止め、場所の下にツールの名前と引数を記載する'
     setup:
       - name: Mock
-        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]`・`read_tool` に `tool: mcp__docs__search_docs` と、`args` に JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}`、`optional_args` に `{"sections": ["命名"]}` を持つエントリを 1 つ持つ'
       - name: 既読の記録
@@ -992,7 +992,7 @@ flows:
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` のパスの行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}（省略可: {"sections": ["命名"]}）`'
-      - '`permissionDecisionReason` の 2 行目に、`ツール:` の行のツールで参照し、記載の引数は全て指定し、使えないときはパスを Read で参照する旨が載っている'
+      - '`permissionDecisionReason` の 2 行目に、`ツール:` の行のツールで参照し、記載の引数は全て指定し、使用できないときはパスを Read で参照する旨が載っている'
       - 終了コードが `0`
     test: test_normal_when_blocked_with_read_tool
   - name: 正常系（参照するツールを添えて止めずに案内する）
@@ -1030,7 +1030,7 @@ flows:
       - 終了コードが `0`
     test: test_normal_when_not_blocked_with_read_tool
   - name: 正常系（参照するツールを持つルールと持たないルールを並べる）
-    summary: '`read_tool` を持つルールにだけツールの行を置き、持たないルールは場所の行だけにする'
+    summary: '`read_tool` を持つルールにだけツールの行を配置し、持たないルールは場所の行だけにする'
     setup:
       - name: Mock
         description: なし
@@ -1056,7 +1056,7 @@ flows:
       - '`permissionDecisionReason` の 2 つ目のルールの場所の次に `ツール:` の行が無い'
     test: test_normal_when_read_tool_mixed
   - name: 正常系（同じルールの参照するツールをまとめる）
-    summary: 同じルールを指すエントリ 2 つの `read_tool` を、同じ組は 1 つにして当たった順に並べる
+    summary: 同じルールを指すエントリ 2 つの `read_tool` を、同じ組は 1 つにして該当した順に並べる
     setup:
       - name: Mock
         description: なし
@@ -1065,7 +1065,7 @@ flows:
       - name: 既読の記録
         description: 空
       - name: 入力
-        description: '`tool_name: Write`、3 つのエントリに当たるパス'
+        description: '`tool_name: Write`、3 つのエントリに該当するパス'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -1083,7 +1083,7 @@ flows:
       - その下に `ツール:` の行が 2 行あり、1 つ目のエントリの `read_tool`、3 つ目のエントリの `read_tool` の順
     test: test_normal_when_read_tools_merged
   - name: 異常系（参照するツールの書式が誤り・止めずに理由を載せる）
-    summary: '`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を載せる'
+    summary: '`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を記載する'
     setup:
       - name: Mock
         description: なし
@@ -1109,14 +1109,14 @@ flows:
     test: test_error_when_read_tool_invalid
 lead: 操作の対象にヒットする未読のルールを、操作を止めるか止めずに案内するフックの入出力を定め、ルール案内の判定や文面を修正するときに参照する。
 idempotent: false
-side_effects: 止めない案内に載せたルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
+side_effects: 止めない案内に記載したルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
 request:
   - name: '`session_id`'
     type: str
     required: true
     description: 呼び出し元のセッションの識別子
     constraints: 1〜128 文字の英数字 / `_` / `-`
-    notes: 既読の記録のファイル名に使う。形式が外れた値は既読なしとして扱う
+    notes: 既読の記録のファイル名に使用する。形式に合わない値は既読なしとして扱う
   - name: '`cwd`'
     type: str
     required: true
@@ -1176,17 +1176,17 @@ response:
   - name: '`hookSpecificOutput.permissionDecision`'
     type: Literal['deny']
     description: 操作を止める
-    notes: 操作の種別が `on` に当たる未読のルールが 1 件でもあるときだけ載せる
+    notes: 操作の種別が `on` に該当する未読のルールが 1 件でもあるときだけ記載する
   - name: '`hookSpecificOutput.permissionDecisionReason`'
     type: str
     description: 止める案内。参照してから同じ操作をやり直すことと、参照の方法（制約「案内文の構成」）と、未読のルールのパス。`read_tool` を持つエントリのルールは、パスの行の下にツールの名前と引数の行
     constraints: 10,000 字以内
-    notes: '`permissionDecision` を載せたときだけ載せる。止めないルールも同じ案内に並べる'
+    notes: '`permissionDecision` を記載したときだけ記載する。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
-    description: 止めない案内。参照の方法（制約「案内文の構成」）と、未読で未案内のルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書けないときはその場所と理由
+    description: 止めない案内。参照の方法（制約「案内文の構成」）と、未読で未案内のルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書き込めないときはその場所と理由
     constraints: 10,000 字以内
-    notes: 操作を止めないときだけ載せる。「やり直してください」は含めない
+    notes: 操作を止めないときだけ記載する。「やり直してください」は含めない
 response_example: |-
   ```json
   {
@@ -1200,79 +1200,84 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 案内の有無に関わらず終了コード 0 で終える
-    notes: 終了コード 2 は Claude Code が操作を止める合図になるため使わない
+    notes: 終了コード 2 は Claude Code が操作を止める合図になるため使用しない
   - name: OSError / 書式の誤り（索引が読めない）
     condition: 索引が無い・読めない・書式に合わない
-    notes: フックの中で捕まえ、操作を止めずに `additionalContext` へ索引の場所と理由を載せ、ログへ `read_index` を書いて終了コード 0 で終える。読めた索引のエントリでの案内は続ける
+    notes: フックの中で捕まえ、操作を止めずに `additionalContext` へ索引の場所と理由を記載し、ログへ `read_index` を書き込んで終了コード 0 で終える。読めた索引のエントリでの案内は続ける
   - name: OSError（既読の記録が読めない）
     condition: 記録ファイルはあるが読めない（権限など）
-    notes: 索引が読めないときと揃え、操作を止めずに `additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` を書く。ファイルが無いときは失敗ではなく既読なしとして扱う
+    notes: 索引が読めないときと同じく、操作を止めずに `additionalContext` へ記録ファイルの場所と理由を記載し、ログへ `read_record` を書き込む。ファイルが無いときは失敗ではなく既読なしとして扱う
   - name: Exception（想定外の例外）
-    condition: 上のどれにも当たらない例外
-    notes: 最上位で捕まえ、操作を止めずに `additionalContext` へ「ルールの案内が動かなかったこと」とログの場所を載せ、ログへ `unexpected` を書いて終了コード 0 で終える
+    condition: 上のどれにも該当しない例外
+    notes: 最上位で捕まえ、操作を止めずに `additionalContext` へ「ルールの案内が動かなかったこと」とログの場所を記載し、ログへ `unexpected` を書き込んで終了コード 0 で終える
   - name: OSError（案内済みの記録が読めない・書けない）
-    condition: 案内済みの記録ファイルはあるが読めない、または記録フォルダか記録ファイルに書けない（権限・容量）
-    notes: 既読の記録が読めないときと揃え、操作を止めずに案内を出し、`additionalContext` へ記録ファイルの場所と理由を載せ、ログへ `read_record` か `write_record` を書く。読めないときは未案内として扱う。ファイルが無いときは失敗ではなく未案内として扱う
+    condition: 案内済みの記録ファイルはあるが読めない、または記録フォルダか記録ファイルに書き込めない（権限・容量）
+    notes: 既読の記録が読めないときと同じく、操作を止めずに案内を出し、`additionalContext` へ記録ファイルの場所と理由を記載し、ログへ `read_record` か `write_record` を書き込む。読めないときは未案内として扱う。ファイルが無いときは失敗ではなく未案内として扱う
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
-    notes: フックの中で捕まえ、設定ファイルを使わず（既定値でも動かさず）索引を読まない。操作を止めずに `additionalContext` へ設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える。廃止したキー（`global.server_port`）のときは、理由に `global-setup` での移し替えを含める
+    notes: フックの中で捕まえ、設定ファイルを使用せず（既定値でも動かさず）索引を読まない。操作を止めずに `additionalContext` へ設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える。廃止したキー（`global.server_port`）のときは、理由に `global-setup` での移し替えを含める
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 案内文の長さ
-    constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を載せて残りの件数を添える
+    constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を記載して残りの件数を添える
     decided_by: NFR-122-1#requirements[フックの案内文の長さ]
   - item: 索引
-    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に追加したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。`enabled: false` のエントリは照合に使わない。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
+    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、該当した `projects` の要素の `indexes` を並びの順に追加したもの（該当した要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて照合する。`enabled: false` のエントリは照合に使用しない。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を記載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
     notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
-    constraint: 同じルールの場所（解決後の絶対パス）に当たったエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
+    constraint: 同じルールの場所（解決後の絶対パス）に該当したエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
   - item: 読むコマンド
-    constraint: '`cat` / `head` / `tail` / `less` / `more` / `grep` / `rg` / `sed` / `awk` / `wc` / `bat`。`&&` / `||` / `;` / `|` と引用符の外の改行（直前に `\` がある行継続は除く）で区切った各コマンドの、`-` で始まらない引数をパスとして扱う。引用符の外に `*` / `?` / `[` を含む引数は、その時点の基準のフォルダから glob として展開し、当たったファイルを名前の順に扱う。`for {変数} in {語の並び}; do … done` の `do` から `done` までの読むコマンドが `$変数` / `${変数}` を引数に取るときは、語の並び（glob は同じく展開する）をパスとして扱う'
+    constraint: '`cat` / `head` / `tail` / `less` / `more` / `grep` / `rg` / `sed` / `awk` / `wc` / `bat`。`&&` / `||` / `;` / `|` と引用符の外の改行（直前に `\` がある行継続は除く）で区切った各コマンドの、`-` で始まらない引数をパスとして扱う。引用符の外に `*` / `?` / `[` を含む引数は、その時点の基準のフォルダから glob として展開し、該当したファイルを名前の順に扱う。`for {変数} in {語の並び}; do … done` の `do` から `done` までの読むコマンドが `$変数` / `${変数}` を引数に取るときは、語の並び（glob は同じく展開する）をパスとして扱う'
     notes: 引数がパターンのコマンド（`grep` の最初の引数など）もパスとして照合する。実在しないパスは捨てる。引用符の中の glob は展開しない
   - item: 認可
     constraint: 制限なし
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。標準出力には JSON 以外を出さない
-    notes: ログに書けないときは同じ 1 行を標準エラー出力へ出す
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。標準出力には JSON 以外を出さない
+    notes: ログに書き込めないときは同じ 1 行を標準エラー出力へ出す
   - item: ルールの場所の変数参照
-    constraint: エントリの `rule` の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックが受け取った環境変数の値に置き換えてから場所を解く。空の値は空文字に置き換える。未設定の名前が残ったエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・展開できない名前を載せ、ログへ `read_index` を書く
+    constraint: エントリの `rule` の `!{名前}`（名前は `[A-Za-z_][A-Za-z0-9_]*`）をフックが受け取った環境変数の値に置き換えてから場所を解く。空の値は空文字に置き換える。未設定の名前が残ったエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・展開できない名前を記載し、ログへ `read_index` を書き込む
   - item: 案内済みの記録
-    constraint: 止めない案内（`additionalContext`）に載せたルールの場所を `{state_dir}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に載せない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
-    notes: 書式は ER 図「既読の記録」の案内済みの記録。止める案内は読むまで毎回出す。案内文の長さに収まらず載せなかった場所は記録しない
+    constraint: 止めない案内（`additionalContext`）に記載したルールの場所を `{state_dir}/{session_id}.guided.txt` に 1 行ずつ追記し、次からはその場所を止めない案内に記載しない。止める案内（`permissionDecisionReason`）に並べた場所は記録しない
+    notes: 書式は ER 図「既読の記録」の案内済みの記録。止める案内は読むまで毎回出す。案内文の長さに収まらず記載しなかった場所は記録しない
   - item: 引数の照合
-    constraint: '`tools` に当たったエントリのうち `args` を持つものは、書いた全てのキーの値がどれかのパターンに当たるときだけ当てる。キーが引数に無いとき・値がオブジェクトのときは当てない。値が配列のとき、およびドット区切りのキーの途中が配列のときは要素ごとにたどり、どれか 1 つが当たれば当てる。文字列以外のスカラーは JSON の表記（`true`・`null`・`1.5`）で文字列にして照合する'
-    notes: '`args` は MCP のツールの呼び出しにだけ当てる'
+    constraint: '`tools` に該当したエントリのうち `args` を持つものは、記載した全てのキーの値がどれかのパターンに該当するときだけ該当とする。キーが引数に無いとき・値がオブジェクトのときは該当としない。値が配列のとき、およびドット区切りのキーの途中が配列のときは要素ごとにたどり、どれか 1 つが該当すれば該当とする。文字列以外のスカラーは JSON の表記（`true`・`null`・`1.5`）で文字列にして照合する'
+    notes: '`args` は MCP のツールの呼び出しにだけ照合する'
   - item: パターンの正規表現
-    constraint: '`paths`・`exclude`・`tools`・`args` のパターンのうち `re:` で始まるものは、残りを正規表現として部分一致（`re.search`）で照合する。それ以外は glob のまま照合する。正規表現は索引を読むときにコンパイルし、コンパイルできないパターンを持つエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・パターン・理由を載せ、ログへ `read_index` を書く'
+    constraint: '`paths`・`exclude`・`tools`・`args` のパターンのうち `re:` で始まるものは、残りを正規表現として部分一致（`re.search`）で照合する。それ以外は glob のまま照合する。正規表現は索引を読むときにコンパイルし、コンパイルできないパターンを持つエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・パターン・理由を記載し、ログへ `read_index` を書き込む'
     decided_by: NFR-122-1#requirements[フックの実行時間]
     notes: 読み飛ばしは、そのエントリだけに及ぶ
   - item: URL のルール
-    constraint: 変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・Read で読めない旨を載せ、ログへ `read_index` を書く
+    constraint: 変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・Read で読めない旨を記載し、ログへ `read_index` を書き込む
     notes: 読み飛ばしは、そのエントリだけに及ぶ
   - item: 既読の判定
     constraint: そのセッションの既読の記録に、ルールの場所と今のルールのファイルの中身の SHA-256 の組み合わせがあるときだけ既読として扱う。ハッシュが違う行・ハッシュを持たない行だけの場所と、ファイルを読めず今のハッシュを取れないルールは未読として扱う
-    notes: ハッシュの取り方は既読の記録の制約「本文のハッシュ」と同じ。今のハッシュは当たったルールの分だけ取る。記録ファイルは書き換えず、読み直したときに既読の記録が新しいハッシュの行を追記する
+    notes: ハッシュの取り方は既読の記録の制約「本文のハッシュ」と同じ。今のハッシュは該当したルールの分だけ取る。記録ファイルは書き換えず、再度読んだときに既読の記録が新しいハッシュの行を追記する
   - item: 設定ファイル
-    constraint: 環境変数 `RULE_INJECT_CONFIG` の値（先頭の `~` はホームに展開）の YAML を読む。`RULE_INJECT_CONFIG` が無いときは `${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` を読み、そのファイルも無いときは設定ファイルのキーを全て既定値で扱う。`projects` の要素は `match` で当て、当たった要素を並びの順に `global` へ重ねる。`CLAUDE_PROJECT_DIR` が無いときはどの要素にも当てない
+    constraint: 環境変数 `RULE_INJECT_CONFIG` の値（先頭の `~` はホームに展開）の YAML を読む。`RULE_INJECT_CONFIG` が無いときは `${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` を読み、そのファイルも無いときは設定ファイルのキーを全て既定値で扱う。`projects` の要素は `match` で照合し、該当した要素を並びの順に `global` へ重ねる。`CLAUDE_PROJECT_DIR` が無いときはどの要素も適用しない
     notes: キー・既定値・許す値・`match` の当て方は設定の設計書。標準ライブラリだけで読む
   - item: 条件の木の照合
-    constraint: '`args` のキーが `{道筋}[{field}]`（例 `filter[tags]`）のときは、ドットの道筋が指す値を条件の木（`field`・`op`・`values` の条件と、`and`・`or`・`not` の束の入れ子）として読み、`and`・`or` の中を深さを問わずたどって、`field` が `{field}` と一致する条件の `values` の要素を照合する値にする。`not` の中と、`op` が `ne`・`not_contains`・`not_exists` の条件は値にしない。道筋の途中や値が配列のときは、ドットの道筋と同じく要素ごとにたどる。条件の木として読めない値（オブジェクトでない・`field` も束のキーも持たない）からは値を取らない。照合する値が 1 つも無いキーは当たらない'
-    notes: '`not` と否定の `op` の条件は、その値の文書を読まない検索のため当てない（PR #77 の `要件.md` の推奨案 A）。`[` と `]` を含まないキーは、今どおりドットの道筋として読む'
+    constraint: '`args` のキーが `{道筋}[{field}]`（例 `filter[tags]`）のときは、ドットの道筋が指す値を条件の木（`field`・`op`・`values` の条件と、`and`・`or`・`not` の束の入れ子）として読み、`and`・`or` の中を深さを問わずたどって、`field` が `{field}` と一致する条件の `values` の要素を照合する値にする。`not` の中と、`op` が `ne`・`not_contains`・`not_exists` の条件は値にしない。道筋の途中や値が配列のときは、ドットの道筋と同じく要素ごとにたどる。条件の木として読めない値（オブジェクトでない・`field` も束のキーも持たない）からは値を取らない。照合する値が 1 つも無いキーは該当しない'
+    notes: '`not` と否定の `op` の条件は、その値の文書を読まない検索のため照合しない（[条件の木のタグの照合の要件](https://github.com/shuhei1101/rule-inject/blob/0029e8f3d759afb62c8660609754a615c05fc74f/dev/pr/77/%E8%A6%81%E4%BB%B6.md) の推奨案 A）。`[` と `]` を含まないキーは、今どおりドットの道筋として読む'
   - item: 参照するツールの案内
-    constraint: |-
-      当たったエントリが `read_tool` を持つルールは、パスの行（`- {パス}`）の下に `  ツール: {tool} {args}` の行を置く。`args` は記載の JSON を読み、キーの順を保って 1 行に書き直した JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を置く。`optional_args` を持つときは、行の末尾に `（省略可: {optional_args}）`（同じ書き直しの JSON）を続ける。
-      同じルールのパスにまとめたエントリの `read_tool` は、`tool`・`args`・`optional_args` が同じものを 1 つにし、当たった順に並べる
-    notes: パスの行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも載せない
+    constraint: '該当したエントリが `read_tool` を持つルールは、パスの行（`- {パス}`）の下に `  ツール: {tool} {args}` の行を配置する。`args` は記載の JSON を読み、キーの順を保って 1 行に変換した JSON（`ensure_ascii` なし・区切りは `, `・`: `）で、`args` を持たないときは `{}` を配置する。`optional_args` を持つときは、行の末尾に `（省略可: {optional_args}）`（同じ変換の JSON）を続ける。同じルールのパスにまとめたエントリの `read_tool` は、`tool`・`args`・`optional_args` が同じものを 1 つにし、該当した順に並べる'
+    notes: パスの行と `ツール:` の行は 1 件として案内文の長さに数え、収まらないときは両方とも記載しない
   - item: 案内文の構成
-    constraint: |-
-      1 行目は、止める案内が「この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。」、止めない案内が「この操作に関連する未読のルールがあります。必要に応じて下のルールを参照してください。この案内はルールごとにセッションで 1 回だけ表示します。」。
-      2 行目は参照の方法で、載せたルールに `ツール:` の行が 1 つでもあるときは「`ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。」、無いときは「パスを Read で参照してください。」。
-      3 行目からルールのパスの行を並べ、載せきれなかったときは末尾に「ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。」を置く
-    notes: 文面はユーザーの確認で決めた（PR #102 の確認ログ）
+    constraint: 補足「案内文の構成」の表の行を上から順に並べる
+    notes: 文面はユーザーの確認で決めた（[参照するツールの案内の確認ログ](https://github.com/shuhei1101/rule-inject/blob/5d7df8abcf051d8a0367ab1b9dc34b7cf33730a0/dev/pr/102/%E7%A2%BA%E8%AA%8D%E3%83%AD%E3%82%B0.md)）
   - item: 参照するツールの書式
-    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args`・`optional_args` を持つときは JSON のオブジェクトを表す文字列にする（標準ライブラリの `json` で読む）。外れた値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
-    notes: '`read_tool` は案内と既読にだけ使い、操作を止めるかの照合（`paths`・`tools`・`args`）には使わない'
+    constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args`・`optional_args` を持つときは JSON のオブジェクトを表す文字列にする（標準ライブラリの `json` で読む）。許す値の外の値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
+    notes: '`read_tool` は案内と既読にだけ使用し、操作を止めるかの照合（`paths`・`tools`・`args`）には使用しない'
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py
+notes:
+  案内文の構成: |-
+    | 行 | 条件 | 文面 |
+    | --- | --- | --- |
+    | 1 行目 | 止める案内 | この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。 |
+    | 1 行目 | 止めない案内 | この操作に関連する未読のルールがあります。必要に応じて下のルールを参照してください。この案内はルールごとにセッションで 1 回だけ表示します。 |
+    | 2 行目 | 記載したルールに `ツール:` の行が 1 つでもある | `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。 |
+    | 2 行目 | `ツール:` の行が無い | パスを Read で参照してください。 |
+    | 3 行目から | - | ルールのパスの行 |
+    | 末尾 | 記載しきれなかった | ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。 |

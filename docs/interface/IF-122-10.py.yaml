@@ -6,17 +6,17 @@ entry:
   value: get_read_records
 flows:
   - name: 正常系
-    summary: 既読のルールごとに、今の本文との関係と読んだ方法を返す
+    summary: 既読のルールごとに、今の本文との関係と読んだ方法を返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global.state_dir` でテストの記録フォルダを指す'
       - name: 既読の記録
         description: 1 つのセッションに 2 つのルールの場所と今の本文のハッシュの行
       - name: 既読の履歴
         description: 片方のルールを `Read` で 1 回、もう片方を `mcp__docs__get_doc` で 2 回既読にした行と、JSON として読めない 1 行
-        notes: 読めない行を読み飛ばすことも確かめる
+        notes: 読めない行を読み飛ばすことも確認する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -43,7 +43,7 @@ flows:
       - 既読の記録と既読の履歴のファイルが書き換わっていない
     test: test_normal
   - name: 正常系（既読にした後に本文が変わった）
-    summary: 本文が変わったルールを `changed`、ファイルが無いルールを `missing` で返す
+    summary: 本文が変わったルールを `changed`、ファイルが無いルールを `missing` で返却する
     setup:
       - name: Mock
         description: 正常系と同じ
@@ -51,7 +51,7 @@ flows:
         description: 正常系と同じ
       - name: 既読の記録
         description: 書き換える前の本文のハッシュを持つルールの行と、ファイルの無い場所の行
-        notes: 記録を置いた後にルールの本文を書き換える
+        notes: 記録を配置した後にルールの本文を書き換える
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -70,7 +70,7 @@ flows:
       - ファイルの無い場所の `state` が `missing`
     test: test_normal_when_rule_changed
   - name: 正常系（セッションを指さない）
-    summary: 既読の記録のあるセッションを最終更新の新しい順に返す
+    summary: 既読の記録のあるセッションを最終更新の新しい順に返却する
     setup:
       - name: Mock
         description: 正常系と同じ
@@ -78,7 +78,7 @@ flows:
         description: 正常系と同じ
       - name: 記録フォルダ
         description: 2 つのセッションの既読の記録と、片方の案内済みの記録・既読の履歴
-        notes: 最終更新の時刻をずらして置く。`.guided.txt` をセッションとして数えないことを確かめる
+        notes: 最終更新の時刻をずらして配置する。`.guided.txt` をセッションとして数えないことを確認する
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -118,12 +118,12 @@ flows:
       - 2 回目の `rules` が残りの 1 件で `next_cursor` が `None`
     test: test_normal_when_more_rules
   - name: 異常系（セッションの形式が誤っている・ToolError）
-    summary: 記録ファイル名に使えない `session_id` をエラーにする
+    summary: 記録ファイル名に使用できない `session_id` をエラーにする
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 引数
-        description: '`session_id` に `../other` を渡す'
+        description: '`session_id` に `../other` を指定する'
         notes: 記録フォルダの外を指す値
     flow: |-
       sequenceDiagram
@@ -145,15 +145,15 @@ request:
     required: false
     default: なし（セッションの一覧を返す）
     location: argument
-    description: 確かめるセッションの識別子
-    constraints: フックが記録ファイル名に使う形式（`is_valid_session_id`）
+    description: 確認するセッションの識別子
+    constraints: フックが記録ファイル名に使用する形式（`is_valid_session_id`）
     notes: サーバーは Claude Code のセッションの ID を受け取らないため、引数で指す
   - name: limit
     type: int
     required: false
     default: '100'
     location: argument
-    description: 返すルール（セッションを省いたときはセッション）の件数の上限
+    description: 返却するルール（セッションを省いたときはセッション）の件数の上限
     constraints: 1〜500
     notes: インターフェース定義「ルールの一覧」の `limit` と同じ
   - name: cursor
@@ -176,7 +176,7 @@ request_example: |-
 response:
   - name: success
     type: bool
-    description: 確かめられたか
+    description: 確認されたか
     notes: 記録の無いセッションでも `true`
   - name: output
     type: str
@@ -189,7 +189,7 @@ response:
     description: 読んだ記録フォルダ
   - name: session_id
     type: str | None
-    description: 確かめたセッション
+    description: 確認したセッション
     notes: セッションを省いたときは `None`
   - name: rules[].location
     type: str
@@ -230,7 +230,7 @@ response:
     description: ルールまたはセッションの総数
   - name: next_cursor
     type: str | None
-    description: 続きを取るときに `cursor` へ渡す値
+    description: 続きを取るときに `cursor` へ指定する値
     notes: 続きが無いときは `None`
 response_example: |-
   ```json
@@ -259,30 +259,30 @@ response_example: |-
   ```
 exceptions:
   - name: なし（正常終了）
-    condition: 確かめられた
-    notes: 記録の無いセッションは空の `rules` を返す
+    condition: 確認された
+    notes: 記録の無いセッションは空の `rules` を返却する
   - name: ToolError（セッションの形式が誤っている）
-    condition: '`session_id` が記録ファイル名に使えない形式'
-    notes: 受けた値と、形式が誤っている旨を返す。ファイルのパスには使わない
+    condition: '`session_id` が記録ファイル名に使用できない形式'
+    notes: 受けた値と、形式が誤っている旨を返却する。ファイルのパスには使用しない
   - name: ToolError（設定ファイルが読めない）
     condition: 設定ファイルが呼び出しの時点で読めない
-    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返す
+    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返却する
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 記録フォルダ
-    constraint: 設定ファイルを `CLAUDE_PROJECT_DIR` 無しでフックと同じ規則で読み、`global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）を使う。呼び出しのたびに読み直す
+    constraint: 設定ファイルを `CLAUDE_PROJECT_DIR` 無しでフックと同じ規則で読み、`global.state_dir`（既定 `${XDG_STATE_HOME:-~/.local/state}/rule-inject`）を使用する。呼び出しのたびに再度読み込む
     notes: 記録フォルダは `projects[]` の要素で変わらず、記録のファイルはプロジェクトを持たない
   - item: 既読の判定
     constraint: フックと同じく、場所ごとに既読の記録のどれかの行のハッシュが今の本文の SHA-256 と同じなら既読とする。ハッシュを持たない行は `changed` として扱う
     notes: ER 図『既読の記録』の `hash`
   - item: 既読の履歴の読み出し
-    constraint: そのセッションの `.history.jsonl` を全行読む。JSON として読めない行・キーの欠けた行は読み飛ばす。既読の記録に無い場所の行は返さない
+    constraint: そのセッションの `.history.jsonl` を全行読む。JSON として読めない行・キーの欠けた行は読み飛ばす。既読の記録に無い場所の行は返却しない
     notes: フックが別のプロセスで追記している途中の行を失敗にしない。圧縮で既読の記録だけが削除された後の履歴は今の既読ではない
   - item: セッションの一覧
     constraint: 記録フォルダの `{session_id}.txt`（`.guided.txt` を除く）のうち、ファイル名が `session_id` の形式に合うものを、最終更新の新しい順に並べる
     notes: 記録フォルダが無ければ空の一覧
   - item: 応答の長さ
-    constraint: 応答が 40,000 字を超えるときは、超える手前のルールまたはセッションで切り、`next_cursor` を返す
+    constraint: 応答が 40,000 字を超えるときは、超える手前のルールまたはセッションで切り、`next_cursor` を返却する
     decided_by: NFR-122-1#requirements[MCPのツールの応答の長さ]
     notes: 読み方を読み方とツール名の組でまとめるため、履歴の行数が増えても 1 ルールあたりの字数は増えない
   - item: 認可

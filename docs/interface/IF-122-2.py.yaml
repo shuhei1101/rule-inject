@@ -9,12 +9,12 @@ flows:
     summary: 末尾にエントリを追加し、他の行を変えない
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
       - name: 索引
         description: コメント・引用符つきの値・1 行のフロー形式の `paths` を持つエントリを 1 つ持つ
-        notes: 書き込みの前の内容を控える
+        notes: 書き込みの前の内容を記録する
       - name: ルールの本文
         description: 新しいエントリが指す Markdown
       - name: 引数
@@ -37,7 +37,7 @@ flows:
         IF-->>C: position・rev・diff
       ```
     expected:
-      - 索引の末尾に渡したエントリがあり、新しい `paths` が 1 行のフロー形式
+      - 索引の末尾に指定したエントリがあり、新しい `paths` が 1 行のフロー形式
       - 書き込みの前との差分が追加したエントリの行だけ
       - 索引を `load_indexes` で読むと、追加したエントリが読み飛ばされずに読める
       - '`position` が 1、`written` が `true`'
@@ -46,12 +46,12 @@ flows:
     summary: 位置で指したエントリのキーだけを書き換える
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: コメントを持つエントリを 2 つ持つ
-        notes: 書き込みの前の内容を控える
+        notes: 書き込みの前の内容を記録する
       - name: 引数
         description: '`position: 1`、2 つ目のエントリの `expected_rev`、`entry` に新しい `paths` だけ'
     flow: |-
@@ -69,19 +69,19 @@ flows:
         IF-->>C: position・rev・diff
       ```
     expected:
-      - 2 つ目のエントリの `paths` が渡した値で、他のキーは変わっていない
+      - 2 つ目のエントリの `paths` が指定した値で、他のキーは変わっていない
       - 書き込みの前との差分が書き換えた行だけで、1 つ目のエントリとコメントは変わっていない
       - 応答の `rev` が `expected_rev` と違う
     test: test_normal_when_entry_updated
   - name: 正常系（エントリを無効にする）
-    summary: '`enabled: false` を書き、照合に使われなくする'
+    summary: '`enabled: false` を記載し、照合に使用されなくする'
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
-        description: '`enabled` を書かないエントリを 1 つ持つ'
+        description: '`enabled` を記載しないエントリを 1 つ持つ'
       - name: 引数
         description: '`position: 0`、`expected_rev`、`entry: {enabled: false}`'
     flow: |-
@@ -99,19 +99,19 @@ flows:
         IF-->>C: position・rev・diff
       ```
     expected:
-      - '対象のエントリに `enabled: false` が書かれている'
+      - '対象のエントリに `enabled: false` が記載されている'
       - 索引を `load_indexes` で読むと、対象のエントリが読めたエントリに入っていない
     test: test_normal_when_entry_disabled
   - name: 正常系（書き込まずに確かめる）
-    summary: '`dry_run` でチェックと差分だけを返す'
+    summary: '`dry_run` でチェックと差分だけを返却する'
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: エントリを 1 つ持つ
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
       - name: 引数
         description: 'エントリを新規作成するフローと同じ `entry` と `dry_run: true`'
     flow: |-
@@ -132,10 +132,10 @@ flows:
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_normal_when_dry_run
   - name: 正常系（もとから問題のある索引のエントリを修正する）
-    summary: 他のエントリにもとから問題が残っていても、新しい問題を生まない書き込みは通す
+    summary: 他のエントリにもとから問題が残っていても、新しい問題を生まない書き込みは許可する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
@@ -157,16 +157,16 @@ flows:
         IF-->>C: position・rev・diff
       ```
     expected:
-      - '`written` が `true` で、1 つ目のエントリの `paths` が渡した値'
+      - '`written` が `true` で、1 つ目のエントリの `paths` が指定した値'
       - 2 つ目のエントリが書き込みの前のまま残っている
     test: test_normal_when_existing_problems_remain
   - name: 異常系（引数の組み合わせが誤り・ToolError）
-    summary: '`position` だけを渡し `expected_rev` を渡さない呼び出しをエラーにする'
+    summary: '`position` だけを指定し `expected_rev` を指定しない呼び出しをエラーにする'
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 引数
-        description: '`position: 0` と `entry` を渡し、`expected_rev` を渡さない'
+        description: '`position: 0` と `entry` を指定し、`expected_rev` を指定しない'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -177,18 +177,18 @@ flows:
         IF-->>C: isError: true（expected_rev を渡す旨）
       ```
     expected:
-      - '結果が `isError: true` で、`expected_rev` を渡す旨が載っている'
+      - '結果が `isError: true` で、`expected_rev` を指定する旨が載っている'
     test: test_error_when_arguments_invalid
   - name: 異常系（設定ファイルが読めない・ToolError）
     summary: 呼び出しの時点で読めない設定ファイルをエラーにする
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
       - name: 索引
         description: エントリを 1 つ持つ
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -209,12 +209,12 @@ flows:
     summary: 設定ファイルで読まないファイルへの書き込みを断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 対象のファイル
-        description: 設定ファイルで読まない場所に置いた、索引の書式の YAML
-        notes: 書き込みの前のバイト列を控える
+        description: 設定ファイルで読まない場所に配置した、索引の書式の YAML
+        notes: 書き込みの前のバイト列を記録する
       - name: 引数
         description: '`index` に対象のファイル、書式どおりの `entry`'
     flow: |-
@@ -237,12 +237,12 @@ flows:
     summary: YAML として読めない索引への書き込みを断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: 閉じていないフロー形式のリストを持ち、YAML として読めない
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -263,12 +263,12 @@ flows:
     summary: エントリの数以上の位置への書き込みを断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: エントリを 1 つ持つ
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
       - name: 引数
         description: '`position: 1` と任意の `expected_rev`'
     flow: |-
@@ -291,12 +291,12 @@ flows:
     summary: 一覧を取った後に書き換えられたエントリへの書き込みを断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: エントリを 1 つ持ち、一覧で `rev` を取った後にテストがそのエントリの `paths` を直接書き換える
-        notes: 書き換えた後のバイト列を控える
+        notes: 書き換えた後のバイト列を記録する
       - name: 引数
         description: '`position: 0` と、書き換える前に取った `expected_rev`'
     flow: |-
@@ -312,19 +312,19 @@ flows:
         IF-->>C: isError: true（今のバージョンと取り直す旨）
       ```
     expected:
-      - '結果が `isError: true` で、今のバージョンと一覧を取り直す旨が載っている'
+      - '結果が `isError: true` で、今のバージョンと一覧を再取得する旨が載っている'
       - 索引のファイルがテストが書き換えた後のバイト列のまま
     test: test_error_when_rev_mismatch
   - name: 異常系（書いた後の索引がチェックに通らない・ToolError）
     summary: Schema に違反するエントリの新規作成を断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: エントリを 1 つ持つ
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
       - name: 引数
         description: '`paths: []` を持つ `entry`（`position` なし）'
     flow: |-
@@ -348,12 +348,12 @@ flows:
     summary: フックが読めない索引の、位置で指した書き換えを断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: 'YAML としては読めるが、エントリに `on: [foo]` を持ちフックが読めない'
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
       - name: 引数
         description: '`position: 0`、任意の `expected_rev`、`entry: {on: [write]}`'
     flow: |-
@@ -369,19 +369,19 @@ flows:
         IF-->>C: isError: true（フックが読めない理由と手で直す旨）
       ```
     expected:
-      - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で直す旨が載っている'
+      - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_hook_unreadable
   - name: 異常系（索引の書式を保てない・ToolError）
     summary: 対象のエントリの外の行が変わる書き込みを断る
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: 'エントリ 2 件。`rules[1]` が `paths: [docs/**, ~]` を持つ'
-        notes: 書き込みの前のバイト列を控える
+        notes: 書き込みの前のバイト列を記録する
       - name: 引数
         description: '`position: 0`、`list_rules` で得た `rules[0]` の `rev` を `expected_rev`、`entry: {on: [write]}`'
     flow: |-
@@ -396,19 +396,19 @@ flows:
         IF->>IF: 書き出し、rules[0] の外の行を比べる
         IF-->>C: isError: true（書式を保てない旨・行の番号・手で直す旨）
     expected:
-      - '結果が `isError: true` で、索引の書式を保って書けない旨、`rules[1]` の `paths` の行の番号、索引を手で直す旨が載っている'
+      - '結果が `isError: true` で、索引の書式を保って書き込めない旨、`rules[1]` の `paths` の行の番号、索引を手で修正する旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_layout_not_kept
   - name: 正常系（参照するツールを書く）
-    summary: 位置で指したエントリに `read_tool` を書き、`read_by` の後ろに並べる
+    summary: 位置で指したエントリに `read_tool` を記載し、`read_by` の後ろに並べる
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: エントリを新規作成するフローと同じ
       - name: 索引
         description: '`read_by` と `enabled` を持つエントリを 1 つ持つ'
-        notes: 書き込みの前の内容を控える
+        notes: 書き込みの前の内容を記録する
       - name: 引数
         description: '`position: 0`、エントリの `expected_rev`、`entry` に `read_tool`（`tool: mcp__docs__search_docs`、`args` に JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}`）だけ'
     flow: |-
@@ -428,7 +428,7 @@ flows:
     expected:
       - 書き込みの前との差分が `read_tool` の行だけで、`read_by` の後ろ・`enabled` の前に並んでいる
       - '`read_tool` がブロックのマップで、`args` が単一引用符で囲んだ 1 行の文字列'
-      - インターフェース定義「ルールの一覧」で読むと、そのエントリの `read_tool` が渡した値
+      - インターフェース定義「ルールの一覧」で読むと、そのエントリの `read_tool` が指定した値
     test: test_normal_when_read_tool_written
 lead: 設定ファイルで読み込む索引へエントリを新規作成・書き換えするツールの入出力を定め、エントリの書き込みを修正するときに参照する。
 identifier: write_index_entry
@@ -442,7 +442,7 @@ request:
     location: argument
     description: プロジェクトの直下
     constraints: 絶対パス
-    notes: 設定ファイルで読む索引を決めるのに使う。インターフェース定義「ルールの一覧」の `project_dir` と同じ
+    notes: 設定ファイルで読む索引を決めるのに使用する。インターフェース定義「ルールの一覧」の `project_dir` と同じ
   - name: index
     type: str
     required: true
@@ -455,7 +455,7 @@ request:
     location: argument
     description: 書き込むキーと値
     constraints: キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`
-    notes: '`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを渡す（渡さないキーはそのまま残る）'
+    notes: '`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを指定する（指定しないキーはそのまま残る）'
   - name: position
     type: int
     required: false
@@ -477,13 +477,13 @@ request:
     default: なし（キーを消さない）
     location: argument
     description: エントリから削除するキー
-    notes: '`position` を渡すときだけ使う。`entry` と同じキーは渡せない'
+    notes: '`position` を指定するときだけ使用する。`entry` と同じキーは指定できない'
   - name: dry_run
     type: bool
     required: false
     default: 'false'
     location: argument
-    description: 書き込まずにチェックと差分だけを返すか
+    description: 書き込まずにチェックと差分だけを返却するか
 request_example: |-
   ```json
   {
@@ -530,55 +530,55 @@ response_example: |-
   ```
 exceptions:
   - name: なし（正常終了）
-    condition: 書いた後の索引に新しい問題が無く、書き込んだ（`dry_run` のときは書き込まずに返した）
+    condition: 書き込んだ後の索引に新しい問題が無く、書き込んだ（`dry_run` のときは書き込まずに返却した）
   - name: ToolError（引数の組み合わせが誤り）
-    condition: '`project_dir` が絶対パスでない、`position` を渡して `expected_rev` を渡さない、`position` が無いのに `remove_keys` を渡す、`entry` と `remove_keys` に同じキーがある'
-    notes: 'ツールの結果を `isError: true` にし、渡し方を返す'
+    condition: '`project_dir` が絶対パスでない、`position` を指定して `expected_rev` を指定しない、`position` が無いのに `remove_keys` を指定する、`entry` と `remove_keys` に同じキーがある'
+    notes: 'ツールの結果を `isError: true` にし、指定方法を返却する'
   - name: ToolError（設定ファイルが読めない）
     condition: インターフェース定義「ルールの一覧」と同じ
-    notes: 設定ファイルの場所と理由を返す
+    notes: 設定ファイルの場所と理由を返却する
   - name: ToolError（設定ファイルで読む索引でない）
     condition: '`index` が、`project_dir` で設定ファイルから決まる読む索引のどれでもない'
-    notes: 設定ファイルで読む索引でない旨と、読む索引の場所を返す
+    notes: 設定ファイルで読む索引でない旨と、読む索引の場所を返却する
   - name: ToolError（索引が YAML として読めない）
     condition: 索引のファイルが無い・読めない・YAML として読めない、または最上位がマップでない
-    notes: 索引の場所と理由を返す
+    notes: 索引の場所と理由を返却する
   - name: ToolError（エントリの位置が無い）
     condition: '`position` が索引のエントリの数以上'
-    notes: 位置が無い旨と索引のエントリの数を返す
+    notes: 位置が無い旨と索引のエントリの数を返却する
   - name: ToolError（バージョンが合わない）
     condition: '`expected_rev` が今のエントリのバージョンと違う'
-    notes: 今のバージョンと、一覧を取り直してから呼び直す旨を返す
+    notes: 今のバージョンと、一覧を再取得してから再度呼び出す旨を返却する
   - name: ToolError（書いた後の索引がチェックに通らない）
-    condition: 書いた後の索引をフックが読めない、または書く前の索引に無かった問題（JSON Schema の違反・ルールの場所にファイルが無いエントリ）が出る
-    notes: 書き込まずに、新しく出た問題ごとの索引の中の場所と理由を返す
+    condition: 書き込んだ後の索引をフックが読めない、または書き込む前の索引に無かった問題（JSON Schema の違反・ルールの場所にファイルが無いエントリ）が出る
+    notes: 書き込まずに、新しく出た問題ごとの索引の中の場所と理由を返却する
   - name: ToolError（フックが読めない索引）
-    condition: '`position` を渡し、索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない）'
-    notes: 書き込まずに、フックが読めない理由（行の番号を含む）と、索引を手で直す旨を返す。`position` を渡さない新規作成も、書いた後の索引をフックが読めないため「書いた後の索引がチェックに通らない」で断る
+    condition: '`position` を指定し、索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない）'
+    notes: 書き込まずに、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨を返却する。`position` を指定しない新規作成も、書き込んだ後の索引をフックが読めないため「書いた後の索引がチェックに通らない」で断る
   - name: ToolError（索引の書式を保てない）
     condition: 書き出した内容で、対象のエントリの外の行が変わる（他のエントリが `~`・アンカーなど round-trip が書き換える表記を持つ）
-    notes: 書き込まずに、索引の書式を保って書けない旨、最初に変わる行の番号、索引を手で直す旨を返す
+    notes: 書き込まずに、索引の書式を保って書き込めない旨、最初に変わる行の番号、索引を手で修正する旨を返却する
 error_format: 'インターフェース定義「ルールの一覧」と同じ。チェックに通らないときは、問題を `{索引の中の場所}: {理由}` の行で全て並べる'
 constraints:
   - item: 書き込める索引
     constraint: '`project_dir` を `CLAUDE_PROJECT_DIR` として設定ファイルから決めた読む索引だけ。`~` を展開し、シンボリックリンクを解いた場所で比べる'
     notes: 任意のファイルへの書き込みを防ぐ
   - item: 書き込みの手順
-    constraint: ロックの中で、索引を読む → バージョンを比べる → 変更を当てる前と後の内容をチェックする → 同じフォルダの一時ファイルに書き、索引と置き換える
+    constraint: ロックの中で、索引を読む → バージョンを比べる → 変更を適用する前と後の内容をチェックする → 同じフォルダの一時ファイルに書き込み、索引と置き換える
     notes: フックは置き換えの前か後のどちらかの内容だけを読む。書き込まなかったときは索引のファイルを 1 バイトも変えない
   - item: チェック
-    constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書く前と書いた後の索引を確かめる。書いた後にフックが読めないか、書く前に無かった問題が出るときだけ断る
-    notes: 問題はエントリのバージョンと理由で照らし合わせる（位置は新規作成・削除でずれるため）。書き換えたエントリの問題は、書く前に同じ理由があっても新しい問題として扱う。もとからある問題は、この書き込みで生じたものではないため書き込みを止めない
+    constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書き込む前と書き込んだ後の索引を確認する。書き込んだ後にフックが読めないか、書き込む前に無かった問題が出るときだけ断る
+    notes: 問題はエントリのバージョンと理由で照らし合わせる（位置は新規作成・削除でずれるため）。書き換えたエントリの問題は、書き込む前に同じ理由があっても新しい問題として扱う。もとからある問題は、この書き込みで生じたものではないため書き込みを止めない
   - item: 書式の維持
-    constraint: '`ruamel.yaml` の round-trip で読み書きし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符で囲んだ 1 行の文字列）で書く'
-    notes: 設定は PoC の結果（`width` 4096・`preserve_quotes`）。字下げは索引から推定し（推定できないときは mapping 2 / sequence 4 / offset 2）、改行は索引の改行に合わせる。`~`・アンカーなど round-trip が書き換える表記を他のエントリに持つ索引は、手で直してもらう。フックの読み取りが受け付ける形式だけで書く。既にあるエントリへ無いキーを途中に書くと、挿入位置の直前のキーの後ろにあるコメント行は新しいキーの上に残る（コメントは対象のエントリの中のため、外の行を変えない確認には掛からない）
+    constraint: '`ruamel.yaml` の round-trip で読み込みと書き込みをし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書き込む文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符で囲んだ 1 行の文字列）で記載する'
+    notes: 設定は PoC の結果（`width` 4096・`preserve_quotes`）。字下げは索引から推定し（推定できないときは mapping 2 / sequence 4 / offset 2）、改行は索引の改行に合わせる。`~`・アンカーなど round-trip が書き換える表記を他のエントリに持つ索引は、手で修正してもらう。フックの読み取りが受け付ける形式だけで書き込む。既にあるエントリへ無いキーを途中に書き込むと、挿入位置の直前のキーの後ろにあるコメント行は新しいキーの上に残る（コメントは対象のエントリの中のため、外の行を変えない確認には掛からない）
   - item: 新規作成の位置
     constraint: '`rules` の末尾。`rules` が無い索引では `rules` を追加する'
   - item: エントリのバージョン
     constraint: インターフェース定義「ルールの一覧」の制約「エントリのバージョン」と同じ求め方
-    notes: 一覧を取った後に手で直されたエントリを上書きしない
+    notes: 一覧を取った後に手で修正されたエントリを上書きしない
   - item: 反映
-    constraint: 書き込んだ内容は、サーバーを再起動せずに次のツールの呼び出しと次のフックの呼び出しに効く
+    constraint: 書き込んだ内容は、サーバーを再起動せずに次のツールの呼び出しと次のフックの呼び出しで有効になる
     notes: 索引をキャッシュしない
   - item: 認可
     constraint: 制限なし
