@@ -118,7 +118,7 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
-lead: 会話の圧縮の前に、そのセッションの既読の記録ファイルと案内済みの記録ファイルを削除する。既読の履歴ファイルは削除しない。
+lead: 会話の圧縮の前にセッションの既読の記録と案内済みの記録を削除するフックの入出力を定め、既読の記録の破棄を修正するときに参照する。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイル（`{session_id}.txt`）と案内済みの記録ファイル（`{session_id}.guided.txt`）を削除する。片方を削除できなくてももう片方は削除する。既読の履歴ファイル（`{session_id}.history.jsonl`）は削除しない
 request:

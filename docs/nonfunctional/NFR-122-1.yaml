@@ -348,4 +348,4 @@ requirements:
         notes: 合計を上回るように切り上げた値
     overflow: 打ち切ったら起動を依頼しないまま終え、ER 図「ログ」へ記載する。次のセッションの開始でまた確認する
     measurement: 有効なユニットへ `is-enabled` と `start --no-block` を 1,000 回ずつ実行し、それぞれの p99.9 を求める
-lead: Claude Code のフックの制約から逆算した、rule-inject が守る値。
+lead: Claude Code のフックの制約から逆算した rule-inject が守る値を定め、時間・保持期間などの値を決める・変えるときに参照する。

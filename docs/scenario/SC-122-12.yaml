@@ -102,7 +102,7 @@ scenarios:
     expected:
       - ツールの結果がエラーで、ファイルのパスかツール名のどちらか 1 つを渡す旨が載っている
     test: test_error_when_both_path_and_tool
-lead: Claude Code が常駐の MCP サーバーの検索のツールに、プロジェクトの直下と、ファイルのパスと操作の種別か MCP のツールの呼び出し（ツール名と引数）を渡し、当たるルールと、未読のときに操作を止めるかを受け取る。
+lead: Claude Code が MCP サーバーの検索のツールで操作にヒットするルールと止めるかを受け取る流れを示し、ルールの検索を変えるときに参照する。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:

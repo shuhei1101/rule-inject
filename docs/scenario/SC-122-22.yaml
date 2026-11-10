@@ -129,7 +129,7 @@ scenarios:
       - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
       - 'セッションが回答を返して終わり、ログに `component: start_server` の行が無い'
     test: test_normal_when_no_unit
-lead: セッションの開始時に `SessionStart` フックが常駐の MCP サーバーの応答を確認し、応答しないときは systemd --user のユニットへ起動を依頼して、`/mcp` で接続し直す旨をコンテキストへ載せる。次に開くセッションは最初から接続できる。
+lead: セッションの開始時にフックが応答しない MCP サーバーのユニットへ起動を依頼する流れを示し、サーバーの起動の補助を変えるときに参照する。
 issue: 111
 primary_actor: Claude Code のセッション
 stakeholders:

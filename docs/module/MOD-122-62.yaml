@@ -1,7 +1,7 @@
 id: MOD-122-62
 visibility: internal
 title: "プラグイン / 索引"
-lead: 設定（`load_settings`）が決めた索引を標準ライブラリだけで読み、操作の対象のパスかツール名に当たるルールをルールごとにまとめて返す。MCP のツールの呼び出しが `read_by` に当たるか `read_tool` に一致するルールの場所も返す。
+lead: 索引を読み込んで操作の対象やツールの呼び出しにヒットするルールを照合するモジュールの構成を定め、ルールの照合を修正するときに参照する。
 directory: |-
   ```text
   src/rule_inject/features/index/

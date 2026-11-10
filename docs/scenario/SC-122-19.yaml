@@ -240,7 +240,7 @@ scenarios:
       - 編集の前との差分が、参照するツールと引数の行だけで、`read_by` の後ろに並んでいる
       - 索引をフックと同じ読み取りで読むと、そのエントリが参照するツールと引数を持って読める
     test: test_normal_when_read_tool_written
-lead: Claude Code が常駐の MCP サーバーの編集のツールで、設定ファイルで読む索引のエントリを新規作成・編集・削除する。書いた後の索引がチェックに通らないときは書き込まない。
+lead: Claude Code が MCP サーバーの編集のツールで索引のエントリを作成・編集・削除する流れを示し、索引のエントリの編集を変えるときに参照する。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:

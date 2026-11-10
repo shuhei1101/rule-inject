@@ -76,7 +76,7 @@ scenarios:
       - ツールのエラーが返り、受け付けるセッションの形式が載っている
       - 記録フォルダの内外のどのファイルも削除していない
     test: test_error_when_session_id_invalid
-lead: Claude Code が常駐の MCP サーバーの削除のツールにセッションを指し、そのセッションの既読の記録と案内済みの記録を削除する。次のフックの呼び出しから、そのセッションのルールは未読として案内される。
+lead: Claude Code が MCP サーバーの削除のツールでセッションの既読の記録を削除する流れを示し、既読の記録の削除を変えるときに参照する。
 issue: 65
 primary_actor: Claude Code のセッション
 stakeholders:

@@ -56,7 +56,7 @@ catalogs:
         purpose: Streamable HTTP の MCP サーバーへ接続し、`ClientSession` でツールを呼ぶ
         description: 接続できないときは、`ClientSession.initialize()` で `httpx2.ConnectError`（`httpx2.HTTPError` の子）を包んだ `ExceptionGroup` が送出される。HTTP のクライアントは依存の `httpx2` で、`httpx` は入らない。MCP のエラーの例外は `mcp.shared.exceptions.MCPError`
         status: planned
-lead: Model Context Protocol の公式の Python SDK。MCP のサーバーとクライアントを書くためのクラスを持つ。
+lead: Model Context Protocol の公式の Python SDK の利用方法を定め、MCP サーバーのツールや接続を実装・修正するときに参照する。
 purl: pkg:pypi/mcp
 dependency_scope: 任意
 adoption: 採用

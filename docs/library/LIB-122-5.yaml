@@ -42,7 +42,7 @@ catalogs:
       - name: Server.started
         kind: 属性
         purpose: 待ち受けを始めたら真になる
-lead: ASGI のアプリを HTTP で待ち受けるサーバー。MCP サーバーの Streamable HTTP の待ち受けに使う。
+lead: ASGI のアプリを HTTP で待ち受ける uvicorn の利用方法を定め、MCP サーバーの待ち受けや停止を修正するときに参照する。
 purl: pkg:pypi/uvicorn
 upstream: encode/uvicorn
 verification:

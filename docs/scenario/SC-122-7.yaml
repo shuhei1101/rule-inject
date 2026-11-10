@@ -125,7 +125,7 @@ scenarios:
       - 端末の設定が変わっていない
       - 結果に `global-setup` かサーバーの起動の案内が記載されている
     test: test_error_when_server_unreachable
-lead: 利用者が `setup` のスキルを実行し、リポジトリの索引が参照される状態にして、索引のチェックの結果を受け取る。
+lead: 利用者がスキルでリポジトリの索引を参照される状態にしてチェックの結果を受け取る流れを示し、索引の登録を変えるときに参照する。
 issue: 105
 primary_actor: 利用者
 stakeholders:

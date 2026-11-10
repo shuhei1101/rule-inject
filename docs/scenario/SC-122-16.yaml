@@ -559,7 +559,7 @@ scenarios:
       - セッションの記録（transcript）の操作を止めない案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
       - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
     test: test_normal_when_not_blocked_with_read_tool
-lead: Claude Code がツールを呼ぶ直前に、`PreToolUse` フックが操作の対象に当たる未読のルールを案内する。操作の種別がエントリに当たれば操作を止め、当たらなければ止めずに案内する。止めない案内は、ルールごとにセッションで 1 回だけ出す。
+lead: ツールを呼ぶ直前にフックが操作の対象にヒットする未読のルールを案内する流れを示し、ルール案内の止め方や文面を変えるときに参照する。
 issue: 2
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ

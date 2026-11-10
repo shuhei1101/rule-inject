@@ -1,7 +1,7 @@
 id: MOD-122-53
 visibility: internal
 title: "MCP サーバー / サーバー"
-lead: 常駐の MCP サーバーの起動の入口、コンポジションルート、ツールの本体と応答の形式。ツールは引数の確かめと `features/index`・`features/record` の呼び出しと応答の組み立てだけを行い、サブフィーチャー同士の組み合わせ（チェックを編集へ注入する）はコンポジションルートが行う。
+lead: 常駐の MCP サーバーの起動の入口・コンポジションルート・ツールの本体と応答の形式の構成を定め、ツールを追加・修正するときに参照する。
 directory: |-
   ```text
   src/rule_inject/server/

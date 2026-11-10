@@ -1,7 +1,7 @@
 id: CFG-122-1
 visibility: internal
 title: "設定: プラグイン"
-lead: プラグインが読む環境変数・設定ファイルのキーと、ルール索引（YAML）のキーの一覧。
+lead: プラグインが読み込む環境変数・設定ファイルのキーと、ルール索引のキーを定め、設定や索引のキーを追加・変更するときに参照する。
 files:
   - file: ~/.claude/settings.json
     manages: 設定ファイルの場所を指す環境変数 `RULE_INJECT_CONFIG`（`env`）

@@ -470,7 +470,7 @@ flows:
       - '`violations` に `location` が `rules[0].read_tool.args` の違反と理由が載っている'
       - '`hook_error` が `None`'
     test: test_normal_when_read_tool_violates_schema
-lead: プロジェクトの直下を受け、そのプロジェクトで読む索引ごとに、フックが読めない理由・索引の JSON Schema への違反・`rule` の場所にファイルが無いエントリと、dev-docs の使われているどのタグにも当たらないタグのパターンを返す。
+lead: プロジェクトで読み込む索引ごとに、読めない理由・スキーマの違反・ルールの無いエントリ・使われていないタグを返却するツールを定め、索引のチェックを修正するときに参照する。
 identifier: check_indexes
 idempotent: true
 side_effects: なし（`readOnlyHint`）

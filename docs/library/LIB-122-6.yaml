@@ -1,8 +1,7 @@
 visibility: internal
 title: sse-starlette
 lead: |-
-  Starlette の応答として Server-Sent Events のストリームを返す ASGI のライブラリ。
-  サーバーの停止を検知すると、開いているストリームを取り消す。
+  Server-Sent Events のストリームを返却する sse-starlette の利用方法を定め、サーバーの停止時のストリームの扱いを修正するときに参照する。
 kind: ライブラリ
 purl: pkg:pypi/sse-starlette
 dependency_scope: 任意

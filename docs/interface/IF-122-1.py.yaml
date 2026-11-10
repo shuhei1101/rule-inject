@@ -279,7 +279,7 @@ flows:
       - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で直す旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_hook_unreadable
-lead: 設定ファイルで読む索引から、位置で指したエントリを削除する。
+lead: 設定ファイルで読み込む索引から位置で指したエントリを削除するツールの入出力を定め、エントリの削除を修正するときに参照する。
 identifier: delete_index_entry
 idempotent: false
 side_effects: 索引のファイルを書き換える（`dry_run` のときとエラーのときは書き換えない）。`destructiveHint`

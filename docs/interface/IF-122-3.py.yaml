@@ -75,7 +75,7 @@ flows:
       - '待つ間に呼んだ `list_rules` も `isError: true` で、再起動の途中である旨が載っている'
       - 接続し直した後の `get_server_status` の `started_at` が、1 回目の再起動の後に 1 回だけ新しくなっている
     test: test_error_when_restart_in_progress
-lead: 応答を返した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま起動し直す。結果は接続し直した後の `get_server_status` で確かめる。
+lead: 処理中の呼び出しの終わりを待って同じプロセスのまま起動し直すツールの入出力を定め、サーバーの再起動を修正するときに参照する。
 identifier: restart_server
 idempotent: false
 side_effects: 待ち受けを閉じて起動し直す（`destructiveHint`）。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書かない

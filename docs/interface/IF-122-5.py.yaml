@@ -72,7 +72,7 @@ flows:
       - 結果が `isError` でなく、`commit` が `null`
       - '`version` が置いた `version.ini` の値'
     test: test_normal_when_not_git_clone
-lead: サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・ツールのバージョン・クローンの場所と commit・設定ファイルを読めるかを返す。
+lead: サーバー自身の待ち受け・バージョン・クローン・設定ファイルの状態を返却するツールの入出力を定め、サーバーの状態の確認を修正するときに参照する。
 identifier: get_server_status
 idempotent: true
 side_effects: なし（`readOnlyHint`）

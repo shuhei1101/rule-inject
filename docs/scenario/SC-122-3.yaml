@@ -49,7 +49,7 @@ scenarios:
       - 2 回目の呼び出しがツールのエラーになり、再起動の途中であることが載っている
       - 接続し直した後の状態の確認で、起動し直したのが 1 回だけ
     test: test_error_when_restart_in_progress
-lead: Claude Code が常駐の MCP サーバーの再起動のツールを呼び、サーバーは応答を返した後に待ち受けを閉じて起動し直す。Claude Code は接続し直し、状態の確認で起動し直したことを確かめる。
+lead: Claude Code が MCP サーバーの再起動のツールを呼び出して接続し直すまでの流れを示し、サーバーの再起動を変えるときに参照する。
 issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:

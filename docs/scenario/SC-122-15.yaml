@@ -114,7 +114,7 @@ scenarios:
       - ツールのエラーが返り、受け付けるセッションの形式が載っている
       - 記録フォルダの外のファイルを読んでいない
     test: test_error_when_session_id_invalid
-lead: Claude Code が常駐の MCP サーバーの確認のツールにセッションを指し、そのセッションの既読のルールと、ルールごとの読んだ方法を受け取る。セッションを指さないときは、記録のあるセッションの一覧を受け取る。
+lead: Claude Code が MCP サーバーの確認のツールでセッションの既読のルールと読んだ方法を受け取る流れを示し、既読の記録の確認を変えるときに参照する。
 issue: 65
 primary_actor: Claude Code のセッション
 stakeholders:

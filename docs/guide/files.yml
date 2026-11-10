@@ -2,14 +2,14 @@
 files:
   - path: 変更履歴.md
     name: 変更履歴
-    description: バージョンごとの変更の一覧なので、更新の前後で何が変わったかを調べるときに読む。
+    description: バージョンごとの変更の一覧で、更新の前後で何が変わったかを調べるときに参照する。
     tags:
       - topic:変更履歴
     category: はじめに
     visibility: public
   - path: コアコンセプト-ルールの案内.md
     name: ルールの案内の仕組み
-    description: 未読のルールの案内・既読の記録・既読の履歴・圧縮での破棄の仕組みを説明する。案内がいつどう出るかを知りたいときに読む。
+    description: 未読のルールの案内・既読の記録・既読の履歴・圧縮での破棄の仕組みを説明し、案内がいつどう出るかを知りたいときに参照する。
     tags:
       - topic:ルールの案内
       - topic:既読の記録
@@ -17,7 +17,7 @@ files:
     visibility: public
   - path: コアコンセプト-MCPサーバー.md
     name: MCP サーバーの役割
-    description: ローカルで常駐させる MCP サーバーの役割と、フックとの関係を説明する。MCP サーバーを使う理由を知りたいときに読む。
+    description: ローカルで常駐させる MCP サーバーの役割とフックとの関係を説明し、MCP サーバーを使用する理由を知りたいときに参照する。
     tags:
       - topic:MCPサーバー
       - tool:mcp
@@ -25,7 +25,7 @@ files:
     visibility: public
   - path: セットアップ.md
     name: セットアップ
-    description: プラグインを読み込み、設定ファイルを置いて環境変数で指すまでの手順なので、初めて使うときに読む。
+    description: プラグインを読み込み、設定ファイルを配置して環境変数で指すまでの手順で、初めて使用するときに参照する。
     tags:
       - topic:セットアップ手順
       - tool:claude-code
@@ -33,7 +33,7 @@ files:
     visibility: public
   - path: ルールにするか文書にするかを決める.md
     name: ルールにするか文書にするかの判定
-    description: 規約・手順を rules.yaml へ登録して注入するか、dev-docs の文書にしてタグで読ませるかを決める判定フローチャートなので、規約や手順を追加するときに読む。
+    description: 規約・手順を索引へ登録して注入するか、dev-docs の文書にしてタグで参照させるかを決める判定フローチャートで、規約や手順を追加するときに参照する。
     tags:
       - topic:判定フローチャート
       - topic:ルールの注入
@@ -41,7 +41,7 @@ files:
     visibility: public
   - path: 環境変数.md
     name: 環境変数
-    description: 設定ファイルを指す環境変数と、索引の変数参照の値を説明する。環境変数の名前や置き場所を調べるときに読む。
+    description: 設定ファイルを指す環境変数と、索引の変数参照の値を説明し、環境変数の名前や配置場所を調べるときに参照する。
     tags:
       - topic:設定ファイル
       - topic:変数参照
@@ -49,21 +49,21 @@ files:
     visibility: public
   - path: 設定ファイル.md
     name: 設定ファイル
-    description: 設定ファイルのキーと、global・projects の当て方と重ね方を定める。設定ファイルを記載するときに読む。
+    description: 設定ファイルのキーと、global・projects の適用の仕方と重ね方を定め、設定ファイルを記載するときに参照する。
     tags:
       - topic:設定ファイル
     category: リファレンス
     visibility: public
   - path: 索引の書式.md
     name: 索引の書式
-    description: ルール索引の YAML のキーを定める。索引にルールを載せるときに読む。
+    description: ルール索引の YAML のキーと値の書式を定め、索引にルールを登録・修正するときに参照する。
     tags:
       - topic:ルール索引
     category: リファレンス
     visibility: public
   - path: MCPの結果の書式.md
     name: MCP の結果の書式
-    description: 文書を返す MCP のツールが、結果に文書の場所と範囲を載せる書式を定める。MCP で読んだ文書を既読にしたいときに読む。
+    description: 文書を返却する MCP のツールが結果に文書の場所と範囲を記載する書式を定め、MCP で読んだ文書を既読にしたいときに参照する。
     tags:
       - topic:既読の記録
       - tool:mcp
@@ -71,7 +71,7 @@ files:
     visibility: public
   - path: MCPツール.md
     name: MCP ツールの引数と応答
-    description: 常駐の MCP サーバーが持つツールの引数と応答の一覧なので、ツールの呼び方を調べるときに読む。
+    description: 常駐の MCP サーバーが持つツールの引数と応答の一覧で、ツールの呼び方を調べるときに参照する。
     tags:
       - topic:MCPツール
       - tool:mcp

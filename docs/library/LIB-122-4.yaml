@@ -25,7 +25,7 @@ catalogs:
         kind: メソッド
         purpose: 新しく作ったリストをフロー形式（`[a, b]`）で書き出すようにする
         description: 読んだ既存のリストはフロー形式を保つが、新しく追加するエントリのリストはこれを呼ばないとブロック形式になる
-lead: コメント・引用符・フロー形式を残したまま YAML を読み書きする（round-trip）ライブラリ。
+lead: コメントや引用符を維持したまま YAML を読み書きする ruamel.yaml の利用方法を定め、索引の書き込みを修正するときに参照する。
 purl: pkg:pypi/ruamel.yaml
 verification:
   state: 済

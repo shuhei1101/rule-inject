@@ -1,0 +1,19 @@
+confirmations:
+  - topic: Mermaid の図を mdmark の map で囲む工程をこの PR で行うか
+    decision: 'この PR から外し、mdmark#324 の完了後に図の工程だけの Issue を起票する。Issue #99 は図の工程の Issue を後続にして閉じる（推奨案 A）'
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/125#discussion_r4528129777
+  - topic: 設計書の本文（lead 以外）の移行をこの PR で行うか
+    decision: 設計書の分類（シナリオ・インターフェース定義・モジュール構成・その他）ごとに別の Issue へ分ける（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/125#discussion_r4528130772
+  - topic: 過去の PR ドキュメント（docs/pr/）を移行の範囲から外すか
+    decision: 過去の PR ドキュメントは書き換えず、これから作る PR ドキュメントだけを新しい書き方にする（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/125#discussion_r4528131484

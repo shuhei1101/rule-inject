@@ -1,7 +1,7 @@
 id: MOD-122-60
 visibility: internal
 title: "プラグイン / 既読の記録"
-lead: セッションごとの既読の記録ファイルと案内済みの記録ファイルと既読の履歴ファイル（ER 図「既読の記録」）の読み・追記・削除・掃除。
+lead: セッションごとの既読の記録・案内済みの記録・既読の履歴の読み書きと掃除のモジュールの構成を定め、既読の記録を修正するときに参照する。
 directory: |-
   ```text
   src/rule_inject/features/record/

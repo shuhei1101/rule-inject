@@ -81,7 +81,7 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
-lead: セッションの開始時に、新しいファイルは空で作ってから中身を書くという作業の決まりを `additionalContext` で載せる。圧縮の後に始まったときは、削除できずに残った既読の記録があればそのことも載せる。
+lead: セッションの開始時に作業の決まりをコンテキストへ追加するフックの入出力を定め、作業の決まりの注入を修正するときに参照する。
 idempotent: true
 side_effects: なし（既読の記録ファイルの有無を見るだけ）
 response:

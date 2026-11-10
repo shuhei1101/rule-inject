@@ -135,7 +135,7 @@ flows:
     expected:
       - '結果が `isError: true` で、受けた値と形式が誤っている旨が載っている'
     test: test_error_when_session_id_invalid
-lead: セッションを受け、そのセッションの既読のルールごとに、今の本文が既読にした時点と同じかと、既読の履歴に残る読んだ方法を返す。セッションを省くと、既読の記録のあるセッションの一覧を返す。
+lead: セッションの既読のルールごとに本文の変化と読んだ方法を返却するツールの入出力を定め、既読の記録の確認を修正するときに参照する。
 identifier: get_read_records
 idempotent: true
 side_effects: なし（`readOnlyHint`）
