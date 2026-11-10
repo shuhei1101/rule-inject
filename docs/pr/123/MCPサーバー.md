@@ -52,4 +52,8 @@ lint: `テスト結果/20261110164517_6e374fa_lint.log`（違反なし）
 
 ### 結合
 
-なし（結合テスト作成で実行する）
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_update_server.py](https://github.com/shuhei1101/rule-inject/blob/163a05f/tests/integration/server/test_update_server.py) | 全実行 | 実行のみ | ✅ | ファイル単体の実行を 10 回続けて、10 回とも 6 テスト pass（終わりの条件）<br>`テスト結果/20261110173048_6e374fa_結合テスト.log` |
+| [tests/integration/server/test_restart_server.py](https://github.com/shuhei1101/rule-inject/blob/163a05f/tests/integration/server/test_restart_server.py) | 全実行 | 実行のみ | ✅ | ファイル単体の実行を 10 回続けて、10 回とも 3 テスト pass（終わりの条件） |
+| `tests/integration/server` | 全実行 | 実行のみ | ✅ | 起動の入口の変更がサーバーの結合テスト全体に効くための回帰確認。82 テスト pass |
