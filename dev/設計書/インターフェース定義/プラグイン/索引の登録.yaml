@@ -7,7 +7,7 @@ flows:
     summary: リポジトリの索引を参照できる状態にして、チェックの結果を示す
     setup:
       - name: Mock
-        description: なし（手順はスキルの本文で、シナリオ『リポジトリの索引を登録する』の E2E で確認する）
+        description: なし（手順はスキルの本文で、自動のテストでは確認しない）
     flow: |-
       ```mermaid
       sequenceDiagram

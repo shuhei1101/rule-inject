@@ -7,7 +7,7 @@ flows:
     summary: 端末の設定を用意し、サーバーとフックを確認して結果を示す
     setup:
       - name: Mock
-        description: なし（手順はスキルの本文で、シナリオ『端末をセットアップする』の E2E で確認する）
+        description: なし（手順はスキルの本文で、自動のテストでは確認しない）
     flow: |-
       ```mermaid
       sequenceDiagram

@@ -71,10 +71,9 @@ selection:
   consequences: |-
     2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使わない。メジャーバージョンで API が変わるので `<3` で固定する。
 
-    プラグインの MCP サーバーを廃止し（#44）、プラグインの依存から外した。E2E テストの `read_by` のシナリオで立てる文書の MCP サーバーだけが使う。
+    プラグインの MCP サーバーを廃止し（#44）、プラグインの依存から外した。
 used_in:
   - src/rule_inject/server/app.py
   - src/rule_inject/server/tools.py
   - src/rule_inject/server/_format.py
-  - tests/e2e/conftest.py
   - src/rule_inject/server/dev_docs.py
