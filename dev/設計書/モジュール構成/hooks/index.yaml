@@ -1,8 +1,6 @@
 summary: "Claude Code が呼ぶフックの入口と共通の実行処理の物理ファイルごとのモジュール"
 docs_index: true
 items:
-  - page: run.py.yaml
-    summary: プラグインの直下の起動スクリプト。src/ を sys.path に追加して引数のフックを動かす
   - page: __init__.py.yaml
     summary: フックのパッケージ
   - page: _runner.py.yaml
@@ -21,3 +19,5 @@ items:
     summary: 作業の決まりの注入（SessionStart）
   - page: start_server.py.yaml
     summary: サーバーの起動の補助（SessionStart）
+  - page: run.py（プラグインの直下）.yaml
+    summary: プラグイン / フック / run.py（プラグインの直下）

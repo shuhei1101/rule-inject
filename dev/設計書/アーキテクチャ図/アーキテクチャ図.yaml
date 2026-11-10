@@ -1,10 +1,10 @@
+id: ARCH-122-1
 title: "アーキテクチャ図"
 overview:
   direction: LR
   nodes:
     - id: U
       label: ユーザー
-      shape: stadium
       kind: actor
     - id: CC
       label: Claude Code
@@ -14,15 +14,12 @@ overview:
       kind: system
     - id: STATE
       label: 既読の記録
-      shape: cylinder
       kind: store
     - id: IDX
       label: ルール索引（YAML）
-      shape: cylinder
       kind: store
     - id: RULE
       label: ルールの本文（ローカル）
-      shape: cylinder
       kind: store
     - id: SRV
       label: MCP サーバー
@@ -58,13 +55,12 @@ overview:
     - from: HOOK
       to: SRV
       label: 応答しないときの起動の依頼（systemd --user）
-  subgraphs:
-    - id: SYS
-      label: rule-inject
-      nodes:
-        - HOOK
-        - SRV
-        - STATE
+  frame:
+    label: rule-inject
+    nodes:
+      - HOOK
+      - SRV
+      - STATE
 repository:
   style: モノレポ
   repositories:
@@ -81,7 +77,7 @@ subsystems:
     runtime: Python 3（mcp・jsonschema・ruamel.yaml）
     runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
     refs:
-      - dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py#
+      - IF-122-6#
     status: planned
 lead: rule-inject のサブシステムと、Claude Code・ルールの置き場所との境界。
 external_systems:
@@ -91,12 +87,12 @@ external_systems:
     protocol: フックの JSON（標準入出力）
     notes:
       事前確認: 不要。Claude Code がフックを起動する側のため、呼ばれた時点で到達している。
-    detail: dev/設計書/外部ライブラリ/claude-code#
+    detail: LIB-122-1#
   - name: dev-docs
     purpose: '`check_indexes` で使われているタグを引く'
     direction: 双方向
     protocol: MCP（Streamable HTTP）
-    detail: dev/設計書/外部API/dev-docs#
+    detail: API-122-1#
     status: planned
 constraints: |-
   - フックは Python の標準ライブラリだけで書く

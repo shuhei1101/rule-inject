@@ -8,7 +8,6 @@ Claude Code が呼ぶフックの入口と共通の実行処理の物理ファ�
 
 | ページ | 概要 |
 | --- | --- |
-| [run.py](./run.py.yaml) | プラグインの直下の起動スクリプト。src/ を sys.path に追加して引数のフックを動かす |
 | [__init__.py](./__init__.py.yaml) | フックのパッケージ |
 | [_runner.py](./_runner.py.yaml) | 標準入出力・想定外の例外・ログ・設定ファイルの誤りのログの共通処理 |
 | [rule_guide.py](./rule_guide.py.yaml) | ルール案内（PreToolUse） |
@@ -18,5 +17,6 @@ Claude Code が呼ぶフックの入口と共通の実行処理の物理ファ�
 | [sweep_read.py](./sweep_read.py.yaml) | 既読の記録の掃除（SessionStart） |
 | [work_rules.py](./work_rules.py.yaml) | 作業の決まりの注入（SessionStart） |
 | [start_server.py](./start_server.py.yaml) | サーバーの起動の補助（SessionStart） |
+| [run.py（プラグインの直下）](./run.py（プラグインの直下）.yaml) | プラグイン / フック / run.py（プラグインの直下） |
 
 <!-- /table -->

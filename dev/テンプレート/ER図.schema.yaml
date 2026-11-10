@@ -5,12 +5,18 @@ description: |-
   全テーブルの一覧と全体図は、各分類のテーブルから横断の一覧として生成する。
 x-kind: er
 x-folder: dev/設計書/ER図
+x-id-prefix: ER
 x-cross: tables
 type: object
 additionalProperties: false
 required:
+- id
 - title
 properties:
+  id:
+    $ref: 共通.schema.yaml#/$defs/id
+    title: ID
+    description: 設計書の変わらない ID。書くツールの `create` が振り、改名・移動でも変わらない。他の設計書からは `{ID}#{項目のパス}` で指す。
   title:
     type: string
     title: タイトル
@@ -213,6 +219,12 @@ properties:
           title: 関連
           items:
             $ref: 共通.schema.yaml#/$defs/ref
+        decisions:
+          type: array
+          title: 検討事項
+          description: 根拠になった話し合いの記録の検討事項の ID。
+          items:
+            $ref: 共通.schema.yaml#/$defs/decision
         reason:
           $ref: 共通.schema.yaml#/$defs/reason
         status:
@@ -232,26 +244,48 @@ properties:
     title: 関連
     items:
       $ref: 共通.schema.yaml#/$defs/ref
+  decisions:
+    type: array
+    title: 検討事項
+    description: 根拠になった話し合いの記録の検討事項の ID。
+    items:
+      $ref: 共通.schema.yaml#/$defs/decision
   notes:
     $ref: 共通.schema.yaml#/$defs/notes
     x-heading: 補足
     x-shape: sections
 examples:
-- title: 'ER 図: タスク'
+- id: ER-1
+  title: 'ER 図: タスク'
   lead: '`タスク` ドメインに属するデータストア構造。'
   er:
     entities:
     - name: ユーザー
+      columns:
+      - type: uuid
+        name: ID
+        key: PK
     - name: タスク
     - name: コメント
+      columns:
+      - type: uuid
+        name: task_id
+        key: FK
+        comment: '参照: タスク.id'
     relations:
     - from: ユーザー
       to: タスク
-      cardinality: '||--o{'
+      from_column: ID
+      to_column: user_id
+      from_cardinality: '1'
+      to_cardinality: 0..n
       label: 作成
     - from: タスク
       to: コメント
-      cardinality: '||--o{'
+      from_column: id
+      to_column: task_id
+      from_cardinality: '1'
+      to_cardinality: 0..n
       label: 持つ
   tables:
   - name: tasks

@@ -1,3 +1,4 @@
+id: MOD-122-55
 title: "プラグイン / MCPの結果の文書"
 lead: MCP のツールの結果から、閉じタグまでそろった `<document>` と、文字列の `path`・`scope` を持つオブジェクトを、文書の場所と範囲として取り出す。
 directory: |-

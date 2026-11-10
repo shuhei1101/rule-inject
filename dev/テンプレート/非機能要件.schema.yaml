@@ -5,13 +5,19 @@ description: |-
   1 コンポーネント内で閉じる要件は作業 PR の非機能要件に書く（判定フローチャート『非機能要件のレイヤー』）。
 x-kind: nonfunctional
 x-folder: dev/設計書/非機能要件
+x-id-prefix: NFR
 x-cross: requirements
 type: object
 additionalProperties: false
 required:
+- id
 - title
 - requirements
 properties:
+  id:
+    $ref: 共通.schema.yaml#/$defs/id
+    title: ID
+    description: 設計書の変わらない ID。書くツールの `create` が振り、改名・移動でも変わらない。他の設計書からは `{ID}#{項目のパス}` で指す。
   title:
     type: string
     title: タイトル
@@ -38,6 +44,7 @@ properties:
       type: object
       additionalProperties: false
       required:
+      - id
       - name
       - category
       - external_constraint
@@ -45,6 +52,15 @@ properties:
       - value
       - rationale
       properties:
+        id:
+          type: string
+          title: ID
+          description: |-
+            設計書の中で一意な要素の ID。1 要素 1 ページにするときのページの ID になる。
+            並びの順に `NFR-{番号}` を振り、新しく足す要素は既にある番号の最大の次を振る。並べ替えても変えない。
+          pattern: "^[A-Za-z0-9_-]+$"
+          examples:
+          - NFR-1
         name:
           type: string
           title: 項目
@@ -79,7 +95,9 @@ properties:
         source:
           type: string
           title: 出所
-          description: 外部の制約を書いた設計書の参照・資料の URL・ユーザーの回答コメントの URL。
+          description: |-
+            外部の制約を書いた設計書の参照・資料の URL・ユーザーの回答コメントの URL。
+            設計書の参照は `{ID}#{項目のパス}` で書く。
         value:
           type: string
           title: 決定値
@@ -94,18 +112,15 @@ properties:
         measurement:
           type: string
           title: 測り方
-          description: 実機での確認に回す項目は、確かめる端末と操作を書く。
         test_file:
           type: string
           title: 対応テスト
-          description: 非機能要件テストのファイル（`tests/nfr/test_{英語名}.py`）。測れない項目・実機での確認に回す項目は持たない。
+          description: 非機能要件テストのファイル（`tests/nfr/test_{英語名}.py`）。測れない項目は持たない。
           pattern: ^tests/.+
         verification:
           type: object
           title: 確認の記録
-          description: |-
-            実機での確認に回した項目だけが持つ、確かめた結果。確かめた側（tester かユーザー）が release ブランチの行へ書く。
-            修正の後に合格の記録を持たない項目は、確かめ直して書き換える。
+          description: 確かめた結果。
           x-heading: 確認の記録
           x-shape: attributes
           additionalProperties: false
@@ -217,6 +232,12 @@ properties:
           title: 関連
           items:
             $ref: 共通.schema.yaml#/$defs/ref
+        decisions:
+          type: array
+          title: 検討事項
+          description: 根拠になった話し合いの記録の検討事項の ID。
+          items:
+            $ref: 共通.schema.yaml#/$defs/decision
         reason:
           $ref: 共通.schema.yaml#/$defs/reason
         status:
@@ -236,15 +257,23 @@ properties:
     title: 関連
     items:
       $ref: 共通.schema.yaml#/$defs/ref
+  decisions:
+    type: array
+    title: 検討事項
+    description: 根拠になった話し合いの記録の検討事項の ID。
+    items:
+      $ref: 共通.schema.yaml#/$defs/decision
   notes:
     $ref: 共通.schema.yaml#/$defs/notes
     x-heading: 補足
     x-shape: sections
 examples:
-- title: 非機能要件
+- id: NFR-1
+  title: 非機能要件
   lead: 外部の制約から逆算したアプリの決定値。
   requirements:
-  - name: 入力トークン上限
+  - id: NFR-1
+    name: 入力トークン上限
     english_name: input_limit
     category: 性能
     external_constraint: 100 万トークン
@@ -279,7 +308,8 @@ examples:
       condition: 100,001 トークンの入力を 1 回送る
       measurement: API へ渡ったトークン数
       expected: 2 回に分かれ、各回が 100,000 以下
-  - name: 応答の待ちの上限
+  - id: NFR-2
+    name: 応答の待ちの上限
     english_name: response_wait_limit
     category: 耐障害
     external_constraint: 制限なし
@@ -302,13 +332,15 @@ examples:
     - part: アプリの決定値
       value: "30"
       notes: 内側の待ちの合計 + 余裕
-  - name: 同時接続数
+  - id: NFR-3
+    name: 同時接続数
     category: 性能
     external_constraint: 未確定
     source_kind: 未確定
     value: 未確定
     rationale: 想定利用者数が決まる Issue「利用者管理」の要件が確定してから決める
-  - name: 対応ブラウザ
+  - id: NFR-4
+    name: 対応ブラウザ
     category: 動作環境
     external_constraint: Chrome と Edge の最新版
     source_kind: ユーザー要望
@@ -321,7 +353,8 @@ examples:
       version: Edge 140
       date: '2026-10-05'
       result: 合格
-  - name: 最小画面幅
+  - id: NFR-5
+    name: 最小画面幅
     english_name: min_viewport_width
     category: 動作環境
     external_constraint: "360"
@@ -341,7 +374,8 @@ examples:
 - title: 非機能要件
   lead: 外部の制約から逆算したゲームの決定値。
   requirements:
-  - name: 対応端末
+  - id: NFR-1
+    name: 対応端末
     category: 動作環境
     external_constraint: Windows の PC と Nintendo Switch
     source_kind: ユーザー要望
@@ -354,7 +388,8 @@ examples:
       version: システムソフトウェア 19.0.0
       date: '2026-10-05'
       result: 合格
-  - name: 入力方式
+  - id: NFR-2
+    name: 入力方式
     english_name: input_devices
     category: 動作環境
     external_constraint: キーボードとゲームパッド
@@ -370,7 +405,8 @@ examples:
       condition: 論理操作ごとに、キーボードとゲームパッドの割り当てを 1 回ずつ送る
       measurement: ゲームが受け取った論理操作
       expected: 全ての論理操作を、どちらの入力からも受け取る
-  - name: 通信
+  - id: NFR-3
+    name: 通信
     category: 動作環境
     external_constraint: 未確定
     source_kind: 未確定

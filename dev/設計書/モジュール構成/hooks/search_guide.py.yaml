@@ -1,3 +1,4 @@
+id: MOD-122-29
 title: "プラグイン / フック / search_guide.py"
 test_files:
   - tests/unit/rule_inject/hooks/test_search_guide.py

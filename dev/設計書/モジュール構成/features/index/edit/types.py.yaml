@@ -1,3 +1,4 @@
+id: MOD-122-13
 title: "MCP サーバー / エントリの編集 / types.py"
 test_files:
   - tests/unit/rule_inject/features/index/edit/test_types.py

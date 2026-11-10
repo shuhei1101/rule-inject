@@ -1,3 +1,4 @@
+id: IF-122-7
 title: "ルールの一覧"
 entry:
   kind: mcp_tool
@@ -341,10 +342,10 @@ constraints:
     notes: コメント・引用符・字下げだけの違いでは変わらない
   - item: 応答の長さ
     constraint: 効いているエントリを `limit` 件まで返し、応答が上限を超えるときはその手前で切って `next_cursor` を返す
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPのツールの応答の長さ]
+    decided_by: NFR-122-1#requirements[MCPのツールの応答の長さ]
     notes: 読めない索引・読み飛ばしたエントリ・無効のエントリは先頭のページだけに載せる
   - item: 認可
     constraint: 制限なし
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/効いているルールの一覧を見る#
+  - SC-122-9#
 test_file: tests/integration/server/test_list_rules.py

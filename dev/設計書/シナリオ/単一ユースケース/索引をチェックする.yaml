@@ -1,3 +1,4 @@
+id: SC-122-20
 title: "索引をチェックする"
 scenarios:
   - name: 正常シナリオ（違反が無い）

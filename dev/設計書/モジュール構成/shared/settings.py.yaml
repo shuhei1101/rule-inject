@@ -1,3 +1,4 @@
+id: MOD-122-49
 title: "プラグイン / 共通 / settings.py"
 test_files:
   - tests/unit/rule_inject/shared/test_settings.py

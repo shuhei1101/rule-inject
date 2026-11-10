@@ -1,3 +1,4 @@
+id: MOD-122-24
 title: "プラグイン / フック / _runner.py"
 test_files:
   - tests/unit/rule_inject/hooks/test_runner.py

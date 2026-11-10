@@ -1,3 +1,4 @@
+id: MOD-122-51
 title: "プラグイン / 共通 / yaml_lines.py"
 constants:
   - name: LIST_ITEM_MARK

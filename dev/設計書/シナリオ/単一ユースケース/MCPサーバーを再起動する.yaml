@@ -1,3 +1,4 @@
+id: SC-122-3
 title: "MCPサーバーを再起動する"
 scenarios:
   - name: 正常シナリオ

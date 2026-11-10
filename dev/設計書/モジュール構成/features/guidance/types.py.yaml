@@ -1,3 +1,4 @@
+id: MOD-122-5
 title: "プラグイン / 案内 / types.py"
 data_models:
   - name: GuidedRule

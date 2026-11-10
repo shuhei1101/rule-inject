@@ -1,3 +1,4 @@
+id: MOD-122-33
 title: "プラグイン / 移し替えの入口 / __main__.py"
 test_files:
   - tests/unit/rule_inject/migrate/test_main.py

@@ -3,12 +3,18 @@ title: テスト実行方法
 description: テスト種別ごとの実行コマンドと前提。1 プロジェクト 1 ファイル。
 x-kind: test_procedure
 x-folder: dev/設計書/テスト
+x-id-prefix: TP
 type: object
 additionalProperties: false
 required:
+- id
 - title
 - layers
 properties:
+  id:
+    $ref: 共通.schema.yaml#/$defs/id
+    title: ID
+    description: 設計書の変わらない ID。書くツールの `create` が振り、改名・移動でも変わらない。他の設計書からは `{ID}#{項目のパス}` で指す。
   title:
     type: string
     title: タイトル
@@ -45,9 +51,19 @@ properties:
       type: object
       additionalProperties: false
       required:
+      - id
       - name
       - run_all
       properties:
+        id:
+          type: string
+          title: ID
+          description: |-
+            設計書の中で一意な要素の ID。1 要素 1 ページにするときのページの ID になる。
+            並びの順に `TL-{番号}` を振り、新しく足す要素は既にある番号の最大の次を振る。並べ替えても変えない。
+          pattern: "^[A-Za-z0-9_-]+$"
+          examples:
+          - TL-1
         name:
           type: string
           title: 種別
@@ -122,18 +138,26 @@ properties:
     title: 関連
     items:
       $ref: 共通.schema.yaml#/$defs/ref
+  decisions:
+    type: array
+    title: 検討事項
+    description: 根拠になった話し合いの記録の検討事項の ID。
+    items:
+      $ref: 共通.schema.yaml#/$defs/decision
   notes:
     $ref: 共通.schema.yaml#/$defs/notes
     x-heading: 補足
     x-shape: sections
 examples:
-- title: テスト実行方法
+- id: TP-1
+  title: テスト実行方法
   lead: テスト種別ごとの実行コマンドと前提。
   prerequisites:
   - Python 3.12 と uv
   - 'DB: PostgreSQL 16 のローカル起動（`docker compose up -d postgres`）'
   layers:
-  - name: 単体テスト（バック）
+  - id: TL-1
+    name: 単体テスト（バック）
     description: pytest で実行する。DB / API に依存しない。
     prerequisites:
     - 外部依存なし（純粋関数と Mock だけ）
@@ -148,7 +172,8 @@ examples:
         uv run pytest {単体テストファイルパス}
         ```
     parallel: true
-  - name: 外部疎通テスト
+  - id: TL-2
+    name: 外部疎通テスト
     description: 実 API に繋いで疎通を確かめる。
     prerequisites:
     - 実 API の認証情報を環境変数に設定する
@@ -165,7 +190,8 @@ examples:
         uv run pytest {外部疎通テストファイルパス} --run-external
         ```
     external_cost: テストごとの料金は外部API の設計書の料金を見る
-  - name: lint
+  - id: TL-3
+    name: lint
     description: ruff で linter・formatter の check を、mypy で型検査を、import-linter で依存の向きを検査する。型検査と依存の向きの検査はプロジェクト全体に回す。
     prerequisites:
     - 検査の設定は `pyproject.toml` が持つ

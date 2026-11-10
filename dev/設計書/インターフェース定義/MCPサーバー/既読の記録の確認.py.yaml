@@ -1,3 +1,4 @@
+id: IF-122-10
 title: "既読の記録の確認"
 entry:
   kind: mcp_tool
@@ -281,10 +282,10 @@ constraints:
     notes: 記録フォルダが無ければ空の一覧
   - item: 応答の長さ
     constraint: 応答が 40,000 字を超えるときは、超える手前のルールまたはセッションで切り、`next_cursor` を返す
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPのツールの応答の長さ]
+    decided_by: NFR-122-1#requirements[MCPのツールの応答の長さ]
     notes: 読み方を読み方とツール名の組でまとめるため、履歴の行数が増えても 1 ルールあたりの字数は増えない
   - item: 認可
     constraint: 制限なし
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/既読の記録を確認する#
+  - SC-122-15#
 test_file: tests/integration/server/test_get_read_records.py

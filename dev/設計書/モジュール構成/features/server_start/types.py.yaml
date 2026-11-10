@@ -1,3 +1,4 @@
+id: MOD-122-22
 title: "プラグイン / サーバーの起動 / types.py"
 enums:
   - name: UnitStart

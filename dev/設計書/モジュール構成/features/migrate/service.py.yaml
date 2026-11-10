@@ -1,3 +1,4 @@
+id: MOD-122-17
 title: "プラグイン / 設定の移し替え / service.py"
 test_files:
   - tests/unit/rule_inject/features/migrate/test_service.py

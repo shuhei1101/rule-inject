@@ -1,3 +1,4 @@
+id: MOD-122-9
 title: "MCP サーバー / 索引のチェック / tags.py"
 test_files:
   - tests/unit/rule_inject/features/index/check/test_tags.py

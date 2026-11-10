@@ -1,3 +1,4 @@
+id: IF-122-16
 title: "既読の記録"
 entry:
   kind: trigger
@@ -615,7 +616,7 @@ exceptions:
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 記録の置き場所
     constraint: '`{state_dir}/{session_id}.txt`（1 行 = 場所とハッシュの組）'
     notes: 書式は ER 図「既読の記録」

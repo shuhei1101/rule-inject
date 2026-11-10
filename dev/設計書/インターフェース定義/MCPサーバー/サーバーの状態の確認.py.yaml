@@ -1,3 +1,4 @@
+id: IF-122-5
 title: "サーバーの状態の確認"
 entry:
   kind: mcp_tool
@@ -153,9 +154,9 @@ constraints:
     notes: 起動の作業ディレクトリに依存しない（規約『MCP サーバー作成ルール』の `structure-02`）
   - item: git の呼び出し
     constraint: '`git -C {clone} rev-parse HEAD` を 1 回呼ぶ。上限はインターフェース定義「サーバーの更新」の git と同じ'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[更新のコマンドの打ち切り]
+    decided_by: NFR-122-1#requirements[更新のコマンドの打ち切り]
   - item: 認可
     constraint: 制限なし
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/MCPサーバーの状態を確認する#
+  - SC-122-1#
 test_file: tests/integration/server/test_get_server_status.py

@@ -1,3 +1,4 @@
+id: MOD-122-20
 title: "プラグイン / 既読の記録 / types.py"
 enums:
   - name: ReadMethod

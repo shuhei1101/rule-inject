@@ -1,3 +1,4 @@
+id: MOD-122-18
 title: "プラグイン / 設定の移し替え / types.py"
 data_models:
   - name: MigrationResult

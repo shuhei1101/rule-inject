@@ -1,3 +1,4 @@
+id: SC-122-9
 title: "効いているルールの一覧を見る"
 scenarios:
   - name: 正常シナリオ

@@ -1,3 +1,4 @@
+id: MOD-122-25
 title: "プラグイン / フック / discard_read.py"
 test_files:
   - tests/unit/rule_inject/hooks/test_discard_read.py

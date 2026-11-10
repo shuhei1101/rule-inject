@@ -1,3 +1,4 @@
+id: IF-122-18
 title: "既読の記録の破棄"
 entry:
   kind: trigger
@@ -147,7 +148,7 @@ exceptions:
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。書けないときは標準エラー出力へ出す
   - item: 設定ファイル

@@ -1,3 +1,4 @@
+id: MOD-122-34
 title: "MCP サーバー / サーバー / __main__.py"
 test_files:
   - tests/unit/rule_inject/server/test_main.py

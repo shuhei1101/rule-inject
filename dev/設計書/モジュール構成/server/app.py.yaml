@@ -1,3 +1,4 @@
+id: MOD-122-37
 title: "MCP サーバー / サーバー / app.py"
 test_files:
   - tests/unit/rule_inject/server/test_app.py

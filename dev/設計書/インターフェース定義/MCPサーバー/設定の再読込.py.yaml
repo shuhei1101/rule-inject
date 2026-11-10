@@ -1,3 +1,4 @@
+id: IF-122-12
 title: "設定の再読込"
 entry:
   kind: mcp_tool
@@ -144,5 +145,5 @@ constraints:
   - item: 認可
     constraint: 制限なし
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/MCPサーバーの設定を読み直す#
+  - SC-122-2#
 test_file: tests/integration/server/test_reload_settings.py

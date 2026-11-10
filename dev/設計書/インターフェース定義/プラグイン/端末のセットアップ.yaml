@@ -1,3 +1,4 @@
+id: IF-122-20
 title: "端末のセットアップ"
 entry:
   kind: operation
@@ -89,8 +90,8 @@ constraints:
     constraint: ユニットを配置したとき、端末の設定の `global.server_service` にサービス名を記載する。既定の `rule-inject` と同じでも記載する
     notes: インターフェース定義「サーバーの起動の補助」がこの名前のユニットを起動する。端末の設定のほかのキーとコメントは変えない
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/端末をセットアップする#
-  - dev/設計書/インターフェース定義/プラグイン/設定の移し替え.py#
+  - SC-122-18#
+  - IF-122-22#
 exceptions:
   - name: なし（正常終了）
     condition: 全ての手順を終えた

@@ -1,3 +1,4 @@
+id: MOD-122-28
 title: "プラグイン / フック / run.py（プラグインの直下）"
 test_files:
   - tests/unit/hooks/test_run.py
@@ -8,7 +9,7 @@ constants:
     summary: これより古い `python3` ではパッケージを import しない
     value: '`(3, 12)`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[フックのPythonのバージョン]
+      - NFR-122-1#requirements[フックのPythonのバージョン]
 functions:
   - name: main
     title: フックの起動

@@ -1,3 +1,4 @@
+id: MOD-122-2
 title: "プラグイン / MCPの結果の文書 / service.py"
 test_files:
   - tests/unit/rule_inject/features/document/test_service.py

@@ -1,3 +1,4 @@
+id: IF-122-4
 title: "サーバーの更新"
 entry:
   kind: mcp_tool
@@ -212,7 +213,7 @@ constraints:
     constraint: '`HEAD` と `@{u}` が同じか、`@{u}` が `HEAD` の祖先（`git merge-base --is-ancestor @{u} HEAD`。クローンが上流より先に進んでいるだけ）なら `up_to_date` を返し、クローンに触らない。`HEAD` が `@{u}` の祖先なら取り込む。どちらでもなければ `UpdateFailedError`（fast-forward できない）'
   - item: 打ち切りの上限
     constraint: git の各コマンド・`uv sync`・`migrate --plan` のそれぞれに、非機能要件の決定値の上限を置く
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[更新のコマンドの打ち切り]
+    decided_by: NFR-122-1#requirements[更新のコマンドの打ち切り]
   - item: 移し替えの確かめ
     constraint: '`migrate --plan` はサーバーと同じ環境（`RULE_INJECT_CONFIG`）で実行し、標準出力の JSON の `migrations`（`version` の更新を除いた、当たった移し替えの手順）が空でなければ要るとする'
     notes: '`steps` は設定の `version` がツールと違えば `version を … にする` を必ず含むため、判定に使わない。`version` だけが古い設定はサーバーが読めるため、再起動する。設定ファイルは書き換えない。移し替えは利用者が `global-setup` で確認してから当てる'
@@ -221,5 +222,5 @@ constraints:
   - item: 認可
     constraint: 制限なし
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/rule-injectを更新する#
+  - SC-122-5#
 test_file: tests/integration/server/test_update_server.py

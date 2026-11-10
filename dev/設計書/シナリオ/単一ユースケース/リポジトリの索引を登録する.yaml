@@ -1,3 +1,4 @@
+id: SC-122-7
 title: "リポジトリの索引を登録する"
 scenarios:
   - name: 正常シナリオ

@@ -1,3 +1,4 @@
+id: MOD-122-45
 title: "プラグイン / 共通 / _settings_yaml.py"
 test_files:
   - tests/unit/rule_inject/shared/test_settings_yaml.py

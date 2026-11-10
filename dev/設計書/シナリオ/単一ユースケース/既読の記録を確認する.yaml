@@ -1,3 +1,4 @@
+id: SC-122-15
 title: "既読の記録を確認する"
 scenarios:
   - name: 正常シナリオ

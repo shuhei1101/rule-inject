@@ -1,3 +1,4 @@
+id: SC-122-13
 title: "既定の場所の設定を読む"
 scenarios:
   - name: 正常シナリオ

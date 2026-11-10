@@ -1,3 +1,4 @@
+id: MOD-122-1
 title: "プラグイン / コマンドの解析 / service.py"
 test_files:
   - tests/unit/rule_inject/features/command/test_service.py
@@ -23,7 +24,7 @@ constants:
     summary: 検索の結果から拾って照合するパスの上限
     value: '`100`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[検索結果から照合するパスの数]
+      - NFR-122-1#requirements[検索結果から照合するパスの数]
 functions:
   - name: extract_read_paths
     title: 読むパスの取り出し

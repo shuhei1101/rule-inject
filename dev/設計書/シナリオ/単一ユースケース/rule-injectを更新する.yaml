@@ -1,3 +1,4 @@
+id: SC-122-5
 title: "rule-injectを更新する"
 scenarios:
   - name: 正常シナリオ

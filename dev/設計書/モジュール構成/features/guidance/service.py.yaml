@@ -1,3 +1,4 @@
+id: MOD-122-4
 title: "プラグイン / 案内 / service.py"
 test_files:
   - tests/unit/rule_inject/features/guidance/test_service.py
@@ -8,7 +9,7 @@ constants:
     summary: 案内文 1 つの字数の上限
     value: '`10000`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
+      - NFR-122-1#requirements[フックの案内文の長さ]
   - name: BLOCKING_HEADER
     title: 止める案内の冒頭
     container: features/guidance/service.py

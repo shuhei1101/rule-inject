@@ -1,3 +1,4 @@
+id: IF-122-13
 title: "サーバーの起動の補助"
 entry:
   kind: trigger
@@ -274,14 +275,14 @@ exceptions:
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 応答の確認
     constraint: '`127.0.0.1` の `RULE_INJECT_PORT`（無ければ既定のポート）へ TCP で接続し、接続できればサーバーが応答するとみなす。待ちの上限は非機能要件の決定値'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[サーバーの応答の確認の待ち]
+    decided_by: NFR-122-1#requirements[サーバーの応答の確認の待ち]
     notes: MCP の `initialize` は送らない。ポートを取っているのがサーバーでないときの扱いは、インターフェース定義「サーバーの起動」の異常系（ポートが使われている）
   - item: systemctl の呼び出し
     constraint: '`systemctl --user is-enabled --quiet -- {サービス名}` が 0 のときだけ `systemctl --user start --no-block -- {サービス名}` を実行する。それぞれの打ち切りは非機能要件の決定値'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[ユニットの確認と起動の依頼の待ち]
+    decided_by: NFR-122-1#requirements[ユニットの確認と起動の依頼の待ち]
     notes: '`is-enabled` が 0 以外（有効でない・ユニットが無い・ユーザーの systemd に接続できない）と、`systemctl` が見つからないときは、ログに書かずに何もしない。標準入力は渡さず、標準出力と標準エラー出力は捨てる'
   - item: サービス名
     constraint: 設定ファイルの `global.server_service`（無ければ `rule-inject`）
@@ -293,5 +294,5 @@ constraints:
   - item: 依存
     constraint: 標準ライブラリだけで動く（サーバーの依存を読み込まない）
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/落ちていたMCPサーバーがセッションの開始時に起動される#
+  - SC-122-22#
 test_file: tests/integration/plugin/test_start_server.py

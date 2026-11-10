@@ -1,3 +1,4 @@
+id: SC-122-1
 title: "MCPサーバーの状態を確認する"
 scenarios:
   - name: 正常シナリオ

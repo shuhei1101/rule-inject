@@ -1,3 +1,4 @@
+id: MOD-122-21
 title: "プラグイン / サーバーの起動 / service.py"
 test_files:
   - tests/unit/rule_inject/features/server_start/test_service.py
@@ -8,21 +9,21 @@ constants:
     summary: サーバーの待ち受けのアドレス
     value: '`"127.0.0.1"`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの待ち受けのアドレス]
+      - NFR-122-1#requirements[MCPサーバーの待ち受けのアドレス]
   - name: PROBE_TIMEOUT_SECONDS
     title: 応答の確認の待ち
     container: features/server_start/service.py
     summary: ポートへ TCP で接続するときの待ちの上限（秒）
     value: '`0.1`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[サーバーの応答の確認の待ち]
+      - NFR-122-1#requirements[サーバーの応答の確認の待ち]
   - name: SYSTEMCTL_TIMEOUT_SECONDS
     title: systemctl の打ち切り
     container: features/server_start/service.py
     summary: '`systemctl --user` の 1 回の呼び出しの打ち切り（秒）'
     value: '`0.3`'
     refs:
-      - dev/設計書/非機能要件/非機能要件#requirements[ユニットの確認と起動の依頼の待ち]
+      - NFR-122-1#requirements[ユニットの確認と起動の依頼の待ち]
 functions:
   - name: server_responds
     title: サーバーの応答の確認

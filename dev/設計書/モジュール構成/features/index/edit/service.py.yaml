@@ -1,3 +1,4 @@
+id: MOD-122-12
 title: "MCP サーバー / エントリの編集 / service.py"
 test_files:
   - tests/unit/rule_inject/features/index/edit/test_service.py

@@ -1,3 +1,4 @@
+id: MOD-122-32
 title: "プラグイン / フック / work_rules.py"
 test_files:
   - tests/unit/rule_inject/hooks/test_work_rules.py

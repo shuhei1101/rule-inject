@@ -1,3 +1,4 @@
+id: MOD-122-39
 title: "MCP サーバー / サーバー / clone.py"
 test_files:
   - tests/unit/rule_inject/server/test_clone.py

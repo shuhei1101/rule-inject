@@ -1,3 +1,4 @@
+id: IF-122-14
 title: "ルール案内"
 entry:
   kind: trigger
@@ -1217,10 +1218,10 @@ exceptions:
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 案内文の長さ
     constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を載せて残りの件数を添える
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
+    decided_by: NFR-122-1#requirements[フックの案内文の長さ]
   - item: 索引
     constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、当たった `projects` の要素の `indexes` を並びの順に追加したもの（当たった要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて当てる。`enabled: false` のエントリは照合に使わない。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
     notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
@@ -1244,7 +1245,7 @@ constraints:
     notes: '`args` は MCP のツールの呼び出しにだけ当てる'
   - item: パターンの正規表現
     constraint: '`paths`・`exclude`・`tools`・`args` のパターンのうち `re:` で始まるものは、残りを正規表現として部分一致（`re.search`）で照合する。それ以外は glob のまま照合する。正規表現は索引を読むときにコンパイルし、コンパイルできないパターンを持つエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・パターン・理由を載せ、ログへ `read_index` を書く'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
     notes: 読み飛ばしは、そのエントリだけに及ぶ
   - item: URL のルール
     constraint: 変数参照を置き換えた後の `rule` が `http://` か `https://` で始まるエントリは読み飛ばし、索引が読めないときと同じく `additionalContext` へ索引の場所・エントリの `rule`・Read で読めない旨を載せ、ログへ `read_index` を書く

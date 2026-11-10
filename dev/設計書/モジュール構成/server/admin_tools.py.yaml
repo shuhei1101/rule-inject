@@ -1,3 +1,4 @@
+id: MOD-122-36
 title: "MCP サーバー / サーバー / admin_tools.py"
 test_files:
   - tests/unit/rule_inject/server/test_admin_tools.py

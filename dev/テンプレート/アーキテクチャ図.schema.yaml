@@ -5,15 +5,21 @@ description: |-
   後から変えると全サブシステムに波及するものだけを扱う。
 x-kind: architecture
 x-folder: dev/設計書/アーキテクチャ図
+x-id-prefix: ARCH
 x-cross: external_systems
 type: object
 additionalProperties: false
 required:
+- id
 - title
 - overview
 - repository
 - subsystems
 properties:
+  id:
+    $ref: 共通.schema.yaml#/$defs/id
+    title: ID
+    description: 設計書の変わらない ID。書くツールの `create` が振り、改名・移動でも変わらない。他の設計書からは `{ID}#{項目のパス}` で指す。
   title:
     type: string
     title: タイトル
@@ -119,6 +125,12 @@ properties:
           title: 関連
           items:
             $ref: 共通.schema.yaml#/$defs/ref
+        decisions:
+          type: array
+          title: 検討事項
+          description: 根拠になった話し合いの記録の検討事項の ID。
+          items:
+            $ref: 共通.schema.yaml#/$defs/decision
         reason:
           $ref: 共通.schema.yaml#/$defs/reason
         status:
@@ -188,6 +200,12 @@ properties:
           title: 関連
           items:
             $ref: 共通.schema.yaml#/$defs/ref
+        decisions:
+          type: array
+          title: 検討事項
+          description: 根拠になった話し合いの記録の検討事項の ID。
+          items:
+            $ref: 共通.schema.yaml#/$defs/decision
         reason:
           $ref: 共通.schema.yaml#/$defs/reason
         status:
@@ -219,18 +237,24 @@ properties:
     title: 関連
     items:
       $ref: 共通.schema.yaml#/$defs/ref
+  decisions:
+    type: array
+    title: 検討事項
+    description: 根拠になった話し合いの記録の検討事項の ID。
+    items:
+      $ref: 共通.schema.yaml#/$defs/decision
   notes:
     $ref: 共通.schema.yaml#/$defs/notes
     x-heading: 補足
     x-shape: sections
 examples:
-- title: アーキテクチャ図
+- id: ARCH-1
+  title: アーキテクチャ図
   lead: TaskFlow のサブシステムと外部システムとの境界。
   overview:
     nodes:
     - id: U
       label: ユーザー
-      shape: stadium
       kind: actor
     - id: FE
       label: フロントエンド
@@ -240,7 +264,6 @@ examples:
       kind: system
     - id: DB
       label: PostgreSQL
-      shape: cylinder
       kind: store
     - id: MAIL
       label: SendGrid
@@ -256,8 +279,7 @@ examples:
     - from: BE
       to: MAIL
       label: メール送信
-    subgraphs:
-    - id: SYS
+    frame:
       label: TaskFlow
       nodes:
       - FE

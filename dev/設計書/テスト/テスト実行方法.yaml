@@ -1,13 +1,16 @@
+id: TP-122-1
 title: "テスト実行方法"
 layers:
-  - name: 単体テスト（バック）
+  - id: TL-1
+    name: 単体テスト（バック）
     run_all: |-
       ```bash
       uv run pytest tests/unit
       ```
     prerequisites:
       - MCP サーバーのテストは、`pyproject.toml` の任意の依存 `server`（`mcp`・`jsonschema`・`ruamel.yaml`）を使う。同じ依存を `dev` グループにも入れ、`uv run` が入れる
-  - name: 結合テスト（バック）
+  - id: TL-2
+    name: 結合テスト（バック）
     run_all: |-
       ```bash
       uv run pytest tests/integration
@@ -32,12 +35,14 @@ layers:
         | 起動のコマンドから標準エラーに待ち受けの開始の行が出るまで | 1,000 回で p50 8.2 秒・p99 25.5 秒・p99.9 33.8 秒（待ち受けた 955 回。45 回は取り合いで終了） | `dev/pr/87/実測/`（結合テストを 2 本並べて流し続け、測る処理も 4 本並べた中。load average 9〜37 / 8 コア） |
 
         規約『資源の値の決め方』の「下流を待つタイムアウト」で、p99.9 の 33.8 秒 + その 50% の 16.9 秒 = 50.7 秒を切り上げて 51 秒。起動して失敗で終わるまでを待つ上限も、起動の時間を含むため同じ 51 秒にする。
-  - name: 非機能要件テスト
+  - id: TL-3
+    name: 非機能要件テスト
     run_all: |-
       ```bash
       uv run pytest tests/nfr
       ```
-  - name: lint
+  - id: TL-4
+    name: lint
     description: |-
       ruff で linter・formatter の check を、mypy で型検査を、import-linter で依存の向きを検査する。型検査と依存の向きの検査はプロジェクト全体に回す。
       反映作業のスクリプト（`dev/pr/{PR 番号}/反映作業/{作業名}/`）は `mypy .` から外し（`[tool.mypy]` の `exclude`）、作業のフォルダごとに `mypy` を回す。

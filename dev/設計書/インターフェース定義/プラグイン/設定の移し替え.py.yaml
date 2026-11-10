@@ -1,3 +1,4 @@
+id: IF-122-22
 title: "設定の移し替え"
 entry:
   kind: operation
@@ -198,4 +199,4 @@ constraints:
   - item: 最初の手順
     constraint: '`global.server_port` を削除し、値を `env` の `RULE_INJECT_PORT` として返却する。`.mcp.json` の既定と同じ `8783` のときは返却しない'
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/端末をセットアップする#
+  - SC-122-18#

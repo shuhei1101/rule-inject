@@ -17,21 +17,31 @@ $defs:
     description: 1 行の要約。改行を含めない。
     minLength: 1
     pattern: "^[^\\n]+$"
+  id:
+    type: string
+    title: ID
+    description: |-
+      設計書の変わらない ID。最上位の `id` に持ち、設計書を改名・移動しても変えない。
+      書くツールの `create` が `{種別の接頭辞}-{作業 PR の番号}-{PR の中の連番}` で振る。Schema のバージョンアップの変換が振る既存の設計書は `{種別の接頭辞}-{連番}`。
+    pattern: "^[A-Z]+-\\d+(-\\d+)?$"
+    examples:
+      - "IF-12"
+      - "IF-3038-1"
   ref:
     type: string
     title: 参照
     description: |-
-      設計書の項目を指す。`{設計書のパス}#{項目のパス}` で書く。
-      設計書のパスはリポジトリの直下から、拡張子 `.yaml` を落とした形。同じ設計書の中は `#{項目のパス}` だけでよい。
+      設計書の項目を指す。`{ID}#{項目のパス}` で書く。
+      ID は指す設計書の最上位の `id`。同じ設計書の中は `#{項目のパス}` だけでよい。
       リストの項目は、その Schema の `x-key` で宣言したキーの値で `[{値}]` と指す（番号で指さない）。
       設計書全体を指すときは `#` の後を空にする。
       辞書のキーも `[{キー}]` で指し、`.` や空白を含むキーも 1 段になる（`notes[main.py の補足]`）。
       同じ `x-key` の値の要素の 2 つ目以降は `[{値}#{順番}]` と指す（`functions[main#3]`）。同じ値の要素が無く末尾が `#{整数}` のときだけ、`[...]` の中の `#` を順番として読む。
-    pattern: "^[^#\\s]*#(?:[^\\s\\[]|\\[[^\\]]*\\])*$"
+    pattern: "^(?:[A-Z]+-\\d+(?:-\\d+)?)?#(?:[^\\s\\[]|\\[[^\\]]*\\])*$"
     examples:
-      - "dev/設計書/インターフェース定義/バックエンド/設計書書き込み.py#flows[正常系]"
+      - "IF-12#flows[正常系]"
       - "#functions[resolve_base].exceptions"
-      - "dev/設計書/設定/モニター#"
+      - "CFG-3#"
       - "#notes[main.py の補足]"
       - "#functions[main#3]"
   reason:
@@ -47,7 +57,7 @@ $defs:
     type: string
     title: 公開
     description: |-
-      Pages に出すか。`user`（ユーザー向け。Pages に出す）/ `developer`（開発者向け。開発ドキュメントサーバーだけで出す）。
+      Pages に出すか。`user`（ユーザー向け。Pages に出す）/ `developer`（開発者向け。dev-docs の画面だけで出す）。
       書かなければ親の値を引き継ぎ、最上位の既定は `developer`。
     enum: [user, developer]
   implementation:
@@ -130,8 +140,8 @@ $defs:
       direction:
         type: string
         title: 向き
-        description: 図の向き。書かなければ図の種類の既定（判定は `TD`、データフロー・アーキテクチャは `LR`）。
-        enum: [TD, TB, LR, RL, BT]
+        description: 図の向き。`TD`（上から下）/ `LR`（左から右）。書かなければ図の種類の既定（判定は `TD`、データフロー・アーキテクチャは `LR`）。
+        enum: [TD, LR]
       nodes:
         type: array
         title: ノード
@@ -162,30 +172,28 @@ $defs:
             line:
               type: string
               title: 線
-              description: 線の種類。書かなければ `solid`（`-->`）。`dotted`（`-.->`）/ `thick`（`==>`）/ `open`（`---`）。
-              enum: [solid, dotted, thick, open]
-      subgraphs:
-        type: array
+              description: 線の意味。書かなければ `flow`（処理の流れ）。`read`（読む）/ `write`（書く）/ `reply`（返す）/ `loop`（戻る）。
+              enum: [flow, read, write, reply, loop]
+            tip:
+              type: string
+              title: 詳細
+              description: 線のツールチップに出す詳細。ラベルを短く保つために書く。
+      frame:
+        type: object
         title: 枠
-        x-key: id
-        items:
-          type: object
-          additionalProperties: false
-          required: [id, nodes]
-          properties:
-            id:
+        description: 図の中で 1 つのシステムを囲む枠。
+        additionalProperties: false
+        required: [label, nodes]
+        properties:
+          label:
+            type: string
+            title: 表示
+          nodes:
+            type: array
+            title: 中のノード
+            description: 枠の中に置くノードの `id`。
+            items:
               type: string
-              title: ID
-              pattern: "^[A-Za-z0-9_]+$"
-            label:
-              type: string
-              title: 表示
-            nodes:
-              type: array
-              title: 中のノード
-              description: 枠の中に置くノードの `id`。
-              items:
-                type: string
       clicks:
         type: array
         title: リンク
@@ -212,30 +220,29 @@ $defs:
       id:
         type: string
         title: ID
-        description: 図の中で一意なノードの ID。空白と記号を含めない。
-        pattern: "^[^\\s\\[\\](){}<>|\"]+$"
+        description: 図の中で一意なノードの ID。空白を含めない。
+        pattern: "^\\S+$"
       label:
         type: string
         title: 表示
         description: ノードに出す文言。半角の括弧は描画を崩すので全角で書く。
-      shape:
-        type: string
-        title: 形
-        description: |-
-          ノードの形。書かなければ `rect`。
-          `rect`（四角）/ `round`（角丸）/ `stadium`（開始・終端 `([…])`）/ `diamond`（判定）/ `circle`（処理）/ `cylinder`（データストア）/ `hexagon` / `parallelogram`（入出力ポート）/ `subroutine`。
-        enum: [rect, round, stadium, diamond, circle, cylinder, hexagon, parallelogram, subroutine]
       kind:
         type: string
         title: 要素の種類
-        description: データフロー・アーキテクチャで、ノードが何を表すか。`actor`（人・外部の相手）/ `process`（処理）/ `store`（データストア）/ `system`（システム・サブシステム）/ `external`（外部システム）。
-        enum: [actor, process, store, system, external]
+        description: |-
+          ノードが何を表すか。書かなければ `process`。
+          データフロー・アーキテクチャは `actor`（人・外部の相手）/ `process`（処理）/ `store`（データストア）/ `system`（システム・サブシステム）/ `external`（外部システム）。
+          判定は `start`（開始）/ `question`（質問）/ `action`（アクション）/ `result`（結果）。
+        enum: [actor, process, store, system, external, start, question, action, result]
+      hint:
+        type: string
+        title: 説明
+        description: 箱のツールチップに出す説明の文。表示を短く保つために書く。
   state_transitions:
     type: object
     title: 状態遷移
     description: |-
-      状態の一覧と遷移の表。`stateDiagram-v2` の図はここから生成する。
-      状態の名前は図のノードになるので、空白と記号を含めない。含める場合は `node` に図のノード名を書く。
+      状態の一覧と遷移の表。状態遷移図はここから生成する。
     additionalProperties: false
     required: [states, initial, transitions]
     properties:
@@ -276,11 +283,6 @@ $defs:
             on_exit:
               type: string
               title: 出る時の処理
-            node:
-              type: string
-              title: 図のノード
-              description: 図のノード名が状態名と違うときだけ書く。
-              pattern: "^[^\\s\\[\\]:（）()]+$"
             notes:
               $ref: "#/$defs/markdown"
               title: 補足
@@ -354,7 +356,7 @@ $defs:
   er:
     type: object
     title: ER 図
-    description: 実体（テーブルとカラム）と関連。`erDiagram` の図はここから生成する。
+    description: 実体（テーブルとカラム）と関連。ER 図はここから生成する。
     additionalProperties: false
     required: [entities]
     properties:
@@ -370,8 +372,7 @@ $defs:
             name:
               type: string
               title: 名前
-              description: 図に出すテーブルの論理名（空白なし）。他の分類のテーブルは名前だけで置く。
-              pattern: "^\\S+$"
+              description: 図に出すテーブルの論理名。他の分類のテーブルは名前だけで置く。
             columns:
               type: array
               title: カラム
@@ -402,7 +403,7 @@ $defs:
         items:
           type: object
           additionalProperties: false
-          required: [from, to, cardinality]
+          required: [from, to, from_column, to_column, from_cardinality, to_cardinality]
           properties:
             from:
               type: string
@@ -410,10 +411,34 @@ $defs:
             to:
               type: string
               title: 先
-            cardinality:
+            from_column:
               type: string
-              title: 多重度
-              description: "`||--o{` = 1:N / `||--||` = 1:1 / `}o--o{` = N:M。"
+              title: 元の列
+              description: 関連が結ぶ元の実体の列の名前。
+            to_column:
+              type: string
+              title: 先の列
+              description: 関連が結ぶ先の実体の列の名前。
+            from_cardinality:
+              $ref: "#/$defs/er_cardinality"
+              title: 元の多重度
+            to_cardinality:
+              $ref: "#/$defs/er_cardinality"
+              title: 先の多重度
             label:
               type: string
               title: ラベル
+  er_cardinality:
+    type: string
+    title: 多重度
+    description: 関連の片端の多重度。`1`（ちょうど 1）/ `0..1`（0 か 1）/ `1..n`（1 以上）/ `0..n`（0 以上）。
+    enum: ["1", "0..1", "1..n", "0..n"]
+    examples:
+      - "0..n"
+  decision:
+    type: string
+    title: 検討事項
+    description: 話し合いの記録の検討事項の ID。本文の文の中に書かず、この項目に持つ。
+    pattern: "^[A-Z]+-[0-9]+$"
+    examples:
+      - "D-313"

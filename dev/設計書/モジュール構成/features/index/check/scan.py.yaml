@@ -1,3 +1,4 @@
+id: MOD-122-7
 title: "MCP サーバー / 索引のチェック / scan.py"
 test_files:
   - tests/unit/rule_inject/features/index/check/test_scan.py

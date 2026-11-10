@@ -1,3 +1,4 @@
+id: SC-122-14
 title: "既読の記録を削除する"
 scenarios:
   - name: 正常シナリオ

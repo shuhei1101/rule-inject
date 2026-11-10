@@ -1,3 +1,4 @@
+id: SC-122-4
 title: "MCPサーバーを常駐させる"
 scenarios:
   - name: 正常シナリオ

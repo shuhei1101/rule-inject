@@ -1,3 +1,4 @@
+id: IF-122-21
 title: "索引の登録"
 entry:
   kind: operation
@@ -39,7 +40,7 @@ constraints:
   - item: projects の要素
     constraint: '`match` はリポジトリの絶対パス。同じ `match` の要素があれば、その `indexes` へ追加する'
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/リポジトリの索引を登録する#
+  - SC-122-7#
 exceptions:
   - name: なし（正常終了）
     condition: 索引のチェックの結果を示した

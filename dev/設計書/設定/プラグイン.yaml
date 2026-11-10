@@ -1,3 +1,4 @@
+id: CFG-122-1
 title: "設定: プラグイン"
 lead: プラグインが読む環境変数・設定ファイルのキーと、ルール索引（YAML）のキーの一覧。
 files:
@@ -289,7 +290,7 @@ settings:
     reload: immediate
     allowed: '`http://` か `https://` で始まる URL。それ以外の値は設定ファイルの誤りとして扱う'
     refs:
-      - dev/設計書/外部API/dev-docs#base_urls
+      - API-122-1#base_urls
     reason: 既定は dev-docs の既定の待ち受けに合わせる。サーバーは全てのプロジェクトで 1 つのため `global` だけに置く
     status: planned
     visibility: user

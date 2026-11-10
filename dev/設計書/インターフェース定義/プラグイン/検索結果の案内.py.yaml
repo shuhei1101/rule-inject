@@ -1,3 +1,4 @@
+id: IF-122-19
 title: "検索結果の案内"
 entry:
   kind: trigger
@@ -496,10 +497,10 @@ exceptions:
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 案内文の長さ
     constraint: 10,000 字。超えるときは収まるところまで場所を載せて残りの件数を添える
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの案内文の長さ]
+    decided_by: NFR-122-1#requirements[フックの案内文の長さ]
   - item: 検索のコマンド
     constraint: Bash のコマンドを `&&` / `||` / `;` / `|` で区切った、`cd` を除く最初のコマンドの名前（パスの最後の要素）が `grep` / `rg` / `find` / `ls` のときだけ対象にする
     notes: 名前の部分一致にしない（`git merge` を `rg` と取り違えない）。出力の相対パスは、それまでの `cd` で動かした `cwd` から解く。`ls` は、`-` で始まらない引数が実在するフォルダ 1 つだけならそのフォルダから解く
@@ -507,7 +508,7 @@ constraints:
     constraint: 結果から拾ったパスを `cwd` から絶対パスに解き、実在するファイルだけを、出た順に重なりを除いて照合する。フォルダ・実在しないパスは捨てる
   - item: 照合するパスの数
     constraint: 先頭から 100 件まで。超えた分は照合せず、案内を出すときに照合しなかった件数を添える
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[検索結果から照合するパスの数]
+    decided_by: NFR-122-1#requirements[検索結果から照合するパスの数]
   - item: 当てる操作
     constraint: 読む操作（`read`）としてエントリに当てる。エントリの `on` によらず止めない
     notes: 索引の読み方・既定の置き場所・`rule` の変数参照の展開はルール案内と同じ

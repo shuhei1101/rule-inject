@@ -1,3 +1,4 @@
+id: IF-122-15
 title: "作業の決まりの注入"
 entry:
   kind: trigger
@@ -102,7 +103,7 @@ exceptions:
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[フックの実行時間]
+    decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 文面
     constraint: 特定の開発基盤や作者の環境を思わせる語を含めない
   - item: ログ

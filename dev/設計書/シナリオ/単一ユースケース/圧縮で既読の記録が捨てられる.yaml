@@ -1,3 +1,4 @@
+id: SC-122-11
 title: "圧縮で既読の記録が捨てられる"
 scenarios:
   - name: 正常シナリオ

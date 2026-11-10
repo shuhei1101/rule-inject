@@ -1,3 +1,4 @@
+id: IF-122-6
 title: "サーバーの起動"
 entry:
   kind: operation
@@ -153,11 +154,11 @@ exceptions:
 constraints:
   - item: 待ち受けのアドレス
     constraint: '`127.0.0.1` だけ'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの待ち受けのアドレス]
+    decided_by: NFR-122-1#requirements[MCPサーバーの待ち受けのアドレス]
     notes: 引数・設定ファイルでは変えられない
   - item: 待ち受けのポート
     constraint: '`RULE_INJECT_PORT` があればその値、無ければ既定のポート'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[MCPサーバーの既定のポート]
+    decided_by: NFR-122-1#requirements[MCPサーバーの既定のポート]
     notes: 起動時に 1 回だけ読む。変えたときは再起動する
   - item: MCP のエンドポイント
     constraint: '`http://127.0.0.1:{ポート}/mcp`'
@@ -167,7 +168,7 @@ constraints:
     notes: 索引と設定ファイルを直した結果を、再起動せずに次のツールの呼び出しに効かせる
   - item: 待ち受けの方法
     constraint: '`MCPServer.streamable_http_app()` のアプリを、`timeout_graceful_shutdown` を渡した `uvicorn.Config` の `uvicorn.Server` で待ち受ける'
-    decided_by: dev/設計書/非機能要件/非機能要件#requirements[待ち受けを閉じた後の接続の待ち]
+    decided_by: NFR-122-1#requirements[待ち受けを閉じた後の接続の待ち]
     notes: '`MCPServer.run` は `uvicorn.Server` と `timeout_graceful_shutdown` を外へ出さないため使わない。インターフェース定義「サーバーの再起動」が `should_exit` で閉じる。Ctrl+C・SIGTERM でも、SSE のストリームを持つ接続は同じ上限で切って終わる'
   - item: 状態
     constraint: ツールの呼び出しをまたぐ状態をプロセスに持たない
@@ -176,5 +177,5 @@ constraints:
     constraint: 制限なし
     notes: ループバックだけで待ち受け、同じ端末の利用者だけが呼べる
 refs:
-  - dev/設計書/シナリオ/単一ユースケース/MCPサーバーを常駐させる#
+  - SC-122-4#
 test_file: tests/integration/server/test_server_start.py
