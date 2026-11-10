@@ -19,5 +19,6 @@ rule-inject のドキュメント全体の目次
 | [test-procedure](./test-procedure/) | プロジェクト固有のテスト起動コマンドと前提条件 |
 | [external-api](./external-api/) | 採用済みの外部 API のリファレンス |
 | [library](./library/) | 採用済みの外部ライブラリ / 外部ツールのリファレンス |
+| [glossary](./glossary/) | rule-inject のドメイン用語と、使用しない言い方の一覧 |
 
 <!-- /table -->
