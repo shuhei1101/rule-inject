@@ -1,0 +1,38 @@
+$ (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; for d in docs/pr/*/反映作業/*/; do uv run mypy "$d"*.py || rc=1; done; uv run lint-imports || rc=1; exit $rc)
+   Building rule-inject @ file:///mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/refactor-docs-dev-to-docs-kind-folders
+      Built rule-inject @ file:///mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/refactor-docs-dev-to-docs-kind-folders
+Uninstalled 1 package in 34ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 1 package in 127ms
+All checks passed!
+336 files already formatted
+Success: no issues found in 132 source files
+Success: no issues found in 5 source files
+Success: no issues found in 4 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 65 files, 175 dependencies.
+------------------------------------
+
+hooks と server は features を使い、features は shared を使う KEPT
+features の機能どうしは import しない KEPT
+
+Contracts: 2 kept, 0 broken.
+exit=0

@@ -65,16 +65,20 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-10T05:38:11.528115+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: v0.4.0 の変換を dev/ のまま掛け、dev/ と docs/ の文書を docs/ の種類のフォルダ・schemas/ へ移し、visibility と category を持たせ、文書を指すパスを移動先へ合わせる（要件.yaml の docs）
+    updated_by: planner
+    updated_at: '2026-11-10T06:21:52.335263+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードの挙動を変えないため新しいテストは無い（既存の単体テストの全 pass は実装で確かめる）
     updated_by: planner
     updated_at: '2026-11-10T05:38:11.528115+00:00'
   - process: 実装
-    status: todo
+    status: done
     note: pyproject.toml の exclude・.gitignore・dev-docs.yaml を移動先へ合わせ、単体テストの全 pass と lint と dev-docs の check を確かめる
+    updated_by: planner
+    updated_at: '2026-11-10T06:21:52.335263+00:00'
   - process: 結合テスト作成
     status: skipped
     reason: 操作の入出力を変えないため新しいテストは無い
