@@ -24,11 +24,12 @@ flows:
         SV->>CF: 読む
         SV->>SV: 127.0.0.1 の RULE_INJECT_PORT で待ち受ける
         U->>SV: MCP の initialize（/mcp）
-        SV-->>U: 応答
+        SV-->>U: 応答（instructions）
       ```
     expected:
       - '`127.0.0.1` の `RULE_INJECT_PORT` のポートだけで待ち受けている'
       - '`http://127.0.0.1:{ポート}/mcp` へ MCP のクライアントで接続でき、ツールの一覧に `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`・`get_server_status`・`reload_settings`・`restart_server`・`update_server` が並ぶ'
+      - '`initialize` の応答の `instructions` が 4,096 字以内で、`Write`・`空の内容`・`Edit` を含む'
     test: test_normal
   - name: 正常系（止める）
     summary: SIGTERM で待ち受けを閉じて終わる
@@ -177,6 +178,9 @@ constraints:
   - item: 認可
     constraint: 制限なし
     notes: ループバックだけで待ち受け、同じ端末の利用者だけが呼べる
+  - item: instructions
+    constraint: '`initialize` の応答の `instructions` に、新しいファイルは Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する、という決まりを事実の文で記載する。4,096 字以内'
+    notes: 接続のたびに同じ文面。設定ファイルでは変えられない。SessionStart のフックはこの決まりを記載しない（[圧縮の後の通知](id:IF-122-15)）
 refs:
   - SC-122-4#
 test_file: tests/integration/server/test_server_start.py

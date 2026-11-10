@@ -7,7 +7,7 @@ items:
   - page: IF-122-18.py.yaml
     summary: 圧縮の前にそのセッションの既読の記録を削除する（PreCompact）
   - page: IF-122-15.py.yaml
-    summary: 新しいファイルは空で作ってから書く決まりを載せる（SessionStart）
+    summary: 圧縮の後に、削除できずに残った既読の記録と設定ファイルが読めない理由を通知する（SessionStart）
   - page: IF-122-17.py.yaml
     summary: セッションの開始時に、保持期間を過ぎた既読の記録を削除する（SessionStart）
   - page: IF-122-19.py.yaml
