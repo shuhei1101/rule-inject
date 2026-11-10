@@ -7,15 +7,15 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 対象のファイルに当たるパスの glob と、書く操作を必須とするエントリを 1 つ持つ YAML
-        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに当たる要素で指す'
+        description: 対象のファイルにヒットするパスの glob と、書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに該当する要素で指す'
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
+        notes: 対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -33,7 +33,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
+      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作を再試行する旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_blocked
   - name: 正常シナリオ（既読のため案内しない）
@@ -41,15 +41,15 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML
       - name: 既読の記録
         description: そのセッションでルールの場所が既読になっている
         notes: 前の実行でルールの本文を Read で読んだセッションを `--resume {session_id}` で続ける
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパス。`--allowedTools` で Write と Edit を許可する（Claude Code は作業の決まりに従い、Write で空で作ってから Edit で中身を書くことがある）
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
+        notes: 対象のファイルはまだ無いパス。`--allowedTools` で Write と Edit を許可する（Claude Code は作業の決まりに従い、Write で空で作ってから Edit で中身を書き込むことがある）
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -69,22 +69,22 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - 対象のファイルに中身が書かれている
+      - 対象のファイルに中身が書き込まれている
     test: test_normal_when_already_read
   - name: 正常シナリオ（止めずに案内する）
     setup:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 対象のファイルに当たるパスの glob と、書く操作だけを必須とするエントリを 1 つ持つ YAML
+        description: 対象のファイルにヒットするパスの glob と、書く操作だけを必須とするエントリを 1 つ持つ YAML
         notes: 読む操作は必須に含めない
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
         description: プロンプトで、既にある対象のファイルを Read で読むよう指示する
-        notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を置く
+        notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を配置する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -118,14 +118,14 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 対象のファイルに当たるパスの glob と、読む操作を必須とするエントリを 1 つ持つ YAML
+        description: 対象のファイルにヒットするパスの glob と、読む操作を必須とするエントリを 1 つ持つ YAML
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
         description: プロンプトで、既にある対象のファイルを Bash の `cat` で読むよう指示する
-        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で除外して読み方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -151,14 +151,14 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown を 100 件
+        description: ローカルに配置したルールの Markdown を 100 件
         notes: 場所のパスを 1 件 150 字前後にし、全件を並べると 10,000 字を超えるようにする
       - name: 索引
-        description: 100 件のルールそれぞれに、対象のファイルに当たるパスの glob と書く操作を必須とするエントリを持つ YAML
+        description: 100 件のルールそれぞれに、対象のファイルにヒットするパスの glob と書く操作を必須とするエントリを持つ YAML
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
       ```mermaid
@@ -179,7 +179,7 @@ scenarios:
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
       - 止めた理由の文面が 10,000 字以内
-      - 止めた理由の文面に、載せきれなかったルールの件数が載っている
+      - 止めた理由の文面に、記載しきれなかったルールの件数が載っている
     test: test_normal_when_guidance_too_long
   - name: 異常シナリオ（索引が読めない）
     setup:
@@ -189,7 +189,7 @@ scenarios:
         description: YAML として読めないファイルを指す
         notes: 実在しないパスを指す場合も同じ結末になる
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
     flow: |-
       ```mermaid
@@ -207,7 +207,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - 対象のファイルに中身が書かれている
+      - 対象のファイルに中身が書き込まれている
       - セッションの記録（transcript）に、読めなかった索引の場所と理由が載っている
     test: test_error_when_index_unreadable
   - name: 正常シナリオ（案内済みのため案内しない）
@@ -215,13 +215,13 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 止めずに案内するシナリオと同じエントリを 1 つ持つ YAML
         notes: 読む操作は必須に含めない
       - name: 案内済みの記録
         description: そのセッションでルールの場所を止めずに案内している
-        notes: 止めずに案内するシナリオを流したセッションを `--resume {session_id}` で続ける
+        notes: 止めずに案内するシナリオを実行したセッションを `--resume {session_id}` で続ける
       - name: 操作
         description: プロンプトで、同じ対象のファイルをもう一度 Read で読むよう指示する
     flow: |-
@@ -254,14 +254,14 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML を、プロジェクトの直下の `rules.yaml` に置く
-        notes: '`RULE_INJECT_CONFIG` を設定しない（設定ファイルなし）。ユーザーの既定の置き場所は、`XDG_CONFIG_HOME` を空のフォルダに向けて索引が無い状態にする'
+        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML を、プロジェクトの直下の `rules.yaml` に配置する
+        notes: '`RULE_INJECT_CONFIG` を設定しない（設定ファイルなし）。ユーザーの既定の配置場所は、`XDG_CONFIG_HOME` を空のフォルダに向けて索引が無い状態にする'
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
       ```mermaid
@@ -282,21 +282,21 @@ scenarios:
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
       - 止めた理由の文面に、ルールの場所が載っている
-      - 止めた理由の文面に、ユーザーの既定の置き場所の索引が読めなかった知らせが載っていない
+      - 止めた理由の文面に、ユーザーの既定の配置場所の索引が読めなかった通知が載っていない
     test: test_normal_when_default_index
   - name: 正常シナリオ（ルールの場所に変数参照がある）
     setup:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: ルールのフォルダを `!{名前}` で書いた `rule` と、書く操作を必須とするエントリを 1 つ持つ YAML
+        description: ルールのフォルダを `!{名前}` で記載した `rule` と、書く操作を必須とするエントリを 1 つ持つ YAML
         notes: '`!{名前}` の環境変数にルールのフォルダを設定して起動する'
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
       ```mermaid
@@ -324,10 +324,10 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: 索引
-        description: 設定していない環境変数の `!{名前}` を `rule` に書き、書く操作を必須とするエントリを 1 つ持つ YAML
+        description: 設定していない環境変数の `!{名前}` を `rule` に記載し、書く操作を必須とするエントリを 1 つ持つ YAML
         notes: その名前の環境変数を設定せずに起動する
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
     flow: |-
       ```mermaid
@@ -346,7 +346,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - 対象のファイルに中身が書かれている
+      - 対象のファイルに中身が書き込まれている
       - セッションの記録（transcript）に、読み飛ばした索引の場所と展開できない名前が載っている
     test: test_error_when_rule_variable_unset
   - name: 異常シナリオ（索引に読めない正規表現がある）
@@ -354,9 +354,9 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: 索引
-        description: '`paths` に正規表現として読めないパターン（例 `re:[`）を書き、書く操作を必須とするエントリを 1 つ持つ YAML'
+        description: '`paths` に正規表現として読めないパターン（例 `re:[`）を記載し、書く操作を必須とするエントリを 1 つ持つ YAML'
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
     flow: |-
       ```mermaid
@@ -375,7 +375,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - 対象のファイルに中身が書かれている
+      - 対象のファイルに中身が書き込まれている
       - セッションの記録（transcript）に、読み飛ばした索引の場所・読めなかったパターン・理由が載っている
     test: test_error_when_regex_unreadable
   - name: 正常シナリオ（読んだ後に変わったルールを案内する）
@@ -383,7 +383,7 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML
       - name: 既読の記録
@@ -392,8 +392,8 @@ scenarios:
       - name: ルールの書き換え
         description: 続ける前に、テストがルールの本文に 1 行を追加する
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
+        notes: 対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -412,7 +412,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
-      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
+      - 止めた理由の文面に、ルールのパスと、Read で参照してから同じ操作を再試行する旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_rule_changed_after_read
   - name: 異常シナリオ（設定ファイルが読めない）
@@ -423,10 +423,10 @@ scenarios:
         description: '`RULE_INJECT_CONFIG` で、設定ファイルとして読めないファイル（YAML として崩れたもの・許さないキーを持つもの 等）を指す'
         notes: 実在しないパスを指す場合も同じ結末になる
       - name: 索引
-        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML を、プロジェクトの直下の `rules.yaml` に置く
-        notes: 読めない設定ファイルを設定なしとして扱わないこと（既定の置き場所の索引で止めないこと）を確かめる
+        description: 止めて案内するシナリオと同じエントリを 1 つ持つ YAML を、プロジェクトの直下の `rules.yaml` に配置する
+        notes: 読めない設定ファイルを設定なしとして扱わないこと（既定の配置場所の索引で止めないこと）を確認する
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス。既読のため案内しないシナリオと同じく、`--allowedTools` で Write と Edit を許可する
     flow: |-
       ```mermaid
@@ -444,7 +444,7 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - 対象のファイルに中身が書かれている
+      - 対象のファイルに中身が書き込まれている
       - セッションの記録（transcript）に、読めなかった設定ファイルの場所と理由が載っている
     test: test_error_when_settings_unreadable
   - name: 正常シナリオ（無効のエントリに当たる）
@@ -453,17 +453,17 @@ scenarios:
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
         notes: '-'
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
         notes: '-'
       - name: 索引
-        description: '止めて案内するシナリオと同じエントリに `enabled: false` を書いた YAML'
+        description: '止めて案内するシナリオと同じエントリに `enabled: false` を記載した YAML'
         notes: 同じルールの場所を指すエントリは、ほかに持たない
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
         notes: '-'
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
-        notes: 対象のファイルはまだ無いパス。`--allowedTools` で Write と Edit を許可する（Claude Code は作業の決まりに従い、Write で空で作ってから Edit で中身を書くことがある）
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
+        notes: 対象のファイルはまだ無いパス。`--allowedTools` で Write と Edit を許可する（Claude Code は作業の決まりに従い、Write で空で作ってから Edit で中身を書き込むことがある）
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -480,8 +480,8 @@ scenarios:
       ```
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
-      - 対象のファイルに中身が書かれている
-      - この実行のセッションの記録（transcript）に、ルールの場所を載せた案内の文面が無い
+      - 対象のファイルに中身が書き込まれている
+      - この実行のセッションの記録（transcript）に、ルールの場所を記載した案内の文面が無い
       - この実行のセッションの記録（transcript）に、読めなかった索引の場所と理由が載っていない
     test: test_normal_when_entry_disabled
   - name: 正常シナリオ（参照するツールを添えて止めて案内する）
@@ -489,14 +489,14 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 止めて案内するシナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と引数を記載した YAML
         notes: 引数は、文面に載ったかで見分けられる値にする
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: プロンプトで、対象のファイルを Write で書くよう指示する
+        description: プロンプトで、対象のファイルを Write で書き込むよう指示する
         notes: 対象のファイルはまだ無いパス
     flow: |-
       ```mermaid
@@ -516,7 +516,7 @@ scenarios:
     expected:
       - '`claude -p` の結果の `permission_denials` に Write が載っている'
       - 止めた理由の文面のルールのパスの行の下に、索引に記載したツールの名前と引数の行が載っている
-      - 止めた理由の文面に、ツールが使えないときはパスを Read で参照する旨が載っている
+      - 止めた理由の文面に、ツールが使用できないときはパスを Read で参照する旨が載っている
       - 対象のファイルが作られていない
     test: test_normal_when_blocked_with_read_tool
   - name: 正常シナリオ（参照するツールを添えて止めずに案内する）
@@ -524,7 +524,7 @@ scenarios:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 止めずに案内するシナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と引数を記載した YAML
         notes: 読む操作は必須に含めない
@@ -532,7 +532,7 @@ scenarios:
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
         description: プロンプトで、既にある対象のファイルを Read で読むよう指示する
-        notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を置く
+        notes: 対象のファイルには、応答に出たかで読めたことを見分ける文字列を配置する
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -557,7 +557,7 @@ scenarios:
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）の操作を止めない案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
-      - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
+      - 同じ文面に、ツールが使用できないときはパスを Read で参照する旨が載っている
     test: test_normal_when_not_blocked_with_read_tool
 lead: ツールを呼ぶ直前にフックが操作の対象にヒットする未読のルールを案内する流れを示し、ルール案内の止め方や文面を変えるときに参照する。
 issue: 2
@@ -565,23 +565,23 @@ primary_actor: Claude Code のセッション
 trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ
 preconditions:
   - プラグインが Claude Code に読み込まれている
-  - 索引を、設定ファイルで指した場所か既定の置き場所に置いている
+  - 索引を、設定ファイルで指した場所か既定の配置場所に配置している
 notes:
-  結合テストで確かめる要望: |-
-    次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
+  結合テストで確認する要望: |-
+    次の要望は、E2E ではなくインターフェース定義（結合テスト）で確認する。
 
-    - 同じルールに複数のエントリが当たったとき、案内と止めるかの判定をルールごとに 1 つへまとめる
-    - エントリの当てる範囲から外すパスの glob
-    - 当てるツール名で MCP のツールの呼び出しに当たる案内
-    - MCP のツールの引数のキーと値のパターン（`args`）で当たる案内と、値が配列のときの要素ごとの照合・オブジェクトの子のドット区切りのキー・引数にキーが無いときに当てないこと
-    - MCP のツールの引数の条件の木（`field`・`op`・`values` の条件と `and`・`or` の束の入れ子）の中の、`field` が指定した値の条件の `values` で当たる案内と、入れ子の束の中の条件も見ること
-    - `paths`・`exclude`・`tools`・`args` のパターンを `re:` で始めて正規表現として当てること（部分一致）と、`re:` で始めないパターンを今の glob のまま当てること
-    - ユーザーの既定の置き場所の索引と、既定の置き場所にファイルが無いとき（`CLAUDE_PROJECT_DIR` が無いときを含む）に理由を載せずに読まないこと
-    - 設定ファイルの `projects` の `match` を絶対パス（配下と `.claude/worktrees/` の下の worktree を含む）・プロジェクト名で当てることと、当たらない要素の索引を読まないこと
-    - 当たった `projects` の要素の索引を `global` の索引の後ろに追加し、`projects` の中の相対パスを起動したプロジェクトの直下から解くこと
-    - 設定ファイルに知らないキーがあるときに、読めない設定ファイルと同じく理由を載せること
-    - 案内済みの記録が読めない・書けないときの扱い
-    - 止める案内に載せたルールを、案内済みにしないこと（読むまで止め続ける）
-    - 無効のエントリに MCP のツールの呼び出しが当たっても案内しないことと、同じルールの場所を指す有効なエントリがあればそのエントリで案内すること
-    - `enabled` が `true` / `false` 以外のとき、読めない索引と同じく索引の場所と理由を載せること
+    - 同じルールに複数のエントリがヒットしたとき、案内と止めるかの判定をルールごとに 1 つへまとめる
+    - エントリの適用する範囲から除外するパスの glob
+    - 適用するツール名で MCP のツールの呼び出しにヒットする案内
+    - MCP のツールの引数のキーと値のパターン（`args`）でヒットする案内と、値が配列のときの要素ごとの照合・オブジェクトの子のドット区切りのキー・引数にキーが無いときに適用しないこと
+    - MCP のツールの引数の条件の木（`field`・`op`・`values` の条件と `and`・`or` の束の入れ子）の中の、`field` が指定した値の条件の `values` でヒットする案内と、入れ子の束の中の条件も確認すること
+    - `paths`・`exclude`・`tools`・`args` のパターンを `re:` で始めて正規表現として適用すること（部分一致）と、`re:` で始めないパターンを今の glob のまま適用すること
+    - ユーザーの既定の配置場所の索引と、既定の配置場所にファイルが無いとき（`CLAUDE_PROJECT_DIR` が無いときを含む）に理由を記載せずに読まないこと
+    - 設定ファイルの `projects` の `match` を絶対パス（配下と `.claude/worktrees/` の下の worktree を含む）・プロジェクト名で適用することと、ヒットしない要素の索引を読まないこと
+    - ヒットした `projects` の要素の索引を `global` の索引の後ろに追加し、`projects` の中の相対パスを起動したプロジェクトの直下から解くこと
+    - 設定ファイルに知らないキーがあるときに、読めない設定ファイルと同じく理由を記載すること
+    - 案内済みの記録が読めない・書き込めないときの扱い
+    - 止める案内に記載したルールを、案内済みにしないこと（読むまで止め続ける）
+    - 無効のエントリに MCP のツールの呼び出しがヒットしても案内しないことと、同じルールの場所を指す有効なエントリがあればそのエントリで案内すること
+    - `enabled` が `true` / `false` 以外のとき、読めない索引と同じく索引の場所と理由を記載すること
 test_file: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py

@@ -6,18 +6,18 @@ scenarios:
     setup:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定（`~/.claude`）のフック・プラグイン・MCP サーバーを読み込ませない
-        notes: サーバーは `--mcp-config` で HTTP の接続先（`http://127.0.0.1:{ポート}/mcp`）として渡す
+        notes: サーバーは `--mcp-config` で HTTP の接続先（`http://127.0.0.1:{ポート}/mcp`）として指定する
       - name: MCP サーバー
         description: テストがローカルのクローンから起動した常駐の MCP サーバー
-        notes: 起動の方法は単一ユースケース『MCPサーバーを常駐させる』に従う。ポートは空いているポートを設定ファイルに書いて渡す
+        notes: 起動の方法は単一ユースケース『MCPサーバーを常駐させる』に従う。ポートは空いているポートを設定ファイルに記載して指定する
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 対象のファイルに当たるエントリを持たない YAML
-        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに当たる要素で指す'
+        description: 対象のファイルにヒットするエントリを持たない YAML
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに該当する要素で指す'
       - name: ツールの許可
         description: '`--allowedTools` でサーバーの編集・検索のツールと、Write・Edit を許可する'
-        notes: 編集・検索・書く操作を別々の `claude -p` で指示し、2 回目からは `--resume {session_id}` で続ける。対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+        notes: 編集・検索・書く操作を別々の `claude -p` で指示し、2 回目からは `--resume {session_id}` で続ける。対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける
     flow: |-
       ```mermaid
       flowchart TD
@@ -43,17 +43,17 @@ scenarios:
   - name: 正常シナリオ（エントリを無効にする）
     setup:
       - name: Mock
-        description: エントリを新規作成するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`、サーバーは `--mcp-config` で渡す）
+        description: エントリを新規作成するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`、サーバーは `--mcp-config` で指定する）
       - name: MCP サーバー
         description: エントリを新規作成するシナリオと同じ常駐の MCP サーバー
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: 対象のファイルに当たり、書く操作を必須とするエントリを 1 つだけ持つ YAML
-        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに当たる要素で指す'
+        description: 対象のファイルにヒットし、書く操作を必須とするエントリを 1 つだけ持つ YAML
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに該当する要素で指す'
       - name: ツールの許可
         description: エントリを新規作成するシナリオと同じ（サーバーの編集・検索のツールと、Write・Edit を許可する）
-        notes: 対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける
+        notes: 対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける
     flow: |-
       ```mermaid
       flowchart TD
@@ -67,9 +67,9 @@ scenarios:
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（無効のエントリに当たる）]"
       ```
     expected:
-      - '索引のファイルの対象のエントリに `enabled: false` が書かれている'
-      - 検索のツールの結果に、当たるルールが無い
-      - 書く操作は止められず、対象のファイルに中身が書かれている
+      - '索引のファイルの対象のエントリに `enabled: false` が記載されている'
+      - 検索のツールの結果に、ヒットするルールが無い
+      - 書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_entry_disabled
     uses:
       - SC-122-19#scenarios[正常シナリオ（エントリを無効にする）]
@@ -80,12 +80,12 @@ issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: ユーザー
-    interest: ツールで直したエントリが、索引を手で書き直したときと同じく、次の操作から案内に効くこと
-trigger: Claude Code が、常駐の MCP サーバーの編集のツールで索引のエントリを直す
+    interest: ツールで修正したエントリが、索引を手で書き換えたときと同じく、次の操作から案内に反映されること
+trigger: Claude Code が、常駐の MCP サーバーの編集のツールで索引のエントリを修正する
 preconditions:
   - プラグインが Claude Code に読み込まれている
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
-  - フックとサーバーが同じ設定ファイルを読み、設定ファイルで指した場所に索引が置かれている
-success_guarantee: 編集のツールが書き込んだエントリは、サーバーを再起動せずに、検索のツールと次のフックの呼び出しの両方で同じ当たり方をする。
-minimal_guarantee: 書いた後の索引がチェックに通らないときは索引を書き換えず、フックの案内は編集の前のまま変わらない。
+  - フックとサーバーが同じ設定ファイルを読み、設定ファイルで指した場所に索引が配置されている
+success_guarantee: 編集のツールが書き込んだエントリは、サーバーを再起動せずに、検索のツールと次のフックの呼び出しの両方で同じヒットの仕方をする。
+minimal_guarantee: 書き込んだ後の索引がチェックに通らないときは索引を書き換えず、フックの案内は編集の前のまま変わらない。
 test_file: tests/e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py

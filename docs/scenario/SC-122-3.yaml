@@ -10,7 +10,7 @@ scenarios:
         description: 索引を記載した設定ファイル
         notes: '`RULE_INJECT_PORT` に空いているポートを指定する'
       - name: 再起動の前の状態
-        description: 再起動を呼ぶ前に状態の確認を呼び、起動した時刻を控える
+        description: 再起動を呼ぶ前に状態の確認を呼び、起動した時刻を記録する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -25,7 +25,7 @@ scenarios:
         SV-->>CL: 新しい起動した時刻
     expected:
       - 再起動の応答に、再起動を始めたことが載っている
-      - 接続し直した後の状態の確認のポートが再起動の前と同じで、起動した時刻が再起動の前より新しい
+      - 再接続した後の状態の確認のポートが再起動の前と同じで、起動した時刻が再起動の前より新しい
       - テストが起動したサーバーのプロセスが、再起動の後も終わっていない
     test: test_normal
   - name: 異常シナリオ（再起動の途中で呼ばれる）
@@ -47,19 +47,19 @@ scenarios:
         SV-->>CL: ツールのエラー（再起動の途中）
     expected:
       - 2 回目の呼び出しがツールのエラーになり、再起動の途中であることが載っている
-      - 接続し直した後の状態の確認で、起動し直したのが 1 回だけ
+      - 再接続した後の状態の確認で、再起動したのが 1 回だけ
     test: test_error_when_restart_in_progress
 lead: Claude Code が MCP サーバーの再起動のツールを呼び出して接続し直すまでの流れを示し、サーバーの再起動を変えるときに参照する。
 issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: コードの更新を、端末で systemctl を打たずにサーバーへ効かせられること
+    interest: コードの更新を、端末で systemctl を打たずにサーバーへ反映できること
   - name: 他の Claude Code のセッション
-    interest: 再起動の後に、接続し直せば同じポートでツールを呼び続けられること
+    interest: 再起動の後に、再接続すれば同じポートでツールを呼び続けられること
 trigger: Claude Code が再起動のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code からプラグインの `.mcp.json` の接続先で接続できる
-success_guarantee: 応答を返し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じポートで待ち受け直す。起動し直した後の状態の確認で、起動した時刻が再起動の前より新しい。
-minimal_guarantee: 再起動の途中の再起動・更新の呼び出しは断り、起動し直すのは 1 回だけ。起動し直せないときは、サーバーの起動と同じく標準エラーに理由を書いて終わる。
+success_guarantee: 応答を返却し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じポートで再び待ち受ける。再起動した後の状態の確認で、起動した時刻が再起動の前より新しい。
+minimal_guarantee: 再起動の途中の再起動・更新の呼び出しは断り、再起動するのは 1 回だけ。再起動できないときは、サーバーの起動と同じく標準エラーに理由を出力して終わる。
 test_file: tests/e2e/単一ユースケース/test_restart_server.py

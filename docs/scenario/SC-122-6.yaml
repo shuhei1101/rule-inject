@@ -19,7 +19,7 @@ scenarios:
         S-->>CC: 空で作ってから書く決まり（additionalContext）
       ```
     expected:
-      - セッションの記録（transcript）に、空で作ってから書く決まりの文面が載っている
+      - セッションの記録（transcript）に、空で作ってから中身を記載する決まりの文面が載っている
     test: test_normal
 lead: セッションの開始時にフックが作業の決まりをコンテキストへ追加する流れを示し、作業の決まりの注入を変えるときに参照する。
 issue: 2

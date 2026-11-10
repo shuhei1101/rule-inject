@@ -15,7 +15,7 @@ scenarios:
         description: テストが `~/.config/systemd/user/{サービス名}.service` にクローンから `RULE_INJECT_PORT` で起動するユニットを配置し、`systemctl --user enable` で有効にする。起動はしない
         notes: テストの後始末で `disable` してユニットを削除する
       - name: 操作
-        description: プロンプトで、ツールを呼ばずに 1 語で回答するよう指示する
+        description: プロンプトで、ツールを呼ばずに 1 単語で回答するよう指示する
         notes: '`--max-turns 1`'
     flow: |-
       ```mermaid
@@ -36,8 +36,8 @@ scenarios:
         SV->>SV: RULE_INJECT_PORT で待ち受ける
       ```
     expected:
-      - セッションの記録（transcript）に、`/mcp` で接続し直す案内の文面が載っている
-      - 'セッションの開始から 40 秒以内（PR #112 の PoC 検証の最大 26.0 秒に余裕 50% を加えて切り上げた値）に、サーバーが `RULE_INJECT_PORT` で待ち受けている'
+      - セッションの記録（transcript）に、`/mcp` で再接続する案内の文面が載っている
+      - 'セッションの開始から 40 秒以内（[PR #112「常駐の MCP サーバーが落ちていたとき、SessionStart のフックで起動を補助する」](https://github.com/shuhei1101/rule-inject/pull/112) の PoC 検証の最大 26.0 秒に余裕 50% を加えて切り上げた値）に、サーバーが `RULE_INJECT_PORT` で待ち受けている'
       - ユニットが `active` になっている
     test: test_normal
   - name: 正常シナリオ（サーバーが応答する）
@@ -65,7 +65,7 @@ scenarios:
         S-->>CC: 何も返さない
       ```
     expected:
-      - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
+      - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
       - ユニットの起動の時刻（`ActiveEnterTimestamp`）がセッションの開始の前のまま
     test: test_normal_when_server_responding
   - name: 正常シナリオ（ユニットが有効でない）
@@ -97,7 +97,7 @@ scenarios:
         S-->>CC: 何も返さない
       ```
     expected:
-      - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
+      - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
       - 'ユニットが `inactive` のままで、ログに `component: start_server` の行が無い'
     test: test_normal_when_unit_disabled
   - name: 正常シナリオ（ユニットが無い）
@@ -126,23 +126,23 @@ scenarios:
         S-->>CC: 何も返さない
       ```
     expected:
-      - セッションの記録に、`/mcp` で接続し直す案内の文面が載っていない
-      - 'セッションが回答を返して終わり、ログに `component: start_server` の行が無い'
+      - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
+      - 'セッションが回答して終わり、ログに `component: start_server` の行が無い'
     test: test_normal_when_no_unit
 lead: セッションの開始時にフックが応答しない MCP サーバーのユニットへ起動を依頼する流れを示し、サーバーの起動の補助を変えるときに参照する。
 issue: 111
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: サーバーが落ちていても、セッションを開くだけでサーバーが起動し、`/mcp` の接続し直しか次のセッションからツールを使用できること
+    interest: サーバーが落ちていても、セッションを開くだけでサーバーが起動し、`/mcp` の再接続か次のセッションからツールを使用できること
   - name: Claude Code のセッション
     interest: サーバーの起動を待たずにセッションが始まり、フックの案内と既読の記録が今どおり動くこと
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 preconditions:
   - プラグインを読み込んでいる
   - '`systemctl --user` が使用できる'
-success_guarantee: サーバーが応答しないときだけユニットへ起動を依頼し、起動を依頼したセッションに `/mcp` で接続し直す旨を載せる。サーバーの待ち受けの開始は待たない。
+success_guarantee: サーバーが応答しないときだけユニットへ起動を依頼し、起動を依頼したセッションに `/mcp` で再接続する旨を記載する。サーバーの待ち受けの開始は待たない。
 minimal_guarantee: どの経路でもセッションの開始を止めない。応答するサーバー・有効でないユニット・無いユニットは起動しない。
 notes:
-  同じセッションで接続し直す理由: Claude Code は接続を拒まれると 1 秒・2 秒・4 秒の間隔で 3 回だけ接続し直し、セッションの開始から 8〜11 秒で諦める。サーバーの待ち受けの開始はそれより遅く（9.3〜26.0 秒）、起動を依頼したセッションの最初の接続には間に合わない（PR #112 の PoC 検証）。そのため `/mcp` で接続し直す旨を案内する
+  同じセッションで再接続する理由: 'Claude Code は接続を拒まれると 1 秒・2 秒・4 秒の間隔で 3 回だけ再接続し、セッションの開始から 8〜11 秒で諦める。サーバーの待ち受けの開始はそれより遅く（9.3〜26.0 秒）、起動を依頼したセッションの最初の接続には間に合わない（[PR #112「常駐の MCP サーバーが落ちていたとき、SessionStart のフックで起動を補助する」](https://github.com/shuhei1101/rule-inject/pull/112) の PoC 検証）。そのため `/mcp` で再接続する旨を案内する'
 test_file: tests/e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
