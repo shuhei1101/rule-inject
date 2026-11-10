@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-10T21:49:18.899537+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: docs/guide/ の 5 ファイルの「索引へ登録して注入する」とタグ topic:ルールの注入を、用語「案内」の言い方へ置き換える
+    updated_by: planner
+    updated_at: '2026-11-10T21:53:06.441557+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードは変わらない

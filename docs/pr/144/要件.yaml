@@ -2,23 +2,33 @@ docs:
   - page: docs/guide/files.yml
     new: false
     change: 「ルールにするか文書にするかを決める」の行の description の「索引へ登録して注入する」を用語「案内」の言い方へ、タグ topic:ルールの注入を既存の topic:ルールの案内へ置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:53:03.776924+00:00'
   - page: docs/guide/index.yaml
     new: false
     change: 「ルールにするか文書にするかを決める」の行の summary の「索引へ登録して注入する」を用語「案内」の言い方へ置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:53:03.776924+00:00'
   - page: docs/guide/README.md
     new: false
     change: 「ルールにするか文書にするかを決める」の行の概要の「索引へ登録して注入する」を用語「案内」の言い方へ置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:53:03.776924+00:00'
   - page: docs/guide/使い方.md
     new: false
     change: 「ルールにするか文書にするかを決める」の行の概要の「索引へ登録して注入する」を用語「案内」の言い方へ置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:53:03.776924+00:00'
   - page: docs/guide/ルールにするか文書にするかを決める.md
     new: false
     change: 冒頭リードの「索引へ登録して注入する」を用語「案内」の言い方へ置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T21:53:03.776924+00:00'
 scope_out:
   - item: 作業の決まりの「注入」（IF-122-15・MOD-122-32・SC-122-6 など）
     reason: SessionStart でコンテキストへ本文を記載するため、本文を差し込まない「案内」とは別の仕組みで、Issue 本文で対象外とされている
