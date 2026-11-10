@@ -1,0 +1,87 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存リポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 設計書は既にあり、置き場所を移すだけのため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めの依頼ではないため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: 未検証の技術機構に依存しない（構成は ai-monitor#3307 で検証済み）
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: プラグインの挙動を変えず、シナリオの中身は変わらない（置き場所と参照の書き方だけを移す）
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面を持たないため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面を持たないため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 単一ユースケース設計
+    status: skipped
+    reason: プラグインの挙動を変えず、シナリオの中身は変わらない（置き場所と参照の書き方だけを移す）
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: モック作成
+    status: skipped
+    reason: 画面を持たないため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: インターフェース定義設計
+    status: skipped
+    reason: 操作の入出力・フローは変わらない（置き場所と参照の書き方だけを移す）
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面を持たないため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たないため対象外
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: モジュール構成設計
+    status: skipped
+    reason: コードの構成は変わらない（置き場所と参照の書き方だけを移す）
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: ドキュメント修正
+    status: todo
+    note: v0.4.0 の変換を dev/ のまま掛け、dev/ と docs/ の文書を docs/ の種類のフォルダ・schemas/ へ移し、visibility と category を持たせ、文書を指すパスを移動先へ合わせる（要件.yaml の docs）
+  - process: 単体テスト作成
+    status: skipped
+    reason: コードの挙動を変えないため新しいテストは無い（既存の単体テストの全 pass は実装で確かめる）
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: 実装
+    status: todo
+    note: pyproject.toml の exclude・.gitignore・dev-docs.yaml を移動先へ合わせ、単体テストの全 pass と lint と dev-docs の check を確かめる
+  - process: 結合テスト作成
+    status: skipped
+    reason: 操作の入出力を変えないため新しいテストは無い
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
+  - process: E2E テスト作成
+    status: skipped
+    reason: 'E2E テストは #118 で削除済みで、シナリオの挙動も変わらない'
+    updated_by: planner
+    updated_at: '2026-11-10T05:38:11.528115+00:00'
