@@ -33,7 +33,7 @@ docs:
 scope_out:
   - item: 既存の文書に出る、用語集の avoid に入れた言い方の置き換え
     reason: 要望は用語集の新設と用語の登録まで。置き換えはこの作業 PR で決める avoid を前提にする
-    plan: to_file
+    plan: '#142'
   - item: 公開ドキュメント（docs/guide/ のリファレンス）への用語集のページの追加
-    reason: '要望は dev-docs の配信元の alias_type: term の用語集で、用語集は先例（voice-paste）と同じ internal で置く。利用者向けに公開するかは判断が分かれるため、レビューで確定する（現時点の判断: 要望に含まれないため対応しない）'
+    reason: '要望は dev-docs の配信元の alias_type: term の用語集で、公開ページを追加すると要望の範囲を超え、同じ定義を 2 か所に持つため対応しない（reviewer の合格で確定）'
     plan: none
