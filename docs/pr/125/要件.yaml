@@ -1,120 +1,166 @@
 docs:
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ（Mermaid は残す）
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える（Mermaid は残す）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ（Mermaid は残す）
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える（Mermaid は残す）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/ルールにするか文書にするかを決める.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ（Mermaid は残す）
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換え、冒頭の 1 行を目次の概要と合わせる（Mermaid は残す）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/MCPの結果の書式.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/MCPツール.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/セットアップ.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/環境変数.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/索引の書式.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/設定ファイル.md
     new: false
-    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換え、冒頭の 1 行を目次の概要と合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/変更履歴.md
     new: false
-    change: AI slop の修正と本文の生の Issue 番号をリンクへ
-    status: todo
+    change: AI slop の和語を対応表の語へ置き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/files.yml
     new: false
-    change: タグを接頭辞付きに揃えて main を付け、description をチェックシートに合わせ、エイリアスを登録する
-    status: todo
+    change: description を 1 文（40〜120 字・何を定めるかとどんなときに参照するか）にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/_root/files.yml
     new: false
-    change: タグの main・description・エイリアスを付け直す
-    status: todo
+    change: description を 1 文にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: files.yaml
     new: false
-    change: タグの main・description・エイリアスを付け直す
-    status: todo
+    change: description を 1 文にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: src/files.yaml
     new: false
-    change: タグの main・description・エイリアスを付け直す
-    status: todo
+    change: description を 1 文にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: hooks/files.yaml
     new: false
-    change: タグの main・description・エイリアスを付け直す
-    status: todo
+    change: description を 1 文にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: skills/files.yaml
     new: false
-    change: タグの main・description・エイリアスを付け直す
-    status: todo
+    change: description を 1 文にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: tests/files.yaml
     new: false
-    change: タグの main・description を付け直し、related の無い行にテストするコードへの tests を張る
-    status: todo
+    change: description を 1 文にし、拡張子の抜けた関連先の ID（61 行）を実在する ID に修正し、設計書への tests を see_also にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: dev-docs.yaml
     new: false
-    change: 用語集を配信する alias_type の行を追加する
-    status: todo
+    change: '設計書の種類の行と公開ドキュメントの行に alias_type: doc を追加する'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/interface/index.yaml
     new: false
-    change: フォルダのインターフェース定義の文を表へ・文の削減・AI slop の修正・lead をチェックシートに合わせる（Mermaid は残す）
-    status: todo
+    change: フォルダのインターフェース定義の lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/scenario/index.yaml
     new: false
-    change: フォルダのシナリオの文を表へ・文の削減・AI slop の修正・lead をチェックシートに合わせる（Mermaid は残す）
-    status: todo
-  - page: docs/module/index.yaml
-    new: false
-    change: フォルダのモジュール構成の文を表へ・文の削減・AI slop の修正・lead をチェックシートに合わせる
-    status: todo
+    change: フォルダのシナリオの lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/library/index.yaml
     new: false
-    change: フォルダの外部ライブラリの文の削減・AI slop の修正・lead をチェックシートに合わせる
-    status: todo
+    change: フォルダの外部ライブラリの lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/external-api/index.yaml
     new: false
-    change: フォルダの外部 API の文の削減・AI slop の修正・lead をチェックシートに合わせる
-    status: todo
+    change: 外部 API の lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/architecture/index.yaml
     new: false
-    change: アーキテクチャ図の文の削減・AI slop の修正
-    status: todo
+    change: アーキテクチャ図の lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/nonfunctional/index.yaml
     new: false
-    change: 非機能要件の文の削減・AI slop の修正
-    status: todo
+    change: 非機能要件の lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/config/index.yaml
     new: false
-    change: 設定の文を表へ・文の削減・AI slop の修正
-    status: todo
+    change: 設定の lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/er/index.yaml
     new: false
-    change: ER 図の文の削減・AI slop の修正
-    status: todo
-  - page: docs/test-procedure/index.yaml
+    change: ER 図の lead をチェックシートに合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:58:17.193768+00:00'
+  - page: docs/guide/index.yaml
     new: false
-    change: テスト実行方法の文の削減・AI slop の修正
-    status: todo
-  - page: docs/pr/112/プラグイン.md
-    new: false
-    change: Mermaid を含む PR ドキュメントとして棚卸しに載せる（Mermaid は残す）
-    status: todo
+    change: 目次の概要の和語を対応表の語へ置き換え、セットアップの概要をページの冒頭と合わせ、README を生成し直す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T16:59:06.336554+00:00'
 scope_out:
   - item: Mermaid の図を mdmark の map のマーカーで囲んで補足を付ける
     reason: mdmark#324（新しい図 map）が open で、計画の依存に置かれていない。他の工程は map を待たずに進められる。この作業 PR で待つか別の Issue へ回すかの判断が分かれるため、要件.md の未確定のとおりレビューで確定する
@@ -127,4 +173,16 @@ scope_out:
     plan: none
   - item: 過去の PR ドキュメント（docs/pr/）の文を表へ・文の削減
     reason: 完了した作業の記録で、書き換えると当時の判断の記録が変わり、dev-docs の配信元にも含まれない。Issue 本文は docs/pr/ も範囲に含めるとしているため、判断が分かれる。レビューで確定する
+    plan: none
+  - item: 設計書の本文（lead 以外）の文を表へ・文の削減・AI slop の修正と、モジュール構成のファイル単位の文書の空の lead
+    reason: 設計書は 120 件あり、本文の書き換えは設計の中身のレビューを伴う。この PR では検索と注入に使う lead と管理用の YAML を移行し、本文は設計書の分類ごとに分ける案（A-5 の「進め方」）。この PR で行うかは判断が分かれるためレビューで確定する
+    plan: to_file
+  - item: 管理用の YAML のタグへの main と、管理用の YAML・設計書への aliases の登録
+    reason: 配布された Schema では管理用の YAML のタグが文字列の並びで main を持てず、aliases も管理用の YAML と設計書の最上位には無い。Schema が持つようになったら AI Monitor の配布物への追従で付ける
+    plan: none
+  - item: '用語集（alias_type: term の文書）の新設と用語の登録'
+    reason: 'リポジトリに用語を持つ文書の種類も Schema も無く、knowledge にも用語集の行が無い。この PR では文書の名前で照合する alias_type: doc だけを追加した'
+    plan: to_file
+  - item: 公開ドキュメントの「読む」の置き換え
+    reason: 「読む」は Claude Code がルールを読んだかを既読として記録する、このプラグインの仕組みそのものを指す動詞で、「参照」へ置き換えると「既読」と意味がずれる
     plan: none
