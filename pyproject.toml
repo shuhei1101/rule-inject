@@ -40,6 +40,8 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importli
 line-length = 100
 target-version = "py312"
 src = ["src"]
+# AI Monitor から配布された設計書の変換は、このリポジトリのコードとして検査しない
+extend-exclude = ["schemas/conversions"]
 
 [tool.ruff.lint]
 select = [
@@ -74,7 +76,7 @@ python_version = "3.12"
 mypy_path = "src"
 explicit_package_bases = true
 # 反映作業のスクリプトは PR ごとに同じファイル名を持つため、`mypy .` からは外し、フォルダごとに検査する
-exclude = ["^docs/pr/"]
+exclude = ["^docs/pr/", "^schemas/conversions/"]
 
 [tool.importlinter]
 root_package = "rule_inject"
