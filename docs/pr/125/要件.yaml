@@ -1,0 +1,130 @@
+docs:
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ（Mermaid は残す）
+    status: todo
+  - page: docs/guide/コアコンセプト-ルールの案内.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ（Mermaid は残す）
+    status: todo
+  - page: docs/guide/ルールにするか文書にするかを決める.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ（Mermaid は残す）
+    status: todo
+  - page: docs/guide/MCPの結果の書式.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
+    status: todo
+  - page: docs/guide/MCPツール.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
+    status: todo
+  - page: docs/guide/セットアップ.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
+    status: todo
+  - page: docs/guide/環境変数.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
+    status: todo
+  - page: docs/guide/索引の書式.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
+    status: todo
+  - page: docs/guide/設定ファイル.md
+    new: false
+    change: 文を表へ・文の削減・AI slop の修正・本文の生の ID とパスをリンクへ
+    status: todo
+  - page: docs/guide/変更履歴.md
+    new: false
+    change: AI slop の修正と本文の生の Issue 番号をリンクへ
+    status: todo
+  - page: docs/guide/files.yml
+    new: false
+    change: タグを接頭辞付きに揃えて main を付け、description をチェックシートに合わせ、エイリアスを登録する
+    status: todo
+  - page: docs/_root/files.yml
+    new: false
+    change: タグの main・description・エイリアスを付け直す
+    status: todo
+  - page: files.yaml
+    new: false
+    change: タグの main・description・エイリアスを付け直す
+    status: todo
+  - page: src/files.yaml
+    new: false
+    change: タグの main・description・エイリアスを付け直す
+    status: todo
+  - page: hooks/files.yaml
+    new: false
+    change: タグの main・description・エイリアスを付け直す
+    status: todo
+  - page: skills/files.yaml
+    new: false
+    change: タグの main・description・エイリアスを付け直す
+    status: todo
+  - page: tests/files.yaml
+    new: false
+    change: タグの main・description を付け直し、related の無い行にテストするコードへの tests を張る
+    status: todo
+  - page: dev-docs.yaml
+    new: false
+    change: 用語集を配信する alias_type の行を追加する
+    status: todo
+  - page: docs/interface/index.yaml
+    new: false
+    change: フォルダのインターフェース定義の文を表へ・文の削減・AI slop の修正・lead をチェックシートに合わせる（Mermaid は残す）
+    status: todo
+  - page: docs/scenario/index.yaml
+    new: false
+    change: フォルダのシナリオの文を表へ・文の削減・AI slop の修正・lead をチェックシートに合わせる（Mermaid は残す）
+    status: todo
+  - page: docs/module/index.yaml
+    new: false
+    change: フォルダのモジュール構成の文を表へ・文の削減・AI slop の修正・lead をチェックシートに合わせる
+    status: todo
+  - page: docs/library/index.yaml
+    new: false
+    change: フォルダの外部ライブラリの文の削減・AI slop の修正・lead をチェックシートに合わせる
+    status: todo
+  - page: docs/external-api/index.yaml
+    new: false
+    change: フォルダの外部 API の文の削減・AI slop の修正・lead をチェックシートに合わせる
+    status: todo
+  - page: docs/architecture/index.yaml
+    new: false
+    change: アーキテクチャ図の文の削減・AI slop の修正
+    status: todo
+  - page: docs/nonfunctional/index.yaml
+    new: false
+    change: 非機能要件の文の削減・AI slop の修正
+    status: todo
+  - page: docs/config/index.yaml
+    new: false
+    change: 設定の文を表へ・文の削減・AI slop の修正
+    status: todo
+  - page: docs/er/index.yaml
+    new: false
+    change: ER 図の文の削減・AI slop の修正
+    status: todo
+  - page: docs/test-procedure/index.yaml
+    new: false
+    change: テスト実行方法の文の削減・AI slop の修正
+    status: todo
+  - page: docs/pr/112/プラグイン.md
+    new: false
+    change: Mermaid を含む PR ドキュメントとして棚卸しに載せる（Mermaid は残す）
+    status: todo
+scope_out:
+  - item: Mermaid の図を mdmark の map のマーカーで囲んで補足を付ける
+    reason: mdmark#324（新しい図 map）が open で、計画の依存に置かれていない。他の工程は map を待たずに進められる。この作業 PR で待つか別の Issue へ回すかの判断が分かれるため、要件.md の未確定のとおりレビューで確定する
+    plan: to_file
+  - item: schemas/ の Mermaid（common・interface・scenario の 3 件）
+    reason: AI Monitor から配布された Schema で、このリポジトリでは書き換えない
+    plan: none
+  - item: 設計書（docs/ の種類のフォルダの YAML）へのタグの付与
+    reason: 配布された Schema が設計書のタグのキーを持たない。Schema が持つようになったら AI Monitor の配布物への追従で付ける
+    plan: none
+  - item: 過去の PR ドキュメント（docs/pr/）の文を表へ・文の削減
+    reason: 完了した作業の記録で、書き換えると当時の判断の記録が変わり、dev-docs の配信元にも含まれない。Issue 本文は docs/pr/ も範囲に含めるとしているため、判断が分かれる。レビューで確定する
+    plan: none
