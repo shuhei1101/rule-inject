@@ -14,23 +14,26 @@ catalogs:
       - name: YAML
         kind: クラス
         purpose: round-trip（既定の `typ="rt"`）で YAML を読み書きする
-        description: フックの `parse_index` が読める書式で書き戻すには、既定（`width` 80・字下げ 2/2/0・`preserve_quotes` 無効）を替えて、`width = 4096`・`indent(mapping=2, sequence=4, offset=2)`・`preserve_quotes = True` を設定する。`width` が 80 のままだと長いフロー形式のリストが複数行に折り返され、`parse_index` が読めない
+        description: フックの `parse_index` が読み込める書式で書き戻すには、既定（`width` 80・字下げ 2/2/0・`preserve_quotes` 無効）を変更して、`width = 4096`・`indent(mapping=2, sequence=4, offset=2)`・`preserve_quotes = True` を設定する。`width` が 80 のままだと、長いフロー形式のリストが複数行に折り返され、`parse_index` が読み込めない
       - name: YAML.load
         kind: メソッド
-        purpose: 文字列かストリームから読み、コメントと書式を持つ `CommentedMap` / `CommentedSeq` を返す
+        purpose: 文字列かストリームから読み込み、コメントと書式を持つ `CommentedMap` / `CommentedSeq` を返却する
       - name: YAML.dump
         kind: メソッド
-        purpose: 読んだときのコメント・引用符・フロー形式を残して書き出す
+        purpose: 読み込んだときのコメント・引用符・フロー形式を維持して書き出す
       - name: CommentedSeq.fa.set_flow_style
         kind: メソッド
         purpose: 新しく作ったリストをフロー形式（`[a, b]`）で書き出すようにする
-        description: 読んだ既存のリストはフロー形式を保つが、新しく追加するエントリのリストはこれを呼ばないとブロック形式になる
+        description: 読み込んだ既存のリストはフロー形式を保つが、新しく追加するエントリのリストはこれを呼ばないとブロック形式になる
 lead: コメントや引用符を維持したまま YAML を読み書きする ruamel.yaml の利用方法を定め、索引の書き込みを修正するときに参照する。
 purl: pkg:pypi/ruamel.yaml
 verification:
   state: 済
   date: '2026-10-28'
-  detail: PoC 検証（#60）で 0.19.1 を使い、コメント・引用符・`  - rule:` の字下げを持つ索引の 1 行のフロー形式の `paths` に 80 字を超える値を追加し、空白入りの長い `rule` を持つエントリを追加して書き戻した。リストは 1 行のままで、差分は追加した行だけだった。書き戻した索引をフックの `load_indexes` が読み飛ばし 0 件・読めない索引 0 件で読み、追加した値が照合で当たることを確かめた
+  detail: |-
+    [PoC 検証](https://github.com/shuhei1101/rule-inject/pull/60) で 0.19.1 を使用し、コメント・引用符・`  - rule:` の字下げを持つ索引の 1 行のフロー形式の `paths` に 80 字を超える値を追加し、空白入りの長い `rule` を持つエントリを追加して書き戻した。
+    リストは 1 行のままで、差分は追加した行だけだった。
+    書き戻した索引をフックの `load_indexes` が読み込み（読み飛ばし 0 件・読み込めない索引 0 件）、追加した値が照合でヒットすることを確認した
 license: MIT（商用利用可）
 official_url: https://sourceforge.net/projects/ruamel-yaml/
 docs_url: https://yaml.dev/doc/ruamel.yaml/

@@ -13,7 +13,7 @@ verification:
   state: 済
   date: '2026-11-10'
   detail: |-
-    3.5.0（uv.lock）で、`MCPServer.streamable_http_app(host="127.0.0.1")` を uvicorn 0.54.0 の `Server`（`timeout_graceful_shutdown=3`）で待ち受け、mcp 2.2.0 の `streamable_http_client` で、`delay` 秒待ってから戻るツールを呼んだ。ツールの中で `exit_after` 秒後に `should_exit` を立てた（各 3 回、2026-11-10、WSL）。
+    3.5.0（uv.lock）で、`MCPServer.streamable_http_app(host="127.0.0.1")` を uvicorn 0.54.0 の `Server`（`timeout_graceful_shutdown=3`）で待ち受け、mcp 2.2.0 の `streamable_http_client` で、`delay` 秒待ってから戻るツールを呼び出した。ツールの中で `exit_after` 秒後に `should_exit` を真にした（各 3 回、2026-11-10、WSL）。
 
     | delay | exit_after | クライアントの結果 | `should_exit` から `serve()` が戻るまで |
     | --- | --- | --- | --- |
@@ -22,7 +22,7 @@ verification:
     | 0.5 | 0 | 3 回とも `SSE stream ended without a response` | 0.51〜1.50 秒 |
     | 1.0 | 0.2 | 3 回とも `SSE stream ended without a response` | 1.31〜1.38 秒 |
 
-    応答を送信し終える前に `should_exit` が立つと、POST の応答のストリームは `timeout_graceful_shutdown` を待たずに取り消される。
+    応答を送信し終える前に `should_exit` が真になると、POST の応答のストリームは `timeout_graceful_shutdown` を待たずに取り消される。
 version:
   current: 3.5.0
   checked_on: '2026-11-10'
@@ -32,15 +32,15 @@ official_url: https://github.com/sysid/sse-starlette
 docs_url: https://github.com/sysid/sse-starlette#readme
 selection:
   candidates: '`mcp` が依存に持つ sse-starlette だけを候補にした。'
-  decision: '`mcp` の Streamable HTTP は GET と POST のどちらの応答にも `EventSourceResponse` を使うため、直接は呼ばず、停止の振る舞いだけを既定のまま使う。'
-  consequences: 依存は `mcp` の依存のまま増やさない。版は `mcp` の依存の範囲に従う
+  decision: '`mcp` の Streamable HTTP は GET と POST のどちらの応答にも `EventSourceResponse` を使用するため、直接は呼び出さず、停止の振る舞いだけを既定のまま使用する。'
+  consequences: 依存は `mcp` の依存のまま増やさない。バージョンは `mcp` の依存の範囲に従う
 catalogs:
   - name: API
     version: 3.5.0
     entries:
       - name: EventSourceResponse
         kind: クラス
-        purpose: SSE のストリームを返す応答。停止を検知すると、送信しているストリームを取り消す
+        purpose: SSE のストリームを返却する応答。停止を検知すると、送信しているストリームを取り消す
         params:
           - name: shutdown_grace_period
             type: '`float`'
@@ -53,6 +53,6 @@ catalogs:
 notes:
   停止の検知: |-
     ストリームを開いたイベントループごとに監視のタスクを 1 つ動かし、0.5 秒ごとに、SIGTERM のハンドラから取り出した uvicorn の `Server` の `should_exit` を確認する。
-    立っていれば、そのイベントループの全ての `EventSourceResponse` を `shutdown_grace_period` の後に取り消す。
-    確認が 0.5 秒ごとのため、`should_exit` を立ててから取り消すまでの時間は 0〜0.5 秒で揺れる。
+    真であれば、そのイベントループの全ての `EventSourceResponse` を `shutdown_grace_period` の後に取り消す。
+    確認が 0.5 秒ごとのため、`should_exit` を真にしてから取り消すまでの時間は 0〜0.5 秒で変動する。
 id: LIB-122-6
