@@ -18,9 +18,9 @@ directory: |-
   ├── search_guide.py             # 検索結果の案内（PostToolUse）
   ├── discard_read.py             # 既読の記録の破棄（PreCompact）
   ├── sweep_read.py               # 既読の記録の掃除（SessionStart）
-  ├── work_rules.py               # 作業の決まりの注入（SessionStart）
+  ├── work_rules.py               # 圧縮の後の通知（SessionStart）
   └── start_server.py             # サーバーの起動の補助（SessionStart）
   ```
 notes:
-  hooks.json: '7 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には作業の決まりの注入・既読の記録の掃除・サーバーの起動の補助の 3 つのコマンドを並べる'
+  hooks.json: '7 つのフックとも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。matcher は PreToolUse のルール案内が `Read|Grep|Edit|Write|NotebookEdit|Bash|mcp__.*`、PostToolUse の既読の記録が `Read|Bash|mcp__.*`、検索結果の案内が `Grep|Glob|Bash`。PreCompact と SessionStart は matcher を持たない。SessionStart には圧縮の後の通知・既読の記録の掃除・サーバーの起動の補助の 3 つのコマンドを並べる'
   Python のバージョン: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい書き方・標準ライブラリを使わない。`pyproject.toml` の `requires-python` は `>=3.12`

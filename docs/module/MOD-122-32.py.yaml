@@ -5,10 +5,10 @@ test_files:
   - tests/unit/rule_inject/hooks/test_work_rules.py
 functions:
   - name: work_rules
-    title: 作業の決まりの注入の処理
+    title: 圧縮の後の通知の処理
     container: hooks/work_rules.py
-    usecase: セッションの開始時に作業の決まりを受け取る
-    summary: 作業の決まりを返し、圧縮の後に記録が残っていれば削除できなかったことも返す
+    usecase: 圧縮で既読の記録が捨てられる
+    summary: 圧縮の後に、削除できずに残った記録か設定ファイルが読めない理由を通知する
     kind: フック
     scope: public
     inherits: HookHandler
@@ -24,34 +24,40 @@ functions:
         passing: positional
         description: 環境変数
     returns:
-      type: dict[str, Any]
-      description: additionalContext に `WORK_RULES`（と削除できずに残った記録の知らせ）
+      type: dict[str, Any] | None
+      description: 通知があれば additionalContext にその通知。無ければ `None`（`run_hook` は何も出力しない）
     unit_tests:
       - name: test_work_rules
         case: 正常
-        summary: 作業の決まりを返す
+        summary: 圧縮の後でなければ何も返却しない
         condition: '`source: startup`'
         mock: なし
-        expected: additionalContext が `WORK_RULES`
+        expected: '`None`'
       - name: test_work_rules_when_record_left_after_compact
         case: 正常
-        summary: 圧縮の後の削除できずに残った記録を知らせる
+        summary: 圧縮の後の削除できずに残った記録を通知する
         condition: '`source: compact` で記録ファイルがある'
         mock: なし
-        expected: additionalContext に `WORK_RULES` と記録ファイル・ログの場所
+        expected: additionalContext が `LEFTOVER_NOTICE` に記録ファイルとログの場所を入れた文だけ
+      - name: test_work_rules_when_no_record_after_compact
+        case: 正常
+        summary: 圧縮の後でも記録が無ければ何も返却しない
+        condition: '`source: compact` で記録ファイルが無い'
+        mock: なし
+        expected: '`None`'
       - name: test_work_rules_when_settings_unreadable_after_compact
         case: 正常
-        summary: 圧縮の後に設定ファイルが読めなければ作業の決まりに理由を続ける
+        summary: 圧縮の後に設定ファイルが読めなければ理由を通知する
         condition: '`source: compact`。`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ'
         mock: なし
-        expected: additionalContext が `WORK_RULES` で始まり、空行の後に `SETTINGS_FAILURE_SUMMARY`・設定ファイルの場所と理由・ログの場所。ログに `read_settings` が 1 行
+        expected: additionalContext が `SETTINGS_FAILURE_SUMMARY` で始まり、設定ファイルの場所と理由・ログの場所を含む。ログに `read_settings` が 1 行
       - name: test_work_rules_when_settings_unreadable_at_startup
         case: 正常
         summary: 圧縮の後でなければ設定ファイルを読まない
         condition: '`source: startup`。`RULE_INJECT_CONFIG` が実在しないファイルを指す。`XDG_STATE_HOME` は一時フォルダ'
         mock: なし
-        expected: additionalContext が `WORK_RULES` だけ。ログのファイルが無い
+        expected: '`None`。ログのファイルが無い'
     process: |-
-      1. `source` が `compact` でないか、session_id の形式が外れていれば、設定ファイルを読まずに `WORK_RULES` だけを返す
-      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き、`WORK_RULES` の後に空行を挟んで `build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を続けて返す
-      3. `record_exists(settings.state_dir, session_id)` が真なら、`WORK_RULES` の後に `LEFTOVER_NOTICE`（記録ファイルと `settings.log_dir` の場所）を続けて返す。偽なら `WORK_RULES` だけを返す
+      1. `source` が `compact` でないか、session_id の形式が外れていれば、設定ファイルを読まずに `None` を返却する
+      2. `load_settings(env)` で設定を読む。SettingsReadError なら `settings_failure_notice` でログ（`read_settings`）へ記録し、その通知を additionalContext で返却する
+      3. `record_exists(settings.state_dir, session_id)` が真なら `LEFTOVER_NOTICE`（記録ファイルと `settings.log_dir` の場所）を additionalContext で返却する。偽なら `None` を返却する

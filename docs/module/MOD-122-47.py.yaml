@@ -56,7 +56,7 @@ enums:
         title: 既読の記録の破棄
         description: PreCompact
       - value: work_rules
-        title: 作業の決まりの注入
+        title: 圧縮の後の通知
         description: SessionStart
       - value: sweep_read
         title: 既読の記録の掃除
