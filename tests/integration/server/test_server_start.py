@@ -40,6 +40,12 @@ def test_normal(
     # 検証
     assert addresses_listening(server.port) == {LOOPBACK_HEX}
     assert sorted(server.tool_names()) == TOOL_NAMES
+    instructions = server.instructions()
+    assert instructions is not None
+    assert len(instructions) <= 4096
+    assert "Write" in instructions
+    assert "空の内容" in instructions
+    assert "Edit" in instructions
 
 
 def test_normal_when_stopped(

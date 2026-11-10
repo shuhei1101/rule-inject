@@ -81,6 +81,19 @@ class RunningServer:
 
         return asyncio.run(asyncio.wait_for(_list(), CALL_TIMEOUT_SEC))
 
+    def instructions(self) -> str | None:
+        """接続時の initialize の応答の instructions を返す。"""
+
+        async def _initialize() -> str | None:
+            """接続して初期化の応答を取る。"""
+            async with (
+                streamable_http_client(self.url) as (read, write),
+                ClientSession(read, write) as session,
+            ):
+                return (await session.initialize()).instructions
+
+        return asyncio.run(asyncio.wait_for(_initialize(), CALL_TIMEOUT_SEC))
+
 
 def listening_addresses(port: int) -> set[str]:
     """ポートで待ち受けているソケットのアドレス（IPv4 は 16 進、IPv6 は `v6:` を付けた 16 進）を返す。"""
