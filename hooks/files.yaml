@@ -2,7 +2,7 @@
 files:
   - path: hooks.json
     name: フックの定義
-    description: Claude Code に登録する全てのフックの matcher・timeout・コマンドを定める。フックを追加・変更するときに開く。
+    description: Claude Code に登録する全てのフックの matcher・timeout・コマンドを定め、フックを追加・変更するときに参照する。
     tags:
       - topic:フック
       - tool:claude-code
@@ -11,7 +11,7 @@ files:
         type: implements
   - path: run.py
     name: フックの起動スクリプト
-    description: src/ を import の探索に追加し、引数で指したフックを動かす。フックの起動の仕組みを読む・修正するときに開く。
+    description: ソースコードを import の探索に追加して引数で指したフックを動かし、フックの起動の仕組みを修正するときに参照する。
     tags:
       - topic:フック
       - tool:claude-code
