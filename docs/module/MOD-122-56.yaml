@@ -1,7 +1,7 @@
 id: MOD-122-56
 visibility: internal
 title: "プラグイン / コマンドの解析"
-lead: Bash のコマンドの文字列から、読むコマンドが読むファイルの絶対パスを取り出し、検索のコマンドとその結果の行から実在するファイルを拾う。
+lead: Bash のコマンドから読むファイルのパスと検索結果の実在するファイルを取り出すモジュールの構成を定め、コマンドの解析を修正するときに参照する。
 directory: |-
   ```text
   src/rule_inject/features/command/

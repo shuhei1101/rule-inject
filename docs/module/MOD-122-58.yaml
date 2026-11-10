@@ -1,7 +1,7 @@
 id: MOD-122-58
 visibility: internal
 title: "プラグイン / フック"
-lead: Claude Code が呼ぶフックの入口。標準入力の JSON を読み、機能の関数を呼んで標準出力へ JSON を返し、想定外の例外も捕まえて終了コード 0 で終える。標準ライブラリだけで動く。
+lead: Claude Code が呼ぶフックの入口と標準入出力・想定外の例外の扱いの構成を定め、フックを追加・修正するときに参照する。
 directory: |-
   ```text
   .claude-plugin/

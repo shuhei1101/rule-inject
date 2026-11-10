@@ -82,7 +82,7 @@ files:
       - to: MOD-122-54
         type: implements
   - path: rule_inject/features/index/check/scan.py
-    name: 当たらないエントリの走査
+    name: ヒットしないエントリの走査
     description: プロジェクトのファイルを辿って paths がどのファイルにもヒットしないエントリを返却し、索引のチェックで未使用のエントリを探す処理を修正するときに参照する。
     tags:
       - topic:索引のチェック
@@ -247,7 +247,7 @@ files:
         type: implements
   - path: rule_inject/hooks/rule_guide.py
     name: ルール案内
-    description: 操作の対象に当たる未読のルールを、操作の前（PreToolUse）に案内し、ルール案内の判定を修正するときに参照する。
+    description: 操作の対象にヒットする未読のルールを、操作の前（PreToolUse）に案内し、ルール案内の判定を修正するときに参照する。
     tags:
       - topic:フック
       - topic:ルールの案内
@@ -259,7 +259,7 @@ files:
         type: implements
   - path: rule_inject/hooks/search_guide.py
     name: 検索結果の案内
-    description: 検索の結果に出たファイルに当たる未読・未案内のルールを、結果の後（PostToolUse）に案内し、検索結果の案内を修正するときに参照する。
+    description: 検索の結果に出たファイルにヒットする未読・未案内のルールを、結果の後（PostToolUse）に案内し、検索結果の案内を修正するときに参照する。
     tags:
       - topic:フック
       - topic:ルールの案内

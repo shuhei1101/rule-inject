@@ -49,7 +49,7 @@ files:
     visibility: public
   - path: 設定ファイル.md
     name: 設定ファイル
-    description: 設定ファイルのキーと、global・projects の当て方と重ね方を定め、設定ファイルを記載するときに参照する。
+    description: 設定ファイルのキーと、global・projects の適用の仕方と重ね方を定め、設定ファイルを記載するときに参照する。
     tags:
       - topic:設定ファイル
     category: リファレンス

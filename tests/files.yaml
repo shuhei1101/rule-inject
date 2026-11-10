@@ -329,7 +329,7 @@ files:
       - to: src/rule_inject/features/server_start/service.py
         type: tests
   - path: unit/rule_inject/features/index/check/test_scan.py
-    name: 当たらないエントリの走査の単体テスト
+    name: ヒットしないエントリの走査の単体テスト
     description: ヒットしないエントリの走査の振る舞いを確認する単体テストで、ヒットしないエントリの走査を修正したときに実行する。
     tags:
       - topic:索引のチェック

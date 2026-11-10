@@ -8,7 +8,7 @@
 ## 共通
 
 `get_read_records`・`delete_read_records` と管理のツール（`get_server_status`・`reload_settings`・`restart_server`・`update_server`）以外の全てのツールが `project_dir` を受ける。`reload_settings` は `project_dir` を省いてもよい。
-フックの `CLAUDE_PROJECT_DIR` に当たる値で、`projects[].match` を適用して索引を決め、`projects[].indexes` の相対パスを解く（[設定ファイル](設定ファイル.md)）。
+フックの `CLAUDE_PROJECT_DIR` に該当する値で、`projects[].match` を適用して索引を決め、`projects[].indexes` の相対パスを解く（[設定ファイル](設定ファイル.md)）。
 
 | 引数 | 型 | 必須 | 既定値 | 内容 |
 | --- | --- | --- | --- | --- |
@@ -34,7 +34,7 @@
 | 引数 | 型 | 必須 | 既定値 | 内容 |
 | --- | --- | --- | --- | --- |
 | `limit` | 整数 | - | `100` | 返却する有効なエントリの件数の上限。1〜500 |
-| `cursor` | 文字列 | - | 先頭から返す | 前の応答の `next_cursor` |
+| `cursor` | 文字列 | - | 先頭から返却する | 前の応答の `next_cursor` |
 
 <!-- table: data -->
 
@@ -60,7 +60,7 @@
 
 ## search_rules
 
-ファイルのパスと操作の種別か MCP のツールの呼び出しを受け、フックと同じ照合で当たるルールを返却する。
+ファイルのパスと操作の種別か MCP のツールの呼び出しを受け、フックと同じ照合でヒットするルールを返却する。
 既読の記録は確認せず、全て未読とみなした結果を返却する。
 `enabled: false` のエントリは照合に使用しない。
 
@@ -69,7 +69,7 @@
 | `path` | 文字列 | - | ツールの呼び出しで検索する | 操作の対象のファイルの絶対パス。まだ無いパスも受ける。`tool_name` とどちらか 1 つだけ |
 | `operation` | `read` / `write` | - | なし | パスへの操作の種別。`path` を指定するときは必須。`read` は Read・Grep・Bash の読み取り、`write` は Edit・Write・NotebookEdit |
 | `tool_name` | 文字列 | - | パスで検索する | MCP のツールの完全名。`mcp__` で始まる。`path` とどちらか 1 つだけ。`mcp` として照合する |
-| `arguments` | オブジェクト | - | 引数を持たない呼び出しとして照合する | MCP のツールの引数。`tool_name` を指定するときだけ使い、エントリの `args` と照合する |
+| `arguments` | オブジェクト | - | 引数を持たない呼び出しとして照合する | MCP のツールの引数。`tool_name` を指定するときだけ使用し、エントリの `args` と照合する |
 
 次の指定方法は `isError: true` になる。
 
@@ -81,13 +81,13 @@
 
 | 応答のキー | 型 | 内容 |
 | --- | --- | --- |
-| `success` | 真偽値 | 照合できたか。当たるルールが無くても `true` |
-| `output` | 文字列 | 当たったルールの件数と、止めるルールの件数の 1 行 |
+| `success` | 真偽値 | 照合できたか。ヒットするルールが無くても `true` |
+| `output` | 文字列 | ヒットしたルールの件数と、止めるルールの件数の 1 行 |
 | `config_path` | 文字列 / `null` | 読んだ設定ファイルの場所 |
 | `operation` | `read` / `write` / `mcp` | 照合に使用した操作の種別 |
-| `matched[].rule` | 文字列 | 当たったルールの場所。同じ場所に当たったエントリは 1 件にまとめる |
-| `matched[].blocking` | 真偽値 | 未読のときに操作を止めるか。当たったエントリのどれか 1 つでも `operation` が `on` に入っていれば `true` |
-| `matched[].entries[]` | オブジェクトのリスト | 当たったエントリの `index` と `position` |
+| `matched[].rule` | 文字列 | ヒットしたルールの場所。同じ場所にヒットしたエントリは 1 件にまとめる |
+| `matched[].blocking` | 真偽値 | 未読のときに操作を止めるか。ヒットしたエントリのどれか 1 つでも `operation` が `on` に入っていれば `true` |
+| `matched[].entries[]` | オブジェクトのリスト | ヒットしたエントリの `index` と `position` |
 | `unreadable_indexes[]` | オブジェクトのリスト | `list_rules` と同じ |
 | `skipped_entries[]` | オブジェクトのリスト | `list_rules` と同じ |
 
@@ -95,7 +95,7 @@
 
 ## check_indexes
 
-プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにも当たらないエントリ・dev-docs の使われているどのタグにも当たらないタグのパターンを返却する。
+プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにもヒットしないエントリ・dev-docs の使われているどのタグにもヒットしないタグのパターンを返却する。
 索引の問題はエラーにせず応答に記載する。
 
 索引ごとに、フックと同じ読み取り、JSON Schema、`rule` の場所の実在の順に確認する。
@@ -106,8 +106,8 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 
 | 引数 | 型 | 必須 | 既定値 | 内容 |
 | --- | --- | --- | --- | --- |
-| `include_global` | 真偽値 | - | `false` | ユーザー全体の索引（`global.indexes`、無ければユーザーの既定の索引）の `paths` の当たらないエントリも確認するか |
-| `cursor` | 文字列 | - | 最初のファイルから辿る | 前の応答の `unmatched_scan.next_cursor`。`paths` の当たらないエントリの検出を、前の呼び出しが止まった続きから行う |
+| `include_global` | 真偽値 | - | `false` | ユーザー全体の索引（`global.indexes`、無ければユーザーの既定の索引）の `paths` のヒットしないエントリも確認するか |
+| `cursor` | 文字列 | - | 最初のファイルから辿る | 前の応答の `unmatched_scan.next_cursor`。`paths` のヒットしないエントリの検出を、前の呼び出しが止まった続きから行う |
 
 <!-- table: data -->
 
@@ -117,18 +117,18 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 | `output` | 文字列 | チェックした索引の数と問題の件数の 1 行 |
 | `config_path` | 文字列 / `null` | 読んだ設定ファイルの場所 |
 | `problem_count` | 整数 | 全ての索引の `hook_error`・`violations`・`missing_rules`・`skipped_entries` の件数と、`origin` が `project` の索引の `unmatched_paths` の件数の合計。`origin` が `global` の索引の `unmatched_paths` と、どの索引の `unused_tag_patterns` も数えない |
-| `unmatched_scan.completed` | 真偽値 | `paths` の当たらないエントリの検出を最後まで行えたか。`false` のときはどの索引の `unmatched_paths` も空 |
+| `unmatched_scan.completed` | 真偽値 | `paths` のヒットしないエントリの検出を最後まで行えたか。`false` のときはどの索引の `unmatched_paths` も空 |
 | `unmatched_scan.scanned_files` | 整数 | 辿ったプロジェクトのファイルの数。`cursor` を指定したときは、最初の呼び出しからの合計 |
 | `unmatched_scan.reason` | 文字列 / `null` | 検出を終えられなかった理由。辿る時間の上限の秒数と、`next_cursor` を `cursor` に指定すると続きから辿れることを含む。終えられたときは `null` |
 | `unmatched_scan.next_cursor` | 文字列 / `null` | 辿る時間の上限で止まったときの続きの位置。最後まで辿れたときは `null` |
 | `indexes[].index` | 文字列 | チェックした索引の場所。フックが読む順 |
-| `indexes[].origin` | `global` / `project` | 索引の出所。`global` は `global.indexes`（無ければユーザーの既定の索引）、`project` は当たった `projects[].indexes` とプロジェクトの既定の配置場所の索引 |
+| `indexes[].origin` | `global` / `project` | 索引の出所。`global` は `global.indexes`（無ければユーザーの既定の索引）、`project` はヒットした `projects[].indexes` とプロジェクトの既定の配置場所の索引 |
 | `indexes[].hook_error` | 文字列 / `null` | フックがその索引を読めない理由。書式の誤りは行の番号を含む。読めたときは `null` |
 | `indexes[].violations[]` | オブジェクトのリスト | JSON Schema への違反の `location` と `reason` |
 | `indexes[].missing_rules[]` | オブジェクトのリスト | ルールの場所にファイルが無いエントリの `position` と、解いた `rule` |
 | `indexes[].skipped_entries[]` | オブジェクトのリスト | フックが読み飛ばすエントリの `position` と `reason` |
-| `indexes[].unmatched_paths[]` | オブジェクトのリスト | `paths` がプロジェクトのどのファイルにも当たらないエントリの `position`・`rev`・解いた `rule`。`origin` が `global` の索引は `include_global` が `true` のときだけ載せる |
-| `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使われているどのタグにも当たらないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も記載する |
+| `indexes[].unmatched_paths[]` | オブジェクトのリスト | `paths` がプロジェクトのどのファイルにもヒットしないエントリの `position`・`rev`・解いた `rule`。`origin` が `global` の索引は `include_global` が `true` のときだけ記載する |
+| `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使われているどのタグにもヒットしないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も記載する |
 | `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確認の結果。`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かない、または読める文書が 0 件で飛ばした、`no_patterns` は確認するパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
 | `tag_check.reason` | 文字列 / `null` | 飛ばした理由。`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返却した・読める文書が 0 件だったのどれかを含む。それ以外は `null` |
 
@@ -137,16 +137,16 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 `violations[].location` は、キーを `.`、リストの要素を `[位置]` で結ぶ（例 `rules[0].read_by[1].tools`）。最上位の違反は `$`。
 
 - `unmatched_paths` で確認するのは、有効なエントリ（`enabled: false`・読み飛ばすエントリ・フックが読めない索引のエントリを除く）のうち `paths` を持つもの。`tools` だけのエントリは確認しない
-- 当たるかは、フックと同じ照合（`paths` と `exclude`。`on` は問わない）を、`project_dir` の下のファイルの絶対パスに適用して決める
+- ヒットするかは、フックと同じ照合（`paths` と `exclude`。`on` は問わない）を、`project_dir` の下のファイルの絶対パスに適用して決める
 - 既定では、`origin` が `project` の索引だけを確認する。`include_global` を `true` にすると、`origin` が `global` の索引の分も、`project` の索引の分とは分けて返却する
 - `project_dir` の下を `.git` だけ除いて辿る。`.gitignore` で除いたファイルも辿り、フォルダへのシンボリックリンクは辿らない。辿る順はパスの部品ごとの名前の順
 - 1 回の呼び出しで辿る時間は 30 秒まで。超えたら辿るのをやめ、`unmatched_scan.completed` を `false` にして、どの索引の `unmatched_paths` も返却せず、`unmatched_scan.next_cursor` を返却する
 - `next_cursor` を `cursor` に指定して呼び直すと、続きから辿る。`project_dir`・`include_global` は前の呼び出しと同じ値で指定する。確認するエントリが前の呼び出しの後に変わっていたときは、`cursor` を使用せず最初のファイルから辿り直す
 - `hook_error`・`violations`・`missing_rules`・`skipped_entries` の確認は、`cursor` によらず毎回全て行う
 - `unused_tag_patterns` で確認するのは、有効なエントリ（`unmatched_paths` と同じ除外）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターン。ドットの道筋のキー（`filter.tags`）は確認しない
-- パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかに当たれば使われているとする
-- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使われているタグを取得する。索引ごとには問い合わせ直さない
-- dev-docs への問い合わせは、`paths` の当たらないエントリを確認するファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
+- パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかにヒットすれば使われているとする
+- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使われているタグを取得する。索引ごとには問い合わせ修正しない
+- dev-docs への問い合わせは、`paths` のヒットしないエントリを確認するファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
 - dev-docs に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返却する。ほかの確認は変わらない
 - `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths`・`unused_tag_patterns` を含めない
 
@@ -165,7 +165,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 | `entry` | オブジェクト | ✅ | - | 書き込むキーと値。キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`。`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを指定する（指定しないキーはそのまま残る） |
 | `position` | 整数 | - | `rules` の末尾に新規作成する | 書き換えるエントリの位置。0 以上 |
 | `expected_rev` | 文字列 | - | なし | 書き換える前のエントリのバージョン。`position` を指定するときは必須 |
-| `remove_keys` | 文字列のリスト | - | キーを削除しない | エントリから削除するキー。`position` を指定するときだけ使い、`entry` と同じキーは指定できない |
+| `remove_keys` | 文字列のリスト | - | キーを削除しない | エントリから削除するキー。`position` を指定するときだけ使用し、`entry` と同じキーは指定できない |
 | `dry_run` | 真偽値 | - | `false` | 書き込まずにチェックと差分だけを返却するか |
 
 <!-- /table -->
@@ -188,9 +188,9 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 - 書き込みは、索引を読む → バージョンを比べる → 変更を適用する前と後をチェックする → 同じフォルダの一時ファイルに記載して置き換える、の順。書き込まなかったときは索引のファイルを変えない
 - チェックは `check_indexes` と同じ内容で、記載した後にフックが読めないか、記載する前に無かった問題が出るときだけ断る。もとからある問題では断らない
 - 対象のエントリの外の行（コメント・引用符・字下げ・キーの並び・改行）は変えない。字下げと改行は索引に合わせる
-- 新しく書く文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符の文字列）で記載する
+- 新しく記載する文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符の文字列）で記載する
 - 同じ索引への書き込みは、サーバーの中で 1 つずつ行う
-- 記載した内容は、再起動せずに次のツールの呼び出しとフックの呼び出しから効く
+- 記載した内容は、再起動せずに次のツールの呼び出しとフックの呼び出しから有効になる
 
 次のときは `isError: true` になる。
 
@@ -254,7 +254,7 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 | --- | --- | --- | --- | --- |
 | `session_id` | 文字列 | - | セッションの一覧を返却する | 確認するセッションの識別子。フックが記録ファイル名に使用できる形式 |
 | `limit` | 整数 | - | `100` | 返却するルール（`session_id` を省いたときはセッション）の件数の上限。1〜500 |
-| `cursor` | 文字列 | - | 先頭から返す | 前の応答の `next_cursor` |
+| `cursor` | 文字列 | - | 先頭から返却する | 前の応答の `next_cursor` |
 | `format` | `markdown` / `json` | - | `markdown` | 応答の形式。`list_rules` と同じ |
 
 <!-- table: data -->
@@ -346,8 +346,8 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 ## reload_settings
 
 設定ファイルを読み直し、読めたかと、読んだ値を返却する。
-設定ファイルはどのツールも呼び出しのたびに読み直しているため、修正した値は次の呼び出しから効く。
-待ち受けのポートは起動したプロセスの環境変数だけから読むため返さない（変えたときは、サーバーを起動する環境の `RULE_INJECT_PORT` を変えて起動し直す）。
+設定ファイルはどのツールも呼び出しのたびに読み直しているため、修正した値は次の呼び出しから有効になる。
+待ち受けのポートは起動したプロセスの環境変数だけから読むため返却しない（変えたときは、サーバーを起動する環境の `RULE_INJECT_PORT` を変えて起動し直す）。
 
 | 引数 | 型 | 必須 | 既定値 | 内容 |
 | --- | --- | --- | --- | --- |
@@ -410,7 +410,7 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 - 順に、commit していない変更の確認・`git fetch`・前後の確認・`git merge --ff-only`・`uv sync --extra server`・`python -m rule_inject.migrate --plan` を実行する
 - クローンが上流と同じか、上流より先に進んでいるだけのときは `up_to_date` で、何も変えない
 - 設定ファイルの `version` だけが古いときは移し替えが要らないものとして再起動する。設定ファイルは書き換えない
-- `migration_required` のときは、`/rule-inject:global-setup` で手順を確認してから当て、続けて `restart_server` を呼ぶ
+- `migration_required` のときは、`/rule-inject:global-setup` で手順を確認してから適用し、続けて `restart_server` を呼ぶ
 - コマンドの上限は、git の各コマンド 49 秒・`uv sync` 864 秒・`migrate --plan` 57 秒
 
 次のときは `isError: true` になり、再起動しない。

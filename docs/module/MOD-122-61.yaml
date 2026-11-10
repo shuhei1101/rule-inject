@@ -1,7 +1,7 @@
 id: MOD-122-61
 visibility: internal
 title: "プラグイン / 案内"
-lead: フックが返す案内文（止める案内・止めない案内・検索結果の案内・失敗の知らせ・作業の決まり）を組み立てる。
+lead: フックが返却する案内文を組み立てるモジュールの構成を定め、案内の文面を変えるときに参照する。
 directory: |-
   ```text
   src/rule_inject/features/guidance/

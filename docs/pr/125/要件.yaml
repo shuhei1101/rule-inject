@@ -1,19 +1,19 @@
 docs:
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える（Mermaid は残す）
+    change: AI slop の語を対応表の語へ置き換える（Mermaid は残す。工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換える（Mermaid は残す）
+    change: AI slop の語を対応表の語へ置き換える（Mermaid は残す。工程 2 の表にする箇所は該当なし）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/guide/ルールにするか文書にするかを決める.md
     new: false
-    change: AI slop の和語を対応表の語へ置き換え、冒頭の 1 行を目次の概要と合わせる（Mermaid は残す）
+    change: 'AI slop の語を対応表の語へ置き換え、※1〜※5 の `**キー**: 値` を「注 / 内容」の表にし、冒頭の 1 行を目次の概要と合わせる（Mermaid は残す）'
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
@@ -109,49 +109,49 @@ docs:
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/interface/index.yaml
     new: false
-    change: フォルダのインターフェース定義の lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（IF-122-1〜22）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/scenario/index.yaml
     new: false
-    change: フォルダのシナリオの lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（SC-122-1〜25）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/library/index.yaml
     new: false
-    change: フォルダの外部ライブラリの lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（LIB-122-1〜6）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/external-api/index.yaml
     new: false
-    change: 外部 API の lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（API-122-1）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/architecture/index.yaml
     new: false
-    change: アーキテクチャ図の lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（ARCH-122-1）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/nonfunctional/index.yaml
     new: false
-    change: 非機能要件の lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（NFR-122-1）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/config/index.yaml
     new: false
-    change: 設定の lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（CFG-122-1）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
   - page: docs/er/index.yaml
     new: false
-    change: ER 図の lead をチェックシートに合わせる
+    change: フォルダの個別の設計書（ER-122-1〜2）の lead をチェックシートに合わせる（index.yaml 自体は変えない）
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:58:17.193768+00:00'
@@ -161,9 +161,15 @@ docs:
     status: done
     updated_by: planner
     updated_at: '2026-11-10T16:59:06.336554+00:00'
+  - page: docs/module/index.yaml
+    new: false
+    change: フォルダの個別の設計書のうち lead を持つ MOD-122-52〜62 の lead をチェックシートに合わせる（index.yaml 自体は変えない）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T17:19:16.445692+00:00'
 scope_out:
   - item: Mermaid の図を mdmark の map のマーカーで囲んで補足を付ける
-    reason: mdmark#324（新しい図 map）が open で、計画の依存に置かれていない。他の工程は map を待たずに進められる。この作業 PR で待つか別の Issue へ回すかの判断が分かれるため、要件.md の未確定のとおりレビューで確定する
+    reason: 'mdmark#324（新しい図 map）が open で、計画の依存に置かれていない。Issue #99 の範囲を減らすため、別の Issue へ回すかをユーザーへ確認する（確認事項の回答で plan を確定する）'
     plan: to_file
   - item: schemas/ の Mermaid（common・interface・scenario の 3 件）
     reason: AI Monitor から配布された Schema で、このリポジトリでは書き換えない
@@ -172,10 +178,10 @@ scope_out:
     reason: 配布された Schema が設計書のタグのキーを持たない。Schema が持つようになったら AI Monitor の配布物への追従で付ける
     plan: none
   - item: 過去の PR ドキュメント（docs/pr/）の文を表へ・文の削減
-    reason: 完了した作業の記録で、書き換えると当時の判断の記録が変わり、dev-docs の配信元にも含まれない。Issue 本文は docs/pr/ も範囲に含めるとしているため、判断が分かれる。レビューで確定する
-    plan: none
-  - item: 設計書の本文（lead 以外）の文を表へ・文の削減・AI slop の修正と、モジュール構成のファイル単位の文書の空の lead
-    reason: 設計書は 120 件あり、本文の書き換えは設計の中身のレビューを伴う。この PR では検索と注入に使う lead と管理用の YAML を移行し、本文は設計書の分類ごとに分ける案（A-5 の「進め方」）。この PR で行うかは判断が分かれるためレビューで確定する
+    reason: '完了した作業の記録で、書き換えると当時の判断の記録が変わる。Issue #99 は docs/pr/ も範囲に含めると明記しているため、外すかをユーザーへ確認する（確認事項の回答で plan を確定する）'
+    plan: to_file
+  - item: 設計書の本文（lead 以外）の文を表へ・文の削減・AI slop の修正と、モジュール構成のファイル単位の文書（MOD-122-1〜51）の空の lead
+    reason: '設計書は 120 件あり、1 つの PR でレビューしきれない。Issue #99 の範囲を減らすため、分類ごとの別の Issue へ分けるかをユーザーへ確認する（確認事項の回答で plan を確定する）'
     plan: to_file
   - item: 管理用の YAML のタグへの main と、管理用の YAML・設計書への aliases の登録
     reason: 配布された Schema では管理用の YAML のタグが文字列の並びで main を持てず、aliases も管理用の YAML と設計書の最上位には無い。Schema が持つようになったら AI Monitor の配布物への追従で付ける
@@ -186,3 +192,6 @@ scope_out:
   - item: 公開ドキュメントの「読む」の置き換え
     reason: 「読む」は Claude Code がルールを読んだかを既読として記録する、このプラグインの仕組みそのものを指す動詞で、「参照」へ置き換えると「既読」と意味がずれる
     plan: none
+  - item: 公開ドキュメントへの mdmark の check と、画面で描いた図の確認
+    reason: リポジトリに mdmark.config.yaml が無く、作るにはスキル mdmark:setup でキーを 1 つずつ利用者に確認する必要がある。図は Mermaid のままで、この PR で図を変えていない
+    plan: to_file
