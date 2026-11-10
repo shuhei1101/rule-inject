@@ -1,0 +1,63 @@
+docs:
+  - page: docs/architecture/ARCH-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/nonfunctional/NFR-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/config/CFG-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/er/ER-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/er/ER-122-2.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/external-api/API-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/library/LIB-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/library/LIB-122-2.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/library/LIB-122-3.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/library/LIB-122-4.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/library/LIB-122-5.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/library/LIB-122-6.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+  - page: docs/test-procedure/TP-122-1.yaml
+    new: false
+    change: 本文（lead 以外）を、文を表へ・文の削減と AI slop の修正・本文に出さないものの移動の 3 工程で移行する
+    status: todo
+scope_out:
+  - item: 対象の設計書の lead と管理用の YAML（index.yaml）
+    reason: 'PR #125 で移行済み'
+    plan: none
+  - item: 'Issue #99 の手順 2（図の置き換え）・手順 5（メタデータの付け直し）'
+    reason: '起点 Issue の本文が手順 3・4・6 だけを求めている。図の置き換えは #126 が扱う'
+    plan: '#126'
+  - item: シナリオ・インターフェース定義・モジュール構成の本文
+    reason: '設計書の分類ごとの Issue に分けている（シナリオ #127・インターフェース定義 #128・モジュール構成 #129）'
+    plan: '#127'
