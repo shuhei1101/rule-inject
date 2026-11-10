@@ -8,7 +8,7 @@ functions:
     title: 設定ファイルの YAML の読み取り
     container: shared/_settings_yaml.py
     usecase: 共通
-    summary: 設定ファイルの YAML のうち設定の設計書に挙げたキーと形式だけを読む
+    summary: 設定ファイルの YAML のうち設定の設計書に挙げたキーと形式だけを読み込む
     kind: 関数
     scope: public
     args:
@@ -19,13 +19,13 @@ functions:
         description: 設定ファイルの中身
     returns:
       type: dict[str, dict[str, str | list[str]] | list[dict[str, str | list[str]]]]
-      description: '`version`（文字列）と `global`（キー → 文字列か文字列のリスト）と `projects`（そのマップのリスト）。書かれていないキーは持たない。整数の値も文字列のまま返す'
+      description: '`version`（文字列）と `global`（キー → 文字列か文字列のリスト）と `projects`（そのマップのリスト）。記載されていないキーは持たない。整数の値も文字列のまま返却する'
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす（`yaml_lines` の行の読み取り）
       2. 最上位のキーは `version`（文字列）・`global`・`projects` だけを許す
-      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url`・`server_service`（文字列）だけを許す。`server_port` は `/rule-inject:global-setup` での移し替えを案内する ValueError にする
-      4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
-      5. 文字列は引用符あり・なしを読む。リストは空の `[]` を許す
+      3. `global` は続く行に深い桁でキーを並べたブロックのマップだけを読み込む。キーは `indexes`（フローかブロックのリスト）と `state_dir`・`log_dir`・`record_retention_days`・`log_retention_days`・`dev_docs_url`・`server_service`（文字列）だけを許す。`server_port` は `/rule-inject:global-setup` での移し替えを案内する ValueError にする
+      4. `projects` は空のフローのリスト `[]` か、続く行に深い桁で `- ` で始まるマップを並べたブロックのリストだけを読み込む。各マップのキーは `match`（文字列）と `indexes`（フローかブロックのリスト）だけを許す
+      5. 文字列は引用符あり・なしを読み込む。リストは空の `[]` を許す
       6. 許さないキー・形式（フローのマップ・キーの重複を含む）は行番号つきの ValueError にする
     exceptions:
       - name: ValueError
@@ -34,7 +34,7 @@ functions:
     unit_tests:
       - name: test_parse_settings
         case: 正常
-        summary: '`global` と `projects` を読む'
+        summary: '`global` と `projects` を読み込む'
         condition: '`global` に `indexes`（ブロックのリスト）・引用符つきの `state_dir`・`log_retention_days: 5`。`projects` に `match` と `indexes`（フローのリスト）を持つ要素と `match` だけの要素。行末にコメント'
         mock: なし
         expected: '`global` と 2 要素の `projects` のキーと値（`log_retention_days` は文字列 `5`）'
@@ -46,7 +46,7 @@ functions:
         expected: 空の dict
       - name: test_parse_settings_when_empty_lists
         case: 正常
-        summary: 空のリストを読む
+        summary: 空のリストを読み込む
         condition: '`global.indexes: []` と `projects: []`'
         mock: なし
         expected: '`indexes` と `projects` が空のリスト'
@@ -73,7 +73,7 @@ functions:
         exception: 許さないキー・形式がある
       - name: test_parse_settings_when_version
         case: 正常
-        summary: '`version` を読む'
+        summary: '`version` を読み込む'
         condition: '最上位の `version: 0.3.0`'
         mock: なし
         expected: '`version` が文字列 `0.3.0`'
@@ -84,3 +84,4 @@ functions:
         mock: なし
         expected: 行番号と `global-setup` を含む ValueError
         exception: 許さないキー・形式がある
+lead: 設定ファイルの YAML からフックが使用するキーだけを読み取る関数を定め、設定ファイルの書式の読み取りを修正するときに参照する。

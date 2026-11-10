@@ -6,5 +6,5 @@ directory: |-
   ```text
   src/rule_inject/features/command/
   ├── __init__.py   # 公開 API
-  └── service.py    # 読むコマンドの引数からパスを取り出し、検索の結果の行からパスを拾う
+  └── service.py    # 読み込むコマンドの引数からパスを取り出し、検索の結果の行からパスを取得する
   ```

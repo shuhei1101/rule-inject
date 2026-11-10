@@ -7,39 +7,39 @@ constants:
   - name: SEARCH_DOCS_TOOL
     title: dev-docsの検索のツール名
     container: server/dev_docs.py
-    summary: 使われているタグを引く dev-docs のツール
+    summary: 使用されているタグを取得する dev-docs のツール
     value: '`"search_docs"`'
   - name: TAG_GROUP_ARGUMENTS
-    title: タグを引く検索の引数
+    title: タグを取得する検索の引数
     container: server/dev_docs.py
-    summary: '`search_docs` に渡す固定の引数（これに `cwd` を加える）'
+    summary: '`search_docs` に引き渡す固定の引数（これに `cwd` を加える）'
     value: '`{"source": "*", "group_by": "tags", "format": "json"}`'
   - name: NO_TAG_LABEL
     title: タグを持たない文書のグループの値
     container: server/dev_docs.py
-    summary: dev-docs がタグを持たない文書をまとめて返す `groups[].value`。使われているタグに含めない
+    summary: dev-docs がタグを持たない文書をまとめて返却する `groups[].value`。使用されているタグに含めない
     value: '`"（なし）"`'
 data_models:
   - name: UsedTags
-    title: dev-docsの使われているタグ
+    title: dev-docsの使用されているタグ
     container: server/dev_docs.py
     usecase: 索引をチェックする
     role: DTO
-    summary: '`fetch_used_tags` の結果。引けたタグか、引けなかった理由のどちらかを持つ（frozen の dataclass）'
+    summary: '`fetch_used_tags` の結果。取得できたタグか、取得できなかった理由のどちらかを持つ（frozen の dataclass）'
     properties:
       - name: tags
         type: tuple[str, ...]
         description: '`groups[].value` の並び。`reason` があるときは空'
       - name: reason
         type: str | None
-        description: タグを引けなかった理由（接続先の URL を含む）。引けたときは `None`
+        description: タグを取得できなかった理由（接続先の URL を含む）。取得できたときは `None`
 functions:
   - name: fetch_used_tags
-    title: 使われているタグの問い合わせ
+    title: 使用されているタグの問い合わせ
     container: server/dev_docs.py
     usecase: 索引をチェックする
-    summary: 'dev-docs の `search_docs` を `group_by: tags` で 1 回呼び、使われているタグを返す。届かないときは例外にせず理由を返す'
-    description: 実際の dev-docs への疎通テストは置かない。dev-docs は利用者の端末で別に立てる開発用のサーバーでテストの環境に無いため、呼び方と応答の読み方は外部 API「dev-docs」の実測と、偽の dev-docs を立てる結合テストで確かめる
+    summary: 'dev-docs の `search_docs` を `group_by: tags` で 1 回呼び、使用されているタグを返却する。届かないときは例外にせず理由を返却する'
+    description: 実際の dev-docs への疎通テストは配置しない。dev-docs は利用者の端末で別に起動する開発用のサーバーでテストの環境に無いため、呼び方と応答の参照方法は外部 API「dev-docs」の実測と、偽の dev-docs を起動する結合テストで確認する
     kind: 関数
     scope: public
     is_async: true
@@ -53,12 +53,12 @@ functions:
         type: str
         required: true
         passing: positional
-        description: '`cwd` に渡すプロジェクトの直下'
+        description: '`cwd` に引き渡すプロジェクトの直下'
       - name: timeout
         type: float
         required: true
         passing: keyword
-        description: 問い合わせを始めてから応答を読み終えるまでの待ち時間の上限（秒）
+        description: 問い合わせを始めてから応答を読み込み終えるまでの待ち時間の上限（秒）
       - name: open_session
         type: Callable[[str], AbstractAsyncContextManager[ClientSession]]
         required: false
@@ -67,63 +67,63 @@ functions:
         description: 接続先への初期化済みの MCP のセッションを開く関数（テストで差し替える）
     returns:
       type: UsedTags
-      description: 使われているタグか、引けなかった理由
+      description: 使用されているタグか、取得できなかった理由
     process: |-
       1. `async with asyncio.timeout(timeout)` の中で、`open_session(url)` のセッションの `call_tool(SEARCH_DOCS_TOOL, {**TAG_GROUP_ARGUMENTS, "cwd": project_dir})` を呼ぶ
-      2. 上限を超えた（`TimeoutError`）ら、接続先と待ち時間の上限の秒数を含む理由を返す
-      3. 接続・通信に失敗した（`httpx2.HTTPError`・`OSError`・`mcp.shared.exceptions.MCPError`。`anyio` の TaskGroup が包んだ `ExceptionGroup` の中のものを含む）ら、接続先と接続できなかった旨と例外の内容を含む理由を返す
-      4. 結果の `is_error` が True なら、接続先とエラーを返した旨と結果の文字列を含む理由を返す
-      5. 結果の文字列を JSON として読む。読めない、または `total_count` が整数でないときは、接続先と応答を読めない旨を含む理由を返す
-      6. `total_count` が 0 なら、接続先と `project_dir` から読める文書が 0 件だった旨を含む理由を返す
-      7. `groups[].value` の文字列のうち `NO_TAG_LABEL` を除いたものを並べた `UsedTags` を返す
+      2. 上限を超えた（`TimeoutError`）ら、接続先と待ち時間の上限の秒数を含む理由を返却する
+      3. 接続・通信に失敗した（`httpx2.HTTPError`・`OSError`・`mcp.shared.exceptions.MCPError`。`anyio` の TaskGroup が包んだ `ExceptionGroup` の中のものを含む）ら、接続先と接続できなかった旨と例外の内容を含む理由を返却する
+      4. 結果の `is_error` が True なら、接続先とエラーを返却した旨と結果の文字列を含む理由を返却する
+      5. 結果の文字列を JSON として解釈する。読み込めない、または `total_count` が整数でないときは、接続先と応答を読み込めない旨を含む理由を返却する
+      6. `total_count` が 0 なら、接続先と `project_dir` から読み込める文書が 0 件だった旨を含む理由を返却する
+      7. `groups[].value` の文字列のうち `NO_TAG_LABEL` を除いたものを並べた `UsedTags` を返却する
     unit_tests:
       - name: test_fetch_used_tags
         case: 正常
-        summary: groups の値を使われているタグにする
-        condition: '`{"total_count": 3, "groups": [{"value": "Python", "count": 2}, {"value": "mcp", "count": 1}]}` を返すセッション'
-        mock: '`open_session` を、受けた引数を記録して決めた結果を返す偽のセッションに差し替える'
+        summary: groups の値を使用されているタグにする
+        condition: '`{"total_count": 3, "groups": [{"value": "Python", "count": 2}, {"value": "mcp", "count": 1}]}` を返却するセッション'
+        mock: '`open_session` を、受けた引数を記録して決めた結果を返却する偽のセッションに差し替える'
         expected: '`tags` が `("Python", "mcp")`、`reason` が None。受けた引数が `source: "*"`・`group_by: "tags"`・`format: "json"`・`cwd` が `project_dir`'
       - name: test_fetch_used_tags_when_no_documents
         case: 正常
-        summary: 読める文書が 0 件なら飛ばす理由を返す
-        condition: '`{"total_count": 0, "returned": 0}` を返すセッション'
+        summary: 読み込める文書が 0 件なら飛ばす理由を返却する
+        condition: '`{"total_count": 0, "returned": 0}` を返却するセッション'
         mock: 同上
         expected: '`tags` が空、`reason` に接続先と 0 件の旨'
       - name: test_fetch_used_tags_when_tool_error
         case: 正常
         summary: ツールのエラーを飛ばす理由にする
-        condition: '`is_error` が True で文字列 `bad argument` を返すセッション'
+        condition: '`is_error` が True で文字列 `bad argument` を返却するセッション'
         mock: 同上
         expected: '`reason` に接続先と `bad argument`'
       - name: test_fetch_used_tags_when_unreadable
         case: 正常
-        summary: 読めない応答を飛ばす理由にする
-        condition: JSON でない文字列を返すセッションと、`total_count` を持たない JSON を返すセッション（パラメータ展開）
+        summary: 読み込めない応答を飛ばす理由にする
+        condition: JSON でない文字列を返却するセッションと、`total_count` を持たない JSON を返却するセッション（パラメータ展開）
         mock: 同上
-        expected: '`reason` に接続先と応答を読めない旨'
+        expected: '`reason` に接続先と応答を読み込めない旨'
       - name: test_fetch_used_tags_when_timeout
         case: 正常
-        summary: 待ち時間の上限を超えたら飛ばす理由を返す
+        summary: 待ち時間の上限を超えたら飛ばす理由を返却する
         condition: '`call_tool` が 1 秒待つセッションと `timeout=0.01`'
         mock: 同上
         expected: '`reason` に接続先と `0.01` 秒'
       - name: test_fetch_used_tags_when_unreachable
         case: 正常
-        summary: 接続できないときは飛ばす理由を返す
+        summary: 接続できないときは飛ばす理由を返却する
         condition: テストが `SO_REUSEADDR` を付けずにポート 0 で bind し、listen しないまま握っている `http://127.0.0.1:{ポート}/mcp`
         mock: なし（既定の `_open_session`）
         expected: 例外を送出せず、`reason` に接続先と接続できなかった旨
       - name: test_fetch_used_tags_when_no_tag_group
         case: 正常
-        summary: タグを持たない文書のグループは使われているタグに含めない
-        condition: '`{"total_count": 3, "groups": [{"value": "python", "count": 2}, {"value": "（なし）", "count": 1}]}` を返すセッション'
+        summary: タグを持たない文書のグループは使用されているタグに含めない
+        condition: '`{"total_count": 3, "groups": [{"value": "python", "count": 2}, {"value": "（なし）", "count": 1}]}` を返却するセッション'
         mock: '`test_fetch_used_tags` と同じ'
         expected: '`tags` が `("python",)`、`reason` が None'
   - name: _open_session
     title: dev-docsのセッションの開始
     container: server/dev_docs.py
     usecase: 索引をチェックする
-    summary: 接続先へ `mcp` の Streamable HTTP のクライアントで接続し、初期化した `ClientSession` を返す非同期のコンテキストマネージャー
+    summary: 接続先へ `mcp` の Streamable HTTP のクライアントで接続し、初期化した `ClientSession` を返却する非同期のコンテキストマネージャー
     kind: 関数
     scope: internal
     is_async: true
@@ -137,5 +137,6 @@ functions:
       type: AbstractAsyncContextManager[ClientSession]
       description: 初期化済みのセッション。抜けるときに接続を閉じる
     process: |-
-      1. `streamable_http_client(url)` で読み書きのストリームを開き、`ClientSession` を作って `initialize()` する（`contextlib.asynccontextmanager`）
-      2. セッションを渡し、抜けるときにセッションとストリームを閉じる
+      1. `streamable_http_client(url)` で読み込み・書き込みのストリームを開き、`ClientSession` を作って `initialize()` する（`contextlib.asynccontextmanager`）
+      2. セッションを引き渡し、抜けるときにセッションとストリームを閉じる
+lead: dev-docs から使用されているタグを取得するクライアントを定め、dev-docs への問い合わせを修正するときに参照する。

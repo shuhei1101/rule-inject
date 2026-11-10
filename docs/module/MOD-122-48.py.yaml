@@ -15,16 +15,16 @@ constants:
     summary: 既定のログのフォルダの最後の名前（既定の記録フォルダの下）
     value: '`logs`'
   - name: STATE_DIR_ENV
-    title: 状態の置き場所の環境変数
+    title: 状態の配置場所の環境変数
     container: shared/paths.py
-    summary: 状態の置き場所を上書きする環境変数の名前
+    summary: 状態の配置場所を上書きする環境変数の名前
     value: '`"RULE_INJECT_STATE_DIR"`'
 functions:
   - name: resolve_location
     title: 場所の解決
     container: shared/paths.py
     usecase: 共通
-    summary: ルールの場所や対象のパスを、照合・記録に使う正規の形式へ揃える
+    summary: ルールの場所や対象のパスを、照合・記録に使用する正規の形式へ統一する
     kind: 関数
     scope: public
     args:
@@ -43,7 +43,7 @@ functions:
       description: '`~` を展開して基準から解き、`..` を畳んだ絶対パス（シンボリックリンクは辿らない）'
     process: |-
       1. `~` を展開し、相対なら `base` と結ぶ
-      2. `os.path.normpath` で畳んで返す
+      2. `os.path.normpath` で畳んで返却する
     unit_tests:
       - name: test_resolve_location_when_relative
         case: 正常
@@ -74,18 +74,18 @@ functions:
       type: Path
       description: 記録フォルダの絶対パス（作らない）
     process: |-
-      1. `STATE_DIR_ENV` が空でなければ、その値の `~` を展開して返す
-      2. `XDG_STATE_HOME`（無いか空なら `~/.local/state`）の `~` を展開し、その下の `STATE_DIR_NAME` を返す
+      1. `STATE_DIR_ENV` が空でなければ、その値の `~` を展開して返却する
+      2. `XDG_STATE_HOME`（無いか空なら `~/.local/state`）の `~` を展開し、その下の `STATE_DIR_NAME` を返却する
     unit_tests:
       - name: test_default_state_dir_when_xdg_state_home
         case: 正常
-        summary: XDG_STATE_HOME の下を使う
+        summary: XDG_STATE_HOME の下を使用する
         condition: '`XDG_STATE_HOME=/s`'
         mock: なし
         expected: '`/s/rule-inject`'
       - name: test_default_state_dir_when_no_env
         case: 正常
-        summary: 既定の場所を使う
+        summary: 既定の場所を使用する
         condition: '`XDG_STATE_HOME` が無い'
         mock: なし
         expected: '`~/.local/state/rule-inject` の絶対パス'
@@ -99,7 +99,7 @@ functions:
     title: 既定のログのフォルダの解決
     container: shared/paths.py
     usecase: 共通
-    summary: 設定ファイルに `global.log_dir` が無いとき・設定ファイルが読めないときのログのフォルダを決める
+    summary: 設定ファイルに `global.log_dir` が無いとき・設定ファイルが読み込めないときのログのフォルダを決める
     kind: 関数
     scope: public
     args:
@@ -111,17 +111,17 @@ functions:
     returns:
       type: Path
       description: ログのフォルダの絶対パス（作らない）
-    process: 1. `default_state_dir(env)` の下の `LOG_DIR_NAME` を返す（設定ファイルの `global.state_dir` には従わない）
+    process: 1. `default_state_dir(env)` の下の `LOG_DIR_NAME` を返却する（設定ファイルの `global.state_dir` には従わない）
     unit_tests:
       - name: test_default_log_dir_when_xdg_state_home
         case: 正常
-        summary: XDG_STATE_HOME の下を使う
+        summary: XDG_STATE_HOME の下を使用する
         condition: '`XDG_STATE_HOME=/s`'
         mock: なし
         expected: '`/s/rule-inject/logs`'
       - name: test_default_log_dir_when_no_env
         case: 正常
-        summary: 既定の場所を使う
+        summary: 既定の場所を使用する
         condition: '`XDG_STATE_HOME` が無い'
         mock: なし
         expected: '`~/.local/state/rule-inject/logs` の絶対パス'
@@ -131,3 +131,4 @@ functions:
         condition: '`RULE_INJECT_STATE_DIR=/s`'
         mock: なし
         expected: '`/s/logs`'
+lead: 既定の記録フォルダ・ログのフォルダとルールの場所の解決を定め、記録やルールの場所の決め方を修正するときに参照する。

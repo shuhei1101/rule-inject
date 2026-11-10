@@ -15,9 +15,9 @@ constants:
     summary: 非機能要件「待ち受けを閉じた後の接続の待ち」の決定値（秒）。`uvicorn.Config` の `timeout_graceful_shutdown`
     value: '`3`'
   - name: DRAIN_POLL_INTERVAL
-    title: 処理中の呼び出しを見る間隔
+    title: 処理中の呼び出しを確認する間隔
     container: server/control.py
-    summary: 停止の待ちで処理中の呼び出しの数を見直す間隔（秒）。uvicorn が接続の終わりを見る間隔と同じ
+    summary: 停止の待ちで処理中の呼び出しの数を見直す間隔（秒）。uvicorn が接続の終わりを確認する間隔と同じ
     value: '`0.1`'
 classes:
   - name: RestartInProgressError
@@ -32,7 +32,7 @@ classes:
     title: サーバーの稼働の状態
     container: server/control.py
     usecase: MCPサーバーを再起動する
-    summary: 待ち受けのポート・起動した時刻・処理中の呼び出しと要求の数・再起動を始めたかを持ち、再起動の停止を進める。起動の入口が 1 つ作ってツールへ渡す（モジュール変数に状態を持たない）
+    summary: 待ち受けのポート・起動した時刻・処理中の呼び出しと要求の数・再起動を始めたかを持ち、再起動の停止を進める。起動の入口が 1 つ作ってツールへ引き渡す（モジュール変数に状態を持たない）
     kind: クラス
     properties:
       - name: port
@@ -50,7 +50,7 @@ classes:
       - name: _lock
         type: threading.Lock
         access: 内部 (_)
-        description: '`_in_flight`・`_requests`・`_restarting`・`_updating` の読み書きを 1 つずつ行うロック（同期のツールはスレッドで動く）'
+        description: '`_in_flight`・`_requests`・`_restarting`・`_updating` の読み込み・書き込みを 1 つずつ行うロック（同期のツールはスレッドで動く）'
       - name: _in_flight
         type: int
         access: 内部 (_)
@@ -78,7 +78,7 @@ classes:
     methods:
       - name: attach
         title: 待ち受けのサーバーの受け取り
-        summary: 停止に使う `uvicorn.Server` を受け取る
+        summary: 停止に使用する `uvicorn.Server` を受け取る
         kind: メソッド
         scope: public
         args:
@@ -92,15 +92,15 @@ classes:
           description: なし
       - name: restarting
         title: 再起動を始めたか
-        summary: '`_restarting` を返す（`@property`。`get_server_status` の `restarting`）'
+        summary: '`_restarting` を返却する（`@property`。`get_server_status` の `restarting`）'
         kind: メソッド
         scope: public
         returns:
           type: bool
           description: 再起動を始めたか
       - name: restart_requested
-        title: 起動し直すか
-        summary: '`serve` が返った後に起動し直すかを返す（`@property`）。`_restarting` が真なら真'
+        title: 再起動するか
+        summary: '`serve` が返った後に再起動するかを返却する（`@property`）。`_restarting` が真なら真'
         kind: メソッド
         scope: public
         returns:
@@ -133,7 +133,7 @@ classes:
           - name: test_guard
             case: 正常
             summary: 呼び出しの間だけ処理中の数が増える
-            condition: 包んだ関数の中で処理中の数を読む同期の関数と `async def` の関数
+            condition: 包んだ関数の中で処理中の数を読み込む同期の関数と `async def` の関数
             mock: なし
             expected: 関数の中で 1、呼んだ後に 0。戻り値がそのまま返る
           - name: test_guard_when_restarting
@@ -152,7 +152,7 @@ classes:
             exception: 再起動を始めた後に呼ばれた
       - name: begin_update
         title: 更新の開始
-        summary: 再起動の途中か別の更新が動いていれば断り、`_updating` を立てる
+        summary: 再起動の途中か別の更新が動いていれば断り、`_updating` を設定する
         kind: メソッド
         scope: public
         thread_safe: true
@@ -182,7 +182,7 @@ classes:
           description: なし
       - name: begin_restart
         title: 再起動の開始
-        summary: 再起動の途中か更新が動いていれば断り、`_restarting` を立てて停止を進めるタスクを作る
+        summary: 再起動の途中か更新が動いていれば断り、`_restarting` を設定して停止を進めるタスクを作る
         kind: メソッド
         scope: public
         thread_safe: true
@@ -190,7 +190,7 @@ classes:
           type: None
           description: なし
         process: |-
-          1. `_lock` の中で `_restarting` か `_updating` が真なら `RestartInProgressError` を送出し、偽なら `_restarting` を立てる
+          1. `_lock` の中で `_restarting` か `_updating` が真なら `RestartInProgressError` を送出し、偽なら `_restarting` を設定する
           2. `_start_stop()` で停止を進めるタスクを作る
         exceptions:
           - name: RestartInProgressError
@@ -213,7 +213,7 @@ classes:
             exception: '`_restarting` か `_updating` が真'
       - name: finish_update_and_restart
         title: 更新を終えて再起動
-        summary: '`_lock` の中で 1 回で `_updating` を下ろして `_restarting` を立て、停止を進めるタスクを作る。`update_server` が取り込みを終えたときに呼ぶ'
+        summary: '`_lock` の中で 1 回で `_updating` を下ろして `_restarting` を設定し、停止を進めるタスクを作る。`update_server` が取り込みを終えたときに呼ぶ'
         kind: メソッド
         scope: public
         thread_safe: true
@@ -221,7 +221,7 @@ classes:
           type: None
           description: なし
         process: |-
-          1. `_lock` の中で `_updating` を下ろし、`_restarting` を立てる（`_updating` を立てている間は `begin_restart` が断るため、`_restarting` は偽のまま）
+          1. `_lock` の中で `_updating` を下ろし、`_restarting` を設定する（`_updating` を設定している間は `begin_restart` が断るため、`_restarting` は偽のまま）
           2. `_start_stop()` で停止を進めるタスクを作る
         unit_tests:
           - name: test_finish_update_and_restart
@@ -240,15 +240,15 @@ classes:
           description: なし
       - name: _drain_and_stop
         title: 停止を進める
-        summary: 処理中の呼び出しと要求の終わりを `STOP_DRAIN_TIMEOUT` まで待ち、`_server.should_exit` を立てる
+        summary: 処理中の呼び出しと要求の終わりを `STOP_DRAIN_TIMEOUT` まで待ち、`_server.should_exit` を設定する
         kind: メソッド
         scope: internal
         returns:
           type: None
           description: なし
         process: |-
-          1. `async with asyncio.timeout(STOP_DRAIN_TIMEOUT)` の中で、`_in_flight` と `_requests` がどちらも 0 になるまで `DRAIN_POLL_INTERVAL` ごとに見直す。上限を過ぎたら待つのをやめる（`TimeoutError` を捕まえ、残った呼び出しと要求の数をログに書く）
-          2. `_server.should_exit = True` を立てる。`uvicorn.Server.serve` は待ち受けを閉じて返る。SSE のストリームは sse-starlette が `should_exit` に気づいて取り消し、SSE でない残りの接続は `GRACEFUL_SHUTDOWN_TIMEOUT` で切る
+          1. `async with asyncio.timeout(STOP_DRAIN_TIMEOUT)` の中で、`_in_flight` と `_requests` がどちらも 0 になるまで `DRAIN_POLL_INTERVAL` ごとに見直す。上限を過ぎたら待つのをやめる（`TimeoutError` を捕まえ、残った呼び出しと要求の数をログに書き込む）
+          2. `_server.should_exit = True` を設定する。`uvicorn.Server.serve` は待ち受けを閉じて返る。SSE のストリームは sse-starlette が `should_exit` に気づいて取り消し、SSE でない残りの接続は `GRACEFUL_SHUTDOWN_TIMEOUT` で切る
         unit_tests:
           - name: test_drain_and_stop
             case: 正常
@@ -279,12 +279,12 @@ classes:
             type: starlette.types.ASGIApp
             required: true
             passing: positional
-            description: '`MCPServer.streamable_http_app()` が返すアプリ'
+            description: '`MCPServer.streamable_http_app()` が返却するアプリ'
         returns:
           type: starlette.types.ASGIApp
-          description: 同じ要求をそのまま渡す ASGI のアプリ
+          description: 同じ要求をそのまま引き渡す ASGI のアプリ
         process: |-
-          1. `scope["type"]` が `http` で `scope["method"]` が `POST` のときだけ、`_lock` の中で `_requests` を 1 増やす。GET（SSE のストリーム）・DELETE・`lifespan` は数えずにそのまま渡す
+          1. `scope["type"]` が `http` で `scope["method"]` が `POST` のときだけ、`_lock` の中で `_requests` を 1 増やす。GET（SSE のストリーム）・DELETE・`lifespan` は数えずにそのまま引き渡す
           2. 包んだアプリを await する。SSE の応答は、応答を送信し終えるか接続が切れた後に戻る
           3. 例外の有無によらず、数えた要求は `_lock` の中で `_requests` を 1 減らす
         unit_tests:
@@ -293,7 +293,7 @@ classes:
             summary: POST の要求の応答を送信し終えるまでだけ数える
             condition: 応答を送信する前に待つ ASGI のアプリを `track` で包み、POST の `scope` で呼ぶ
             mock: なし（`scope`・`receive`・`send` はテストの関数）
-            expected: アプリの中で処理中の要求が 1、戻った後に 0。`send` に渡した応答がそのまま届く
+            expected: アプリの中で処理中の要求が 1、戻った後に 0。`send` に引き渡した応答がそのまま届く
           - name: test_track_when_get
             case: 正常
             summary: GET の要求は数えない
@@ -310,4 +310,5 @@ classes:
 notes:
   停止の 2 段: |-
     処理中のツールの呼び出しと POST の要求の応答は `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は sse-starlette が取り消し、SSE でない接続は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
-    `should_exit` を立てると sse-starlette が送信中の POST の応答も取り消すため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
+    `should_exit` を設定すると sse-starlette が送信中の POST の応答も取り消すため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
+lead: 処理中の呼び出しの数と再起動の状態、停止の進め方を定め、サーバーの再起動や停止を修正するときに参照する。

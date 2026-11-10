@@ -9,10 +9,10 @@ enums:
     summary: エントリの `on`・`default_on` と呼ばれた操作の種別（Literal）
     values:
       - value: read
-        title: 読む
-        description: Read・Grep・Bash の読むコマンド
+        title: 読み込む
+        description: Read・Grep・Bash の読み込むコマンド
       - value: write
-        title: 書く
+        title: 記載する
         description: Edit・Write・NotebookEdit
       - value: mcp
         title: MCP
@@ -21,27 +21,27 @@ enums:
     title: エントリの状態
     container: features/index/types.py
     usecase: 効いているルールの一覧を見る
-    summary: 索引を読んだときのエントリごとの扱い（Literal）
+    summary: 索引を読み込んだときのエントリごとの扱い（Literal）
     values:
       - value: effective
-        title: 効いている
-        description: 照合に使う
+        title: 有効な
+        description: 照合に使用する
       - value: skipped
-        title: 読み飛ばした
-        description: 展開できない変数参照・URL の `rule`・読めない正規表現のため照合に使わない
+        title: スキップした
+        description: 展開できない変数参照・URL の `rule`・読み込めない正規表現のため照合に使用しない
       - value: disabled
         title: 無効
-        description: '`enabled: false` のため照合に使わない'
+        description: '`enabled: false` のため照合に使用しない'
 constants:
   - name: DEFAULT_ON
     title: 既定の止める操作
     container: features/index/types.py
-    summary: 索引が `default_on` を書かないときの値
+    summary: 索引が `default_on` を記載しないときの値
     value: '`("read", "write", "mcp")`'
   - name: TREE_KEY_PATTERN
-    title: 条件の木のキーの書き方
+    title: 条件の木のキーの記載方法
     container: features/index/types.py
-    summary: '`args` のキーを、ドットの道筋と条件の木の `field` に分ける正規表現。当たらないキーは全体をドットの道筋として読む'
+    summary: '`args` のキーを、ドットの道筋と条件の木の `field` に分ける正規表現。ヒットしないキーは全体をドットの道筋として読み込む'
     value: '`re.compile(r"^(?P<path>[^\[\]]+)\[(?P<field>[^\[\]]+)\]$")`'
 data_models:
   - name: IndexEntry
@@ -56,27 +56,27 @@ data_models:
         description: 解決後のルールの場所（絶対パス）
       - name: paths
         type: tuple[MatchPattern, ...]
-        description: 当てるパスのパターン
+        description: 適用するパスのパターン
       - name: exclude
         type: tuple[MatchPattern, ...]
-        description: 外すパスのパターン
+        description: 除外するパスのパターン
       - name: tools
         type: tuple[MatchPattern, ...]
-        description: 当てるツール名のパターン
+        description: 適用するツール名のパターン
       - name: args
         type: tuple[ArgCondition, ...]
-        description: MCP のツールの引数の条件。全てが当たるときだけエントリを当てる（空なら引数では絞らない）
+        description: MCP のツールの引数の条件。全てがヒットするときだけエントリを適用する（空なら引数では絞らない）
       - name: on
         type: frozenset[Operation]
         description: 止める操作
       - name: read_by
         type: tuple[ReadByCondition, ...]
-        description: そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つに当たれば既読にする（空なら MCP のツールでは既読にしない）
+        description: そのルールを既読にする MCP のツールの呼び出しの条件。どれか 1 つにヒットすれば既読にする（空なら MCP のツールでは既読にしない）
       - name: read_tool
         type: ReadTool | None
-        description: ルールを参照する MCP のツールと引数。書かないエントリは None
+        description: ルールを参照する MCP のツールと引数。記載しないエントリは None
   - name: MatchedRule
-    title: 当たったルール
+    title: ヒットしたルール
     container: features/index/types.py
     usecase: 共通
     role: DTO
@@ -87,33 +87,33 @@ data_models:
         description: ルールの場所
       - name: blocking
         type: bool
-        description: 当たったエントリのどれか 1 つでも操作の種別が `on` に入っていれば True
+        description: ヒットしたエントリのどれか 1 つでも操作の種別が `on` に入っていれば True
       - name: read_tools
         type: tuple[ReadTool, ...]
-        description: 当たったエントリの `read_tool`（同じ値は 1 つにし、当たった順）。既定は空のタプル
+        description: ヒットしたエントリの `read_tool`（同じ値は 1 つにし、ヒットした順）。既定は空のタプル
   - name: IndexLoadResult
     title: 索引の読み込みの結果
     container: features/index/types.py
     usecase: 共通
     role: DTO
-    summary: 読めたエントリと読めなかった索引
+    summary: 読み込めたエントリと読み込めなかった索引
     properties:
       - name: entries
         type: tuple[IndexEntry, ...]
-        description: 読めた全ての索引のエントリ
+        description: 読み込めた全ての索引のエントリ
       - name: failures
         type: tuple[IndexReadError, ...]
-        description: 読めなかった索引ごとの例外
+        description: 読み込めなかった索引ごとの例外
   - name: MatchPattern
     title: 照合のパターン
     container: features/index/types.py
     usecase: 共通
     role: DTO
-    summary: 索引に書かれた glob か正規表現のパターン 1 つ（正規表現はコンパイル済み）
+    summary: 索引に記載された glob か正規表現のパターン 1 つ（正規表現はコンパイル済み）
     properties:
       - name: source
         type: str
-        description: 索引に書かれたままのパターン（`re:` を含む）
+        description: 索引に記載されたままのパターン（`re:` を含む）
       - name: regex
         type: re.Pattern[str] | None
         description: '`re:` で始まるパターンの、`re:` を除いてコンパイルした正規表現。glob のときは None'
@@ -122,20 +122,20 @@ data_models:
     container: features/index/types.py
     usecase: 共通
     role: DTO
-    summary: エントリの `args` の 1 キーと、その値に当てるパターン。索引を読むときにキーを `TREE_KEY_PATTERN` で道筋と `field` に分けておき、照合のたびに分け直さない
+    summary: エントリの `args` の 1 キーと、その値に適用するパターン。索引を読み込むときにキーを `TREE_KEY_PATTERN` で道筋と `field` に分けておき、照合のたびに再分割しない
     properties:
       - name: key
         type: str
-        description: 索引に書かれたままの引数のキー（例 `filter.kind`・`filter[tags]`）
+        description: 索引に記載されたままの引数のキー（例 `filter.kind`・`filter[tags]`）
       - name: patterns
         type: tuple[MatchPattern, ...]
-        description: どれか 1 つに当たれば、そのキーは当たる
+        description: どれか 1 つにヒットすれば、そのキーはヒットする
       - name: path
         type: str
-        description: ドットで結んだ引数の道筋。`key` が `TREE_KEY_PATTERN` に当たればその `path`、当たらなければ `key` のまま
+        description: ドットで結んだ引数の道筋。`key` が `TREE_KEY_PATTERN` にヒットすればその `path`、ヒットしなければ `key` のまま
       - name: field
         type: str | None
-        description: 道筋の値を条件の木として読むときの `field`（`key` が `TREE_KEY_PATTERN` に当たったときの `field`）。ドットの道筋のキーは `None`
+        description: 道筋の値を条件の木として読み込むときの `field`（`key` が `TREE_KEY_PATTERN` にヒットしたときの `field`）。ドットの道筋のキーは `None`
   - name: ReadByCondition
     title: 既読にする呼び出しの条件
     container: features/index/types.py
@@ -145,41 +145,41 @@ data_models:
     properties:
       - name: tools
         type: tuple[MatchPattern, ...]
-        description: 当てる MCP のツールの完全名のパターン。どれか 1 つに当たればよい
+        description: 適用する MCP のツールの完全名のパターン。どれか 1 つにヒットすればよい
       - name: args
         type: tuple[ArgCondition, ...]
-        description: 引数の条件。全てが当たるときだけ要素を当てる（空なら引数では絞らない）
+        description: 引数の条件。全てがヒットするときだけ要素を適用する（空なら引数では絞らない）
   - name: EntryOutcome
     title: エントリの読み取り結果
     container: features/index/types.py
     usecase: 効いているルールの一覧を見る
     role: DTO
-    summary: 索引の 1 エントリの位置・書かれた値・バージョンと、照合に使うか
+    summary: 索引の 1 エントリの位置・記載された値・バージョンと、照合に使用するか
     properties:
       - name: position
         type: int
         description: 索引の `rules` の中の位置（0 始まり）
       - name: raw
         type: Mapping[str, Any]
-        description: '`parse_index` が読んだエントリのキーと値（書かれたまま）'
+        description: '`parse_index` が読み込んだエントリのキーと値（記載されたまま）'
       - name: rev
         type: str
         description: '`entry_rev(raw)`'
       - name: status
         type: EntryStatus
-        description: 照合に使うか
+        description: 照合に使用するか
       - name: entry
         type: IndexEntry | None
         description: 状態が `effective` のときだけ持つ、場所を解きパターンをコンパイルしたエントリ
       - name: reason
         type: str | None
-        description: 状態が `skipped` のときだけ持つ、読み飛ばした理由（フックが案内に載せる文言）
+        description: 状態が `skipped` のときだけ持つ、スキップした理由（フックが案内に記載する文言）
   - name: IndexContent
     title: 索引の読み取り結果
     container: features/index/types.py
     usecase: 効いているルールの一覧を見る
     role: DTO
-    summary: 読めた索引 1 つのエントリごとの読み取り結果
+    summary: 読み込めた索引 1 つのエントリごとの読み取り結果
     properties:
       - name: path
         type: str
@@ -192,14 +192,15 @@ data_models:
     container: features/index/types.py
     usecase: 未読のルールの案内を受ける
     role: DTO
-    summary: エントリの `read_tool`。案内に載せ、一致する呼び出しを既読にする（パターンでなく値）
+    summary: エントリの `read_tool`。案内に記載し、一致する呼び出しを既読にする（パターンでなく値）
     properties:
       - name: tool
         type: str
         description: MCP のツールの完全名（`mcp__` で始まる）
       - name: args
         type: Mapping[str, Any]
-        description: '`args` の JSON の文字列を `json.loads` で読んだオブジェクト（キーの順を保つ）。`args` を書かないときは空の辞書'
+        description: '`args` の JSON の文字列を `json.loads` で読み込んだオブジェクト（キーの順を保つ）。`args` を記載しないときは空の辞書'
       - name: optional_args
         type: Mapping[str, Any]
-        description: '`optional_args` を同じく読んだオブジェクト。案内にだけ使い、既読の照合には使わない。書かないときは空の辞書'
+        description: '`optional_args` を同じく読み込んだオブジェクト。案内にだけ使用し、既読の照合には使用しない。記載しないときは空の辞書'
+lead: 索引のエントリ・照合の条件と結果・操作の種別・エントリの状態の型を定め、索引の読み込みや照合を修正するときに参照する。

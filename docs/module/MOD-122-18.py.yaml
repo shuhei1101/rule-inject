@@ -43,3 +43,4 @@ classes:
       - name: tool_version
         type: str
         description: 比べたツールのバージョン
+lead: 設定の移し替えの結果と、設定ファイルがツールより新しいときの例外の型を定め、移し替えの結果を修正するときに参照する。

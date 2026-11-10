@@ -5,33 +5,33 @@ test_files:
   - tests/unit/rule_inject/features/command/test_service.py
 constants:
   - name: READ_COMMANDS
-    title: 読むコマンド
+    title: 読み込むコマンド
     container: features/command/service.py
-    summary: ルール案内が読む操作として扱うコマンド
+    summary: ルール案内が読み込む操作として扱うコマンド
     value: '`frozenset({"cat", "head", "tail", "less", "more", "grep", "rg", "sed", "awk", "wc", "bat"})`'
   - name: FULL_READ_COMMANDS
-    title: 全体を読むコマンド
+    title: 全体を読み込むコマンド
     container: features/command/service.py
     summary: 既読の記録が既読にするコマンド（本文全体を出すもの）
     value: '`frozenset({"cat", "bat", "less", "more"})`'
   - name: SEARCH_COMMANDS
     title: 検索のコマンド
     container: features/command/service.py
-    summary: 検索結果の案内が結果を読むコマンド
+    summary: 検索結果の案内が結果を読み込むコマンド
     value: '`frozenset({"grep", "rg", "find", "ls"})`'
   - name: SEARCH_PATH_LIMIT
     title: 照合するパスの数
     container: features/command/service.py
-    summary: 検索の結果から拾って照合するパスの上限
+    summary: 検索の結果から取得して照合するパスの上限
     value: '`100`'
     refs:
       - NFR-122-1#requirements[検索結果から照合するパスの数]
 functions:
   - name: extract_read_paths
-    title: 読むパスの取り出し
+    title: 読み込むパスの取り出し
     container: features/command/service.py
     usecase: 共通
-    summary: コマンドの文字列から、指定のコマンドが読む実在するファイルの絶対パスを返す
+    summary: コマンドの文字列から、指定のコマンドが読み込む実在するファイルの絶対パスを返却する
     kind: 関数
     scope: public
     args:
@@ -54,13 +54,13 @@ functions:
       type: list[str]
       description: 実在するファイルの絶対パス（出てきた順、重なりなし）
     process: |-
-      1. 語に分ける前にコマンドの文字列を先頭から走査し、引用符の状態を追う（二重引用符の中の `\"` / `\\` はエスケープとして読み、一重引用符の中の `\` は文字どおり）。引用符の外の行継続（`\` + 改行）は空白に置き換える。引用符の外で、先頭か空白・区切りの記号の直後にある `#` から行末まではコメントとして捨てる（改行は残す）。引用符の中の `*` / `?` / `[` と、引用符の外で `\` の直後にある `*` / `?` / `[`（`\` ごと）は、`glob.escape` の形式（`[*]` / `[?]` / `[[]`）に置き換える
-      2. `shlex`（`posix=True`、`punctuation_chars` は `();<>|&` と改行、`whitespace` は空白・タブ・CR、`whitespace_split=True`）で語に分ける。引用符が閉じていないなどで分けられなければ空を返す
-      3. `&&` / `||` / `;` / `|` / 改行など記号だけの語で区切る。`<<` の次の語（先頭の `-` を外す）をヒアドキュメントの終わりの語とし、次の改行から、その語だけの区切りまでの語を捨てる
-      4. 区切ったコマンドを順に見る。`cd {フォルダ}` は以降の基準を動かす。フォルダが `*` / `?` / `[` を含むときは手順 7 と同じく `glob.glob` で解き、当たったフォルダが 1 つのときだけそれを基準にする（それ以外は基準を動かさない）
-      5. `for {変数} in {語の並び}` の区切りは、変数と語の並びをループの積み重ねに積む。`while` / `until` の区切りも、変数を持たないループとして積む。`do` で始まる区切りは `do` を外した残りをコマンドとして見る。`done` だけの区切りで積み重ねの最後を降ろす
-      6. 先頭の語のベース名が `commands` にあれば、`-` で始まらない引数を読む対象にする。引数が積み重ねのいずれかの変数の `$変数` / `${変数}` なら、その語の並びを引数の代わりに読む対象にする
-      7. 読む対象の語のうち `*` / `?` / `[` を含むものは、基準から解いたパターンを `glob.glob`（`recursive=False`）に当て、当たったものを名前の順に並べる。含まない語は基準から解く
+      1. 単語に分ける前にコマンドの文字列を先頭から走査し、引用符の状態を追う（二重引用符の中の `\"` / `\\` はエスケープとして解釈し、一重引用符の中の `\` は文字どおり）。引用符の外の行継続（`\` + 改行）は空白に置き換える。引用符の外で、先頭か空白・区切りの記号の直後にある `#` から行末まではコメントとして捨てる（改行は残す）。引用符の中の `*` / `?` / `[` と、引用符の外で `\` の直後にある `*` / `?` / `[`（`\` ごと）は、`glob.escape` の形式（`[*]` / `[?]` / `[[]`）に置き換える
+      2. `shlex`（`posix=True`、`punctuation_chars` は `();<>|&` と改行、`whitespace` は空白・タブ・CR、`whitespace_split=True`）で単語に分ける。引用符が閉じていないなどで分けられなければ空を返却する
+      3. `&&` / `||` / `;` / `|` / 改行など記号だけの単語で区切る。`<<` の次の単語（先頭の `-` を除外する）をヒアドキュメントの終わりの単語とし、次の改行から、その単語だけの区切りまでの単語を捨てる
+      4. 区切ったコマンドを順に確認する。`cd {フォルダ}` は以降の基準を動かす。フォルダが `*` / `?` / `[` を含むときは手順 7 と同じく `glob.glob` で解き、ヒットしたフォルダが 1 つのときだけそれを基準にする（それ以外は基準を動かさない）
+      5. `for {変数} in {語の並び}` の区切りは、変数と単語の並びをループのスタックに追加する。`while` / `until` の区切りも、変数を持たないループとして追加する。`do` で始まる区切りは `do` を除外した残りをコマンドとして扱う。`done` だけの区切りでスタックの最後を降ろす
+      6. 先頭の単語のベース名が `commands` にあれば、`-` で始まらない引数を読み込む対象にする。引数がスタックのいずれかの変数の `$変数` / `${変数}` なら、その単語の並びを引数の代わりに読み込む対象にする
+      7. 読み込む対象の単語のうち `*` / `?` / `[` を含むものは、基準から解いたパターンを `glob.glob`（`recursive=False`）に適用し、ヒットしたものを名前の順に並べる。含まない単語は基準から解く
       8. 実在するファイルだけを、出てきた順に重なりなしで残す
     unit_tests:
       - name: test_extract_read_paths
@@ -77,7 +77,7 @@ functions:
         expected: '`a.md` の絶対パスだけ'
       - name: test_extract_read_paths_when_not_full_read
         case: 正常
-        summary: 対象外のコマンドは見ない
+        summary: 対象外のコマンドは確認しない
         condition: '`grep foo a.md`、`FULL_READ_COMMANDS`'
         mock: なし
         expected: 空
@@ -101,31 +101,31 @@ functions:
         expected: 空
       - name: test_extract_read_paths_when_glob_no_match
         case: 正常
-        summary: 当たるファイルが無い glob を捨てる
+        summary: ヒットするファイルが無い glob を捨てる
         condition: '`cat src/*.rs`、`src/a.py` だけ実在'
         mock: なし
         expected: 空
       - name: test_extract_read_paths_when_for_loop
         case: 正常
-        summary: for の語の並びを読む対象にする
+        summary: for の単語の並びを読み込む対象にする
         condition: '`for f in src/tasks/*.py tests/unit/tasks/test_service.py; do echo "=== $f"; cat "$f"; done`、`src/tasks/text_rules.py`・`src/tasks/service.py`・`tests/unit/tasks/test_service.py` が実在、`READ_COMMANDS`'
         mock: なし
         expected: '`src/tasks/service.py`・`src/tasks/text_rules.py`・`tests/unit/tasks/test_service.py` の絶対パスの 3 件（この順）'
       - name: test_extract_read_paths_when_for_loop_multiline
         case: 正常
-        summary: 改行で区切った for の語の並びを読む対象にする
+        summary: 改行で区切った for の単語の並びを読み込む対象にする
         condition: '`for f in a.md b.md` / `do` / `  cat "${f}"` / `done` を改行でつないだコマンド、`a.md`・`b.md` が実在'
         mock: なし
         expected: '`a.md`・`b.md` の絶対パスの 2 件'
       - name: test_extract_read_paths_when_for_loop_not_read
         case: 正常
-        summary: 読むコマンドが変数を取らない for は見ない
+        summary: 読み込むコマンドが変数を取らない for は確認しない
         condition: '`for f in a.md; do echo "$f"; done`、`a.md` が実在、`READ_COMMANDS`'
         mock: なし
         expected: 空
       - name: test_extract_read_paths_when_for_loop_full_read
         case: 正常
-        summary: 全体を読むコマンドの for と glob を既読の対象にする
+        summary: 全体を読み込むコマンドの for と glob を既読の対象にする
         condition: '`for f in a.md; do cat "$f"; done && cat src/*.md`、`a.md`・`src/b.md` が実在、`FULL_READ_COMMANDS`'
         mock: なし
         expected: '`a.md`・`src/b.md` の絶対パスの 2 件'
@@ -143,13 +143,13 @@ functions:
         expected: '`a.md`・`b.md` の絶対パスの 2 件'
       - name: test_extract_read_paths_when_heredoc
         case: 正常
-        summary: ヒアドキュメントの本文の行は見ない
+        summary: ヒアドキュメントの本文の行は確認しない
         condition: "`cat <<'EOF' > out.md` / `cat x.md` / `EOF` / `cat y.md` を改行でつないだコマンド、`x.md`・`y.md` が実在"
         mock: なし
         expected: '`y.md` の絶対パスの 1 件'
       - name: test_extract_read_paths_when_escaped_or_inner_quoted
         case: 正常
-        summary: エスケープした空白・語の途中の引用符・エスケープした引用符のパスを取り出す
+        summary: エスケープした空白・単語の途中の引用符・エスケープした引用符のパスを取り出す
         condition: "`cat a\\ b.md src/\"my dir\"/x.md dir/it\\'s.md`、`a b.md`・`src/my dir/x.md`・`dir/it's.md` が実在"
         mock: なし
         expected: "`a b.md`・`src/my dir/x.md`・`dir/it's.md` の絶対パスの 3 件"
@@ -161,7 +161,7 @@ functions:
         expected: '`[x].md`・`*.md` の絶対パスの 2 件'
       - name: test_extract_read_paths_when_cd_literal_glob
         case: 正常
-        summary: 引用符で包んだ・エスケープした glob の文字を含むフォルダへ移る cd の後の読むコマンドを解く
+        summary: 引用符で包んだ・エスケープした glob の文字を含むフォルダへ移る cd の後の読み込むコマンドを解く
         condition: '`cd "dir[1]" && cat r.md` と `cd dir\[1\] && cat r.md` の 2 つ、`dir[1]/r.md` が実在、`READ_COMMANDS`'
         mock: なし
         expected: どちらも `{cwd}/dir[1]/r.md` の 1 件
@@ -169,7 +169,7 @@ functions:
     title: 検索の出力の基準
     container: features/command/service.py
     usecase: 検索の結果に出たファイルのルールの案内を受ける
-    summary: コマンドが検索のコマンドなら、その出力の相対パスを解くフォルダを返す
+    summary: コマンドが検索のコマンドなら、その出力の相対パスを解くフォルダを返却する
     kind: 関数
     scope: public
     args:
@@ -187,13 +187,13 @@ functions:
       type: Path | None
       description: 出力を解くフォルダ。検索のコマンドでなければ None
     process: |-
-      1. `extract_read_paths` と同じ規則で語に分け、記号だけの語でコマンドごとに区切る（ヒアドキュメントの本文の語も同じく捨てる）。分けられなければ None
-      2. `cd {フォルダ}` を除いた最初のコマンドの先頭の語のベース名が `SEARCH_COMMANDS` に無ければ None（名前の部分一致にしない）
-      3. 基準は `cwd` をそれまでの `cd` で動かしたフォルダにする。`ls` で、`-` で始まらない引数が 1 つだけでそれが実在するフォルダなら、そのフォルダを基準にする。`cd` と `ls` の引数が `*` / `?` / `[` を含むときは `extract_read_paths` の手順 4 と同じく `glob.glob` で解き、当たったフォルダが 1 つのときだけそれを使う
+      1. `extract_read_paths` と同じ規則で単語に分け、記号だけの単語でコマンドごとに区切る（ヒアドキュメントの本文の単語も同じく捨てる）。分けられなければ None
+      2. `cd {フォルダ}` を除いた最初のコマンドの先頭の単語のベース名が `SEARCH_COMMANDS` に無ければ None（名前の部分一致にしない）
+      3. 基準は `cwd` をそれまでの `cd` で動かしたフォルダにする。`ls` で、`-` で始まらない引数が 1 つだけでそれが実在するフォルダなら、そのフォルダを基準にする。`cd` と `ls` の引数が `*` / `?` / `[` を含むときは `extract_read_paths` の手順 4 と同じく `glob.glob` で解き、ヒットしたフォルダが 1 つのときだけそれを使用する
     unit_tests:
       - name: test_search_output_base
         case: 正常
-        summary: 検索のコマンドの基準を返す
+        summary: 検索のコマンドの基準を返却する
         condition: '`find src -type f | head`'
         mock: なし
         expected: '`cwd`'
@@ -240,10 +240,10 @@ functions:
         mock: なし
         expected: どちらも `{cwd}/dir[1]`
   - name: extract_result_paths
-    title: 結果の行からのパスの拾い出し
+    title: 結果の行からのパスの取り出し
     container: features/command/service.py
     usecase: 検索の結果に出たファイルのルールの案内を受ける
-    summary: 検索の結果の行から実在するファイルの絶対パスを拾い、上限までを照合するパスにする
+    summary: 検索の結果の行から実在するファイルの絶対パスを取得し、上限までを照合するパスにする
     kind: 関数
     scope: public
     args:
@@ -267,19 +267,19 @@ functions:
       type: ResultPaths
       description: 照合するパスと照合しない件数
     process: |-
-      1. 行ごとに前後の空白を落とし、行全体を `base` から解いて実在するファイルならそのパスを拾う
-      2. そうでなければ最初の `:` より前を解いて、実在するファイルなら拾う（`{パス}:{行番号}:{行}` と `{パス}:{件数}`）。フォルダ・実在しないものは捨てる
-      3. 拾ったパスの重なりを落とし、出た順に先頭から `limit` 件を `paths`、残りの件数を `unchecked` にする
+      1. 行ごとに前後の空白を落とし、行全体を `base` から解いて実在するファイルならそのパスを取得する
+      2. そうでなければ最初の `:` より前を解いて、実在するファイルなら取得する（`{パス}:{行番号}:{行}` と `{パス}:{件数}`）。フォルダ・実在しないものは捨てる
+      3. 取得したパスの重なりを落とし、出た順に先頭から `limit` 件を `paths`、残りの件数を `unchecked` にする
     unit_tests:
       - name: test_extract_result_paths
         case: 正常
-        summary: パスだけの行と `{パス}:…` の行を拾う
+        summary: パスだけの行と `{パス}:…` の行を取得する
         condition: '`a.py`・`b.md:3:x`・`b.md:1`・`missing.py`・`sub`（フォルダ）の 5 行。`a.py` と `b.md` が実在'
         mock: なし
         expected: '`paths` が `{base}/a.py` と `{base}/b.md` の 2 件、`unchecked` が 0'
       - name: test_extract_result_paths_when_colon_in_name
         case: 正常
-        summary: 名前に `:` を含むファイルを行全体で拾う
+        summary: 名前に `:` を含むファイルを行全体で取得する
         condition: 実在する `a:b.md` の 1 行
         mock: なし
         expected: '`{base}/a:b.md` の 1 件'
@@ -291,7 +291,7 @@ functions:
         expected: '`paths` が先頭 100 件、`unchecked` が 5'
 data_models:
   - name: ResultPaths
-    title: 検索の結果から拾ったパス
+    title: 検索の結果から取得したパス
     container: features/command/service.py
     usecase: 検索の結果に出たファイルのルールの案内を受ける
     role: DTO
@@ -303,3 +303,4 @@ data_models:
       - name: unchecked
         type: int
         description: 上限を超えて照合しない実在するファイルの件数
+lead: Bash のコマンドから読み込むファイルのパスと、検索のコマンドの結果に出た実在するファイルを取り出す関数を定め、コマンドの解析を修正するときに参照する。

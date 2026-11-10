@@ -11,10 +11,10 @@ constants:
     value: '`frozenset({".git"})`'
 functions:
   - name: scan_unmatched
-    title: paths の当たらないエントリの検出
+    title: paths のヒットしないエントリの検出
     container: features/index/check/scan.py
     usecase: 索引をチェックする
-    summary: '`project_dir` の下のファイルを辿り、効いているエントリのうち `paths` がどのファイルにも当たらないものを返す。時間の上限を超えたら続きの位置を返す'
+    summary: '`project_dir` の下のファイルを辿り、有効なエントリのうち `paths` がどのファイルにもヒットしないものを返却する。時間の上限を超えたら続きの位置を返却する'
     kind: 関数
     scope: public
     args:
@@ -27,7 +27,7 @@ functions:
         type: Sequence[IndexContent]
         required: true
         passing: positional
-        description: 確かめる索引の読み取り結果（呼び出し元が `include_global` で絞った後）
+        description: 確認する索引の読み取り結果（呼び出し元が `include_global` で絞った後）
       - name: cursor
         type: ScanCursor | None
         required: true
@@ -49,46 +49,46 @@ functions:
       description: 辿った結果
     process: |-
       1. 状態が `effective` で `paths` を持つエントリを索引・位置・`rev` の鍵で並べ、`_fingerprint` で一覧の指紋を出す
-      2. `cursor` があり指紋が同じなら、まだ当たっていないエントリを `cursor.unmatched` に絞り、`cursor.last_file` の後から辿る。指紋が違えば `cursor` を使わず最初から辿る
-      3. `_iter_project_files` の順にファイルを取り、2 件目からは取る前に `clock()` の経過が `time_limit` 以上かを見る。超えていたら `completed=False` と、最後に辿ったファイル・辿った数・まだ当たっていないエントリ・指紋の `ScanCursor` を返す
-      4. ファイルの絶対パスに、まだ当たっていないエントリを `entry_matches_path` で当て、当たったものを外す。全て当たったらその場で辿り終える
-      5. 最後まで辿ったら、残ったエントリを索引ごとに `unmatched_path` の `IndexProblem`（場所 `rules[{position}].paths`・理由はルールの場所・位置・`rev`）にし、`contents` の順の `IndexCheck` で返す
+      2. `cursor` があり指紋が同じなら、まだヒットしていないエントリを `cursor.unmatched` に絞り、`cursor.last_file` の後から辿る。指紋が違えば `cursor` を使用せず最初から辿る
+      3. `_iter_project_files` の順にファイルを取り、2 件目からは取る前に `clock()` の経過が `time_limit` 以上かを確認する。超えていたら `completed=False` と、最後に辿ったファイル・辿った数・まだヒットしていないエントリ・指紋の `ScanCursor` を返却する
+      4. ファイルの絶対パスに、まだヒットしていないエントリを `entry_matches_path` で照合し、ヒットしたものを除外する。全てヒットしたらその場で辿り終える
+      5. 最後まで辿ったら、残ったエントリを索引ごとに `unmatched_path` の `IndexProblem`（場所 `rules[{position}].paths`・理由はルールの場所・位置・`rev`）にし、`contents` の順の `IndexCheck` で返却する
     unit_tests:
       - name: test_scan_unmatched
         case: 正常
-        summary: どのファイルにも当たらないエントリを返す
+        summary: どのファイルにもヒットしないエントリを返却する
         condition: '`src/app.py` だけのプロジェクト、`paths: ["**/*.py"]` と `paths: ["**/*.toml"]` のエントリ'
         mock: なし
         expected: '`completed` が True、`rules[1].paths` の `unmatched_path` 1 件、`next_cursor` が None'
       - name: test_scan_unmatched_when_no_paths
         case: 正常
-        summary: '`paths` を持たないエントリと効いていないエントリは確かめない'
+        summary: '`paths` を持たないエントリと無効なエントリは確認しない'
         condition: '`tools` だけのエントリと `enabled: false` のエントリ'
         mock: なし
         expected: 問題が空
       - name: test_scan_unmatched_when_time_limit
         case: 正常
-        summary: 時間の上限を超えたら続きの位置を返す
+        summary: 時間の上限を超えたら続きの位置を返却する
         condition: '`docs/readme.md` と `src/app.py` のプロジェクト、`time_limit=0`'
         mock: '`clock` を呼ぶたびに 1 進む時計'
         expected: '`completed` が False、`scanned_files` が 1、`next_cursor.last_file` が `docs/readme.md`、問題が空'
       - name: test_scan_unmatched_when_cursor
         case: 正常
-        summary: 続きの位置から辿り、前に当たったエントリは確かめ直さない
-        condition: '`docs/readme.md` と `src/app.py` のプロジェクトで、`time_limit=0` の 1 回目の呼び出しが返した `next_cursor` を渡し、`time_limit=30`'
+        summary: 続きの位置から辿り、前にヒットしたエントリは再確認しない
+        condition: '`docs/readme.md` と `src/app.py` のプロジェクトで、`time_limit=0` の 1 回目の呼び出しが返却した `next_cursor` を引き渡し、`time_limit=30`'
         mock: なし
         expected: '`completed` が True、`scanned_files` が 2、`src/app.py` だけを辿る'
       - name: test_scan_unmatched_when_fingerprint_changed
         case: 正常
         summary: エントリの一覧が変わっていたら最初から辿る
-        condition: 指紋の違う `ScanCursor` を渡す
+        condition: 指紋の違う `ScanCursor` を引き渡す
         mock: なし
         expected: '`scanned_files` が全てのファイルの数'
   - name: _iter_project_files
     title: プロジェクトのファイルの列挙
     container: features/index/check/scan.py
     usecase: 索引をチェックする
-    summary: '`project_dir` の下のファイルを、パスの部分ごとの名前の順で `/` 区切りの相対パスにして返す'
+    summary: '`project_dir` の下のファイルを、パスの部分ごとの名前の順で `/` 区切りの相対パスにして返却する'
     kind: 関数
     scope: internal
     args:
@@ -101,31 +101,31 @@ functions:
         type: str | None
         required: true
         passing: positional
-        description: このファイルより後だけを返す。`None` なら最初から
+        description: このファイルより後だけを返却する。`None` なら最初から
     returns:
       type: Iterator[str]
       description: ファイルの相対パス
     process: |-
-      1. `os.scandir` でフォルダの中を名前の順に読む。`SKIPPED_DIR_NAMES` のフォルダとフォルダへのシンボリックリンクには入らない。読めないフォルダは飛ばす
-      2. `after` があるときは、`after` の部分の並びより前のフォルダには入らず、`after` 以前のファイルは返さない
+      1. `os.scandir` でフォルダの中を名前の順に読み込む。`SKIPPED_DIR_NAMES` のフォルダとフォルダへのシンボリックリンクには入らない。読み込めないフォルダは飛ばす
+      2. `after` があるときは、`after` の部分の並びより前のフォルダには入らず、`after` 以前のファイルは返却しない
     unit_tests:
       - name: test_iter_project_files
         case: 正常
-        summary: 部分ごとの名前の順に返し、`.git` には入らない
+        summary: 部分ごとの名前の順に返却し、`.git` には入らない
         condition: '`b.txt`・`a/z.txt`・`.git/HEAD` のプロジェクト'
         mock: なし
         expected: '`a/z.txt`・`b.txt` の順'
       - name: test_iter_project_files_when_after
         case: 正常
-        summary: '`after` より後だけを返す'
+        summary: '`after` より後だけを返却する'
         condition: 同じプロジェクト、`after="a/z.txt"`
         mock: なし
         expected: '`b.txt` だけ'
   - name: _fingerprint
-    title: 確かめるエントリの指紋
+    title: 確認するエントリの指紋
     container: features/index/check/scan.py
     usecase: 索引をチェックする
-    summary: 確かめるエントリの索引・位置・`rev` の並びを SHA-256 の 16 進数にする
+    summary: 確認するエントリの索引・位置・`rev` の並びを SHA-256 の 16 進数にする
     kind: 関数
     scope: internal
     args:
@@ -133,8 +133,9 @@ functions:
         type: Sequence[tuple[str, int, str]]
         required: true
         passing: positional
-        description: 確かめるエントリの索引・位置・`rev`
+        description: 確認するエントリの索引・位置・`rev`
     returns:
       type: str
       description: 指紋
     process: 1. 並びを JSON にして SHA-256 を取る
+lead: プロジェクトのファイルを辿って paths がどのファイルにもヒットしないエントリを検出する処理を定め、その検出を修正するときに参照する。

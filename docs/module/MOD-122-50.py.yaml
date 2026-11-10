@@ -14,7 +14,7 @@ functions:
     title: 変数参照の展開
     container: shared/variables.py
     usecase: 共通
-    summary: 文字列の `!{名前}` を環境変数の値に置き換え、展開できなかった名前と一緒に返す
+    summary: 文字列の `!{名前}` を環境変数の値に置き換え、展開できなかった名前と一緒に返却する
     kind: 関数
     scope: public
     args:
@@ -32,7 +32,7 @@ functions:
       type: Expansion
       description: 展開した文字列と未設定の名前
     process: |-
-      1. `VARIABLE_PATTERN` に当たる箇所を前から順に置き換える（`re.sub` を 1 回。置き換えた値の中の `!{…}` は展開し直さない）
+      1. `VARIABLE_PATTERN` にヒットする箇所を前から順に置き換える（`re.sub` を 1 回。置き換えた値の中の `!{…}` は再展開しない）
       2. 名前が `env` にあればその値（空なら空文字）に、無ければ `!{名前}` のままにする
       3. 無かった名前を、重なりを落として出た順に `unresolved` へ並べる
     unit_tests:
@@ -62,7 +62,7 @@ functions:
         expected: '`text` がそのまま、`unresolved` が空'
       - name: test_expand_variables_when_value_has_reference
         case: 正常
-        summary: 値の中の変数参照は展開し直さない
+        summary: 値の中の変数参照は再展開しない
         condition: '`!{X}`、`env` に `X=!{Y}` と `Y=2`'
         mock: なし
         expected: '`text` が `!{Y}`'
@@ -80,3 +80,4 @@ data_models:
       - name: unresolved
         type: tuple[str, ...]
         description: 未設定の名前。重なりを落とし、出た順に並べる
+lead: '!{名前} の変数参照を環境変数の値へ展開する関数を定め、変数参照の展開を修正するときに参照する。'
