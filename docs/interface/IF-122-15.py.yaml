@@ -9,7 +9,7 @@ flows:
     summary: 圧縮の後でなければ何も出力しない
     setup:
       - name: Mock
-        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を渡す）
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
       - name: 入力
         description: '`hook_event_name: SessionStart`、`source: startup`'
     flow: |-
@@ -31,7 +31,7 @@ flows:
       - name: Mock
         description: なし
       - name: 既読の記録
-        description: そのセッションの記録ファイルを置く
+        description: そのセッションの記録ファイルを配置する
         notes: 圧縮の前に削除できなかった状態を作る
       - name: 入力
         description: '`source: compact`'
@@ -107,7 +107,7 @@ flows:
     test: test_error_when_settings_unreadable
 lead: 圧縮の後に始まったセッションへ、削除できずに残った既読の記録と設定ファイルが読めない理由を通知するフックの入出力を定め、圧縮の後の通知を修正するときに参照する。
 idempotent: true
-side_effects: なし（既読の記録ファイルの有無を見るだけ）
+side_effects: なし（既読の記録ファイルの有無を確認するだけ）
 response:
   - name: '`hookSpecificOutput.hookEventName`'
     type: Literal['SessionStart']
@@ -122,20 +122,20 @@ exceptions:
     condition: 終了コード 0 で終える
   - name: Exception（想定外の例外）
     condition: 記録ファイルの有無を確認するだけのため通常は起きない
-    notes: 最上位で捕まえ、ログへ `unexpected` を書いて終了コード 0 で終える
+    notes: 最上位で捕まえ、ログへ `unexpected` を書き込んで終了コード 0 で終える
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`source: compact` で、`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
-    notes: フックの中で捕まえ、削除できずに残った記録を確かめず、設定ファイルの場所と理由を載せ、既定のログのフォルダへ `read_settings` を書いて終了コード 0 で終える
+    notes: フックの中で捕まえ、削除できずに残った記録を確認せず、設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: NFR-122-1#requirements[フックの実行時間]
   - item: 文面
-    constraint: 特定の開発基盤や作者の環境を思わせる語を含めない
+    constraint: 特定の開発基盤や作者の環境を思わせる単語を含めない
   - item: ログ
-    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書く。書けないときは標準エラー出力へ出す
+    constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。書き込めないときは標準エラー出力へ出す
   - item: 設定ファイル
-    constraint: '`source: compact` のときだけ、ルール案内の制約「設定ファイル」と同じく読む。使うキーは `global.state_dir`・`global.log_dir`'
+    constraint: '`source: compact` のときだけ、ルール案内の制約「設定ファイル」と同じく読む。使用するキーは `global.state_dir`・`global.log_dir`'
 identifier: work_rules
 request:
   - name: '`session_id`'
@@ -147,5 +147,5 @@ request:
     type: Literal['startup', 'resume', 'clear', 'compact']
     required: true
     description: セッションが始まったきっかけ
-    notes: '`compact` のときだけ、削除できずに残った既読の記録ファイルが無いかを確かめる'
+    notes: '`compact` のときだけ、削除できずに残った既読の記録ファイルが無いかを確認する'
 test_file: tests/integration/plugin/test_work_rules.py

@@ -6,10 +6,10 @@ entry:
   value: delete_read_records
 flows:
   - name: 正常系
-    summary: 既読の記録と案内済みの記録を削除し、既読だったルールの場所を返す
+    summary: 既読の記録と案内済みの記録を削除し、既読だったルールの場所を返却する
     setup:
       - name: Mock
-        description: なし（`127.0.0.1` の空いているポートで子プロセスとして立てたサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
       - name: 設定ファイル
         description: '`global.state_dir` でテストの記録フォルダを指す'
       - name: 記録フォルダ
@@ -34,14 +34,14 @@ flows:
       - そのセッションの `{session_id}.history.jsonl` とほかのセッションの既読の記録が残っている
     test: test_normal
   - name: 正常系（記録が無い）
-    summary: 既読の記録の無いセッションは、何も削除せず空の一覧を返す
+    summary: 既読の記録の無いセッションは、何も削除せず空の一覧を返却する
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 設定ファイル
         description: 正常系と同じ
       - name: 記録フォルダ
-        description: そのセッションの記録を置かない
+        description: そのセッションの記録を作成しない
     flow: |-
       sequenceDiagram
         participant C as クライアント
@@ -57,14 +57,14 @@ flows:
       - 結果が `isError` でない
     test: test_normal_when_no_record
   - name: 異常系（セッションの形式が誤っている・ToolError）
-    summary: 記録ファイル名に使えない `session_id` をエラーにし、何も削除しない
+    summary: 記録ファイル名に使用できない `session_id` をエラーにし、何も削除しない
     setup:
       - name: Mock
         description: 正常系と同じ
       - name: 記録フォルダ
         description: ほかのセッションの既読の記録
       - name: 引数
-        description: '`session_id` に `../other` を渡す'
+        description: '`session_id` に `../other` を指定する'
         notes: 記録フォルダの外を指す値
     flow: |-
       sequenceDiagram
@@ -87,7 +87,7 @@ request:
     required: true
     location: argument
     description: 既読の記録を削除するセッションの識別子
-    constraints: フックが記録ファイル名に使う形式（`is_valid_session_id`）
+    constraints: フックが記録ファイル名に使用する形式（`is_valid_session_id`）
     notes: インターフェース定義「既読の記録の確認」の `session_id` と同じ
 request_example: |-
   ```json
@@ -131,13 +131,13 @@ response_example: |-
 exceptions:
   - name: なし（正常終了）
     condition: 削除を終えた
-    notes: 記録の無いセッションは空の `locations` を返す
+    notes: 記録の無いセッションは空の `locations` を返却する
   - name: ToolError（セッションの形式が誤っている）
-    condition: '`session_id` が記録ファイル名に使えない形式'
-    notes: 受けた値と、形式が誤っている旨を返す。ファイルのパスには使わず、何も削除しない
+    condition: '`session_id` が記録ファイル名に使用できない形式'
+    notes: 受けた値と、形式が誤っている旨を返却する。ファイルのパスには使用せず、何も削除しない
   - name: ToolError（設定ファイルが読めない）
     condition: 設定ファイルが呼び出しの時点で読めない
-    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返す
+    notes: インターフェース定義「ルールの一覧」と同じく、設定ファイルの場所と理由を返却する
 error_format: インターフェース定義「ルールの一覧」と同じ
 constraints:
   - item: 記録フォルダ
@@ -149,7 +149,7 @@ constraints:
     constraint: セッション単位。ルールの場所ごとの削除はしない
   - item: 同時の呼び出し
     constraint: フックが同じセッションの記録へ追記している途中でも削除する。削除の後に追記された行は残る
-    notes: フックの追記は O_APPEND で、無いファイルは作り直す
+    notes: フックの追記は O_APPEND で、無いファイルは再作成する
   - item: 認可
     constraint: 制限なし
 refs:
