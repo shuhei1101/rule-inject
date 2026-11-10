@@ -1,0 +1,64 @@
+$ uv run pytest tests/integration/server
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/bug-server-wait-response-sent-before-stop
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 82 items
+
+tests/integration/server/test_check_indexes.py .................         [ 20%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 34%]
+tests/integration/server/test_delete_read_records.py ...                 [ 37%]
+tests/integration/server/test_get_read_records.py .....                  [ 43%]
+tests/integration/server/test_get_server_status.py ...                   [ 47%]
+tests/integration/server/test_list_rules.py ......                       [ 54%]
+tests/integration/server/test_reload_settings.py ...                     [ 58%]
+tests/integration/server/test_restart_server.py ...                      [ 62%]
+tests/integration/server/test_search_rules.py .....                      [ 68%]
+tests/integration/server/test_server_start.py .....                      [ 74%]
+tests/integration/server/test_update_server.py ......                    [ 81%]
+tests/integration/server/test_write_index_entry.py ...............       [100%]
+
+======================== 82 passed in 429.96s (0:07:09) ========================
+
+# 終わりの条件: ファイル単体の実行を 10 回ずつ
+$ uv run pytest tests/integration/server/test_update_server.py   # 1 回目
+======================== 6 passed in 118.09s (0:01:58) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 2 回目
+======================== 6 passed in 124.23s (0:02:04) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 3 回目
+======================== 6 passed in 114.79s (0:01:54) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 4 回目
+======================== 6 passed in 130.73s (0:02:10) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 5 回目
+======================== 6 passed in 124.42s (0:02:04) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 6 回目
+======================== 6 passed in 115.36s (0:01:55) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 7 回目
+======================== 6 passed in 117.10s (0:01:57) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 8 回目
+======================== 6 passed in 122.57s (0:02:02) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 9 回目
+======================== 6 passed in 131.13s (0:02:11) =========================
+$ uv run pytest tests/integration/server/test_update_server.py   # 10 回目
+======================== 6 passed in 120.32s (0:02:00) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 1 回目
+========================= 3 passed in 72.69s (0:01:12) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 2 回目
+========================= 3 passed in 70.12s (0:01:10) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 3 回目
+========================= 3 passed in 68.96s (0:01:08) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 4 回目
+========================= 3 passed in 67.22s (0:01:07) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 5 回目
+========================= 3 passed in 75.80s (0:01:15) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 6 回目
+========================= 3 passed in 68.79s (0:01:08) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 7 回目
+========================= 3 passed in 78.92s (0:01:18) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 8 回目
+========================= 3 passed in 69.37s (0:01:09) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 9 回目
+========================= 3 passed in 75.17s (0:01:15) =========================
+$ uv run pytest tests/integration/server/test_restart_server.py   # 10 回目
+========================= 3 passed in 66.83s (0:01:06) =========================

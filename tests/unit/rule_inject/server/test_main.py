@@ -111,14 +111,25 @@ def test_main_when_restart_requested(
 
 
 def test_main_when_stopped(
+    monkeypatch: pytest.MonkeyPatch,
     free_port_env: int,
     run_spy: list[Any],
     execv_spy: list[tuple[str, list[str]]],
 ) -> None:
     """Ctrl+C・SIGTERM で終わったときは起動し直さない（正常系）。"""
     from rule_inject.server.__main__ import main
-    from rule_inject.server.control import GRACEFUL_SHUTDOWN_TIMEOUT
+    from rule_inject.server.control import GRACEFUL_SHUTDOWN_TIMEOUT, ServerControl
 
+    # 準備
+    tracked: list[Any] = []
+
+    def _track(self: ServerControl, app: Any) -> Any:
+        """包んだことが分かる印のアプリを返す。"""
+        wrapped = object()
+        tracked.append(wrapped)
+        return wrapped
+
+    monkeypatch.setattr(ServerControl, "track", _track)
     # 実行
     main()
     # 検証
@@ -126,3 +137,5 @@ def test_main_when_stopped(
     assert len(run_spy) == 1
     assert run_spy[0].timeout_graceful_shutdown == GRACEFUL_SHUTDOWN_TIMEOUT
     assert run_spy[0].port == free_port_env
+    assert len(tracked) == 1
+    assert run_spy[0].app is tracked[0]

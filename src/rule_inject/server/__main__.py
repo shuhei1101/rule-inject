@@ -39,7 +39,10 @@ def main() -> None:
         sys.exit(FAILURE_EXIT_CODE)
     control = ServerControl(port=settings.server_port)
     clone = find_clone(Path(__file__).parent)
-    app = build_server(env, control=control, clone=clone).streamable_http_app(host=HOST)
+    # 停止の待ちが POST の要求の応答の送信の終わりまで数えられるよう、アプリを包む
+    app = control.track(
+        build_server(env, control=control, clone=clone).streamable_http_app(host=HOST)
+    )
     # MCPServer.run は timeout_graceful_shutdown を渡せず、Server も外へ出さないため、uvicorn.Server で待ち受ける
     server = uvicorn.Server(
         uvicorn.Config(

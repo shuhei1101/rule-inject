@@ -1,0 +1,15 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-3.yaml
+    impact: none
+    detail: 再起動の応答を受け取ってから待ち受けが閉じる。シナリオの記述は変わらず、実装がシナリオの保証を満たすようにする
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-5.yaml
+    impact: none
+    detail: 更新の応答を受け取ってから待ち受けが閉じる。シナリオの記述は変わらず、実装がシナリオの保証を満たすようにする
+    depends_on: []
+scope_out:
+  - item: 待ち受けを閉じた後の接続の待ち（GRACEFUL_SHUTDOWN_TIMEOUT）の値の変更
+    reason: 応答が届かないのは、`should_exit` を立てた後に sse-starlette が送信中の POST の応答のストリームを取り消すためで、この上限は応答を切っていない（外部ライブラリ『sse-starlette』の動作確認）。値を広げても事象は直らない
+    plan: none

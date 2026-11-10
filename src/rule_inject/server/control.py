@@ -1,4 +1,4 @@
-"""サーバーの稼働の状態（処理中の呼び出しの数・再起動と更新の印）と、再起動の停止の進め方。"""
+"""サーバーの稼働の状態（処理中の呼び出しと要求の数・再起動と更新の印）と、再起動の停止の進め方。"""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 if TYPE_CHECKING:
     import uvicorn
+    from starlette.types import ASGIApp, Receive, Scope, Send
 
 # 再起動で、処理中の呼び出しの終わりを待つ上限（秒）
 STOP_DRAIN_TIMEOUT = 356
@@ -32,7 +33,7 @@ class RestartInProgressError(ToolError):
 
 
 class ServerControl:
-    """待ち受けのポート・起動した時刻・処理中の呼び出しの数・再起動と更新の印を持ち、再起動の停止を進める。"""
+    """待ち受けのポート・起動した時刻・処理中の呼び出しと要求の数・再起動と更新の印を持ち、再起動の停止を進める。"""
 
     def __init__(self, *, port: int) -> None:
         """待ち受けているポートを受け、このプロセスのイメージで作った時刻を起動した時刻にする。"""
@@ -42,6 +43,8 @@ class ServerControl:
         # 同期のツールは SDK がスレッドで動かすため、数と印の読み書きを 1 つずつ行う
         self._lock = threading.Lock()
         self._in_flight = 0
+        # 応答を送信し終えていない POST の要求の数（ツールの関数が戻った後も、応答の送信が終わるまで数える）
+        self._requests = 0
         self._restarting = False
         self._updating = False
         self._server: uvicorn.Server | None = None
@@ -88,6 +91,26 @@ class ServerControl:
                 self._leave()
 
         return guarded
+
+    def track(self, app: ASGIApp) -> ASGIApp:
+        """ASGI のアプリを包み、POST の要求を受けてから包んだアプリが戻るまでを処理中の要求として数える。"""
+
+        async def tracked(scope: Scope, receive: Receive, send: Send) -> None:
+            """POST の要求だけを数えて、包んだアプリへそのまま渡す。"""
+            # GET（SSE のストリーム）・DELETE・lifespan は終わりを待たないため数えない
+            if scope["type"] != "http" or scope["method"] != "POST":
+                await app(scope, receive, send)
+                return
+            with self._lock:
+                self._requests += 1
+            try:
+                # SSE の応答は、応答を送信し終えるか接続が切れた後に戻る
+                await app(scope, receive, send)
+            finally:
+                with self._lock:
+                    self._requests -= 1
+
+        return tracked
 
     def begin_update(self) -> None:
         """再起動の途中か別の更新が動いていれば断り、更新の印を立てる。"""
@@ -144,20 +167,23 @@ class ServerControl:
         self._stop_task = asyncio.get_running_loop().create_task(self._drain_and_stop())
 
     async def _drain_and_stop(self) -> None:
-        """処理中の呼び出しの終わりを上限まで待ち、待ち受けのサーバーに停止を合図する。"""
+        """処理中の呼び出しと要求の終わりを上限まで待ち、待ち受けのサーバーに停止を合図する。"""
         try:
             async with asyncio.timeout(STOP_DRAIN_TIMEOUT):
-                # 処理中の呼び出しが残っている間は待つ（新しい呼び出しは guard が断る）
+                # 処理中の呼び出しか、応答を送信し終えていない要求が残っている間は待つ（新しい呼び出しは guard が断る）
+                # should_exit を立てると sse-starlette が送信中の応答を取り消すため、要求の応答の送信も待つ
                 # 数は同期のツールのスレッドからも減るため、asyncio.Event でなく間隔を置いて見直す
-                while self._in_flight > 0:  # noqa: ASYNC110
+                while self._in_flight > 0 or self._requests > 0:  # noqa: ASYNC110
                     await asyncio.sleep(DRAIN_POLL_INTERVAL)
         except TimeoutError:
-            # 上限を過ぎた: 待つのをやめ、残った呼び出しは uvicorn が上限で切る
+            # 上限を過ぎた: 待つのをやめ、残った応答は sse-starlette が取り消す
             logger.warning(
-                "再起動の停止の待ちが %s 秒を過ぎたため、処理中の %d 件を待たずに止めます",
+                "再起動の停止の待ちが %s 秒を過ぎたため、処理中の呼び出し %d 件・要求 %d 件を待たずに止めます",
                 STOP_DRAIN_TIMEOUT,
                 self._in_flight,
+                self._requests,
             )
-        # uvicorn は次の周回で待ち受けを閉じ、残った接続を GRACEFUL_SHUTDOWN_TIMEOUT で切って serve から返る
+        # uvicorn は次の周回で待ち受けを閉じて serve から返る。SSE のストリームは sse-starlette が取り消し、
+        # SSE でない残りの接続は GRACEFUL_SHUTDOWN_TIMEOUT で切る
         if self._server is not None:
             self._server.should_exit = True

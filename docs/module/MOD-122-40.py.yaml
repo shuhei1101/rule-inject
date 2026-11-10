@@ -32,7 +32,7 @@ classes:
     title: サーバーの稼働の状態
     container: server/control.py
     usecase: MCPサーバーを再起動する
-    summary: 待ち受けのポート・起動した時刻・処理中の呼び出しの数・再起動を始めたかを持ち、再起動の停止を進める。起動の入口が 1 つ作ってツールへ渡す（モジュール変数に状態を持たない）
+    summary: 待ち受けのポート・起動した時刻・処理中の呼び出しと要求の数・再起動を始めたかを持ち、再起動の停止を進める。起動の入口が 1 つ作ってツールへ渡す（モジュール変数に状態を持たない）
     kind: クラス
     properties:
       - name: port
@@ -50,7 +50,7 @@ classes:
       - name: _lock
         type: threading.Lock
         access: 内部 (_)
-        description: '`_in_flight`・`_restarting`・`_updating` の読み書きを 1 つずつ行うロック（同期のツールはスレッドで動く）'
+        description: '`_in_flight`・`_requests`・`_restarting`・`_updating` の読み書きを 1 つずつ行うロック（同期のツールはスレッドで動く）'
       - name: _in_flight
         type: int
         access: 内部 (_)
@@ -71,6 +71,10 @@ classes:
         type: asyncio.Task[None] | None
         access: 内部 (_)
         description: 停止を進めるタスク（参照を持って捨てられないようにする）
+      - name: _requests
+        type: int
+        access: 内部 (_)
+        description: '`track` を通った、応答を送信し終えていない POST の要求の数'
     methods:
       - name: attach
         title: 待ち受けのサーバーの受け取り
@@ -236,15 +240,15 @@ classes:
           description: なし
       - name: _drain_and_stop
         title: 停止を進める
-        summary: 処理中の呼び出しの終わりを `STOP_DRAIN_TIMEOUT` まで待ち、`_server.should_exit` を立てる
+        summary: 処理中の呼び出しと要求の終わりを `STOP_DRAIN_TIMEOUT` まで待ち、`_server.should_exit` を立てる
         kind: メソッド
         scope: internal
         returns:
           type: None
           description: なし
         process: |-
-          1. `async with asyncio.timeout(STOP_DRAIN_TIMEOUT)` の中で、`_in_flight` が 0 になるまで `DRAIN_POLL_INTERVAL` ごとに見直す。上限を過ぎたら待つのをやめる（`TimeoutError` を捕まえ、残った数をログに書く）
-          2. `_server.should_exit = True` を立てる。`uvicorn.Server.serve` は待ち受けを閉じ、残った接続を `GRACEFUL_SHUTDOWN_TIMEOUT` で切って返る
+          1. `async with asyncio.timeout(STOP_DRAIN_TIMEOUT)` の中で、`_in_flight` と `_requests` がどちらも 0 になるまで `DRAIN_POLL_INTERVAL` ごとに見直す。上限を過ぎたら待つのをやめる（`TimeoutError` を捕まえ、残った呼び出しと要求の数をログに書く）
+          2. `_server.should_exit = True` を立てる。`uvicorn.Server.serve` は待ち受けを閉じて返る。SSE のストリームは sse-starlette が `should_exit` に気づいて取り消し、SSE でない残りの接続は `GRACEFUL_SHUTDOWN_TIMEOUT` で切る
         unit_tests:
           - name: test_drain_and_stop
             case: 正常
@@ -258,7 +262,52 @@ classes:
             condition: '`STOP_DRAIN_TIMEOUT` を 0.2 に差し替え、終わらない呼び出しを処理中にしたまま `begin_restart`'
             mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
             expected: 約 0.2 秒で `should_exit` が真
+          - name: test_drain_and_stop_when_request_in_flight
+            case: 正常
+            summary: 要求の応答を送信し終えてから止める
+            condition: '`track` で包んだ「0.3 秒待ってから応答を送信する」 ASGI のアプリを POST で呼んでいる間に `begin_restart`（ツールの呼び出しは処理中でない）'
+            mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
+            expected: 応答を送信する前は `should_exit` が偽、アプリが戻った後に真
+      - name: track
+        title: 要求の見張り
+        summary: ASGI のアプリを包み、POST の要求を受けてから、包んだアプリが戻る（応答を送信し終えるか、接続が切れる）までを処理中の要求として数える
+        kind: メソッド
+        scope: public
+        thread_safe: true
+        args:
+          - name: app
+            type: starlette.types.ASGIApp
+            required: true
+            passing: positional
+            description: '`MCPServer.streamable_http_app()` が返すアプリ'
+        returns:
+          type: starlette.types.ASGIApp
+          description: 同じ要求をそのまま渡す ASGI のアプリ
+        process: |-
+          1. `scope["type"]` が `http` で `scope["method"]` が `POST` のときだけ、`_lock` の中で `_requests` を 1 増やす。GET（SSE のストリーム）・DELETE・`lifespan` は数えずにそのまま渡す
+          2. 包んだアプリを await する。SSE の応答は、応答を送信し終えるか接続が切れた後に戻る
+          3. 例外の有無によらず、数えた要求は `_lock` の中で `_requests` を 1 減らす
+        unit_tests:
+          - name: test_track
+            case: 正常
+            summary: POST の要求の応答を送信し終えるまでだけ数える
+            condition: 応答を送信する前に待つ ASGI のアプリを `track` で包み、POST の `scope` で呼ぶ
+            mock: なし（`scope`・`receive`・`send` はテストの関数）
+            expected: アプリの中で処理中の要求が 1、戻った後に 0。`send` に渡した応答がそのまま届く
+          - name: test_track_when_get
+            case: 正常
+            summary: GET の要求は数えない
+            condition: '`track` で包んだアプリを GET の `scope` で呼ぶ'
+            mock: なし
+            expected: アプリの中で処理中の要求が 0
+          - name: test_track_when_raises
+            case: 異常
+            summary: 包んだアプリが例外を送出しても数を戻す
+            condition: POST の `scope` で、`RuntimeError` を送出するアプリを呼ぶ
+            mock: なし
+            expected: '`RuntimeError` がそのまま送出され、処理中の要求が 0'
+            exception: 包んだアプリが例外を送出した
 notes:
   停止の 2 段: |-
-    処理中のツールの呼び出しは `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
-    SSE のストリームは終わらないため、1 段目の上限を `timeout_graceful_shutdown` に渡すと再起動のたびに上限まで待つことになる。
+    処理中のツールの呼び出しと POST の要求の応答は `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は sse-starlette が取り消し、SSE でない接続は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
+    `should_exit` を立てると sse-starlette が送信中の POST の応答も取り消すため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
