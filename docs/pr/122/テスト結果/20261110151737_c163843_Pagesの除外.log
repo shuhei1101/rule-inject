@@ -1,0 +1,34 @@
+$ which bundle jekyll
+（bundle・jekyll がこの端末に無いため、jekyll build の代わりに exclude と visibility を突き合わせる）
+$ python3 pages_check.py .
+# """docs/_config.yml の exclude が、visibility が internal の文書を全て覆うかを確かめる。"""
+# import glob, os, sys
+# import yaml
+# os.chdir(sys.argv[1])
+# cfg = yaml.safe_load(open("docs/_config.yml", encoding="utf-8"))
+# ex = cfg["exclude"]
+# def excluded(rel):
+#     return any(rel == e or (e.endswith("/") and rel.startswith(e)) for e in ex)
+# vis = {}
+# for f in glob.glob("docs/**/*.yaml", recursive=True):
+#     rel = f[5:]
+#     if rel.startswith(("pr/", "_")) or f.endswith("index.yaml") or rel == "rules.yaml":
+#         continue
+#     vis[rel] = (yaml.safe_load(open(f, encoding="utf-8")) or {}).get("visibility", "internal")
+# for fy in glob.glob("docs/**/files.yml", recursive=True):
+#     base = os.path.dirname(fy)[5:]
+#     for row in yaml.safe_load(open(fy, encoding="utf-8"))["files"]:
+#         rel = os.path.normpath(os.path.join(base, row["path"]))
+#         vis[rel] = row.get("visibility", "internal")
+# leak = sorted(r for r, v in vis.items() if v != "public" and not excluded(r))
+# hidden = sorted(r for r, v in vis.items() if v == "public" and excluded(r))
+# print("exclude:", ex)
+# print(f"文書 {len(vis)} 件（public {sum(v == 'public' for v in vis.values())} / internal {sum(v != 'public' for v in vis.values())}）")
+# print("exclude に当たらない internal の文書:", leak or "なし")
+# print("exclude に当たる public の文書:", hidden or "なし")
+# sys.exit(1 if leak or hidden else 0)
+exclude: ['Gemfile', 'Gemfile.lock', 'vendor', 'node_modules', 'README.md', 'architecture/', 'config/', 'er/', 'external-api/', 'interface/', 'library/', 'module/', 'nonfunctional/', 'rules.yaml', 'scenario/', 'test-procedure/', 'pr/', 'mock/', 'generated/']
+文書 132 件（public 10 / internal 122）
+exclude に当たらない internal の文書: なし
+exclude に当たる public の文書: なし
+exit=0

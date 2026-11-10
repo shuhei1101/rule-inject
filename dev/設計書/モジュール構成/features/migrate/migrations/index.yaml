@@ -1,5 +1,0 @@
-summary: "バージョンごとの移し替えの手順"
-docs_index: true
-items:
-  - page: v0_2_3.py.yaml
-    summary: '`global.server_port` を `RULE_INJECT_PORT` へ移す手順'

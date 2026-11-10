@@ -1,0 +1,6 @@
+summary: データストア（テキストファイル）の定義
+items:
+  - page: ER-122-2.yaml
+    summary: フックが共有する、セッションごとの既読のルールの場所
+  - page: ER-122-1.yaml
+    summary: フックが失敗した操作を書き出すログ

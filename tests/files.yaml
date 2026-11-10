@@ -18,7 +18,7 @@ files:
     related:
       - to: src/rule_inject/hooks/discard_read
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の破棄.py
+      - to: IF-122-18
         type: see_also
   - path: integration/plugin/test_migrate_settings.py
     name: 設定の移し替えの結合テスト
@@ -40,7 +40,7 @@ files:
     related:
       - to: src/rule_inject/hooks/record_read
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録.py
+      - to: IF-122-16
         type: see_also
   - path: integration/plugin/test_rule_guide.py
     name: ルール案内フックの結合テスト
@@ -53,7 +53,7 @@ files:
     related:
       - to: src/rule_inject/hooks/rule_guide
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/ルール案内.py
+      - to: IF-122-14
         type: see_also
   - path: integration/plugin/test_search_guide.py
     name: 検索結果の案内フックの結合テスト
@@ -66,7 +66,7 @@ files:
     related:
       - to: src/rule_inject/hooks/search_guide
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
+      - to: IF-122-19
         type: see_also
   - path: integration/plugin/test_start_server.py
     name: サーバーの起動の補助フックの結合テスト
@@ -80,7 +80,7 @@ files:
     related:
       - to: src/rule_inject/hooks/start_server
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/サーバーの起動の補助.py
+      - to: IF-122-13
         type: tests
   - path: integration/plugin/test_sweep_read.py
     name: 既読の記録の掃除フックの結合テスト
@@ -93,7 +93,7 @@ files:
     related:
       - to: src/rule_inject/hooks/sweep_read
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の掃除.py
+      - to: IF-122-17
         type: see_also
   - path: integration/plugin/test_work_rules.py
     name: 作業の決まりの注入フックの結合テスト
@@ -105,7 +105,7 @@ files:
     related:
       - to: src/rule_inject/hooks/work_rules
         type: tests
-      - to: dev/設計書/インターフェース定義/プラグイン/作業の決まりの注入.py
+      - to: IF-122-15
         type: see_also
   - path: integration/server/conftest.py
     name: サーバーの結合テストの共通設定
@@ -125,7 +125,7 @@ files:
     related:
       - to: src/rule_inject/server/check_tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/索引のチェック.py
+      - to: IF-122-11
         type: see_also
   - path: integration/server/test_delete_index_entry.py
     name: インターフェース定義『エントリの削除』の結合テスト
@@ -137,7 +137,7 @@ files:
     related:
       - to: src/rule_inject/server/tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの削除.py
+      - to: IF-122-1
         type: see_also
   - path: integration/server/test_delete_read_records.py
     name: インターフェース定義『既読の記録の削除』の結合テスト
@@ -149,7 +149,7 @@ files:
     related:
       - to: src/rule_inject/server/record_tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の削除.py
+      - to: IF-122-9
         type: see_also
   - path: integration/server/test_get_read_records.py
     name: インターフェース定義『既読の記録の確認』の結合テスト
@@ -161,7 +161,7 @@ files:
     related:
       - to: src/rule_inject/server/record_tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の確認.py
+      - to: IF-122-10
         type: see_also
   - path: integration/server/test_get_server_status.py
     name: インターフェース定義『サーバーの状態の確認』の結合テスト
@@ -174,7 +174,7 @@ files:
     related:
       - to: src/rule_inject/server/admin_tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの状態の確認.py
+      - to: IF-122-5
         type: see_also
   - path: integration/server/test_list_rules.py
     name: インターフェース定義『ルールの一覧』の結合テスト
@@ -186,7 +186,7 @@ files:
     related:
       - to: src/rule_inject/server/tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの一覧.py
+      - to: IF-122-7
         type: see_also
   - path: integration/server/test_reload_settings.py
     name: インターフェース定義『設定の再読込』の結合テスト
@@ -199,7 +199,7 @@ files:
     related:
       - to: src/rule_inject/server/admin_tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/設定の再読込.py
+      - to: IF-122-12
         type: see_also
   - path: integration/server/test_restart_server.py
     name: インターフェース定義『サーバーの再起動』の結合テスト
@@ -212,7 +212,7 @@ files:
     related:
       - to: src/rule_inject/server/control
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
+      - to: IF-122-3
         type: see_also
   - path: integration/server/test_search_rules.py
     name: インターフェース定義『ルールの検索』の結合テスト
@@ -224,7 +224,7 @@ files:
     related:
       - to: src/rule_inject/server/tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの検索.py
+      - to: IF-122-8
         type: see_also
   - path: integration/server/test_server_start.py
     name: インターフェース定義『サーバーの起動』の結合テスト
@@ -238,7 +238,7 @@ files:
         type: tests
       - to: src/rule_inject/server/app
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
+      - to: IF-122-6
         type: see_also
   - path: integration/server/test_update_server.py
     name: インターフェース定義『サーバーの更新』の結合テスト
@@ -251,7 +251,7 @@ files:
     related:
       - to: src/rule_inject/server/clone
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの更新.py
+      - to: IF-122-4
         type: see_also
   - path: integration/server/test_write_index_entry.py
     name: インターフェース定義『エントリの書き込み』の結合テスト
@@ -263,7 +263,7 @@ files:
     related:
       - to: src/rule_inject/server/tools
         type: tests
-      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの書き込み.py
+      - to: IF-122-2
         type: see_also
   - path: nfr/test_version_consistency.py
     name: バージョンの一致の非機能要件テスト
@@ -272,7 +272,7 @@ files:
       - topic:バージョン
       - tool:pytest
     related:
-      - to: dev/設計書/非機能要件/非機能要件
+      - to: NFR-122-1
         type: see_also
   - path: unit/conftest.py
     name: 単体テストの共通設定

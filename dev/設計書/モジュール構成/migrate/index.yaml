@@ -1,5 +1,0 @@
-summary: "設定の移し替えのコマンドの入口"
-docs_index: true
-items:
-  - page: __main__.py.yaml
-    summary: 引数の読み取りと、結果の JSON の出力・終了コード

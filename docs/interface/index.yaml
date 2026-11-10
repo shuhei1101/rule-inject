@@ -1,0 +1,46 @@
+summary: サブシステムの外部インターフェースと処理フロー（サブシステム結合テストの元）
+items:
+  - page: IF-122-14.py.yaml
+    summary: 操作の対象に当たる未読のルールを、止めて、または止めずに案内する（PreToolUse）
+  - page: IF-122-16.py.yaml
+    summary: Read か Bash で読んだルールの場所を既読として記録する（PostToolUse）
+  - page: IF-122-18.py.yaml
+    summary: 圧縮の前にそのセッションの既読の記録を削除する（PreCompact）
+  - page: IF-122-15.py.yaml
+    summary: 新しいファイルは空で作ってから書く決まりを載せる（SessionStart）
+  - page: IF-122-17.py.yaml
+    summary: セッションの開始時に、保持期間を過ぎた既読の記録を削除する（SessionStart）
+  - page: IF-122-19.py.yaml
+    summary: 検索の結果に出たファイルに当たる未読のルールを、止めずに案内する（PostToolUse）
+  - page: IF-122-22.py.yaml
+    summary: 端末の設定ファイルを今のバージョンへ移し替える（`python -m rule_inject.migrate`）
+  - page: IF-122-20.yaml
+    summary: 端末の設定・サーバー・フックを用意して確認する（`/rule-inject:global-setup`）
+  - page: IF-122-21.yaml
+    summary: リポジトリの索引を参照できる状態にしてチェックする（`/rule-inject:setup`）
+  - page: IF-122-13.py.yaml
+    summary: セッションの開始時に、応答しない MCP サーバーのユニットへ起動を依頼し、`/mcp` で接続し直す案内を載せる（SessionStart）
+  - page: IF-122-6.py.yaml
+    summary: 設定ファイルのポートで 127.0.0.1 に待ち受け、SIGTERM で止まる
+  - page: IF-122-7.py.yaml
+    summary: プロジェクトで効いている索引とエントリを返す（list_rules）
+  - page: IF-122-8.py.yaml
+    summary: パスか MCP のツールの呼び出しに当たるルールと止めるかを返す（search_rules）
+  - page: IF-122-11.py.yaml
+    summary: 索引ごとにフックが読めない理由・Schema の違反・無いルールのファイル・paths の当たらないエントリを返す（check_indexes）
+  - page: IF-122-2.py.yaml
+    summary: 索引のエントリを新規作成・編集し、チェックに通るときだけ書き込む（write_index_entry）
+  - page: IF-122-1.py.yaml
+    summary: 索引のエントリを削除し、チェックに通るときだけ書き込む（delete_index_entry）
+  - page: IF-122-10.py.yaml
+    summary: セッションの既読のルールと読んだ方法、または既読の記録のあるセッションの一覧を返す（get_read_records）
+  - page: IF-122-9.py.yaml
+    summary: セッションの既読の記録と案内済みの記録を削除し、ルールを未読に戻す（delete_read_records）
+  - page: IF-122-5.py.yaml
+    summary: 待ち受けのポート・プロセス・バージョン・クローンの commit・設定ファイルを読めるかを返す（get_server_status）
+  - page: IF-122-12.py.yaml
+    summary: 設定ファイルを読み直し、読めたかと読んだ値を返す（reload_settings）
+  - page: IF-122-3.py.yaml
+    summary: 処理中の呼び出しの終わりを待って待ち受けを閉じ、同じプロセスで起動し直す（restart_server）
+  - page: IF-122-4.py.yaml
+    summary: クローンへ上流の commit を取り込み、依存を入れ直して再起動する（update_server）

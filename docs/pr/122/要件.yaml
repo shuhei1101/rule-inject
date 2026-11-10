@@ -1,0 +1,167 @@
+use_cases:
+  - kind: composite
+    scenario: dev/設計書/シナリオ/複合ユースケース/ルールを読んでからファイルを触る.yaml
+    impact: none
+    detail: ルールの案内の流れは変わらない。シナリオのファイルは docs/scenario/ へ移り、参照はパスから ID へ変わる
+    depends_on: []
+  - kind: composite
+    scenario: dev/設計書/シナリオ/複合ユースケース/既読の記録を削除して案内を受け直す.yaml
+    impact: none
+    detail: 既読の記録の削除と案内の受け直しの流れは変わらない。シナリオのファイルは docs/scenario/ へ移る
+    depends_on: []
+  - kind: composite
+    scenario: dev/設計書/シナリオ/複合ユースケース/索引のエントリを直して案内を確かめる.yaml
+    impact: none
+    detail: 索引のエントリの修正と案内の確認の流れは変わらない。シナリオのファイルは docs/scenario/ へ移る
+    depends_on: []
+  - kind: single
+    scenario: dev/設計書/シナリオ/単一ユースケース/端末をセットアップする.yaml
+    impact: run_only
+    detail: pyproject.toml の lint の除外を書き換えるため、利用者の入れ方で入れて起動できることを確かめる。手順は変わらない
+    depends_on: []
+docs:
+  - page: dev/設計書/index.yaml
+    new: false
+    change: 'AI Monitor の v0.4.0 の変換（f135cff63 の dev/テンプレート/変換/v0.4.0.py と Schema を dev/テンプレート/ へ写して convert --from v0.3.0 --to v0.4.0 --number 122）を dev/ の置き場所のまま掛けて ID を振り、参照をパスから ID へ書き換えた後に、設計書を docs/{kind}/ へフラットに移してファイル名を {ID}.yaml（.py.yaml のものは {ID}.py.yaml）にする。各設計書へ visibility: internal を持たせ、種類のフォルダごとに index.yaml を作り、今のフォルダごとの index.yaml・README.md を削除する。本文に残る dev/ のパス（dev/pr/{番号}/・非機能要件・モジュール構成・公開ドキュメントのパス）を移した後へ合わせる'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: dev/テンプレート/index.yaml
+    new: false
+    change: 設計書の Schema を AI Monitor の develop の schemas/{kind}.schema.yaml（common・index・files を含む）へ置き換え、変換を schemas/conversions/ へ移し、dev/テンプレート/ を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: dev/エージェント運用/index.yaml
+    new: false
+    change: 中身の文書を持たない目次（規約・チェックシート・判定フローチャートの index.yaml・README.md）を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: dev/コーディング規約/index.yaml
+    new: false
+    change: 中身の文書を持たない目次（index.yaml・README.md）を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: dev/index.yaml
+    new: false
+    change: dev/index.yaml・dev/README.md を削除し、目次の起点を docs/index.yaml の 1 つにする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: dev/pr/119/README.md
+    new: false
+    change: マージ済みの PR の dev/pr/{PR 番号}/ を全て docs/pr/{PR 番号}/ へ移す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/index.yaml
+    new: false
+    change: 行を種類のフォルダ（guide/ と設計書の種類のフォルダ）を指す行にし、README.md を作り直す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/はじめに/index.yaml
+    new: false
+    change: 'docs/はじめに/ の文書を docs/guide/ へフラットに移し（サブフォルダのものは コアコンセプト-{ファイル名}.md）、ページの間のリンクを移した後へ合わせ、docs/guide/files.yml の行に category: はじめに と visibility: public を持たせる。分類のトップページ docs/guide/はじめに.md を publish で書き出す'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/使い方/index.yaml
+    new: false
+    change: 'docs/使い方/ の文書を docs/guide/ へ移し、ページの間のリンクを移した後へ合わせ、docs/guide/files.yml の行に category: 使い方 と visibility: public を持たせる。分類のトップページ docs/guide/使い方.md を publish で書き出す'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/リファレンス/index.yaml
+    new: false
+    change: 'docs/リファレンス/ の文書を docs/guide/ へ移し、ページの間のリンクを移した後へ合わせ、docs/guide/files.yml の行に category: リファレンス と visibility: public を持たせる。分類のトップページ docs/guide/リファレンス.md を publish で書き出す'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/files.yaml
+    new: false
+    change: '公開ドキュメントの行を docs/guide/files.yml（category・visibility: public）、docs/rules.yaml の行を docs/_root/files.yml（visibility: internal）、リポジトリの直下の README.md・CLAUDE.md・rules.yaml の行を直下の files.yaml へ分け、docs/files.yaml を削除する'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/_config.yml
+    new: false
+    change: exclude に internal の文書だけを持つ種類のフォルダと pr/・mock/・generated/ を載せ、Pages に出さない
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: docs/_theme/_data/nav.project.yml
+    new: false
+    change: 上タブを docs/guide/ の分類（はじめに・使い方・リファレンス）から作り直す。表示名は今のまま
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: dev-docs.yaml
+    new: false
+    change: documents の paths・schema を docs/{kind}/・schemas/{kind}.schema.yaml へ書き換え、設計書と files.yml の行に visibility のメタデータを持たせ、公開ドキュメントの行を docs/guide/files.yml・docs/_root/files.yml、直下のファイルの行を files.yaml（root）から読む。外部 API の種類の id を external_api にし、instructions の置き場所の説明を移動先へ合わせる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: rules.yaml
+    new: false
+    change: rule の docs/リファレンス/索引の書式.md を移動先の docs/guide/索引の書式.md へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: src/files.yaml
+    new: false
+    change: related の to の dev/設計書/... を移した設計書の ID へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: hooks/files.yaml
+    new: false
+    change: related の to の dev/設計書/... を移した設計書の ID へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: tests/files.yaml
+    new: false
+    change: related の to の dev/設計書/... を移した設計書の ID へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: skills/files.yaml
+    new: false
+    change: related の to の dev/設計書/... を移した設計書の ID へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: CLAUDE.md
+    new: false
+    change: ドキュメントの場所を docs/ の 1 つにし、使い方へのリンクを docs/guide/ の分類のトップページへ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: .gitignore
+    new: false
+    change: dev/generated/ を docs/generated/ へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+  - page: pyproject.toml
+    new: false
+    change: mypy の exclude の ^dev/pr/ を ^docs/pr/ へ書き換え、配布された変換 schemas/conversions/ を ruff・mypy の対象から外す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T06:16:01.377019+00:00'
+scope_out:
+  - item: 移した文書の本文を mdmark の書き方と表し方の優先順位へ移す
+    reason: '置き場所の移行と目的が違う。#99 が #120 の後に移した後の置き場所で行う'
+    plan: '#99'
+  - item: フォルダ構成の設計書（layout）の作成
+    reason: '移した後のフォルダ構成を記載する別の作業。#114 が #120 の後に行う'
+    plan: '#114'
+  - item: 変更履歴の各版の PR へのリンク（dev/pr/{番号}/README.md）
+    reason: リンクは版のタグに固定した URL で、移した後も同じ内容を開けるため書き換えない
+    plan: none
+  - item: ai-monitor-version.ini を v0.4.0 へ上げる
+    reason: 版の記録は AI Monitor v0.4.0 の配布物への追従 Issue が上げる（ai-monitor#3307 の要件で、追従 Issue は移行済みを確かめるだけになる）。v0.4.0 はまだ版のタグを打っていない
+    plan: none

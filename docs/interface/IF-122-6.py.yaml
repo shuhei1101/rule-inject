@@ -1,0 +1,182 @@
+id: IF-122-6
+visibility: internal
+title: "サーバーの起動"
+entry:
+  kind: operation
+  value: '`python -m rule_inject.server`（前面で動くプロセス。ローカルのクローンでサーバーの依存を入れて起動する）'
+flows:
+  - name: 正常系
+    summary: '`RULE_INJECT_PORT` のポートで待ち受け、MCP のクライアントから接続できる'
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: '索引を記載した設定ファイル'
+        notes: '`RULE_INJECT_CONFIG` で指し、`RULE_INJECT_PORT` に空いているポートを指定する'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド
+        SV->>CF: 読む
+        SV->>SV: 127.0.0.1 の RULE_INJECT_PORT で待ち受ける
+        U->>SV: MCP の initialize（/mcp）
+        SV-->>U: 応答
+      ```
+    expected:
+      - '`127.0.0.1` の `RULE_INJECT_PORT` のポートだけで待ち受けている'
+      - '`http://127.0.0.1:{ポート}/mcp` へ MCP のクライアントで接続でき、ツールの一覧に `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`・`get_server_status`・`reload_settings`・`restart_server`・`update_server` が並ぶ'
+    test: test_normal
+  - name: 正常系（止める）
+    summary: SIGTERM で待ち受けを閉じて終わる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 起動したサーバー
+        description: 正常系と同じ設定ファイルで待ち受けているサーバー
+        notes: 待ち受けを確かめてから止める
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+
+        U->>SV: SIGTERM
+        SV->>SV: 待ち受けを閉じる
+        SV-->>U: 標準エラーに終了の処理<br>終了コード 143
+      ```
+    expected:
+      - 終了コードが SIGTERM で終わったことを示す（シェルでは 143、`subprocess` の `returncode` では -15）
+      - 標準エラーに `Application shutdown complete.` と `Finished server process` が出ている
+    test: test_normal_when_stopped
+  - name: 異常系（ポートが使われている・OSError）
+    summary: 待ち受けに失敗し、理由を書いて終わる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: ポートの使用
+        description: テストがポート 0 で待ち受け、割り当てられたポートを待ち受けたままにする
+      - name: 環境変数
+        description: '`RULE_INJECT_PORT` にテストが待ち受けているポートを指定する'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+
+        U->>SV: 起動のコマンド
+        SV->>SV: 待ち受けに失敗する
+        SV-->>U: 標準エラーにポートと理由<br>0 以外の終了コード
+      ```
+    expected:
+      - 終了コードが 0 以外
+      - 標準エラーに、ポートの番号と使われている旨が載っている
+    test: test_error_when_port_in_use
+  - name: 異常系（設定ファイルが読めない・SettingsReadError）
+    summary: 待ち受ける前に設定ファイルの誤りで終わる
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: '`global` に知らないキーを持つ設定ファイル'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド
+        SV->>CF: 読む
+        CF-->>SV: 知らないキー
+        SV-->>U: 標準エラーに設定ファイルの場所と理由<br>0 以外の終了コード
+      ```
+    expected:
+      - 終了コードが 0 以外
+      - 標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
+      - 標準エラーに、設定ファイルの場所と読めない理由が載っている
+    test: test_error_when_settings_unreadable
+  - name: 異常系（廃止したキーが残っている・SettingsReadError）
+    summary: '`global.server_port` が残った設定ファイルでは待ち受けず、移し替えの案内を出して終わる'
+    setup:
+      - name: Mock
+        description: なし（起動のコマンドを子プロセスで実行する）
+      - name: 設定ファイル
+        description: '`global.server_port` を持つ設定ファイル'
+    flow: |-
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant CF as 設定ファイル
+
+        U->>SV: 起動のコマンド
+        SV->>CF: 読む
+        CF-->>SV: 廃止したキー
+        SV-->>U: 標準エラーに場所と移し替えの案内<br>0 以外の終了コード
+      ```
+    expected:
+      - 終了コードが 0 以外
+      - 標準エラーに、設定ファイルの場所と `global.server_port`・`global-setup` が記載されている
+    test: test_error_when_removed_key
+lead: 設定ファイルを読み、`127.0.0.1` のポートで Streamable HTTP の MCP サーバーとして待ち受ける。Ctrl+C か SIGTERM で待ち受けを閉じて終わる。
+identifier: server_start
+idempotent: false
+side_effects: '`127.0.0.1` のポートで待ち受ける。索引・既読の記録・ログには書かない'
+exclusivity: 同じポートで 2 つ目を起動すると、待ち受けに失敗して終わる（1 つだけ常駐させる）
+request:
+  - name: RULE_INJECT_CONFIG
+    type: str
+    required: false
+    default: '`${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml`（ファイルが無ければ全てのキーを既定値で動かす）'
+    description: 設定ファイルの場所（起動の側の環境変数）
+    constraints: 絶対パスか `~` で始まるパス
+    notes: フックと同じ設定ファイルを指す
+  - name: RULE_INJECT_PORT
+    type: str
+    required: false
+    default: なし（既定のポート）
+    description: 待ち受けのポートをその起動だけ上書きする環境変数
+    constraints: 1024〜65535 の整数
+    notes: '`.mcp.json` の接続先と同じ値になるよう、Claude Code の `env` にも同じ値を配置する'
+exceptions:
+  - name: なし（正常終了）
+    condition: Ctrl+C か SIGTERM を受けた
+    notes: 待ち受けを閉じ、標準エラーに終了の処理を書いて終わる。SIGTERM のときの終了コードは 143（シグナルで終わる）
+  - name: OSError（ポートが使われている）
+    condition: 待ち受けのポートを別のプロセスが使っている
+    notes: 待ち受けずに、標準エラーへポートの番号と使われている旨を書き、0 以外の終了コードで終わる
+  - name: SettingsReadError（設定ファイルが読めない）
+    condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ。`RULE_INJECT_PORT` が許す値の外'
+    notes: 待ち受ける前に確かめ、待ち受けずに、標準エラーへ設定ファイルの場所（環境変数のときはその名前）と理由を書き、0 以外の終了コードで終わる
+constraints:
+  - item: 待ち受けのアドレス
+    constraint: '`127.0.0.1` だけ'
+    decided_by: NFR-122-1#requirements[MCPサーバーの待ち受けのアドレス]
+    notes: 引数・設定ファイルでは変えられない
+  - item: 待ち受けのポート
+    constraint: '`RULE_INJECT_PORT` があればその値、無ければ既定のポート'
+    decided_by: NFR-122-1#requirements[MCPサーバーの既定のポート]
+    notes: 起動時に 1 回だけ読む。変えたときは再起動する
+  - item: MCP のエンドポイント
+    constraint: '`http://127.0.0.1:{ポート}/mcp`'
+    notes: Claude Code はプラグインの `.mcp.json` の `http://127.0.0.1:${RULE_INJECT_PORT:-8783}/mcp` で接続する
+  - item: 設定ファイルの読み直し
+    constraint: 起動時に読み、待ち受けのポート以外は各ツールの呼び出しのたびに読み直す
+    notes: 索引と設定ファイルを直した結果を、再起動せずに次のツールの呼び出しに効かせる
+  - item: 待ち受けの方法
+    constraint: '`MCPServer.streamable_http_app()` のアプリを、`timeout_graceful_shutdown` を渡した `uvicorn.Config` の `uvicorn.Server` で待ち受ける'
+    decided_by: NFR-122-1#requirements[待ち受けを閉じた後の接続の待ち]
+    notes: '`MCPServer.run` は `uvicorn.Server` と `timeout_graceful_shutdown` を外へ出さないため使わない。インターフェース定義「サーバーの再起動」が `should_exit` で閉じる。Ctrl+C・SIGTERM でも、SSE のストリームを持つ接続は同じ上限で切って終わる'
+  - item: 状態
+    constraint: ツールの呼び出しをまたぐ状態をプロセスに持たない
+    notes: 1 プロセスを複数のセッションが共有するため
+  - item: 認可
+    constraint: 制限なし
+    notes: ループバックだけで待ち受け、同じ端末の利用者だけが呼べる
+refs:
+  - SC-122-4#
+test_file: tests/integration/server/test_server_start.py

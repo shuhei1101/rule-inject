@@ -4,109 +4,116 @@ name: rule-inject
 worktrees: [".claude/worktrees/*"]
 description: Claude Code がファイルを触る前に、そのファイルに当たるルールを案内するプラグインの設計書・公開ドキュメント・ソースコード・テスト
 instructions: |-
-  設計書（`dev/設計書/`）と各フォルダの `index.yaml` は YAML が正本で、種類ごとの行に分かれる。
-  公開ドキュメント（`docs/`）の Markdown、ソースコード（`src/`・`hooks/`）、テスト（`tests/`）は、各フォルダの `files.yaml` が名前・概要文・タグ・関連を持つ。
+  設計書（`docs/` の種類のフォルダ）と各フォルダの `index.yaml` は YAML が正本で、種類ごとの行に分かれる。書式は `schemas/{種類}.schema.yaml` が持ち、他の設計書は `{ID}#{項目のパス}` で指す。
+  公開ドキュメント（`docs/guide/`）と `docs/` の直下のファイルは `files.yml`、リポジトリの直下・ソースコード（`src/`・`hooks/`）・テスト（`tests/`）・スキル（`skills/`）のファイルは `files.yaml` が名前・概要文・タグ・関連を持つ。各文書の公開範囲は `visibility`（`public` / `internal`）で、YAML の文書はキー、Markdown は `files.yml` の行が持つ。
   コードは `implements` で設計書を、テストは `tests` でコードを指す。設計書からコードを辿るときは `trace_related` を使う。
 documents:
   - id: architecture
     title: アーキテクチャ図
-    paths: ["dev/設計書/アーキテクチャ図/*.yaml"]
+    paths: ["docs/architecture/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/アーキテクチャ図.schema.yaml
+    schema: schemas/architecture.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: nonfunctional
     title: 非機能要件
-    paths: ["dev/設計書/非機能要件/*.yaml"]
+    paths: ["docs/nonfunctional/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/非機能要件.schema.yaml
+    schema: schemas/nonfunctional.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: scenario
     title: シナリオ
-    paths: ["dev/設計書/シナリオ/**/*.yaml"]
+    paths: ["docs/scenario/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/シナリオ.schema.yaml
+    schema: schemas/scenario.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: interface
     title: インターフェース定義
-    paths: ["dev/設計書/インターフェース定義/**/*.yaml"]
+    paths: ["docs/interface/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/インターフェース定義.schema.yaml
+    schema: schemas/interface.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: module
     title: モジュール構成
-    paths: ["dev/設計書/モジュール構成/**/*.yaml"]
+    paths: ["docs/module/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/モジュール構成.schema.yaml
+    schema: schemas/module.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: config
     title: 設定
-    paths: ["dev/設計書/設定/*.yaml"]
+    paths: ["docs/config/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/設定.schema.yaml
+    schema: schemas/config.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: er
     title: ER図
-    paths: ["dev/設計書/ER図/*.yaml"]
+    paths: ["docs/er/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/ER図.schema.yaml
+    schema: schemas/er.schema.yaml
     metadata:
       name: title
       description: lead
-  - id: api
+      visibility: visibility
+  - id: external_api
     title: 外部API
-    paths: ["dev/設計書/外部API/*.yaml"]
+    paths: ["docs/external-api/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/外部API.schema.yaml
+    schema: schemas/external-api.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: library
     title: 外部ライブラリ
-    paths: ["dev/設計書/外部ライブラリ/*.yaml"]
+    paths: ["docs/library/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/外部ライブラリ.schema.yaml
+    schema: schemas/library.schema.yaml
     metadata:
       name: title
       description: lead
+      visibility: visibility
   - id: test_procedure
     title: テスト実行方法
-    paths: ["dev/設計書/テスト/*.yaml"]
+    paths: ["docs/test-procedure/*.yaml"]
     exclude: [index.yaml]
-    schema: dev/テンプレート/テスト実行方法.schema.yaml
+    schema: schemas/test-procedure.schema.yaml
     metadata:
       name: title
+      visibility: visibility
   - id: index
     title: 目次
     paths:
-      - dev/index.yaml
-      - "dev/設計書/**/index.yaml"
-      - "dev/エージェント運用/**/index.yaml"
-      - dev/コーディング規約/index.yaml
-      - dev/テンプレート/index.yaml
       - docs/index.yaml
-      - "docs/**/index.yaml"
-    schema: dev/テンプレート/index.schema.yaml
+      - "docs/*/index.yaml"
+    schema: schemas/index.schema.yaml
     metadata:
       description: summary
   - id: docs
     title: 公開ドキュメント
-    paths: [docs/files.yaml]
-    exclude: [README.md, index.md, index.yaml, _config.yml, nav.yml, nav.project.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
+    paths: [docs/guide/files.yml, docs/_root/files.yml]
+    exclude: ["*.yaml", "*.yml", README.md, index.md, はじめに.md, 使い方.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
     schema: schemas/files.schema.yaml
     records: files
     body_file: path
+    metadata:
+      visibility: visibility
   - id: src
     title: ソースコード
     paths: [src/files.yaml]
@@ -128,6 +135,12 @@ documents:
   - id: skills
     title: スキル
     paths: [skills/files.yaml]
+    schema: schemas/files.schema.yaml
+    records: files
+    body_file: path
+  - id: root
+    title: リポジトリの直下のファイル
+    paths: [files.yaml]
     schema: schemas/files.schema.yaml
     records: files
     body_file: path

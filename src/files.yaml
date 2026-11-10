@@ -7,7 +7,7 @@ files:
       - topic:既読の記録
       - topic:コマンドの解析
     related:
-      - to: dev/設計書/モジュール構成/features/command/service.py
+      - to: MOD-122-1
         type: implements
   - path: rule_inject/features/document/service.py
     name: MCP の結果の文書の取り出し
@@ -16,7 +16,7 @@ files:
       - topic:既読の記録
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/features/document/service.py
+      - to: MOD-122-2
         type: implements
   - path: rule_inject/features/document/types.py
     name: MCP の結果の文書の型
@@ -25,7 +25,7 @@ files:
       - topic:既読の記録
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/features/document/types.py
+      - to: MOD-122-3
         type: implements
   - path: rule_inject/features/guidance/service.py
     name: 案内文の組み立て
@@ -33,7 +33,7 @@ files:
     tags:
       - topic:ルールの案内
     related:
-      - to: dev/設計書/モジュール構成/features/guidance/service.py
+      - to: MOD-122-4
         type: implements
   - path: rule_inject/features/guidance/types.py
     name: 案内文の型
@@ -41,7 +41,7 @@ files:
     tags:
       - topic:ルールの案内
     related:
-      - to: dev/設計書/モジュール構成/features/guidance/types.py
+      - to: MOD-122-5
         type: implements
   - path: rule_inject/features/server_start/service.py
     name: サーバーの応答の確認とユニットの起動の依頼
@@ -51,7 +51,7 @@ files:
       - topic:MCPサーバー
       - topic:起動
     related:
-      - to: dev/設計書/モジュール構成/features/server_start/service.py
+      - to: MOD-122-21
         type: implements
   - path: rule_inject/features/server_start/types.py
     name: 起動の依頼の結果の型
@@ -61,7 +61,7 @@ files:
       - topic:MCPサーバー
       - topic:起動
     related:
-      - to: dev/設計書/モジュール構成/features/server_start/types.py
+      - to: MOD-122-22
         type: implements
   - path: rule_inject/features/index/_yaml.py
     name: 索引の YAML の読み取り
@@ -69,7 +69,7 @@ files:
     tags:
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/features/index/_yaml.py
+      - to: MOD-122-6
         type: implements
   - path: rule_inject/features/index/check/index.schema.yaml
     name: ルール索引のスキーマ
@@ -79,7 +79,7 @@ files:
       - topic:索引のチェック
       - tool:jsonschema
     related:
-      - to: dev/設計書/モジュール構成/分類/MCPサーバー/索引のチェック
+      - to: MOD-122-54
         type: implements
   - path: rule_inject/features/index/check/scan.py
     name: 当たらないエントリの走査
@@ -87,7 +87,7 @@ files:
     tags:
       - topic:索引のチェック
     related:
-      - to: dev/設計書/モジュール構成/features/index/check/scan.py
+      - to: MOD-122-7
         type: implements
   - path: rule_inject/features/index/check/service.py
     name: 索引のチェック
@@ -96,7 +96,7 @@ files:
       - topic:索引のチェック
       - tool:jsonschema
     related:
-      - to: dev/設計書/モジュール構成/features/index/check/service.py
+      - to: MOD-122-8
         type: implements
   - path: rule_inject/features/index/check/tags.py
     name: 使われていないタグのパターンの検出
@@ -106,7 +106,7 @@ files:
       - topic:タグ
       - tool:dev-docs
     related:
-      - to: dev/設計書/モジュール構成/features/index/check/tags.py
+      - to: MOD-122-9
         type: implements
   - path: rule_inject/features/index/check/types.py
     name: 索引のチェックの型
@@ -114,7 +114,7 @@ files:
     tags:
       - topic:索引のチェック
     related:
-      - to: dev/設計書/モジュール構成/features/index/check/types.py
+      - to: MOD-122-10
         type: implements
   - path: rule_inject/features/index/edit/_yaml.py
     name: 索引の書き込みの YAML の設定
@@ -123,7 +123,7 @@ files:
       - topic:索引の編集
       - tool:ruamel-yaml
     related:
-      - to: dev/設計書/モジュール構成/features/index/edit/_yaml.py
+      - to: MOD-122-11
         type: implements
   - path: rule_inject/features/index/edit/service.py
     name: 索引のエントリの書き込みと削除
@@ -132,11 +132,11 @@ files:
       - topic:索引の編集
       - tool:ruamel-yaml
     related:
-      - to: dev/設計書/モジュール構成/features/index/edit/service.py
+      - to: MOD-122-12
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの書き込み.py
+      - to: IF-122-2
         type: see_also
-      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの削除.py
+      - to: IF-122-1
         type: see_also
   - path: rule_inject/features/index/edit/types.py
     name: 索引の編集の型
@@ -144,7 +144,7 @@ files:
     tags:
       - topic:索引の編集
     related:
-      - to: dev/設計書/モジュール構成/features/index/edit/types.py
+      - to: MOD-122-13
         type: implements
   - path: rule_inject/features/index/service.py
     name: 索引の読み込みと照合
@@ -153,7 +153,7 @@ files:
       - topic:ルール索引
       - topic:ルールの案内
     related:
-      - to: dev/設計書/モジュール構成/features/index/service.py
+      - to: MOD-122-14
         type: implements
   - path: rule_inject/features/index/types.py
     name: 索引の型
@@ -161,7 +161,7 @@ files:
     tags:
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/features/index/types.py
+      - to: MOD-122-15
         type: implements
   - path: rule_inject/features/migrate/migrations/v0_2_3.py
     name: global.server_port の移し替えの手順
@@ -169,7 +169,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/features/migrate/migrations/v0_2_3.py
+      - to: MOD-122-16
         type: implements
   - path: rule_inject/features/migrate/service.py
     name: 設定の移し替えの本体
@@ -177,7 +177,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/features/migrate/service.py
+      - to: MOD-122-17
         type: implements
   - path: rule_inject/features/migrate/types.py
     name: 設定の移し替えの型
@@ -185,7 +185,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/features/migrate/types.py
+      - to: MOD-122-18
         type: implements
   - path: rule_inject/features/record/service.py
     name: 既読の記録ファイルの読み書き
@@ -193,7 +193,7 @@ files:
     tags:
       - topic:既読の記録
     related:
-      - to: dev/設計書/モジュール構成/features/record/service.py
+      - to: MOD-122-19
         type: implements
   - path: rule_inject/features/record/types.py
     name: 既読の記録の型
@@ -201,7 +201,7 @@ files:
     tags:
       - topic:既読の記録
     related:
-      - to: dev/設計書/モジュール構成/features/record/types.py
+      - to: MOD-122-20
         type: implements
   - path: rule_inject/hooks/__init__.py
     name: フックの入口
@@ -210,7 +210,7 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/__init__.py
+      - to: MOD-122-23
         type: implements
   - path: rule_inject/hooks/_runner.py
     name: フックの共通の実行処理
@@ -219,7 +219,7 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/_runner.py
+      - to: MOD-122-24
         type: implements
   - path: rule_inject/hooks/discard_read.py
     name: 既読の記録の破棄
@@ -229,9 +229,9 @@ files:
       - topic:既読の記録
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/discard_read.py
+      - to: MOD-122-25
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の破棄.py
+      - to: IF-122-18
         type: implements
   - path: rule_inject/hooks/record_read.py
     name: 既読の記録
@@ -241,9 +241,9 @@ files:
       - topic:既読の記録
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/record_read.py
+      - to: MOD-122-26
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録.py
+      - to: IF-122-16
         type: implements
   - path: rule_inject/hooks/rule_guide.py
     name: ルール案内
@@ -253,9 +253,9 @@ files:
       - topic:ルールの案内
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/rule_guide.py
+      - to: MOD-122-27
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/ルール案内.py
+      - to: IF-122-14
         type: implements
   - path: rule_inject/hooks/search_guide.py
     name: 検索結果の案内
@@ -265,9 +265,9 @@ files:
       - topic:ルールの案内
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/search_guide.py
+      - to: MOD-122-29
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/検索結果の案内.py
+      - to: IF-122-19
         type: implements
   - path: rule_inject/hooks/start_server.py
     name: サーバーの起動の補助
@@ -278,9 +278,9 @@ files:
       - topic:起動
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/start_server.py
+      - to: MOD-122-30
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/サーバーの起動の補助.py
+      - to: IF-122-13
         type: implements
   - path: rule_inject/hooks/sweep_read.py
     name: 既読の記録の掃除
@@ -290,9 +290,9 @@ files:
       - topic:既読の記録
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/sweep_read.py
+      - to: MOD-122-31
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/既読の記録の掃除.py
+      - to: IF-122-17
         type: implements
   - path: rule_inject/hooks/work_rules.py
     name: 作業の決まりの注入
@@ -301,9 +301,9 @@ files:
       - topic:フック
       - tool:claude-code
     related:
-      - to: dev/設計書/モジュール構成/hooks/work_rules.py
+      - to: MOD-122-32
         type: implements
-      - to: dev/設計書/インターフェース定義/プラグイン/作業の決まりの注入.py
+      - to: IF-122-15
         type: implements
   - path: rule_inject/migrate/__main__.py
     name: 設定の移し替えの入口
@@ -311,7 +311,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/migrate/__main__.py
+      - to: MOD-122-33
         type: implements
   - path: rule_inject/server/__main__.py
     name: サーバーの起動の入口
@@ -321,9 +321,9 @@ files:
       - topic:起動
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/__main__.py
+      - to: MOD-122-34
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
+      - to: IF-122-6
         type: see_also
   - path: rule_inject/server/admin_tools.py
     name: サーバーの管理のツール
@@ -333,15 +333,15 @@ files:
       - topic:MCPサーバー
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/admin_tools.py
+      - to: MOD-122-36
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの状態の確認.py
+      - to: IF-122-5
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/設定の再読込.py
+      - to: IF-122-12
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
+      - to: IF-122-3
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの更新.py
+      - to: IF-122-4
         type: implements
   - path: rule_inject/server/_format.py
     name: 応答の形式と長さの切り詰め
@@ -350,7 +350,7 @@ files:
       - topic:MCPツール
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/_format.py
+      - to: MOD-122-35
         type: implements
   - path: rule_inject/server/app.py
     name: サーバーのコンポジションルート
@@ -360,9 +360,9 @@ files:
       - topic:MCPツール
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/app.py
+      - to: MOD-122-37
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの起動.py
+      - to: IF-122-6
         type: see_also
   - path: rule_inject/server/check_tools.py
     name: 索引のチェックのツール
@@ -372,9 +372,9 @@ files:
       - topic:索引のチェック
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/check_tools.py
+      - to: MOD-122-38
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/索引のチェック.py
+      - to: IF-122-11
         type: implements
   - path: rule_inject/server/clone.py
     name: クローンの操作
@@ -382,7 +382,7 @@ files:
     tags:
       - topic:MCPサーバー
     related:
-      - to: dev/設計書/モジュール構成/server/clone.py
+      - to: MOD-122-39
         type: implements
   - path: rule_inject/server/control.py
     name: サーバーの稼働の状態
@@ -391,9 +391,9 @@ files:
       - topic:MCPサーバー
       - topic:起動
     related:
-      - to: dev/設計書/モジュール構成/server/control.py
+      - to: MOD-122-40
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/サーバーの再起動.py
+      - to: IF-122-3
         type: implements
   - path: rule_inject/server/dev_docs.py
     name: 使われているタグを引くクライアント
@@ -404,7 +404,7 @@ files:
       - tool:dev-docs
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/dev_docs.py
+      - to: MOD-122-41
         type: implements
   - path: rule_inject/server/record_tools.py
     name: 既読の記録のツール
@@ -414,11 +414,11 @@ files:
       - topic:既読の記録
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/record_tools.py
+      - to: MOD-122-42
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の確認.py
+      - to: IF-122-10
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/既読の記録の削除.py
+      - to: IF-122-9
         type: implements
   - path: rule_inject/server/tools.py
     name: ルールの一覧・検索・エントリ編集のツール
@@ -428,15 +428,15 @@ files:
       - topic:ルール索引
       - tool:mcp
     related:
-      - to: dev/設計書/モジュール構成/server/tools.py
+      - to: MOD-122-43
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの一覧.py
+      - to: IF-122-7
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/ルールの検索.py
+      - to: IF-122-8
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの書き込み.py
+      - to: IF-122-2
         type: implements
-      - to: dev/設計書/インターフェース定義/MCPサーバー/エントリの削除.py
+      - to: IF-122-1
         type: implements
   - path: rule_inject/server/types.py
     name: サーバーの応答の型
@@ -446,7 +446,7 @@ files:
       - tool:mcp
       - tool:pydantic
     related:
-      - to: dev/設計書/モジュール構成/server/types.py
+      - to: MOD-122-44
         type: implements
   - path: rule_inject/shared/_settings_yaml.py
     name: 設定ファイルの YAML の読み取り
@@ -454,7 +454,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/shared/_settings_yaml.py
+      - to: MOD-122-45
         type: implements
   - path: rule_inject/shared/errors.py
     name: 共通の例外
@@ -462,7 +462,7 @@ files:
     tags:
       - topic:例外
     related:
-      - to: dev/設計書/モジュール構成/shared/errors.py
+      - to: MOD-122-46
         type: implements
   - path: rule_inject/shared/logger.py
     name: 失敗のログ
@@ -470,7 +470,7 @@ files:
     tags:
       - topic:ログ
     related:
-      - to: dev/設計書/モジュール構成/shared/logger.py
+      - to: MOD-122-47
         type: implements
   - path: rule_inject/shared/paths.py
     name: 記録フォルダとルールの場所の解決
@@ -479,7 +479,7 @@ files:
       - topic:設定ファイル
       - topic:既読の記録
     related:
-      - to: dev/設計書/モジュール構成/shared/paths.py
+      - to: MOD-122-48
         type: implements
   - path: rule_inject/shared/settings.py
     name: 設定ファイルの読み取り
@@ -487,7 +487,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/モジュール構成/shared/settings.py
+      - to: MOD-122-49
         type: implements
   - path: rule_inject/shared/variables.py
     name: 索引の変数参照の展開
@@ -496,7 +496,7 @@ files:
       - topic:変数参照
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/shared/variables.py
+      - to: MOD-122-50
         type: implements
   - path: rule_inject/shared/yaml_lines.py
     name: YAML の行の読み取り
@@ -505,5 +505,5 @@ files:
       - topic:設定ファイル
       - topic:ルール索引
     related:
-      - to: dev/設計書/モジュール構成/shared/yaml_lines.py
+      - to: MOD-122-51
         type: implements

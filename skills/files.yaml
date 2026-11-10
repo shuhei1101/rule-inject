@@ -6,7 +6,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/インターフェース定義/プラグイン/端末のセットアップ
+      - to: IF-122-20
         type: implements
   - path: setup/SKILL.md
     name: 索引の登録のスキル
@@ -14,5 +14,5 @@ files:
     tags:
       - topic:設定ファイル
     related:
-      - to: dev/設計書/インターフェース定義/プラグイン/索引の登録
+      - to: IF-122-21
         type: implements

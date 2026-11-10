@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=schemas/files.schema.yaml
+files:
+  - path: README.md
+    name: README
+    description: rule-inject が何かを 1 行で説明し、公開ドキュメントの場所を示す。リポジトリを初めて開くときに読む。
+    tags:
+      - topic:ルールの案内
+  - path: CLAUDE.md
+    name: CLAUDE
+    description: Claude Code がリポジトリを開いたときに読む指示で、ドキュメントの場所と索引の引き方を示す。
+    tags:
+      - tool:claude-code
+  - path: rules.yaml
+    name: このリポジトリのルール索引（直下）
+    description: このリポジトリで作業するときに rule-inject が案内するルールのエントリを持つ索引。案内するルールを追加・修正するときに開く。
+    tags:
+      - topic:ルール索引
