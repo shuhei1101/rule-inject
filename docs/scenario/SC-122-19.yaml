@@ -12,11 +12,11 @@ scenarios:
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
         description: コメント・引用符つきの値・1 行のフロー形式の `paths` を持つエントリを 1 つ持つ YAML
-        notes: 編集の前の内容を控え、差分を比べる
+        notes: 編集の前の内容を記録し、差分を比べる
       - name: ルールの本文
-        description: 作成するエントリが指すルールの Markdown を置く
+        description: 作成するエントリが指すルールの Markdown を配置する
       - name: 引数
-        description: 索引の場所と、ルールの場所・80 字を超える `paths` の glob・`on` を持つ新しいエントリを渡す
+        description: 索引の場所と、ルールの場所・80 字を超える `paths` の glob・`on` を持つ新しいエントリを指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -33,7 +33,7 @@ scenarios:
         SV->>IDX: 書き込む
         SV-->>CL: 書き込んだエントリの位置
     expected:
-      - 索引のファイルの末尾に、渡したエントリが追加されている
+      - 索引のファイルの末尾に、指定したエントリが追加されている
       - 編集の前との差分が追加したエントリの行だけで、新しい `paths` が 1 行のフロー形式のリストになっている
       - 索引をフックと同じ読み取りで読むと、追加したエントリが読み飛ばされずに読める
       - 応答に、書き込んだエントリの位置が載っている
@@ -46,9 +46,9 @@ scenarios:
         description: エントリを新規作成するシナリオと同じ
       - name: 索引
         description: コメントを持つエントリを 2 つ持つ YAML
-        notes: 編集の前の内容を控え、差分を比べる
+        notes: 編集の前の内容を記録し、差分を比べる
       - name: 引数
-        description: 索引の場所、2 つ目のエントリの位置と、書き換える `paths` の値を渡す
+        description: 索引の場所、2 つ目のエントリの位置と、書き換える `paths` の値を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -65,7 +65,7 @@ scenarios:
         SV->>IDX: 書き込む
         SV-->>CL: 書き込んだエントリの位置
     expected:
-      - 2 つ目のエントリの `paths` が渡した値になっている
+      - 2 つ目のエントリの `paths` が指定した値になっている
       - 編集の前との差分が書き換えた行だけで、1 つ目のエントリとコメントは変わっていない
     test: test_normal_when_entry_updated
   - name: 正常シナリオ（エントリを無効にする）
@@ -75,9 +75,9 @@ scenarios:
       - name: 設定ファイル
         description: エントリを新規作成するシナリオと同じ
       - name: 索引
-        description: '`enabled` を書かないエントリを 1 つ持つ YAML'
+        description: '`enabled` を記載しないエントリを 1 つ持つ YAML'
       - name: 引数
-        description: '索引の場所、エントリの位置と、`enabled: false` を渡す'
+        description: '索引の場所、エントリの位置と、`enabled: false` を指定する'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -94,8 +94,8 @@ scenarios:
         SV->>IDX: 書き込む
         SV-->>CL: 書き込んだエントリの位置
     expected:
-      - '対象のエントリに `enabled: false` が書かれている'
-      - 索引をフックと同じ読み取りで読むと、対象のエントリが照合に使われない
+      - '対象のエントリに `enabled: false` が記載されている'
+      - 索引をフックと同じ読み取りで読むと、対象のエントリが照合に使用されない
     test: test_normal_when_entry_disabled
   - name: 正常シナリオ（エントリを削除する）
     setup:
@@ -106,7 +106,7 @@ scenarios:
       - name: 索引
         description: コメントを持つエントリを 2 つ持つ YAML
       - name: 引数
-        description: 索引の場所と、1 つ目のエントリの位置を渡す
+        description: 索引の場所と、1 つ目のエントリの位置を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -134,9 +134,9 @@ scenarios:
         description: エントリを新規作成するシナリオと同じ
       - name: 索引
         description: エントリを 1 つ持つ YAML
-        notes: 編集の前のバイト列を控える
+        notes: 編集の前のバイト列を記録する
       - name: 引数
-        description: '索引の場所と、`paths: []` を持つ新しいエントリを渡す'
+        description: '索引の場所と、`paths: []` を持つ新しいエントリを指定する'
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -162,10 +162,10 @@ scenarios:
       - name: 設定ファイル
         description: エントリを新規作成するシナリオと同じ
       - name: 対象のファイル
-        description: 設定ファイルで読まない場所に置いた、索引の書式の YAML
-        notes: 編集の前のバイト列を控える
+        description: 設定ファイルで読まない場所に配置した、索引の書式の YAML
+        notes: 編集の前のバイト列を記録する
       - name: 引数
-        description: 対象のファイルの場所と、書式どおりの新しいエントリを渡す
+        description: 対象のファイルの場所と、書式どおりの新しいエントリを指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -188,9 +188,9 @@ scenarios:
         description: エントリを新規作成するシナリオと同じ
       - name: 索引
         description: エントリを 1 つ持つ YAML
-        notes: 編集の前のバイト列を控える
+        notes: 編集の前のバイト列を記録する
       - name: 引数
-        description: 索引の場所と、存在しないエントリの位置（エントリの数以上）を渡す
+        description: 索引の場所と、存在しないエントリの位置（エントリの数以上）を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -216,11 +216,11 @@ scenarios:
         description: エントリを新規作成するシナリオと同じ
       - name: 索引
         description: '`read_by` を持つエントリを 1 つ持つ YAML'
-        notes: 編集の前の内容を控え、差分を比べる
+        notes: 編集の前の内容を記録し、差分を比べる
       - name: ルールの本文
-        description: エントリが指すルールの Markdown を置く
+        description: エントリが指すルールの Markdown を配置する
       - name: 引数
-        description: 索引の場所と、既存のエントリの位置と、ルールを参照する MCP のツールと引数（`sections` を含む）を追加したエントリを渡す
+        description: 索引の場所と、既存のエントリの位置と、ルールを参照する MCP のツールと引数（`sections` を含む）を追加したエントリを指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -245,11 +245,11 @@ issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: ツールで 1 エントリを直しても、索引に手で書いたコメントと書式が残り、フックが読めない索引にならないこと
+    interest: ツールで 1 エントリを修正しても、索引に手で記載したコメントと書式が残り、フックが読めない索引にならないこと
 trigger: Claude Code が編集のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
   - フックとサーバーが同じ設定ファイルを読む
-success_guarantee: 書き込みで索引に新しい問題（フックが読めない・Schema の違反・ルールの場所にファイルが無い）を生まず、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び）は書き換えない。書き込んだ内容は、サーバーを再起動せずに次のツールの呼び出しと次のフックの呼び出しに効く。
+success_guarantee: 書き込みで索引に新しい問題（フックが読めない・Schema の違反・ルールの場所にファイルが無い）を生まず、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び）は書き換えない。書き込んだ内容は、サーバーを再起動せずに次のツールの呼び出しと次のフックの呼び出しに反映される。
 minimal_guarantee: 書き込まなかったときは、索引のファイルを 1 バイトも変えない。設定ファイルで読まないファイルには書き込まない。
 test_file: tests/e2e/単一ユースケース/test_edit_index_entries.py

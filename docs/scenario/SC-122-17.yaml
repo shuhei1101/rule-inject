@@ -7,17 +7,17 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定のフック・プラグインを読み込ませない
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 検索されるファイル
-        description: 検索で当たる文字列を含むファイルを 1 つ置く
+        description: 検索でヒットする文字列を含むファイルを 1 つ配置する
       - name: 索引
-        description: 検索されるファイルに当たるパスの glob と、書く操作だけを必須とするエントリを 1 つ持つ YAML
+        description: 検索されるファイルにヒットするパスの glob と、書く操作だけを必須とするエントリを 1 つ持つ YAML
         notes: 読む操作を必須に含めない
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: プロンプトで、プロジェクトのフォルダを Grep で検索し、当たったファイルの名前だけを回答するよう指示する
-        notes: '`--allowedTools` で Grep だけを許可し、フォルダを検索させる（ファイルを指す Grep は `PreToolUse` の案内に当たる）'
+        description: プロンプトで、プロジェクトのフォルダを Grep で検索し、ヒットしたファイルの名前だけを回答するよう指示する
+        notes: '`--allowedTools` で Grep だけを許可し、フォルダを検索させる（ファイルを指す Grep は `PreToolUse` の案内に該当する）'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -49,16 +49,16 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 検索されるファイル
-        description: 名前で見分けられるファイルを 1 つ置く
+        description: 名前で見分けられるファイルを 1 つ配置する
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
         description: プロンプトで、プロジェクトのフォルダを Bash の `find` で探し、見つかったファイルの名前だけを回答するよう指示する
-        notes: '`--allowedTools` で Bash を許可し、Grep・Glob を `--disallowedTools` で外して探し方を 1 つに定める'
+        notes: '`--allowedTools` で Bash を許可し、Grep・Glob を `--disallowedTools` で除外して探し方を 1 つに定める'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -89,14 +89,14 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 検索されるファイル
         description: 正常シナリオと同じファイル
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
       - name: 案内済みの記録
         description: そのセッションでルールの場所を案内している
-        notes: 正常シナリオを流したセッションを `--resume {session_id}` で続ける
+        notes: 正常シナリオを実行したセッションを `--resume {session_id}` で続ける
       - name: 操作
         description: プロンプトで、同じ検索をもう一度 Grep で行うよう指示する
         notes: '`--allowedTools` で Grep だけを許可する'
@@ -129,16 +129,16 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 検索されるファイル
-        description: 検索で当たる文字列を含むファイルを 1 つ置く
+        description: 検索でヒットする文字列を含むファイルを 1 つ配置する
       - name: 索引
         description: 正常シナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と引数を記載した YAML
         notes: 読む操作を必須に含めない
       - name: 既読の記録
         description: そのセッションの記録が無い（新しいセッション）
       - name: 操作
-        description: 正常シナリオと同じ（プロジェクトのフォルダを Grep で検索し、当たったファイルの名前だけを回答する）
+        description: 正常シナリオと同じ（プロジェクトのフォルダを Grep で検索し、ヒットしたファイルの名前だけを回答する）
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -163,7 +163,7 @@ scenarios:
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）の検索結果の案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
-      - 同じ文面に、ツールが使えないときはパスを Read で参照する旨が載っている
+      - 同じ文面に、ツールが使用できないときはパスを Read で参照する旨が載っている
     test: test_normal_with_read_tool
 lead: 検索のツールを呼んだ直後にフックが結果に出たファイルのルールを止めずに案内する流れを示し、検索結果の案内を変えるときに参照する。
 issue: 16
@@ -171,17 +171,17 @@ primary_actor: Claude Code のセッション
 trigger: Claude Code が Grep・Glob・検索の Bash を呼び、結果が返る
 preconditions:
   - プラグインが Claude Code に読み込まれている
-  - 索引を、設定ファイルで指した場所か既定の置き場所に置いている
+  - 索引を、設定ファイルで指した場所か既定の配置場所に配置している
 notes:
-  結合テストで確かめる要望: |-
-    次の要望は利用者から見える結末が上のシナリオと変わらないため、E2E ではなくインターフェース定義（結合テスト）で確かめる。
+  結合テストで確認する要望: |-
+    次の要望は、E2E ではなくインターフェース定義（結合テスト）で確認する。
 
-    - Glob の結果と、Grep の出力の形式（ファイル名だけ・一致した行・件数）ごとのパスの拾い方
-    - `grep` `rg` `ls` の Bash の出力からのパスの拾い方と、検索でない Bash を対象にしないこと
+    - Glob の結果と、Grep の出力の形式（ファイル名だけ・一致した行・件数）ごとのパスの取得の仕方
+    - `grep` `rg` `ls` の Bash の出力からのパスの取得の仕方と、検索でない Bash を対象にしないこと
     - 実在しないパス・フォルダを照合しないこと
     - 既読のルールを案内しないこと
     - 既読の後に本文が変わったルールを、未読として案内すること
     - 案内が非機能要件「フックの案内文の長さ」を超えるときの扱い
-    - 索引・既読の記録・案内済みの記録が読めない、案内済みの記録が書けないときの扱い
-    - 無効のエントリだけが当たるファイルを案内しないこと
+    - 索引・既読の記録・案内済みの記録が読めない、案内済みの記録が書き込めないときの扱い
+    - 無効のエントリだけがヒットするファイルを案内しないこと
 test_file: tests/e2e/単一ユースケース/test_receive_guidance_for_search_results.py

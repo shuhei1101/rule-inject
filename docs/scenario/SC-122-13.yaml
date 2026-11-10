@@ -11,7 +11,7 @@ scenarios:
       - name: 設定ファイル
         description: '`{XDG_CONFIG_HOME}/rule-inject/settings.yaml` の `global.indexes` にテスト用の索引を記載する'
       - name: 索引
-        description: '操作の対象のパスに当たり、`on: [write]` のエントリを持つ索引'
+        description: '操作の対象のパスにヒットし、`on: [write]` のエントリを持つ索引'
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -37,8 +37,8 @@ scenarios:
       - name: 環境変数
         description: '`XDG_CONFIG_HOME` をファイルの無いテスト用のフォルダへ向け、`RULE_INJECT_CONFIG` を指定しない'
       - name: 索引
-        description: プロジェクトの直下の `rules.yaml` に、操作の対象のパスに当たるエントリを記載する
-        notes: 設定なしのときの既定の置き場所
+        description: プロジェクトの直下の `rules.yaml` に、操作の対象のパスにヒットするエントリを記載する
+        notes: 設定なしのときの既定の配置場所
     flow: |-
       ```mermaid
       sequenceDiagram
@@ -85,11 +85,11 @@ issue: 105
 primary_actor: 利用者
 stakeholders:
   - name: 利用者
-    interest: '`env` を書かなくても、既定の場所に置いた設定が有効になること'
+    interest: '`env` を記載しなくても、既定の場所に配置した設定が有効になること'
 trigger: '`RULE_INJECT_CONFIG` を配置せずに Claude Code を起動して、ファイルを記載する'
 preconditions:
   - プラグインを読み込んでいる
-  - '`RULE_INJECT_CONFIG` を置いていない'
+  - '`RULE_INJECT_CONFIG` を設定していない'
 success_guarantee: 既定の場所の設定ファイルの索引で、ルールの案内を受ける。
 minimal_guarantee: 既定の場所のファイルが読み取れないときは既定値で動かさず、ファイルの場所と理由を案内に表示する。
 test_file: tests/e2e/単一ユースケース/test_read_default_settings.py

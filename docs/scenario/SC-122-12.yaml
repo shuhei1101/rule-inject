@@ -11,10 +11,10 @@ scenarios:
         description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ'
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
-        description: 対象のパスに当たり書く操作を止めるエントリと、同じパスに当たり読む操作だけを止めるエントリを 1 つずつ持つ YAML
+        description: 対象のパスにヒットし書く操作を止めるエントリと、同じパスにヒットし読む操作だけを止めるエントリを 1 つずつ持つ YAML
         notes: ルールの場所は別々にする
       - name: 引数
-        description: プロジェクトの直下・対象のパス・書く操作を渡す
+        description: プロジェクトの直下・対象のパス・書く操作を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -41,7 +41,7 @@ scenarios:
       - name: 索引
         description: '`tools` にツール名の glob、`args` に引数の値のパターンを持つエントリを 1 つ持つ YAML'
       - name: 引数
-        description: プロジェクトの直下・エントリに当たるツール名・パターンに当たる引数を渡す
+        description: プロジェクトの直下・エントリにヒットするツール名・パターンにヒットする引数を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -65,9 +65,9 @@ scenarios:
       - name: 設定ファイル
         description: ファイルのパスで検索するシナリオと同じ
       - name: 索引
-        description: '対象のパスに当たるエントリを `enabled: false` で 1 つだけ持つ YAML'
+        description: '対象のパスにヒットするエントリを `enabled: false` で 1 つだけ持つ YAML'
       - name: 引数
-        description: プロジェクトの直下・対象のパス・書く操作を渡す
+        description: プロジェクトの直下・対象のパス・書く操作を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -82,7 +82,7 @@ scenarios:
         IDX-->>SV: 当たるエントリが無い（無効のエントリは照合に使わない）
         SV-->>CL: 空の結果
     expected:
-      - 応答の当たるルールが空
+      - 応答のヒットするルールが空
     test: test_normal_when_no_rule_matched
   - name: 異常シナリオ（パスとツール名の両方を渡す）
     setup:
@@ -91,7 +91,7 @@ scenarios:
       - name: 設定ファイル
         description: ファイルのパスで検索するシナリオと同じ
       - name: 引数
-        description: プロジェクトの直下に加え、対象のパスとツール名の両方を渡す
+        description: プロジェクトの直下に加え、対象のパスとツール名の両方を指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -100,18 +100,18 @@ scenarios:
         CL->>SV: 検索（対象のパスとツール名の両方）
         SV-->>CL: ツールのエラー（どちらか 1 つを渡す旨）
     expected:
-      - ツールの結果がエラーで、ファイルのパスかツール名のどちらか 1 つを渡す旨が載っている
+      - ツールの結果がエラーで、ファイルのパスかツール名のどちらか 1 つを指定する旨が載っている
     test: test_error_when_both_path_and_tool
 lead: Claude Code が MCP サーバーの検索のツールで操作にヒットするルールと止めるかを受け取る流れを示し、ルールの検索を変えるときに参照する。
 issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: 索引を直した後、実際に操作する前に、どのルールがどう当たるかを確かめられること
+    interest: 索引を修正した後、実際に操作する前に、どのルールがどうヒットするかを確認できること
 trigger: Claude Code が検索のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
   - フックとサーバーが同じ設定ファイルを読む
-success_guarantee: フックの `PreToolUse` と同じ索引・同じ照合で、当たるルールと止めるかを返す。既読の記録は見ず、未読とみなした結果を返す。
+success_guarantee: フックの `PreToolUse` と同じ索引・同じ照合で、ヒットするルールと止めるかを返却する。既読の記録は参照せず、未読とみなした結果を返却する。
 minimal_guarantee: 索引・既読の記録・サーバーの状態を書き換えない。
 test_file: tests/e2e/単一ユースケース/test_search_rules_for_operation.py

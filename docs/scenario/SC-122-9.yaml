@@ -12,7 +12,7 @@ scenarios:
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
         description: ユーザーの索引とプロジェクトの索引に、それぞれ有効なエントリを 1 つずつ持つ YAML
-        notes: ルールの本文はローカルに置いた Markdown
+        notes: ルールの本文はローカルに配置した Markdown
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -29,7 +29,7 @@ scenarios:
     expected:
       - 応答に、サーバーが読んだ設定ファイルの場所が載っている
       - 応答に、ユーザーの索引とプロジェクトの索引の場所が、フックが読む順に載っている
-      - 索引ごとに、エントリのルールの場所（展開・解決した後）と、当てるパス・止める操作の種別が載っている
+      - 索引ごとに、エントリのルールの場所（展開・解決した後）と、適用するパス・止める操作の種別が載っている
     test: test_normal
   - name: 正常シナリオ（読めない索引と除いたエントリがある）
     setup:
@@ -39,7 +39,7 @@ scenarios:
         description: 正常シナリオの設定ファイルの `projects[].indexes` に、無い索引の場所を 1 つ追加する
       - name: 索引
         description: 'プロジェクトの索引に、展開できない変数参照（`!{名前}`）を `rule` に持つエントリと、`enabled: false` のエントリを 1 つずつ追加する'
-        notes: 変数参照の名前は起動の側の環境変数に置かない
+        notes: 変数参照の名前は起動の側の環境変数に設定しない
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -56,7 +56,7 @@ scenarios:
     expected:
       - 応答の読めない索引に、無い索引の場所と理由が載っている
       - 応答の読み飛ばしたエントリに、変数参照を展開できないエントリと、展開できない名前が載っている
-      - '応答の無効のエントリに、`enabled: false` のエントリが載り、効いているエントリには載っていない'
+      - '応答の無効のエントリに、`enabled: false` のエントリが載り、有効なエントリには載っていない'
     test: test_normal_when_some_entries_excluded
   - name: 異常シナリオ（プロジェクトの直下が絶対パスでない）
     setup:
@@ -65,7 +65,7 @@ scenarios:
       - name: 設定ファイル
         description: 正常シナリオと同じ
       - name: 引数
-        description: プロジェクトの直下に相対パスを渡す
+        description: プロジェクトの直下に相対パスを指定する
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -74,7 +74,7 @@ scenarios:
         CL->>SV: 一覧（相対パス）
         SV-->>CL: ツールのエラー（絶対パスで渡す旨）
     expected:
-      - ツールの結果がエラーで、プロジェクトの直下を絶対パスで渡す旨が載っている
+      - ツールの結果がエラーで、プロジェクトの直下を絶対パスで指定する旨が載っている
     test: test_error_when_project_dir_not_absolute
   - name: 正常シナリオ（参照するツールを記載したエントリがある）
     setup:
@@ -85,7 +85,7 @@ scenarios:
         notes: '`RULE_INJECT_CONFIG` で指す'
       - name: 索引
         description: ルールを参照する MCP のツールと引数を記載したエントリと、記載していないエントリを 1 つずつ持つ YAML
-        notes: ルールの本文はローカルに置いた Markdown
+        notes: ルールの本文はローカルに配置した Markdown
     flow: |-
       sequenceDiagram
         participant CL as MCP クライアント
@@ -108,11 +108,11 @@ issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者
-    interest: フックが今どの索引のどのエントリで案内しているかを、索引を開かずに確かめられること
+    interest: フックが今どの索引のどのエントリで案内しているかを、索引を開かずに確認できること
 trigger: Claude Code が一覧のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
   - フックとサーバーが同じ設定ファイルを読む
-success_guarantee: フックが同じプロジェクトで読む索引とエントリを、フックと同じ規則（設定ファイルの `projects[].match`・既定の索引・変数の展開）で返す。
+success_guarantee: フックが同じプロジェクトで読む索引とエントリを、フックと同じ規則（設定ファイルの `projects[].match`・既定の索引・変数の展開）で返却する。
 minimal_guarantee: 索引とサーバーの状態を書き換えない。
 test_file: tests/e2e/単一ユースケース/test_view_effective_rules.py

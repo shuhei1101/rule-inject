@@ -6,15 +6,15 @@ scenarios:
     setup:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、利用者の設定（`~/.claude`）のフック・プラグイン・MCP サーバーを読み込ませない
-        notes: 残るのは組み込みのプラグイン（agents-md・telemetry）だけ。起動時の init のプラグイン一覧で確かめた（2026-09-29）。`--bare` は API キーの課金になるため使わない
+        notes: 残るのは組み込みのプラグイン（agents-md・telemetry）だけ。起動時の init のプラグイン一覧で確認した（2026-09-29）。`--bare` は API キーの課金になるため使用しない
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
-        description: ルールの場所と、当てるパスの glob（対象のファイルに当たる）・書く操作を必須とするエントリを 1 つ持つ YAML
-        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに当たる要素で指す。対象のファイルはまだ無いパスにし、書かれたかで結末を見分ける'
+        description: ルールの場所と、適用するパスの glob（対象のファイルにヒットする）・書く操作を必須とするエントリを 1 つ持つ YAML
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `projects` の、起動したプロジェクトに該当する要素で指す。対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける'
       - name: 書く操作の許可
         description: '`--allowedTools` で Write と Edit を許可する'
-        notes: Claude Code は作業の決まりに従い、対象のファイルを Write で空で作ってから Edit で中身を書くことがある
+        notes: Claude Code は作業の決まりに従い、対象のファイルを Write で空で作ってから Edit で中身を書き込むことがある
     flow: |-
       ```mermaid
       flowchart TD
@@ -28,9 +28,9 @@ scenarios:
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
     expected:
-      - 1 回目の書く操作は止められ、案内にルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている
+      - 1 回目の書く操作は止められ、案内にルールのパスと、Read で参照してから同じ操作を再試行する旨が載っている
       - Read の結果に、ルールの本文が載っている
-      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+      - 再試行した書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal
     uses:
       - SC-122-16#scenarios[正常シナリオ（止めて案内する）]
@@ -41,12 +41,12 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
       - name: 読み方の指示
         description: プロンプトで、ルールの本文を Read ではなく Bash の `cat` で読むよう指示する
-        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で Bash を許可し、Read を `--disallowedTools` で除外して読み方を 1 つに定める'
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
@@ -63,7 +63,7 @@ scenarios:
       ```
     expected:
       - 1 回目の書く操作は止められ、案内にルールの場所が載っている
-      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+      - 再試行した書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_read_by_bash
     uses:
       - SC-122-16#scenarios[正常シナリオ（止めて案内する）]
@@ -74,15 +74,15 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
       - name: 既読のセッション
         description: 正常シナリオを終え、ルールを既読にしたセッション
         notes: 以降の実行は、このセッションを `--resume {session_id}` で続ける
       - name: 圧縮
-        description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を起こす'
-        notes: '`-p` の `--resume` でも、同じ session_id に `PreCompact`（`trigger: manual`）が走ることを確かめた（2026-09-29、Claude Code 2.1.284）'
+        description: '`claude -p "/compact" --resume {session_id}` で手動の圧縮を発生させる'
+        notes: '`-p` の `--resume` でも、同じ session_id に `PreCompact`（`trigger: manual`）が走ることを確認した（2026-09-29、Claude Code 2.1.284）'
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
@@ -101,7 +101,7 @@ scenarios:
       ```
     expected:
       - 圧縮の後の 1 回目の書く操作は止められ、案内にルールの場所が載っている
-      - 本文を Read で読み直した後の書く操作は止められず、対象のファイルに中身が書かれている
+      - 本文を Read で再度読んだ後の書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_after_compact
     uses:
       - SC-122-11#scenarios[正常シナリオ]
@@ -111,15 +111,15 @@ scenarios:
   - name: 正常シナリオ（本文を文書のMCPで読む）
     setup:
       - name: Mock
-        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
-        notes: MCP サーバーは `--mcp-config` で渡す。ツール `search_docs` は、ルールの本文を `<document path="{ルールの場所}" scope="full">` で包んで返す
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返却する MCP のツールは、テストが用意する stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で指定する。ツール `search_docs` は、ルールの本文を `<document path="{ルールの場所}" scope="full">` で包んで返却する
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML（`read_by` を持たない）
       - name: 読み方の指示
         description: プロンプトで、ルールの本文を Read ではなく `search_docs` で読むよう指示する
-        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で外して読み方を 1 つに定める'
+        notes: '`--allowedTools` で `mcp__docs__search_docs` を許可し、Read と Bash を `--disallowedTools` で除外して読み方を 1 つに定める'
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
@@ -137,7 +137,7 @@ scenarios:
     expected:
       - 1 回目の書く操作は止められ、案内にルールの場所が載っている
       - '`search_docs` の結果に、ルールの本文が載っている'
-      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+      - 再試行した書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_read_by_mcp_result
     uses:
       - SC-122-16#scenarios[正常シナリオ（止めて案内する）]
@@ -148,14 +148,14 @@ scenarios:
       - name: Mock
         description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリを 1 つ持つ YAML
       - name: 既読のセッション
         description: 正常シナリオを終え、ルールを既読にしたセッション
         notes: 以降の実行は、このセッションを `--resume {session_id}` で続ける
       - name: ルールの書き換え
-        description: 続ける前に、テストがルールの本文に、応答に出たかで読み直したことを見分ける 1 行を追加する
+        description: 続ける前に、テストがルールの本文に、応答に出たかで再度読んだことを見分ける 1 行を追加する
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
         notes: 対象のファイルは正常シナリオと別の、まだ無いパスにする
@@ -174,7 +174,7 @@ scenarios:
     expected:
       - ルールが変わった後の 1 回目の書く操作は止められ、案内にルールの場所が載っている
       - Read の結果に、書き換えた後のルールの本文が載っている
-      - 本文を Read で読み直した後の書く操作は止められず、対象のファイルに中身が書かれている
+      - 本文を Read で再度読んだ後の書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_rule_changed
     uses:
       - SC-122-16#scenarios[正常シナリオ（読んだ後に変わったルールを案内する）]
@@ -183,16 +183,16 @@ scenarios:
   - name: 正常シナリオ（案内されたツールで読む）
     setup:
       - name: Mock
-        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返す MCP のツールは、テストが置く stdio の MCP サーバーで代える
-        notes: MCP サーバーは `--mcp-config` で渡す。ツール `search_docs` は、`sections` を含む引数を受けたら、ルールの本文のうちそのセクションだけを `<document path="{ルールの場所}" scope="section">` で包んで返し、受けた引数をテストが読めるファイルへ出力する
+        description: 正常シナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）。文書を返却する MCP のツールは、テストが用意する stdio の MCP サーバーで代える
+        notes: MCP サーバーは `--mcp-config` で指定する。ツール `search_docs` は、`sections` を含む引数を受けたら、ルールの本文のうちそのセクションだけを `<document path="{ルールの場所}" scope="section">` で包んで返却し、受けた引数をテストが読めるファイルへ出力する
       - name: ルールの本文
-        description: ローカルに置いた、セクションを 2 つ以上持つルールの Markdown
+        description: ローカルに配置した、セクションを 2 つ以上持つルールの Markdown
       - name: 索引
         description: 正常シナリオと同じエントリに、ルールを参照する MCP のツール（`mcp__docs__search_docs`）と、`sections` を含む引数を記載した YAML（`read_by` を持たない）
         notes: 引数は、テストが受けた引数と照らして見分けられる値にする
       - name: 読み方の指示
         description: プロンプトでは読み方を指示しない
-        notes: '`--allowedTools` で `mcp__docs__search_docs` と Read を許可し、案内のとおりにツールを選ぶかを見る'
+        notes: '`--allowedTools` で `mcp__docs__search_docs` と Read を許可し、案内のとおりにツールを選ぶかを確認する'
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
@@ -210,7 +210,7 @@ scenarios:
     expected:
       - 1 回目の書く操作は止められ、案内に索引に記載したツールと引数と、代わりに Read で読むルールの場所が載っている
       - '`search_docs` が、索引に記載した引数で呼ばれている'
-      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+      - 再試行した書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_read_by_guided_tool
     uses:
       - SC-122-16#scenarios[正常シナリオ（参照するツールを添えて止めて案内する）]
@@ -219,14 +219,14 @@ scenarios:
   - name: 正常シナリオ（案内されたツールが使えずReadで読む）
     setup:
       - name: Mock
-        description: 正常シナリオ（案内されたツールで読む）と同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}` と、テストが置く stdio の MCP サーバー）
+        description: 正常シナリオ（案内されたツールで読む）と同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}` と、テストが用意する stdio の MCP サーバー）
       - name: ルールの本文
-        description: ローカルに置いたルールの Markdown
+        description: ローカルに配置したルールの Markdown
       - name: 索引
         description: 正常シナリオ（案内されたツールで読む）と同じエントリを 1 つ持つ YAML
       - name: ツールの禁止
-        description: 案内するツールを使えないセッションにする
-        notes: '`--disallowedTools` で `mcp__docs__search_docs` を外し、`--allowedTools` で Read を許可する'
+        description: 案内するツールを使用できないセッションにする
+        notes: '`--disallowedTools` で `mcp__docs__search_docs` を除外し、`--allowedTools` で Read を許可する'
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
@@ -244,7 +244,7 @@ scenarios:
     expected:
       - 1 回目の書く操作は止められ、案内に索引に記載したツールと引数と、代わりに Read で読むルールの場所が載っている
       - Read の結果に、ルールの本文が載っている
-      - やり直した書く操作は止められず、対象のファイルに中身が書かれている
+      - 再試行した書く操作は止められず、対象のファイルに中身が書き込まれている
     test: test_normal_when_guided_tool_unavailable
     uses:
       - SC-122-16#scenarios[正常シナリオ（参照するツールを添えて止めて案内する）]
@@ -255,11 +255,11 @@ issue: 2
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: ユーザー
-    interest: 索引に書いたルールが、対象のファイルを書く前に必ず読まれること
-trigger: Claude Code が、索引のエントリに当たるファイルを書こうとする
+    interest: 索引に記載したルールが、対象のファイルに書き込む前に必ず読まれること
+trigger: Claude Code が、索引のエントリにヒットするファイルを書き込もうとする
 preconditions:
   - プラグインが Claude Code に読み込まれている
-  - 設定ファイルで指した場所に索引が置かれ、対象のファイルに当たるエントリ（書く操作が必須）が 1 つある
-success_guarantee: 索引が読め、フックが時間内に終わる限り、対象のファイルは当たるルールの本文を読んだ後にだけ書かれる。
-minimal_guarantee: 設定ファイルと索引が読め、フックが時間内に終わる限り、ルールを読むまで対象のファイルは書かれない。索引か設定ファイルが読めないときは、読めなかった場所と理由がコンテキストに載る。
+  - 設定ファイルで指した場所に索引が配置され、対象のファイルにヒットするエントリ（書く操作が必須）が 1 つある
+success_guarantee: 索引が読め、フックが時間内に終わる限り、対象のファイルはヒットするルールの本文を読んだ後にだけ書き込まれる。
+minimal_guarantee: 設定ファイルと索引が読め、フックが時間内に終わる限り、ルールを読むまで対象のファイルは書き込まれない。索引か設定ファイルが読めないときは、読めなかった場所と理由がコンテキストに載る。
 test_file: tests/e2e/複合ユースケース/test_read_rule_then_touch_file.py

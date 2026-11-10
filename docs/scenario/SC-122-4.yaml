@@ -38,7 +38,7 @@ scenarios:
         description: 正常シナリオと同じ
       - name: 起動したサーバー
         description: 起動のコマンドで待ち受けているサーバー
-        notes: 待ち受けを確かめてから止める
+        notes: 待ち受けを確認してから止める
     flow: |-
       sequenceDiagram
         participant U as 利用者
@@ -70,7 +70,7 @@ scenarios:
         SV-->>U: 標準エラーに理由を書き、0 以外の終了コードで終わる
     expected:
       - プロセスが 0 以外の終了コードで終わっている
-      - 標準エラーに、ポートの番号と使われている旨が載っている
+      - 標準エラーに、ポートの番号と使用されている旨が載っている
     test: test_error_when_port_in_use
   - name: 異常シナリオ（設定ファイルが読めない）
     setup:
@@ -78,7 +78,7 @@ scenarios:
         description: 正常シナリオと同じ（テストが起動のコマンドを子プロセスで実行する）
       - name: 設定ファイル
         description: 知らないキーを持つ設定ファイル
-        notes: フックが設定ファイルの誤りとして扱う書き方にする
+        notes: フックが設定ファイルの誤りとして扱う記載にする
     flow: |-
       sequenceDiagram
         participant U as 利用者
@@ -98,7 +98,7 @@ issue: 58
 primary_actor: 利用者
 stakeholders:
   - name: 利用者
-    interest: 1 つのサーバーを常駐させれば、どのセッションからも同じツールを使え、セッションごとにプロセスが立たないこと
+    interest: 1 つのサーバーを常駐させれば、どのセッションからも同じツールを使用でき、セッションごとにプロセスが立たないこと
   - name: Claude Code のセッション
     interest: サーバーが止まっていても、フックの案内と既読の記録が今どおり動くこと
 trigger: 利用者が、ローカルのクローンで起動のコマンドを実行する
@@ -108,5 +108,5 @@ preconditions:
   - 既定のポートを変えるときは、起動の側と Claude Code の両方に同じ `RULE_INJECT_PORT` を配置している
   - 起動の側の環境変数 `RULE_INJECT_CONFIG` が、フックと同じ設定ファイルを指している（既定のパスの設定ファイルは指さなくてよい）
 success_guarantee: サーバーは `127.0.0.1` の `RULE_INJECT_PORT`（無ければ既定のポート）だけで待ち受け、プラグインを読み込んだ Claude Code から接続できる。
-minimal_guarantee: 起動できないときは待ち受けずに終了し、標準エラーに理由を書く。サーバーの起動と停止は、フックの案内と既読の記録に影響しない。
+minimal_guarantee: 起動できないときは待ち受けずに終了し、標準エラーに理由を出力する。サーバーの起動と停止は、フックの案内と既読の記録に影響しない。
 test_file: tests/e2e/単一ユースケース/test_run_resident_mcp_server.py
