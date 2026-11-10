@@ -48,3 +48,36 @@ scope_out:
   - item: インターフェース定義のフロー名（IF-122-2・6・8・11・14・19 の「正常系（当たるルールが無い）」など）・テストの docstring・コードの文言にある同じ語句
     reason: 'シナリオ名を `{ID}#scenarios[{名前}]` で参照しておらず、シナリオ名を変えても参照は切れない。フロー名は #128（PR #135、マージ済み）が「参照元とあわせて扱う」として対応しない扱いで残しており、受ける Issue が無い。起点 Issue の終わりの条件はシナリオ名とその参照に限るためスコープ外と判断し、この PR で扱うか別の Issue で扱うかをレビューで確定する'
     plan: to_file
+docs:
+  - page: docs/scenario/SC-122-4.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: todo
+  - page: docs/scenario/SC-122-12.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: todo
+  - page: docs/scenario/SC-122-16.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にし、図の「置き場所」を本文の「配置場所」に統一する
+    status: todo
+  - page: docs/scenario/SC-122-18.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: todo
+  - page: docs/scenario/SC-122-19.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: todo
+  - page: docs/scenario/SC-122-20.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にし、図のメッセージの「確かめる」を「確認する」にする
+    status: todo
+  - page: docs/scenario/SC-122-23.yaml
+    new: false
+    change: シナリオ名を要件.md の表の新しい名前にする
+    status: todo
+  - page: docs/scenario/SC-122-25.yaml
+    new: false
+    change: SC-122-12・16 の新しい名前に合わせて、uses・図の click とノードのラベルを書き換える
+    status: todo

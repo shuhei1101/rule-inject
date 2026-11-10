@@ -119,7 +119,7 @@ scenarios:
     expected:
       - 応答のファイルが無いエントリに、索引の場所・エントリの位置・解決したルールの場所が載っている
     test: test_normal_when_rule_file_missing
-  - name: 正常シナリオ（pathsがどのファイルにも当たらない）
+  - name: 正常シナリオ（pathsがどのファイルにも該当しない）
     setup:
       - name: Mock
         description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
@@ -162,7 +162,7 @@ scenarios:
       - ユーザー全体の索引のエントリは、`paths` のヒットしないエントリに載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_paths_unmatched
-  - name: 正常シナリオ（ユーザー全体の索引も確かめる）
+  - name: 正常シナリオ（ユーザー全体の索引も確認する）
     setup:
       - name: Mock
         description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）
@@ -191,7 +191,7 @@ scenarios:
         participant SC as 索引の JSON Schema
         participant PJ as プロジェクトのファイル
 
-        CL->>SV: チェック（プロジェクトの直下・ユーザー全体の索引も確かめる）
+        CL->>SV: チェック（プロジェクトの直下・ユーザー全体の索引も確認する）
         SV->>CF: プロジェクトに当たる索引を引く
         CF-->>SV: 索引の場所（ユーザー全体・プロジェクト）
         SV->>IDX: フックと同じ読み取りで読む
@@ -208,7 +208,7 @@ scenarios:
       - '`problem_count` にユーザー全体の索引のヒットしないエントリが数えられていない'
       - 索引のファイルが書き換わっていない
     test: test_normal_when_global_included
-  - name: 正常シナリオ（タグのパターンが使われているどのタグにも当たらない）
+  - name: 正常シナリオ（タグのパターンが使用中のどのタグにも該当しない）
     setup:
       - name: Mock
         description: '違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は、テストが起動した文書の MCP サーバーに差し替え、`search_docs` の `group_by: tags` に決まったタグの一覧を返却させる'
