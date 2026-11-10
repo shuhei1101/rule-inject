@@ -76,8 +76,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-10T07:46:50.943658+00:00'
   - process: 結合テスト作成
-    status: todo
+    status: done
     note: 既存の test_restart_server.py・test_update_server.py の実行で事象が起きないことを確かめる
+    updated_by: planner
+    updated_at: '2026-11-10T08:31:06.616835+00:00'
   - process: E2E テスト作成
     status: skipped
     reason: 'E2E のテストは #118 で削除済みで、結合テストが事象を再現するため'
