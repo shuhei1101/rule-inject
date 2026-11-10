@@ -311,4 +311,3 @@ notes:
   停止の 2 段: |-
     処理中のツールの呼び出しと POST の要求の応答は `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は sse-starlette が取り消し、SSE でない接続は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
     `should_exit` を立てると sse-starlette が送信中の POST の応答も取り消すため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
-    SSE のストリームは終わらないため、1 段目の上限を `timeout_graceful_shutdown` に渡すと再起動のたびに上限まで待つことになる。
