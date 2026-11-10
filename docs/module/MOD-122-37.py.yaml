@@ -31,7 +31,7 @@ functions:
     title: サーバーの組み立て
     container: server/app.py
     usecase: MCPサーバーを常駐させる
-    summary: コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 11 のツールを登録する
+    summary: コンポジションルート。依存を作ってツールへ引き渡し、`MCPServer` にツールを登録する
     kind: 関数
     scope: public
     args:
@@ -45,7 +45,7 @@ functions:
         required: false
         default: UNMATCHED_SCAN_TIME_LIMIT
         passing: keyword
-        description: '`check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）。結合テストが 0 を渡して上限で止まる流れを確かめる'
+        description: '`check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）。結合テストが 0 を引き渡して上限で止まる流れを確認する'
       - name: dev_docs_timeout
         type: float
         required: false
@@ -56,7 +56,7 @@ functions:
         type: ServerControl
         required: true
         passing: keyword
-        description: サーバーの稼働の状態。起動の入口が作って渡す
+        description: サーバーの稼働の状態。起動の入口が作って引き渡す
       - name: clone
         type: Path
         required: true
@@ -67,33 +67,34 @@ functions:
         required: false
         default: clone.run_command
         passing: keyword
-        description: コマンドの実行。結合テストが差し替えてコマンドの失敗を起こす
+        description: コマンドの実行。結合テストが差し替えてコマンドの失敗を発生させる
     returns:
       type: MCPServer
       description: ツールを登録したサーバー
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
       2. `MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)` を作る
-      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` が `destructiveHint: true` で、全て `openWorldHint: false`
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` が `destructiveHint: true` で、全て `openWorldHint: false`
       4. `get_server_status` と `restart_server` を除くツールを `control.guard` で包んでから登録する（再起動の途中は断り、処理中の数を数える）。`restart_server` は `begin_restart` が自分で断る
-      5. サーバーを返す
+      5. サーバーを返却する
     unit_tests:
       - name: test_build_server
         case: 正常
-        summary: 11 のツールを依存の引数なしで登録する
-        condition: 空の `env`、`ServerControl`、`version.ini` を置いた一時フォルダの `clone`
+        summary: 全てのツールを依存の引数なしで登録する
+        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
         mock: なし
-        expected: '`list_tools` が 11 の名前を返し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command` が無く、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` だけが `destructiveHint: true`'
+        expected: '`list_tools` が 11 の名前を返却し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command` が無く、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` だけが `destructiveHint: true`'
       - name: test_build_server_when_restarting
         case: 異常
         summary: 再起動の途中は状態の確認だけを受け付ける
         condition: '`control.begin_restart()` の後に `call_tool` で `list_rules` と `get_server_status` を呼ぶ'
         mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
-        expected: '`list_rules` が再起動の途中の `isError: true`、`get_server_status` が `restarting: true` を返す'
+        expected: '`list_rules` が再起動の途中の `isError: true`、`get_server_status` が `restarting: true` を返却する'
         exception: 再起動を始めた後に呼ばれた
       - name: test_build_server_instructions
         case: 正常
         summary: instructions を指定する
-        condition: 空の `env`、`ServerControl`、`version.ini` を置いた一時フォルダの `clone`
+        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
         mock: なし
         expected: サーバーの `instructions` が `SERVER_INSTRUCTIONS` で、4,096 字以内
+lead: MCP サーバーを組み立てるコンポジションルートとツール・接続時の instructions の登録を定め、ツールや instructions を追加するときや依存を差し替えるときに参照する。

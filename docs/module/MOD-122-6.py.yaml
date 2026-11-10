@@ -8,7 +8,7 @@ functions:
     title: 索引の YAML の読み取り
     container: features/index/_yaml.py
     usecase: 共通
-    summary: 索引の YAML のうち設定の設計書に挙げたキーと形式だけを読む
+    summary: 索引の YAML のうち設定の設計書に挙げたキーと形式だけを読み込む
     kind: 関数
     scope: public
     args:
@@ -24,11 +24,11 @@ functions:
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
       2. 最上位のキーは `default_on` と `rules` だけを許す
       3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` / `read_tool` / `enabled` だけを許す
-      4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読む
-      5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読む。キーは空白を含まない文字列（ドットを含んでよい）
-      6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
-      7. `read_tool` は続く行に、エントリのキーより深い桁でキーを並べたブロックのマップだけを読む。キーは `tool`（必須。`mcp__` で始まる文字列）と `args`・`optional_args`（任意。文字列）だけを許す。`args`・`optional_args` は `json.loads` で読めて JSON のオブジェクトになる文字列だけを許し、文字列のまま返す
-      8. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素・`tool` の無い `read_tool`・`mcp__` で始まらない `tool`・`read_tool` の同じ行の値・JSON として読めないかオブジェクトでない `read_tool.args`・`read_tool.optional_args` を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返す
+      4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読み込む
+      5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読み込む。キーは空白を含まない文字列（ドットを含んでよい）
+      6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読み込む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
+      7. `read_tool` は続く行に、エントリのキーより深い桁でキーを並べたブロックのマップだけを読み込む。キーは `tool`（必須。`mcp__` で始まる文字列）と `args`・`optional_args`（任意。文字列）だけを許す。`args`・`optional_args` は `json.loads` で読み込めて JSON のオブジェクトになる文字列だけを許し、文字列のまま返却する
+      8. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素・`tool` の無い `read_tool`・`mcp__` で始まらない `tool`・`read_tool` の同じ行の値・JSON として解釈できないかオブジェクトでない `read_tool.args`・`read_tool.optional_args` を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返却する
     exceptions:
       - name: ValueError
         condition: 許さないキー・形式・値がある
@@ -36,10 +36,10 @@ functions:
     unit_tests:
       - name: test_parse_index
         case: 正常
-        summary: フローとブロックのリスト、引用符、コメントを読む
-        condition: '`default_on: [write]` と、`paths` をブロック、`on` をフローで書いた 2 エントリ。引用符の中に `#` を含む値'
+        summary: フローとブロックのリスト、引用符、コメントを読み込む
+        condition: '`default_on: [write]` と、`paths` をブロック、`on` をフローで記載した 2 エントリ。引用符の中に `#` を含む値'
         mock: なし
-        expected: '`default_on` と 2 エントリのキーと値が読め、引用符の中の `#` が残る'
+        expected: '`default_on` と 2 エントリのキーと値が読み込め、引用符の中の `#` が残る'
       - name: test_parse_index_when_no_default_on
         case: 正常
         summary: '`default_on` が無い'
@@ -69,8 +69,8 @@ functions:
         exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_args
         case: 正常
-        summary: '`args` のブロックのマップを読む'
-        condition: '`args:` の下に `tags: ["re:^python$"]`（フロー）と `filter.kind:` + `- rule`（ブロック）を書いたエントリ'
+        summary: '`args` のブロックのマップを読み込む'
+        condition: '`args:` の下に `tags: ["re:^python$"]`（フロー）と `filter.kind:` + `- rule`（ブロック）を記載したエントリ'
         mock: なし
         expected: '`args` が `{"tags": ["re:^python$"], "filter.kind": ["rule"]}`'
       - name: test_parse_index_when_args_flow_map
@@ -82,8 +82,8 @@ functions:
         exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_read_by
         case: 正常
-        summary: '`read_by` のマップのリストを読む'
-        condition: '`read_by:` の下に、`tools: [mcp__docs__get_doc]` と `args:` + `path: ["re:\\.md$"]` を持つ要素と、`tools:` + `- mcp__docs__search`（ブロック）だけの要素を書いたエントリ'
+        summary: '`read_by` のマップのリストを読み込む'
+        condition: '`read_by:` の下に、`tools: [mcp__docs__get_doc]` と `args:` + `path: ["re:\\.md$"]` を持つ要素と、`tools:` + `- mcp__docs__search`（ブロック）だけの要素を記載したエントリ'
         mock: なし
         expected: '`read_by` が `[{"tools": ["mcp__docs__get_doc"], "args": {"path": ["re:\\.md$"]}}, {"tools": ["mcp__docs__search"]}]`'
       - name: test_parse_index_when_read_by_without_tools
@@ -95,8 +95,8 @@ functions:
         exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_enabled
         case: 正常
-        summary: '`enabled` を読む'
-        condition: '`enabled: false` のエントリと `enabled: true` のエントリと `enabled` を書かないエントリの 3 つ'
+        summary: '`enabled` を読み込む'
+        condition: '`enabled: false` のエントリと `enabled: true` のエントリと `enabled` を記載しないエントリの 3 つ'
         mock: なし
         expected: 1 つ目の `enabled` が `"false"`、2 つ目が `"true"`、3 つ目は `enabled` のキーを持たない
       - name: test_parse_index_when_invalid_enabled
@@ -108,14 +108,15 @@ functions:
         exception: 許さないキー・形式・値がある
       - name: test_parse_index_when_read_tool
         case: 正常
-        summary: '`read_tool` のブロックのマップを読む'
-        condition: '`read_tool:` の下に `tool: mcp__docs__search_docs` と、単一引用符で囲んだ `args` の JSON `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を書いたエントリと、`tool` だけの `read_tool` のエントリと、`args` と `optional_args` を書いた `read_tool` のエントリ'
+        summary: '`read_tool` のブロックのマップを読み込む'
+        condition: '`read_tool:` の下に `tool: mcp__docs__search_docs` と、単一引用符で囲んだ `args` の JSON `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を記載したエントリと、`tool` だけの `read_tool` のエントリと、`args` と `optional_args` を記載した `read_tool` のエントリ'
         mock: なし
-        expected: '1 つ目の `read_tool` が `tool` と、書いた JSON の文字列のままの `args` を持ち、2 つ目は `args` のキーを持たず、3 つ目は `args`・`optional_args` を文字列のまま持つ'
+        expected: '1 つ目の `read_tool` が `tool` と、記載した JSON の文字列のままの `args` を持ち、2 つ目は `args` のキーを持たず、3 つ目は `args`・`optional_args` を文字列のまま持つ'
       - name: test_parse_index_when_read_tool_invalid
         case: 異常
         summary: '`read_tool` の書式の誤りを拒む'
-        condition: '`args` だけを持つ `read_tool`・`tool: docs_search`・`read_tool: {tool: mcp__a}`・`read_tool` に `foo:` を持つ・`args` が JSON として読めない・`args` が JSON の配列・`optional_args` が JSON の配列のエントリ（7 通りをパラメータ化）'
+        condition: '`args` だけを持つ `read_tool`・`tool: docs_search`・`read_tool: {tool: mcp__a}`・`read_tool` に `foo:` を持つ・`args` が JSON として解釈できない・`args` が JSON の配列・`optional_args` が JSON の配列のエントリ（7 通りをパラメータ化）'
         mock: なし
         expected: 行番号つきの ValueError
         exception: 許さないキー・形式・値がある
+lead: 索引の YAML からフックが使用するキーだけを読み取る関数を定め、索引の書式の読み取りを修正するときに参照する。

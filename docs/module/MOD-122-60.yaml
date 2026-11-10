@@ -7,5 +7,5 @@ directory: |-
   src/rule_inject/features/record/
   ├── __init__.py   # 公開 API
   ├── types.py      # ReadMethod・ReadState・ReadEntry・HistoryEntry・RecordSession
-  └── service.py    # 記録ファイルの読み・追記・削除・掃除と、既読の履歴の追記・読みと、本文のハッシュ
+  └── service.py    # 記録ファイルの読み込み・追記・削除・掃除と、既読の履歴の追記・読み込みと、本文のハッシュ
   ```

@@ -28,8 +28,8 @@ functions:
       description: 常に出力しない
     process: |-
       1. session_id の形式が外れていれば何もしない
-      2. `load_settings(env)` で設定を読む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書いて終える（何も削除しない）
-      3. `delete_record` と `delete_guided` を `settings.state_dir` で順に呼ぶ。片方が RecordDeleteError でももう片方を呼び、それぞれ `settings.log_dir` のログ（`delete_record`）へ書く
+      2. `load_settings(env)` で設定を読み込む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き込んで終える（何も削除しない）
+      3. `delete_record` と `delete_guided` を `settings.state_dir` で順に呼ぶ。片方が RecordDeleteError でももう片方を呼び、それぞれ `settings.log_dir` のログ（`delete_record`）へ書き込む
     unit_tests:
       - name: test_discard_read
         case: 正常
@@ -39,7 +39,7 @@ functions:
         expected: 記録ファイルが無い
       - name: test_discard_read_when_undeletable
         case: 正常
-        summary: 削除できないときログに書く
+        summary: 削除できないときログに書き込む
         condition: 書き込み権限の無い記録フォルダと、書き込み権限の無い空のログのフォルダ（設定ファイルの `global.log_dir`）
         mock: なし
         expected: 標準エラー出力に `delete_record`
@@ -51,7 +51,8 @@ functions:
         expected: どちらも無い
       - name: test_discard_read_when_settings_unreadable
         case: 正常
-        summary: 設定ファイルが読めないときはログに書くだけで何も削除しない
+        summary: 設定ファイルが読み込めないときはログに書き込むだけで何も削除しない
         condition: '`RULE_INJECT_CONFIG` が知らないキーを持つ設定ファイルを指す。`XDG_STATE_HOME` は一時フォルダで、その下の `rule-inject` にそのセッションの記録ファイルがある'
         mock: なし
         expected: 記録ファイルが残る。`{XDG_STATE_HOME}/rule-inject/logs` のログに `read_settings` が 1 行
+lead: 会話の圧縮の前に既読の記録を破棄するフックの処理を定め、既読の記録の破棄を修正するときに参照する。

@@ -7,7 +7,7 @@ data_models:
     container: features/guidance/types.py
     usecase: 未読のルールの案内を受ける
     role: Protocol
-    summary: 案内文の組み立てが読む属性だけを持つ型（`typing.Protocol`）。索引の `MatchedRule` を import せず、フックが `MatchedRule` をそのまま渡せる
+    summary: 案内文の組み立てが読み込む属性だけを持つ型（`typing.Protocol`）。索引の `MatchedRule` を import せず、フックが `MatchedRule` をそのまま引き渡せる
     properties:
       - name: location
         type: str
@@ -17,33 +17,34 @@ data_models:
         description: 操作を止めるルールか
       - name: read_tools
         type: Sequence[GuidedReadTool]
-        description: ルールを参照する MCP のツールと引数（場所の行の下に載せる順）
+        description: ルールを参照する MCP のツールと引数（場所の行の下に記載する順）
   - name: Guidance
     title: 案内文
     container: features/guidance/types.py
     usecase: 未読のルールの案内を受ける
     role: DTO
-    summary: 組み立てた案内文と、上限に収まって載せたルールの場所。フックは `shown` だけを案内済みにする
+    summary: 組み立てた案内文と、上限に収まって記載したルールの場所。フックは `shown` だけを案内済みにする
     properties:
       - name: text
         type: str
         description: 案内文
       - name: shown
         type: tuple[str, ...]
-        description: 案内文に載せたルールの場所（載せた順）
+        description: 案内文に記載したルールの場所（記載した順）
   - name: GuidedReadTool
     title: 案内する参照のツール
     container: features/guidance/types.py
     usecase: 未読のルールの案内を受ける
     role: Protocol
-    summary: '`ツール:` の行に載せる属性だけを持つ型（`typing.Protocol`）。索引の `ReadTool` を import せず、そのまま渡せる'
+    summary: '`ツール:` の行に記載する属性だけを持つ型（`typing.Protocol`）。索引の `ReadTool` を import せず、そのまま引き渡せる'
     properties:
       - name: tool
         type: str
         description: MCP のツールの完全名
       - name: args
         type: Mapping[str, Any]
-        description: 引数のオブジェクト（索引に書いたキーの順）
+        description: 引数のオブジェクト（索引に記載したキーの順）
       - name: optional_args
         type: Mapping[str, Any]
         description: '省略してよい引数のオブジェクト（空なら `（省略可: ...）` を付けない）'
+lead: 案内に使用するルールと、組み立てた案内文・記載したルールの場所のデータモデルを定め、案内の組み立てを修正するときに参照する。

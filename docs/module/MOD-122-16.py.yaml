@@ -70,3 +70,4 @@ functions:
         condition: '`global.server_port: 8783`'
         mock: なし
         expected: 空で、キーが削除される
+lead: 設定ファイルの global.server_port を環境変数 RULE_INJECT_PORT へ移す移し替えの手順を定め、この手順を修正するときに参照する。

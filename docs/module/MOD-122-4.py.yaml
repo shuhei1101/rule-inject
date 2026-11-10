@@ -24,34 +24,34 @@ constants:
   - name: SEARCH_HEADER
     title: 検索結果の案内の冒頭
     container: features/guidance/service.py
-    summary: 検索結果の案内の冒頭（読むかは任意と伝え、再試行を促さない）
+    summary: 検索結果の案内の冒頭（読み込むかは任意と伝え、再試行を促さない）
     value: '`検索結果のファイルに関連する未読のルールがあります（参照は任意です）。この案内はルールごとにセッションで 1 回だけ表示します。`'
   - name: READ_TOOL_NOTE
-    title: 参照するツールの添え書き
+    title: 参照するツールの補足
     container: features/guidance/service.py
-    summary: 載せたルールに `ツール:` の行が 1 つでもあるときの 2 行目（参照の方法）
+    summary: 記載したルールに `ツール:` の行が 1 つでもあるときの 2 行目（参照の方法）
     value: '`` `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。 ``'
   - name: READ_NOTE
-    title: Read で参照する添え書き
+    title: Read で参照する補足
     container: features/guidance/service.py
-    summary: 載せたルールに `ツール:` の行が無いときの 2 行目（参照の方法）
+    summary: 記載したルールに `ツール:` の行が無いときの 2 行目（参照の方法）
     value: '`パスを Read で参照してください。`'
   - name: READ_TOOL_PREFIX
     title: 参照するツールの行の頭
     container: features/guidance/service.py
-    summary: 場所の行の下に置く行の頭
+    summary: 場所の行の下に配置する行の頭
     value: '`"  ツール: "`'
   - name: SERVER_START_NOTICE
     title: サーバーの起動の案内
     container: features/guidance/service.py
-    summary: サーバーの起動の補助が起動を依頼したときに載せる文面（`{service}` にサービス名を入れる）
+    summary: サーバーの起動の補助が起動を依頼したときに記載する文面（`{service}` にサービス名を入れる）
     value: '`rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {service} へ起動を依頼しました。サーバーが待ち受けを始めるまで数十秒かかります。このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に接続し直すと使用できます。`'
 functions:
   - name: build_guidance
     title: 案内文の組み立て
     container: features/guidance/service.py
     usecase: 未読のルールの案内を受ける
-    summary: 未読のルールの場所を上限に収まる分だけ並べた案内文を返す
+    summary: 未読のルールの場所を上限に収まる分だけ並べた案内文を返却する
     kind: 関数
     scope: public
     args:
@@ -68,12 +68,12 @@ functions:
         description: 字数の上限
     returns:
       type: Guidance
-      description: 止めるルールがあれば `BLOCKING_HEADER`、無ければ `NON_BLOCKING_HEADER` で始まる案内文と、載せた場所
+      description: 止めるルールがあれば `BLOCKING_HEADER`、無ければ `NON_BLOCKING_HEADER` で始まる案内文と、記載した場所
     process: |-
       1. 止めるルールを先に、元の順を保って並べる
-      2. 冒頭の後に、ルールごとに `- {場所}` の行と、`read_tools` ごとの `ツール:` の行（`_tool_line`）を 1 件として追加し、末尾に残りの件数の行を追加しても `limit` を超えないところまで載せる（1 件の途中では切らない）
-      3. 載せきれなかったときは `ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。` を末尾に追加する
-      4. 2 行目（冒頭の次の行）に、載せたルールに `ツール:` の行が 1 つでもあれば `READ_TOOL_NOTE`、無ければ `READ_NOTE` を置く。`read_tools` を持つルールが 1 つでもあるときは、手順 2 の字数に `READ_TOOL_NOTE` の分を含めて数え、無いときは `READ_NOTE` の分を含めて数える
+      2. 冒頭の後に、ルールごとに `- {場所}` の行と、`read_tools` ごとの `ツール:` の行（`_tool_line`）を 1 件として追加し、末尾に残りの件数の行を追加しても `limit` を超えないところまで記載する（1 件の途中では切らない）
+      3. 記載しきれなかったときは `ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。` を末尾に追加する
+      4. 2 行目（冒頭の次の行）に、記載したルールに `ツール:` の行が 1 つでもあれば `READ_TOOL_NOTE`、無ければ `READ_NOTE` を配置する。`read_tools` を持つルールが 1 つでもあるときは、手順 2 の字数に `READ_TOOL_NOTE` の分を含めて数え、無いときは `READ_NOTE` の分を含めて数える
     unit_tests:
       - name: test_build_guidance_when_blocking
         case: 正常
@@ -92,16 +92,16 @@ functions:
         summary: 上限を超える分を件数にする
         condition: 1 件 150 字の場所を 100 件、`limit=10000`
         mock: なし
-        expected: 10,000 字以内で、末尾に載せきれなかった件数がある
+        expected: 10,000 字以内で、末尾に記載しきれなかった件数がある
       - name: test_build_guidance_when_shown
         case: 正常
-        summary: 載せた場所だけを shown に返す
+        summary: 記載した場所だけを shown に返却する
         condition: 1 件 150 字の場所を 100 件、`limit=10000`
         mock: なし
         expected: '`shown` の件数が案内文の `- ` の行数と同じで、並びも同じ'
       - name: test_build_guidance_when_read_tools
         case: 正常
-        summary: 参照するツールの行と添え書きを載せる
+        summary: 参照するツールの行と補足を記載する
         condition: '`read_tools` に `mcp__docs__search_docs` と `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を持つ止めるルールと、`read_tools` が空のルール'
         mock: なし
         expected: '1 行目が `BLOCKING_HEADER`、2 行目が `READ_TOOL_NOTE`。1 つ目のパスの次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}`、2 つ目のパスの次に `ツール:` の行が無い'
@@ -113,21 +113,21 @@ functions:
         expected: 1 行目が `BLOCKING_HEADER`、2 行目が `READ_NOTE` で、`ツール:` の行が無い
       - name: test_build_guidance_when_read_tool_too_long
         case: 正常
-        summary: パスの行とツールの行を分けて載せない
+        summary: パスの行とツールの行を分けて記載しない
         condition: '`read_tools` を 1 つ持つルールを、パスの行だけなら収まり、ツールの行を加えると収まらない `limit` で 2 件'
         mock: なし
         expected: 2 件目はパスの行もツールの行も無く、件数の行がある。`shown` は 1 件
       - name: test_build_guidance_when_tool_rule_omitted
         case: 正常
-        summary: ツールの行を載せなければ Read の添え書きにする
+        summary: ツールの行を記載しなければ Read の補足にする
         condition: '`read_tools` を持たないルールが先、`read_tools` を持つルールが後で、後のルールが `limit` に収まらない'
         mock: なし
         expected: 2 行目が `READ_NOTE`（`READ_TOOL_NOTE` が無い）
   - name: build_failure_notice
-    title: 失敗の知らせの組み立て
+    title: 失敗の通知の組み立て
     container: features/guidance/service.py
     usecase: 共通
-    summary: 索引・記録の読み書きの失敗を、場所と理由とログの場所つきの文にする
+    summary: 索引・記録の読み込み・書き込みの失敗を、場所と理由とログの場所つきの文にする
     kind: 関数
     scope: public
     args:
@@ -135,7 +135,7 @@ functions:
         type: str
         required: true
         passing: positional
-        description: '何が起きたかの 1 文（例: 索引を読めませんでした）'
+        description: '何が起きたかの 1 文（例: 索引を読み込めませんでした）'
       - name: errors
         type: Sequence[RuleInjectError]
         required: true
@@ -166,7 +166,7 @@ functions:
     title: 検索結果の案内文の組み立て
     container: features/guidance/service.py
     usecase: 検索の結果に出たファイルのルールの案内を受ける
-    summary: 検索で当たったファイルの未読・未案内のルールの場所を、上限に収まる分だけ並べた案内文を返す
+    summary: 検索でヒットしたファイルの未読・未案内のルールの場所を、上限に収まる分だけ並べた案内文を返却する
     kind: 関数
     scope: public
     args:
@@ -174,7 +174,7 @@ functions:
         type: Sequence[GuidedRule]
         required: true
         passing: positional
-        description: 案内するルール（`blocking` は見ない）
+        description: 案内するルール（`blocking` は確認しない）
       - name: unchecked
         type: int
         required: false
@@ -189,15 +189,15 @@ functions:
         description: 字数の上限
     returns:
       type: Guidance
-      description: '`SEARCH_HEADER` で始まる案内文と、載せた場所'
+      description: '`SEARCH_HEADER` で始まる案内文と、記載した場所'
     process: |-
-      1. 冒頭の後に、`build_guidance` の手順 2 と同じく場所の行と `ツール:` の行を 1 件ずつ、末尾の行を追加しても `limit` を超えないところまで載せる。2 行目（`READ_TOOL_NOTE` か `READ_NOTE`）も `build_guidance` の手順 4 と同じ
-      2. 載せきれなかったときは `ほか {N} 件のルールは、次に関連したときに表示します。` を末尾に追加する
+      1. 冒頭の後に、`build_guidance` の手順 2 と同じく場所の行と `ツール:` の行を 1 件ずつ、末尾の行を追加しても `limit` を超えないところまで記載する。2 行目（`READ_TOOL_NOTE` か `READ_NOTE`）も `build_guidance` の手順 4 と同じ
+      2. 記載しきれなかったときは `ほか {N} 件のルールは、次に関連したときに表示します。` を末尾に追加する
       3. `unchecked` が 1 以上なら `検索結果のうち {unchecked} 件は照合していません。` を末尾に追加する
     unit_tests:
       - name: test_build_search_guidance
         case: 正常
-        summary: 読むかは任意と伝える案内
+        summary: 読み込むかは任意と伝える案内
         condition: '`read_tools` が空のルール 2 件'
         mock: なし
         expected: '`SEARCH_HEADER` で始まり 2 行の場所がある。「やり直してください」を含まない。`shown` が 2 件'
@@ -212,10 +212,10 @@ functions:
         summary: 上限を超える分を件数にする
         condition: 1 件 150 字の場所のルールを 100 件、`limit=10000`
         mock: なし
-        expected: 10,000 字以内で、末尾に載せきれなかった件数があり、`shown` は載せた分だけ
+        expected: 10,000 字以内で、末尾に記載しきれなかった件数があり、`shown` は記載した分だけ
       - name: test_build_search_guidance_when_read_tools
         case: 正常
-        summary: 参照するツールの行と添え書きを載せる
+        summary: 参照するツールの行と補足を記載する
         condition: '`read_tools` に `mcp__docs__search_docs` と `{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` を持つルール 1 件'
         mock: なし
         expected: '1 行目が `SEARCH_HEADER`、2 行目が `READ_TOOL_NOTE`、パスの次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}`'
@@ -235,19 +235,19 @@ functions:
     returns:
       type: str
       description: '`READ_TOOL_PREFIX` + `{tool} {args の JSON}`'
-    process: '`args` を `json.dumps(ensure_ascii=False)`（区切りは既定の `, `・`: `。キーの順は書いた順）で 1 行の JSON にする。`args` が空なら `{}`。`optional_args` が空でなければ、同じく JSON にして `（省略可: {JSON}）` を末尾に続ける'
+    process: '`args` を `json.dumps(ensure_ascii=False)`（区切りは既定の `, `・`: `。キーの順は記載した順）で 1 行の JSON にする。`args` が空なら `{}`。`optional_args` が空でなければ、同じく JSON にして `（省略可: {JSON}）` を末尾に続ける'
     unit_tests:
       - name: test_tool_line
         case: 正常
-        summary: 書いた順の JSON にする
-        condition: '`mcp__docs__search_docs` と、`sections` を先に書いた `{"sections": ["命名"], "filter": {"field": "id"}}`。別に `args` が空。別に `args` が `{"filter": {"field": "id"}}`・`optional_args` が `{"sections": ["命名"]}`'
+        summary: 記載した順の JSON にする
+        condition: '`mcp__docs__search_docs` と、`sections` を先に記載した `{"sections": ["命名"], "filter": {"field": "id"}}`。別に `args` が空。別に `args` が `{"filter": {"field": "id"}}`・`optional_args` が `{"sections": ["命名"]}`'
         mock: なし
         expected: '`  ツール: mcp__docs__search_docs {"sections": ["命名"], "filter": {"field": "id"}}` と `  ツール: mcp__docs__search_docs {}` と `  ツール: mcp__docs__search_docs {"filter": {"field": "id"}}（省略可: {"sections": ["命名"]}）`'
   - name: build_server_start_notice
     title: サーバーの起動の案内の組み立て
     container: features/guidance/service.py
     usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
-    summary: '`SERVER_START_NOTICE` にサービス名を入れた文面を返す'
+    summary: '`SERVER_START_NOTICE` にサービス名を入れた文面を返却する'
     kind: 関数
     scope: public
     args:
@@ -262,7 +262,8 @@ functions:
     unit_tests:
       - name: test_build_server_start_notice
         case: 正常
-        summary: サービス名と接続し直す方法を載せる
+        summary: サービス名と再接続する方法を記載する
         condition: '`service` が `rule-inject-ut`'
         mock: なし
         expected: '`rule-inject-ut` と `/mcp` を含み、`GUIDANCE_LIMIT` 以内'
+lead: フックが返却する案内文・通知の文の組み立てと、文面の定数を定め、案内の文面や上限を変えるときに参照する。

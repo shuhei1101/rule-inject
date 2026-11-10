@@ -17,21 +17,21 @@ classes:
         type: str
         description: 理由（元の例外のクラス名と文面）
   - name: IndexReadError
-    title: 索引が読めない
+    title: 索引が読み込めない
     container: shared/errors.py
     usecase: 共通
-    summary: 索引が無い・読めない・書式に合わない
+    summary: 索引が無い・読み込めない・書式に合わない
     kind: クラス
     inherits: RuleInjectError
   - name: RecordReadError
-    title: 既読の記録が読めない
+    title: 既読の記録が読み込めない
     container: shared/errors.py
     usecase: 共通
-    summary: 記録ファイルはあるが読めない
+    summary: 記録ファイルはあるが読み込めない
     kind: クラス
     inherits: RuleInjectError
   - name: RecordWriteError
-    title: 既読の記録に書けない
+    title: 既読の記録に書き込めない
     container: shared/errors.py
     usecase: 共通
     summary: 記録フォルダが作れない・記録ファイルに追記できない
@@ -52,24 +52,24 @@ classes:
     kind: クラス
     inherits: RuleInjectError
   - name: HistoryWriteError
-    title: 既読の履歴に書けない
+    title: 既読の履歴に書き込めない
     container: shared/errors.py
     usecase: ルールを読んだことが記録される
     summary: 記録フォルダが作れない・既読の履歴ファイルに追記できない
     kind: クラス
     inherits: RuleInjectError
   - name: SettingsReadError
-    title: 設定ファイルが読めない
+    title: 設定ファイルが読み込めない
     container: shared/errors.py
     usecase: 共通
-    summary: 設定ファイルが無い・読めない・知らないキーや許す値の外の値を持つ。`path` は設定ファイルの場所
+    summary: 設定ファイルが無い・読み込めない・知らないキーや許す値の外の値を持つ。`path` は設定ファイルの場所
     kind: クラス
     inherits: RuleInjectError
   - name: IndexEditError
     title: 索引を編集できない
     container: shared/errors.py
     usecase: 索引のエントリを編集する
-    summary: 索引が YAML として読めない・エントリの位置が無い・バージョンが合わない・書いた後の索引がチェックに通らない。`path` は索引の場所、`reason` はツールの結果にそのまま載せる文言
+    summary: 索引が YAML として解釈できない・エントリの位置が無い・バージョンが合わない・書き込んだ後の索引がチェックに通らない。`path` は索引の場所、`reason` はツールの結果にそのまま記載する文言
     kind: クラス
     inherits: RuleInjectError
   - name: UnitCheckError
@@ -86,3 +86,4 @@ classes:
     summary: '`systemctl --user start --no-block` が 0 以外で終わったか、打ち切りの待ちを過ぎた。`path` は実行したコマンド'
     kind: クラス
     inherits: RuleInjectError
+lead: 設定ファイル・索引・既読の記録・既読の履歴・ログ・ユニットの操作で送出する例外を定め、失敗の扱いを修正するときに参照する。

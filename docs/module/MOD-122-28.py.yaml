@@ -29,31 +29,32 @@ functions:
       type: int
       description: 終了コード（常に 0）
     process: |-
-      1. 冒頭で `sys.version_info` を確かめる。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart ならバージョンが足りないことを additionalContext で返し（`sweep_read`・`start_server` は同じ SessionStart の `work_rules` が知らせるため返さない）、既定のログのフォルダ（`XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`。設定ファイルは読まない）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書いて 0 を返す（この分岐は古いバージョンでも読める書き方にするため、`default_log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
+      1. 冒頭で `sys.version_info` を確認する。`MIN_PYTHON` より古ければ、パッケージを import せずに、標準入力の `hook_event_name` が PreToolUse・PostToolUse・SessionStart ならバージョンが足りないことを additionalContext で返却し（`sweep_read`・`start_server` は同じ SessionStart の `work_rules` が通知するため返却しない）、既定のログのフォルダ（`XDG_STATE_HOME`（無ければ `~/.local/state`）の下の `rule-inject/logs`。設定ファイルは読み込まない）の、UTC の今日の日付の `{yyyymmdd}_rule-inject.log` へ 1 行書き込んで 0 を返却する（この分岐は古いバージョンでも読み込める構文にするため、`default_log_dir`・`log_file_path` と同じ規則をこのファイルの中で持つ）
       2. `Path(__file__).parents[1] / "src"` を sys.path の先頭に追加する
-      3. `HOOKS[argv[0]]` の出した元・処理・知らせ方を `run_hook` に渡す
+      3. `HOOKS[argv[0]]` の出した元・処理・通知方法を `run_hook` に引き渡す
     unit_tests:
       - name: test_main
         case: 正常
         summary: 子プロセスとして動かして終了コード 0
-        condition: 'そのセッションの既読の記録ファイルを配置し、`python3 hooks/run.py work_rules` に SessionStart（`source: compact`）の JSON を渡す'
+        condition: 'そのセッションの既読の記録ファイルを配置し、`python3 hooks/run.py work_rules` に SessionStart（`source: compact`）の JSON を引き渡す'
         mock: なし
         expected: 終了コード 0、標準出力に additionalContext
       - name: test_main_when_python_too_old
         case: 正常
-        summary: バージョンが足りないとき知らせて終える
-        condition: '`sys.version_info` を (3, 11) に差し替え、`XDG_STATE_HOME` をテスト用のフォルダにして、PreToolUse の JSON を渡す'
+        summary: バージョンが足りないとき通知して終える
+        condition: '`sys.version_info` を (3, 11) に差し替え、`XDG_STATE_HOME` をテスト用のフォルダにして、PreToolUse の JSON を引き渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力の additionalContext に必要なバージョンと動いたバージョン、`rule_inject` を import していない
       - name: test_main_when_python_too_old_and_sweep_read
         case: 正常
-        summary: 掃除のフックはバージョンが足りなくても知らせを重ねない
-        condition: '`sys.version_info` を (3, 11) に差し替え、`sweep_read` に SessionStart の JSON を渡す'
+        summary: 掃除のフックはバージョンが足りなくても通知を重ねない
+        condition: '`sys.version_info` を (3, 11) に差し替え、`sweep_read` に SessionStart の JSON を引き渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力が空、既定のログのフォルダ（`{XDG_STATE_HOME}/rule-inject/logs`）の今日の日付のファイルに 1 行。記録フォルダに `rule-inject.log` を作らない
       - name: test_main_when_python_too_old_and_start_server
         case: 正常
-        summary: サーバーの起動の補助もバージョンが足りなくても知らせを重ねない
-        condition: '`sys.version_info` を (3, 11) に差し替え、`start_server` に SessionStart の JSON を渡す'
+        summary: サーバーの起動の補助もバージョンが足りなくても通知を重ねない
+        condition: '`sys.version_info` を (3, 11) に差し替え、`start_server` に SessionStart の JSON を引き渡す'
         mock: '`sys.version_info`'
         expected: 戻り値 0、標準出力が空、既定のログのフォルダの今日の日付のファイルに 1 行
+lead: プラグインの直下から引数のフックを起動する入口と、Python の最低のバージョンを定め、フックの起動を修正するときに参照する。

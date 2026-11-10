@@ -5,7 +5,7 @@ test_files:
   - tests/unit/rule_inject/features/server_start/test_service.py
 constants:
   - name: LOOPBACK
-    title: 応答を確かめるアドレス
+    title: 応答を確認するアドレス
     container: features/server_start/service.py
     summary: サーバーの待ち受けのアドレス
     value: '`"127.0.0.1"`'
@@ -30,7 +30,7 @@ functions:
     title: サーバーの応答の確認
     container: features/server_start/service.py
     usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
-    summary: '`LOOPBACK` のポートへ TCP で接続できるかを返す'
+    summary: '`LOOPBACK` のポートへ TCP で接続できるかを返却する'
     kind: 関数
     scope: public
     args:
@@ -49,8 +49,8 @@ functions:
       type: bool
       description: 接続できれば True。拒まれた・待ちを過ぎた・その他の OSError は False
     process: |-
-      1. `socket.create_connection((LOOPBACK, port), timeout=timeout)` で接続し、すぐに閉じて True を返す
-         - `TimeoutError`（待ちを過ぎた）・その他の `OSError`（拒まれた等）の場合、False を返す。ログには書かない
+      1. `socket.create_connection((LOOPBACK, port), timeout=timeout)` で接続し、すぐに閉じて True を返却する
+         - `TimeoutError`（待ちを過ぎた）・その他の `OSError`（拒まれた等）の場合、False を返却する。ログには記載しない
     unit_tests:
       - name: test_server_responds
         case: 正常
@@ -74,7 +74,7 @@ functions:
     title: ユニットの起動の依頼
     container: features/server_start/service.py
     usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
-    summary: ユニットが有効なときだけ `systemctl --user start --no-block` で起動を依頼し、結果を返す
+    summary: ユニットが有効なときだけ `systemctl --user start --no-block` で起動を依頼し、結果を返却する
     kind: 関数
     scope: public
     side_effects: ユニットの起動を依頼する
@@ -95,13 +95,13 @@ functions:
       description: '`REQUESTED`（依頼した）/ `NOT_ENABLED`（有効でない・無い・ユーザーの systemd に接続できない）/ `SYSTEMCTL_MISSING`（`systemctl` が無い）'
     process: |-
       1. `subprocess.run(["systemctl", "--user", "is-enabled", "--quiet", "--", service], stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL, timeout=timeout, check=False)` を実行する
-         - FileNotFoundError の場合、`SYSTEMCTL_MISSING` を返す（ログには書かない）
+         - FileNotFoundError の場合、`SYSTEMCTL_MISSING` を返却する（ログには記載しない）
          - TimeoutExpired の場合、UnitCheckError を送出する
-         - 終了コードが 0 以外の場合、`NOT_ENABLED` を返す
-      2. 同じ形で `["systemctl", "--user", "start", "--no-block", "--", service]` を実行する
+         - 終了コードが 0 以外の場合、`NOT_ENABLED` を返却する
+      2. 同じ構造で `["systemctl", "--user", "start", "--no-block", "--", service]` を実行する
          - TimeoutExpired の場合、UnitStartError を送出する
          - 終了コードが 0 以外の場合、UnitStartError を送出する
-      3. `REQUESTED` を返す
+      3. `REQUESTED` を返却する
     exceptions:
       - name: UnitCheckError
         condition: '`is-enabled` が `timeout` を過ぎた'
@@ -116,13 +116,13 @@ functions:
       - name: test_request_unit_start
         case: 正常
         summary: 有効なユニットへ起動を依頼する
-        condition: '`subprocess.run` が `is-enabled` と `start` のどちらも終了コード 0 を返す'
+        condition: '`subprocess.run` が `is-enabled` と `start` のどちらも終了コード 0 を返却する'
         mock: '`subprocess.run`（monkeypatch）'
         expected: '`REQUESTED`。`["systemctl", "--user", "is-enabled", "--quiet", "--", "rule-inject"]`、`["systemctl", "--user", "start", "--no-block", "--", "rule-inject"]` の順に `timeout=SYSTEMCTL_TIMEOUT_SECONDS` で呼ばれる'
       - name: test_request_unit_start_when_not_enabled
         case: 正常
         summary: 有効でなければ起動を依頼しない
-        condition: '`is-enabled` が終了コード 1 を返す'
+        condition: '`is-enabled` が終了コード 1 を返却する'
         mock: '`subprocess.run`'
         expected: '`NOT_ENABLED`。`start` が呼ばれない'
       - name: test_request_unit_start_when_systemctl_missing
@@ -148,7 +148,8 @@ functions:
       - name: test_request_unit_start_when_start_failed
         case: 異常
         summary: start の失敗
-        condition: '`start` が終了コード 5 を返す'
+        condition: '`start` が終了コード 5 を返却する'
         mock: '`subprocess.run`'
         expected: UnitStartError（reason に `終了コード 5`）
         exception: '`start --no-block` が 0 以外の終了コードで終わった'
+lead: MCP サーバーの応答の確認と、systemd --user のユニットへの起動の依頼の関数を定め、サーバーの起動の補助を修正するときに参照する。

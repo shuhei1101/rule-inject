@@ -6,7 +6,7 @@ enums:
     title: 起動の依頼の結果
     container: features/server_start/types.py
     usecase: 落ちていたMCPサーバーがセッションの開始時に起動される
-    summary: '`request_unit_start` が返す、起動を依頼したか・依頼しなかった理由'
+    summary: '`request_unit_start` が返却する、起動を依頼したか・依頼しなかった理由'
     values:
       - value: requested
         member: REQUESTED
@@ -20,3 +20,4 @@ enums:
         member: SYSTEMCTL_MISSING
         title: systemctl が無い
         description: '`systemctl` が `PATH` に無い'
+lead: MCP サーバーのユニットへ起動を依頼した結果の型を定め、サーバーの起動の補助の結果を修正するときに参照する。

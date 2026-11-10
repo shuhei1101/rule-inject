@@ -11,7 +11,12 @@ requirements:
     source: https://code.claude.com/docs/en/hooks
     value: '1'
     unit: 秒
-    rationale: 外部の上限（600 秒）は、操作のたびに走るフックを待つ値として長すぎる。規約『資源の値の決め方』の「下流を待つタイムアウト」に従い、実測の p99.9 に余裕 50% を加算して、`hooks.json` の `timeout`（秒）に切り上げた。実測は参考の実装のもので、本実装の非機能要件テストで測り直す。正規表現は索引を読むときにエントリごとに 1 回だけコンパイルし、照合のたびにはコンパイルしない。コンパイルと照合を含めたフックの実行全体を、非機能要件テストで `args` を持つエントリ 231 件（実測の索引と同じ件数）と、照合する引数の値 100,000 字の条件で測る
+    rationale: |-
+      外部の上限（600 秒）は、操作のたびに実行されるフックを待つ値として長すぎる。
+      規約『資源の値の決め方』の「下流を待つタイムアウト」に従い、実測の p99.9 に余裕 50% を加算して、`hooks.json` の `timeout`（秒）に切り上げた。
+      実測は参考の実装のもので、本実装の非機能要件テストで再測定する。
+      正規表現は索引を読み込むときにエントリごとに 1 回だけコンパイルし、照合のたびにはコンパイルしない。
+      コンパイルと照合を含めたフックの実行全体を、非機能要件テストで `args` を持つエントリ 231 件（実測の索引と同じ件数）と、照合する引数の値 100,000 字の条件で測る
     breakdown:
       - part: 実測 p99.9
         value: 409 ms
@@ -21,20 +26,23 @@ requirements:
         notes: 実測 p99.9 の 50%（規約の既定値）
       - part: 合計
         value: 614 ms
-        notes: '`timeout` は秒で書くため 1 秒に切り上げる'
-    overflow: Claude Code がフックを打ち切り、操作は案内なしで通常の許可の流れへ進む（止める判定が効かない。Hooks の公式ドキュメント「A timed-out command ... hook doesn't block the tool call」）。索引の件数を増やしたときは測り直す
-    measurement: フックの入力の JSON を標準入力へ渡して実行し、終了までの時間を 1,000 回測って p99.9 を求める
+        notes: '`timeout` は秒で記載するため 1 秒に切り上げる'
+    overflow: Claude Code がフックを打ち切り、操作は案内なしで通常の許可の流れへ進む（止める判定が無効になる。Hooks の公式ドキュメント「A timed-out command ... hook doesn't block the tool call」）。索引の件数を増やしたときは再測定する
+    measurement: フックの入力の JSON を標準入力へ指定して実行し、終了までの時間を 1,000 回測って p99.9 を求める
   - id: NFR-2
     name: フックの案内文の長さ
     english_name: hook_context_length
     category: 性能
-    external_constraint: フックの additionalContext・systemMessage・initialUserMessage と plain stdout は 1 つあたり 10,000 字まで。超えるとファイルへ退避され、先頭 2,000 字のプレビューに置き換わる。止めるときの permissionDecisionReason はこの上限の対象に挙がっておらず、15,709 字を返すと切られず退避もされずにツールの結果へそのまま載った（2026-09-29、Claude Code 2.1.284 で実測）
+    external_constraint: フックの additionalContext・systemMessage・initialUserMessage と plain stdout は 1 つあたり 10,000 字まで。超えるとファイルへ退避され、先頭 2,000 字のプレビューに置き換わる。止めるときの permissionDecisionReason はこの上限の対象に挙がっておらず、15,709 字を返却すると、切られず退避もされずにツールの結果へそのまま表示された（2026-09-29、Claude Code 2.1.284 で実測）
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/hooks
     value: 10,000
     unit: 字
-    rationale: 止めずに案内する additionalContext は外部の上限そのまま。止める案内の permissionDecisionReason には実行基盤の上限が無いが、コンテキストを消費する量として同じ 10,000 字を自分で決めた上限にし、2 つの案内で処置を揃える
-    overflow: 案内文を出力する前に字数を数える。超えるときは、止めるルールを先に並べてルールの場所を 10,000 字に収まるところまで載せ、載せきれなかった件数を末尾に添える。載せきれなかったルールは未読のまま残るので、載せた分を読んで操作をやり直したときに案内される（単一ユースケース「未読のルールの案内を受ける」の正常シナリオ（案内が長い））
+    rationale: 止めずに案内する additionalContext は外部の上限そのまま。止める案内の permissionDecisionReason には実行基盤の上限が無いが、コンテキストを消費する量として同じ 10,000 字を自分で決めた上限にし、2 つの案内で処置を統一する
+    overflow: |-
+      案内文を出力する前に字数を数える。
+      超えるときは、止めるルールを先に並べてルールの場所を 10,000 字に収まるところまで記載し、記載しきれなかった件数を末尾に追加する。
+      記載しきれなかったルールは未読のままで、記載した分を参照して操作を再実行したときに案内される（単一ユースケース「未読のルールの案内を受ける」の正常シナリオ（案内が長い））
   - id: NFR-3
     name: 対応 OS
     english_name: supported_os
@@ -43,7 +51,7 @@ requirements:
     source_kind: ユーザー要望
     source: https://github.com/shuhei1101/rule-inject/issues/2
     value: Linux / WSL
-    rationale: Issue の構成方針のとおり。PoC 検証と設計の工程の実測は WSL（Linux 6.6）で行った。macOS・Windows（WSL なし）は要件のスコープ外
+    rationale: 構成方針のとおり。PoC 検証と設計の工程の実測は WSL（Linux 6.6）で実施した。macOS・Windows（WSL なし）は要件のスコープ外
   - id: NFR-4
     name: フックのPythonのバージョン
     english_name: hook_python_version
@@ -51,19 +59,25 @@ requirements:
     external_constraint: フックは利用者の端末の `python3`（OS が持つバージョン）で動き、バージョンを固定する仕組みが無い
     source_kind: 実行基盤の制限
     value: 3.12 以上
-    rationale: PoC 検証と設計の工程で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使わず、`pyproject.toml` の `requires-python` も `>=3.12` に揃える
-    measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動き、後者はバージョンが足りない知らせが出ることを確かめる
-    overflow: これより古い `python3` で起動されたときは、`hooks/run.py` が冒頭でバージョンを確かめ、パッケージを import する前に終える。PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、動いた `python3` のバージョン」を知らせ、ログ（`unexpected`）に書いて終了コード 0 で終える
+    rationale: PoC 検証と設計の工程で動かした環境が Python 3.12.3。実装は 3.12 より新しい書き方（`PurePath.full_match` など）を使用せず、`pyproject.toml` の `requires-python` も `>=3.12` に統一する
+    measurement: フックの入口（`hooks/run.py`）を 3.12 と 3.11 の `python3` で起動し、前者は案内が動作し、後者はバージョンの不足の通知が出ることを確認する
+    overflow: |-
+      これより古い `python3` で起動されたときは、`hooks/run.py` が冒頭でバージョンを確認し、パッケージを import する前に終了する。
+      PreToolUse・PostToolUse・SessionStart は `additionalContext` で「フックには Python 3.12 以上が要ること、実行した `python3` のバージョン」を通知し、ログ（`unexpected`）に記録して終了コード 0 で終了する
   - id: NFR-5
     name: 既読の記録の保持期間
     english_name: record_retention
     category: 保守性
-    external_constraint: Claude Code は会話の記録（transcript）を既定で 30 日残し（`cleanupPeriodDays`）、そのあいだは `/exit`・`/clear` で終えたセッションも再開できる
+    external_constraint: Claude Code は会話の記録（transcript）を既定で 30 日保持し（`cleanupPeriodDays`）、そのあいだは `/exit`・`/clear` で終えたセッションも再開できる
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/sessions
     value: '30'
     unit: 日
-    rationale: 再開できるセッションの記録を削除すると、文脈に残っているルールがまた案内される。会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を残す。最終更新はルールを読んだ最後の時刻のため、ルールを追加で読まないまま 30 日を超えて続いたセッションでは、削除された後にルールがまた案内される（読めば既読に戻る）。`cleanupPeriodDays` を変えた利用者は 設定ファイルの `global.record_retention_days` で合わせられる（設定『プラグイン』）
+    rationale: |-
+      再開できるセッションの記録を削除すると、文脈に含まれているルールが再度案内される。
+      会話の既定の保持期間と同じ長さにし、再開できるあいだは記録を保持する。
+      最終更新はルールを参照した最後の時刻のため、ルールを追加で参照しないまま 30 日を超えて続いたセッションでは、削除された後にルールが再度案内される（参照すれば既読に戻る）。
+      `cleanupPeriodDays` を変えた利用者は、設定『プラグイン』の `global.record_retention_days` で合わせられる
     overflow: 最終更新から 30 日を過ぎた記録ファイルを、次に始まったセッションの `SessionStart` で削除する（単一ユースケース「終わったセッションの既読の記録が掃除される」）
   - id: NFR-6
     name: ログの保持日数
@@ -74,7 +88,7 @@ requirements:
     source: https://github.com/shuhei1101/rule-inject/pull/12#discussion_r4134801433
     value: '3'
     unit: 日
-    rationale: 利用者の回答で既定を 3 日にした。失敗の原因を追うのに要るのは直近の失敗で、失敗が続いても 1 日のファイルは数 MB に収まる。長く残したい利用者は 設定ファイルの `global.log_retention_days` で変える（設定『プラグイン』）
+    rationale: 利用者の回答で既定を 3 日にした。失敗の原因を追うのに要るのは直近の失敗で、失敗が続いても 1 日のファイルは数 MB に収まる。長く保持したい利用者は、設定『プラグイン』の `global.log_retention_days` で変更する
     overflow: 日付が今日（UTC）から保持日数以上前のログのファイルを、次に始まったセッションの `SessionStart` で削除する（単一ユースケース「古いログが掃除される」）
   - id: NFR-7
     name: 検索結果から照合するパスの数
@@ -85,9 +99,12 @@ requirements:
     source: NFR-122-1#requirements[フックの実行時間]
     value: '100'
     unit: 件
-    rationale: 規約『資源の値の決め方』の「入れ子の待ち」に従い、フックの 1 秒から既存の経路の待ち（非機能要件「フックの実行時間」の合計 614 ms）を引いた残りに安全率 20% を掛け、1 パスあたりの照合の実測で割って切り下げた。実測は「フックの実行時間」と同じ索引 231 件の前提で測った。照合の時間は索引の件数に比例するため、索引の件数を増やしたときや照合を速くしたときは測り直す
-    measurement: 索引 231 件を読んだ状態で、100 件の実在するパスを結果に持つ Glob の入力を検索結果の案内のフックに渡し、終了までの時間を 1,000 回測って p99.9 が 1 秒に収まるかを見る
-    overflow: 結果の先頭から 100 件だけを照合し、残りは照合しない。案内を出すときは照合しなかった件数を添える
+    rationale: |-
+      規約『資源の値の決め方』の「入れ子の待ち」に従い、フックの 1 秒から既存の経路の待ち（非機能要件「フックの実行時間」の合計 614 ms）を差し引いた残りに安全率 20% を掛け、1 パスあたりの照合の実測で割って切り下げた。
+      実測は「フックの実行時間」と同じ索引 231 件の前提で測った。
+      照合の時間は索引の件数に比例するため、索引の件数を増やしたときや照合を速くしたときは再測定する
+    measurement: 索引 231 件を読み込んだ状態で、100 件の実在するパスを結果に持つ Glob の入力を検索結果の案内のフックに指定し、終了までの時間を 1,000 回測って p99.9 が 1 秒に収まるかを確認する
+    overflow: 結果の先頭から 100 件だけを照合し、残りは照合しない。案内を出すときは照合しなかった件数を追加する
     breakdown:
       - part: フックの timeout
         value: 1,000 ms
@@ -100,7 +117,7 @@ requirements:
         notes: 規約の既定値。残り 309 ms
       - part: 1 パスあたりの照合
         value: 2.55 ms
-        notes: 索引 231 件・1 件あたり glob 2 つに 1,000 パスを当てる測定を 3 回行い、最も遅い回の平均（2026-10-11、WSL）。実在の確かめは 0.001 ms で無視できる
+        notes: 索引 231 件・1 件あたり glob 2 つに 1,000 パスを照合する測定を 3 回実施し、最も遅い回の平均（2026-10-11、WSL）。実在の確認は 0.001 ms で無視できる
       - part: 合計
         value: 100 件
         notes: 309 ÷ 2.55 = 121 を、測定のばらつきを見込んで 100 に切り下げた
@@ -109,34 +126,40 @@ requirements:
     name: バージョンの一致
     english_name: version_consistency
     category: 保守性
-    external_constraint: '`.claude-plugin/plugin.json` の `version` を置くと、その値を変えるまで利用者はそのバージョンに固定される（値が変わらない間、marketplace から入れた利用者へ新しいバージョンは届かない）。`plugin.json` にも marketplace の `plugins[]` にも `version` が無ければ、commit の SHA をバージョンにして更新を判定する'
+    external_constraint: '`.claude-plugin/plugin.json` に `version` を記載すると、その値を変えるまで利用者はそのバージョンに固定される（値が変わらない間、marketplace からインストールした利用者へ新しいバージョンは届かない）。`plugin.json` にも marketplace の `plugins[]` にも `version` が無ければ、commit の SHA をバージョンにして更新を判定する'
     source_kind: 実行基盤の制限
     source: https://code.claude.com/docs/en/plugins/loading#how-claude-code-computes-the-version
     value: '`version.ini`・`pyproject.toml`・`uv.lock` の 3 つの値が全て一致し、`plugin.json` と `marketplace.json` の `plugins[]` は `version` を持たない'
-    rationale: '`.claude-plugin/plugin.json` か `marketplace.json` の `plugins[]` に `version` があると、その値の更新を忘れたときにバージョンの更新が利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のまま残った）。規約『Claude プラグインルール』の `no-version-01` のとおり、どちらにも `version` を持たせない。`pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で揃える対象。食い違いと `version` の再追加はテストで検知する'
+    rationale: '`.claude-plugin/plugin.json` か `marketplace.json` の `plugins[]` に `version` があると、その値の更新を忘れたときにバージョンの更新が利用者へ届かない（v0.1.1 と v0.2.0 で `plugin.json` が `0.1.0` のままだった）。
+
+      規約『Claude プラグインルール』の `no-version-01` のとおり、どちらにも `version` を持たせない。
+
+      `pyproject.toml` の `version` と `uv.lock` の `rule-inject` の `version` は、規約『バージョニング』の `## SoT`（リポジトリ内のファイルはタグの値の複製）で統一する対象。
+
+      食い違いと `version` の再追加はテストで検知する'
     measurement: '`version.ini`・`pyproject.toml`・`uv.lock`（`rule-inject` のパッケージ）の 3 つからバージョンを取り出して比べ、`.claude-plugin/plugin.json` と `.claude-plugin/marketplace.json` の `plugins[]` に `version` が無いことを確認する。食い違うときは 3 つの値を並べ、`version` があるときはそのファイルを挙げて fail する'
     test_file: tests/nfr/test_version_consistency.py
-    overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`uv.lock` の 3 つの値を並べて知らせる。`plugin.json` か `marketplace.json` の `plugins[]` が `version` を持つときは、そのファイルを挙げて fail する
+    overflow: 食い違ったら非機能要件テストが fail し、`version.ini`・`pyproject.toml`・`uv.lock` の 3 つの値を並べて通知する。`plugin.json` か `marketplace.json` の `plugins[]` が `version` を持つときは、そのファイルを挙げて fail する
     tests:
       - name: test_version_consistency_when_all_match
-        summary: 3 つのバージョンが一致し、マニフェストが `version` を持たないとき、検査が通る
+        summary: 3 つのバージョンが一致し、マニフェストが `version` を持たないとき、検査に合格する
         condition: リポジトリの直下の `version.ini`・`pyproject.toml`・`uv.lock`・`.claude-plugin/plugin.json`・`.claude-plugin/marketplace.json`（値は固定しない）
-        measurement: 実物のファイルからバージョンを取り出して `version.ini` は先頭の `v` を除いて比べ、マニフェストの `version` の有無を見る
-        expected: 検査が通る（fail しない）
+        measurement: 実物のファイルからバージョンを取り出して `version.ini` は先頭の `v` を除いて比べ、マニフェストの `version` の有無を確認する
+        expected: 検査に合格する（fail しない）
       - name: test_version_consistency_when_mismatch
         summary: バージョンが 1 つでも食い違うとき、検査が 3 つの値を並べて fail する
         condition: '`version.ini` が `v0.1.1`、`pyproject.toml` の `version` が `0.1.1`、`uv.lock` の `rule-inject` の `version` が `0.1.0`。マニフェストは `version` を持たない'
-        measurement: 食い違うバージョンを置いた一時フォルダのファイルを検査へ渡す
+        measurement: 食い違うバージョンを記載した一時フォルダのファイルを検査へ指定する
         expected: 検査が fail し、失敗の文に 3 つのファイルの値（`v0.1.1`・`0.1.1`・`0.1.0`）が並ぶ
       - name: test_version_consistency_when_plugin_has_version
         summary: '`plugin.json` が `version` を持つとき、検査が fail する'
-        condition: '3 つのバージョンが `0.1.1` で一致し、`plugin.json` の `version` が `0.1.0`（Issue #24 の食い違い）'
-        measurement: '`plugin.json` に `version` を置いた一時フォルダのファイルを検査へ渡す'
+        condition: '3 つのバージョンが `0.1.1` で一致し、`plugin.json` の `version` が `0.1.0`（[プラグインのバージョンの食い違い](https://github.com/shuhei1101/rule-inject/issues/24)）'
+        measurement: '`plugin.json` に `version` を記載した一時フォルダのファイルを検査へ指定する'
         expected: 検査が fail し、失敗の文に `plugin.json` が挙がる
       - name: test_version_consistency_when_marketplace_has_version
         summary: '`marketplace.json` の `plugins[]` が `version` を持つとき、検査が fail する'
         condition: 3 つのバージョンが `0.1.1` で一致し、`marketplace.json` の `plugins[]` の `rule-inject` の `version` が `0.1.1`
-        measurement: '`marketplace.json` の `plugins[]` に `version` を置いた一時フォルダのファイルを検査へ渡す'
+        measurement: '`marketplace.json` の `plugins[]` に `version` を記載した一時フォルダのファイルを検査へ指定する'
         expected: 検査が fail し、失敗の文に `marketplace.json` が挙がる
   - id: NFR-9
     name: MCPサーバーの待ち受けのアドレス
@@ -146,8 +169,8 @@ requirements:
     source_kind: ユーザー要望
     source: https://github.com/shuhei1101/rule-inject/issues/58
     value: 127.0.0.1
-    rationale: 索引を書き換えるツールを持つため、同じ端末の Claude Code だけから届くようにループバックに限る。認証は持たない
-    measurement: サーバーを起動し、待ち受けているソケットのアドレスが 127.0.0.1 だけであることを確かめる
+    rationale: 索引を書き換えるツールを持つため、同じ端末の Claude Code だけから接続できるようにループバックに限定する。認証は持たない
+    measurement: サーバーを起動し、待ち受けているソケットのアドレスが 127.0.0.1 だけであることを確認する
     status: planned
   - id: NFR-10
     name: MCPサーバーの既定のポート
@@ -156,8 +179,8 @@ requirements:
     external_constraint: 制限なし
     source_kind: 制限なし
     value: '8783'
-    rationale: コーディング規約『MCP』のポートの台帳で rule-inject に割り当てた値。同じ端末で動く他の MCP サーバーとぶつからない。環境変数 `RULE_INJECT_PORT` で変えられる（設定『プラグイン』）
-    overflow: ポートが使われているときは起動せず、ポートと理由を標準エラーへ出して 0 以外の終了コードで終える（インターフェース定義「サーバーの起動」の異常系）
+    rationale: コーディング規約『MCP』のポートの台帳で rule-inject に割り当てた値。同じ端末で動く他の MCP サーバーと競合しない。設定『プラグイン』の環境変数 `RULE_INJECT_PORT` で変更できる
+    overflow: ポートが使用されているときは起動せず、ポートと理由を標準エラーへ出力して 0 以外の終了コードで終了する（インターフェース定義「サーバーの起動」の異常系）
     status: planned
   - id: NFR-11
     name: MCPのツールの応答の長さ
@@ -168,7 +191,7 @@ requirements:
     source: https://code.claude.com/docs/en/mcp
     value: 40,000
     unit: 字
-    rationale: ファイルへの退避（50,000 字）に届かず、結果がそのままコンテキストに載るように余裕 20% を引いた。既定の `limit`（100 件）は、実測の索引でエントリ 1 件の JSON が平均 200 字ほどのため、20,000 字前後でこの値に収まる
+    rationale: ファイルへの退避（50,000 字）に届かず、結果がそのままコンテキストに含まれるように余裕 20% を差し引いた。既定の `limit`（100 件）は、実測の索引でエントリ 1 件の JSON が平均 200 字ほどのため、20,000 字前後でこの値に収まる
     breakdown:
       - part: 外部の上限
         value: 50,000 字
@@ -178,7 +201,7 @@ requirements:
         notes: 上限の 20%
       - part: 決定値
         value: 40,000 字
-    overflow: 応答がこの字数を超えるときは、超える手前のエントリで切り、`total` と `next_cursor` を返して続きを取らせる（インターフェース定義「ルールの一覧」の正常系（続きがある））
+    overflow: 応答がこの字数を超えるときは、超える手前のエントリで切り、`total` と `next_cursor` を返却して続きを取得させる（インターフェース定義「ルールの一覧」の正常系（続きがある））
     status: planned
   - id: NFR-12
     name: プロジェクトのファイルを辿る時間
@@ -189,16 +212,24 @@ requirements:
     source: https://github.com/shuhei1101/rule-inject/pull/69#discussion_r4402872638
     value: '30'
     unit: 秒
-    rationale: '`check_indexes` が `paths` の当たらないエントリを確かめるために、プロジェクトの直下からファイルを辿り、エントリに当てる 1 回の呼び出しの時間の上限。辿る速さはファイルシステムで大きく変わるため（内訳）、ファイルの数ではなく時間で区切る。待てる時間は利用者の意向で決まる（規約『資源の値の決め方』で導けない）ため、承認確認で決めた。値は、WSL の `/mnt/c` に置いたリポジトリ 1 つ（約 2 万ファイル、実測 14.2 秒）を余裕を持って辿り終えられる長さ'
-    measurement: 1 万・10 万ファイルを置いたプロジェクトで `check_indexes` を呼び、応答までの時間と辿り終えたかを確かめる
-    overflow: 上限を超えたら辿るのをやめ、`paths` の当たらないエントリを返さず、検出を終えられなかったこと・辿ったファイルの数・続きの位置（`next_cursor`）を応答に載せる。`next_cursor` を `cursor` に渡して呼び直すと続きから辿る（インターフェース定義「索引のチェック」の正常系（辿る時間の上限を超える）・正常系（続きから辿る））。途中までに当たらなかったエントリを当たらないとして返すと誤検出になるため
+    rationale: '`check_indexes` が `paths` のヒットしないエントリを確認するために、プロジェクトの直下からファイルを辿り、エントリに照合する 1 回の呼び出しの時間の上限。
+
+      辿る速さはファイルシステムで大きく変わるため（内訳）、ファイルの数ではなく時間で区切る。
+
+      待てる時間は利用者の意向で決まる（規約『資源の値の決め方』で導けない）ため、承認確認で決めた。
+
+      値は、WSL の `/mnt/c` に配置したリポジトリ 1 つ（約 2 万ファイル、実測 14.2 秒）を余裕を持って辿り終えられる長さ'
+    measurement: 1 万・10 万ファイルを配置したプロジェクトで `check_indexes` を呼び出し、応答までの時間と辿り終えたかを確認する
+    overflow: |-
+      上限を超えたら辿るのをやめ、`paths` のヒットしないエントリを返却せず、検出を終えられなかったこと・辿ったファイルの数・続きの位置（`next_cursor`）を応答に記載する（途中までにヒットしなかったエントリを返却すると誤検出になる）。
+      `next_cursor` を `cursor` に指定して再度呼び出すと続きから辿る（インターフェース定義「索引のチェック」の正常系（辿る時間の上限を超える）・正常系（続きから辿る））
     breakdown:
       - part: WSL の /mnt/c を辿る速さ
         value: 約 600〜1,350 ファイル/秒
         notes: '`.git` を除いて `os.walk` で辿った実測（rule-inject 4,834 ファイル 8.3 秒、ai-monitor 19,163 ファイル 14.2 秒、2026-10-29）'
       - part: Linux のファイルシステムを辿る速さ
         value: 約 78 万ファイル/秒
-        notes: ホームの `.cache` 487,983 ファイル 0.62 秒（同日、ページキャッシュに載った状態）
+        notes: ホームの `.cache` 487,983 ファイル 0.62 秒（同日、ページキャッシュに格納された状態）
     status: planned
     introduced:
       pr: 69
@@ -210,19 +241,25 @@ requirements:
     source_kind: 制限なし
     value: '207'
     unit: 秒
-    rationale: '`check_indexes` が dev-docs の `search_docs`（`source: "*"`・`group_by: tags`）を 1 回呼ぶときの、接続から応答までの上限。規約『資源の値の決め方』の「下流を待つタイムアウト」で、実測の p99.9 + その 50% とする。配信元ごとに 1,000 回測った p99.9 の大きい方（文書 51 件の配信元の 137.6 秒）に 68.8 秒を足し、137.6 + 68.8 ≈ 207 秒（内訳）'
-    measurement: 'dev-docs が配信する文書の数ごとに `search_docs`（`source: "*"`・`group_by: tags`・`format: json`・`cwd` に配信元の中）を 1,000 回呼び、接続から応答までの時間の p99.9 を測る。応答しない偽の dev-docs に向けて `check_indexes` を呼び、応答までの時間と `tag_check.state` を確かめる'
-    overflow: 上限を超えたら問い合わせをやめ、使われていないタグのパターンの確かめだけを飛ばして `tag_check.state` を `skipped`、`reason` に上限の秒数を載せる。ほかの確かめは今どおり返す（インターフェース定義「索引のチェック」の制約「dev-docs への問い合わせ」）
+    rationale: '`check_indexes` が dev-docs の `search_docs`（`source: "*"`・`group_by: tags`）を 1 回呼び出すときの、接続から応答までの上限。
+
+      規約『資源の値の決め方』の「下流を待つタイムアウト」で、実測の p99.9 + その 50% とする。
+
+      配信元ごとに 1,000 回測った p99.9 の大きい方（文書 51 件の配信元の 137.6 秒）に 68.8 秒を加算し、137.6 + 68.8 ≈ 207 秒（内訳）'
+    measurement: 'dev-docs が配信する文書の数ごとに `search_docs`（`source: "*"`・`group_by: tags`・`format: json`・`cwd` に配信元の中）を 1,000 回呼び出し、接続から応答までの時間の p99.9 を測る。
+
+      応答しない偽の dev-docs に向けて `check_indexes` を呼び出し、応答までの時間と `tag_check.state` を確認する'
+    overflow: 上限を超えたら問い合わせをやめ、使用されていないタグのパターンの確認だけを飛ばして `tag_check.state` を `skipped`、`reason` に上限の秒数を記載する。ほかの確認の結果は今どおり返却する（インターフェース定義「索引のチェック」の制約「dev-docs への問い合わせ」）
     breakdown:
       - part: 文書 51 件の配信元への応答
         value: 1,000 回で 31.3〜171.2 秒（p50 37.9 秒・p99 114.3 秒・p99.9 137.6 秒）
-        notes: shuhdev-gateway の develop の worktree を `cwd` に渡し、1 回ずつ順に呼んだ実測（2026-10-30〜31、WSL の `/mnt/c`）。スクリプトと結果は `docs/pr/80/実測/`
+        notes: shuhdev-gateway の develop の worktree を `cwd` に指定し、1 回ずつ順に呼び出した実測（2026-10-30〜31、WSL の `/mnt/c`）。スクリプトと結果は [dev-docs への問い合わせの待ち時間の変更の実測](https://github.com/shuhei1101/rule-inject/tree/develop/docs/pr/80/%E5%AE%9F%E6%B8%AC)
       - part: 文書 589 件の配信元への応答
         value: 1,000 回で 14.2〜65.7 秒（p50 15.9 秒・p99 44.2 秒・p99.9 64.7 秒）
-        notes: claude-balancer のクローンを `cwd` に渡した実測（2026-10-31）。#77 の時点の 585 件から 589 件に増えている。540 回目の前に dev-docs が入れ替わり（止まった間の接続の失敗は測った回から除いた）、それより前は p50 14.5 秒・最大 37.6 秒、以降は p50 19.0 秒・最大 65.7 秒。文書 51 件の 1,000 回は入れ替わる前の値
-      - part: どの配信元も読まないときの応答
+        notes: claude-balancer のクローンを `cwd` に指定した実測（2026-10-31）。[タグの条件の木の照合](https://github.com/shuhei1101/rule-inject/pull/77) の時点の 585 件から 589 件に増えている。540 回目の前に dev-docs が入れ替わり（止まった間の接続の失敗は測った回から除いた）、それより前は p50 14.5 秒・最大 37.6 秒、以降は p50 19.0 秒・最大 65.7 秒。文書 51 件の 1,000 回は入れ替わる前の値
+      - part: どの配信元も参照しないときの応答
         value: 0.02〜2.0 秒
-        notes: '`total_count` が 0 で返る（#77 の実測）'
+        notes: '`total_count` が 0 で返却される（[タグの条件の木の照合](https://github.com/shuhei1101/rule-inject/pull/77) の実測）'
       - part: p99.9
         value: 137.6 秒
         notes: 2 つの配信元の p99.9 の大きい方
@@ -241,9 +278,13 @@ requirements:
     source_kind: 制限なし
     value: '356'
     unit: 秒
-    rationale: '`restart_server`・`update_server` が、待ち受けを閉じる前に処理中のツールの呼び出しの終わりを待つ上限。規約『資源の値の決め方』の「入れ子の待ち」で、待つ相手のうち最も長い `check_indexes` の内側の待ちの合計に余裕を足す。内側の待ち以外の処理の実測が無いため、余裕は規約の既定の 50% を仮に置き、測る作業を残す（内訳）'
-    measurement: 辿るファイルの多いプロジェクトの `check_indexes` を呼んだまま `restart_server` を呼び、`check_indexes` の応答が返ってから待ち受けを閉じることと、`check_indexes` の内側の待ち以外の処理の時間を 1,000 回測る
-    overflow: 上限を超えたら待つのをやめて待ち受けを閉じ、残った呼び出しの接続は非機能要件「待ち受けを閉じた後の接続の待ち」で切って起動し直す（インターフェース定義「サーバーの再起動」の制約「停止の待ち」「待ち受けの閉じ方」）。切られた呼び出しは接続の失敗になる
+    rationale: '`restart_server`・`update_server` が、待ち受けを閉じる前に処理中のツールの呼び出しの終わりを待つ上限。
+
+      規約『資源の値の決め方』の「入れ子の待ち」で、待つ相手のうち最も長い `check_indexes` の内側の待ちの合計に余裕を加算する。
+
+      内側の待ち以外の処理の実測が無いため、余裕は規約の既定の 50% を仮の値とし、測定は今後の作業とする（内訳）'
+    measurement: 辿るファイルの多いプロジェクトの `check_indexes` を呼び出したまま `restart_server` を呼び出し、`check_indexes` の応答が返却されてから待ち受けを閉じることと、`check_indexes` の内側の待ち以外の処理の時間を 1,000 回測る
+    overflow: 上限を超えたら待つのをやめて待ち受けを閉じ、残った呼び出しの接続は非機能要件「待ち受けを閉じた後の接続の待ち」で切って再起動する（インターフェース定義「サーバーの再起動」の制約「停止の待ち」「待ち受けの閉じ方」）。切られた呼び出しは接続の失敗になる
     breakdown:
       - part: プロジェクトのファイルを辿る時間
         value: 30 秒
@@ -269,9 +310,13 @@ requirements:
     source: https://www.uvicorn.org/settings/#timeouts
     value: '3'
     unit: 秒
-    rationale: 再起動・更新・Ctrl+C・SIGTERM で待ち受けを閉じた後、残った接続を切るまでの上限（`uvicorn.Config` の `timeout_graceful_shutdown`）。再起動・更新では処理中のツールの呼び出しを非機能要件「再起動の停止の待ち」で待ち終えているため、残るのは終わらない SSE のストリームと、送り終えていない応答だけになる。自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の 10 倍にする。ループバックで応答を送り終える時間の実測が無いため、仮に 3 秒を置き、測る作業を残す
-    measurement: 再起動の応答を返した直後に待ち受けを閉じ、接続が全て閉じるか切られるまでの時間を、SSE のストリームを開いたクライアントがある状態と無い状態で 1,000 回測る
-    overflow: 上限を超えた接続は uvicorn が切り、停止を続ける。SSE のストリームを持つクライアントは接続し直す
+    rationale: |-
+      再起動・更新・Ctrl+C・SIGTERM で待ち受けを閉じた後、残った接続を切るまでの上限（`uvicorn.Config` の `timeout_graceful_shutdown`）。
+      再起動・更新では処理中のツールの呼び出しを非機能要件「再起動の停止の待ち」で待ち終えているため、残るのは終わらない SSE のストリームと、送信し終えていない応答だけになる。
+      自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の 10 倍にする。
+      ループバックで応答を送信し終える時間の実測が無いため、3 秒を仮の値とし、測定は今後の作業とする
+    measurement: 再起動の応答を返却した直後に待ち受けを閉じ、接続が全て閉じるか切られるまでの時間を、SSE のストリームを開いたクライアントがある状態と無い状態で 1,000 回測る
+    overflow: 上限を超えた接続は uvicorn が切り、停止を続ける。SSE のストリームを持つクライアントは再接続する
     status: planned
     introduced:
       pr: 110
@@ -282,13 +327,17 @@ requirements:
     external_constraint: 制限なし
     source_kind: 制限なし
     value: git の各コマンド 49 秒・`uv sync` 864 秒・`migrate --plan` 57 秒
-    rationale: '`update_server`・`get_server_status` が子プロセスで呼ぶコマンドの上限。自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の最大の 10 倍を秒に切り上げた（内訳）。`uv sync` は `.venv` を作り直すときが最も長い'
-    measurement: クローンで `git fetch`・`uv sync --extra server`（`.venv` が無い状態とある状態）・`python -m rule_inject.migrate --plan` をそれぞれ測り、最大を取る
-    overflow: 上限を超えたコマンドは止め、`UpdateFailedError` でコマンドとその時点の `HEAD` を返して再起動しない（インターフェース定義「サーバーの更新」）。`get_server_status` の `git rev-parse` が超えたときは `commit` を `null` にする
+    rationale: '`update_server`・`get_server_status` が子プロセスで呼び出すコマンドの上限。
+
+      自分の処理の完了を待つだけの待ちで、役目はハングの検知だけのため、規約『資源の値の決め方』のとおり実測の最大の 10 倍を秒に切り上げた（内訳）。
+
+      `uv sync` は `.venv` を再作成するときが最も長い'
+    measurement: クローンで `git fetch`・`uv sync --extra server`（`.venv` が無い状態とある状態）・`python -m rule_inject.migrate --plan` をそれぞれ測り、最大の値を採用する
+    overflow: 上限を超えたコマンドは停止し、`UpdateFailedError` でコマンドとその時点の `HEAD` を返却して再起動しない（インターフェース定義「サーバーの更新」）。`get_server_status` の `git rev-parse` が超えたときは `commit` を `null` にする
     breakdown:
       - part: git fetch
         value: 最大 4.84 秒 → 49 秒
-        notes: rule-inject の worktree で GitHub から 3 回（3.84・4.43・4.84 秒、2026-11-06、WSL の `/mnt/c`）。git の各コマンドに同じ上限を置く
+        notes: rule-inject の worktree で GitHub から 3 回（3.84・4.43・4.84 秒、2026-11-06、WSL の `/mnt/c`）。git の各コマンドに同じ上限を設定する
       - part: uv sync --extra server
         value: 最大 86.36 秒 → 864 秒
         notes: '`.venv` が無い状態で 86.36 秒、ある状態で 1.30・1.10 秒（同日、同じ worktree）'
@@ -307,14 +356,18 @@ requirements:
     source: NFR-122-1#requirements[フックの実行時間]
     value: '0.1'
     unit: 秒
-    rationale: サーバーの起動の補助が `127.0.0.1` の待ち受けのポートへ TCP で接続を試みるときの待ち。待ち受けていればカーネルが接続を受け、待ち受けていなければすぐに拒まれるため、待ちが届くのは応答しない相手がポートを取っているときだけ。規約『資源の値の決め方』の入れ子の待ちで、外側のフックの実行時間（1 秒）に、フックの起動・`systemctl` の 2 回の呼び出しと合わせて収める。接続だけの実測が 1,000 回に満たないため仮の値で、非機能要件テストで測り直す
+    rationale: |-
+      サーバーの起動の補助が `127.0.0.1` の待ち受けのポートへ TCP で接続を試みるときの待ち。
+      待ち受けていればカーネルが接続を受け、待ち受けていなければすぐに拒まれるため、待ちが上限に達するのは応答しない相手がポートを取っているときだけ。
+      規約『資源の値の決め方』の入れ子の待ちで、外側のフックの実行時間（1 秒）に、フックの起動・`systemctl` の 2 回の呼び出しと合わせて収める。
+      接続だけの実測が 1,000 回に満たないため仮の値で、非機能要件テストで再測定する
     breakdown:
       - part: 外側の待ち
         value: 1 秒
         notes: 非機能要件「フックの実行時間」
       - part: フックの起動と応答する経路
         value: 296 ms
-        notes: 'PR #112 の PoC 検証の応答する経路の 1,000 回の p99.9（197 ms）に余裕 50% を加えた値'
+        notes: '[サーバーの起動の補助](https://github.com/shuhei1101/rule-inject/pull/112) の PoC 検証の応答する経路の 1,000 回の p99.9（197 ms）に余裕 50% を加えた値'
       - part: systemctl の呼び出し
         value: 600 ms
         notes: 非機能要件「ユニットの確認と起動の依頼の待ち」の 0.3 秒 × 2 回
@@ -332,7 +385,11 @@ requirements:
     source: NFR-122-1#requirements[フックの実行時間]
     value: '0.3'
     unit: 秒
-    rationale: 'サーバーの起動の補助が実行する `systemctl --user is-enabled` と `systemctl --user start --no-block` のそれぞれの打ち切り。起動を依頼する経路のフック全体（PR #112 の PoC 検証で 1,000 回の p99.9 が 369 ms、余裕 50% を加えて 553 ms）から応答する経路（同じく 296 ms）を差し引いた 257 ms が 2 回の呼び出しの合計で、それを上回る 1 回 0.3 秒を決定値にする。フックの実行時間（1 秒）の内訳は非機能要件「サーバーの応答の確認の待ち」'
+    rationale: 'サーバーの起動の補助が実行する `systemctl --user is-enabled` と `systemctl --user start --no-block` のそれぞれの打ち切り。
+
+      起動を依頼する経路のフック全体（[サーバーの起動の補助](https://github.com/shuhei1101/rule-inject/pull/112) の PoC 検証で 1,000 回の p99.9 が 369 ms、余裕 50% を加えて 553 ms）から応答する経路（同じく 296 ms）を差し引いた 257 ms が 2 回の呼び出しの合計で、それを上回る 1 回 0.3 秒を決定値にする。
+
+      フックの実行時間（1 秒）の内訳は非機能要件「サーバーの応答の確認の待ち」'
     breakdown:
       - part: 起動を依頼する経路
         value: 553 ms
@@ -346,6 +403,6 @@ requirements:
       - part: 1 回の打ち切り
         value: 300 ms
         notes: 合計を上回るように切り上げた値
-    overflow: 打ち切ったら起動を依頼しないまま終え、ER 図「ログ」へ記載する。次のセッションの開始でまた確認する
+    overflow: 打ち切ったら起動を依頼しないまま終了し、ER 図「ログ」へ記録する。次のセッションの開始で再度確認する
     measurement: 有効なユニットへ `is-enabled` と `start --no-block` を 1,000 回ずつ実行し、それぞれの p99.9 を求める
 lead: Claude Code のフックの制約から逆算した rule-inject が守る値を定め、時間・保持期間などの値を決める・変えるときに参照する。
