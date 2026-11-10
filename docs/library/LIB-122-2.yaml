@@ -16,7 +16,7 @@ catalogs:
         purpose: Draft 2020-12 の Schema で値を検証する
       - name: Draft202012Validator.iter_errors
         kind: メソッド
-        purpose: 値の違反をすべて返す
+        purpose: 値の違反をすべて返却する
         params:
           - name: instance
             type: '`object`'
@@ -32,7 +32,7 @@ upstream: python-jsonschema/jsonschema
 verification:
   state: 済
   date: '2026-10-28'
-  detail: PoC 検証（#60）で 4.26.0 の `Draft202012Validator.iter_errors` を ruamel.yaml で読んだ索引に当て、型違反・許さないキー・必須キーの欠けの 3 種類を、`absolute_path`（例 `['rules', 0, 'paths']`）と `message` つきで返すことを確かめた
+  detail: "[PoC 検証](https://github.com/shuhei1101/rule-inject/pull/60) で 4.26.0 の `Draft202012Validator.iter_errors` を ruamel.yaml で読み込んだ索引に適用し、型違反・許さないキー・必須キーの欠けの 3 種類を、`absolute_path`（例 `['rules', 0, 'paths']`）と `message` つきで返却することを確認した"
 license: MIT（商用利用可）
 official_url: https://github.com/python-jsonschema/jsonschema
 docs_url: https://python-jsonschema.readthedocs.io/
