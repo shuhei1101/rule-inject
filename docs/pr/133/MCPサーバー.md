@@ -19,6 +19,12 @@
 | instructions の置き場所 | `server/app.py` の定数にし、`build_server` が `MCPServer(SERVER_NAME, instructions=...)` に指定する | 設定ファイルでは変えられない |
 | `initialize` の応答 | `instructions` に上の文面が入る | 接続のたびに同じ文面 |
 
+## 設計書の確定コミット
+
+| 工程 | 範囲 | 補足 |
+| --- | --- | --- |
+| インターフェース定義設計 | `e5c6aac..821948d` | IF-122-6 |
+
 ## テスト結果
 
 なし
