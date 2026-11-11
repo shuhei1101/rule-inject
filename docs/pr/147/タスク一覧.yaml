@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T01:18:57.698764+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: docs/guide/ の 3 ページの図を mdmark の flow へ描き直す
+    updated_by: planner
+    updated_at: '2026-11-11T01:29:34.956384+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えない
