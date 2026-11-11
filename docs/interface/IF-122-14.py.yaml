@@ -28,13 +28,13 @@ flows:
 
         CC->>H: 標準入力（Write・対象のパス）
         H->>IDX: 読む
-        H->>H: 対象のパスに当たるエントリを選ぶ
+        H->>H: 対象のパスに該当するエントリを選ぶ
         H->>ST: そのセッションの既読を読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
     expected:
       - '`permissionDecision` が `deny`'
-      - '`permissionDecisionReason` にルールのパスと、Read で参照してから同じ操作をやり直す旨が載っている'
+      - '`permissionDecisionReason` にルールのパスと、Read で参照してから同じ操作を再試行する旨が載っている'
       - 終了コードが `0`
     test: test_normal_when_blocked
   - name: 正常系（既読のため案内しない）
@@ -96,7 +96,7 @@ flows:
       ```
     expected:
       - '`permissionDecision` が無い'
-      - '`additionalContext` にルールの場所が載り、「やり直してください」を含まない'
+      - '`additionalContext` にルールの場所が載り、「再試行してください」を含まない'
       - 案内済みの記録にルールの場所が 1 行ある
       - 終了コードが `0`
     test: test_normal_when_not_blocked
@@ -151,7 +151,7 @@ flows:
 
         CC->>H: 標準入力（MCP のツール名）
         H->>IDX: 読む
-        H->>H: ツール名に当たるエントリを選ぶ
+        H->>H: ツール名に該当するエントリを選ぶ
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
@@ -180,7 +180,7 @@ flows:
 
         CC->>H: 標準入力（Write・対象のパス）
         H->>IDX: 読む
-        H->>H: 当たった 2 エントリをルールの場所ごとに 1 件にまとめる
+        H->>H: 該当した 2 エントリをルールの場所ごとに 1 件にまとめる
         H-->>CC: permissionDecision: deny + 案内（場所 1 件）<br>終了コード 0
       ```
     expected:
@@ -207,7 +207,7 @@ flows:
 
         CC->>H: 標準入力（Write・tests の下のパス）
         H->>IDX: 読む
-        H->>H: exclude に当たるためエントリを外す
+        H->>H: exclude に該当するためエントリを除外する
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
     expected:
@@ -233,8 +233,8 @@ flows:
         participant IDX as 索引
 
         CC->>H: 標準入力（Write・対象のパス）
-        H->>IDX: 読む（100 件当たる）
-        H->>H: 止めるルールを先に並べ、<br>10,000 字に収まる分と残りの件数を書く
+        H->>IDX: 読む（100 件該当する）
+        H->>H: 止めるルールを先に並べ、<br>10,000 字に収まる分と残りの件数を記載する
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
     expected:
@@ -416,7 +416,7 @@ flows:
       - ログのファイルが無い
     test: test_normal_when_default_index
   - name: 正常系（索引の並びが空）
-    summary: 該当した `projects` の要素の `indexes` を空の並びにしたとき、プロジェクトの既定の置き場所の索引を読まない
+    summary: 該当した `projects` の要素の `indexes` を空の並びにしたとき、プロジェクトの既定の配置場所の索引を読まない
     setup:
       - name: Mock
         description: なし
@@ -434,7 +434,7 @@ flows:
         participant H as ルール案内
 
         CC->>H: 標準入力（Write・対象のパス）
-        H->>H: 空の並びのため既定の置き場所を読まない
+        H->>H: 空の並びのため既定の配置場所を読まない
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
     expected:
@@ -500,7 +500,7 @@ flows:
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_rule_variable_unset
-  - name: 異常系（案内済みの記録に書けない・止めずに理由を記載する）
+  - name: 異常系（案内済みの記録に書き込めない・止めずに理由を記載する）
     summary: 案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む
     setup:
       - name: Mock
@@ -520,7 +520,7 @@ flows:
         participant LOG as ログ
 
         CC->>H: 標準入力（Read・対象のパス）
-        H->>GD: 追記する（書けない）
+        H->>GD: 追記する（書き込めない）
         H->>LOG: write_record を追記する
         H-->>CC: additionalContext（案内と、記録ファイルの場所と理由）<br>終了コード 0
       ```
@@ -553,7 +553,7 @@ flows:
 
         CC->>H: 標準入力（MCP のツール名・引数）
         H->>IDX: 読む
-        H->>H: ツール名と引数に当たるエントリを選ぶ
+        H->>H: ツール名と引数に該当するエントリを選ぶ
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
@@ -582,7 +582,7 @@ flows:
 
         CC->>H: 標準入力（MCP のツール名・引数）
         H->>IDX: 読む
-        H->>H: 引数が当たらないためエントリを外す
+        H->>H: 引数が該当しないためエントリを除外する
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
     expected:
@@ -740,7 +740,7 @@ flows:
 
         CC->>H: 標準入力（Write・対象のパス）
         H->>CFG: 読む
-        H->>H: match が当たる要素（1 つ目・2 つ目）を選び、<br>相対パスを CLAUDE_PROJECT_DIR から解く
+        H->>H: match が該当する要素（1 つ目・2 つ目）を選び、<br>相対パスを CLAUDE_PROJECT_DIR から解く
         H->>IDX: 索引 a・索引 b を順に読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
@@ -820,7 +820,7 @@ flows:
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に設定ファイルの場所と知らないキー `index` が載っている'
-      - '`additionalContext` に既定の置き場所の索引のルールの場所が載っていない'
+      - '`additionalContext` に既定の配置場所の索引のルールの場所が載っていない'
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
@@ -843,8 +843,8 @@ flows:
         participant IDX as 索引
 
         CC->>H: 標準入力（MCP のツール名）
-        H->>IDX: 読む（無効のエントリを外す）
-        H->>H: ツール名に当たるエントリが無い
+        H->>IDX: 読む（無効のエントリを除外する）
+        H->>H: ツール名に該当するエントリが無い
         H-->>CC: 標準出力なし<br>終了コード 0
     expected:
       - 標準出力が空
@@ -872,15 +872,15 @@ flows:
         participant GD as 案内済みの記録
 
         CC->>H: 標準入力（Write・対象のパス）
-        H->>IDX: 読む（無効のエントリを外す）
-        H->>H: 有効のエントリだけが当たる（Write は on に無い）
+        H->>IDX: 読む（無効のエントリを除外する）
+        H->>H: 有効のエントリだけが該当する（Write は on に無い）
         H->>ST: 既読を読む（未読）
         H->>GD: 案内済みを読む（未案内）
         H->>GD: ルールの場所を追記する
         H-->>CC: additionalContext（案内）<br>終了コード 0
     expected:
       - '`permissionDecision` が無い'
-      - '`additionalContext` にルールの場所が 1 回だけ載り、「やり直してください」を含まない'
+      - '`additionalContext` にルールの場所が 1 回だけ載り、「再試行してください」を含まない'
       - 終了コードが `0`
     test: test_normal_when_disabled_and_enabled_entries
   - name: 異常系（enabledが真偽値でない・止めずに理由を記載する）
@@ -931,7 +931,7 @@ flows:
 
         CC->>H: 標準入力（MCP のツール名・引数）
         H->>IDX: 読む
-        H->>H: 条件の木の field ごとの values に当たるエントリを選ぶ
+        H->>H: 条件の木の field ごとの values に該当するエントリを選ぶ
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
     expected:
@@ -958,7 +958,7 @@ flows:
 
         CC->>H: 標準入力（MCP のツール名・引数）
         H->>IDX: 読む
-        H->>H: not の中と否定の op を除くと tags の値が無いためエントリを外す
+        H->>H: not の中と否定の op を除くと tags の値が無いためエントリを除外する
         H-->>CC: 標準出力なし<br>終了コード 0
     expected:
       - 標準出力が空
@@ -985,7 +985,7 @@ flows:
 
         CC->>H: 標準入力（Write・対象のパス）
         H->>IDX: 読む
-        H->>H: 対象のパスに当たるエントリを選ぶ（read_tool あり）
+        H->>H: 対象のパスに該当するエントリを選ぶ（read_tool あり）
         H->>ST: そのセッションの既読を読む（未読）
         H-->>CC: permissionDecision: deny + 場所とツールの行を並べた案内<br>終了コード 0
       ```
@@ -1179,21 +1179,21 @@ response:
     notes: 操作の種別が `on` に該当する未読のルールが 1 件でもあるときだけ記載する
   - name: '`hookSpecificOutput.permissionDecisionReason`'
     type: str
-    description: 止める案内。参照してから同じ操作をやり直すことと、参照の方法（制約「案内文の構成」）と、未読のルールのパス。`read_tool` を持つエントリのルールは、パスの行の下にツールの名前と引数の行
+    description: 止める案内。参照してから同じ操作を再試行することと、参照の方法（制約「案内文の構成」）と、未読のルールのパス。`read_tool` を持つエントリのルールは、パスの行の下にツールの名前と引数の行
     constraints: 10,000 字以内
     notes: '`permissionDecision` を記載したときだけ記載する。止めないルールも同じ案内に並べる'
   - name: '`hookSpecificOutput.additionalContext`'
     type: str
     description: 止めない案内。参照の方法（制約「案内文の構成」）と、未読で未案内のルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。設定ファイルか索引が読めないとき・索引のエントリを読み飛ばしたとき・記録が読めないか書き込めないときはその場所と理由
     constraints: 10,000 字以内
-    notes: 操作を止めないときだけ記載する。「やり直してください」は含めない
+    notes: 操作を止めないときだけ記載する。「再試行してください」は含めない
 response_example: |-
   ```json
   {
     "hookSpecificOutput": {
       "hookEventName": "PreToolUse",
       "permissionDecision": "deny",
-      "permissionDecisionReason": "この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。\nパスを Read で参照してください。\n- /home/user/rules/python.md"
+      "permissionDecisionReason": "この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作を再試行してください。\nパスを Read で参照してください。\n- /home/user/rules/python.md"
     }
   }
   ```
@@ -1210,7 +1210,7 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 上のどれにも該当しない例外
     notes: 最上位で捕まえ、操作を止めずに `additionalContext` へ「ルールの案内が動かなかったこと」とログの場所を記載し、ログへ `unexpected` を書き込んで終了コード 0 で終える
-  - name: OSError（案内済みの記録が読めない・書けない）
+  - name: OSError（案内済みの記録が読めない・書き込めない）
     condition: 案内済みの記録ファイルはあるが読めない、または記録フォルダか記録ファイルに書き込めない（権限・容量）
     notes: 既読の記録が読めないときと同じく、操作を止めずに案内を出し、`additionalContext` へ記録ファイルの場所と理由を記載し、ログへ `read_record` か `write_record` を書き込む。読めないときは未案内として扱う。ファイルが無いときは失敗ではなく未案内として扱う
   - name: OSError / 書式の誤り（設定ファイルが読めない）
@@ -1224,12 +1224,12 @@ constraints:
     constraint: 10,000 字。超えるときは止めるルールを先に並べ、収まるところまで場所を記載して残りの件数を添える
     decided_by: NFR-122-1#requirements[フックの案内文の長さ]
   - item: 索引
-    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の置き場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、該当した `projects` の要素の `indexes` を並びの順に追加したもの（該当した要素のどれも `indexes` を持たないときはプロジェクトの既定の置き場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて照合する。`enabled: false` のエントリは照合に使用しない。既定の置き場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を記載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の置き場所も読まない'
-    notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の置き場所と別に扱うのは、既定の置き場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
+    constraint: '読む索引は、設定ファイルの `global.indexes`（キーが無いときはユーザーの既定の配置場所 `${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml`）の後ろに、該当した `projects` の要素の `indexes` を並びの順に追加したもの（該当した要素のどれも `indexes` を持たないときはプロジェクトの既定の配置場所 `${CLAUDE_PROJECT_DIR}/rules.yaml`）。全てのエントリを合わせて照合する。`enabled: false` のエントリは照合に使用しない。既定の配置場所のファイルが無いとき・`CLAUDE_PROJECT_DIR` が無いときは理由を記載せずに読まない。`indexes` が空の並び `[]` のときは、その既定の配置場所も読まない'
+    notes: 書式は設定の設計書。標準ライブラリだけで読む。`projects` の中の索引の相対パスは環境変数 `CLAUDE_PROJECT_DIR` から解く。空の並びを既定の配置場所と別に扱うのは、既定の配置場所に別の用途の `rules.yaml` があるときに読ませない手段を残すため
   - item: ルールのまとめ方
     constraint: 同じルールの場所（解決後の絶対パス）に該当したエントリは 1 件にまとめ、どれか 1 つでも止めるなら止める
   - item: 読むコマンド
-    constraint: '`cat` / `head` / `tail` / `less` / `more` / `grep` / `rg` / `sed` / `awk` / `wc` / `bat`。`&&` / `||` / `;` / `|` と引用符の外の改行（直前に `\` がある行継続は除く）で区切った各コマンドの、`-` で始まらない引数をパスとして扱う。引用符の外に `*` / `?` / `[` を含む引数は、その時点の基準のフォルダから glob として展開し、該当したファイルを名前の順に扱う。`for {変数} in {語の並び}; do … done` の `do` から `done` までの読むコマンドが `$変数` / `${変数}` を引数に取るときは、語の並び（glob は同じく展開する）をパスとして扱う'
+    constraint: '`cat` / `head` / `tail` / `less` / `more` / `grep` / `rg` / `sed` / `awk` / `wc` / `bat`。`&&` / `||` / `;` / `|` と引用符の外の改行（直前に `\` がある行継続は除く）で区切った各コマンドの、`-` で始まらない引数をパスとして扱う。引用符の外に `*` / `?` / `[` を含む引数は、その時点の基準のフォルダから glob として展開し、該当したファイルを名前の順に扱う。`for {変数} in {単語の並び}; do … done` の `do` から `done` までの読むコマンドが `$変数` / `${変数}` を引数に取るときは、単語の並び（glob は同じく展開する）をパスとして扱う'
     notes: 引数がパターンのコマンド（`grep` の最初の引数など）もパスとして照合する。実在しないパスは捨てる。引用符の中の glob は展開しない
   - item: 認可
     constraint: 制限なし
@@ -1275,9 +1275,9 @@ notes:
   案内文の構成: |-
     | 行 | 条件 | 文面 |
     | --- | --- | --- |
-    | 1 行目 | 止める案内 | この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。 |
+    | 1 行目 | 止める案内 | この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作を再試行してください。 |
     | 1 行目 | 止めない案内 | この操作に関連する未読のルールがあります。必要に応じて下のルールを参照してください。この案内はルールごとにセッションで 1 回だけ表示します。 |
-    | 2 行目 | 記載したルールに `ツール:` の行が 1 つでもある | `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。 |
+    | 2 行目 | 記載したルールに `ツール:` の行が 1 つでもある | `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。 |
     | 2 行目 | `ツール:` の行が無い | パスを Read で参照してください。 |
     | 3 行目から | - | ルールのパスの行 |
-    | 末尾 | 記載しきれなかった | ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。 |
+    | 末尾 | 記載しきれなかった | ほか {N} 件のルールは、上のルールを参照して操作を再試行したときに表示します。 |

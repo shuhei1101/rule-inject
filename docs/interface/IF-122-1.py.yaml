@@ -31,14 +31,14 @@ flows:
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
         IF->>IF: バージョンを比べ、エントリを除く
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: rule・diff
       ```
     expected:
       - 索引から 1 つ目のエントリが無くなり、2 つ目のエントリとそのコメントは変わっていない
       - 応答の `rule` が削除したエントリの `rule` で、`written` が `true`
     test: test_normal
-  - name: 正常系（書き込まずに確かめる）
+  - name: 正常系（書き込まずに確認する）
     summary: '`dry_run` で差分だけを返却する'
     setup:
       - name: Mock
@@ -89,7 +89,7 @@ flows:
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
         IF->>IF: バージョンを比べ、エントリを除く
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: rule・diff
       ```
     expected:
@@ -110,7 +110,7 @@ flows:
         participant IF as delete_index_entry
 
         C->>IF: project_dir（相対パス）
-        IF-->>C: isError: true（絶対パスで渡す旨）
+        IF-->>C: isError: true（絶対パスで指定する旨）
       ```
     expected:
       - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
@@ -245,7 +245,7 @@ flows:
         C->>IF: index・position 0・古い expected_rev
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書き換えられたエントリ
-        IF-->>C: isError: true（今のバージョンと取り直す旨）
+        IF-->>C: isError: true（今のバージョンと再取得する旨）
       ```
     expected:
       - '結果が `isError: true` で、今のバージョンと一覧を再取得する旨が載っている'
@@ -273,7 +273,7 @@ flows:
         C->>IF: index・position 0・expected_rev
         IF->>IDX: 読む
         IDX-->>IF: フックの読み取りが読めない内容
-        IF-->>C: isError: true（フックが読めない理由と手で直す旨）
+        IF-->>C: isError: true（フックが読めない理由と手で修正する旨）
       ```
     expected:
       - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨が載っている'

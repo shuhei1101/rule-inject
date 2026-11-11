@@ -28,7 +28,7 @@ flows:
         participant GD as 案内済みの記録
 
         CC->>P: 標準入力（Grep・結果）
-        P->>P: filenames から実在するファイルの絶対パスを拾う
+        P->>P: filenames から実在するファイルの絶対パスを取得する
         P->>IDX: 読む
         P->>ST: 既読を読む（未読）
         P->>GD: 案内済みを読む（未案内）
@@ -36,7 +36,7 @@ flows:
         P-->>CC: additionalContext（案内）<br>終了コード 0
       ```
     expected:
-      - '`additionalContext` にルールの場所と「読むかは任意」が載り、「やり直してください」を含まない'
+      - '`additionalContext` にルールの場所と「読むかは任意」が載り、「再試行してください」を含まない'
       - '`permissionDecision` が無い'
       - 案内済みの記録にルールの場所が 1 行ある
       - 終了コードが `0`
@@ -59,7 +59,7 @@ flows:
         participant P as 検索結果の案内
 
         CC->>P: 標準入力（Grep・content）
-        P->>P: 各行の最初の : より前をパスとして拾う
+        P->>P: 各行の最初の : より前をパスとして取得する
         P-->>CC: additionalContext（案内）<br>終了コード 0
       ```
     expected:
@@ -83,7 +83,7 @@ flows:
         participant P as 検索結果の案内
 
         CC->>P: 標準入力（Glob・filenames）
-        P->>P: filenames からパスを拾う
+        P->>P: filenames からパスを取得する
         P-->>CC: additionalContext（案内）<br>終了コード 0
       ```
     expected:
@@ -109,7 +109,7 @@ flows:
 
         CC->>P: 標準入力（Bash・command・stdout）
         P->>P: 最初のコマンドが find のため対象にする
-        P->>P: 各行からパスを拾う
+        P->>P: 各行からパスを取得する
         P-->>CC: additionalContext（案内）<br>終了コード 0
       ```
     expected:
@@ -248,7 +248,7 @@ flows:
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_index_unreadable
-  - name: 異常系（案内済みの記録に書けない・理由を記載する）
+  - name: 異常系（案内済みの記録に書き込めない・理由を記載する）
     summary: 案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む
     setup:
       - name: Mock
@@ -268,7 +268,7 @@ flows:
         participant LOG as ログ
 
         CC->>P: 標準入力（Grep・結果）
-        P->>GD: 追記する（書けない）
+        P->>GD: 追記する（書き込めない）
         P->>LOG: write_record を追記する
         P-->>CC: additionalContext（案内と、記録ファイルの場所と理由）<br>終了コード 0
       ```
@@ -303,7 +303,7 @@ flows:
         P->>ST: 既読を読む
         P->>P: ルールの今のハッシュを取り、記録のハッシュと比べる（違うため未読）
         P->>GD: 案内済みを読む（未案内）
-        P->>GD: 案内に載せた場所を追記する
+        P->>GD: 案内に記載した場所を追記する
         P-->>CC: additionalContext（案内）<br>終了コード 0
       ```
     expected:
@@ -366,9 +366,9 @@ flows:
         participant IDX as 索引
 
         CC->>P: 標準入力（Grep・結果）
-        P->>P: filenames から実在するファイルの絶対パスを拾う
-        P->>IDX: 読む（無効のエントリを外す）
-        P->>P: 当たるエントリが無い
+        P->>P: filenames から実在するファイルの絶対パスを取得する
+        P->>IDX: 読む（無効のエントリを除外する）
+        P->>P: 該当するエントリが無い
         P-->>CC: 標準出力なし<br>終了コード 0
     expected:
       - 標準出力が空
@@ -395,7 +395,7 @@ flows:
         participant GD as 案内済みの記録
 
         CC->>P: 標準入力（Grep の結果）
-        P->>IDX: 拾ったパスに当たるエントリを選ぶ（read_tool あり）
+        P->>IDX: 取得したパスに該当するエントリを選ぶ（read_tool あり）
         P->>GD: ルールの場所を追記する
         P-->>CC: additionalContext（場所とツールの行を並べた案内）<br>終了コード 0
       ```
@@ -469,7 +469,7 @@ response:
     type: str
     description: 検索結果のファイルに関連する未読のルールがあること・参照は任意であること・この案内はルールごとにセッションで 1 回だけ表示することと、参照の方法と、ルールのパス（`read_tool` を持つエントリのルールは、ツールの名前と引数の行も）。索引・記録が読めないか書き込めないときはその場所と理由
     constraints: 10,000 字以内
-    notes: 「やり直してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
+    notes: 「再試行してください」は含めない。照合するパスの数の上限で照合しなかったパスがあれば、その件数を添える
 response_example: |-
   ```json
   {
@@ -486,7 +486,7 @@ exceptions:
   - name: OSError / 書式の誤り（索引が読めない）
     condition: 索引が無い・読めない・書式に合わない、または `rule` の変数参照を展開できないか読めない正規表現を持つエントリがある
     notes: ルール案内と同じく、`additionalContext` へ索引の場所と理由を記載し、ログへ `read_index` を書き込んで終了コード 0 で終える。読めた索引のエントリでの案内は続ける
-  - name: OSError（記録が読めない・書けない）
+  - name: OSError（記録が読めない・書き込めない）
     condition: 既読の記録か案内済みの記録のファイルはあるが読めない、または案内済みの記録に書き込めない（権限・容量）
     notes: 読めない記録は空として扱って案内を出し、`additionalContext` へ記録ファイルの場所と理由を記載し、ログへ `read_record` か `write_record` を書き込む。ファイルが無いときは失敗ではなく空として扱う
   - name: Exception（想定外の例外）
@@ -510,9 +510,9 @@ constraints:
   - item: 照合するパスの数
     constraint: 先頭から 100 件まで。超えた分は照合せず、案内を出すときに照合しなかった件数を添える
     decided_by: NFR-122-1#requirements[検索結果から照合するパスの数]
-  - item: 当てる操作
+  - item: 適用する操作
     constraint: 読む操作（`read`）としてエントリと照合する。エントリの `on` によらず止めない
-    notes: 索引の読み方・既定の置き場所・`rule` の変数参照の展開はルール案内と同じ
+    notes: 索引の読み方・既定の配置場所・`rule` の変数参照の展開はルール案内と同じ
   - item: 案内済みの記録
     constraint: 既読の場所と、`{state_dir}/{session_id}.guided.txt` に載った場所を案内から除く。案内に記載した場所を同じファイルへ 1 行ずつ追記する
     notes: ルール案内と同じ記録を共有する。案内文の長さに収まらず記載しなかった場所は記録しない

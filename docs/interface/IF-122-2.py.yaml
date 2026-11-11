@@ -33,7 +33,7 @@ flows:
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
         IF->>IF: 末尾に追加し、チェックする
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: position・rev・diff
       ```
     expected:
@@ -65,7 +65,7 @@ flows:
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
         IF->>IF: バージョンを比べ、paths を書き換えてチェックする
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: position・rev・diff
       ```
     expected:
@@ -94,8 +94,8 @@ flows:
         C->>IF: index・position 0・expected_rev・enabled: false
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
-        IF->>IF: enabled: false を書き、チェックする
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IF: enabled: false を記載し、チェックする
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: position・rev・diff
       ```
     expected:
@@ -152,8 +152,8 @@ flows:
         C->>IF: index・position 0・expected_rev・entry
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
-        IF->>IF: 書く前と書いた後をチェックし、新しい問題が無いことを確かめる
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IF: 書き込む前と書き込んだ後をチェックし、新しい問題が無いことを確認する
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: position・rev・diff
       ```
     expected:
@@ -174,7 +174,7 @@ flows:
         participant IF as write_index_entry
 
         C->>IF: index・position 0・entry
-        IF-->>C: isError: true（expected_rev を渡す旨）
+        IF-->>C: isError: true（expected_rev を指定する旨）
       ```
     expected:
       - '結果が `isError: true` で、`expected_rev` を指定する旨が載っている'
@@ -309,7 +309,7 @@ flows:
         C->>IF: index・position 0・古い expected_rev・entry
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書き換えられたエントリ
-        IF-->>C: isError: true（今のバージョンと取り直す旨）
+        IF-->>C: isError: true（今のバージョンと再取得する旨）
       ```
     expected:
       - '結果が `isError: true` で、今のバージョンと一覧を再取得する旨が載っている'
@@ -366,7 +366,7 @@ flows:
         C->>IF: index・position 0・expected_rev・entry
         IF->>IDX: 読む
         IDX-->>IF: フックの読み取りが読めない内容
-        IF-->>C: isError: true（フックが読めない理由と手で直す旨）
+        IF-->>C: isError: true（フックが読めない理由と手で修正する旨）
       ```
     expected:
       - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨が載っている'
@@ -394,7 +394,7 @@ flows:
         IF->>IDX: 読む
         IDX-->>IF: 書式つきの内容
         IF->>IF: 書き出し、rules[0] の外の行を比べる
-        IF-->>C: isError: true（書式を保てない旨・行の番号・手で直す旨）
+        IF-->>C: isError: true（書式を保てない旨・行の番号・手で修正する旨）
     expected:
       - '結果が `isError: true` で、索引の書式を保って書き込めない旨、`rules[1]` の `paths` の行の番号、索引を手で修正する旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
@@ -422,7 +422,7 @@ flows:
         IF->>IDX: round-trip で読む
         IDX-->>IF: 書式つきの内容
         IF->>IF: バージョンを比べ、read_tool を加えてチェックする
-        IF->>IDX: 一時ファイルを書き、置き換える
+        IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: position・rev・diff
       ```
     expected:

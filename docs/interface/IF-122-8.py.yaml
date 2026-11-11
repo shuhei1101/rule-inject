@@ -109,7 +109,7 @@ flows:
         participant IF as search_rules
 
         C->>IF: path と tool_name の両方
-        IF-->>C: isError: true（どちらか 1 つを渡す旨）
+        IF-->>C: isError: true（どちらか 1 つを指定する旨）
       ```
     expected:
       - '結果が `isError: true` で、`path` か `tool_name` のどちらか 1 つを指定する旨が載っている'
@@ -235,7 +235,7 @@ response_example: |-
   ```json
   {
     "success": true,
-    "output": "当たったルール 2 件・止めるルール 1 件",
+    "output": "該当したルール 2 件・止めるルール 1 件",
     "config_path": "/home/user/.config/rule-inject/settings.yaml",
     "operation": "write",
     "matched": [

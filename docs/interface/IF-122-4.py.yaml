@@ -20,7 +20,7 @@ flows:
         participant UP as 上流
 
         C->>IF: 引数なし
-        IF->>GC: commit していない変更を確かめる
+        IF->>GC: commit していない変更を確認する
         GC-->>IF: 変更なし
         IF->>UP: git fetch
         UP-->>IF: 新しい commit
@@ -29,7 +29,7 @@ flows:
         IF->>GC: python -m rule_inject.migrate --plan
         GC-->>IF: migrations が空
         IF-->>C: state restarting・before・after
-        IF->>IF: サーバーの再起動と同じ順で起動し直す
+        IF->>IF: サーバーの再起動と同じ順で再起動する
     expected:
       - '`state` が `restarting` で、`before` が更新の前の `HEAD`、`after` が上流の commit'
       - クローンの `HEAD` が上流の commit と同じ
@@ -93,7 +93,7 @@ flows:
         participant GC as クローン
 
         C->>IF: 引数なし
-        IF->>GC: HEAD と上流の commit の前後を確かめる
+        IF->>GC: HEAD と上流の commit の前後を確認する
         GC-->>IF: どちらも相手の祖先でない
         IF-->>C: isError: true（fast-forward できない）
     expected:
@@ -114,7 +114,7 @@ flows:
         participant GC as クローン
 
         C->>IF: 引数なし
-        IF->>GC: commit していない変更を確かめる
+        IF->>GC: commit していない変更を確認する
         GC-->>IF: 変更あり
         IF-->>C: isError: true（変更のあるファイル）
     expected:
@@ -143,7 +143,7 @@ flows:
       - '結果が `isError: true` で、`uv sync` の終了コードと標準エラーの末尾、取り込んだ commit が載っている'
       - 再起動していない
     test: test_error_when_command_failed
-lead: サーバーのクローンへ上流の commit を取り込んで依存を入れ直し再起動するツールの入出力を定め、サーバーの更新を修正するときに参照する。
+lead: サーバーのクローンへ上流の commit を取り込んで依存を再インストールし再起動するツールの入出力を定め、サーバーの更新を修正するときに参照する。
 identifier: update_server
 idempotent: false
 side_effects: クローンの作業ツリーと `.venv` を書き換え、再起動する（`destructiveHint`）。設定ファイルは書き換えない
@@ -210,12 +210,12 @@ constraints:
   - item: コマンドの順
     constraint: '`git status` → `git fetch` → 前後の確認し → `git merge --ff-only @{u}` → `uv sync --extra server` → `{clone}/.venv/bin/python -m rule_inject.migrate --plan`'
     notes: '`uv` は環境変数 `UV`（`uv run` が配置する）、無ければ `PATH` から検索する'
-  - item: 前後の確かめ
+  - item: 前後の確認
     constraint: '`HEAD` と `@{u}` が同じか、`@{u}` が `HEAD` の祖先（`git merge-base --is-ancestor @{u} HEAD`。クローンが上流より先に進んでいるだけ）なら `up_to_date` を返却し、クローンに触らない。`HEAD` が `@{u}` の祖先なら取り込む。どちらでもなければ `UpdateFailedError`（fast-forward できない）'
   - item: 打ち切りの上限
     constraint: git の各コマンド・`uv sync`・`migrate --plan` のそれぞれに、非機能要件の決定値の上限を配置する
     decided_by: NFR-122-1#requirements[更新のコマンドの打ち切り]
-  - item: 移し替えの確かめ
+  - item: 移し替えの確認
     constraint: '`migrate --plan` はサーバーと同じ環境（`RULE_INJECT_CONFIG`）で実行し、標準出力の JSON の `migrations`（`version` の更新を除いた、該当した移し替えの手順）が空でなければ要るとする'
     notes: '`steps` は設定の `version` がツールと違えば `version を … にする` を必ず含むため、判定に使用しない。`version` だけが古い設定はサーバーが読めるため、再起動する。設定ファイルは書き換えない。移し替えは利用者が `global-setup` で確認してから適用する'
   - item: 再起動

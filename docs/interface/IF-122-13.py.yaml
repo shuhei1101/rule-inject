@@ -32,7 +32,7 @@ flows:
         SD-->>S: 終了コード 0
         S->>SD: start --no-block -- rule-inject-it
         SD-->>S: 終了コード 0
-        S-->>CC: additionalContext（/mcp で接続し直す案内）<br>終了コード 0
+        S-->>CC: additionalContext（/mcp で再接続する案内）<br>終了コード 0
       ```
     expected:
       - '`systemctl` が `--user is-enabled --quiet -- rule-inject-it`、`--user start --no-block -- rule-inject-it` の順に 1 回ずつ呼ばれている'
