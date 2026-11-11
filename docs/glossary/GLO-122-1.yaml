@@ -47,7 +47,7 @@ terms:
       - 履歴ファイル
   - id: work-rules
     name: 作業の決まり
-    description: セッションの開始時にフックがコンテキストへ記載する、新しいファイルを空で作ってから中身を記載する決まり。
+    description: MCP サーバーが接続時の instructions でコンテキストへ記載する、新しいファイルを空で作ってから中身を記載する決まり。
   - id: variable-reference
     name: 変数参照
     description: 索引の `rule` に記載し、同じ名前の環境変数の値に置き換わる `!{名前}`。

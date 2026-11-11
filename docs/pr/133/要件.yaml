@@ -17,6 +17,11 @@ docs:
     status: done
     updated_by: planner
     updated_at: '2026-11-10T20:45:39.448298+00:00'
+  - page: docs/glossary/GLO-122-1.yaml
+    change: '用語 `work-rules`（作業の決まり）の description を、MCP サーバーが接続時の instructions で記載する決まりに修正する（develop の #140 の取り込みで入った）'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T01:02:18.828761+00:00'
 scope_out:
   - item: knowledge の判定フローチャート『エージェントに渡す文・処理の置き場所』の ※3 が、MCP を持たないプラグインの例に rule-inject の新しいファイルの作り方を挙げていること
     reason: 別のリポジトリ（knowledge）の文書で、この作業 PR がマージされて初めて例が実体と合わなくなる
