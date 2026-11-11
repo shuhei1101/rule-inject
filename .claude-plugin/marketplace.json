@@ -1,6 +1,6 @@
 {
   "name": "rule-inject",
-  "description": "ファイルに当たるルールを案内する Claude Code プラグインの marketplace",
+  "description": "ファイルに該当するルールを案内する Claude Code プラグインの marketplace",
   "owner": {
     "name": "shuhei1101"
   },
@@ -8,7 +8,7 @@
     {
       "name": "rule-inject",
       "source": "./",
-      "description": "Claude Code がファイルを触る前に、そのファイルに当たるルールをコンテキストへ案内するプラグイン"
+      "description": "Claude Code がファイルを触る前に、そのファイルに該当するルールをコンテキストへ案内するプラグイン"
     }
   ]
 }

@@ -1,6 +1,6 @@
 ---
 name: global-setup
-description: 端末ごとに 1 回、rule-inject の端末の設定・MCP サーバーの起動・フックの確認を用意する。入れ直し・端末の移行・更新のあとにも使う
+description: 端末ごとに 1 回、rule-inject の端末の設定・MCP サーバーの起動・フックの確認を用意する。再インストール・端末の移行・更新のあとにも使用する
 argument-hint: "[--clone パス] [--config パス] [--index パス] [--service 名前] [--yes|--no]"
 ---
 
@@ -35,7 +35,7 @@ argument-hint: "[--clone パス] [--config パス] [--index パス] [--service �
    - クローンの `settings.sample.yaml` を元に、`version` をツールのバージョン、`global.indexes` を `--index` の値にして作る
    - 例の値のキーは削除する
 
-5. 旧い登録を確認する。
+5. 旧登録を確認する。
    - `claude mcp get rule-inject` でユーザースコープの登録があれば、削除してよいかを確認する
    - 了承されたら `claude mcp remove -s user rule-inject` を実行する。断られたら登録を残して続ける
 
@@ -62,5 +62,5 @@ argument-hint: "[--clone パス] [--config パス] [--index パス] [--service �
 
 9. 結果を示す。
    - 作ったもの・`env` に記載したキー・削除した登録・接続の結果を示す
-   - このセッションで MCP を使用するには `/mcp` で接続し直すことを案内する。`env` を記載したときは Claude Code を起動し直すことを案内する
+   - このセッションで MCP を使用するには `/mcp` で再接続することを案内する。`env` を記載したときは Claude Code を再起動することを案内する
    - リポジトリの索引を登録する `/rule-inject:setup` を案内する
