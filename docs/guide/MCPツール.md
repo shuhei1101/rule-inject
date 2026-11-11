@@ -95,7 +95,7 @@
 
 ## check_indexes
 
-プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにもヒットしないエントリ・dev-docs の使われているどのタグにもヒットしないタグのパターンを返却する。
+プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにもヒットしないエントリ・dev-docs の使用中のどのタグにもヒットしないタグのパターンを返却する。
 索引の問題はエラーにせず応答に記載する。
 
 索引ごとに、フックと同じ読み取り、JSON Schema、`rule` の場所の実在の順に確認する。
@@ -128,7 +128,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 | `indexes[].missing_rules[]` | オブジェクトのリスト | ルールの場所にファイルが無いエントリの `position` と、解いた `rule` |
 | `indexes[].skipped_entries[]` | オブジェクトのリスト | フックが読み飛ばすエントリの `position` と `reason` |
 | `indexes[].unmatched_paths[]` | オブジェクトのリスト | `paths` がプロジェクトのどのファイルにもヒットしないエントリの `position`・`rev`・解いた `rule`。`origin` が `global` の索引は `include_global` が `true` のときだけ記載する |
-| `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使われているどのタグにもヒットしないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も記載する |
+| `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使用中のどのタグにもヒットしないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も記載する |
 | `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確認の結果。`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かない、または読める文書が 0 件で飛ばした、`no_patterns` は確認するパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
 | `tag_check.reason` | 文字列 / `null` | 飛ばした理由。`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返却した・読める文書が 0 件だったのどれかを含む。それ以外は `null` |
 
@@ -141,16 +141,16 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 - 既定では、`origin` が `project` の索引だけを確認する。`include_global` を `true` にすると、`origin` が `global` の索引の分も、`project` の索引の分とは分けて返却する
 - `project_dir` の下を `.git` だけ除いて辿る。`.gitignore` で除いたファイルも辿り、フォルダへのシンボリックリンクは辿らない。辿る順はパスの部品ごとの名前の順
 - 1 回の呼び出しで辿る時間は 30 秒まで。超えたら辿るのをやめ、`unmatched_scan.completed` を `false` にして、どの索引の `unmatched_paths` も返却せず、`unmatched_scan.next_cursor` を返却する
-- `next_cursor` を `cursor` に指定して呼び直すと、続きから辿る。`project_dir`・`include_global` は前の呼び出しと同じ値で指定する。確認するエントリが前の呼び出しの後に変わっていたときは、`cursor` を使用せず最初のファイルから辿り直す
+- `next_cursor` を `cursor` に指定して再度呼び出すと、続きから辿る。`project_dir`・`include_global` は前の呼び出しと同じ値で指定する。確認するエントリが前の呼び出しの後に変わっていたときは、`cursor` を使用せず最初のファイルから再度辿る
 - `hook_error`・`violations`・`missing_rules`・`skipped_entries` の確認は、`cursor` によらず毎回全て行う
 - `unused_tag_patterns` で確認するのは、有効なエントリ（`unmatched_paths` と同じ除外）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターン。ドットの道筋のキー（`filter.tags`）は確認しない
-- パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかにヒットすれば使われているとする
-- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使われているタグを取得する。索引ごとには問い合わせ修正しない
+- パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかにヒットすれば使用中とする
+- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使用中のタグを取得する。索引ごとには問い合わせ修正しない
 - dev-docs への問い合わせは、`paths` のヒットしないエントリを確認するファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
 - dev-docs に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返却する。ほかの確認は変わらない
 - `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths`・`unused_tag_patterns` を含めない
 
-`cursor` が読めないとき、または `project_dir`・`include_global` が `cursor` を返却した呼び出しと違うときは、`isError: true` になり、`cursor` を省いて呼び直す旨を返却する。
+`cursor` が読めないとき、または `project_dir`・`include_global` が `cursor` を返却した呼び出しと違うときは、`isError: true` になり、`cursor` を省いて再度呼び出す旨を返却する。
 
 ## write_index_entry
 
@@ -203,7 +203,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 | 索引のファイルが無い・読めない・YAML として読めない・最上位がマップでない | 索引の場所と理由 |
 | `position` が索引のエントリの数以上 | 位置が無い旨とエントリの数 |
 | `position` を指定し、索引が YAML としては読めるがフックが読めない | フックが読めない理由（行の番号を含む）と、索引を手で修正する旨。`position` を指定しない新規作成も、記載した後にフックが読めないため断る |
-| `expected_rev` が今のエントリのバージョンと違う | 今のバージョンと、`list_rules` を取り直してから呼び直す旨 |
+| `expected_rev` が今のエントリのバージョンと違う | 今のバージョンと、`list_rules` を再取得してから再度呼び出す旨 |
 | 記載した後にフックが読めない・記載する前に無かった問題が出る | 新しく出た問題ごとの `{索引の中の場所}: {理由}` の行 |
 | 書き出すと対象のエントリの外の行が変わる（他のエントリが `~`・アンカーなどを持つ） | 索引の書式を保って記載できない旨、最初に変わる行の番号、索引を手で修正する旨 |
 
@@ -234,7 +234,7 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 
 <!-- /table -->
 
-- 削除した位置より後ろのエントリは、位置が 1 つずつ前へずれる。続けて書き込むときは `list_rules` を取り直す
+- 削除した位置より後ろのエントリは、位置が 1 つずつ前へずれる。続けて書き込むときは `list_rules` を再取得する
 - 対象のエントリの行と、そのエントリに付いたコメントだけを除く。次のエントリの直前に配置したコメントは、次のエントリに付くものとして残す
 - チェックは行わない。もとからある問題で削除を止めない
 
@@ -345,9 +345,9 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 
 ## reload_settings
 
-設定ファイルを読み直し、読めたかと、読んだ値を返却する。
-設定ファイルはどのツールも呼び出しのたびに読み直しているため、修正した値は次の呼び出しから有効になる。
-待ち受けのポートは起動したプロセスの環境変数だけから読むため返却しない（変えたときは、サーバーを起動する環境の `RULE_INJECT_PORT` を変えて起動し直す）。
+設定ファイルを再読込し、読めたかと、読んだ値を返却する。
+設定ファイルはどのツールも呼び出しのたびに再読込しているため、修正した値は次の呼び出しから有効になる。
+待ち受けのポートは起動したプロセスの環境変数だけから読むため返却しない（変えたときは、サーバーを起動する環境の `RULE_INJECT_PORT` を変えて再起動する）。
 
 | 引数 | 型 | 必須 | 既定値 | 内容 |
 | --- | --- | --- | --- | --- |
@@ -373,25 +373,25 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 
 ## restart_server
 
-応答を返却した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま起動し直す。
+応答を返却した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま再起動する。
 引数は無い。
-再起動の結果は、接続し直してから `get_server_status` の `started_at` で確認する。
+再起動の結果は、再接続してから `get_server_status` の `started_at` で確認する。
 
 | 応答のキー | 型 | 内容 |
 | --- | --- | --- |
 | `success` | 真偽値 | 再起動を始めたか |
 | `output` | 文字列 | 再起動を始めた旨の 1 行 |
-| `pid` | 整数 | 起動し直した後も変わらないプロセス ID |
+| `pid` | 整数 | 再起動した後も変わらないプロセス ID |
 | `restarting` | 真偽値 | 常に `true` |
 
 - 処理中の呼び出しを待つのは最大 356 秒。待つ間も待ち受けを続け、`get_server_status` 以外のツールの呼び出しは断る
-- 待ち受けを閉じた後に残った接続は 3 秒で切る。Claude Code の接続は切れるので、`/mcp` で接続し直す
+- 待ち受けを閉じた後に残った接続は 3 秒で切る。Claude Code の接続は切れるので、`/mcp` で再接続する
 - 環境変数は起動時の値を引き継ぐ。`RULE_INJECT_PORT`・`RULE_INJECT_CONFIG` を変えても、この再起動では変わらない
 - 再起動の途中か、`update_server` が動いている間は `isError: true` になる
 
 ## update_server
 
-サーバーのクローンで上流の commit を fast-forward で取り込み、依存を入れ直し、設定の移し替えが要らなければ再起動する。
+サーバーのクローンで上流の commit を fast-forward で取り込み、依存を再インストールし、設定の移し替えが要らなければ再起動する。
 引数は無い。
 
 <!-- table: data -->

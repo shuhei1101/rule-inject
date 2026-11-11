@@ -71,7 +71,7 @@ endpoints:
         condition: 'ツールを呼び出せた（引数の誤りも `isError: true` の結果として 200 で返却される）'
       - code: 接続できない
         condition: dev-docs が起動していない・接続先が違う
-lead: 文書を配信元ごとに配信してタグや種類で検索・集計する dev-docs の MCP サーバーの利用方法を定め、索引のタグの検査で使われているタグを取得する処理を修正するときに参照する。
+lead: 文書を配信元ごとに配信してタグや種類で検索・集計する dev-docs の MCP サーバーの利用方法を定め、索引のタグの検査で使用中のタグを取得する処理を修正するときに参照する。
 used_in:
   - src/rule_inject/server/check_tools.py
 verification:

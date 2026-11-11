@@ -25,7 +25,7 @@ terms:
       - ルールの注入
   - id: blocking-guidance
     name: 止める案内
-    description: 操作の種別がエントリの `on` にヒットするときに、操作を止めて出し、参照した後のやり直しを求める案内。
+    description: 操作の種別がエントリの `on` にヒットするときに、操作を止めて出し、参照した後の再試行を求める案内。
   - id: non-blocking-guidance
     name: 止めない案内
     description: 操作の種別がエントリの `on` にヒットしないときに、操作を止めずにルールごとにセッションで 1 回だけ出す案内。
