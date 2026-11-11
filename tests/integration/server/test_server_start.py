@@ -46,6 +46,11 @@ def test_normal(
     assert "Write" in instructions
     assert "空の内容" in instructions
     assert "Edit" in instructions
+    assert "list_rules" in instructions
+    assert "search_rules" in instructions
+    assert "check_indexes" in instructions
+    assert "Read" in instructions
+    assert "grep" in instructions
 
 
 def test_normal_when_stopped(
