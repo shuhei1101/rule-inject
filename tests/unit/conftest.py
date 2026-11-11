@@ -144,7 +144,7 @@ def unreadable_env(
 
 @pytest.fixture
 def unwritable() -> Iterator[Callable[[Path, int], Path]]:
-    """権限を除外したフォルダ・ファイルにする factory。root は権限を無視するため skip する。"""
+    """権限を取り除いたフォルダ・ファイルにする factory。root は権限を無視するため skip する。"""
     changed: list[tuple[Path, int]] = []
 
     def _apply(path: Path, mode: int) -> Path:
