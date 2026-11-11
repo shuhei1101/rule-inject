@@ -80,8 +80,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T10:28:37.424850+00:00'
   - process: 結合テスト作成
-    status: todo
+    status: done
     note: tests/integration・tests/nfr の docstring と、置き換える文言を照合する期待値を修正する
+    updated_by: planner
+    updated_at: '2026-11-11T14:39:22.658445+00:00'
   - process: E2E テスト作成
     status: skipped
     reason: E2E テストを持たない
