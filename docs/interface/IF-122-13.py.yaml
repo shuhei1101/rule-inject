@@ -280,7 +280,7 @@ constraints:
   - item: 応答の確認
     constraint: '`127.0.0.1` の `RULE_INJECT_PORT`（無ければ既定のポート）へ TCP で接続し、接続できればサーバーが応答するとみなす。待ちの上限は非機能要件の決定値'
     decided_by: NFR-122-1#requirements[サーバーの応答の確認の待ち]
-    notes: MCP の `initialize` は送信しない。ポートを取っているのがサーバーでないときの扱いは、インターフェース定義「サーバーの起動」の異常系（ポートが使用されている）
+    notes: MCP の `initialize` は送信しない。ポートを取っているのがサーバーでないときの扱いは、インターフェース定義「サーバーの起動」の異常系（ポートが使用中・OSError）
   - item: systemctl の呼び出し
     constraint: '`systemctl --user is-enabled --quiet -- {サービス名}` が 0 のときだけ `systemctl --user start --no-block -- {サービス名}` を実行する。それぞれの打ち切りは非機能要件の決定値'
     decided_by: NFR-122-1#requirements[ユニットの確認と起動の依頼の待ち]

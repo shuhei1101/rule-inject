@@ -219,7 +219,7 @@ flows:
       - '`additionalContext` に照合しなかった件数 5 が載っている'
       - 終了コードが `0`
     test: test_normal_when_too_many_paths
-  - name: 異常系（索引が読めない・理由を載せる）
+  - name: 異常系（索引が読めない・理由を記載する）
     summary: 索引が読めないとき、読めた索引で案内を続け、理由を記載する
     setup:
       - name: Mock
@@ -248,7 +248,7 @@ flows:
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_index_unreadable
-  - name: 異常系（案内済みの記録に書けない・理由を載せる）
+  - name: 異常系（案内済みの記録に書けない・理由を記載する）
     summary: 案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む
     setup:
       - name: Mock
@@ -311,7 +311,7 @@ flows:
       - 案内済みの記録に `.py` のルールの場所が 1 行ある
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
-  - name: 異常系（設定ファイルが読めない・理由を載せる）
+  - name: 異常系（設定ファイルが読めない・理由を記載する）
     summary: 設定ファイルが読めないとき、案内せずに理由を記載する
     setup:
       - name: Mock
@@ -348,7 +348,7 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
-  - name: 正常系（無効のエントリに当たる）
+  - name: 正常系（無効のエントリに該当する）
     summary: '検索の結果に出たファイルが `enabled: false` のエントリにだけ該当するとき、案内せず案内済みにもしない'
     setup:
       - name: Mock

@@ -69,7 +69,7 @@ flows:
       - '`matched` にエントリのルールの場所が載り、`blocking` が `true`'
       - '`operation` が `mcp`'
     test: test_normal_when_searched_by_tool
-  - name: 正常系（当たるルールが無い）
+  - name: 正常系（該当するルールが無い）
     summary: 無効のエントリだけが該当するときは空で返却する
     setup:
       - name: Mock
@@ -95,7 +95,7 @@ flows:
     expected:
       - '`success` が `true` で `matched` が空'
     test: test_normal_when_no_rule_matched
-  - name: 異常系（パスとツール名の両方を渡す・ToolError）
+  - name: 異常系（パスとツール名の両方を指定する・ToolError）
     summary: 引数の組み合わせの誤りをエラーにする
     setup:
       - name: Mock
