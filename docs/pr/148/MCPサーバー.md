@@ -4,10 +4,10 @@
 
 | 分類 | ページ / ファイル | 概要 | 補足 |
 | --- | --- | --- | --- |
-| ドキュメント | [docs/interface/IF-122-2.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-2.py.yaml) | エントリの書き込み | フロー名・エラー名を変える 2 件と、エラー名を参照する `notes` |
+| ドキュメント | [docs/interface/IF-122-2.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-2.py.yaml) | エントリの書き込み | NG の単語を持つフロー名 3 件・エラー名 1 件と、エラー名を参照する `notes` |
 | ドキュメント | [docs/interface/IF-122-6.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-6.py.yaml) | サーバーの起動 | フロー名・エラー名を変える 2 件 |
 | ドキュメント | [docs/interface/IF-122-8.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-8.py.yaml) | ルールの検索 | フロー名を変える 2 件 |
-| ドキュメント | [docs/interface/IF-122-11.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-11.py.yaml) | 索引のチェック | フロー名を変える 3 件 |
+| ドキュメント | [docs/interface/IF-122-11.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-11.py.yaml) | 索引のチェック | NG の単語を持つフロー名 5 件・エラー名 1 件 |
 | ドキュメント | [docs/interface/IF-122-13.py.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/interface/IF-122-13.py.yaml) | サーバーの状態の確認 | IF-122-6 のフロー名を参照する `notes` |
 | ドキュメント | [docs/scenario/SC-122-19.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/scenario/SC-122-19.yaml) | 索引のエントリを編集する | 図のメッセージ 6 か所 |
 | ドキュメント | [docs/scenario/SC-122-20.yaml](https://github.com/shuhei1101/rule-inject/blob/b93a34d/docs/scenario/SC-122-20.yaml) | 索引をチェックする | 図のメッセージ 1 か所 |
@@ -29,6 +29,7 @@
 | 工程 | 範囲 | 補足 |
 | --- | --- | --- |
 | 単一ユースケース設計 | `b93a34d..8ae5064` | - |
+| インターフェース定義設計 | `e71eb5b..a971478` | - |
 
 ## テスト結果
 

@@ -24,8 +24,13 @@ use_cases:
     impact: none
     detail: インターフェース定義のフロー名をこのシナリオの名前に合わせるだけで、シナリオは変えない
     depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: none
+    detail: インターフェース定義のフロー名をこのシナリオの名前に合わせるだけで、シナリオは変えない
+    depends_on: []
 docs: []
 scope_out:
-  - item: 'Issue #143 の表に無い箇所（MCP のツールの説明文・コードの docstring とコメント・単体テストの docstring・SC-122-20 のほかの図のメッセージ・インターフェース定義のフロー名以外・CFG-122-1・docs/guide/セットアップ.md）に残る同じ語句'
+  - item: 'Issue #143 の表に無い箇所（MCP のツールの説明文・コードの docstring とコメント・単体テストと結合テストの docstring（改名したフローと同じ「理由を載せる」などを含む）・SC-122-20 のほかの図のメッセージ・インターフェース定義のフロー名以外・CFG-122-1・docs/guide）に残る同じ語句'
     reason: 'Issue #143 の終わりの条件は表に挙げた箇所だけを対象にしており、扱いの判断でも範囲に含めないと決めた。今回の作業 PR がマージされなくても同じ内容で成り立つ'
     plan: '#150'
