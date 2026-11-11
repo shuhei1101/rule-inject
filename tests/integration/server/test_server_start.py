@@ -73,7 +73,7 @@ def test_error_when_port_in_use(
     start_server: Callable[..., Any],
     config_text: Callable[..., str],
 ) -> None:
-    """ポートが使われているとき、待ち受けに失敗し、理由を書いて終わる（異常系）。"""
+    """ポートが使用中のとき、待ち受けに失敗し、理由を記載して終わる（異常系）。"""
     # 準備: テストがポート 0 で待ち受け、そのポートを `RULE_INJECT_PORT` に指定する
     with socket.create_server((HOST, 0)) as held:
         port = int(held.getsockname()[1])

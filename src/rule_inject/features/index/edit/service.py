@@ -296,7 +296,7 @@ def write_entry(
             entry_start = after_data[RULES_KEY].lc.item(written_position)[0]
             after_range = (entry_start, after_range[1])
         _check_layout(index_path, before_lines, before_range, after_lines, after_range)
-        # 書いた後の索引がフックの読み取りで読めないときは、バージョンを持たせない（チェックが理由を返す）
+        # 書き込んだ後の索引がフックの読み取りで読めないときは、バージョンを持たせない（チェックが理由を返却する）
         try:
             rev: str | None = entry_revs(after)[written_position]
         except ValueError:
@@ -305,7 +305,7 @@ def write_entry(
         if problems:
             lines = "\n".join(problems)
             raise IndexEditError(
-                path=index_path, reason=f"書いた後の索引がチェックに通らない:\n{lines}"
+                path=index_path, reason=f"書き込んだ後の索引がチェックに通らない:\n{lines}"
             )
         diff = _unified_diff(index_path, before, after)
         if not dry_run:

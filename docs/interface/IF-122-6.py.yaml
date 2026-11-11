@@ -53,7 +53,7 @@ flows:
       - 終了コードが SIGTERM で終わったことを示す（シェルでは 143、`subprocess` の `returncode` では -15）
       - 標準エラーに `Application shutdown complete.` と `Finished server process` が出ている
     test: test_normal_when_stopped
-  - name: 異常系（ポートが使われている・OSError）
+  - name: 異常系（ポートが使用中・OSError）
     summary: 待ち受けに失敗し、理由を記載して終わる
     setup:
       - name: Mock
@@ -147,7 +147,7 @@ exceptions:
   - name: なし（正常終了）
     condition: Ctrl+C か SIGTERM を受けた
     notes: 待ち受けを閉じ、標準エラーに終了の処理を書き込んで終わる。SIGTERM のときの終了コードは 143（シグナルで終わる）
-  - name: OSError（ポートが使われている）
+  - name: OSError（ポートが使用中）
     condition: 待ち受けのポートを別のプロセスが使用している
     notes: 待ち受けずに、標準エラーへポートの番号と使用されている旨を書き込み、0 以外の終了コードで終わる
   - name: SettingsReadError（設定ファイルが読めない）

@@ -186,7 +186,7 @@ def _read_config(env: Mapping[str, str]) -> tuple[str, dict[str, object]]:
 
 
 def _default_user_index(env: Mapping[str, str]) -> list[str]:
-    """ユーザーの既定の置き場所の索引を、ファイルがあるときだけ返す。"""
+    """ユーザーの既定の配置場所の索引を、ファイルがあるときだけ返却する。"""
     candidate = _config_home(env) / USER_INDEX_DEFAULT
     return [str(candidate)] if candidate.is_file() else []
 
