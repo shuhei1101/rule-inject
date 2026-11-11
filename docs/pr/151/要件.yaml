@@ -272,3 +272,6 @@ scope_out:
   - item: 'docs/guide の分類名・ページ名「使い方」（`category`・`permalink: /使い方/`・ページ `使い方.md`・目次の分類）'
     reason: 公開ドキュメントの分類と URL の名前で、置き換えると公開済みの URL とサイドバーの構成が変わる。文中の単語の置き換えと別に、公開 URL を変えるかを判断する
     plan: to_file
+  - item: docs/rules.yaml の 2 行目のコメント「当てるファイルの glob」
+    reason: このリポジトリのルール索引で、起点 Issue の範囲（src・tests・hooks・設計書・docs/guide）の外
+    plan: '#152'
