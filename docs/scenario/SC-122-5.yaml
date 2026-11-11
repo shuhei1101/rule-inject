@@ -20,13 +20,13 @@ scenarios:
         SV->>GC: 上流を取り込む
         GC->>UP: 取得
         UP-->>GC: 新しい commit
-        SV->>GC: 依存を入れ直す
-        SV->>GC: 移し替えの手順を確かめる
+        SV->>GC: 依存を再インストールする
+        SV->>GC: 移し替えの手順を確認する
         GC-->>SV: 手順なし
         SV-->>CL: 取り込んだ commit・再起動を始めた
         SV->>SV: 処理中の呼び出しの終わりを待つ（待ち受けは続ける）
-        SV->>SV: 起動し直す
-        CL->>SV: 接続し直して状態の確認
+        SV->>SV: 再起動する
+        CL->>SV: 再接続して状態の確認
         SV-->>CL: 新しい commit
     expected:
       - 更新の応答に、更新の前と後の commit と、再起動を始めたことが載っている
@@ -68,10 +68,10 @@ scenarios:
         participant GC as クローン
 
         CL->>SV: 更新
-        SV->>GC: 上流を取り込み、依存を入れ直す
-        SV->>GC: 移し替えの手順を確かめる
-        GC-->>SV: 当てる手順あり
-        SV-->>CL: 当てる手順と global-setup の案内（再起動しない）
+        SV->>GC: 上流を取り込み、依存を再インストールする
+        SV->>GC: 移し替えの手順を確認する
+        GC-->>SV: 適用する手順あり
+        SV-->>CL: 適用する手順と global-setup の案内（再起動しない）
     expected:
       - 更新の応答に、適用する移し替えの手順と `global-setup` の実行の案内が載っている
       - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
@@ -111,7 +111,7 @@ scenarios:
         participant GC as クローン
 
         CL->>SV: 更新
-        SV->>GC: 変更を確かめる
+        SV->>GC: 変更を確認する
         GC-->>SV: commit していない変更あり
         SV-->>CL: ツールのエラー（変更のあるファイル）
     expected:
@@ -119,7 +119,7 @@ scenarios:
       - クローンの `HEAD` と書き換えたファイルの中身が更新の前のまま
       - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
     test: test_error_when_uncommitted_changes
-lead: Claude Code が MCP サーバーの更新のツールで上流の commit を取り込んで起動し直す流れを示し、rule-inject の更新を変えるときに参照する。
+lead: Claude Code が MCP サーバーの更新のツールで上流の commit を取り込んで再起動する流れを示し、rule-inject の更新を変えるときに参照する。
 issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:
