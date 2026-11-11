@@ -1,0 +1,42 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: run_only
+    detail: プラグインの定義とスキル global-setup の説明文を変えるため、利用者の入れ方でプラグインを入れて端末をセットアップできることを確かめる
+    depends_on: []
+docs:
+  - page: schemas/glossary.schema.yaml
+    new: false
+    change: id の description の「書くツール」を「書き込むツール」へ置き換える
+    status: todo
+  - page: skills/global-setup/SKILL.md
+    new: false
+    change: 3 行目の「入れ直し」「使う」、38 行目の「旧い登録」、65 行目の「接続し直す」「起動し直す」を対応表の単語へ置き換える
+    status: todo
+  - page: .claude-plugin/marketplace.json
+    new: false
+    change: 3・11 行目の description の「当たる」を「該当する」へ置き換える
+    status: todo
+  - page: .claude-plugin/plugin.json
+    new: false
+    change: 3 行目の description の「当たる」を「該当する」へ置き換える
+    status: todo
+  - page: docs/index.yaml
+    new: false
+    change: guide の行の summary の行頭の「使い方」を「使用方法」へ置き換え、docs/README.md を生成し直す
+    status: todo
+  - page: docs/README.md
+    new: false
+    change: docs/index.yaml から生成し直す
+    status: todo
+  - page: docs/rules.yaml
+    new: false
+    change: 2 行目のコメントの「当てるファイルの glob」を「適用するファイルの glob」へ置き換える
+    status: todo
+scope_out:
+  - item: docs/README.md・docs/index.yaml の guide の行の括弧内の分類名「使い方」
+    reason: '公開ドキュメントの分類名・ページ名を置き換えるかは #153 で決める（task-planner の判断で #152 から移した）'
+    plan: '#153'
+  - item: schemas/ のうち AI Monitor から配布されたコピーの Schema の単語
+    reason: 配布物は AI Monitor 側が原本で、このリポジトリは追従で取り込む
+    plan: none
