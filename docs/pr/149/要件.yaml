@@ -1,0 +1,13 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-6.yaml
+    impact: none
+    detail: 接続時に受け取る instructions に MCP の使い分けが加わるが、作業の決まりを受け取る流れと期待値は変わらない
+    depends_on: []
+docs:
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: instructions が届けるものを、新しいファイルの作り方の決まりと MCP のツールの使い分けにする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T01:26:11.790015+00:00'

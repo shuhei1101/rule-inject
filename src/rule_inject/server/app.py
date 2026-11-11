@@ -18,11 +18,28 @@ from rule_inject.server.types import ResponseFormat
 
 # MCPServer の名前
 SERVER_NAME = "rule-inject"
-# 接続時の initialize の応答で返す instructions（新しいファイルの作り方の決まり）
+# 接続時の initialize の応答で返す instructions（新しいファイルの作り方の決まりと、MCP のツールの使い分け）
 SERVER_INSTRUCTIONS = (
     "rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。"
     "新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、"
     "案内されたルールを参照してから Edit で中身を記載する。"
+    # 呼ぶ場面: 作業の分類ごとにツール名を対応づける
+    "この MCP のツールは、ルールと索引そのものを扱う作業で呼ぶ。"
+    "今効いているルールの一覧は list_rules、"
+    "ファイルやツールの呼び出しにヒットするルールの検索は search_rules、"
+    "索引のエントリの編集と索引のチェックは write_index_entry・delete_index_entry・check_indexes、"
+    "既読の記録の確認と削除は get_read_records・delete_read_records、"
+    "設定ファイルを書き換えた後の読み直しとサーバーの状態の確認・再起動・更新は"
+    " reload_settings・get_server_status・restart_server・update_server で行う。"
+    # 呼ばない場面: grep・Read で足りる作業と、grep・Read・Edit の代わりにツールを呼ぶ作業
+    "ルールの本文は、案内された場所を Read で参照する。"
+    "プロジェクトのコードや文書は grep・Read で探す。"
+    "どのルールがヒットするかは、索引を grep・Read せずに search_rules で調べる。"
+    "索引は Edit で編集せず、write_index_entry・delete_index_entry で編集する。"
+    # ツール間の順序
+    "エントリを書き換え・削除する前に、list_rules で position と rev を取得する。"
+    "ルールが案内されないときは、search_rules でヒットするかを確認してから、"
+    "get_read_records で既読かを確認する。"
 )
 # `check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）
 UNMATCHED_SCAN_TIME_LIMIT = 30
