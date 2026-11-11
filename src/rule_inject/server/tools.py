@@ -43,14 +43,14 @@ from rule_inject.shared.settings import CONFIG_ENV, PROJECT_DIR_ENV, Settings, l
 # `list_rules` の `limit` の既定と上限
 DEFAULT_LIST_LIMIT = 100
 MAX_LIST_LIMIT = 500
-# `cursor` が受け付ける値（効いているエントリの並びの中の位置を 10 進で書いた文字列）
+# `cursor` が受け付ける値（有効なエントリの並びの中の位置を 10 進で記載した文字列）
 CURSOR_PATTERN = r"^[0-9]+$"
 
 
 def _project_settings(project_dir: str, env: Mapping[str, str]) -> Settings:
-    """`project_dir` を `CLAUDE_PROJECT_DIR` として、フックと同じ規則で設定を読む。呼び出しのたびに読み直す。"""
+    """`project_dir` を `CLAUDE_PROJECT_DIR` として、フックと同じ規則で設定を読む。呼び出しのたびに再読込する。"""
     if not os.path.isabs(project_dir):
-        raise ToolError(f"project_dir は絶対パスで渡してください: {project_dir}")
+        raise ToolError(f"project_dir は絶対パスで指定してください: {project_dir}")
     try:
         return load_settings({**env, PROJECT_DIR_ENV: project_dir})
     except SettingsReadError as exc:
@@ -58,13 +58,13 @@ def _project_settings(project_dir: str, env: Mapping[str, str]) -> Settings:
 
 
 def _config_path(env: Mapping[str, str]) -> str | None:
-    """サーバーが読んだ設定ファイルの場所を返す。`RULE_INJECT_CONFIG` が無いときは None。"""
+    """サーバーが読んだ設定ファイルの場所を返却する。`RULE_INJECT_CONFIG` が無いときは None。"""
     configured = env.get(CONFIG_ENV)
     return os.path.expanduser(configured) if configured else None
 
 
 def _editable_index(index: str, settings: Settings) -> str:
-    """`index` が設定で読む索引のどれかを確かめ、シンボリックリンクを解いた場所を返す。"""
+    """`index` が設定で読む索引のどれかを確認し、シンボリックリンクを解いた場所を返却する。"""
     resolved = os.path.realpath(os.path.expanduser(index))
     readable = {os.path.realpath(path) for path in settings.indexes}
     if resolved not in readable:
@@ -76,7 +76,7 @@ def _editable_index(index: str, settings: Settings) -> str:
 def _read_indexes(
     settings: Settings, env: Mapping[str, str]
 ) -> tuple[list[IndexContent], list[IndexIssue]]:
-    """設定で読む索引を順に読み、読めた索引と読めなかった索引の理由を返す。"""
+    """設定で読む索引を順に読み、読めた索引と読めなかった索引の理由を返却する。"""
     contents: list[IndexContent] = []
     unreadable: list[IndexIssue] = []
     for index in settings.indexes:
@@ -99,7 +99,7 @@ def _issue(content: IndexContent, outcome: EntryOutcome) -> EntryIssue:
 
 
 def _rule_entry(content: IndexContent, outcome: EntryOutcome, entry: IndexEntry) -> RuleEntry:
-    """効いているエントリを、索引に書いたままのパターンと解いたルールの場所の応答にする。"""
+    """有効なエントリを、索引に書き込んだままのパターンと解いたルールの場所の応答にする。"""
     raw = outcome.raw
     return RuleEntry(
         index=content.path,
@@ -134,7 +134,7 @@ def list_rules(
     format: ResponseFormat = "markdown",
     env: Mapping[str, str],
 ) -> CallToolResult:
-    """プロジェクトで読む索引と、効いているエントリを返す。読めない索引・読み飛ばしたエントリ・無効のエントリも理由とともに返す。"""
+    """プロジェクトで読む索引と、有効なエントリを返却する。読めない索引・読み飛ばしたエントリ・無効のエントリも理由とともに返却する。"""
     settings = _project_settings(project_dir, env)
     contents, unreadable = _read_indexes(settings, env)
     effective = [
@@ -147,7 +147,7 @@ def list_rules(
     disabled = _issues(contents, "disabled")
     start = int(cursor or 0)
     page = effective[start : start + limit]
-    # 理由の一覧は先頭のページだけに載せる
+    # 理由の一覧は先頭のページだけに記載する
     first_page = cursor is None
 
     def build(count: int) -> ListRulesResult:
@@ -156,7 +156,7 @@ def list_rules(
         return ListRulesResult(
             success=True,
             output=(
-                f"索引 {len(settings.indexes)} 件・効いているエントリ {len(effective)} 件・"
+                f"索引 {len(settings.indexes)} 件・有効なエントリ {len(effective)} 件・"
                 f"読めない索引 {len(unreadable)} 件・読み飛ばしたエントリ {len(skipped)} 件・"
                 f"無効のエントリ {len(disabled)} 件"
             ),
@@ -180,13 +180,13 @@ def _search_arguments_error(
     operation: Literal["read", "write"] | None,
     tool_name: str | None,
 ) -> ToolError | None:
-    """検索の引数の組み合わせの誤りを、渡し方を添えた ToolError にする。誤りが無ければ None。"""
+    """検索の引数の組み合わせの誤りを、引き渡し方を添えた ToolError にする。誤りが無ければ None。"""
     if (path is None) == (tool_name is None):
-        return ToolError("path か tool_name のどちらか 1 つだけを渡してください")
+        return ToolError("path か tool_name のどちらか 1 つだけを指定してください")
     if path is not None and operation is None:
-        return ToolError("path を渡すときは operation（read か write）も渡してください")
+        return ToolError("path を指定するときは operation（read か write）も指定してください")
     if path is not None and not os.path.isabs(path):
-        return ToolError(f"path は絶対パスで渡してください: {path}")
+        return ToolError(f"path は絶対パスで指定してください: {path}")
     return None
 
 
@@ -200,14 +200,14 @@ def search_rules(
     format: ResponseFormat = "markdown",
     env: Mapping[str, str],
 ) -> CallToolResult:
-    """ファイルのパスと操作の種別か MCP のツールの呼び出しを受け、フックと同じ照合で当たるルールを返す。"""
+    """ファイルのパスと操作の種別か MCP のツールの呼び出しを受け、フックと同じ照合で該当するルールを返却する。"""
     error = _search_arguments_error(project_dir, path, operation, tool_name)
     if error is not None:
         raise error
     settings = _project_settings(project_dir, env)
     contents, unreadable = _read_indexes(settings, env)
     used_operation: Operation = operation if path is not None and operation else "mcp"
-    # 効いているエントリを 1 件ずつ当て、ルールの場所ごとに初めて当たった順でまとめる
+    # 有効なエントリを 1 件ずつ照合し、ルールの場所ごとに初めて該当した順でまとめる
     blocking: dict[str, bool] = {}
     refs: dict[str, list[EntryRef]] = {}
     for content in contents:
@@ -230,7 +230,7 @@ def search_rules(
     result = SearchRulesResult(
         success=True,
         output=(
-            f"当たったルール {len(matches)} 件・"
+            f"該当したルール {len(matches)} 件・"
             f"止めるルール {sum(match.blocking for match in matches)} 件"
         ),
         config_path=_config_path(env),
@@ -248,11 +248,11 @@ def _write_arguments_error(
     expected_rev: str | None,
     remove_keys: list[str] | None,
 ) -> ToolError | None:
-    """書き込みの引数の組み合わせの誤りを、渡し方を添えた ToolError にする。誤りが無ければ None。"""
+    """書き込みの引数の組み合わせの誤りを、引き渡し方を添えた ToolError にする。誤りが無ければ None。"""
     if position is not None and expected_rev is None:
-        return ToolError("position を渡すときは expected_rev も渡してください")
+        return ToolError("position を指定するときは expected_rev も指定してください")
     if position is None and remove_keys:
-        return ToolError("remove_keys は position を渡すときだけ使えます")
+        return ToolError("remove_keys は position を指定するときだけ使用できます")
     overlapped = sorted(set(remove_keys or []) & set(entry))
     if overlapped:
         return ToolError(f"entry と remove_keys に同じキーがあります: {'、'.join(overlapped)}")
@@ -291,7 +291,7 @@ def write_index_entry(
         )
     except IndexEditError as exc:
         raise ToolError(f"{exc.path}: {exc.reason}") from exc
-    action = "書き込まずに確かめました" if dry_run else "書き込みました"
+    action = "書き込まずに確認しました" if dry_run else "書き込みました"
     result = WriteEntryResult(
         success=True,
         output=f"{edited.index} の rules[{edited.position}] を{action}",
@@ -323,7 +323,7 @@ def delete_index_entry(
         )
     except IndexEditError as exc:
         raise ToolError(f"{exc.path}: {exc.reason}") from exc
-    action = "削除せずに確かめました" if dry_run else "削除しました"
+    action = "削除せずに確認しました" if dry_run else "削除しました"
     result = DeleteEntryResult(
         success=True,
         output=f"{edited.index} の rules[{edited.position}] を{action}",

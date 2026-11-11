@@ -7,7 +7,7 @@ from typing import Literal
 
 from rule_inject.features.index.types import MatchPattern
 
-# 索引の問題の種類（インターフェース定義「索引のチェック」の応答の一覧に当たる）
+# 索引の問題の種類（インターフェース定義「索引のチェック」の応答の一覧に該当する）
 type ProblemKind = Literal[
     "hook_error", "violation", "missing_rule", "skipped_entry", "unmatched_path"
 ]
@@ -45,21 +45,21 @@ class ScanCursor:
     last_file: str
     # 最初の呼び出しから辿ったファイルの数
     scanned_files: int
-    # まだ当たっていないエントリの索引・位置・バージョン
+    # まだ該当していないエントリの索引・位置・バージョン
     unmatched: tuple[tuple[str, int, str], ...]
-    # 確かめるエントリの一覧（索引・位置・バージョン）の SHA-256 の 16 進数
+    # 確認するエントリの一覧（索引・位置・バージョン）の SHA-256 の 16 進数
     fingerprint: str
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class UnmatchedScan:
-    """1 回の呼び出しで辿った、`paths` の当たらないエントリの検出の結果。"""
+    """1 回の呼び出しで辿った、`paths` の該当しないエントリの検出の結果。"""
 
     # 最後まで辿れたか
     completed: bool
     # 最初の呼び出しから辿ったファイルの数
     scanned_files: int
-    # 索引ごとの `unmatched_path` の問題（渡された索引の順、問題は位置の順）。`completed` が False のときはどの索引も空
+    # 索引ごとの `unmatched_path` の問題（引き渡された索引の順、問題は位置の順）。`completed` が False のときはどの索引も空
     checks: tuple[IndexCheck, ...]
     # 続きの位置。`completed` が True のときは None
     next_cursor: ScanCursor | None
@@ -67,7 +67,7 @@ class UnmatchedScan:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TagPattern:
-    """効いているエントリの `args`・`read_by[].args` の、タグに当てるパターン 1 つとその場所。"""
+    """有効なエントリの `args`・`read_by[].args` の、タグに照合するパターン 1 つとその場所。"""
 
     # 索引の場所
     index: str
@@ -75,9 +75,9 @@ class TagPattern:
     position: int
     # エントリのバージョン（`entry_rev`）
     rev: str
-    # パターンを書いた条件の場所。`args` か `read_by[{要素の位置}].args`
+    # パターンを記載した条件の場所。`args` か `read_by[{要素の位置}].args`
     location: str
-    # パターンを書いたキー（`ArgCondition.key`。例 `filter[tags]`）
+    # パターンを記載したキー（`ArgCondition.key`。例 `filter[tags]`）
     key: str
-    # パターン。応答には索引に書いたまま（`source`）を載せる
+    # パターン。応答には索引に書き込んだまま（`source`）を記載する
     pattern: MatchPattern

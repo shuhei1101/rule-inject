@@ -20,7 +20,7 @@ ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "rea
 # 値がリストのエントリのキー（`rule` と `enabled` が文字列、`args` はキーごとのリストのマップ、`read_by` はマップのリスト）
 LIST_ENTRY_KEYS = ("paths", "exclude", "tools", "on")
 ENABLED_KEY = "enabled"
-# `enabled` に書ける値
+# `enabled` に書き込める値
 ENABLED_VALUES = ("true", "false")
 ARGS_KEY = "args"
 READ_BY_KEY = "read_by"
@@ -41,7 +41,7 @@ type Value = str | list[str] | dict[str, list[str]] | list[ReadByItem] | dict[st
 
 
 def _parse_operations(values: list[str], number: int) -> tuple[Operation, ...]:
-    """`on` と `default_on` の値を、許す操作の種別だけにして返す。"""
+    """`on` と `default_on` の値を、許す操作の種別だけにして返却する。"""
     for value in values:
         if value not in OPERATIONS:
             raise yaml_error(number, f"操作の種別は {', '.join(OPERATIONS)} のどれかです: {value}")
@@ -51,36 +51,36 @@ def _parse_operations(values: list[str], number: int) -> tuple[Operation, ...]:
 def _read_args(
     lines: list[Line], line: Line, next_position: int, rest: str, key_indent: int
 ) -> tuple[dict[str, list[str]], int]:
-    """`args` の続く行に並ぶ `キー: リスト` のブロックのマップを読み、次に読む行の位置を返す。"""
+    """`args` の続く行に並ぶ `キー: リスト` のブロックのマップを読み、次に読む行の位置を返却する。"""
     # 同じ行に値がある（フローのマップなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "args は続く行に `キー:` とパターンのリストを並べてください")
     if next_position >= len(lines) or lines[next_position].indent <= key_indent:
         raise yaml_error(line.number, "args の値がありません")
-    # 続く行の最初のキーの桁に、残りのキーが揃う
+    # 続く行の最初のキーの桁に、残りのキーがそろう
     arg_indent = lines[next_position].indent
     args: dict[str, list[str]] = {}
     position = next_position
     while position < len(lines) and lines[position].indent > key_indent:
         arg_line = lines[position]
         if arg_line.indent != arg_indent:
-            raise yaml_error(arg_line.number, "args のキーは同じ桁に揃えてください")
+            raise yaml_error(arg_line.number, "args のキーは同じ桁に統一してください")
         arg_key, arg_rest = split_key(arg_line)
         if arg_key in args:
             raise yaml_error(arg_line.number, f"args のキーが重複しています: {arg_key}")
         value, position = read_value(lines, arg_line, position + 1, arg_key, arg_rest, arg_indent)
         if not isinstance(value, list):
-            raise yaml_error(arg_line.number, f"args の {arg_key} はリストで書いてください")
+            raise yaml_error(arg_line.number, f"args の {arg_key} はリストで記載してください")
         args[arg_key] = value
     return args, position
 
 
 def _read_read_by_item(lines: list[Line], position: int) -> tuple[ReadByItem, int]:
-    """`read_by` の `- ` で始まる要素 1 つ（`tools` と任意の `args`）を読み、次に読む行の位置を返す。"""
+    """`read_by` の `- ` で始まる要素 1 つ（`tools` と任意の `args`）を読み、次に読む行の位置を返却する。"""
     first = lines[position]
     after_mark = first.text[len(LIST_ITEM_MARK) :]
     content = after_mark.lstrip(" ")
-    # `- ` の後ろのキーの桁に、続くキーが揃う
+    # `- ` の後ろのキーの桁に、続くキーがそろう
     key_indent = first.indent + len(LIST_ITEM_MARK) + len(after_mark) - len(content)
     current = Line(number=first.number, indent=key_indent, text=content)
     item: ReadByItem = {}
@@ -96,7 +96,7 @@ def _read_read_by_item(lines: list[Line], position: int) -> tuple[ReadByItem, in
         else:
             value, position = read_value(lines, current, position + 1, key, rest, key_indent)
             if not isinstance(value, list):
-                raise yaml_error(current.number, f"read_by の {key} はリストで書いてください")
+                raise yaml_error(current.number, f"read_by の {key} はリストで記載してください")
             item[key] = value
         # 次の行が同じ桁のキーなら、同じ要素の続き
         if position >= len(lines) or lines[position].indent != key_indent:
@@ -110,7 +110,7 @@ def _read_read_by_item(lines: list[Line], position: int) -> tuple[ReadByItem, in
 def _read_read_by(
     lines: list[Line], line: Line, next_position: int, rest: str, key_indent: int
 ) -> tuple[list[ReadByItem], int]:
-    """`read_by` の続く行に並ぶ `- ` で始まる要素のブロックのリストを読み、次に読む行の位置を返す。"""
+    """`read_by` の続く行に並ぶ `- ` で始まる要素のブロックのリストを読み、次に読む行の位置を返却する。"""
     # 同じ行に値がある（フローのリストなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "read_by は続く行に `- ` で始まるマップを並べてください")
@@ -129,32 +129,32 @@ def _read_read_by(
 
 
 def _check_json_object(text: str, key: str, number: int) -> None:
-    """`read_tool` の `args`・`optional_args` の文字列が JSON のオブジェクトとして読めるかを確かめる。"""
+    """`read_tool` の `args`・`optional_args` の文字列が JSON のオブジェクトとして読めるかを確認する。"""
     try:
         value = json.loads(text)
     except json.JSONDecodeError as exc:
         raise yaml_error(number, f"read_tool の {key} を JSON として読めません: {exc.msg}") from exc
     if not isinstance(value, dict):
-        raise yaml_error(number, f"read_tool の {key} は JSON のオブジェクトで書いてください")
+        raise yaml_error(number, f"read_tool の {key} は JSON のオブジェクトで記載してください")
 
 
 def _read_read_tool(
     lines: list[Line], line: Line, next_position: int, rest: str, key_indent: int
 ) -> tuple[dict[str, str], int]:
-    """`read_tool` の続く行に並ぶ `tool`・`args`・`optional_args` のブロックのマップを読み、次に読む行の位置を返す。"""
+    """`read_tool` の続く行に並ぶ `tool`・`args`・`optional_args` のブロックのマップを読み、次に読む行の位置を返却する。"""
     # 同じ行に値がある（フローのマップなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "read_tool は続く行に `tool:` などのキーを並べてください")
     if next_position >= len(lines) or lines[next_position].indent <= key_indent:
         raise yaml_error(line.number, "read_tool の値がありません")
-    # 続く行の最初のキーの桁に、残りのキーが揃う
+    # 続く行の最初のキーの桁に、残りのキーがそろう
     item_indent = lines[next_position].indent
     item: dict[str, str] = {}
     position = next_position
     while position < len(lines) and lines[position].indent > key_indent:
         item_line = lines[position]
         if item_line.indent != item_indent:
-            raise yaml_error(item_line.number, "read_tool のキーは同じ桁に揃えてください")
+            raise yaml_error(item_line.number, "read_tool のキーは同じ桁に統一してください")
         item_key, item_rest = split_key(item_line)
         if item_key not in READ_TOOL_KEYS:
             raise yaml_error(item_line.number, f"read_tool に許さないキーです: {item_key}")
@@ -177,11 +177,11 @@ def _read_read_tool(
 
 
 def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int]:
-    """`- ` で始まるエントリ 1 つを読み、次に読む行の位置を返す。"""
+    """`- ` で始まるエントリ 1 つを読み、次に読む行の位置を返却する。"""
     first = lines[position]
     after_mark = first.text[len(LIST_ITEM_MARK) :]
     content = after_mark.lstrip(" ")
-    # `- ` の後ろのキーの桁に、続くキーが揃う
+    # `- ` の後ろのキーの桁に、続くキーがそろう
     key_indent = first.indent + len(LIST_ITEM_MARK) + len(after_mark) - len(content)
     current = Line(number=first.number, indent=key_indent, text=content)
     entry: dict[str, Value] = {}
@@ -203,7 +203,7 @@ def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int
         # `enabled` は文字列 `true` / `false` だけを許す（リストや他の値は、キーの行番号で拒む）
         if key == ENABLED_KEY and entry[key] not in ENABLED_VALUES:
             raise yaml_error(
-                current.number, f"{key} は {' か '.join(ENABLED_VALUES)} で書いてください"
+                current.number, f"{key} は {' か '.join(ENABLED_VALUES)} で記載してください"
             )
         # 次の行が同じ桁のキーなら、同じエントリの続き
         if position >= len(lines) or lines[position].indent != key_indent:
@@ -212,21 +212,21 @@ def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int
 
 
 def _validate_entry(entry: dict[str, Value], number: int) -> None:
-    """エントリの `rule` の有無と各キーの値の形式を確かめる。"""
+    """エントリの `rule` の有無と各キーの値の形式を確認する。"""
     if "rule" not in entry:
         raise yaml_error(number, "エントリに rule がありません")
     if not isinstance(entry["rule"], str):
-        raise yaml_error(number, "rule は文字列で書いてください")
+        raise yaml_error(number, "rule は文字列で記載してください")
     for key in LIST_ENTRY_KEYS:
         if key in entry and not isinstance(entry[key], list):
-            raise yaml_error(number, f"{key} はリストで書いてください")
+            raise yaml_error(number, f"{key} はリストで記載してください")
     operations = entry.get("on")
     if isinstance(operations, list):
         _parse_operations([str(item) for item in operations], number)
 
 
 def parse_index(text: str) -> tuple[tuple[Operation, ...] | None, list[dict[str, Value]]]:
-    """索引の YAML から `default_on`（無ければ None）と `rules` の各エントリのキーと値を返す。"""
+    """索引の YAML から `default_on`（無ければ None）と `rules` の各エントリのキーと値を返却する。"""
     lines = tokenize(text)
     default_on: tuple[Operation, ...] | None = None
     entries: list[dict[str, Value]] = []
@@ -234,7 +234,7 @@ def parse_index(text: str) -> tuple[tuple[Operation, ...] | None, list[dict[str,
     while position < len(lines):
         line = lines[position]
         if line.indent != 0:
-            raise yaml_error(line.number, "最上位のキーはインデントなしで書いてください")
+            raise yaml_error(line.number, "最上位のキーはインデントなしで記載してください")
         key, rest = split_key(line)
         if key not in TOP_KEYS:
             raise yaml_error(line.number, f"許さないキーです: {key}")
@@ -242,7 +242,7 @@ def parse_index(text: str) -> tuple[tuple[Operation, ...] | None, list[dict[str,
         if key == "default_on":
             value, position = read_value(lines, line, position + 1, key, rest, 0)
             if not isinstance(value, list):
-                raise yaml_error(line.number, "default_on はリストで書いてください")
+                raise yaml_error(line.number, "default_on はリストで記載してください")
             default_on = _parse_operations(value, line.number)
             continue
         # rules: 空のリストか、`- ` で始まるエントリの並び

@@ -11,14 +11,14 @@ from rule_inject.features.record.types import ReadMethod, ReadState
 
 # 読むツールの `format`
 type ResponseFormat = Literal["markdown", "json"]
-# 使われていないタグのパターンの確かめの結果（確かめた・dev-docs に届かず飛ばした・確かめるパターンが無い）
+# 使用されていないタグのパターンの確認の結果（確認した・dev-docs に届かず飛ばした・確認するパターンが無い）
 type TagCheckState = Literal["checked", "skipped", "no_patterns"]
 # 更新の結果（何も変えなかった・取り込んで再起動を始めた・取り込んだが移し替えが要るため再起動しなかった）
 type UpdateState = Literal["up_to_date", "restarting", "migration_required"]
 
 
 class RuleEntry(BaseModel):
-    """効いているエントリ。"""
+    """有効なエントリ。"""
 
     index: str
     position: int
@@ -30,7 +30,7 @@ class RuleEntry(BaseModel):
     args: dict[str, list[str]]
     on: list[Operation]
     read_by: list[dict[str, Any]]
-    # 索引に書いたままの `read_tool`。書かないエントリは None
+    # 索引に書き込んだままの `read_tool`。記載しないエントリは None
     read_tool: dict[str, Any] | None = None
 
 
@@ -42,7 +42,7 @@ class IndexIssue(BaseModel):
 
 
 class EntryIssue(BaseModel):
-    """照合に使わないエントリ（読み飛ばした・無効）。"""
+    """照合に使用しないエントリ（読み飛ばした・無効）。"""
 
     index: str
     position: int
@@ -53,7 +53,7 @@ class EntryIssue(BaseModel):
 
     @model_serializer(mode="wrap")
     def _drop_empty_reason(self, handler: Any) -> dict[str, Any]:
-        """`reason` が無いとき（無効のエントリ）は応答から外す。"""
+        """`reason` が無いとき（無効のエントリ）は応答から除外する。"""
         data: dict[str, Any] = handler(self)
         if data.get("reason") is None:
             data.pop("reason", None)
@@ -83,7 +83,7 @@ class EntryRef(BaseModel):
 
 
 class RuleMatch(BaseModel):
-    """当たったルール。"""
+    """該当したルール。"""
 
     rule: str
     blocking: bool
@@ -113,22 +113,22 @@ class IndexReport(BaseModel):
     missing_rules: list[dict[str, Any]]
     skipped_entries: list[dict[str, Any]]
     unmatched_paths: list[dict[str, Any]]
-    # 使われているどのタグにも当たらないタグのパターン（`global` と `project` のどちらの索引も載せる）
+    # 使用中のどのタグにも該当しないタグのパターン（`global` と `project` のどちらの索引も記載する）
     unused_tag_patterns: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class UnmatchedScanReport(BaseModel):
-    """`paths` の当たらないエントリの検出の状態。"""
+    """`paths` の該当しないエントリの検出の状態。"""
 
     completed: bool
     scanned_files: int
-    # 終えられなかった理由（辿る時間の上限の秒数と `cursor` の使い方）
+    # 終えられなかった理由（辿る時間の上限の秒数と `cursor` の使用方法）
     reason: str | None
     next_cursor: str | None
 
 
 class TagCheckReport(BaseModel):
-    """使われていないタグのパターンの確かめの結果。"""
+    """使用されていないタグのパターンの確認の結果。"""
 
     state: TagCheckState
     # `skipped` のときの、飛ばした理由。それ以外は None
@@ -282,5 +282,5 @@ class UpdateResult(BaseModel):
     state: UpdateState
     before: str
     after: str
-    # 当てる移し替えの手順。migration_required 以外は空
+    # 照合する移し替えの手順。migration_required 以外は空
     steps: list[str]

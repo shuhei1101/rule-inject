@@ -2,20 +2,20 @@ $schema: https://json-schema.org/draft/2020-12/schema
 title: ルール索引
 description: |-
   rule-inject の索引（rules.yaml）のキーと値の範囲。
-  フックの読み取り（parse_index）が受け付ける範囲の内側だけを通す。
+  フックの読み取り（parse_index）が受け付ける範囲の内側だけを受け付ける。
 type: object
 additionalProperties: false
 properties:
   default_on:
     $ref: '#/$defs/operations'
     title: 既定の止める操作
-    description: エントリが `on` を書かないときの、操作を止める操作の種別。
+    description: エントリが `on` を記載しないときの、操作を止める操作の種別。
   rules:
     type:
     - array
     - 'null'
     title: エントリ
-    description: ルールごとのエントリ。値を書かない（null）か空のリストは、エントリが無い索引として読む。
+    description: ルールごとのエントリ。値を記載しない（null）か空のリストは、エントリが無い索引として読む。
     items:
       $ref: '#/$defs/entry'
 $defs:
@@ -42,7 +42,7 @@ $defs:
   json_object_text:
     type: string
     pattern: ^\s*\{\s*"
-    description: キーを 1 つ以上持つ JSON のオブジェクトの文字列（空のオブジェクト `{}` は通さない）。
+    description: キーを 1 つ以上持つ JSON のオブジェクトの文字列（空のオブジェクト `{}` は受け付けない）。
   entry:
     type: object
     required:
@@ -56,20 +56,20 @@ $defs:
         description: ルールの本文の場所。
       paths:
         $ref: '#/$defs/patterns'
-        title: 当てるパス
-        description: 操作の対象の絶対パスに当てる glob か正規表現。
+        title: 照合するパス
+        description: 操作の対象の絶対パスに照合する glob か正規表現。
       exclude:
         $ref: '#/$defs/patterns'
-        title: 外すパス
-        description: '`paths` に当たっても、このパターンに当たるパスには当てない。'
+        title: 除外するパス
+        description: '`paths` に該当しても、このパターンに該当するパスには照合しない。'
       tools:
         $ref: '#/$defs/patterns'
-        title: 当てるツール名
-        description: MCP のツールの完全名に当てる glob か正規表現。
+        title: 照合するツール名
+        description: MCP のツールの完全名に照合する glob か正規表現。
       args:
         $ref: '#/$defs/arguments'
-        title: 当てる引数
-        description: '`tools` に当たった MCP のツールの引数に当てるパターン（引数のキー → パターンのリスト）。'
+        title: 照合する引数
+        description: '`tools` に該当した MCP のツールの引数に照合するパターン（引数のキー → パターンのリスト）。'
       'on':
         $ref: '#/$defs/operations'
         title: 止める操作
@@ -88,18 +88,18 @@ $defs:
             tools:
               $ref: '#/$defs/patterns'
               title: 既読にするツール名
-              description: 既読にする MCP のツールの完全名に当てる glob か正規表現。
+              description: 既読にする MCP のツールの完全名に照合する glob か正規表現。
             args:
               $ref: '#/$defs/arguments'
               title: 既読にする引数
-              description: 同じ要素の `tools` に当たった呼び出しの引数に当てるパターン。
+              description: 同じ要素の `tools` に該当した呼び出しの引数に照合するパターン。
       read_tool:
         type: object
         required:
         - tool
         additionalProperties: false
         title: 参照するツール
-        description: ルールを参照する MCP のツールと引数。案内に載せ、一致する呼び出しで既読にする。
+        description: ルールを参照する MCP のツールと引数。案内に記載し、一致する呼び出しで既読にする。
         properties:
           tool:
             type: string
@@ -109,12 +109,12 @@ $defs:
           args:
             $ref: '#/$defs/json_object_text'
             title: 参照する引数
-            description: 既読の判定に使う引数を、JSON のオブジェクトで書いた文字列。
+            description: 既読の判定に使用する引数を、JSON のオブジェクトで記載した文字列。
           optional_args:
             $ref: '#/$defs/json_object_text'
             title: 省略してよい引数
-            description: 案内に「省略可」として載せ、既読の判定には使わない引数を、JSON のオブジェクトで書いた文字列。
+            description: 案内に「省略可」として記載し、既読の判定には使用しない引数を、JSON のオブジェクトで記載した文字列。
       enabled:
         type: boolean
         title: 有効
-        description: エントリを照合に使うか。`false` のエントリは案内にも既読にも使わない。
+        description: エントリを照合に使用するか。`false` のエントリは案内にも既読にも使用しない。

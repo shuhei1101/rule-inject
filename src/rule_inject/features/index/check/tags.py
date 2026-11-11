@@ -1,4 +1,4 @@
-"""タグのパターンを集め、使われているタグのどれにも当たらないものを返す。"""
+"""タグのパターンを集め、使用中のタグのどれにも該当しないものを返却する。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from rule_inject.features.index import match_arg_pattern
 from rule_inject.features.index.check.types import TagPattern
 from rule_inject.features.index.types import ArgCondition, IndexContent
 
-# 使われているかを確かめる、条件の木のキーの `field`
+# 使用中のかを確認する、条件の木のキーの `field`
 TAG_FIELD = "tags"
 # dev-docs がタグを数える前にかける Unicode の正規化の形式（この後に `casefold` する）
 TAG_NORMALIZATION_FORM: Literal["NFKC"] = "NFKC"
@@ -19,7 +19,7 @@ TAG_NORMALIZATION_FORM: Literal["NFKC"] = "NFKC"
 def _condition_patterns(
     index: str, position: int, rev: str, location: str, conditions: Sequence[ArgCondition]
 ) -> list[TagPattern]:
-    """条件の並びから、`field` が `TAG_FIELD` のキーのパターンを書いた順に集める。"""
+    """条件の並びから、`field` が `TAG_FIELD` のキーのパターンを記載した順に集める。"""
     return [
         TagPattern(
             index=index,
@@ -37,11 +37,11 @@ def _condition_patterns(
 
 
 def tag_patterns(contents: Sequence[IndexContent]) -> tuple[TagPattern, ...]:
-    """索引の効いているエントリの `args` と `read_by[].args` から、タグに当てるパターンを集める。"""
+    """索引の有効なエントリの `args` と `read_by[].args` から、タグに照合するパターンを集める。"""
     patterns: list[TagPattern] = []
     for content in contents:
         for outcome in content.outcomes:
-            # `enabled: false` と読み飛ばしたエントリは見ない
+            # `enabled: false` と読み飛ばしたエントリは確認しない
             if outcome.status != "effective" or outcome.entry is None:
                 continue
             entry = outcome.entry
@@ -64,13 +64,13 @@ def tag_patterns(contents: Sequence[IndexContent]) -> tuple[TagPattern, ...]:
 def unused_tag_patterns(
     patterns: Sequence[TagPattern], tags: Sequence[str]
 ) -> tuple[TagPattern, ...]:
-    """使われているタグのどれにも当たらないパターンを、渡された順に返す。"""
+    """使用中のタグのどれにも該当しないパターンを、引き渡された順に返却する。"""
     # 照らす値は、返ったタグそのものと、各タグを正規化したもの
     used = {
         *tags,
         *(unicodedata.normalize(TAG_NORMALIZATION_FORM, tag).casefold() for tag in tags),
     }
-    # パターンの側は正規化せず、どちらかの値に当たれば使われているとする
+    # パターンの側は正規化せず、どちらかの値に該当すれば使用中のとする
     return tuple(
         pattern
         for pattern in patterns

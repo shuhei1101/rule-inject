@@ -25,7 +25,7 @@ def _log_failure(
     session_id: str,
     failure: RuleInjectError,
 ) -> None:
-    """削除できなかった失敗をログへ書く（セッションの開始は止めない）。"""
+    """削除できなかった失敗をログへ書き込む（セッションの開始は止めない）。"""
     write_log(
         log_folder,
         component=Component.SWEEP_READ,
@@ -37,12 +37,12 @@ def _log_failure(
 
 
 def sweep_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
-    """保持期間を過ぎた記録ファイル・変更前のログ・保持日数を過ぎたログを削除し、失敗をログへ書く。"""
+    """保持期間を過ぎた記録ファイル・変更前のログ・保持日数を過ぎたログを削除し、失敗をログへ書き込む。"""
     session_id = payload.get("session_id")
-    # 形式が外れた session_id では、始まったセッションを見分けられないため何も削除しない
+    # 形式に合わない session_id では、始まったセッションを見分けられないため何も削除しない
     if not is_valid_session_id(session_id):
         return
-    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書いて何も削除しない
+    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書き込んで何も削除しない
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:

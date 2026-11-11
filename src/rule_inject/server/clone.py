@@ -1,4 +1,4 @@
-"""サーバーが動いているクローンの操作（バージョン・commit・上流の取り込み・依存の入れ直し・移し替えの確かめ）。"""
+"""サーバーが動いているクローンの操作（バージョン・commit・上流の取り込み・依存の再インストール・移し替えの確認）。"""
 
 from __future__ import annotations
 
@@ -20,9 +20,9 @@ GIT_TIMEOUT = 49
 UV_SYNC_TIMEOUT = 864
 # `migrate --plan` の打ち切りの上限（秒）
 MIGRATE_PLAN_TIMEOUT = 57
-# 失敗したコマンドの標準エラーから、誤りに載せる末尾の行数
+# 失敗したコマンドの標準エラーから、誤りに記載する末尾の行数
 STDERR_TAIL_LINES = 20
-# `uv run` が子プロセスに置く、uv の実行ファイルの場所
+# `uv run` が子プロセスに配置する、uv の実行ファイルの場所
 UV_ENV = "UV"
 
 
@@ -51,7 +51,7 @@ class PullOutcome:
 
 
 class RunCommand(Protocol):
-    """コマンドを上限つきで実行し、終了コードと出力を返す。"""
+    """コマンドを上限つきで実行し、終了コードと出力を返却する。"""
 
     def __call__(
         self,
@@ -66,7 +66,7 @@ class RunCommand(Protocol):
 
 
 def find_clone(start: Path) -> Path:
-    """start とその親を順に見て、`VERSION_FILE` を持つ最初のフォルダを返す。"""
+    """start とその親を順に確認して、`VERSION_FILE` を持つ最初のフォルダを返却する。"""
     for folder in (start, *start.parents):
         if (folder / VERSION_FILE).is_file():
             return folder
@@ -74,7 +74,7 @@ def find_clone(start: Path) -> Path:
 
 
 def read_version(clone: Path) -> str | None:
-    """クローンの `VERSION_FILE` の 1 行目を返す。ファイルが無いときは None。"""
+    """クローンの `VERSION_FILE` の 1 行目を返却する。ファイルが無いときは None。"""
     path = clone / VERSION_FILE
     if not path.is_file():
         return None
@@ -83,7 +83,7 @@ def read_version(clone: Path) -> str | None:
 
 
 def head_commit(clone: Path, *, run: RunCommand) -> str | None:
-    """`git rev-parse HEAD` の結果を返す。git のリポジトリでない・git が無い・打ち切られたときは None。"""
+    """`git rev-parse HEAD` の結果を返却する。git のリポジトリでない・git が無い・打ち切られたときは None。"""
     try:
         result = run(["git", "rev-parse", "HEAD"], cwd=clone, timeout=GIT_TIMEOUT)
     except UpdateFailedError:
@@ -122,7 +122,7 @@ def run_command(
 
 
 def pull(clone: Path, *, run: RunCommand) -> PullOutcome:
-    """commit していない変更を確かめ、上流を取得し、前後を確かめて fast-forward で取り込む。"""
+    """commit していない変更を確認し、上流を取得し、前後を確認して fast-forward で取り込む。"""
     # 追跡しているファイルに commit していない変更があれば、取得もせずに断る
     status = _git(clone, run, "status", "--porcelain", "--untracked-files=no")
     if status.strip():
@@ -156,7 +156,7 @@ def sync_dependencies(clone: Path, env: Mapping[str, str], *, run: RunCommand) -
     """クローンで `uv sync --extra server` を実行する。"""
     uv = env.get(UV_ENV) or shutil.which("uv")
     if uv is None:
-        raise UpdateFailedError("uv が見つからないため、依存を入れ直せません")
+        raise UpdateFailedError("uv が見つからないため、依存を再インストールできません")
     args = [uv, "sync", "--extra", "server"]
     result = run(args, cwd=clone, timeout=UV_SYNC_TIMEOUT, env=env)
     if result.returncode != 0:
@@ -164,7 +164,7 @@ def sync_dependencies(clone: Path, env: Mapping[str, str], *, run: RunCommand) -
 
 
 def plan_migrations(clone: Path, env: Mapping[str, str], *, run: RunCommand) -> list[str]:
-    """クローンの `.venv` の Python で `migrate --plan` を実行し、`migrations` を返す。"""
+    """クローンの `.venv` の Python で `migrate --plan` を実行し、`migrations` を返却する。"""
     python = clone / ".venv" / "bin" / "python"
     args = [str(python), "-m", "rule_inject.migrate", "--plan"]
     result = run(args, cwd=clone, timeout=MIGRATE_PLAN_TIMEOUT, env=env)
@@ -181,7 +181,7 @@ def plan_migrations(clone: Path, env: Mapping[str, str], *, run: RunCommand) -> 
 
 
 def _git(clone: Path, run: RunCommand, *args: str) -> str:
-    """クローンで git を実行し、0 以外の終了コードは失敗にして標準出力を返す。"""
+    """クローンで git を実行し、0 以外の終了コードは失敗にして標準出力を返却する。"""
     command = ["git", *args]
     result = run(command, cwd=clone, timeout=GIT_TIMEOUT)
     if result.returncode != 0:

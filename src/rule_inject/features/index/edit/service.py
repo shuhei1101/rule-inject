@@ -23,7 +23,7 @@ from rule_inject.shared.errors import IndexEditError, describe
 
 RULES_KEY = "rules"
 COMMENT_MARK = "#"
-# 新規作成するエントリにキーを書く順（ここに無いキーは渡された順で後ろに置く）
+# 新規作成するエントリにキーを記載する順（ここに無いキーは引き渡された順で後ろに配置する）
 ENTRY_KEY_ORDER = (
     "rule",
     "paths",
@@ -43,12 +43,12 @@ MIN_MAPPING_INDENT = 1
 MIN_SEQUENCE_ITEM_WIDTH = 2
 # 差分に添える前後の行数
 DIFF_CONTEXT_LINES = 3
-# 一覧を取り直してから呼び直してもらうための案内
-RELIST_HINT = "list_rules を取り直してから呼び直してください"
+# 一覧を再取得してから再度呼び出してもらうための案内
+RELIST_HINT = "list_rules を再取得してから再度呼び出してください"
 
 
 def _read_text(index_path: str) -> tuple[str, str]:
-    """索引を UTF-8 で改行を変えずに読み、最初の改行が `\\r\\n` ならそれを控えて全て `\\n` にそろえる。内容と控えた改行を返す。"""
+    """索引を UTF-8 で改行を変えずに読み、最初の改行が `\\r\\n` ならそれを記録して全て `\\n` にそろえる。内容と記録した改行を返却する。"""
     try:
         text = Path(index_path).read_bytes().decode("utf-8")
     except (OSError, UnicodeDecodeError) as exc:
@@ -67,7 +67,7 @@ def _index_yaml(index_path: str, text: str) -> YAML:
         raise IndexEditError(
             path=index_path, reason=f"YAML として読めない: {describe(exc)}"
         ) from exc
-    # マップとリストの字下げが推定でき、`indent()` が受け付ける範囲のときだけ使う
+    # マップとリストの字下げが推定でき、`indent()` が受け付ける範囲のときだけ使用する
     if (
         indent is None
         or sequence_indent is None
@@ -101,7 +101,7 @@ def _dump(yaml: YAML, data: CommentedMap) -> str:
 
 
 def _entries(index_path: str, data: CommentedMap) -> CommentedSeq:
-    """`rules` のエントリのリストを返す。無いか値が空（None）なら空のリストを返す（`data` へは入れない）。"""
+    """`rules` のエントリのリストを返却する。無いか値が空（None）なら空のリストを返却する（`data` へは入れない）。"""
     rules = data.get(RULES_KEY)
     if rules is None:
         return CommentedSeq()
@@ -111,7 +111,7 @@ def _entries(index_path: str, data: CommentedMap) -> CommentedSeq:
 
 
 def _check_target(index_path: str, text: str, rules: CommentedSeq, position: int, rev: str) -> None:
-    """位置のエントリがあり、バージョンが合うことを確かめる。合わなければ IndexEditError を送出する。"""
+    """位置のエントリがあり、バージョンが合うことを確認する。合わなければ IndexEditError を送出する。"""
     if position >= len(rules):
         raise IndexEditError(
             path=index_path,
@@ -124,8 +124,8 @@ def _check_target(index_path: str, text: str, rules: CommentedSeq, position: int
         raise IndexEditError(
             path=index_path,
             reason=(
-                f"フックの読み取りが索引を読めず、バージョンを確かめられない: {exc}。"
-                "索引を手で直してください"
+                f"フックの読み取りが索引を読めず、バージョンを確認できない: {exc}。"
+                "索引を手で修正してください"
             ),
         ) from exc
     if rev != current:
@@ -136,7 +136,7 @@ def _check_target(index_path: str, text: str, rules: CommentedSeq, position: int
 
 
 def _unified_diff(index_path: str, before: str, after: str) -> str:
-    """書く前と書いた後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る。"""
+    """記載する前と記載した後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る。"""
     name = Path(index_path).name
     return "".join(
         difflib.unified_diff(
@@ -150,7 +150,7 @@ def _unified_diff(index_path: str, before: str, after: str) -> str:
 
 
 def _replace_file(index_path: str, text: str) -> None:
-    """同じフォルダの一時ファイルに書き、索引と置き換える。失敗したら一時ファイルを消して IndexEditError を送出する。"""
+    """同じフォルダの一時ファイルに書き込み、索引と置き換える。失敗したら一時ファイルを削除して IndexEditError を送出する。"""
     temp_path = ""
     try:
         with tempfile.NamedTemporaryFile(
@@ -160,7 +160,7 @@ def _replace_file(index_path: str, text: str) -> None:
             temp.write(text)
             temp.flush()
             os.fsync(temp.fileno())
-        # 索引のパーミッションを一時ファイルへ写してから置き換える
+        # 索引のパーミッションを一時ファイルへコピーしてから置き換える
         shutil.copymode(index_path, temp_path)
         os.replace(temp_path, index_path)
     except OSError as exc:
@@ -170,13 +170,13 @@ def _replace_file(index_path: str, text: str) -> None:
 
 
 def _insert_position(target: CommentedMap, key: str) -> int:
-    """既にあるエントリへ無いキーを書く位置を返す（`ENTRY_KEY_ORDER` でそのキーより前のキーのうち最後のものの後ろ。並びに無いキーは末尾）。"""
+    """既にあるエントリへ無いキーを記載する位置を返却する（`ENTRY_KEY_ORDER` でそのキーより前のキーのうち最後のものの後ろ。並びに無いキーは末尾）。"""
     if key not in ENTRY_KEY_ORDER:
         return len(target)
     earlier = ENTRY_KEY_ORDER[: ENTRY_KEY_ORDER.index(key)]
     keys = list(target.keys())
     positions = [index for index, existing in enumerate(keys) if existing in earlier]
-    # 前に来るキーが 1 つも無ければ、`ENTRY_KEY_ORDER` の後ろのキーより前（先頭）に書く
+    # 前に来るキーが 1 つも無ければ、`ENTRY_KEY_ORDER` の後ろのキーより前（先頭）に書き込む
     return positions[-1] + 1 if positions else 0
 
 
@@ -191,7 +191,7 @@ def _new_entry(entry: Mapping[str, Any]) -> CommentedMap:
 
 
 def _outside_lines(lines: Sequence[str], line_range: tuple[int, int] | None) -> list[str]:
-    """対象の範囲（始まりと終わり。終わりを含む）の行を除いた行の並びを返す。範囲が無ければ全ての行を返す。"""
+    """対象の範囲（始まりと終わり。終わりを含む）の行を除いた行の並びを返却する。範囲が無ければ全ての行を返却する。"""
     if line_range is None:
         return list(lines)
     begin, end = line_range
@@ -205,12 +205,12 @@ def _check_layout(
     after_lines: Sequence[str],
     after_range: tuple[int, int],
 ) -> None:
-    """書く前と書いた後で、対象のエントリの外の行が変わらないことを確かめる。変われば IndexEditError を送出する。"""
+    """記載する前と記載した後で、対象のエントリの外の行が変わらないことを確認する。変われば IndexEditError を送出する。"""
     before_outside = _outside_lines(before_lines, before_range)
     after_outside = _outside_lines(after_lines, after_range)
     if before_outside == after_outside:
         return
-    # 最初に違った行を、書く前の内容での行の番号（`parse_index` と同じ 1 始まり）にして知らせる
+    # 最初に違った行を、記載する前の内容での行の番号（`parse_index` と同じ 1 始まり）にして通知する
     first_diff = next(
         (
             number
@@ -229,8 +229,8 @@ def _check_layout(
     raise IndexEditError(
         path=index_path,
         reason=(
-            "索引の書式を保って書けない"
-            f"（対象のエントリの外の {first_diff + skipped + 1}行目が変わる）。索引を手で直してください"
+            "索引の書式を保って書き込めない"
+            f"（対象のエントリの外の {first_diff + skipped + 1}行目が変わる）。索引を手で修正してください"
         ),
     )
 
@@ -252,7 +252,7 @@ def write_entry(
         before, newline = _read_text(index_path)
         yaml = _index_yaml(index_path, before)
         data = _load(yaml, index_path, before)
-        # 書式を保てたかの確認に使う、書く前の内容の行の範囲は、書き換える前に求める
+        # 書式を保てたかの確認に使用する、記載する前の内容の行の範囲は、書き換える前に求める
         before_data = _load(round_trip_yaml(), index_path, before)
         before_lines = before.splitlines()
         rules = _entries(index_path, data)
@@ -264,7 +264,7 @@ def write_entry(
         if position is None:
             if rules_created:
                 data[RULES_KEY] = rules
-                # 書く前の内容に `rules` のキーの行があれば、その行も対象の範囲に含める
+                # 記載する前の内容に `rules` のキーの行があれば、その行も対象の範囲に含める
                 if RULES_KEY in before_data:
                     key_line = before_data.lc.key(RULES_KEY)[0]
                     before_range = (key_line, key_line)
@@ -275,7 +275,7 @@ def write_entry(
             _check_target(index_path, before, rules, position, expected_rev or "")
             written_position = position
             target = rules[position]
-            # 渡されたキーは、あればその場で、無ければ `ENTRY_KEY_ORDER` の並びの位置に書く。`remove_keys` のキーは削除する
+            # 引き渡されたキーは、あればその場で、無ければ `ENTRY_KEY_ORDER` の並びの位置に書き込む。`remove_keys` のキーは削除する
             for key, value in entry.items():
                 if key in target:
                     target[key] = to_yaml_value(key, value)
@@ -285,14 +285,14 @@ def write_entry(
                 target.pop(key, None)
             before_range = _entry_line_range(before_lines, before_data, position)
         after = _dump(yaml, data)
-        # 書式を保てたかを確かめる。書いたエントリの外の行が変わるときは書き込まない
+        # 書式を保てたかを確認する。記載したエントリの外の行が変わるときは書き込まない
         after_lines = after.splitlines()
         after_data = _load(round_trip_yaml(), index_path, after)
         after_range = _entry_line_range(after_lines, after_data, written_position)
         if rules_created:
             after_range = (after_data.lc.key(RULES_KEY)[0], after_range[1])
         elif position is None:
-            # 新規作成したエントリは、直前のコメントを含めない（前のエントリの後ろのコメントは、書く前から外の行）
+            # 新規作成したエントリは、直前のコメントを含めない（前のエントリの後ろのコメントは、記載する前から外の行）
             entry_start = after_data[RULES_KEY].lc.item(written_position)[0]
             after_range = (entry_start, after_range[1])
         _check_layout(index_path, before_lines, before_range, after_lines, after_range)
@@ -327,7 +327,7 @@ def _is_content_line(line: str) -> bool:
 
 
 def _last_content_line(lines: Sequence[str], start: int, boundary: int) -> int:
-    """`start` から `boundary` の手前までで、空行とコメントだけの行を除いた最後の行の番号を返す。"""
+    """`start` から `boundary` の手前までで、空行とコメントだけの行を除いた最後の行の番号を返却する。"""
     for number in range(boundary - 1, start - 1, -1):
         if _is_content_line(lines[number]):
             return number
@@ -335,7 +335,7 @@ def _last_content_line(lines: Sequence[str], start: int, boundary: int) -> int:
 
 
 def _entry_line_range(lines: Sequence[str], data: CommentedMap, position: int) -> tuple[int, int]:
-    """削除するエントリの行の範囲（始まりと終わり。終わりを含む。行の番号は 0 始まり）を返す。"""
+    """削除するエントリの行の範囲（始まりと終わり。終わりを含む。行の番号は 0 始まり）を返却する。"""
     rules = data[RULES_KEY]
     starts = [rules.lc.item(number)[0] for number in range(len(rules))]
     keys = list(data.keys())
@@ -344,7 +344,7 @@ def _entry_line_range(lines: Sequence[str], data: CommentedMap, position: int) -
     after_rules = data.lc.key(following[0])[0] if following else len(lines)
 
     def last_line(number: int) -> int:
-        """エントリ `number` の最後の内容の行を返す。"""
+        """エントリ `number` の最後の内容の行を返却する。"""
         boundary = starts[number + 1] if number + 1 < len(starts) else after_rules
         return _last_content_line(lines, starts[number], boundary)
 

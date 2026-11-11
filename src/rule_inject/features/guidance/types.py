@@ -8,7 +8,7 @@ from typing import Any, Protocol
 
 
 class GuidedReadTool(Protocol):
-    """案内する参照のツール（`ツール:` の行に載せる属性だけを持つ型）。"""
+    """案内する参照のツール（`ツール:` の行に記載する属性だけを持つ型）。"""
 
     @property
     def tool(self) -> str:
@@ -17,7 +17,7 @@ class GuidedReadTool(Protocol):
 
     @property
     def args(self) -> Mapping[str, Any]:
-        """引数のオブジェクト（索引に書いたキーの順）。"""
+        """引数のオブジェクト（索引に書き込んだキーの順）。"""
         ...
 
     @property
@@ -41,14 +41,14 @@ class GuidedRule(Protocol):
 
     @property
     def read_tools(self) -> Sequence[GuidedReadTool]:
-        """ルールを参照する MCP のツールと引数（パスの行の下に載せる順）。"""
+        """ルールを参照する MCP のツールと引数（パスの行の下に記載する順）。"""
         ...
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Guidance:
-    """組み立てた案内文と、上限に収まって載せたルールの場所。"""
+    """組み立てた案内文と、上限に収まって記載したルールの場所。"""
 
     text: str
-    # 案内文に載せたルールの場所（載せた順）。フックは shown だけを案内済みにする
+    # 案内文に記載したルールの場所（記載した順）。フックは shown だけを案内済みにする
     shown: tuple[str, ...]

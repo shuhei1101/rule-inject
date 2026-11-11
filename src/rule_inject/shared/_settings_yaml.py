@@ -44,28 +44,28 @@ def _check_value_type(
     list_keys: tuple[str, ...],
     owner: str,
 ) -> None:
-    """キーの値がリストか文字列かの形式を確かめる。"""
+    """キーの値がリストか文字列かの形式を確認する。"""
     if key in list_keys and not isinstance(value, list):
-        raise yaml_error(line.number, f"{owner}の {key} はリストで書いてください")
+        raise yaml_error(line.number, f"{owner}の {key} はリストで記載してください")
     if key not in list_keys and isinstance(value, list):
-        raise yaml_error(line.number, f"{owner}の {key} は文字列で書いてください")
+        raise yaml_error(line.number, f"{owner}の {key} は文字列で記載してください")
 
 
 def _read_global(lines: list[Line], line: Line, next_position: int, rest: str) -> tuple[Table, int]:
-    """`global` の続く行に並ぶ `キー: 値` のブロックのマップを読み、次に読む行の位置を返す。"""
+    """`global` の続く行に並ぶ `キー: 値` のブロックのマップを読み、次に読む行の位置を返却する。"""
     # 同じ行に値がある（フローのマップなど）形式は読まない
     if rest.strip():
         raise yaml_error(line.number, "global は続く行に `キー: 値` を並べてください")
     if next_position >= len(lines) or lines[next_position].indent <= line.indent:
         raise yaml_error(line.number, "global の値がありません")
-    # 続く行の最初のキーの桁に、残りのキーが揃う
+    # 続く行の最初のキーの桁に、残りのキーがそろう
     map_indent = lines[next_position].indent
     values: Table = {}
     position = next_position
     while position < len(lines) and lines[position].indent > line.indent:
         key_line = lines[position]
         if key_line.indent != map_indent:
-            raise yaml_error(key_line.number, "global のキーは同じ桁に揃えてください")
+            raise yaml_error(key_line.number, "global のキーは同じ桁に統一してください")
         key, key_rest = split_key(key_line)
         # 廃止したキーは、知らないキーとせず移し替えを案内する
         if key in REMOVED_GLOBAL_KEYS:
@@ -81,11 +81,11 @@ def _read_global(lines: list[Line], line: Line, next_position: int, rest: str) -
 
 
 def _read_project(lines: list[Line], position: int) -> tuple[Table, int]:
-    """`projects` の `- ` で始まる要素 1 つ（`match` と `indexes`）を読み、次に読む行の位置を返す。"""
+    """`projects` の `- ` で始まる要素 1 つ（`match` と `indexes`）を読み、次に読む行の位置を返却する。"""
     first = lines[position]
     after_mark = first.text[len(LIST_ITEM_MARK) :]
     content = after_mark.lstrip(" ")
-    # `- ` の後ろのキーの桁に、続くキーが揃う
+    # `- ` の後ろのキーの桁に、続くキーがそろう
     key_indent = first.indent + len(LIST_ITEM_MARK) + len(after_mark) - len(content)
     current = Line(number=first.number, indent=key_indent, text=content)
     project: Table = {}
@@ -128,14 +128,14 @@ def _read_projects(
 
 
 def parse_settings(text: str) -> Settings:
-    """設定ファイルの YAML から `version`・`global`（キー → 文字列か文字列のリスト）・`projects`（そのマップのリスト）を返す。"""
+    """設定ファイルの YAML から `version`・`global`（キー → 文字列か文字列のリスト）・`projects`（そのマップのリスト）を返却する。"""
     lines = tokenize(text)
     settings: Settings = {}
     position = 0
     while position < len(lines):
         line = lines[position]
         if line.indent != 0:
-            raise yaml_error(line.number, "最上位のキーはインデントなしで書いてください")
+            raise yaml_error(line.number, "最上位のキーはインデントなしで記載してください")
         key, rest = split_key(line)
         if key not in TOP_KEYS:
             raise yaml_error(line.number, f"許さないキーです: {key}")
@@ -145,7 +145,7 @@ def parse_settings(text: str) -> Settings:
         if key == VERSION_KEY:
             value, position = read_value(lines, line, position + 1, key, rest, 0)
             if isinstance(value, list):
-                raise yaml_error(line.number, "version は文字列で書いてください")
+                raise yaml_error(line.number, "version は文字列で記載してください")
             settings[key] = value
         elif key == GLOBAL_KEY:
             settings[key], position = _read_global(lines, line, position + 1, rest)

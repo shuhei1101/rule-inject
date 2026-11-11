@@ -17,7 +17,7 @@ class EditResult:
     position: int
     # 書き込んだ後のエントリのバージョン。削除のときは None
     rev: str | None
-    # 削除したエントリの `rule`（索引に書いたまま）。書き込みのときは None
+    # 削除したエントリの `rule`（索引に書き込んだまま）。書き込みのときは None
     rule: str | None
     # 索引のファイルを書き換えたか
     written: bool
@@ -34,16 +34,16 @@ class IndexLocks:
         self._locks: dict[str, threading.Lock] = {}
 
     def lock_for(self, index_path: str) -> threading.Lock:
-        """索引の場所のロックを返す。無ければ作る。"""
+        """索引の場所のロックを返却する。無ければ作る。"""
         with self._guard:
             return self._locks.setdefault(index_path, threading.Lock())
 
 
 class CheckChange(Protocol):
-    """書く前と書いた後の索引の内容を受け、新しく出た問題を `{索引の中の場所}: {理由}` の行で返す。"""
+    """記載する前と記載した後の索引の内容を受け、新しく出た問題を `{索引の中の場所}: {理由}` の行で返却する。"""
 
     def __call__(
         self, index_path: str, before_text: str, after_text: str, changed_rev: str | None, /
     ) -> tuple[str, ...]:
-        """新しく出た問題の行を返す。空なら書いてよい。"""
+        """新しく出た問題の行を返却する。空なら記載してよい。"""
         ...

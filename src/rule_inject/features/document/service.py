@@ -16,8 +16,8 @@ ATTRIBUTE_PATTERN = re.compile(r'([A-Za-z_][A-Za-z0-9_-]*)="([^"]*)"')
 
 
 def _documents_in_text(text: str) -> list[ResultDocument]:
-    """文字列から、`path` と `scope` を両方持つ閉じた `<document>` を見つけた順に返す（入れ子の内側は数えない）。"""
-    # 開きタグを積み、閉じタグで直近の開きタグと組にする（開始位置・終了位置・属性の部分）
+    """文字列から、`path` と `scope` を両方持つ閉じた `<document>` を見つけた順に返却する（入れ子の内側は数えない）。"""
+    # 開きタグを追加し、閉じタグで直近の開きタグと組にする（開始位置・終了位置・属性の部分）
     opened: list[re.Match[str]] = []
     pairs: list[tuple[int, int, str]] = []
     for tag in TAG_PATTERN.finditer(text):
@@ -70,7 +70,7 @@ def _collect(value: Any, found: list[ResultDocument]) -> None:
 
 
 def extract_documents(response: object) -> tuple[ResultDocument, ...]:
-    """MCP のツールの結果から、書式に従う文書を見つけた順に返す。"""
+    """MCP のツールの結果から、書式に従う文書を見つけた順に返却する。"""
     found: list[ResultDocument] = []
     _collect(response, found)
     return tuple(found)

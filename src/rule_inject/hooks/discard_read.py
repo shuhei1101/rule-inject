@@ -15,10 +15,10 @@ from rule_inject.shared.settings import load_settings
 def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
     """そのセッションの既読の記録ファイルと案内済みの記録ファイルを削除する（削除できなくても圧縮は止めない）。"""
     session_id = payload.get("session_id")
-    # 形式が外れた session_id では何も削除しない
+    # 形式に合わない session_id では何も削除しない
     if not is_valid_session_id(session_id):
         return
-    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書いて何も削除しない
+    # 設定ファイルが読めなければ、既定値でも動かさず、ログに書き込んで何も削除しない
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
@@ -29,7 +29,7 @@ def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
         try:
             delete(settings.state_dir, session_id)
         except RecordDeleteError as exc:
-            # 削除できずに残った記録は、圧縮の後の通知が見つけて知らせる
+            # 削除できずに残った記録は、圧縮の後の通知が見つけて通知する
             write_log(
                 settings.log_dir,
                 component=Component.DISCARD_READ,

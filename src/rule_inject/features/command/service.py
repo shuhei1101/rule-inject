@@ -1,4 +1,4 @@
-"""Bash のコマンドの文字列から、読むコマンドが読むファイルの絶対パスを取り出し、検索のコマンドとその結果の行から実在するファイルを拾う。"""
+"""Bash のコマンドの文字列から、読むコマンドが読むファイルの絶対パスを取り出し、検索のコマンドとその結果の行から実在するファイルを取得する。"""
 
 from __future__ import annotations
 
@@ -17,16 +17,16 @@ READ_COMMANDS = frozenset(
 FULL_READ_COMMANDS = frozenset({"cat", "bat", "less", "more"})
 # 検索結果の案内が結果を読むコマンド
 SEARCH_COMMANDS = frozenset({"grep", "rg", "find", "ls"})
-# 検索の結果から拾って照合するパスの上限
+# 検索の結果から取得して照合するパスの上限
 SEARCH_PATH_LIMIT = 100
 
 CD_COMMAND = "cd"
 LIST_COMMAND = "ls"
 RESULT_LINE_SEPARATOR = ":"
 NEWLINE = "\n"
-# コマンドの区切り（`&&` `||` `;` `|` と改行、リダイレクトなど、記号だけでできた語）
+# コマンドの区切り（`&&` `||` `;` `|` と改行、リダイレクトなど、記号だけでできた単語）
 PUNCTUATION_CHARS = "();<>|&\n"
-# 語を分ける空白（改行はコマンドの区切りにするため含めない）
+# 単語を分ける空白（改行はコマンドの区切りにするため含めない）
 WHITESPACE_CHARS = " \t\r"
 # パターンとして展開する文字
 GLOB_CHARS = frozenset("*?[")
@@ -47,13 +47,13 @@ DO_COMMAND = "do"
 DONE_COMMAND = "done"
 OPTION_PREFIX = "-"
 
-# ループの変数と語の並び（変数を持たないループの変数は空）
+# ループの変数と単語の並び（変数を持たないループの変数は空）
 type Loop = tuple[str, list[str]]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ResultPaths:
-    """検索の結果から拾ったパス。"""
+    """検索の結果から取得したパス。"""
 
     # 照合する実在するファイルの絶対パス（出た順、重なりなし、`limit` 件まで）
     paths: tuple[str, ...]
@@ -72,7 +72,7 @@ def _protect_literals(command: str) -> str:
         # 進める文字数の既定は 1 文字
         step = 1
         if quote:
-            # 引用符の中: 閉じる引用符、二重引用符の中のエスケープ、glob の文字の順に見る
+            # 引用符の中: 閉じる引用符、二重引用符の中のエスケープ、glob の文字の順に確認する
             if char == quote:
                 quote = ""
                 protected.append(char)
@@ -108,7 +108,7 @@ def _protect_literals(command: str) -> str:
 
 
 def _split_words(command: str) -> list[str] | None:
-    """コマンドを語に分ける。引用符が閉じていないなど、分けられなければ None を返す。"""
+    """コマンドを単語に分ける。引用符が閉じていないなど、分けられなければ None を返却する。"""
     lexer = shlex.shlex(_protect_literals(command), posix=True, punctuation_chars=PUNCTUATION_CHARS)
     lexer.whitespace = WHITESPACE_CHARS
     lexer.whitespace_split = True
@@ -119,17 +119,17 @@ def _split_words(command: str) -> list[str] | None:
 
 
 def _drop_heredocs(words: list[str]) -> list[str]:
-    """ヒアドキュメントの終わりの語と、次の行からの本文の語を捨てる。"""
+    """ヒアドキュメントの終わりの単語と、次の行からの本文の単語を捨てる。"""
     kept: list[str] = []
-    # 宣言されたが、本文がまだ始まっていない終わりの語
+    # 宣言されたが、本文がまだ始まっていない終わりの単語
     pending: list[str] = []
-    # 本文を捨てている間の、終わりの語と今の行の語
+    # 本文を捨てている間の、終わりの単語と今の行の単語
     terminator = ""
     line: list[str] = []
     iterator = iter(words)
     for word in iterator:
         if terminator:
-            # 本文: 終わりの語だけの行で終える
+            # 本文: 終わりの単語だけの行で終える
             if NEWLINE not in word:
                 line.append(word)
             else:
@@ -140,7 +140,7 @@ def _drop_heredocs(words: list[str]) -> list[str]:
             continue
         kept.append(word)
         if word == HEREDOC_OPERATOR:
-            # `<<-` の `-` は終わりの語に含めない
+            # `<<-` の `-` は終わりの単語に含めない
             pending.append(next(iterator, "").lstrip(OPTION_PREFIX))
         elif NEWLINE in word and pending:
             # 宣言した行が終わったので、次の行から本文を捨てる
@@ -149,10 +149,10 @@ def _drop_heredocs(words: list[str]) -> list[str]:
 
 
 def _split_segments(words: list[str]) -> list[list[str]]:
-    """記号だけの語でコマンドごとに区切る。"""
+    """記号だけの単語でコマンドごとに区切る。"""
     segments: list[list[str]] = [[]]
     for word in words:
-        # 記号だけの語は次のコマンドの始まり
+        # 記号だけの単語は次のコマンドの始まり
         if set(word) <= set(PUNCTUATION_CHARS):
             segments.append([])
         else:
@@ -161,7 +161,7 @@ def _split_segments(words: list[str]) -> list[list[str]]:
 
 
 def _command_segments(command: str) -> list[list[str]] | None:
-    """コマンドを区切ったコマンドごとの語にする。分けられなければ None を返す。"""
+    """コマンドを区切ったコマンドごとの単語にする。分けられなければ None を返却する。"""
     words = _split_words(command)
     if words is None:
         return None
@@ -175,7 +175,7 @@ def _resolve(argument: str, base: str) -> str:
 
 
 def _resolve_folder(argument: str, base: str) -> str | None:
-    """フォルダの引数を絶対パスにする。glob の文字を含むときは、当たったフォルダが 1 つのときだけ返す。"""
+    """フォルダの引数を絶対パスにする。glob の文字を含むときは、該当したフォルダが 1 つのときだけ返却する。"""
     paths = _expand_word(argument, base)
     if GLOB_CHARS.isdisjoint(argument):
         return paths[0]
@@ -184,21 +184,21 @@ def _resolve_folder(argument: str, base: str) -> str | None:
 
 
 def _moved_base(segment: list[str], base: str) -> str:
-    """`cd {フォルダ}` の区切りで動かした後の基準を返す。"""
+    """`cd {フォルダ}` の区切りで動かした後の基準を返却する。"""
     if len(segment) > 1 and not segment[1].startswith(OPTION_PREFIX):
         return _resolve_folder(segment[1], base) or base
     return base
 
 
 def _start_loop(segment: list[str]) -> Loop:
-    """ループの始まりの区切りから、`for` の変数と語の並びを取り出す（取り出せなければ変数なし）。"""
+    """ループの始まりの区切りから、`for` の変数と単語の並びを取り出す（取り出せなければ変数なし）。"""
     if segment[0] == FOR_COMMAND and segment[2:3] == [FOR_IN]:
         return segment[1], segment[3:]
     return "", []
 
 
 def _loop_words(argument: str, loops: list[Loop]) -> list[str]:
-    """引数が `for` の変数なら語の並びを、そうでなければ引数そのものを返す。"""
+    """引数が `for` の変数なら単語の並びを、そうでなければ引数そのものを返却する。"""
     for variable, words in reversed(loops):
         if variable and argument in (f"${variable}", f"${{{variable}}}"):
             return words
@@ -206,7 +206,7 @@ def _loop_words(argument: str, loops: list[Loop]) -> list[str]:
 
 
 def _expand_word(word: str, base: str) -> list[str]:
-    """語を基準から解いた絶対パスにする。glob の文字を含む語は展開して名前の順に並べる。"""
+    """単語を基準から解いた絶対パスにする。glob の文字を含む単語は展開して名前の順に並べる。"""
     if GLOB_CHARS.isdisjoint(word):
         return [_resolve(word, base)]
     matches = sorted(glob.glob(os.path.expanduser(word), root_dir=base))
@@ -214,7 +214,7 @@ def _expand_word(word: str, base: str) -> list[str]:
 
 
 def _argument_paths(segment: list[str], base: str, loops: list[Loop]) -> list[str]:
-    """読むコマンドの引数を、`for` の語の並びと glob を展開した絶対パスにする。"""
+    """読むコマンドの引数を、`for` の単語の並びと glob を展開した絶対パスにする。"""
     paths: list[str] = []
     for argument in segment[1:]:
         for word in _loop_words(argument, loops):
@@ -225,7 +225,7 @@ def _argument_paths(segment: list[str], base: str, loops: list[Loop]) -> list[st
 
 
 def extract_read_paths(command: str, cwd: Path, commands: frozenset[str]) -> list[str]:
-    """コマンドの文字列から、指定のコマンドが読む実在するファイルの絶対パスを返す。"""
+    """コマンドの文字列から、指定のコマンドが読む実在するファイルの絶対パスを返却する。"""
     segments = _command_segments(command)
     if segments is None:
         return []
@@ -233,13 +233,13 @@ def extract_read_paths(command: str, cwd: Path, commands: frozenset[str]) -> lis
     loops: list[Loop] = []
     found: list[str] = []
     for segment in segments:
-        # `do` の残りを 1 つのコマンドとして見る
+        # `do` の残りを 1 つのコマンドとして確認する
         if segment[0] == DO_COMMAND:
             segment = segment[1:]
             if not segment:
                 continue
         head = segment[0]
-        # ループの始まりは変数と語の並びを積み、終わりで降ろす
+        # ループの始まりは変数と単語の並びを追加し、終わりで降ろす
         if head == FOR_COMMAND or head in LOOP_COMMANDS:
             loops.append(_start_loop(segment))
             continue
@@ -261,7 +261,7 @@ def extract_read_paths(command: str, cwd: Path, commands: frozenset[str]) -> lis
 
 
 def search_output_base(command: str, cwd: Path) -> Path | None:
-    """コマンドが検索のコマンドなら、その出力の相対パスを解くフォルダを返す（検索でなければ None）。"""
+    """コマンドが検索のコマンドなら、その出力の相対パスを解くフォルダを返却する（検索でなければ None）。"""
     segments = _command_segments(command)
     if segments is None:
         return None
@@ -272,7 +272,7 @@ def search_output_base(command: str, cwd: Path) -> Path | None:
         if name == CD_COMMAND:
             base = _moved_base(segment, base)
             continue
-        # cd を除いた最初のコマンドだけを見る（名前の部分一致にしない）
+        # cd を除いた最初のコマンドだけを確認する（名前の部分一致にしない）
         if name not in SEARCH_COMMANDS:
             return None
         # ls は、`-` で始まらない引数が実在するフォルダ 1 つだけなら、そのフォルダの名前が出力される
@@ -289,11 +289,11 @@ def search_output_base(command: str, cwd: Path) -> Path | None:
 
 
 def _result_path(line: str, base: Path) -> str | None:
-    """結果の 1 行から実在するファイルの絶対パスを拾う（拾えなければ None）。"""
+    """結果の 1 行から実在するファイルの絶対パスを取得する（取得できなければ None）。"""
     stripped = line.strip()
     if not stripped:
         return None
-    # 行全体がファイルを指せばそのパス（名前に `:` を含むファイルも拾う）
+    # 行全体がファイルを指せばそのパス（名前に `:` を含むファイルも取得する）
     whole = _resolve(stripped, str(base))
     if os.path.isfile(whole):
         return whole
@@ -309,8 +309,8 @@ def _result_path(line: str, base: Path) -> str | None:
 def extract_result_paths(
     lines: Iterable[str], base: Path, *, limit: int = SEARCH_PATH_LIMIT
 ) -> ResultPaths:
-    """検索の結果の行から実在するファイルの絶対パスを拾い、上限までを照合するパスにする。"""
+    """検索の結果の行から実在するファイルの絶対パスを取得し、上限までを照合するパスにする。"""
     found = [_result_path(line, base) for line in lines]
-    # 拾えなかった行を除き、重なりを落として出た順に並べる
+    # 取得できなかった行を除き、重なりを落として出た順に並べる
     unique = list(dict.fromkeys(path for path in found if path is not None))
     return ResultPaths(paths=tuple(unique[:limit]), unchecked=max(len(unique) - limit, 0))

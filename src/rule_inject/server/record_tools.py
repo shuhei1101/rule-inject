@@ -47,7 +47,7 @@ UPDATED_AT_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 def _record_settings(env: Mapping[str, str]) -> Settings:
-    """`CLAUDE_PROJECT_DIR` 無しで、フックと同じ規則で設定を読む。呼び出しのたびに読み直す。"""
+    """`CLAUDE_PROJECT_DIR` 無しで、フックと同じ規則で設定を読む。呼び出しのたびに再読込する。"""
     try:
         return load_settings({key: value for key, value in env.items() if key != PROJECT_DIR_ENV})
     except SettingsReadError as exc:
@@ -55,7 +55,7 @@ def _record_settings(env: Mapping[str, str]) -> Settings:
 
 
 def _check_session_id(session_id: str) -> None:
-    """記録ファイル名に使えない形式の `session_id` を ToolError にする（ファイルのパスには使わない）。"""
+    """記録ファイル名に使用できない形式の `session_id` を ToolError にする（ファイルのパスには使用しない）。"""
     if not is_valid_session_id(session_id):
         raise ToolError(
             f"session_id の形式が誤っています（英数字・`_`・`-` の 1〜128 字）: {session_id}"
@@ -89,7 +89,7 @@ def get_read_records(
     format: ResponseFormat = "markdown",
     env: Mapping[str, str],
 ) -> CallToolResult:
-    """セッションの既読のルールごとに、今の本文が既読にした時点と同じかと、読んだ方法を返す。セッションを省くと、既読の記録のあるセッションの一覧を返す。"""
+    """セッションの既読のルールごとに、今の本文が既読にした時点と同じかと、読んだ方法を返却する。セッションを省くと、既読の記録のあるセッションの一覧を返却する。"""
     if session_id is not None:
         _check_session_id(session_id)
     settings = _record_settings(env)
@@ -144,7 +144,7 @@ def get_read_records(
 
 
 def delete_read_records(*, session_id: str, env: Mapping[str, str]) -> CallToolResult:
-    """セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返す。既読の履歴は削除しない。"""
+    """セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返却する。既読の履歴は削除しない。"""
     _check_session_id(session_id)
     settings = _record_settings(env)
     try:

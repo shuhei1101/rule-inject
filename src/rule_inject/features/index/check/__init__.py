@@ -1,4 +1,4 @@
-"""索引のチェック（フックと同じ読み取り・JSON Schema・ルールの場所の実在・`paths` の当たらないエントリ・使われていないタグのパターン）。サーバーの依存を使うため、フックからは読み込まない。"""
+"""索引のチェック（フックと同じ読み取り・JSON Schema・ルールの場所の実在・`paths` の該当しないエントリ・使用されていないタグのパターン）。サーバーの依存を使用するため、フックからは読み込まない。"""
 
 from rule_inject.features.index.check.scan import scan_unmatched
 from rule_inject.features.index.check.service import (

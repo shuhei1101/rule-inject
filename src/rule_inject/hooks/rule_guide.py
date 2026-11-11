@@ -1,4 +1,4 @@
-"""ルール案内（PreToolUse）。操作の対象に当たる未読のルールを案内する。"""
+"""ルール案内（PreToolUse）。操作の対象に該当する未読のルールを案内する。"""
 
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ def _target_paths(payload: Mapping[str, Any], tool_name: str) -> list[str]:
 
 
 def _match(payload: Mapping[str, Any], entries: Sequence[IndexEntry]) -> list[MatchedRule]:
-    """操作の対象のパスかツール名に当たるルールを、ルールごとに 1 件へまとめて返す。"""
+    """操作の対象のパスかツール名に該当するルールを、ルールごとに 1 件へまとめて返却する。"""
     tool_name = payload["tool_name"]
     if tool_name.startswith(MCP_TOOL_PREFIX):
         return match_tool(entries, tool_name, payload["tool_input"])
@@ -86,7 +86,7 @@ def _log_record_failure(
     session_id: str,
     failure: RecordReadError | RecordWriteError,
 ) -> None:
-    """記録の読み書きの失敗をログへ書く（操作は止めない）。"""
+    """記録の読み込み・書き込みの失敗をログへ書き込む（操作は止めない）。"""
     write_log(
         log_folder,
         component=Component.RULE_GUIDE,
@@ -98,11 +98,11 @@ def _log_record_failure(
 
 
 def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
-    """操作の対象に当たる未読のルールを案内する PreToolUse の出力を作る。"""
+    """操作の対象に該当する未読のルールを案内する PreToolUse の出力を作る。"""
     raw_session_id = payload.get("session_id")
-    # 形式が外れた session_id は記録の読み書きに使わず、None として扱う
+    # 形式に合わない session_id は記録の読み込み・書き込みに使用せず、None として扱う
     session_id = raw_session_id if is_valid_session_id(raw_session_id) else None
-    # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに止めない知らせだけを返す
+    # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに止めない通知だけを返却する
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
@@ -112,7 +112,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     log_folder = settings.log_dir
     log_path = log_file_path(log_folder, datetime.now(UTC).date())
     notices: list[str] = []
-    # 読めない索引と読み飛ばしたエントリは、ログと知らせの文に回して、読めたエントリでの案内は続ける
+    # 読めない索引と読み飛ばしたエントリは、ログと通知の文に回して、読めたエントリでの案内は続ける
     loaded = load_indexes(settings.indexes, env)
     for failure in loaded.failures:
         write_log(
@@ -126,7 +126,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if loaded.failures:
         notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
     matched = _match(payload, loaded.entries)
-    # そのセッションで読んだルールを除く（読んだ後に本文が変わったルールは未読のまま残す）。記録が読めなければ止めずに理由を知らせる
+    # そのセッションで読んだルールを除く（読んだ後に本文が変わったルールは未読のまま残す）。記録が読めなければ止めずに理由を通知する
     already_read: frozenset[str] = frozenset()
     record_failed = False
     if session_id is not None and matched:
@@ -157,22 +157,22 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if not unread and not notices:
         return None
     guidance = _build(unread, notices)
-    # 止めない案内に載せた場所だけを案内済みにする。書けなければ案内は出して理由を知らせる
+    # 止めない案内に記載した場所だけを案内済みにする。記載できなければ案内は出して理由を通知する
     if session_id is not None and track_guided and guidance is not None and guidance.shown:
         try:
             append_guided(folder, session_id, guidance.shown)
         except RecordWriteError as exc:
             _log_record_failure(log_folder, LogOperation.WRITE_RECORD, session_id, exc)
             notices.append(
-                build_failure_notice("案内済みの記録に書けませんでした。", [exc], log_path)
+                build_failure_notice("案内済みの記録に書き込めませんでした。", [exc], log_path)
             )
-            # 知らせの分を引いた字数に、案内を収め直す
+            # 通知の分を除いた字数に、案内を収め修正する
             guidance = _build(unread, notices)
     return _output(guidance, unread, notices)
 
 
 def _build(unread: Sequence[MatchedRule], notices: Sequence[str]) -> Guidance | None:
-    """知らせの分を引いた字数に収めた案内文を組み立てる（未読のルールが無ければ None）。"""
+    """通知の分を除いた字数に収めた案内文を組み立てる（未読のルールが無ければ None）。"""
     if not unread:
         return None
     budget = GUIDANCE_LIMIT - (
@@ -184,7 +184,7 @@ def _build(unread: Sequence[MatchedRule], notices: Sequence[str]) -> Guidance | 
 def _output(
     guidance: Guidance | None, unread: Sequence[MatchedRule], notices: Sequence[str]
 ) -> dict[str, Any]:
-    """案内と知らせから、止める出力か止めない出力を作る。"""
+    """案内と通知から、止める出力か止めない出力を作る。"""
     text = NOTICE_SEPARATOR.join(
         part for part in (guidance.text if guidance else "", *notices) if part
     )
