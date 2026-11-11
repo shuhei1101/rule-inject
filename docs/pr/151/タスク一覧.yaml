@@ -75,8 +75,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T10:18:49.810173+00:00'
   - process: 実装
-    status: todo
+    status: done
     note: src・hooks の docstring・コメント・ツールの説明文・エラーと案内の文言の単語を置き換える
+    updated_by: planner
+    updated_at: '2026-11-11T10:28:37.424850+00:00'
   - process: 結合テスト作成
     status: todo
     note: tests/integration・tests/nfr の docstring と、置き換える文言を照合する期待値を修正する
