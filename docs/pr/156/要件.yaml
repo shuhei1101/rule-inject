@@ -1,0 +1,39 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: run_only
+    detail: pyproject.toml の説明と import-linter の契約の名前を変えるため、利用者の入れ方でプラグインを入れて端末をセットアップできることを確認する
+    depends_on: []
+docs:
+  - page: README.md
+    new: false
+    change: 3 行目の「当たる」を「該当する」へ置き換える
+    status: todo
+  - page: CLAUDE.md
+    new: false
+    change: 3 行目の「当たる」を「該当する」、8 行目の行頭の「使い方は」を「使用方法は」、10 行目の「引いて」を「検索して」へ置き換える
+    status: todo
+  - page: files.yaml
+    new: false
+    change: CLAUDE.md の行の description の「索引の引き方」を「索引の検索方法」へ置き換える
+    status: todo
+  - page: dev-docs.yaml
+    new: false
+    change: 5 行目の「当たる」を「該当する」、7 行目の「正本」を「原本」、9 行目の「使う」を「使用する」へ置き換える
+    status: todo
+  - page: pyproject.toml
+    new: false
+    change: 4 行目の「当たる」を「該当する」、78 行目の「外し」を「除外し」、85 行目の契約の名前の「使い」「使う」を「使用し」「使用する」へ置き換える
+    status: todo
+  - page: rules.yaml
+    new: false
+    change: 2 行目の「当てる」を「適用する」、3 行目の「載せない」を「記載しない」へ置き換える
+    status: todo
+  - page: settings.sample.yaml
+    new: false
+    change: 2・11・13 行目の「置く」を「配置する」、19 行目の「使われているタグを引く」を「使用されているタグを取得する」、24・26 行目の「当たる」「当たった」を「該当する」「該当した」へ置き換える
+    status: todo
+scope_out:
+  - item: CLAUDE.md 8 行目のリンクの表示名とリンク先 docs/guide/使い方.md、dev-docs.yaml 129 行目の 使い方.md
+    reason: '公開ドキュメントのページ名を置き換えるかは #153 で決める'
+    plan: '#153'
