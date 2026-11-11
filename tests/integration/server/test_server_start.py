@@ -83,14 +83,14 @@ def test_error_when_port_in_use(
     # 検証
     assert server.process.returncode != 0
     assert str(port) in server.stderr_text()
-    assert "別のプロセスが使っている" in server.stderr_text()
+    assert "別のプロセスが使用している" in server.stderr_text()
 
 
 def test_error_when_settings_unreadable(
     start_server: Callable[..., Any],
     config_path: Path,
 ) -> None:
-    """設定ファイルが読めないとき、待ち受ける前に理由を書いて終わる（異常系）。"""
+    """設定ファイルが読めないとき、待ち受ける前に理由を記載して終わる（異常系）。"""
     # 実行
     server = start_server(lambda: "global:\n  foo: 1\n", wait_ready=False)
     server.process.wait(timeout=EXIT_TIMEOUT_SEC)

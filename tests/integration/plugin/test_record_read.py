@@ -22,7 +22,7 @@ def rule_index(
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
 ) -> tuple[Path, Path]:
-    """ルールのファイル 1 つを載せた索引と、そのルールのパスを返す。"""
+    """ルールのファイル 1 つを記載した索引と、そのルールのパスを返却する。"""
     rule = rule_file("python.md")
     index = make_index(index_text({"rule": str(rule), "paths": ["**/*.py"]}))
     return index, rule
@@ -121,7 +121,7 @@ def test_error_when_record_unwritable(
     log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """記録のフォルダに書けないとき、既読にできなかった理由を載せる（異常系）。"""
+    """記録のフォルダに書き込めないとき、既読にできなかった理由を記載する（異常系）。"""
     # 準備
     index, rule = rule_index
     state_dir.mkdir()
@@ -155,7 +155,7 @@ def test_normal_when_read_by_mcp_tool(
     read_lines: Callable[[Path], list[str]],
     read_history: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """`read_by` に当たった MCP のツールの呼び出しのエントリのルールの場所を記録する（正常系）。"""
+    """`read_by` に該当した MCP のツールの呼び出しのエントリのルールの場所を記録する（正常系）。"""
     # 準備
     rule = rule_file("python.md")
     index = make_index(
@@ -194,7 +194,7 @@ def test_normal_when_read_by_not_matched(
     state_dir: Path,
     session_id: str,
 ) -> None:
-    """`read_by` の引数に当たらない呼び出しと、案内用の `tools` だけに当たる呼び出しでは記録しない（正常系）。"""
+    """`read_by` の引数に該当しない呼び出しと、案内用の `tools` だけに該当する呼び出しでは記録しない（正常系）。"""
     # 準備
     read_by_rule = rule_file("read_by.md")
     guide_rule = rule_file("guide.md")
@@ -227,7 +227,7 @@ def test_normal_when_rule_is_url(
     log_folder: Path,
     session_id: str,
 ) -> None:
-    """`read_by` に当たっても、`rule` が URL のエントリは記録しない（正常系）。"""
+    """`read_by` に該当しても、`rule` が URL のエントリは記録しない（正常系）。"""
     # 準備
     index = make_index(
         index_text(
@@ -260,7 +260,7 @@ def test_error_when_history_unwritable(
     read_lines: Callable[[Path], list[str]],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """既読の履歴に書けないとき、既読にはしたうえで書けなかった理由を載せる（異常系）。"""
+    """既読の履歴に書き込めないとき、既読にはしたうえで書き込めなかった理由を記載する（異常系）。"""
     # 準備
     index, rule = rule_index
     (state_dir / f"{session_id}.history.jsonl").mkdir(parents=True)
@@ -328,7 +328,7 @@ def test_normal_when_read_by_mcp_document(
             {"rule": str(summary_rule), "paths": ["**/*.md"]},
         )
     )
-    # 属性の `"` が JSON の中で `\"` になった形式で渡す
+    # 属性の `"` が JSON の中で `\"` になった形式で引き渡す
     markdown = (
         f'<document path="{full_rule}" scope="full"># 規約</document>\n'
         f'<document path="{summary_rule}" scope="summary">説明</document>'
@@ -391,7 +391,7 @@ def test_normal_when_mcp_document_unclosed(
     index = make_index(
         index_text({"rule": str(rule), "read_by": [{"tools": ["mcp__docs__get_doc"]}]})
     )
-    # ツール名を `read_by` に当てず、どちらの照合でも記録されないことを確かめる
+    # ツール名を `read_by` に照合せず、どちらの照合でも記録されないことを確認する
     payload = hook_payload(
         "PostToolUse",
         tool_name="mcp__docs__search_docs",
@@ -417,7 +417,7 @@ def test_error_when_settings_unreadable(
     session_id: str,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないとき、何も記録せずに理由を載せる（異常系）。"""
+    """設定ファイルが読めないとき、何も記録せずに理由を記載する（異常系）。"""
     # 準備
     rule = rule_file("python.md")
     make_index(index_text({"rule": str(rule), "paths": ["**/*.py"]}), "rules.yaml")
@@ -479,7 +479,7 @@ def test_normal_when_read_by_entry_disabled(
     state_dir: Path,
     session_id: str,
 ) -> None:
-    """`enabled: false` のエントリの `read_by` に当たる MCP のツールの呼び出しでは記録しない（正常系）。"""
+    """`enabled: false` のエントリの `read_by` に該当する MCP のツールの呼び出しでは記録しない（正常系）。"""
     # 準備
     rule = rule_file("python.md")
     index = make_index(
@@ -543,7 +543,7 @@ def read_tool_index(
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
 ) -> tuple[Path, Path]:
-    """`read_tool`（`filter` と `sections`）を持ち `read_by` の無いエントリの索引と、そのルールのパスを返す。"""
+    """`read_tool`（`filter` と `sections`）を持ち `read_by` の無いエントリの索引と、そのルールのパスを返却する。"""
     rule = rule_file("python.md")
     index = make_index(
         index_text(

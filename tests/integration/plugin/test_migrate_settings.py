@@ -27,7 +27,7 @@ def run_migrate(tmp_path: Path) -> Callable[..., subprocess.CompletedProcess[str
     """`python -m rule_inject.migrate` を、既定のパスを一時フォルダへ向けて子プロセスで実行する関数。"""
 
     def _run(*args: str) -> subprocess.CompletedProcess[str]:
-        """引数を渡して実行し、結果を返す。"""
+        """引数を引き渡して実行し、結果を返却する。"""
         env = {
             name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")
         }

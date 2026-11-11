@@ -56,7 +56,7 @@ def test_error_when_record_undeletable(
     log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """記録ファイルを削除できないとき、圧縮は止めずにログと標準エラー出力に書く（異常系）。"""
+    """記録ファイルを削除できないとき、圧縮は止めずにログと標準エラー出力に書き込む（異常系）。"""
     # 準備
     record_file = write_record(["/r/a.md"])
     unwritable(state_dir, 0o555)
@@ -79,7 +79,7 @@ def test_error_when_settings_unreadable(
     session_id: str,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないとき、何も削除せずにログに書く（異常系）。"""
+    """設定ファイルが読めないとき、何も削除せずにログに書き込む（異常系）。"""
     # 準備
     record_file = default_state_folder / f"{session_id}.txt"
     record_file.parent.mkdir(parents=True)

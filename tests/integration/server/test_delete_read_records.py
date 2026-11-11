@@ -19,7 +19,7 @@ def test_normal(
     write_guided: Callable[..., Path],
     write_history: Callable[..., Path],
 ) -> None:
-    """既読の記録と案内済みの記録を削除し、既読だったルールの場所を返す（正常系）。"""
+    """既読の記録と案内済みの記録を削除し、既読だったルールの場所を返却する（正常系）。"""
     # 準備
     write_record([f"/r/a.md\t{HASH}", f"/r/b.md\t{HASH}"])
     write_guided(["/r/a.md"])
@@ -36,7 +36,7 @@ def test_normal(
 
 
 def test_normal_when_no_record(session_id: str, record_server: Any) -> None:
-    """既読の記録の無いセッションは、何も削除せず空の一覧を返す（正常系）。"""
+    """既読の記録の無いセッションは、何も削除せず空の一覧を返却する（正常系）。"""
     # 実行
     result = record_server.call("delete_read_records", session_id=session_id)
     # 検証
@@ -52,7 +52,7 @@ def test_error_when_session_id_invalid(
     write_record: Callable[..., Path],
     text_of: Callable[[CallToolResult], str],
 ) -> None:
-    """記録ファイル名に使えない `session_id` をエラーにし、何も削除しない（異常系）。"""
+    """記録ファイル名に使用できない `session_id` をエラーにし、何も削除しない（異常系）。"""
     # 準備
     write_record([f"/r/a.md\t{HASH}"])
     # 実行

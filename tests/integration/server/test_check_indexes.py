@@ -9,7 +9,7 @@ from typing import Any
 
 from mcp.types import CallToolResult
 
-# 位置 0 は `src/app.py` に当たり、位置 1・2・3 はどのファイルにも当たらず、位置 4 は無効
+# 位置 0 は `src/app.py` に該当し、位置 1・2・3 はどのファイルにも該当せず、位置 4 は無効
 FIVE_ENTRIES = (
     "rules:\n"
     "  - rule: {rule}\n"
@@ -62,7 +62,7 @@ def test_normal_when_schema_violated(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """フックは読めるが Schema に違反するエントリの場所と理由を返す（正常系）。"""
+    """フックは読めるが Schema に違反するエントリの場所と理由を返却する（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(f"rules:\n  - rule: {rule}\n    paths: []\n  - rule: {rule}\n")
@@ -81,7 +81,7 @@ def test_normal_when_unreadable_by_hook(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """フックが読めない索引は理由だけを返し、Schema には照らさない（正常系）。"""
+    """フックが読めない索引は理由だけを返却し、Schema には照らさない（正常系）。"""
     # 準備
     index = make_index("rules:\n  - rule: /r/a.md\n    paths: [a,\n      b]\n")
     server = running_server(index)
@@ -100,7 +100,7 @@ def test_normal_when_rule_file_missing(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """ルールの場所にファイルが無いエントリを返す（正常系）。"""
+    """ルールの場所にファイルが無いエントリを返却する（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(f"rules:\n  - rule: {rule}\n  - rule: {tmp_path}/rules/missing.md\n")
@@ -157,7 +157,7 @@ def test_normal_when_paths_unmatched(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """プロジェクトの索引の `paths` の当たらないエントリを返し、ユーザー全体の索引の分は返さない（正常系）。"""
+    """プロジェクトの索引の `paths` の該当しないエントリを返却し、ユーザー全体の索引の分は返却しない（正常系）。"""
     # 準備
     rule = rule_file("project.md")
     global_rule = rule_file("global.md")
@@ -167,7 +167,7 @@ def test_normal_when_paths_unmatched(
         f'rules:\n  - rule: {global_rule}\n    paths: ["**/*.java"]\n', "global.yaml"
     )
     server = running_server(project_index, global_indexes=[global_index])
-    # 並びは、ユーザー全体の索引の 1 件の後にプロジェクトの索引の効いているエントリ（位置 0〜3）
+    # 並びは、ユーザー全体の索引の 1 件の後にプロジェクトの索引の有効なエントリ（位置 0〜3）
     revs = list_revs(server)
     # 実行
     result = server.call("check_indexes", project_dir=str(project_dir), format="json")
@@ -193,7 +193,7 @@ def test_normal_when_global_included(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """`include_global` が `true` のとき、ユーザー全体の索引の `paths` の当たらないエントリも返し、`problem_count` には数えない（正常系）。"""
+    """`include_global` が `true` のとき、ユーザー全体の索引の `paths` の該当しないエントリも返却し、`problem_count` には数えない（正常系）。"""
     # 準備
     rule = rule_file("project.md")
     global_rule = rule_file("global.md")
@@ -226,7 +226,7 @@ def test_normal_when_scan_timed_out(
     make_project_files: Callable[..., None],
     running_limited_server: Callable[..., Any],
 ) -> None:
-    """上限を超えたら辿るのをやめ、`paths` の当たらないエントリを返さずに、終えられなかったことと続きの位置を返す（正常系）。"""
+    """上限を超えたら辿るのをやめ、`paths` の該当しないエントリを返却せずに、終えられなかったことと続きの位置を返却する（正常系）。"""
     # 準備
     rule = rule_file("project.md")
     make_project_files("docs/readme.md", "src/app.py")
@@ -255,7 +255,7 @@ def test_normal_when_cursor_passed(
     make_project_files: Callable[..., None],
     running_limited_server: Callable[..., Any],
 ) -> None:
-    """前の呼び出しの `next_cursor` を渡すと続きから辿り、最後まで辿れたら 1 回で辿ったときと同じ `paths` の当たらないエントリを返す（正常系）。"""
+    """前の呼び出しの `next_cursor` を引き渡すと続きから辿り、最後まで辿れたら 1 回で辿ったときと同じ `paths` の該当しないエントリを返却する（正常系）。"""
     # 準備
     rule = rule_file("project.md")
     make_project_files("docs/readme.md", "src/app.py")
@@ -285,7 +285,7 @@ def test_normal_when_index_changed_since_cursor(
     make_project_files: Callable[..., None],
     running_limited_server: Callable[..., Any],
 ) -> None:
-    """`cursor` を返した後に索引のエントリが変わったら、`cursor` を使わず最初のファイルから辿り直す（正常系）。"""
+    """`cursor` を返却した後に索引のエントリが変わったら、`cursor` を使用せず最初のファイルから再度辿る（正常系）。"""
     # 準備
     rule = rule_file("project.md")
     make_project_files("docs/readme.md", "src/app.py")
@@ -317,7 +317,7 @@ def test_error_when_cursor_invalid(
     running_limited_server: Callable[..., Any],
     text_of: Callable[[CallToolResult], str],
 ) -> None:
-    """読めない `cursor` と、別の `project_dir` で返した `cursor` をエラーにする（異常系）。"""
+    """読めない `cursor` と、別の `project_dir` で返却した `cursor` をエラーにする（異常系）。"""
     # 準備
     rule = rule_file("project.md")
     make_project_files("docs/readme.md", "src/app.py")
@@ -349,7 +349,7 @@ def test_normal_when_tag_pattern_unused(
     start_fake_dev_docs: Callable[..., Any],
     running_server: Callable[..., Any],
 ) -> None:
-    """dev-docs の使われているタグに当たらないタグのパターンを、全ての索引について返し、`problem_count` には数えない（正常系）。"""
+    """dev-docs の使用中のタグに該当しないタグのパターンを、全ての索引について返却し、`problem_count` には数えない（正常系）。"""
     # 準備
     fake = start_fake_dev_docs(
         {
@@ -415,7 +415,7 @@ def test_normal_when_dev_docs_unreachable(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """dev-docs に接続できないときは、タグの確かめだけを飛ばして理由を返し、ツールのエラーにしない（正常系）。"""
+    """dev-docs に接続できないときは、タグの確認だけを飛ばして理由を返却し、ツールのエラーにしない（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(
@@ -451,7 +451,7 @@ def test_normal_when_dev_docs_returns_nothing(
     start_fake_dev_docs: Callable[..., Any],
     running_server: Callable[..., Any],
 ) -> None:
-    """dev-docs が読める文書を 0 件と返したときは、タグの確かめを飛ばして理由を返す（正常系）。"""
+    """dev-docs が読める文書を 0 件と返却したときは、タグの確認を飛ばして理由を返却する（正常系）。"""
     # 準備
     fake = start_fake_dev_docs({"total_count": 0, "returned": 0})
     rule = make_index("# a\n", "rules/a.md")
@@ -472,7 +472,7 @@ def test_normal_when_read_tool_name_missing(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """`read_tool` が `tool` を持たないエントリを、フックが読めない索引として理由を返す（正常系）。"""
+    """`read_tool` が `tool` を持たないエントリを、フックが読めない索引として理由を返却する（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(
@@ -492,7 +492,7 @@ def test_normal_when_read_tool_violates_schema(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """フックは読めるが、`read_tool.args` が空のオブジェクトのエントリの Schema の違反を返す（正常系）。"""
+    """フックは読めるが、`read_tool.args` が空のオブジェクトのエントリの Schema の違反を返却する（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(

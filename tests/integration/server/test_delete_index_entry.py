@@ -60,7 +60,7 @@ def test_normal_when_dry_run(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """`dry_run` で差分だけを返す（正常系）。"""
+    """`dry_run` で差分だけを返却する（正常系）。"""
     # 準備
     a = make_index("# a\n", "rules/a.md")
     b = make_index("# b\n", "rules/b.md")

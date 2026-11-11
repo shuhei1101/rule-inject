@@ -8,7 +8,7 @@ from typing import Any
 
 
 def test_normal(shared_server: Any, tmp_path: Path) -> None:
-    """設定ファイルを読み直し、読んだ値を返す（正常系）。"""
+    """設定ファイルを再読込、読んだ値を返却する（正常系）。"""
     # 準備
     index = tmp_path / "added.yaml"
     shared_server.config_path.write_text(
@@ -30,7 +30,7 @@ def test_normal(shared_server: Any, tmp_path: Path) -> None:
 def test_normal_when_project_given(
     running_server: Callable[..., Any], project_dir: Path, tmp_path: Path
 ) -> None:
-    """`project_dir` を受けると、そのプロジェクトで読む索引を返す（正常系）。"""
+    """`project_dir` を受けると、そのプロジェクトで読む索引を返却する（正常系）。"""
     # 準備
     global_index = tmp_path / "global.yaml"
     project_index = tmp_path / "project.yaml"
@@ -46,7 +46,7 @@ def test_error_when_settings_unreadable(
     invalid_config: Callable[[], str],
     text_of: Callable[[Any], str],
 ) -> None:
-    """読めない設定ファイルは場所と理由をエラーで返し、待ち受けは続ける（異常系）。"""
+    """読めない設定ファイルは場所と理由をエラーで返却し、待ち受けは続ける（異常系）。"""
     # 準備
     config = invalid_config()
     # 実行

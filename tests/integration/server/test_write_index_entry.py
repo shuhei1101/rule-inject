@@ -110,7 +110,7 @@ def test_normal_when_entry_disabled(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """`enabled: false` を書き、照合に使われなくする（正常系）。"""
+    """`enabled: false` を記載し、照合に使用されなくする（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(f'rules:\n  - rule: {rule}\n    paths: ["**/*.py"]\n')
@@ -137,7 +137,7 @@ def test_normal_when_dry_run(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """`dry_run` でチェックと差分だけを返す（正常系）。"""
+    """`dry_run` でチェックと差分だけを返却する（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     new_rule = make_index("# new\n", "rules/new.md")
@@ -165,7 +165,7 @@ def test_normal_when_existing_problems_remain(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """他のエントリにもとから問題が残っていても、新しい問題を生まない書き込みは通す（正常系）。"""
+    """他のエントリにもとから問題が残っていても、新しい問題を生まない書き込みは受け付ける（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     second = f"  - rule: {tmp_path}/rules/missing.md\n"
@@ -194,7 +194,7 @@ def test_error_when_arguments_invalid(
     running_server: Callable[..., Any],
     text_of: Callable[[CallToolResult], str],
 ) -> None:
-    """`position` だけを渡し `expected_rev` を渡さない呼び出しをエラーにする（異常系）。"""
+    """`position` だけを引き渡し `expected_rev` を引き渡さない呼び出しをエラーにする（異常系）。"""
     # 準備
     index = make_index("rules: []\n")
     server = running_server(index)
@@ -429,7 +429,7 @@ def test_error_when_layout_not_kept(
     )
     # 検証
     assert result.is_error is True
-    assert "書式を保って書けない" in text_of(result)
+    assert "書式を保って書き込めない" in text_of(result)
     assert "5行目" in text_of(result)
     assert "手で直" in text_of(result)
     assert index.read_bytes() == before
@@ -441,7 +441,7 @@ def test_normal_when_read_tool_written(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """位置で指したエントリに `read_tool` を書き、`read_by` の後ろに並べる（正常系）。"""
+    """位置で指したエントリに `read_tool` を記載し、`read_by` の後ろに並べる（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     before = (

@@ -96,7 +96,7 @@ def test_error_when_record_undeletable(
     log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """記録を削除できず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く（異常系）。"""
+    """記録を削除できず、ログにも書き込めないとき、セッションの開始は止めずに標準エラー出力に書き込む（異常系）。"""
     # 準備
     expired = set_age_days(write_record(["/r/a.md"], "expired-session"), 31)
     unwritable(state_dir, 0o555)
@@ -170,7 +170,7 @@ def test_error_when_log_undeletable(
     log_folder: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """ログを削除できず、ログにも書けないとき、セッションの開始は止めずに標準エラー出力に書く（異常系）。"""
+    """ログを削除できず、ログにも書き込めないとき、セッションの開始は止めずに標準エラー出力に書き込む（異常系）。"""
     # 準備
     expired_log = write_dated_log(datetime.now(UTC).date() - timedelta(days=3))
     unwritable(log_folder, 0o555)
@@ -210,7 +210,7 @@ def test_error_when_settings_unreadable(
     default_log_folder: Path,
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """設定ファイルの保持の値が 1 以上の整数でないとき、既定の値でも掃除せず、ログに書く（異常系）。"""
+    """設定ファイルの保持の値が 1 以上の整数でないとき、既定の値でも掃除せず、ログに書き込む（異常系）。"""
     # 準備
     today = datetime.now(UTC).date()
     default_log_folder.mkdir(parents=True)

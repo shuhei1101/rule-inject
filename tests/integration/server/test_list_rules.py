@@ -12,7 +12,7 @@ from mcp.types import CallToolResult
 
 @pytest.fixture
 def two_indexes(tmp_path: Path, make_index: Callable[..., Path]) -> tuple[Path, Path]:
-    """ユーザーの索引とプロジェクトの索引（どちらも `on` を書かないエントリと `on: [write]` のエントリを 1 つずつ）。"""
+    """ユーザーの索引とプロジェクトの索引（どちらも `on` を記載しないエントリと `on: [write]` のエントリを 1 つずつ）。"""
     user = make_index(
         f"rules:\n  - rule: {tmp_path}/rules/u1.md\n  - rule: {tmp_path}/rules/u2.md\n    on: [write]\n",
         "user/rules.yaml",
@@ -30,7 +30,7 @@ def test_normal(
     two_indexes: tuple[Path, Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """ユーザーの索引とプロジェクトの索引のエントリを、フックが読む順に返す（正常系）。"""
+    """ユーザーの索引とプロジェクトの索引のエントリを、フックが読む順に返却する（正常系）。"""
     # 準備
     user, project = two_indexes
     server = running_server(project, global_indexes=[user])
@@ -59,7 +59,7 @@ def test_normal_when_some_entries_excluded(
     two_indexes: tuple[Path, Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """読めない索引・読み飛ばしたエントリ・無効のエントリを分けて返す（正常系）。"""
+    """読めない索引・読み飛ばしたエントリ・無効のエントリを分けて返却する（正常系）。"""
     # 準備
     user, _ = two_indexes
     project = make_index(
@@ -152,7 +152,7 @@ def test_normal_when_entry_has_read_tool(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """`read_tool` を書いたエントリは索引に書いたままの値を、書かないエントリは None を返す（正常系）。"""
+    """`read_tool` を記載したエントリは索引に書き込んだままの値を、記載しないエントリは None を返却する（正常系）。"""
     # 準備
     arguments = (
         '{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}'

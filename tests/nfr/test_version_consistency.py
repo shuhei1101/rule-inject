@@ -40,7 +40,7 @@ def _read_versions(root: Path) -> dict[str, str]:
 
 
 def _find_manifests_with_version(root: Path) -> list[str]:
-    """plugin.json と marketplace.json の plugins[] のうち、version を持つファイルの名前を返す。"""
+    """plugin.json と marketplace.json の plugins[] のうち、version を持つファイルの名前を返却する。"""
     plugin = json.loads((root / PLUGIN_DIR / PLUGIN_JSON).read_text(encoding="utf-8"))
     marketplace = json.loads((root / PLUGIN_DIR / MARKETPLACE_JSON).read_text(encoding="utf-8"))
     found: list[str] = []
@@ -54,7 +54,7 @@ def _find_manifests_with_version(root: Path) -> list[str]:
 
 
 def _check_version_consistency(root: Path) -> None:
-    """3 つのバージョンの一致とマニフェストに version が無いことを確かめ、外れれば例外を投げる。"""
+    """3 つのバージョンの一致とマニフェストに version が無いことを確認し、合わなければ例外を投げる。"""
     versions = _read_versions(root)
     # version.ini だけ先頭の v を除いて比べる
     comparable = {
@@ -80,12 +80,12 @@ def _write_version_files(
     plugin: str | None = None,
     marketplace: str | None = None,
 ) -> None:
-    """root の下に、バージョンだけを引数で変えたファイルを置く（plugin・marketplace が None なら version を持たせない）。"""
+    """root の下に、バージョンだけを引数で変えたファイルを配置する（plugin・marketplace が None なら version を持たせない）。"""
     (root / VERSION_INI).write_text(f"{version_ini}\n", encoding="utf-8")
     (root / PYPROJECT).write_text(
         f'[project]\nname = "{PACKAGE_NAME}"\nversion = "{pyproject}"\n', encoding="utf-8"
     )
-    # 自分自身より前に別のパッケージを置き、名前で選べることも確かめる
+    # 自分自身より前に別のパッケージを配置し、名前で選べることも確認する
     (root / UV_LOCK).write_text(
         '[[package]]\nname = "mcp"\nversion = "2.2.0"\n\n'
         f'[[package]]\nname = "{PACKAGE_NAME}"\nversion = "{uv_lock}"\n',

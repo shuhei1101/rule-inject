@@ -8,7 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-# 偽の dev-docs が応答を返すまでの秒数（check_indexes を処理中のままにする時間）
+# 偽の dev-docs が応答を返却するまでの秒数（check_indexes を処理中のままにする時間）
 SLOW_DEV_DOCS_SEC = 10
 # 処理中の呼び出しを始めてから、再起動を呼ぶまでの秒数
 CALL_START_SEC = 1
@@ -37,7 +37,7 @@ def _slow_server(
 def _call_in_background(
     server: Any, name: str, **arguments: Any
 ) -> tuple[threading.Thread, list[Any]]:
-    """別の接続でツールを呼ぶスレッドを始め、スレッドと結果を入れるリストを返す。"""
+    """別の接続でツールを呼ぶスレッドを始め、スレッドと結果を入れるリストを返却する。"""
     results: list[Any] = []
     thread = threading.Thread(target=lambda: results.append(server.call(name, **arguments)))
     thread.start()
@@ -49,7 +49,7 @@ def test_normal(
     config_text: Callable[..., str],
     wait_restarted: Callable[..., dict[str, Any]],
 ) -> None:
-    """応答を返し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスで起動し直す（正常系）。"""
+    """応答を返却し、処理中の呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスで再起動する（正常系）。"""
     # 準備
     server = start_server(config_text)
     before = server.call("get_server_status").structured_content
@@ -73,7 +73,7 @@ def test_normal_when_call_in_flight(
     project_dir: Path,
     wait_restarted: Callable[..., dict[str, Any]],
 ) -> None:
-    """処理中の呼び出しの応答を返し終えてから待ち受けを閉じる（正常系）。"""
+    """処理中の呼び出しの応答を返却し終えてから待ち受けを閉じる（正常系）。"""
     # 準備
     server = _slow_server(start_server, start_fake_dev_docs, make_index, config_text, project_dir)
     before = server.call("get_server_status").structured_content
