@@ -1,0 +1,1 @@
+# src・tests・hooks・設計書・docs/guide に残る AI slop の単語を置き換える
