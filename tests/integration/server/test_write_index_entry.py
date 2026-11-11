@@ -397,7 +397,7 @@ def test_error_when_hook_unreadable(
     # 検証
     assert result.is_error is True
     assert "2行目" in text_of(result)
-    assert "手で直" in text_of(result)
+    assert "手で修正" in text_of(result)
     assert index.read_bytes() == before
 
 
@@ -431,7 +431,7 @@ def test_error_when_layout_not_kept(
     assert result.is_error is True
     assert "書式を保って書き込めない" in text_of(result)
     assert "5行目" in text_of(result)
-    assert "手で直" in text_of(result)
+    assert "手で修正" in text_of(result)
     assert index.read_bytes() == before
 
 

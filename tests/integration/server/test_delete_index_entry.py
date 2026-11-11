@@ -304,5 +304,5 @@ def test_error_when_hook_unreadable(
     # 検証
     assert result.is_error is True
     assert line in text_of(result)
-    assert "手で直" in text_of(result)
+    assert "手で修正" in text_of(result)
     assert index.read_bytes() == before
