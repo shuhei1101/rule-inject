@@ -82,6 +82,19 @@ def test_build_server_instructions(clone_dir: Path) -> None:
     assert "Write" in SERVER_INSTRUCTIONS
     assert "空の内容" in SERVER_INSTRUCTIONS
     assert "Edit" in SERVER_INSTRUCTIONS
+    assert "check_indexes" in SERVER_INSTRUCTIONS
+    assert "delete_index_entry" in SERVER_INSTRUCTIONS
+    assert "delete_read_records" in SERVER_INSTRUCTIONS
+    assert "get_read_records" in SERVER_INSTRUCTIONS
+    assert "get_server_status" in SERVER_INSTRUCTIONS
+    assert "list_rules" in SERVER_INSTRUCTIONS
+    assert "reload_settings" in SERVER_INSTRUCTIONS
+    assert "restart_server" in SERVER_INSTRUCTIONS
+    assert "search_rules" in SERVER_INSTRUCTIONS
+    assert "update_server" in SERVER_INSTRUCTIONS
+    assert "write_index_entry" in SERVER_INSTRUCTIONS
+    assert "Read" in SERVER_INSTRUCTIONS
+    assert "grep" in SERVER_INSTRUCTIONS
 
 
 def test_build_server_when_restarting(clone_dir: Path) -> None:
