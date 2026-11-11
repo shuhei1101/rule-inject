@@ -1,0 +1,1 @@
+# MCP サーバーの instructions に rule-inject の MCP のツールの使い分けを追加する
