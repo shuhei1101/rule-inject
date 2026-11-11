@@ -54,3 +54,6 @@ scope_out:
   - item: schemas/ のうち AI Monitor から配布されたコピーの Schema の単語
     reason: 配布物は AI Monitor 側が原本で、このリポジトリは追従で取り込む
     plan: none
+  - item: リポジトリ直下のファイル（README.md・CLAUDE.md・dev-docs.yaml・pyproject.toml・rules.yaml・settings.sample.yaml）に残る AI slop の単語
+    reason: '#152 の要望の分類（スキーマ・スキル・プラグインの定義・目次）に含まれず、要件の追加にはユーザーの確認が要るため別の Issue に切り出した'
+    plan: '#155'
