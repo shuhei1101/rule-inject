@@ -8,4 +8,6 @@ docs:
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
     change: instructions が届けるものを、新しいファイルの作り方の決まりと MCP のツールの使い分けにする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T01:26:11.790015+00:00'
