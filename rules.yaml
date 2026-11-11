@@ -1,6 +1,6 @@
 # rule-inject のルール索引（このリポジトリで作業するときに読む）
-# rule: 索引ファイルからの相対パスか !{環境変数} で始まるパス / paths: 当てるファイルの glob（クォート必須）
-# 設計書の Schema は AI Monitor の rules.global.yaml が案内する。knowledge の rules.yaml にある規約は載せない
+# rule: 索引ファイルからの相対パスか !{環境変数} で始まるパス / paths: 適用するファイルの glob（クォート必須）
+# 設計書の Schema は AI Monitor の rules.global.yaml が案内する。knowledge の rules.yaml にある規約は記載しない
 default_on: ["write"]
 rules:
   - rule: docs/guide/索引の書式.md

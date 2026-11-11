@@ -1,5 +1,5 @@
 # rule-inject の設定ファイルのサンプル
-# ${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml にコピーする。別の場所に置くときだけ ~/.claude/settings.json の env の RULE_INJECT_CONFIG でそのパスを指す
+# ${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml にコピーする。別の場所に配置するときだけ ~/.claude/settings.json の env の RULE_INJECT_CONFIG でそのパスを指す
 # 値は例。キーを省くと既定値で動く
 # MCP サーバーのポートは環境変数 RULE_INJECT_PORT で指す
 # 最後に移し替えたツールのバージョン。スキル global-setup が記載する
@@ -8,21 +8,21 @@ global:
   # どのプロジェクトでも読む索引。絶対パスか ~ で始まるパス（既定: ${XDG_CONFIG_HOME:-~/.config}/rule-inject/rules.yaml）
   indexes:
     - ~/path/to/rules.yaml
-  # 既読の記録を置くフォルダ（既定: ${XDG_STATE_HOME:-~/.local/state}/rule-inject）
+  # 既読の記録を配置するフォルダ（既定: ${XDG_STATE_HOME:-~/.local/state}/rule-inject）
   state_dir: ~/path/to/state
-  # ログを置くフォルダ（既定: 記録フォルダの既定の下の logs）
+  # ログを配置するフォルダ（既定: 記録フォルダの既定の下の logs）
   log_dir: ~/path/to/logs
   # 既読の記録を残す日数。1 以上の整数（既定: 30）
   record_retention_days: 30
   # ログを残す日数。1 以上の整数（既定: 3）
   log_retention_days: 3
-  # check_indexes が使われているタグを引く dev-docs の MCP サーバーの URL。http:// か https:// で始まる（既定: http://127.0.0.1:8781/mcp）
+  # check_indexes が使用されているタグを取得する dev-docs の MCP サーバーの URL。http:// か https:// で始まる（既定: http://127.0.0.1:8781/mcp）
   dev_docs_url: http://127.0.0.1:8781/mcp
   # セッションの開始時に応答しない MCP サーバーを起動する systemd --user のユニットのサービス名。英数字・_・- の 1〜64 文字（既定: rule-inject）
   server_service: rule-inject
 projects:
-  # 絶対パスかプロジェクト名。絶対パスは起動したプロジェクトがそのパスかその配下のとき、プロジェクト名はフォルダ名が一致したときに当たる
+  # 絶対パスかプロジェクト名。絶対パスは起動したプロジェクトがそのパスかその配下のとき、プロジェクト名はフォルダ名が一致したときに該当する
   - match: project-name
-    # 当たったプロジェクトだけで読む索引。相対パスはプロジェクトの直下から解く（既定: ${CLAUDE_PROJECT_DIR}/rules.yaml）
+    # 該当したプロジェクトだけで読む索引。相対パスはプロジェクトの直下から解く（既定: ${CLAUDE_PROJECT_DIR}/rules.yaml）
     indexes:
       - rules/project.yaml

@@ -7,7 +7,7 @@ files:
       - topic:ルールの案内
   - path: CLAUDE.md
     name: CLAUDE
-    description: Claude Code がリポジトリを開いたときに読み込む指示で、ドキュメントの場所と索引の引き方を示し、エージェントへの指示を変えるときに参照する。
+    description: Claude Code がリポジトリを開いたときに読み込む指示で、ドキュメントの場所と索引の検索方法を示し、エージェントへの指示を変えるときに参照する。
     tags:
       - tool:claude-code
   - path: rules.yaml

@@ -2,11 +2,11 @@
 version: "3"
 name: rule-inject
 worktrees: [".claude/worktrees/*"]
-description: Claude Code がファイルを触る前に、そのファイルに当たるルールを案内するプラグインの設計書・公開ドキュメント・ソースコード・テスト
+description: Claude Code がファイルを触る前に、そのファイルに該当するルールを案内するプラグインの設計書・公開ドキュメント・ソースコード・テスト
 instructions: |-
-  設計書（`docs/` の種類のフォルダ）と各フォルダの `index.yaml` は YAML が正本で、種類ごとの行に分かれる。書式は `schemas/{種類}.schema.yaml` が持ち、他の設計書は `{ID}#{項目のパス}` で指す。
+  設計書（`docs/` の種類のフォルダ）と各フォルダの `index.yaml` は YAML が原本で、種類ごとの行に分かれる。書式は `schemas/{種類}.schema.yaml` が持ち、他の設計書は `{ID}#{項目のパス}` で指す。
   公開ドキュメント（`docs/guide/`）と `docs/` の直下のファイルは `files.yml`、リポジトリの直下・ソースコード（`src/`・`hooks/`）・テスト（`tests/`）・スキル（`skills/`）のファイルは `files.yaml` が名前・概要文・タグ・関連を持つ。各文書の公開範囲は `visibility`（`public` / `internal`）で、YAML の文書はキー、Markdown は `files.yml` の行が持つ。
-  コードは `implements` で設計書を、テストは `tests` でコードを指す。設計書からコードを辿るときは `trace_related` を使う。
+  コードは `implements` で設計書を、テストは `tests` でコードを指す。設計書からコードを辿るときは `trace_related` を使用する。
 documents:
   - id: architecture
     title: アーキテクチャ図

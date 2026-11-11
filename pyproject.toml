@@ -1,7 +1,7 @@
 [project]
 name = "rule-inject"
 version = "0.2.4"
-description = "ファイルに当たるルールを案内する Claude Code プラグイン"
+description = "ファイルに該当するルールを案内する Claude Code プラグイン"
 requires-python = ">=3.12"
 dependencies = []
 
@@ -75,14 +75,14 @@ known-first-party = ["rule_inject"]
 python_version = "3.12"
 mypy_path = "src"
 explicit_package_bases = true
-# 反映作業のスクリプトは PR ごとに同じファイル名を持つため、`mypy .` からは外し、フォルダごとに検査する
+# 反映作業のスクリプトは PR ごとに同じファイル名を持つため、`mypy .` からは除外し、フォルダごとに検査する
 exclude = ["^docs/pr/", "^schemas/conversions/"]
 
 [tool.importlinter]
 root_package = "rule_inject"
 
 [[tool.importlinter.contracts]]
-name = "hooks と server は features を使い、features は shared を使う"
+name = "hooks と server は features を使用し、features は shared を使用する"
 type = "layers"
 layers = [
     "rule_inject.hooks | rule_inject.server | rule_inject.migrate",
