@@ -24,10 +24,10 @@ def guide_env(
     settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
 ) -> Callable[[str], dict[str, str]]:
-    """索引の文字列を書き、設定ファイルの `global.indexes` で指す環境変数を返す factory。"""
+    """索引の文字列を記載し、設定ファイルの `global.indexes` で指す環境変数を返却する factory。"""
 
     def _env(text: str) -> dict[str, str]:
-        """text を索引として置き、その索引を指す設定ファイルを `RULE_INJECT_CONFIG` で指す。"""
+        """text を索引として配置し、その索引を指す設定ファイルを `RULE_INJECT_CONFIG` で指す。"""
         return settings_env(indexes=[str(make_index(text))])
 
     return _env
@@ -50,7 +50,7 @@ def test_search_guide(
     hook_payload: Callable[..., dict[str, Any]],
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """Grep の結果に当たるルールを案内する（正常系）。"""
+    """Grep の結果に該当するルールを案内する（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"]))
     payload = hook_payload(
@@ -76,7 +76,7 @@ def test_search_guide_when_not_search(
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """検索でない Bash は見ない（正常系）。"""
+    """検索でない Bash は確認しない（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"]))
     payload = hook_payload(
@@ -129,7 +129,7 @@ def test_search_guide_when_invalid_session_id(
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """session_id の形式が外れていれば案内しない（正常系）。"""
+    """session_id の形式に合わなければ案内しない（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"]))
     payload = hook_payload(
@@ -155,7 +155,7 @@ def test_search_guide_when_guided_unwritable(
     unwritable: Callable[[Path, int], Path],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """案内済みに書けなくても案内を出す（正常系）。"""
+    """案内済みに書き込めなくても案内を出す（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"]))
     state_dir.mkdir()
@@ -214,7 +214,7 @@ def test_search_guide_when_settings_unreadable(
     default_log_folder: Path,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないときは照合せずに知らせる（正常系）。"""
+    """設定ファイルが読めないときは照合せずに通知する（正常系）。"""
     # 準備
     env = unreadable_env("broken")
     payload = hook_payload(

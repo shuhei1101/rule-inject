@@ -12,7 +12,7 @@ LONG_GLOB = "**/some/very/long/folder/name/that/goes/on/and/on/and/on/until/it/p
 
 
 def test_round_trip_yaml() -> None:
-    """書き換えない索引は 1 バイトも変わらずに書き戻る（正常系）。"""
+    """書き換えない索引は 1 バイトも変わらずに書き込まれる（正常系）。"""
     from rule_inject.features.index.edit._yaml import round_trip_yaml
 
     # 準備

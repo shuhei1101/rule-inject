@@ -32,10 +32,10 @@ def run_module() -> ModuleType:
 
 @pytest.fixture
 def imported_rule_inject_modules() -> Callable[[], list[str]]:
-    """import 済みの rule_inject のモジュール名を返す関数。"""
+    """import 済みの rule_inject のモジュール名を返却する関数。"""
 
     def _names() -> list[str]:
-        """sys.modules にある rule_inject 配下のモジュール名を返す。"""
+        """sys.modules にある rule_inject 配下のモジュール名を返却する。"""
         return [name for name in sys.modules if name.split(".")[0] == "rule_inject"]
 
     return _names
@@ -46,7 +46,7 @@ def without_rule_inject(
     monkeypatch: pytest.MonkeyPatch,
     imported_rule_inject_modules: Callable[[], list[str]],
 ) -> None:
-    """import 済みの rule_inject のモジュールを外し、テストの後に戻す。"""
+    """import 済みの rule_inject のモジュールを除外し、テストの後に戻す。"""
     for name in imported_rule_inject_modules():
         monkeypatch.delitem(sys.modules, name)
 
@@ -56,7 +56,7 @@ def test_main(
     hook_payload: Callable[..., dict[str, Any]],
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """子プロセスとして動かして終了コード 0 を返す（正常系）。"""
+    """子プロセスとして動かして終了コード 0 を返却する（正常系）。"""
     # 準備
     write_record(["/r/a.md"])
     payload = hook_payload("SessionStart", source="compact")
@@ -84,7 +84,7 @@ def test_main_when_python_too_old(
     imported_rule_inject_modules: Callable[[], list[str]],
     without_rule_inject: None,
 ) -> None:
-    """バージョンが足りないとき知らせて終える（正常系）。"""
+    """バージョンが足りないとき通知して終える（正常系）。"""
     # 準備
     monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
     payload = hook_payload("PreToolUse", tool_name="Write", tool_input={"file_path": "/p/a.py"})
@@ -110,7 +110,7 @@ def test_main_when_python_too_old_and_sweep_read(
     read_lines: Callable[[Path], list[str]],
     without_rule_inject: None,
 ) -> None:
-    """掃除のフックはバージョンが足りなくても知らせを重ねない（正常系）。"""
+    """掃除のフックはバージョンが足りなくても通知を重ねない（正常系）。"""
     # 準備
     monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
     payload = hook_payload("SessionStart", source="startup")
@@ -136,7 +136,7 @@ def test_main_when_python_too_old_and_start_server(
     read_lines: Callable[[Path], list[str]],
     without_rule_inject: None,
 ) -> None:
-    """サーバーの起動の補助もバージョンが足りなくても知らせを重ねない（正常系）。"""
+    """サーバーの起動の補助もバージョンが足りなくても通知を重ねない（正常系）。"""
     # 準備
     monkeypatch.setenv("XDG_STATE_HOME", str(xdg_state_home))
     payload = hook_payload("SessionStart", source="startup")

@@ -42,7 +42,7 @@ def test_expand_variables_when_not_name() -> None:
 
 
 def test_expand_variables_when_value_has_reference() -> None:
-    """値の中の変数参照は展開し直さない（正常系）。"""
+    """値の中の変数参照は再展開しない（正常系）。"""
     # 実行
     result = expand_variables("!{X}", {"X": "!{Y}", "Y": "2"})
     # 検証

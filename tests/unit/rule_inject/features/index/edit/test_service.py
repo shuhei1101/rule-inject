@@ -52,14 +52,14 @@ def locks() -> Any:
 
 @pytest.fixture
 def make_check() -> Callable[..., CheckSpy]:
-    """呼ばれた引数を控え、決めた行を返す書き込みのチェックを作る factory。"""
+    """呼ばれた引数を記録し、決めた行を返却する書き込みのチェックを作る factory。"""
 
     def _make(lines: Sequence[str] = ()) -> CheckSpy:
-        """lines を返し、呼ばれた引数を calls に控える関数と calls を返す。"""
+        """lines を返却し、呼ばれた引数を calls に記録する関数と calls を返却する。"""
         calls: list[tuple[Any, ...]] = []
 
         def _check(*args: Any) -> tuple[str, ...]:
-            """引数を控えて lines を返す。"""
+            """引数を記録して lines を返却する。"""
             calls.append(args)
             return tuple(lines)
 
@@ -70,7 +70,7 @@ def make_check() -> Callable[..., CheckSpy]:
 
 @pytest.fixture
 def write(locks: Any) -> Callable[..., Any]:
-    """`write_entry` を、使わない引数を既定にして呼ぶ関数。"""
+    """`write_entry` を、使用しない引数を既定にして呼ぶ関数。"""
     from rule_inject.features.index.edit import write_entry
 
     def _write(
@@ -155,7 +155,7 @@ def test_write_entry_when_update(
     make_check: Callable[..., CheckSpy],
     write: Callable[..., Any],
 ) -> None:
-    """渡したキーだけを書き換え、`remove_keys` を削除する（正常系）。"""
+    """引き渡したキーだけを書き換え、`remove_keys` を削除する（正常系）。"""
     from rule_inject.features.index import entry_revs
 
     # 準備
@@ -187,7 +187,7 @@ def test_write_entry_when_dry_run(
     make_check: Callable[..., CheckSpy],
     write: Callable[..., Any],
 ) -> None:
-    """`dry_run` は差分だけを返して書き換えない（正常系）。"""
+    """`dry_run` は差分だけを返却して書き換えない（正常系）。"""
     # 準備
     index = make_index(INDEX_TEXT)
     before = index.read_bytes()
@@ -302,7 +302,7 @@ def test_write_entry_when_scalar_notation(
     write: Callable[..., Any],
     text: str,
 ) -> None:
-    """書き方によらず一覧のバージョンで書き換えられる（正常系）。"""
+    """記法によらず一覧のバージョンで書き換えられる（正常系）。"""
     from rule_inject.features.index import read_index
 
     # 準備
@@ -388,7 +388,7 @@ def test_write_entry_when_indent_and_newline(
     update: bool,
     expected: str,
 ) -> None:
-    """索引の字下げと改行を保って書く（正常系）。"""
+    """索引の字下げと改行を保って記載する（正常系）。"""
     from rule_inject.features.index import entry_revs
 
     # 準備
@@ -444,7 +444,7 @@ def test_write_entry_when_layout_not_kept(
             expected_rev=expected_rev,
             dry_run=dry_run,
         )
-    assert "書式を保って書けない" in raised.value.reason
+    assert "書式を保って書き込めない" in raised.value.reason
     assert "5行目" in raised.value.reason
     assert index.read_bytes() == before
     assert calls == []

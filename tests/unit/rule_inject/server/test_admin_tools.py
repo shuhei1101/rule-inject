@@ -17,7 +17,7 @@ COMMIT_AFTER = "b" * 40
 
 
 def _commit_run(commit: str) -> Callable[..., Any]:
-    """`git rev-parse HEAD` に commit を返す `RunCommand`。"""
+    """`git rev-parse HEAD` に commit を返却する `RunCommand`。"""
     from rule_inject.server.clone import CommandResult
 
     def _run(
@@ -27,7 +27,7 @@ def _commit_run(commit: str) -> Callable[..., Any]:
         timeout: float,
         env: Mapping[str, str] | None = None,
     ) -> CommandResult:
-        """commit を標準出力に返す。"""
+        """commit を標準出力に返却する。"""
         return CommandResult(returncode=0, stdout=f"{commit}\n", stderr="")
 
     return _run
@@ -35,7 +35,7 @@ def _commit_run(commit: str) -> Callable[..., Any]:
 
 @pytest.fixture
 def clone_dir(tmp_path: Path) -> Path:
-    """`version.ini` を置いたクローンの代わりのフォルダ。"""
+    """`version.ini` を配置したクローンの代わりのフォルダ。"""
     clone = tmp_path / "clone"
     clone.mkdir()
     (clone / "version.ini").write_text("v0.2.4\n", encoding="utf-8")
@@ -55,7 +55,7 @@ def control() -> Any:
 
 @pytest.fixture
 def stub_update(monkeypatch: pytest.MonkeyPatch) -> Callable[..., list[str]]:
-    """`pull`・`sync_dependencies`・`plan_migrations` を差し替え、呼ばれた順を返す factory。"""
+    """`pull`・`sync_dependencies`・`plan_migrations` を差し替え、呼ばれた順を返却する factory。"""
     from rule_inject.server import admin_tools
     from rule_inject.server.clone import PullOutcome, UpdateFailedError
 
@@ -90,7 +90,7 @@ def stub_update(monkeypatch: pytest.MonkeyPatch) -> Callable[..., list[str]]:
 def test_get_server_status(
     server_env: Callable[..., dict[str, str]], clone_dir: Path, control: Any
 ) -> None:
-    """稼働の状態とクローンを返す（正常系）。"""
+    """稼働の状態とクローンを返却する（正常系）。"""
     from rule_inject.server.admin_tools import get_server_status
 
     # 準備
@@ -133,7 +133,7 @@ def test_get_server_status_when_settings_unreadable(
 
 
 def test_reload_settings(server_env: Callable[..., dict[str, str]], tmp_path: Path) -> None:
-    """読んだ値を返す（正常系）。"""
+    """読んだ値を返却する（正常系）。"""
     from rule_inject.server.admin_tools import reload_settings
 
     # 準備
@@ -238,7 +238,7 @@ def test_update_server_when_migration_required(
 def test_update_server_when_failed(
     control: Any, clone_dir: Path, stub_update: Callable[..., list[str]]
 ) -> None:
-    """失敗したら更新の印を下ろす（異常系）。"""
+    """失敗したら更新のマーカーを下ろす（異常系）。"""
     from rule_inject.server.admin_tools import update_server
     from rule_inject.server.clone import UpdateFailedError
 

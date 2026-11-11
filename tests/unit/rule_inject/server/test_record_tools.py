@@ -26,10 +26,10 @@ def record_env(
 
 @pytest.fixture
 def write_session_record(state_dir: Path) -> Callable[..., Path]:
-    """指定のセッションの既読の記録を、最終更新を決めて置く factory。"""
+    """指定のセッションの既読の記録を、最終更新を決めて配置する factory。"""
 
     def _write(target_session_id: str, lines: Sequence[str], modified: int) -> Path:
-        """target_session_id の記録ファイルに lines を書き、最終更新を modified（UNIX 時刻の秒）にする。"""
+        """target_session_id の記録ファイルに lines を記載し、最終更新を modified（UNIX 時刻の秒）にする。"""
         path = state_dir / f"{target_session_id}.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
@@ -40,7 +40,7 @@ def write_session_record(state_dir: Path) -> Callable[..., Path]:
 
 
 def _at(second: int) -> Callable[[], datetime]:
-    """2026-10-24 09:30 台の固定した時刻（秒を second にした UTC）を返す関数を作る。"""
+    """2026-10-24 09:30 台の固定した時刻（秒を second にした UTC）を返却する関数を作る。"""
     return lambda: datetime(2026, 10, 24, 9, 30, second, tzinfo=UTC)
 
 
@@ -51,7 +51,7 @@ def test_get_read_records(
     record_env: dict[str, str],
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """既読のルールごとに状態と読み方のまとめを返す（正常系）。"""
+    """既読のルールごとに状態と読み方のまとめを返却する（正常系）。"""
     from rule_inject.features.record import ReadMethod, append_history
     from rule_inject.server.record_tools import get_read_records
 
@@ -107,7 +107,7 @@ def test_get_read_records_when_sessions(
     record_env: dict[str, str],
     write_session_record: Callable[..., Path],
 ) -> None:
-    """セッションを省くとセッションの一覧を返す（正常系）。"""
+    """セッションを省くとセッションの一覧を返却する（正常系）。"""
     from rule_inject.server.record_tools import get_read_records
 
     # 準備
@@ -142,7 +142,7 @@ def test_delete_read_records(
     write_guided: Callable[[Sequence[str]], Path],
     write_session_record: Callable[..., Path],
 ) -> None:
-    """既読の記録と案内済みの記録を削除し、既読だった場所を返す（正常系）。"""
+    """既読の記録と案内済みの記録を削除し、既読だった場所を返却する（正常系）。"""
     from rule_inject.features.record import ReadMethod, append_history
     from rule_inject.server.record_tools import delete_read_records
 
@@ -164,7 +164,7 @@ def test_delete_read_records(
 
 
 def test_delete_read_records_when_missing(session_id: str, record_env: dict[str, str]) -> None:
-    """記録の無いセッションは空の一覧を返す（正常系）。"""
+    """記録の無いセッションは空の一覧を返却する（正常系）。"""
     from rule_inject.server.record_tools import delete_read_records
 
     # 実行

@@ -15,7 +15,7 @@ from rule_inject.shared.settings import load_settings
 
 @pytest.fixture
 def project_dir(tmp_path: Path) -> Path:
-    """ツールに渡すプロジェクトの直下。"""
+    """ツールに引き渡すプロジェクトの直下。"""
     path = tmp_path / "project"
     path.mkdir()
     return path
@@ -27,7 +27,7 @@ def test_list_rules_when_paged(
     make_index: Callable[..., Path],
     indexes_env: Callable[..., dict[str, str]],
 ) -> None:
-    """`limit` と `cursor` で続きを返し、理由の一覧は先頭のページだけに載せる（正常系）。"""
+    """`limit` と `cursor` で続きを返却し、理由の一覧は先頭のページだけに記載する（正常系）。"""
     from rule_inject.server.tools import list_rules
 
     # 準備
@@ -59,7 +59,7 @@ def test_search_rules_when_same_rule(
     make_index: Callable[..., Path],
     indexes_env: Callable[..., dict[str, str]],
 ) -> None:
-    """同じルールに当たったエントリを 1 件にまとめ、どれかが止めれば止める（正常系）。"""
+    """同じルールに該当したエントリを 1 件にまとめ、どれかが止めれば止める（正常系）。"""
     from rule_inject.server.tools import search_rules
 
     # 準備
@@ -141,7 +141,7 @@ def test_write_index_entry_when_invalid_arguments(
     calls: list[tuple[Any, ...]] = []
 
     def _write_entry(*args: Any, **kwargs: Any) -> None:
-        """呼ばれたことを控える（呼ばれてはならない）。"""
+        """呼ばれたことを記録する（呼ばれてはならない）。"""
         calls.append((args, kwargs))
 
     monkeypatch.setattr("rule_inject.server.tools.write_entry", _write_entry)
@@ -163,7 +163,7 @@ def test_write_index_entry_when_invalid_arguments(
 def test_project_settings_when_project_matched(
     server_env: Callable[..., dict[str, str]],
 ) -> None:
-    """`project_dir` で `projects[].match` を当てる（正常系）。"""
+    """`project_dir` で `projects[].match` を照合する（正常系）。"""
     from rule_inject.server.tools import _project_settings
 
     # 準備

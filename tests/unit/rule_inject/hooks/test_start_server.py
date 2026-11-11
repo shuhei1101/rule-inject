@@ -19,7 +19,7 @@ hook_module = importlib.import_module("rule_inject.hooks.start_server")
 
 @pytest.fixture
 def fake_server_start(monkeypatch: pytest.MonkeyPatch) -> Callable[..., list[str]]:
-    """応答の確認と起動の依頼を差し替え、起動を依頼したサービス名の並びを返す factory。"""
+    """応答の確認と起動の依頼を差し替え、起動を依頼したサービス名の並びを返却する factory。"""
 
     def _install(
         *, responds: bool = False, result: UnitStart | Exception = UnitStart.REQUESTED
@@ -34,7 +34,7 @@ def fake_server_start(monkeypatch: pytest.MonkeyPatch) -> Callable[..., list[str
         def _request(service: str) -> UnitStart:
             """差し替えた起動の依頼。"""
             requested.append(service)
-            # 例外を渡されたときは送出し、それ以外は戻り値にする
+            # 例外を引き渡されたときは送出し、それ以外は戻り値にする
             if isinstance(result, Exception):
                 raise result
             return result
@@ -51,7 +51,7 @@ def test_start_server(
     hook_payload: Callable[..., dict[str, Any]],
     fake_server_start: Callable[..., list[str]],
 ) -> None:
-    """起動を依頼したら案内を返す（正常系）。"""
+    """起動を依頼したら案内を返却する（正常系）。"""
     # 準備
     env = settings_env(server_service="rule-inject-ut")
     requested = fake_server_start(result=UnitStart.REQUESTED)
@@ -98,7 +98,7 @@ def test_start_server_when_not_requested(
     read_daily_log: Callable[[], list[dict[str, Any]]],
     result: UnitStart,
 ) -> None:
-    """起動を依頼しなかったら何も返さない（正常系）。"""
+    """起動を依頼しなかったら何も返却しない（正常系）。"""
     # 準備
     fake_server_start(result=result)
     payload = hook_payload("SessionStart", source="startup")
@@ -115,7 +115,7 @@ def test_start_server_when_check_failed(
     fake_server_start: Callable[..., list[str]],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """ユニットの確認の失敗をログへ書く（正常系）。"""
+    """ユニットの確認の失敗をログへ書き込む（正常系）。"""
     # 準備
     error = UnitCheckError("systemctl --user is-enabled rule-inject", "TimeoutExpired")
     fake_server_start(result=error)
@@ -136,7 +136,7 @@ def test_start_server_when_start_failed(
     fake_server_start: Callable[..., list[str]],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """起動の依頼の失敗をログへ書く（正常系）。"""
+    """起動の依頼の失敗をログへ書き込む（正常系）。"""
     # 準備
     fake_server_start(result=UnitStartError("systemctl --user start rule-inject", "終了コード 5"))
     payload = hook_payload("SessionStart", source="startup")
@@ -156,7 +156,7 @@ def test_start_server_when_settings_unreadable(
     fake_server_start: Callable[..., list[str]],
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めなければ何も確かめずにログへ書く（正常系）。"""
+    """設定ファイルが読めなければ何も確認せずにログへ書き込む（正常系）。"""
     # 準備
     env = unreadable_env("missing")
     requested = fake_server_start(responds=False)
@@ -178,7 +178,7 @@ def test_start_server_when_invalid_session_id(
     fake_server_start: Callable[..., list[str]],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """session_id の形式が外れていても補助を行う（正常系）。"""
+    """session_id の形式に合わなくても補助をする（正常系）。"""
     # 準備
     fake_server_start(result=UnitStartError("systemctl --user start rule-inject", "終了コード 5"))
     payload = hook_payload("SessionStart", source="startup", session_id="../x")

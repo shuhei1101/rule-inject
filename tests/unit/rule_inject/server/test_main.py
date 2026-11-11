@@ -14,11 +14,11 @@ import uvicorn
 
 @pytest.fixture
 def run_spy(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
-    """`uvicorn.Server.run` を、呼ばれたサーバーの設定を控えるだけの関数へ差し替える。"""
+    """`uvicorn.Server.run` を、呼ばれたサーバーの設定を記録するだけの関数へ差し替える。"""
     calls: list[Any] = []
 
     def _run(self: uvicorn.Server, *args: Any, **kwargs: Any) -> None:
-        """呼ばれたサーバーの設定を控える（待ち受けない）。"""
+        """呼ばれたサーバーの設定を記録する（待ち受けない）。"""
         calls.append(self.config)
 
     monkeypatch.setattr(uvicorn.Server, "run", _run)
@@ -27,11 +27,11 @@ def run_spy(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
 
 @pytest.fixture
 def execv_spy(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, list[str]]]:
-    """`os.execv` を、呼ばれた引数を控えるだけの関数へ差し替える。"""
+    """`os.execv` を、呼ばれた引数を記録するだけの関数へ差し替える。"""
     calls: list[tuple[str, list[str]]] = []
 
     def _execv(path: str, args: list[str]) -> None:
-        """呼ばれた引数を控える（プロセスを置き換えない）。"""
+        """呼ばれた引数を記録する（プロセスを置き換えない）。"""
         calls.append((path, list(args)))
 
     monkeypatch.setattr(os, "execv", _execv)
@@ -40,7 +40,7 @@ def execv_spy(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, list[str]]]:
 
 @pytest.fixture
 def free_port_env(monkeypatch: pytest.MonkeyPatch) -> int:
-    """設定ファイルを指さず、空いているポートを `RULE_INJECT_PORT` に置く。"""
+    """設定ファイルを指さず、空いているポートを `RULE_INJECT_PORT` に配置する。"""
     with socket.create_server(("127.0.0.1", 0)) as probe:
         port = probe.getsockname()[1]
     monkeypatch.delenv("RULE_INJECT_CONFIG", raising=False)
@@ -75,7 +75,7 @@ def test_main_when_port_in_use(
     capsys: pytest.CaptureFixture[str],
     run_spy: list[Any],
 ) -> None:
-    """ポートが使われていれば待ち受けずに終わる（異常系）。"""
+    """ポートが使用されていれば待ち受けずに終わる（異常系）。"""
     from rule_inject.server.__main__ import main
 
     # 準備
@@ -97,7 +97,7 @@ def test_main_when_restart_requested(
     run_spy: list[Any],
     execv_spy: list[tuple[str, list[str]]],
 ) -> None:
-    """再起動で待ち受けを閉じたら同じプロセスで起動し直す（正常系）。"""
+    """再起動で待ち受けを閉じたら同じプロセスで再起動する（正常系）。"""
     from rule_inject.server.__main__ import main
     from rule_inject.server.control import ServerControl
 
@@ -116,7 +116,7 @@ def test_main_when_stopped(
     run_spy: list[Any],
     execv_spy: list[tuple[str, list[str]]],
 ) -> None:
-    """Ctrl+C・SIGTERM で終わったときは起動し直さない（正常系）。"""
+    """Ctrl+C・SIGTERM で終わったときは再起動しない（正常系）。"""
     from rule_inject.server.__main__ import main
     from rule_inject.server.control import GRACEFUL_SHUTDOWN_TIMEOUT, ServerControl
 
@@ -124,7 +124,7 @@ def test_main_when_stopped(
     tracked: list[Any] = []
 
     def _track(self: ServerControl, app: Any) -> Any:
-        """包んだことが分かる印のアプリを返す。"""
+        """包んだことが分かるマーカーのアプリを返却する。"""
         wrapped = object()
         tracked.append(wrapped)
         return wrapped

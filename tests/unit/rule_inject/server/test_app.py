@@ -38,7 +38,7 @@ INJECTED_NAMES = {
 
 @pytest.fixture
 def clone_dir(tmp_path: Path) -> Path:
-    """`version.ini` を置いたクローンの代わりのフォルダ。"""
+    """`version.ini` を配置したクローンの代わりのフォルダ。"""
     (tmp_path / "version.ini").write_text("v0.2.4\n", encoding="utf-8")
     return tmp_path
 

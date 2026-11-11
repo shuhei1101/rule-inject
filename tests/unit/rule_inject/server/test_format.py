@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 
 def _json_or_none(text: str) -> Any:
-    """text が JSON ならその値を、JSON でなければ None を返す。"""
+    """text が JSON ならその値を、JSON でなければ None を返却する。"""
     try:
         return json.loads(text)
     except ValueError:
@@ -27,7 +27,7 @@ def _text_of(response: CallToolResult) -> str:
 
 
 def _entry(position: int, rule: str = "/r/a.md", paths: list[str] | None = None) -> Any:
-    """効いているエントリを 1 件作る。"""
+    """有効なエントリを 1 件作る。"""
     from rule_inject.server.types import RuleEntry
 
     return RuleEntry(
@@ -122,7 +122,7 @@ def test_render_markdown() -> None:
 
 
 def test_fit_page() -> None:
-    """上限に収まる最大の件数を返す（正常系）。"""
+    """上限に収まる最大の件数を返却する（正常系）。"""
     from rule_inject.server._format import MAX_RESPONSE_CHARS, fit_page, respond
 
     # 準備

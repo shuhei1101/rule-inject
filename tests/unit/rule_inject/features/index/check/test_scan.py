@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-# `src/app.py` に当たるエントリ（位置 0）と、どのファイルにも当たらないエントリ（位置 1）
+# `src/app.py` に該当するエントリ（位置 0）と、どのファイルにも該当しないエントリ（位置 1）
 INDEX_PY_TOML = (
     "rules:\n"
     "  - rule: /r/py.md\n"
@@ -17,7 +17,7 @@ INDEX_PY_TOML = (
     "  - rule: /r/toml.md\n"
     '    paths: ["**/*.toml"]\n'
 )
-# `docs/readme.md` に当たるエントリ（位置 0）を先頭に足した索引
+# `docs/readme.md` に該当するエントリ（位置 0）を先頭に追加した索引
 INDEX_MD_PY_TOML = (
     "rules:\n"
     "  - rule: /r/md.md\n"
@@ -39,10 +39,10 @@ def project(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def make_files(project: Path) -> Callable[..., None]:
-    """プロジェクトの下に空のファイルを置く factory。"""
+    """プロジェクトの下に空のファイルを配置する factory。"""
 
     def _make(*names: str) -> None:
-        """names の相対パスのファイルを、フォルダごと作って置く。"""
+        """names の相対パスのファイルを、フォルダごと作って配置する。"""
         for name in names:
             path = project / name
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -53,10 +53,10 @@ def make_files(project: Path) -> Callable[..., None]:
 
 @pytest.fixture
 def read_contents(make_index: Callable[..., Path]) -> Callable[..., list[Any]]:
-    """索引の YAML を書き、読み取り結果（IndexContent）の並びを返す factory。"""
+    """索引の YAML を記載し、読み取り結果（IndexContent）の並びを返却する factory。"""
 
     def _read(*texts: str) -> list[Any]:
-        """texts を索引ごとのファイルに書き、`read_index` で読む。"""
+        """texts を索引ごとのファイルに書き込み、`read_index` で読む。"""
         from rule_inject.features.index import read_index
 
         return [
@@ -79,7 +79,7 @@ def test_scan_unmatched(
     make_files: Callable[..., None],
     read_contents: Callable[..., list[Any]],
 ) -> None:
-    """どのファイルにも当たらないエントリを返す（正常系）。"""
+    """どのファイルにも該当しないエントリを返却する（正常系）。"""
     from rule_inject.features.index.check.scan import scan_unmatched
 
     # 準備
@@ -104,7 +104,7 @@ def test_scan_unmatched_when_no_paths(
     make_files: Callable[..., None],
     read_contents: Callable[..., list[Any]],
 ) -> None:
-    """`paths` を持たないエントリと効いていないエントリは確かめない（正常系）。"""
+    """`paths` を持たないエントリと有効でないエントリは確認しない（正常系）。"""
     from rule_inject.features.index.check.scan import scan_unmatched
 
     # 準備
@@ -130,7 +130,7 @@ def test_scan_unmatched_when_time_limit(
     read_contents: Callable[..., list[Any]],
     ticking_clock: Callable[[], float],
 ) -> None:
-    """時間の上限を超えたら続きの位置を返す（正常系）。"""
+    """時間の上限を超えたら続きの位置を返却する（正常系）。"""
     from rule_inject.features.index.check.scan import scan_unmatched
 
     # 準備
@@ -153,7 +153,7 @@ def test_scan_unmatched_when_cursor(
     ticking_clock: Callable[[], float],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """続きの位置から辿り、前に当たったエントリは確かめ直さない（正常系）。"""
+    """続きの位置から辿り、前に該当したエントリは再確認しない（正常系）。"""
     from rule_inject.features.index.check import scan
     from rule_inject.features.index.check.scan import scan_unmatched
 
@@ -165,7 +165,7 @@ def test_scan_unmatched_when_cursor(
     real_iter = scan._iter_project_files
 
     def _spy(project_dir: str, after: str | None) -> Iterator[str]:
-        """辿ったファイルを控えながら、本物の列挙を返す。"""
+        """辿ったファイルを記録しながら、本物の列挙を返却する。"""
         for relative in real_iter(project_dir, after):
             walked.append(relative)
             yield relative
@@ -208,7 +208,7 @@ def test_scan_unmatched_when_fingerprint_changed(
 
 
 def test_iter_project_files(project: Path, make_files: Callable[..., None]) -> None:
-    """部分ごとの名前の順に返し、`.git` には入らない（正常系）。"""
+    """部分ごとの名前の順に返却し、`.git` には入らない（正常系）。"""
     from rule_inject.features.index.check.scan import _iter_project_files
 
     # 準備
@@ -220,7 +220,7 @@ def test_iter_project_files(project: Path, make_files: Callable[..., None]) -> N
 
 
 def test_iter_project_files_when_after(project: Path, make_files: Callable[..., None]) -> None:
-    """`after` より後だけを返す（正常系）。"""
+    """`after` より後だけを返却する（正常系）。"""
     from rule_inject.features.index.check.scan import _iter_project_files
 
     # 準備
