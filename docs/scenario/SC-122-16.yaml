@@ -113,7 +113,7 @@ scenarios:
       - 操作を止めない案内の文面に、読む場合は Read で読む旨が載っている
       - そのセッションの案内済みの記録に、ルールの場所が載っている
     test: test_normal_when_not_blocked
-  - name: 正常シナリオ（Bashで読む対象に当たる）
+  - name: 正常シナリオ（Bashで読む対象に該当する）
     setup:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
@@ -249,7 +249,7 @@ scenarios:
       - 応答に対象のファイルの文字列が出ている
       - この実行で増えたセッションの記録（transcript）に、操作を止めない案内の文面が載っていない
     test: test_normal_when_already_guided
-  - name: 正常シナリオ（既定の置き場所の索引）
+  - name: 正常シナリオ（既定の配置場所の索引）
     setup:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
@@ -268,11 +268,11 @@ scenarios:
       sequenceDiagram
         participant CC as Claude Code
         participant H as PreToolUse フック
-        participant IDX as 既定の置き場所の索引
+        participant IDX as 既定の配置場所の索引
         participant ST as 既読の記録
 
         CC->>H: Write（対象のパス）
-        H->>H: 設定ファイルが無いため、既定の置き場所を索引にする
+        H->>H: 設定ファイルが無いため、既定の配置場所を索引にする
         H->>IDX: 対象のパス・操作の種別に当たるエントリを引く
         IDX-->>H: ルールの場所（書く操作が必須）
         H->>ST: そのセッションの既読を引く
@@ -447,7 +447,7 @@ scenarios:
       - 対象のファイルに中身が書き込まれている
       - セッションの記録（transcript）に、読めなかった設定ファイルの場所と理由が載っている
     test: test_error_when_settings_unreadable
-  - name: 正常シナリオ（無効のエントリに当たる）
+  - name: 正常シナリオ（無効のエントリに該当する）
     setup:
       - name: Mock
         description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）

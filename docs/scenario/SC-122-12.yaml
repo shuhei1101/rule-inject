@@ -58,7 +58,7 @@ scenarios:
     expected:
       - 応答に、エントリのルールの場所と、MCP のツールの操作を止めるかが載っている
     test: test_normal_when_searched_by_tool
-  - name: 正常シナリオ（当たるルールが無い）
+  - name: 正常シナリオ（該当するルールが無い）
     setup:
       - name: Mock
         description: ファイルのパスで検索するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
@@ -84,7 +84,7 @@ scenarios:
     expected:
       - 応答のヒットするルールが空
     test: test_normal_when_no_rule_matched
-  - name: 異常シナリオ（パスとツール名の両方を渡す）
+  - name: 異常シナリオ（パスとツール名の両方を指定する）
     setup:
       - name: Mock
         description: ファイルのパスで検索するシナリオと同じ（SDK のクライアントでツールを呼ぶ）

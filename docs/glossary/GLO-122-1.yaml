@@ -1,0 +1,53 @@
+id: GLO-122-1
+visibility: internal
+title: 用語集
+lead: rule-inject のドメイン用語と、文書・コードのコメントで使用しない言い方。
+terms:
+  - id: rule
+    name: ルール
+    description: 索引のエントリの `rule` が指し、操作の前に Claude Code に参照させるファイル。
+  - id: rule-index
+    name: 索引
+    description: 利用者が記載し、ルールと、ルールを適用するパス・ツール・引数を対応付ける YAML。
+    aliases:
+      - ルール索引
+      - 索引ファイル
+  - id: entry
+    name: エントリ
+    description: 索引の `rules` の 1 要素で、1 つのルールと、そのルールを適用する条件を持つもの。
+  - id: unread-rule
+    name: 未読のルール
+    description: そのセッションの既読の記録に場所が無いか、記録したハッシュと今の本文が違うルール。
+  - id: guidance
+    name: 案内
+    description: 操作の対象にヒットする未読のルールの場所と参照の方法を、フックがコンテキストへ記載すること。
+    avoid:
+      - ルールの注入
+  - id: blocking-guidance
+    name: 止める案内
+    description: 操作の種別がエントリの `on` にヒットするときに、操作を止めて出し、参照した後のやり直しを求める案内。
+  - id: non-blocking-guidance
+    name: 止めない案内
+    description: 操作の種別がエントリの `on` にヒットしないときに、操作を止めずにルールごとにセッションで 1 回だけ出す案内。
+  - id: read-record
+    name: 既読の記録
+    description: 参照したルールの場所と、参照した時点の本文のハッシュをセッションごとに持つ記録。
+    aliases:
+      - 既読の記録ファイル
+  - id: guided-record
+    name: 案内済みの記録
+    description: 止めない案内を出したルールの場所をセッションごとに持つ記録（`{session_id}.guided.txt`）。
+    aliases:
+      - 案内済みの記録ファイル
+  - id: read-history
+    name: 既読の履歴
+    description: 既読にするたびに時刻・読み方・ツール名・ルールの場所を 1 行ずつ追記する、セッションごとの記録（`{session_id}.history.jsonl`）。
+    aliases:
+      - 既読の履歴ファイル
+      - 履歴ファイル
+  - id: work-rules
+    name: 作業の決まり
+    description: セッションの開始時にフックがコンテキストへ記載する、新しいファイルを空で作ってから中身を記載する決まり。
+  - id: variable-reference
+    name: 変数参照
+    description: 索引の `rule` に記載し、同じ名前の環境変数の値に置き換わる `!{名前}`。

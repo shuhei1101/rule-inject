@@ -216,7 +216,7 @@ scenarios:
       - SC-122-16#scenarios[正常シナリオ（参照するツールを添えて止めて案内する）]
       - SC-122-8#scenarios[正常シナリオ（案内されたツールと引数で読む）]
       - SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]
-  - name: 正常シナリオ（案内されたツールが使えずReadで読む）
+  - name: 正常シナリオ（案内されたツールを使用できずReadで読む）
     setup:
       - name: Mock
         description: 正常シナリオ（案内されたツールで読む）と同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}` と、テストが用意する stdio の MCP サーバー）

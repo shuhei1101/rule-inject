@@ -96,6 +96,7 @@ exclude:
   - config/
   - er/
   - external-api/
+  - glossary/
   - interface/
   - library/
   - module/
