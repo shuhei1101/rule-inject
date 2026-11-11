@@ -45,8 +45,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T05:25:43.479705+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: docs/interface の summary・notes・constraint・図のメッセージ・エラーの文言の単語を置き換える
+    updated_by: planner
+    updated_at: '2026-11-11T05:52:08.028997+00:00'
   - process: 部品設計
     status: skipped
     reason: 画面を持たない
