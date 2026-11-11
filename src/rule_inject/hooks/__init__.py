@@ -21,9 +21,7 @@ def _notice_of(event: str, subject: str) -> UnexpectedNotifier:
 
     def _notify(message: str, log_path: Path) -> dict[str, Any]:
         """何が動かなかったかと、ログの場所を通知する。"""
-        text = (
-            f"{subject}が動きませんでした（{message}）。詳しくはログ（{log_path}）を確認してください。"
-        )
+        text = f"{subject}が動きませんでした（{message}）。詳しくはログ（{log_path}）を確認してください。"
         return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
 
     return _notify
