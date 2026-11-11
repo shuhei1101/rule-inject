@@ -34,7 +34,7 @@ def test_parse_index() -> None:
 
 
 def test_parse_index_when_no_default_on() -> None:
-    """`default_on` が無ければ None を返す（正常系）。"""
+    """`default_on` が無ければ None を返却する（正常系）。"""
     # 実行
     default_on, entries = parse_index("rules:\n  - rule: ./a.md\n")
     # 検証

@@ -15,12 +15,12 @@ DEFAULT_PORT_TEXT = str(DEFAULT_SERVER_PORT)
 
 
 def applies(data: MutableMapping[str, Any]) -> bool:
-    """`global.server_port` を持つかを返す。"""
+    """`global.server_port` を持つかを返却する。"""
     return PORT_KEY in (data.get(GLOBAL_KEY) or {})
 
 
 def apply(data: MutableMapping[str, Any]) -> dict[str, str]:
-    """`global.server_port` を削除し、`env` へ移す値を返す。"""
+    """`global.server_port` を削除し、`env` へ移す値を返却する。"""
     port = str(data[GLOBAL_KEY].pop(PORT_KEY))
     # 既定のポートは `env` が無くても同じ接続先になる
     if port == DEFAULT_PORT_TEXT:

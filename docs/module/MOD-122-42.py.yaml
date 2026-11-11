@@ -7,7 +7,7 @@ functions:
   - name: get_read_records
     title: 既読の記録の確認
     container: server/record_tools.py
-    usecase: 既読の記録を確かめる
+    usecase: 既読の記録を確認する
     summary: インターフェース定義「既読の記録の確認」のツールの本体
     kind: 関数
     scope: public

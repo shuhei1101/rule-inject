@@ -16,7 +16,7 @@ def test_main_when_plan(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """手順を JSON で書く（正常系）。"""
+    """手順を JSON で記載する（正常系）。"""
     # 準備
     result = MigrationResult(
         source_version=None,

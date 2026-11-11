@@ -71,7 +71,7 @@ functions:
   - name: fit_page
     title: 応答の長さの切り詰め
     container: server/_format.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     summary: 応答の text が `MAX_RESPONSE_CHARS` に収まるまで、一覧の末尾から要素を切る
     kind: 関数
     scope: public

@@ -24,7 +24,7 @@ scenarios:
         H->>CF: 参照する
         CF-->>H: global.indexes
         H->>IDX: 照合する
-        IDX-->>H: 当たるルール
+        IDX-->>H: 該当するルール
         H-->>CC: 操作を止めて案内する
       ```
     expected:
@@ -49,7 +49,7 @@ scenarios:
         CC->>H: ファイルを記載する操作
         H->>H: 設定なし（全てのキーを既定値）で動く
         H->>IDX: 照合する
-        IDX-->>H: 当たるルール
+        IDX-->>H: 該当するルール
         H-->>CC: 操作を止めて案内する
       ```
     expected:

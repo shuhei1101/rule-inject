@@ -13,10 +13,10 @@ def server_env(
     tmp_path: Path,
     make_settings: Callable[..., Path],
 ) -> Callable[..., dict[str, str]]:
-    """設定ファイルを書いて `RULE_INJECT_CONFIG` で指した、サーバーを起動した環境変数を返す factory。"""
+    """設定ファイルを書き込んで `RULE_INJECT_CONFIG` で指した、サーバーを起動した環境変数を返却する factory。"""
 
     def _make(text: str) -> dict[str, str]:
-        """text を設定ファイルに書き、それを指す環境変数を返す。"""
+        """text を設定ファイルに書き込み、それを指す環境変数を返却する。"""
         config = make_settings(text)
         return {"RULE_INJECT_CONFIG": str(config)}
 
@@ -25,7 +25,7 @@ def server_env(
 
 @pytest.fixture
 def indexes_env(server_env: Callable[..., dict[str, str]]) -> Callable[..., dict[str, str]]:
-    """`global.indexes` に絶対パスの索引を並べた設定ファイルを指す環境変数を返す factory。"""
+    """`global.indexes` に絶対パスの索引を並べた設定ファイルを指す環境変数を返却する factory。"""
 
     def _make(*indexes: Path) -> dict[str, str]:
         """indexes を `global.indexes` に並べる。"""

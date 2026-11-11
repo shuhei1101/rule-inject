@@ -1,4 +1,4 @@
-"""サーバーの起動の補助が使う型。"""
+"""サーバーの起動の補助が使用する型。"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from enum import StrEnum
 
 
 class UnitStart(StrEnum):
-    """`request_unit_start` が返す、起動を依頼したか・依頼しなかった理由。"""
+    """`request_unit_start` が返却する、起動を依頼したか・依頼しなかった理由。"""
 
     # `start --no-block` が終了コード 0 で終わった
     REQUESTED = "requested"

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "_description": "操作の対象に当たる未読のルールを案内し、必須の操作なら止める",
+            "_description": "操作の対象に該当する未読のルールを案内し、必須の操作なら止める",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" rule_guide",
             "timeout": 1
           }
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "_description": "Read か Bash で読んだルールの場所と、read_by に当たった MCP のツールの呼び出しのルールの場所を既読として記録し、既読の履歴へ残す",
+            "_description": "Read か Bash で読んだルールの場所と、read_by に該当した MCP のツールの呼び出しのルールの場所を既読として記録し、既読の履歴へ残す",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" record_read",
             "timeout": 1
           }
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "_description": "検索の結果に出たファイルに当たる未読のルールを、止めずに案内する",
+            "_description": "検索の結果に出たファイルに該当する未読のルールを、止めずに案内する",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" search_guide",
             "timeout": 1
           }
@@ -69,7 +69,7 @@
           },
           {
             "type": "command",
-            "_description": "常駐の MCP サーバーが応答しなければ、systemd --user のユニットへ起動を依頼し、/mcp で接続し直す案内を載せる",
+            "_description": "常駐の MCP サーバーが応答しなければ、systemd --user のユニットへ起動を依頼し、/mcp で再接続する案内を記載する",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" start_server",
             "timeout": 1
           }

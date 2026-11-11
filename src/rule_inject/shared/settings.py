@@ -28,14 +28,14 @@ USER_INDEX_DEFAULT = "rule-inject/rules.yaml"
 CONFIG_FILE_DEFAULT = "rule-inject/settings.yaml"
 # 設定ファイルのバックアップを配置するフォルダの、設定フォルダからのパス
 BACKUP_DIR_DEFAULT = "rule-inject/bk"
-# 当たった `projects` の要素のどれも `indexes` を持たないときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス
+# 該当した `projects` の要素のどれも `indexes` を持たないときに読む索引の、`CLAUDE_PROJECT_DIR` からのパス
 PROJECT_INDEX_DEFAULT = "rules.yaml"
-# `projects[].match` を当てるとき、この下を本体のリポジトリとして見るフォルダ
+# `projects[].match` を照合するとき、この下を本体のリポジトリとして確認するフォルダ
 WORKTREES_DIR = ".claude/worktrees"
 # 設定ファイルに保持日数が無いときの日数
 DEFAULT_RECORD_RETENTION_DAYS = 30
 DEFAULT_LOG_RETENTION_DAYS = 3
-# 10 進の整数の書き方（符号は付けてよい）
+# 10 進の整数の記法（符号は付けてよい）
 INTEGER_PATTERN = re.compile(r"[+-]?[0-9]+")
 MIN_RETENTION_DAYS = 1
 # MCP サーバーの待ち受けのポートの既定と、許す範囲
@@ -56,35 +56,35 @@ DEV_DOCS_URL_SCHEMES = ("http://", "https://")
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Settings:
-    """設定ファイルと既定値から決めた、フックが使う値。"""
+    """設定ファイルと既定値から決めた、フックが使用する値。"""
 
     indexes: tuple[str, ...]
-    # `indexes` のうち、当たった `projects` の要素の `indexes` とプロジェクトの既定の置き場所から入ったもの（フックは使わない）
+    # `indexes` のうち、該当した `projects` の要素の `indexes` とプロジェクトの既定の配置場所から入ったもの（フックは使用しない）
     project_indexes: tuple[str, ...]
     state_dir: Path
     log_dir: Path
     record_retention_days: int
     log_retention_days: int
-    # MCP サーバーが待ち受けるポート（フックはサーバーの起動の補助だけが使う）
+    # MCP サーバーが待ち受けるポート（フックはサーバーの起動の補助だけが使用する）
     server_port: int
-    # `check_indexes` が使われているタグを引く dev-docs の MCP サーバーの URL（フックは使わない）
+    # `check_indexes` が使用中のタグを取得する dev-docs の MCP サーバーの URL（フックは使用しない）
     dev_docs_url: str
     # 応答しない MCP サーバーを起動する systemd --user のユニットのサービス名
     server_service: str
 
 
 def _matches_project(match: str, project_dir: str) -> bool:
-    """`projects[].match` が起動したプロジェクトに当たるかを返す。"""
-    # worktree は本体のパスで見る
+    """`projects[].match` が起動したプロジェクトに該当するかを返却する。"""
+    # worktree は本体のパスで確認する
     normalized = os.path.normpath(project_dir)
     marker = f"/{WORKTREES_DIR}/"
     base = normalized[: normalized.index(marker)] if marker in normalized else normalized
     expanded = os.path.expanduser(match)
-    # 絶対パスは、そのパスかその配下に当てる
+    # 絶対パスは、そのパスかその配下に照合する
     if os.path.isabs(expanded):
         target = os.path.normpath(expanded)
         return base == target or base.startswith(target.rstrip("/") + "/")
-    # それ以外はプロジェクト名として、リポジトリのフォルダ名に当てる
+    # それ以外はプロジェクト名として、リポジトリのフォルダ名に照合する
     return os.path.basename(base) == match
 
 
@@ -94,7 +94,7 @@ def _value_error(config: str, key: str, written: str, allowed: str) -> SettingsR
 
 
 def _absolute_path(config: str, key: str, written: str) -> str:
-    """`~` を展開した絶対パスを返し、絶対パスでなければ SettingsReadError を送出する。"""
+    """`~` を展開した絶対パスを返却し、絶対パスでなければ SettingsReadError を送出する。"""
     expanded = os.path.expanduser(written)
     if not os.path.isabs(expanded):
         raise _value_error(config, key, written, "絶対パス")
@@ -102,7 +102,7 @@ def _absolute_path(config: str, key: str, written: str) -> str:
 
 
 def _retention_days(config: str, key: str, written: str | None, default: int) -> int:
-    """保持日数を 1 以上の整数として読み、無ければ既定の日数を返す。"""
+    """保持日数を 1 以上の整数として読み、無ければ既定の日数を返却する。"""
     if written is None:
         return default
     if not INTEGER_PATTERN.fullmatch(written) or int(written) < MIN_RETENTION_DAYS:
@@ -111,7 +111,7 @@ def _retention_days(config: str, key: str, written: str | None, default: int) ->
 
 
 def _resolve_server_port(env: Mapping[str, str]) -> int:
-    """環境変数のポート、無ければ既定のポートを返す。"""
+    """環境変数のポート、無ければ既定のポートを返却する。"""
     written = env.get(PORT_ENV)
     if not written:
         return DEFAULT_SERVER_PORT
@@ -127,7 +127,7 @@ def _resolve_server_port(env: Mapping[str, str]) -> int:
 
 
 def _resolve_dev_docs_url(config: str, global_values: Mapping[str, object]) -> str:
-    """設定ファイルの dev-docs の接続先、無ければ既定の接続先を返す。"""
+    """設定ファイルの dev-docs の接続先、無ければ既定の接続先を返却する。"""
     written = global_values.get("dev_docs_url")
     if written is None:
         return DEFAULT_DEV_DOCS_URL
@@ -139,24 +139,24 @@ def _resolve_dev_docs_url(config: str, global_values: Mapping[str, object]) -> s
 
 
 def _resolve_server_service(config: str, global_values: Mapping[str, object]) -> str:
-    """設定ファイルのサービス名、無ければ既定のサービス名を返す。"""
+    """設定ファイルのサービス名、無ければ既定のサービス名を返却する。"""
     written = global_values.get("server_service")
     if written is None:
         return DEFAULT_SERVER_SERVICE
     service = str(written)
-    # systemctl の引数に渡すため、英数字・`_`・`-` の 1〜64 文字だけを許す
+    # systemctl の引数に引き渡すため、英数字・`_`・`-` の 1〜64 文字だけを許す
     if not SERVICE_NAME_PATTERN.fullmatch(service):
         raise _value_error(config, "global.server_service", service, "1〜64 文字の英数字・_・-")
     return service
 
 
 def _config_home(env: Mapping[str, str]) -> Path:
-    """設定フォルダ（`XDG_CONFIG_HOME`。無いか空なら ~/.config）を返す。"""
+    """設定フォルダ（`XDG_CONFIG_HOME`。無いか空なら ~/.config）を返却する。"""
     return Path(env.get(CONFIG_HOME_ENV) or DEFAULT_CONFIG_HOME).expanduser()
 
 
 def config_path(env: Mapping[str, str]) -> Path:
-    """`RULE_INJECT_CONFIG` の値か、無ければ既定のパスを返す。"""
+    """`RULE_INJECT_CONFIG` の値か、無ければ既定のパスを返却する。"""
     configured = env.get(CONFIG_ENV)
     if configured:
         return Path(configured).expanduser()
@@ -164,12 +164,12 @@ def config_path(env: Mapping[str, str]) -> Path:
 
 
 def backup_dir(env: Mapping[str, str]) -> Path:
-    """設定ファイルのバックアップを配置するフォルダを返す。"""
+    """設定ファイルのバックアップを配置するフォルダを返却する。"""
     return _config_home(env) / BACKUP_DIR_DEFAULT
 
 
 def _read_config(env: Mapping[str, str]) -> tuple[str, dict[str, object]]:
-    """設定ファイルを読み、場所と読み取った値を返す。既定のパスにファイルが無ければ空の値を返す。"""
+    """設定ファイルを読み、場所と読み取った値を返却する。既定のパスにファイルが無ければ空の値を返却する。"""
     path = config_path(env)
     # 環境変数で指していないとき、既定のパスのファイルは無くてよい
     if not env.get(CONFIG_ENV) and not path.is_file():
@@ -192,13 +192,13 @@ def _default_user_index(env: Mapping[str, str]) -> list[str]:
 
 
 def load_settings(env: Mapping[str, str]) -> Settings:
-    """設定ファイルを読み、当たった `projects` の要素を重ね、既定値で埋めた設定を返す。"""
+    """設定ファイルを読み、該当した `projects` の要素を重ね、既定値で埋めた設定を返却する。"""
     config, parsed = _read_config(env)
     global_table = parsed.get("global", {})
     global_values = dict(global_table) if isinstance(global_table, dict) else {}
     project_tables = parsed.get("projects", [])
     projects = list(project_tables) if isinstance(project_tables, list) else []
-    # 値を確かめる
+    # 値を確認する
     for number, project in enumerate(projects):
         if "match" not in project:
             raise SettingsReadError(
@@ -208,7 +208,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         _absolute_path(config, "global.indexes", written)
         for written in global_values.get("indexes", [])
     ]
-    # 環境変数の状態の置き場所は、設定ファイルより優先する
+    # 環境変数の状態の配置場所は、設定ファイルより優先する
     state_dir = (
         Path(_absolute_path(config, "global.state_dir", global_values["state_dir"]))
         if "state_dir" in global_values and not env.get(STATE_DIR_ENV)
@@ -234,14 +234,14 @@ def load_settings(env: Mapping[str, str]) -> Settings:
     server_port = _resolve_server_port(env)
     dev_docs_url = _resolve_dev_docs_url(config, global_values)
     server_service = _resolve_server_service(config, global_values)
-    # 起動したプロジェクトの直下に当たる要素を、並びの順に集める
+    # 起動したプロジェクトの直下に該当する要素を、並びの順に集める
     project_dir = env.get(PROJECT_DIR_ENV)
     matched = (
         [project for project in projects if _matches_project(project["match"], project_dir)]
         if project_dir
         else []
     )
-    # 索引の並び: global（無ければユーザーの既定）、続けて当たった要素の indexes
+    # 索引の並び: global（無ければユーザーの既定）、続けて該当した要素の indexes
     indexes = global_indexes if "indexes" in global_values else _default_user_index(env)
     project_indexes: list[str] = []
     if project_dir:
@@ -250,7 +250,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
                 resolve_location(written, Path(project_dir))
                 for written in project.get("indexes", [])
             )
-        # 当たった要素のどれも indexes を持たなければ、プロジェクトの既定の置き場所を読む
+        # 該当した要素のどれも indexes を持たなければ、プロジェクトの既定の配置場所を読む
         if not any("indexes" in project for project in matched):
             default_project_index = Path(project_dir) / PROJECT_INDEX_DEFAULT
             if default_project_index.is_file():

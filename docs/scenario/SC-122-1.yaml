@@ -20,7 +20,7 @@ scenarios:
         CL->>SV: 状態の確認
         SV->>CF: 読む
         CF-->>SV: 読めた
-        SV->>GC: バージョンと commit を引く
+        SV->>GC: バージョンと commit を取得する
         GC-->>SV: バージョンと commit
         SV-->>CL: ポート・プロセス・起動した時刻・バージョン・commit・設定ファイル
     expected:

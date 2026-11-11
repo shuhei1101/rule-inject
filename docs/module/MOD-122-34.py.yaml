@@ -22,8 +22,8 @@ functions:
       description: 終わるときは終了コードで抜ける
     process: |-
       1. `env = os.environ` として `load_settings(env)` で設定ファイルと `RULE_INJECT_PORT` を確認する。`SettingsReadError` は標準エラーへ `{path}: {reason}` を記載し、終了コード 1 で終わる
-      2. `socket.create_server((HOST, settings.server_port))` で待ち受けられるか確認して閉じる。OSError は標準エラーへポートの番号と「別のプロセスが使っている」旨を記載し、終了コード 1 で終わる（uvicorn は待ち受けの失敗を自分のログに書き込んで終わるため、先に確認する）
-      3. `control = ServerControl(port=settings.server_port)` と `clone = find_clone(Path(__file__).parent)` を作り、`build_server(env, control=control, clone=clone).streamable_http_app()` のアプリを `control.track` で包み、`uvicorn.Config(app, host=HOST, port=settings.server_port, timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_TIMEOUT)` の `uvicorn.Server` で待ち受ける（`control.attach(server)` の後に `server.run()`）。Ctrl+C・SIGTERM は uvicorn が待ち受けを閉じ、残った接続を上限で切ってから終わる（SSE のストリームは sse-starlette が取り消す）
+      2. `socket.create_server((HOST, settings.server_port))` で待ち受けられるか確認して閉じる。OSError は標準エラーへポートの番号と「別のプロセスが使用している」旨を記載し、終了コード 1 で終わる（uvicorn は待ち受けの失敗を自分のログに書き込んで終わるため、先に確認する）
+      3. `control = ServerControl(port=settings.server_port)` と `clone = find_clone(Path(__file__).parent)` を作り、`build_server(env, control=control, clone=clone).streamable_http_app()` のアプリを `control.track` で包み、`uvicorn.Config(app, host=HOST, port=settings.server_port, timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_TIMEOUT)` の `uvicorn.Server` で待ち受ける（`control.attach(server)` の後に `server.run()`）。Ctrl+C・SIGTERM は uvicorn が待ち受けを閉じ、残った接続を上限で切ってから終わる（SSE のストリームは sse-starlette がキャンセルする）
       4. `server.run()` が返ったとき `control.restart_requested` が真なら、`os.execv(sys.executable, [sys.executable, "-m", "rule_inject.server"])` で同じプロセスを置き換える（戻らない）。偽ならそのまま終わる
     unit_tests:
       - name: test_main_when_settings_unreadable

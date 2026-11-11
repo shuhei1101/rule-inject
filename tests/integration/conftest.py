@@ -1,4 +1,4 @@
-"""結合テストが共有する fixture。フックは子プロセスとして起動し、標準入力へ JSON を渡す。"""
+"""結合テストが共有する fixture。フックは子プロセスとして起動し、標準入力へ JSON を引き渡す。"""
 
 from __future__ import annotations
 
@@ -23,19 +23,19 @@ SECONDS_PER_DAY = 86_400
 
 @pytest.fixture
 def session_id() -> str:
-    """テストで使うセッションの識別子。"""
+    """テストで使用するセッションの識別子。"""
     return SESSION_ID
 
 
 @pytest.fixture
 def state_dir(tmp_path: Path) -> Path:
-    """既読の記録とログを置く記録フォルダ（まだ作らない）。"""
+    """既読の記録とログを配置する記録フォルダ（まだ作らない）。"""
     return tmp_path / "state"
 
 
 @pytest.fixture
 def log_folder(tmp_path: Path) -> Path:
-    """日付ごとのログを置くログのフォルダ（まだ作らない）。"""
+    """日付ごとのログを配置するログのフォルダ（まだ作らない）。"""
     return tmp_path / "logs"
 
 
@@ -65,10 +65,10 @@ def config_path(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def settings_text(state_dir: Path, log_folder: Path) -> Callable[..., str]:
-    """記録フォルダとログのフォルダに global の値を重ねた設定ファイルの YAML の文字列を返す factory。"""
+    """記録フォルダとログのフォルダに global の値を重ねた設定ファイルの YAML の文字列を返却する factory。"""
 
     def _text(**global_values: Any) -> str:
-        """global の値（リストはブロックのリスト、空のリストは `[]`）を並べた設定ファイルの文字列を返す。"""
+        """global の値（リストはブロックのリスト、空のリストは `[]`）を並べた設定ファイルの文字列を返却する。"""
         values: dict[str, Any] = {"state_dir": str(state_dir), "log_dir": str(log_folder)}
         values.update(global_values)
         lines = ["global:"]
@@ -85,12 +85,12 @@ def settings_text(state_dir: Path, log_folder: Path) -> Callable[..., str]:
 
 @pytest.fixture
 def base_env(tmp_path: Path, xdg_state_home: Path) -> dict[str, str]:
-    """このプラグインの環境変数を外し、プロジェクトの直下・索引の無い設定フォルダ・状態フォルダだけを追加した環境変数。"""
+    """このプラグインの環境変数を除外し、プロジェクトの直下・索引の無い設定フォルダ・状態フォルダだけを追加した環境変数。"""
     env = {name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")}
     env["CLAUDE_PROJECT_DIR"] = str(tmp_path)
     # 既定の索引が実際の設定フォルダの索引を読まないよう、索引の無い一時フォルダを指す
     env["XDG_CONFIG_HOME"] = str(tmp_path / "config")
-    # 既定の記録フォルダとログのフォルダが実際の状態フォルダを使わないよう、一時フォルダを指す
+    # 既定の記録フォルダとログのフォルダが実際の状態フォルダを使用しないよう、一時フォルダを指す
     env["XDG_STATE_HOME"] = str(xdg_state_home)
     return env
 
@@ -99,7 +99,7 @@ def base_env(tmp_path: Path, xdg_state_home: Path) -> dict[str, str]:
 def run_hook(
     base_env: dict[str, str], config_path: Path, settings_text: Callable[..., str]
 ) -> Callable[..., subprocess.CompletedProcess[str]]:
-    """フックを子プロセスとして起動し、標準入力へ JSON を渡して結果を返す factory。"""
+    """フックを子プロセスとして起動し、標準入力へ JSON を引き渡して結果を返却する factory。"""
 
     def _run(
         name: str,
@@ -112,11 +112,11 @@ def run_hook(
         project_dir: Path | None = None,
         extra_env: Mapping[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        """hooks/run.py に name を渡して起動する。
+        """hooks/run.py に name を引き渡して起動する。
 
         設定ファイルは、config_text があればその文字列で、無ければ記録フォルダとログのフォルダに
-        index（`global.indexes`）と global_values を重ねた文字列で書き、`RULE_INJECT_CONFIG` で指す。
-        no_config なら設定ファイルを渡さない。project_dir は `CLAUDE_PROJECT_DIR` を差し替え、extra_env を環境変数に追加する。
+        index（`global.indexes`）と global_values を重ねた文字列で書き込み、`RULE_INJECT_CONFIG` で指す。
+        no_config なら設定ファイルを引き渡さない。project_dir は `CLAUDE_PROJECT_DIR` を差し替え、extra_env を環境変数に追加する。
         """
         env = {**base_env, **(extra_env or {})}
         if project_dir is not None:
@@ -150,12 +150,12 @@ def run_hook(
 
 @pytest.fixture
 def unwritable() -> Iterator[Callable[[Path, int], Path]]:
-    """権限を外したフォルダ・ファイルにする factory。root は権限を無視するため skip する。"""
+    """権限を取り除いたフォルダ・ファイルにする factory。root は権限を無視するため skip する。"""
     changed: list[tuple[Path, int]] = []
 
     def _apply(path: Path, mode: int) -> Path:
-        """path の権限を mode にして返す。"""
-        # root は権限の判定を受けないため、確かめられない
+        """path の権限を mode にして返却する。"""
+        # root は権限の判定を受けないため、確認できない
         if os.geteuid() == 0:
             pytest.skip("root は権限を無視する")
         changed.append((path, path.stat().st_mode))
@@ -170,10 +170,10 @@ def unwritable() -> Iterator[Callable[[Path, int], Path]]:
 
 @pytest.fixture
 def make_index(tmp_path: Path) -> Callable[..., Path]:
-    """索引の YAML を書き、そのパスを返す factory。"""
+    """索引の YAML を書き込み、そのパスを返却する factory。"""
 
     def _make(text: str, name: str = "index.yaml") -> Path:
-        """text を tmp_path の下の name に書く。"""
+        """text を tmp_path の下の name に書き込む。"""
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
@@ -184,7 +184,7 @@ def make_index(tmp_path: Path) -> Callable[..., Path]:
 
 @pytest.fixture
 def index_text() -> Callable[..., str]:
-    """エントリの dict を並べた索引の YAML の文字列を返す factory。"""
+    """エントリの dict を並べた索引の YAML の文字列を返却する factory。"""
 
     def _text(*entries: Mapping[str, Any], default_on: Sequence[str] | None = None) -> str:
         """各エントリの rule・paths・exclude・tools・args・on・read_by・read_tool・enabled から索引の文字列を組み立てる。"""
@@ -195,12 +195,12 @@ def index_text() -> Callable[..., str]:
         lines.append("rules:")
         for entry in entries:
             lines.append(f"  - rule: {entry['rule']}")
-            # 書かれた条件だけをエントリに追加する
+            # 記載された条件だけをエントリに追加する
             for key in ("paths", "exclude", "tools"):
                 if entry.get(key):
                     lines.append(f"    {key}:")
                     lines.extend(f'      - "{value}"' for value in entry[key])
-            # 引数の条件は、キーごとにパターンのリストを並べたブロックのマップで書く
+            # 引数の条件は、キーごとにパターンのリストを並べたブロックのマップで記載する
             if entry.get("args"):
                 lines.append("    args:")
                 for arg_key, patterns in entry["args"].items():
@@ -208,13 +208,13 @@ def index_text() -> Callable[..., str]:
                     lines.extend(f'        - "{pattern}"' for pattern in patterns)
             if entry.get("on") is not None:
                 lines.append(f"    on: [{', '.join(entry['on'])}]")
-            # 有効・無効は、真偽値なら `true` / `false`、文字列ならそのままの表記で書く
+            # 有効・無効は、真偽値なら `true` / `false`、文字列ならそのままの表記で記載する
             if "enabled" in entry:
                 enabled = entry["enabled"]
                 lines.append(
                     f"    enabled: {str(enabled).lower() if isinstance(enabled, bool) else enabled}"
                 )
-            # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで書く
+            # 既読にする呼び出しは、`tools` のリストと任意の `args` のマップを持つ要素のブロックのリストで記載する
             if entry.get("read_by"):
                 lines.append("    read_by:")
                 for condition in entry["read_by"]:
@@ -225,7 +225,7 @@ def index_text() -> Callable[..., str]:
                         for arg_key, patterns in condition["args"].items():
                             lines.append(f"          {arg_key}:")
                             lines.extend(f'            - "{pattern}"' for pattern in patterns)
-            # 参照するツールは、`tool` と JSON の文字列の `args`・`optional_args` を単一引用符で書く
+            # 参照するツールは、`tool` と JSON の文字列の `args`・`optional_args` を単一引用符で記載する
             if entry.get("read_tool"):
                 lines.append("    read_tool:")
                 for tool_key, value in entry["read_tool"].items():
@@ -238,10 +238,10 @@ def index_text() -> Callable[..., str]:
 
 @pytest.fixture
 def rule_file(tmp_path: Path) -> Callable[..., Path]:
-    """ルールの本文のファイルを置く factory。"""
+    """ルールの本文のファイルを配置する factory。"""
 
     def _make(name: str = "python.md", body: str = "# 規約\n") -> Path:
-        """tmp_path/rules の下に name のファイルを body で置く。"""
+        """tmp_path/rules の下に name のファイルを body で配置する。"""
         path = tmp_path / "rules" / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(body, encoding="utf-8")
@@ -252,10 +252,10 @@ def rule_file(tmp_path: Path) -> Callable[..., Path]:
 
 @pytest.fixture
 def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], Path]:
-    """既読の記録ファイルを、行を 1 行ずつ書いて置く factory（既読の行は `{場所}\\t{ハッシュ}`）。"""
+    """既読の記録ファイルを、行を 1 行ずつ書き込んで配置する factory（既読の行は `{場所}\\t{ハッシュ}`）。"""
 
     def _write(lines: Sequence[str], name: str | None = None) -> Path:
-        """lines を 1 行ずつ、name（無ければこのセッション）の記録ファイルに書く。"""
+        """lines を 1 行ずつ、name（無ければこのセッション）の記録ファイルに書き込む。"""
         path = state_dir / f"{name or session_id}.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
@@ -266,10 +266,10 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
 
 @pytest.fixture
 def write_guided(state_dir: Path, session_id: str) -> Callable[..., Path]:
-    """案内済みの記録ファイルを、場所を 1 行ずつ書いて置く factory。"""
+    """案内済みの記録ファイルを、場所を 1 行ずつ書き込んで配置する factory。"""
 
     def _write(locations: Sequence[str], name: str | None = None) -> Path:
-        """locations を 1 行ずつ、name（無ければこのセッション）の案内済みの記録ファイルに書く。"""
+        """locations を 1 行ずつ、name（無ければこのセッション）の案内済みの記録ファイルに書き込む。"""
         path = state_dir / f"{name or session_id}.guided.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("".join(f"{location}\n" for location in locations), encoding="utf-8")
@@ -280,10 +280,10 @@ def write_guided(state_dir: Path, session_id: str) -> Callable[..., Path]:
 
 @pytest.fixture
 def write_history(state_dir: Path, session_id: str) -> Callable[..., Path]:
-    """既読の履歴ファイルを、1 行の JSON を書いて置く factory。"""
+    """既読の履歴ファイルを、1 行の JSON を書き込んで配置する factory。"""
 
     def _write(name: str | None = None) -> Path:
-        """name（無ければこのセッション）の既読の履歴ファイルに 1 行の JSON を書く。"""
+        """name（無ければこのセッション）の既読の履歴ファイルに 1 行の JSON を書き込む。"""
         target = name or session_id
         path = state_dir / f"{target}.history.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -302,7 +302,7 @@ def write_history(state_dir: Path, session_id: str) -> Callable[..., Path]:
 
 @pytest.fixture
 def read_history(state_dir: Path, session_id: str) -> Callable[[], list[dict[str, Any]]]:
-    """このセッションの既読の履歴ファイル（JSON Lines）を読み、1 行ごとの dict を返す。"""
+    """このセッションの既読の履歴ファイル（JSON Lines）を読み、1 行ごとの dict を返却する。"""
 
     def _read() -> list[dict[str, Any]]:
         """{session_id}.history.jsonl の各行を JSON として読む。"""
@@ -317,7 +317,7 @@ def set_age_days() -> Callable[[Path, int], Path]:
     """ファイルの最終更新を、現在から指定の日数前に戻す factory。"""
 
     def _set(path: Path, age_days: int) -> Path:
-        """path の最終更新を age_days 日前にして返す。"""
+        """path の最終更新を age_days 日前にして返却する。"""
         modified = time.time() - age_days * SECONDS_PER_DAY
         os.utime(path, (modified, modified))
         return path
@@ -327,10 +327,10 @@ def set_age_days() -> Callable[[Path, int], Path]:
 
 @pytest.fixture
 def read_lines() -> Callable[[Path], list[str]]:
-    """ファイルを UTF-8 で読み、行のリストを返す。"""
+    """ファイルを UTF-8 で読み、行のリストを返却する。"""
 
     def _read(path: Path) -> list[str]:
-        """path の行を返す。"""
+        """path の行を返却する。"""
         return path.read_text(encoding="utf-8").splitlines()
 
     return _read
@@ -338,7 +338,7 @@ def read_lines() -> Callable[[Path], list[str]]:
 
 @pytest.fixture
 def read_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
-    """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
+    """ログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返却する。"""
 
     def _read() -> list[dict[str, Any]]:
         """{yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
@@ -353,7 +353,7 @@ def read_log(log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
 
 @pytest.fixture
 def read_default_log(default_log_folder: Path) -> Callable[[], list[dict[str, Any]]]:
-    """既定のログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返す。"""
+    """既定のログのフォルダの日付ごとのログ（JSON Lines）を日付の順に読み、1 行ごとの dict を返却する。"""
 
     def _read() -> list[dict[str, Any]]:
         """既定のログのフォルダの {yyyymmdd}_rule-inject.log の各行を JSON として読む。"""
@@ -368,10 +368,10 @@ def read_default_log(default_log_folder: Path) -> Callable[[], list[dict[str, An
 
 @pytest.fixture
 def write_dated_log(log_folder: Path) -> Callable[[date], Path]:
-    """日付を名前に持つログのファイルを、ログのフォルダに置く factory。"""
+    """日付を名前に持つログのファイルを、ログのフォルダに配置する factory。"""
 
     def _write(day: date) -> Path:
-        """day の日付の `{yyyymmdd}_rule-inject.log` をログのフォルダに置く。"""
+        """day の日付の `{yyyymmdd}_rule-inject.log` をログのフォルダに配置する。"""
         path = log_folder / f"{day:%Y%m%d}_rule-inject.log"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}\n", encoding="utf-8")

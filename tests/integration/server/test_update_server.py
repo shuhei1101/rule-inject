@@ -9,14 +9,14 @@ from typing import Any
 
 # テストの commit の作者（利用者の git の設定を読まない）
 GIT_IDENTITY = ["-c", "user.name=test", "-c", "user.email=test@example.com"]
-# 上流へ積む、どの設定にも当たる移し替えの手順
+# 上流へ追加する、どの設定にも該当する移し替えの手順
 MIGRATION_MODULE = '''"""結合テストの移し替えの手順。"""
 
 DESCRIPTION = "結合テストの移し替え"
 
 
 def applies(data: object) -> bool:
-    """どの設定にも当たる。"""
+    """どの設定にも該当する。"""
     return True
 
 
@@ -28,7 +28,7 @@ SERVICE_PATH = "src/rule_inject/features/migrate/service.py"
 
 
 def _git(cwd: Path, *args: str) -> str:
-    """cwd で git を実行し、標準出力を返す。"""
+    """cwd で git を実行し、標準出力を返却する。"""
     completed = subprocess.run(
         ["git", *GIT_IDENTITY, *args], cwd=cwd, capture_output=True, text=True, check=True
     )
@@ -36,7 +36,7 @@ def _git(cwd: Path, *args: str) -> str:
 
 
 def _push_migration(pusher: Path) -> str:
-    """移し替えの手順を 1 つ足して `MIGRATIONS` に並べた commit を、上流へ push して返す。"""
+    """移し替えの手順を 1 つ追加して `MIGRATIONS` に並べた commit を、上流へ push して返却する。"""
     (pusher / "src/rule_inject/features/migrate/migrations/v9_9_9.py").write_text(
         MIGRATION_MODULE, encoding="utf-8"
     )
@@ -58,7 +58,7 @@ def test_normal(
     start_clone_server: Callable[..., Any],
     wait_restarted: Callable[..., dict[str, Any]],
 ) -> None:
-    """上流の commit を fast-forward で取り込み、依存を入れ直し、移し替えが要らなければ再起動する（正常系）。"""
+    """上流の commit を fast-forward で取り込み、依存を再インストール、移し替えが要らなければ再起動する（正常系）。"""
     # 準備
     server = start_clone_server()
     before = server.call("get_server_status").structured_content
@@ -95,7 +95,7 @@ def test_normal_when_up_to_date(clone_repos: Any, start_clone_server: Callable[.
 def test_normal_when_migration_required(
     clone_repos: Any, start_clone_server: Callable[..., Any]
 ) -> None:
-    """移し替えの手順があるときは再起動せず、手順と global-setup を返す（正常系）。"""
+    """移し替えの手順があるときは再起動せず、手順と global-setup を返却する（正常系）。"""
     # 準備
     server = start_clone_server()
     before = server.call("get_server_status").structured_content
@@ -163,7 +163,7 @@ def test_error_when_command_failed(
     start_clone_server: Callable[..., Any],
     text_of: Callable[[Any], str],
 ) -> None:
-    """`uv sync` が失敗したときは、取り込んだ commit を返して再起動しない（異常系）。"""
+    """`uv sync` が失敗したときは、取り込んだ commit を返却して再起動しない（異常系）。"""
     # 準備
     server = start_clone_server(fail_uv=True)
     before = server.call("get_server_status").structured_content

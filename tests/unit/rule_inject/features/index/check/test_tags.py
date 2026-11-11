@@ -63,7 +63,7 @@ def test_tag_patterns(index_text: Callable[..., str]) -> None:
 
 
 def test_tag_patterns_when_not_effective() -> None:
-    """効いていないエントリは集めない（正常系）。"""
+    """有効でないエントリは集めない（正常系）。"""
     from rule_inject.features.index.check.tags import tag_patterns
 
     # 準備
@@ -85,7 +85,7 @@ def test_tag_patterns_when_not_effective() -> None:
 
 
 def test_unused_tag_patterns(make_tag_pattern: Callable[[str], TagPattern]) -> None:
-    """返ったタグか正規化したタグに当たらないパターンだけを返す（正常系）。"""
+    """返ったタグか正規化したタグに該当しないパターンだけを返却する（正常系）。"""
     from rule_inject.features.index.check.tags import unused_tag_patterns
 
     # 準備
@@ -103,7 +103,7 @@ def test_unused_tag_patterns(make_tag_pattern: Callable[[str], TagPattern]) -> N
 
 
 def test_unused_tag_patterns_when_fullwidth(make_tag_pattern: Callable[[str], TagPattern]) -> None:
-    """NFKC で揃うタグに当てる（正常系）。"""
+    """NFKC で一致するタグに照合する（正常系）。"""
     from rule_inject.features.index.check.tags import unused_tag_patterns
 
     # 準備

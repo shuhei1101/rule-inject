@@ -28,7 +28,7 @@ START_TIMEOUT_SEC = 51
 STOP_TIMEOUT_SEC = 15
 CALL_TIMEOUT_SEC = 30
 POLL_INTERVAL_SEC = 0.1
-# 待ち受けに失敗して子プロセスが終わったとき、別の空いているポートで起動し直す回数の上限（導き方はテスト実行方法の結合テスト（バック）の補足「再起動の回数」）
+# 待ち受けに失敗して子プロセスが終わったとき、別の空いているポートで再起動する回数の上限（導き方はテスト実行方法の結合テスト（バック）の補足「再起動の回数」）
 START_ATTEMPTS = 5
 # `/proc/net/tcp` の状態が LISTEN のときの値と、127.0.0.1 の 16 進の表記
 LISTEN_STATE = "0A"
@@ -68,7 +68,7 @@ class RunningServer:
         return asyncio.run(asyncio.wait_for(_call(), CALL_TIMEOUT_SEC))
 
     def tool_names(self) -> list[str]:
-        """ツールの一覧の名前を返す。"""
+        """ツールの一覧の名前を返却する。"""
 
         async def _list() -> list[str]:
             """接続してツールの一覧を取る。"""
@@ -82,7 +82,7 @@ class RunningServer:
         return asyncio.run(asyncio.wait_for(_list(), CALL_TIMEOUT_SEC))
 
     def instructions(self) -> str | None:
-        """接続時の initialize の応答の instructions を返す。"""
+        """接続時の initialize の応答の instructions を返却する。"""
 
         async def _initialize() -> str | None:
             """接続して初期化の応答を取る。"""
@@ -96,7 +96,7 @@ class RunningServer:
 
 
 def listening_addresses(port: int) -> set[str]:
-    """ポートで待ち受けているソケットのアドレス（IPv4 は 16 進、IPv6 は `v6:` を付けた 16 進）を返す。"""
+    """ポートで待ち受けているソケットのアドレス（IPv4 は 16 進、IPv6 は `v6:` を付けた 16 進）を返却する。"""
     addresses: set[str] = set()
     for table, prefix in (("/proc/net/tcp", ""), ("/proc/net/tcp6", "v6:")):
         for line in Path(table).read_text(encoding="utf-8").splitlines()[1:]:
@@ -110,29 +110,29 @@ def listening_addresses(port: int) -> set[str]:
 
 @pytest.fixture
 def addresses_listening() -> Callable[[int], set[str]]:
-    """ポートで待ち受けているソケットのアドレスを返す関数。"""
+    """ポートで待ち受けているソケットのアドレスを返却する関数。"""
     return listening_addresses
 
 
 def _free_port() -> int:
-    """ポート 0 で待ち受けて、割り当てられたポートを返す（すぐ閉じる）。
+    """ポート 0 で待ち受けて、割り当てられたポートを返却する（すぐ閉じる）。
 
     閉じてから子プロセスが待ち受けるまでの間に他のプロセスが同じポートを取ることがあるため、
-    この番号で起動する側は `_launch` で起動を確かめ、失敗したら別の番号で起動し直す。
+    この番号で起動する側は `_launch` で起動を確認し、失敗したら別の番号で再起動する。
     """
     with socket.create_server((HOST, 0)) as probe:
         return int(probe.getsockname()[1])
 
 
 def ready_line(port: int) -> str:
-    """uvicorn が待ち受けを始めたときに標準エラーへ書く行（`port` で待ち受けたときだけ出る）。"""
+    """uvicorn が待ち受けを始めたときに標準エラーへ書き込む行（`port` で待ち受けたときだけ出る）。"""
     return f"Uvicorn running on http://{HOST}:{port}"
 
 
 def _wait_ready(process: subprocess.Popen[bytes], stderr_path: Path, port: int) -> bool:
     """標準エラーに `port` の待ち受けの開始の行が出るまで待つ。
 
-    先に子プロセスが終わったときは、待ち受けに失敗したとして False を返す。
+    先に子プロセスが終わったときは、待ち受けに失敗したとして False を返却する。
     時間を超えたときは子プロセスを止めて失敗にする。
     """
     deadline = time.monotonic() + START_TIMEOUT_SEC
@@ -155,10 +155,10 @@ def _wait_ready(process: subprocess.Popen[bytes], stderr_path: Path, port: int) 
 def _launch(
     spawn: Callable[[int, int], tuple[subprocess.Popen[bytes], Path]],
 ) -> tuple[int, subprocess.Popen[bytes], Path]:
-    """空いているポートで子プロセスを起動して待ち受けるまで待ち、失敗したら別のポートで起動し直す。
+    """空いているポートで子プロセスを起動して待ち受けるまで待ち、失敗したら別のポートで再起動する。
 
-    spawn は (ポート, 何回目か) を受けて起動し、子プロセスと標準エラーのファイルを返す。
-    待ち受けたポート・子プロセス・標準エラーのファイルを返す。`START_ATTEMPTS` 回とも失敗したら失敗にする。
+    spawn は (ポート, 何回目か) を受けて起動し、子プロセスと標準エラーのファイルを返却する。
+    待ち受けたポート・子プロセス・標準エラーのファイルを返却する。`START_ATTEMPTS` 回とも失敗したら失敗にする。
     """
     stderr = ""
     for attempt in range(START_ATTEMPTS):
@@ -167,7 +167,7 @@ def _launch(
         if _wait_ready(process, stderr_path, port):
             return port, process, stderr_path
         stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
-    pytest.fail(f"{START_ATTEMPTS} 回起動し直しても待ち受けなかった: {stderr}")
+    pytest.fail(f"{START_ATTEMPTS} 回再起動しても待ち受けなかった: {stderr}")
 
 
 # 辿る時間の上限を 0 秒に差し替えてサーバーを起動するコード（`python -m rule_inject.server` は上限を差し替えられない）
@@ -192,7 +192,7 @@ LIMITED_SERVER_CODE = (
 def _spawn(
     env: Mapping[str, str], stderr_path: Path, *, limited: bool = False
 ) -> subprocess.Popen[bytes]:
-    """`python -m rule_inject.server` を子プロセスとして起動する（標準エラーはファイルへ書く）。limited なら辿る時間の上限を 0 秒にして起動する。"""
+    """`python -m rule_inject.server` を子プロセスとして起動する（標準エラーはファイルへ書き込む）。limited なら辿る時間の上限を 0 秒にして起動する。"""
     command = (
         [sys.executable, "-c", LIMITED_SERVER_CODE]
         if limited
@@ -220,7 +220,7 @@ def _stop(server: RunningServer) -> None:
 
 
 def _server_env(config: Path, state_home: Path, config_home: Path) -> dict[str, str]:
-    """このプラグインの環境変数を外し、設定ファイルと状態・設定フォルダだけを指した環境変数を作る。"""
+    """このプラグインの環境変数を除外し、設定ファイルと状態・設定フォルダだけを指した環境変数を作る。"""
     env = {name: value for name, value in os.environ.items() if not name.startswith("RULE_INJECT_")}
     env["RULE_INJECT_CONFIG"] = str(config)
     env["XDG_CONFIG_HOME"] = str(config_home)
@@ -233,13 +233,13 @@ def start_server(
     tmp_path: Path,
     config_path: Path,
 ) -> Iterator[Callable[..., RunningServer]]:
-    """設定ファイルを書き、サーバーを子プロセスとして起動する factory。終わったら止める。"""
+    """設定ファイルを書き込み、サーバーを子プロセスとして起動する factory。終わったら止める。"""
     started: list[RunningServer] = []
 
     def _spawn_at(
         make_config: Callable[[], str], port: int, attempt: int
     ) -> tuple[subprocess.Popen[bytes], Path]:
-        """設定ファイルを書き、port を `RULE_INJECT_PORT` に渡して起動する。"""
+        """設定ファイルを書き込み、port を `RULE_INJECT_PORT` に引き渡して起動する。"""
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(make_config(), encoding="utf-8")
         env = _server_env(config_path, tmp_path / "xdg_state", tmp_path / "xdg_config")
@@ -255,8 +255,8 @@ def start_server(
     ) -> RunningServer:
         """make_config の設定ファイルと空いているポート（port があればそのポート）で起動する。
 
-        wait_ready なら待ち受けるまで待ち、待ち受けに失敗したら別のポートで起動し直す。
-        wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確かめに使う）。
+        wait_ready なら待ち受けるまで待ち、待ち受けに失敗したら別のポートで再起動する。
+        wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確認に使用する）。
         """
         if wait_ready:
             used, process, stderr_path = _launch(
@@ -279,14 +279,14 @@ def start_server(
 def _start_shared(
     tmp_path_factory: pytest.TempPathFactory, name: str, *, limited: bool
 ) -> RunningServer:
-    """テスト全体で共有するサーバーを、空いているポートで起動して待ち受けるまで待つ（失敗したら別のポートで起動し直す）。"""
+    """テスト全体で共有するサーバーを、空いているポートで起動して待ち受けるまで待つ（失敗したら別のポートで再起動する）。"""
     home = tmp_path_factory.mktemp(name)
     config = home / "config" / "settings.yaml"
     config.parent.mkdir()
     env = _server_env(config, home / "xdg_state", home / "xdg_config")
 
     def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
-        """起動し直したポートを `RULE_INJECT_PORT` に渡して起動する。"""
+        """再起動したポートを `RULE_INJECT_PORT` に引き渡して起動する。"""
         config.write_text("", encoding="utf-8")
         stderr_path = home / f"server-{attempt}.stderr"
         return _spawn(
@@ -299,7 +299,7 @@ def _start_shared(
 
 @pytest.fixture(scope="module")
 def shared_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningServer]:
-    """ツールの結合テストが共有するサーバー。設定ファイルは呼び出しのたびに読み直されるため、テストごとに書き換える。"""
+    """ツールの結合テストが共有するサーバー。設定ファイルは呼び出しのたびに再読込されるため、テストごとに書き換える。"""
     server = _start_shared(tmp_path_factory, "shared_server", limited=False)
     yield server
     _stop(server)
@@ -307,13 +307,13 @@ def shared_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningS
 
 @pytest.fixture(scope="module")
 def limited_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RunningServer]:
-    """辿る時間の上限を 0 秒にして起動した、ツールの結合テストが共有するサーバー（1 回の呼び出しで 1 つのファイルだけを当てる）。"""
+    """辿る時間の上限を 0 秒にして起動した、ツールの結合テストが共有するサーバー（1 回の呼び出しで 1 つのファイルだけを照合する）。"""
     server = _start_shared(tmp_path_factory, "limited_server", limited=True)
     yield server
     _stop(server)
 
 
-# 偽の dev-docs を立てるコード。`search_docs` が受けた引数を 1 行ずつ記録し、`FAKE_DELAY` 秒待ってから決めた応答の文字列を返す
+# 偽の dev-docs を起動するコード。`search_docs` が受けた引数を 1 行ずつ記録し、`FAKE_DELAY` 秒待ってから決めた応答の文字列を返却する
 FAKE_DEV_DOCS_CODE = (
     "import json, os, time\n"
     "from mcp.server.mcpserver import MCPServer\n"
@@ -340,7 +340,7 @@ class FakeDevDocs:
     calls_path: Path
 
     def calls(self) -> list[dict[str, str]]:
-        """受けた `search_docs` の引数を、呼ばれた順に返す。"""
+        """受けた `search_docs` の引数を、呼ばれた順に返却する。"""
         if not self.calls_path.exists():
             return []
         lines = self.calls_path.read_text(encoding="utf-8").splitlines()
@@ -349,11 +349,11 @@ class FakeDevDocs:
 
 @pytest.fixture
 def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[..., FakeDevDocs]]:
-    """`search_docs` が決めた応答を返す偽の dev-docs を子プロセスとして立てる factory。終わったら止める。"""
+    """`search_docs` が決めた応答を返却する偽の dev-docs を子プロセスとして起動する factory。終わったら止める。"""
     processes: list[subprocess.Popen[bytes]] = []
 
     def _start(response: Mapping[str, Any], *, delay: float = 0) -> FakeDevDocs:
-        """response の JSON を delay 秒待ってから返す偽の dev-docs を空いているポートで立て、待ち受けるまで待つ。"""
+        """response の JSON を delay 秒待ってから返却する偽の dev-docs を空いているポートで起動し、待ち受けるまで待つ。"""
         directory = tmp_path / "fake_dev_docs"
         directory.mkdir(exist_ok=True)
         response_path = directory / "response.json"
@@ -361,7 +361,7 @@ def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[..., FakeDevDocs]]:
         calls_path = directory / "calls.jsonl"
 
         def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
-            """port で偽の dev-docs を起動する（標準エラーは起動の確かめのためファイルへ書く）。"""
+            """port で偽の dev-docs を起動する（標準エラーは起動の確認のためファイルへ書き込む）。"""
             env = dict(os.environ)
             env.update(
                 FAKE_PORT=str(port),
@@ -395,7 +395,7 @@ def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[..., FakeDevDocs]]:
 
 @pytest.fixture
 def project_dir(tmp_path: Path) -> Path:
-    """ツールに渡すプロジェクトの直下。"""
+    """ツールに引き渡すプロジェクトの直下。"""
     path = tmp_path / "workspace"
     path.mkdir()
     return path
@@ -403,7 +403,7 @@ def project_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def config_text() -> Callable[..., str]:
-    """`global.indexes`・`global.dev_docs_url`・`projects` を持つ設定ファイルの文字列を返す factory。"""
+    """`global.indexes`・`global.dev_docs_url`・`projects` を持つ設定ファイルの文字列を返却する factory。"""
 
     def _text(
         *,
@@ -412,9 +412,9 @@ def config_text() -> Callable[..., str]:
         project_indexes: Sequence[Path] = (),
         dev_docs_url: str | None = None,
     ) -> str:
-        """渡した索引・プロジェクトの要素・dev-docs の接続先を書いた設定ファイルの文字列を作る。"""
+        """引き渡した索引・プロジェクトの要素・dev-docs の接続先を記載した設定ファイルの文字列を作る。"""
         lines: list[str] = []
-        # global のキーがあるときだけ見出しを置く
+        # global のキーがあるときだけ見出しを配置する
         if dev_docs_url is not None or global_indexes:
             lines.append("global:")
         if dev_docs_url is not None:
@@ -436,14 +436,14 @@ def running_server(
     config_text: Callable[..., str],
     project_dir: Path,
 ) -> Callable[..., RunningServer]:
-    """プロジェクトの直下に当たる要素に索引を並べた設定ファイルを書き、共有のサーバーを返す factory。"""
+    """プロジェクトの直下に該当する要素に索引を並べた設定ファイルを書き込み、共有のサーバーを返却する factory。"""
 
     def _use(
         *project_indexes: Path,
         global_indexes: Sequence[Path] = (),
         dev_docs_url: str | None = None,
     ) -> RunningServer:
-        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に置く。"""
+        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に、dev_docs_url を `global.dev_docs_url` に配置する。"""
         text = config_text(
             global_indexes=global_indexes,
             match=project_dir if project_indexes else None,
@@ -462,10 +462,10 @@ def running_limited_server(
     config_text: Callable[..., str],
     project_dir: Path,
 ) -> Callable[..., RunningServer]:
-    """`running_server` と同じ設定ファイルを書き、辿る時間の上限を 0 秒にしたサーバーを返す factory。"""
+    """`running_server` と同じ設定ファイルを書き込み、辿る時間の上限を 0 秒にしたサーバーを返却する factory。"""
 
     def _use(*project_indexes: Path, global_indexes: Sequence[Path] = ()) -> RunningServer:
-        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に置く。"""
+        """project_indexes を `projects` の要素の `indexes` に、global_indexes を `global.indexes` に配置する。"""
         text = config_text(
             global_indexes=global_indexes,
             match=project_dir if project_indexes else None,
@@ -479,7 +479,7 @@ def running_limited_server(
 
 @pytest.fixture
 def record_server(shared_server: RunningServer, state_dir: Path) -> RunningServer:
-    """`global.state_dir` でテストの記録フォルダを指した設定ファイルを書き、共有のサーバーを返す。"""
+    """`global.state_dir` でテストの記録フォルダを指した設定ファイルを書き込み、共有のサーバーを返却する。"""
     text = f"global:\n  state_dir: {state_dir}\n"
     shared_server.config_path.write_text(text, encoding="utf-8")
     return shared_server
@@ -487,10 +487,10 @@ def record_server(shared_server: RunningServer, state_dir: Path) -> RunningServe
 
 @pytest.fixture
 def write_history_rows(state_dir: Path, session_id: str) -> Callable[..., Path]:
-    """既読の履歴ファイルを、行を 1 行ずつ書いて置く factory。dict は JSON にし、文字列はそのまま書く。"""
+    """既読の履歴ファイルを、行を 1 行ずつ書き込んで配置する factory。dict は JSON にし、文字列はそのまま書き込む。"""
 
     def _write(rows: Sequence[Mapping[str, Any] | str], name: str | None = None) -> Path:
-        """rows を 1 行ずつ、name（無ければこのセッション）の既読の履歴ファイルに書く。"""
+        """rows を 1 行ずつ、name（無ければこのセッション）の既読の履歴ファイルに書き込む。"""
         path = state_dir / f"{name or session_id}.history.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
         lines = [row if isinstance(row, str) else json.dumps(row) for row in rows]
@@ -502,10 +502,10 @@ def write_history_rows(state_dir: Path, session_id: str) -> Callable[..., Path]:
 
 @pytest.fixture
 def make_project_files(project_dir: Path) -> Callable[..., None]:
-    """プロジェクトの直下の下に、空のファイルをフォルダごと置く factory。"""
+    """プロジェクトの直下の下に、空のファイルをフォルダごと配置する factory。"""
 
     def _make(*names: str) -> None:
-        """names の相対パスのファイルを置く。"""
+        """names の相対パスのファイルを配置する。"""
         for name in names:
             path = project_dir / name
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -516,10 +516,10 @@ def make_project_files(project_dir: Path) -> Callable[..., None]:
 
 @pytest.fixture
 def hashed() -> Callable[[Path], str]:
-    """ルールのファイルの中身の SHA-256 を、既読の記録の書式（`sha256:{16 進数}`）で返す関数。"""
+    """ルールのファイルの中身の SHA-256 を、既読の記録の書式（`sha256:{16 進数}`）で返却する関数。"""
 
     def _hash(path: Path) -> str:
-        """path の中身のハッシュを返す。"""
+        """path の中身のハッシュを返却する。"""
         return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
 
     return _hash
@@ -527,10 +527,10 @@ def hashed() -> Callable[[Path], str]:
 
 @pytest.fixture
 def invalid_config(shared_server: RunningServer) -> Callable[[], str]:
-    """共有のサーバーの設定ファイルを、`global` に知らないキーを持つ内容へ書き換える関数。設定ファイルの場所を返す。"""
+    """共有のサーバーの設定ファイルを、`global` に知らないキーを持つ内容へ書き換える関数。設定ファイルの場所を返却する。"""
 
     def _break() -> str:
-        """設定ファイルを読めない内容にして、その場所を返す。"""
+        """設定ファイルを読めない内容にして、その場所を返却する。"""
         shared_server.config_path.write_text("global:\n  foo: 1\n", encoding="utf-8")
         return str(shared_server.config_path)
 
@@ -539,7 +539,7 @@ def invalid_config(shared_server: RunningServer) -> Callable[[], str]:
 
 @pytest.fixture
 def list_revs(project_dir: Path) -> Callable[[RunningServer], list[str]]:
-    """`list_rules` が返す効いているエントリのバージョンを、位置の順に返す関数。"""
+    """`list_rules` が返却する有効なエントリのバージョンを、位置の順に返却する関数。"""
 
     def _revs(server: RunningServer) -> list[str]:
         """`list_rules` を呼び、`entries[].rev` を並べる。"""
@@ -551,7 +551,7 @@ def list_revs(project_dir: Path) -> Callable[[RunningServer], list[str]]:
 
 @pytest.fixture
 def text_of() -> Callable[[CallToolResult], str]:
-    """ツールの結果の text を返す関数。"""
+    """ツールの結果の text を返却する関数。"""
 
     def _text(result: CallToolResult) -> str:
         """結果の content の text をつなげる。"""
@@ -560,12 +560,12 @@ def text_of() -> Callable[[CallToolResult], str]:
     return _text
 
 
-# 再起動の後に接続し直せるようになるまで、状態の確認を呼び直す上限（秒）。起動を待つ上限と同じ
+# 再起動の後に再接続できるようになるまで、状態の確認を再度呼び出す上限（秒）。起動を待つ上限と同じ
 RESTART_WAIT_SEC = START_TIMEOUT_SEC
 
 
 def call_quietly(server: RunningServer, name: str, **arguments: Any) -> CallToolResult | None:
-    """ツールを呼び、接続できない・接続が切れたときは None を返す。"""
+    """ツールを呼び、接続できない・接続が切れたときは None を返却する。"""
     # 接続の失敗は SDK が ExceptionGroup に包んで送出する（mcp の外部ライブラリの設計書）
     try:
         return server.call(name, **arguments)
@@ -575,18 +575,18 @@ def call_quietly(server: RunningServer, name: str, **arguments: Any) -> CallTool
 
 @pytest.fixture
 def wait_restarted() -> Callable[[RunningServer, str], dict[str, Any]]:
-    """`get_server_status` の `started_at` が before より新しくなるまで呼び直し、その応答を返す関数。"""
+    """`get_server_status` の `started_at` が before より新しくなるまで再度呼び出し、その応答を返却する関数。"""
 
     def _wait(server: RunningServer, before: str) -> dict[str, Any]:
-        """再起動の後に接続し直せるまで待つ。上限を過ぎたら失敗にする。"""
+        """再起動の後に再接続できるまで待つ。上限を過ぎたら失敗にする。"""
         deadline = time.monotonic() + RESTART_WAIT_SEC
         while time.monotonic() < deadline:
             result = call_quietly(server, "get_server_status")
-            # 接続でき、起動した時刻が新しくなった: 起動し直した
+            # 接続でき、起動した時刻が新しくなった: 再起動した
             if result is not None and result.structured_content["started_at"] > before:
                 return dict(result.structured_content)
             time.sleep(POLL_INTERVAL_SEC)
-        pytest.fail(f"{RESTART_WAIT_SEC} 秒で起動し直さなかった: {server.stderr_text()}")
+        pytest.fail(f"{RESTART_WAIT_SEC} 秒で再起動しなかった: {server.stderr_text()}")
 
     return _wait
 
@@ -596,7 +596,7 @@ GIT_IDENTITY = ("-c", "user.name=test", "-c", "user.email=test@example.com")
 
 
 def git(cwd: Path, *args: str) -> str:
-    """cwd で git を実行し、標準出力を返す。"""
+    """cwd で git を実行し、標準出力を返却する。"""
     completed = subprocess.run(
         ["git", *GIT_IDENTITY, *args], cwd=cwd, capture_output=True, text=True, check=True
     )
@@ -605,14 +605,14 @@ def git(cwd: Path, *args: str) -> str:
 
 @dataclass
 class CloneRepos:
-    """作業ブランチから作った上流の bare リポジトリと、サーバーを動かすクローンと、上流へ commit を積む作業用のクローン。"""
+    """作業ブランチから作った上流の bare リポジトリと、サーバーを動かすクローンと、上流へ commit を追加する作業用のクローン。"""
 
     upstream: Path
     clone: Path
     pusher: Path
 
     def push(self, name: str, text: str = "x\n") -> str:
-        """作業用のクローンにファイルを 1 つ足して commit し、上流へ push して commit を返す。"""
+        """作業用のクローンにファイルを 1 つ追加して commit し、上流へ push して commit を返却する。"""
         (self.pusher / name).write_text(text, encoding="utf-8")
         git(self.pusher, "add", name)
         git(self.pusher, "commit", "-m", name)
@@ -620,7 +620,7 @@ class CloneRepos:
         return git(self.pusher, "rev-parse", "HEAD")
 
     def head(self) -> str:
-        """サーバーを動かすクローンの HEAD を返す。"""
+        """サーバーを動かすクローンの HEAD を返却する。"""
         return git(self.clone, "rev-parse", "HEAD")
 
 
@@ -642,7 +642,7 @@ def clone_repos(tmp_path: Path) -> CloneRepos:
     return CloneRepos(upstream=upstream, clone=clone, pusher=pusher)
 
 
-# クローンのコードを読む起動の入口。FAIL_UV が立っていれば、uv sync だけ終了コード 1 を返す run_command で組み立てる
+# クローンのコードを読む起動の入口。FAIL_UV が立っていれば、uv sync だけ終了コード 1 を返却する run_command で組み立てる
 CLONE_SERVER_CODE = (
     "import os, sys\n"
     "from pathlib import Path\n"
@@ -674,7 +674,7 @@ CLONE_SERVER_CODE = (
 def start_clone_server(
     tmp_path: Path, clone_repos: CloneRepos
 ) -> Iterator[Callable[..., RunningServer]]:
-    """クローンの `src` を `PYTHONPATH` に置いてサーバーを子プロセスとして起動する factory。終わったら止める。"""
+    """クローンの `src` を `PYTHONPATH` に配置してサーバーを子プロセスとして起動する factory。終わったら止める。"""
     started: list[RunningServer] = []
     config = tmp_path / "clone_config" / "settings.yaml"
     config.parent.mkdir()
@@ -684,7 +684,7 @@ def start_clone_server(
         """クローンのコードで起動し、待ち受けるまで待つ。fail_uv なら uv sync だけ失敗させる。"""
 
         def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
-            """port を `RULE_INJECT_PORT` に渡して起動する。"""
+            """port を `RULE_INJECT_PORT` に引き渡して起動する。"""
             env = _server_env(config, tmp_path / "xdg_state", tmp_path / "xdg_config")
             env["RULE_INJECT_PORT"] = str(port)
             env["PYTHONPATH"] = str(clone_repos.clone / "src")

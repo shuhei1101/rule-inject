@@ -1,4 +1,4 @@
-"""既読の記録（PostToolUse）。Read・Bash で全体を読んだルールと、MCP のツールの結果に載った全文のルールの場所（書式に従う文書が無ければ `read_by` に当たったルールの場所）と `read_tool` に一致したルールの場所を、本文のハッシュと一緒に既読にし、既読の履歴へ残す。"""
+"""既読の記録（PostToolUse）。Read・Bash で全体を読んだルールと、MCP のツールの結果に載った全文のルールの場所（書式に従う文書が無ければ `read_by` に該当したルールの場所）と `read_tool` に一致したルールの場所を、本文のハッシュと一緒に既読にし、既読の履歴へ残す。"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ URL_SCHEMES = ("http://", "https://")
 
 
 def _is_whole_file(tool_response: object) -> bool:
-    """Read の `tool_response.file` が、ファイルの先頭から最後までを読んだ結果かを返す。"""
+    """Read の `tool_response.file` が、ファイルの先頭から最後までを読んだ結果かを返却する。"""
     file_info = tool_response.get("file") if isinstance(tool_response, Mapping) else None
     if not isinstance(file_info, Mapping):
         return False
@@ -66,7 +66,7 @@ def _read_paths(payload: Mapping[str, Any]) -> list[str]:
 
 
 def _document_paths(payload: Mapping[str, Any]) -> list[str] | None:
-    """MCP のツールの結果の全文の文書のパスを解いて返す（書式に従う文書が無ければ None）。"""
+    """MCP のツールの結果の全文の文書のパスを解いて返却する（書式に従う文書が無ければ None）。"""
     documents = extract_documents(payload.get("tool_response"))
     if not documents:
         return None
@@ -81,13 +81,13 @@ def _document_paths(payload: Mapping[str, Any]) -> list[str] | None:
 def _locations_and_method(
     payload: Mapping[str, Any], entries: tuple[IndexEntry, ...]
 ) -> tuple[list[str], ReadMethod]:
-    """既読にする場所と読み方を決める。MCP のツールは結果の全文の文書（無ければ `read_by` に当たるエントリ）と `read_tool` に一致するエントリのルールの場所。それ以外は索引に載ったルールのパスだけ。"""
+    """既読にする場所と読み方を決める。MCP のツールは結果の全文の文書（無ければ `read_by` に該当するエントリ）と `read_tool` に一致するエントリのルールの場所。それ以外は索引に載ったルールのパスだけ。"""
     tool_name = payload["tool_name"]
     listed = rule_locations(entries)
     if tool_name.startswith(MCP_TOOL_PREFIX):
         tool_input = payload.get("tool_input") or {}
         paths = _document_paths(payload)
-        # 書式に従う文書が無い結果は、`read_by` に当たる呼び出しで判断する
+        # 書式に従う文書が無い結果は、`read_by` に該当する呼び出しで判断する
         if paths is None:
             found = match_read_by(entries, tool_name, tool_input)
         else:
@@ -101,18 +101,18 @@ def _locations_and_method(
 
 
 def _failure_context(summary: str, error: RuleInjectError, log_path: Path) -> dict[str, Any]:
-    """書けなかった理由を載せた additionalContext を作る。"""
+    """書き込めなかった理由を記載した additionalContext を作る。"""
     notice = build_failure_notice(summary, [error], log_path)
     return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": notice}}
 
 
 def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
-    """既読にする場所を既読の記録と既読の履歴へ書き、書けなければ理由を返す。"""
+    """既読にする場所を既読の記録と既読の履歴へ書き込み、書き込めなければ理由を返却する。"""
     session_id = payload.get("session_id")
     if not is_valid_session_id(session_id):
         return None
     tool_name = payload["tool_name"]
-    # 設定ファイルが読めなければ、既定値でも動かさず、記録せずに知らせだけを返す
+    # 設定ファイルが読めなければ、既定値でも動かさず、記録せずに通知だけを返却する
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
@@ -142,7 +142,7 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     try:
         append_history(folder, session_id, locations, method=method, tool=tool_name)
     except HistoryWriteError as exc:
-        # 既読の記録は残したまま、履歴にだけ書けなかったことを知らせる
+        # 既読の記録は残したまま、履歴にだけ書き込めなかったことを通知する
         write_log(
             log_folder,
             component=Component.RECORD_READ,
@@ -151,6 +151,6 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             session_id=session_id,
             path=exc.path,
         )
-        summary = f"次のルールを既読にしましたが、既読の履歴に書けませんでした（{', '.join(locations)}）。"
+        summary = f"次のルールを既読にしましたが、既読の履歴に書き込めませんでした（{', '.join(locations)}）。"
         return _failure_context(summary, exc, log_file_path(log_folder, datetime.now(UTC).date()))
     return None

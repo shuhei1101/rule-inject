@@ -60,7 +60,7 @@ def test_normal_when_dry_run(
     running_server: Callable[..., Any],
     list_revs: Callable[[Any], list[str]],
 ) -> None:
-    """`dry_run` で差分だけを返す（正常系）。"""
+    """`dry_run` で差分だけを返却する（正常系）。"""
     # 準備
     a = make_index("# a\n", "rules/a.md")
     b = make_index("# b\n", "rules/b.md")
@@ -304,5 +304,5 @@ def test_error_when_hook_unreadable(
     # 検証
     assert result.is_error is True
     assert line in text_of(result)
-    assert "手で直" in text_of(result)
+    assert "手で修正" in text_of(result)
     assert index.read_bytes() == before

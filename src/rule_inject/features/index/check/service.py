@@ -1,4 +1,4 @@
-"""索引のチェックと、書く前と書いた後の問題の比較。"""
+"""索引のチェックと、書き込む前と書き込んだ後の問題の比較。"""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def load_validator() -> Validator:
         .read_text(encoding="utf-8")
     )
     schema = YAML(typ="safe").load(text)
-    # Schema 自体が Schema として正しいことを確かめる
+    # Schema 自体が Schema として正しいことを確認する
     Draft202012Validator.check_schema(schema)
     return Draft202012Validator(schema)
 
@@ -52,7 +52,7 @@ def _hook_error(index_path: str, reason: str) -> IndexCheck:
 
 
 def check_index(index_path: str, env: Mapping[str, str], *, validator: Validator) -> IndexCheck:
-    """索引のファイルを読み、`check_index_text` で確かめる。"""
+    """索引のファイルを読み、`check_index_text` で確認する。"""
     try:
         text = Path(index_path).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
@@ -73,7 +73,7 @@ def _format_location(path: list[str | int]) -> str:
 
 
 def _location_order(path: list[str | int]) -> list[tuple[int, str]]:
-    """違反を場所の順に並べるための、数と文字を混ぜて比べられる並べ替えの鍵を返す。"""
+    """違反を場所の順に並べるための、数と文字を混ぜて比べられる並べ替えの鍵を返却する。"""
     return [(part if isinstance(part, int) else -1, str(part)) for part in path]
 
 
@@ -125,14 +125,14 @@ def _violations(
 def check_index_text(
     index_path: str, text: str, env: Mapping[str, str], *, validator: Validator
 ) -> IndexCheck:
-    """索引の内容を、フックと同じ読み取り→ JSON Schema → ルールの場所の実在の順に確かめる。"""
-    # フックが読めない索引は、その理由だけを返す（JSON Schema に照らさず、ルールの場所も確かめない）
+    """索引の内容を、フックと同じ読み取り→ JSON Schema → ルールの場所の実在の順に確認する。"""
+    # フックが読めない索引は、その理由だけを返却する（JSON Schema に照らさず、ルールの場所も確認しない）
     try:
         content = read_index_text(index_path, text, env)
     except IndexReadError as exc:
         return _hook_error(index_path, exc.reason)
     problems = _violations(text, content.outcomes, validator)
-    # 照合に使うエントリのうち、解いたルールの場所にファイルが無いもの（無効のエントリは確かめない）
+    # 照合に使用するエントリのうち、解いたルールの場所にファイルが無いもの（無効のエントリは確認しない）
     problems.extend(
         IndexProblem(
             kind="missing_rule",
@@ -146,7 +146,7 @@ def check_index_text(
         and outcome.entry is not None
         and not Path(outcome.entry.location).is_file()
     )
-    # フックが読み飛ばすエントリ（場所を解けないため、ファイルの有無は確かめない）
+    # フックが読み飛ばすエントリ（場所を解けないため、ファイルの有無は確認しない）
     problems.extend(
         IndexProblem(
             kind="skipped_entry",
@@ -162,7 +162,7 @@ def check_index_text(
 
 
 def _problem_key(problem: IndexProblem) -> tuple[str, str | None, str, str]:
-    """書く前と書いた後で同じ問題かを比べる鍵を返す（位置は新規作成・削除でずれるため比べない）。"""
+    """書き込む前と書き込んだ後で同じ問題かを比べる鍵を返却する（位置は新規作成・削除でずれるため比べない）。"""
     location = ENTRY_LOCATION_PATTERN.sub(ENTRY_LOCATION_PLACEHOLDER, problem.location)
     return (problem.kind, problem.rev, location, problem.reason)
 
@@ -170,13 +170,13 @@ def _problem_key(problem: IndexProblem) -> tuple[str, str | None, str, str]:
 def new_problems(
     before: IndexCheck, after: IndexCheck, changed_rev: str | None
 ) -> tuple[IndexProblem, ...]:
-    """書いた後の索引の問題のうち、書く前に無かったものを返す。"""
-    # 書いた後にフックが読めなければ、それだけを返す（書く前も読めなかった場合も含む）
+    """書き込んだ後の索引の問題のうち、書き込む前に無かったものを返却する。"""
+    # 書き込んだ後にフックが読めなければ、それだけを返却する（書き込む前も読めなかった場合も含む）
     hook_errors = tuple(problem for problem in after.problems if problem.kind == "hook_error")
     if hook_errors:
         return hook_errors
     existing = {_problem_key(problem) for problem in before.problems}
-    # 書いたエントリの問題は、書く前に同じ理由があっても新しい問題として扱う
+    # 書き込んだエントリの問題は、書き込む前に同じ理由があっても新しい問題として扱う
     return tuple(
         problem
         for problem in after.problems
@@ -194,7 +194,7 @@ def check_change(
     env: Mapping[str, str],
     validator: Validator,
 ) -> tuple[str, ...]:
-    """書く前と書いた後の索引を確かめ、新しく出た問題を `{索引の中の場所}: {理由}` の行で返す。"""
+    """書き込む前と書き込んだ後の索引を確認し、新しく出た問題を `{索引の中の場所}: {理由}` の行で返却する。"""
     before = check_index_text(index_path, before_text, env, validator=validator)
     after = check_index_text(index_path, after_text, env, validator=validator)
     return tuple(

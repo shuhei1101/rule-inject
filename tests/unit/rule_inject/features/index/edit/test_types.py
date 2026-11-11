@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def test_lock_for() -> None:
-    """同じ場所には同じロック、違う場所には別のロックを返す（正常系）。"""
+    """同じ場所には同じロック、違う場所には別のロックを返却する（正常系）。"""
     from rule_inject.features.index.edit import IndexLocks
 
     # 準備

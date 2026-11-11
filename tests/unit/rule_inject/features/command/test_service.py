@@ -17,10 +17,10 @@ from rule_inject.features.command.service import (
 
 @pytest.fixture
 def make_files(tmp_path: Path) -> Callable[[int], list[str]]:
-    """連番の名前のファイルを tmp_path に置き、名前のリストを返す factory。"""
+    """連番の名前のファイルを tmp_path に配置し、名前のリストを返却する factory。"""
 
     def _make(count: int) -> list[str]:
-        """f000.md から count 件のファイルを置く。"""
+        """f000.md から count 件のファイルを配置する。"""
         names = [f"f{number:03d}.md" for number in range(count)]
         for name in names:
             (tmp_path / name).write_text("# f\n", encoding="utf-8")
@@ -51,7 +51,7 @@ def test_extract_read_paths_when_pattern_arg(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_not_full_read(tmp_path: Path) -> None:
-    """対象外のコマンドは見ない（正常系）。"""
+    """対象外のコマンドは確認しない（正常系）。"""
     # 準備
     (tmp_path / "a.md").write_text("# a\n", encoding="utf-8")
     # 実行
@@ -61,7 +61,7 @@ def test_extract_read_paths_when_not_full_read(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_unparsable(tmp_path: Path) -> None:
-    """分けられないコマンドは空を返す（正常系）。"""
+    """分けられないコマンドは空を返却する（正常系）。"""
     # 実行
     result = extract_read_paths('cat "a.md', tmp_path, READ_COMMANDS)
     # 検証
@@ -96,7 +96,7 @@ def test_extract_read_paths_when_quoted_glob(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_glob_no_match(tmp_path: Path) -> None:
-    """当たるファイルが無い glob を捨てる（正常系）。"""
+    """該当するファイルが無い glob を捨てる（正常系）。"""
     # 準備
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "a.py").write_text("print()\n", encoding="utf-8")
@@ -107,7 +107,7 @@ def test_extract_read_paths_when_glob_no_match(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_for_loop(tmp_path: Path) -> None:
-    """for の語の並びを読む対象にする（正常系）。"""
+    """for の単語の並びを読む対象にする（正常系）。"""
     # 準備
     (tmp_path / "src" / "tasks").mkdir(parents=True)
     (tmp_path / "tests" / "unit" / "tasks").mkdir(parents=True)
@@ -130,7 +130,7 @@ def test_extract_read_paths_when_for_loop(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_for_loop_multiline(tmp_path: Path) -> None:
-    """改行で区切った for の語の並びを読む対象にする（正常系）。"""
+    """改行で区切った for の単語の並びを読む対象にする（正常系）。"""
     # 準備
     (tmp_path / "a.md").write_text("# a\n", encoding="utf-8")
     (tmp_path / "b.md").write_text("# b\n", encoding="utf-8")
@@ -142,7 +142,7 @@ def test_extract_read_paths_when_for_loop_multiline(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_for_loop_not_read(tmp_path: Path) -> None:
-    """読むコマンドが変数を取らない for は見ない（正常系）。"""
+    """読むコマンドが変数を取らない for は確認しない（正常系）。"""
     # 準備
     (tmp_path / "a.md").write_text("# a\n", encoding="utf-8")
     # 実行
@@ -188,7 +188,7 @@ def test_extract_read_paths_when_line_continuation(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_heredoc(tmp_path: Path) -> None:
-    """ヒアドキュメントの本文の行は見ない（正常系）。"""
+    """ヒアドキュメントの本文の行は確認しない（正常系）。"""
     # 準備
     (tmp_path / "x.md").write_text("# x\n", encoding="utf-8")
     (tmp_path / "y.md").write_text("# y\n", encoding="utf-8")
@@ -200,7 +200,7 @@ def test_extract_read_paths_when_heredoc(tmp_path: Path) -> None:
 
 
 def test_extract_read_paths_when_escaped_or_inner_quoted(tmp_path: Path) -> None:
-    """エスケープした空白・語の途中の引用符・エスケープした引用符のパスを取り出す（正常系）。"""
+    """エスケープした空白・単語の途中の引用符・エスケープした引用符のパスを取り出す（正常系）。"""
     # 準備
     (tmp_path / "src" / "my dir").mkdir(parents=True)
     (tmp_path / "dir").mkdir()
@@ -251,7 +251,7 @@ def test_extract_read_paths_when_cd_literal_glob(tmp_path: Path, command: str) -
 
 
 def test_search_output_base(tmp_path: Path) -> None:
-    """検索のコマンドの基準を返す（正常系）。"""
+    """検索のコマンドの基準を返却する（正常系）。"""
     # 実行
     result = service.search_output_base("find src -type f | head", tmp_path)
     # 検証
@@ -287,7 +287,7 @@ def test_search_output_base_when_ls_dir(tmp_path: Path) -> None:
     ],
 )
 def test_search_output_base_when_not_search(tmp_path: Path, command: str) -> None:
-    """検索でないコマンドは None を返す（正常系）。"""
+    """検索でないコマンドは None を返却する（正常系）。"""
     # 実行
     result = service.search_output_base(command, tmp_path)
     # 検証
@@ -295,7 +295,7 @@ def test_search_output_base_when_not_search(tmp_path: Path, command: str) -> Non
 
 
 def test_search_output_base_when_unparsable(tmp_path: Path) -> None:
-    """分けられないコマンドは例外を送出せず None を返す（正常系）。"""
+    """分けられないコマンドは例外を送出せず None を返却する（正常系）。"""
     # 実行
     result = service.search_output_base('grep "foo', tmp_path)
     # 検証
@@ -340,7 +340,7 @@ def test_search_output_base_when_literal_glob(tmp_path: Path, command: str) -> N
 
 
 def test_extract_result_paths(tmp_path: Path) -> None:
-    """パスだけの行と `{パス}:…` の行を拾う（正常系）。"""
+    """パスだけの行と `{パス}:…` の行を取得する（正常系）。"""
     # 準備
     (tmp_path / "a.py").write_text("print()\n", encoding="utf-8")
     (tmp_path / "b.md").write_text("# b\n", encoding="utf-8")
@@ -354,7 +354,7 @@ def test_extract_result_paths(tmp_path: Path) -> None:
 
 
 def test_extract_result_paths_when_colon_in_name(tmp_path: Path) -> None:
-    """名前に `:` を含むファイルを行全体で拾う（正常系）。"""
+    """名前に `:` を含むファイルを行全体で取得する（正常系）。"""
     # 準備
     (tmp_path / "a:b.md").write_text("# ab\n", encoding="utf-8")
     # 実行

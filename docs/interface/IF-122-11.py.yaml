@@ -29,7 +29,7 @@ flows:
         IF->>IDX: フックと同じ読み取りで読む
         IDX-->>IF: 読めた
         IF->>IF: JSON Schema に照らす
-        IF->>FS: ルールの場所を確かめる
+        IF->>FS: ルールの場所を確認する
         FS-->>IF: ある
         IF-->>C: problem_count 0
       ```
@@ -112,7 +112,7 @@ flows:
         IF->>IDX: フックと同じ読み取りで読む
         IDX-->>IF: 読めた
         IF->>IF: JSON Schema に照らす
-        IF->>FS: ルールの場所を確かめる
+        IF->>FS: ルールの場所を確認する
         FS-->>IF: 無い場所が 1 つ
         IF-->>C: missing_rules
       ```
@@ -134,7 +134,7 @@ flows:
         participant IF as check_indexes
 
         C->>IF: project_dir（相対パス）
-        IF-->>C: isError: true（絶対パスで渡す旨）
+        IF-->>C: isError: true（絶対パスで指定する旨）
       ```
     expected:
       - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
@@ -189,10 +189,10 @@ flows:
         CF-->>IF: 索引の場所と出所
         IF->>IDX: フックと同じ読み取りで読む
         IDX-->>IF: 読めた
-        IF->>IF: JSON Schema に照らし、ルールの場所を確かめる
+        IF->>IF: JSON Schema に照らし、ルールの場所を確認する
         IF->>PJ: .git を除いて辿る
         PJ-->>IF: ファイルの絶対パス
-        IF->>IF: project の索引の効いているエントリの paths と exclude を当てる
+        IF->>IF: project の索引の有効なエントリの paths と exclude を適用する
         IF-->>C: unmatched_paths
     expected:
       - '`origin` が `project` の索引の `unmatched_paths` に、位置 1・2・3 のエントリが `rev` と解いたルールの場所つきで載っている'
@@ -219,7 +219,7 @@ flows:
         C->>IF: project_dir・include_global true
         IF->>PJ: .git を除いて辿る
         PJ-->>IF: ファイルの絶対パス
-        IF->>IF: global と project の索引の効いているエントリの paths と exclude を当てる
+        IF->>IF: global と project の索引の有効なエントリの paths と exclude を適用する
         IF-->>C: 索引ごとの unmatched_paths
     expected:
       - '`origin` が `global` の索引の `unmatched_paths` に、位置 0 のエントリが載っている'
@@ -245,7 +245,7 @@ flows:
 
         C->>IF: project_dir
         IF->>PJ: .git を除いて名前の順に辿る
-        IF->>IF: docs/readme.md を当てる
+        IF->>IF: docs/readme.md を照合する
         IF->>IF: 次のファイルの前に上限を超えたのでやめる
         IF-->>C: unmatched_scan.completed false・next_cursor
     expected:
@@ -270,11 +270,11 @@ flows:
         participant PJ as プロジェクトのファイル
 
         C->>IF: project_dir
-        IF->>IF: docs/readme.md を当てて上限でやめる
+        IF->>IF: docs/readme.md を照合して上限でやめる
         IF-->>C: completed false・next_cursor
         C->>IF: project_dir・cursor
         IF->>PJ: docs/readme.md より後から辿る
-        IF->>IF: src/app.py をまだ当たっていないエントリに当てる
+        IF->>IF: src/app.py をまだ照合していないエントリに照合する
         IF-->>C: completed true・unmatched_paths
     expected:
       - 2 回目の `unmatched_scan.completed` が `true` で、`next_cursor` が `None`、`scanned_files` が 2
@@ -304,7 +304,7 @@ flows:
         C->>IF: project_dir・cursor（索引の書き換えの後）
         IF->>IF: エントリの一覧のハッシュが cursor と違う
         IF->>PJ: 最初のファイルから辿る
-        IF->>IF: docs/readme.md を当てて上限でやめる
+        IF->>IF: docs/readme.md を照合して上限でやめる
         IF-->>C: completed false・next_cursor
     expected:
       - 2 回目の `unmatched_scan.scanned_files` が 1（1 回目からの合計でない）で、`completed` が `false`
@@ -323,9 +323,9 @@ flows:
         participant IF as check_indexes
 
         C->>IF: project_dir・cursor（読めない）
-        IF-->>C: isError: true（cursor を省いて呼び直す旨）
+        IF-->>C: isError: true（cursor を省いて再度呼び出す旨）
         C->>IF: 別の project_dir・cursor
-        IF-->>C: isError: true（cursor を省いて呼び直す旨）
+        IF-->>C: isError: true（cursor を省いて再度呼び出す旨）
     expected:
       - 'どちらの呼び出しも結果が `isError: true` で、`cursor` を省いて再度呼び出す旨が載っている'
     test: test_error_when_cursor_invalid
@@ -352,10 +352,10 @@ flows:
         C->>IF: project_dir
         IF->>IDX: フックと同じ読み取りで読む
         IDX-->>IF: 読めた
-        IF->>IF: 効いているエントリの [tags] のキーのパターンを集める
+        IF->>IF: 有効なエントリの [tags] のキーのパターンを集める
         IF->>DD: search_docs（source *・group_by tags）
         DD-->>IF: groups
-        IF->>IF: パターンを返ったタグと正規化したタグに当てる
+        IF->>IF: パターンを返ったタグと正規化したタグに照合する
         IF-->>C: unused_tag_patterns・tag_check
     expected:
       - '`origin` が `project` の索引の `unused_tag_patterns` に、位置 1 の `args` の `filter[tags]` の `pyhton` と、位置 2 の `read_by[0].args` の `filter[tags]` の `rust` が `rev` つきで載っている'
@@ -383,10 +383,10 @@ flows:
         participant DD as dev-docs
 
         C->>IF: project_dir
-        IF->>IF: 違反・ルールの場所・paths を確かめる
+        IF->>IF: 違反・ルールの場所・paths を確認する
         IF->>DD: search_docs
         DD-->>IF: 接続できない
-        IF->>IF: タグの確かめを飛ばす
+        IF->>IF: タグの確認を飛ばす
         IF-->>C: tag_check.state skipped・reason
     expected:
       - ツールのエラーにならず `success` が `true`
@@ -410,7 +410,7 @@ flows:
         C->>IF: project_dir
         IF->>DD: search_docs（source *・group_by tags・cwd project_dir）
         DD-->>IF: total_count 0
-        IF->>IF: タグの確かめを飛ばす
+        IF->>IF: タグの確認を飛ばす
         IF-->>C: tag_check.state skipped・reason
     expected:
       - '`tag_check.state` が `skipped` で、`reason` に読める文書が 0 件だった旨が載っている'
@@ -470,7 +470,7 @@ flows:
       - '`violations` に `location` が `rules[0].read_tool.args` の違反と理由が載っている'
       - '`hook_error` が `None`'
     test: test_normal_when_read_tool_violates_schema
-lead: プロジェクトで読み込む索引ごとに、読めない理由・スキーマの違反・ルールの無いエントリ・使われていないタグを返却するツールを定め、索引のチェックを修正するときに参照する。
+lead: プロジェクトで読み込む索引ごとに、読めない理由・スキーマの違反・ルールの無いエントリ・使用されていないタグを返却するツールを定め、索引のチェックを修正するときに参照する。
 identifier: check_indexes
 idempotent: true
 side_effects: なし（`readOnlyHint`）
@@ -562,7 +562,7 @@ response:
   - name: indexes[].origin
     type: Literal['global', 'project']
     description: 索引の出所
-    notes: '`global` は `global.indexes`（無ければユーザーの既定の索引）、`project` は該当した `projects[].indexes` とプロジェクトの既定の置き場所の索引'
+    notes: '`global` は `global.indexes`（無ければユーザーの既定の索引）、`project` は該当した `projects[].indexes` とプロジェクトの既定の配置場所の索引'
   - name: indexes[].unmatched_paths[].position
     type: int
     description: '`paths` がプロジェクトのどのファイルにも該当しないエントリの位置'
@@ -658,7 +658,7 @@ constraints:
     notes: フックが読めない索引はどのエントリも案内に使用されないため、その理由だけを返却する
   - item: 索引の JSON Schema
     constraint: 索引のキーと値の範囲を JSON Schema 2020-12 で記載した YAML を `jsonschema` で照らす。違反は全て並べる
-    notes: 'Schema が受け付ける範囲は、フックの読み取りが受け付ける範囲の内側にする（例: `paths: []` はフックが読めるが Schema は要素を 1 つ以上求める）。置き場所はモジュール構成が決める。`read_tool` は `tool`（`^mcp__` の文字列）を必須、`args`（文字列。空のオブジェクト `{}` を除くため、`{` の後に空白を挟んで `"` が続く文字列を正規表現で求める）と `optional_args`（`args` と同じ）を任意とし、他のキーを許さない'
+    notes: 'Schema が受け付ける範囲は、フックの読み取りが受け付ける範囲の内側にする（例: `paths: []` はフックが読めるが Schema は要素を 1 つ以上求める）。配置場所はモジュール構成が決める。`read_tool` は `tool`（`^mcp__` の文字列）を必須、`args`（文字列。空のオブジェクト `{}` を除くため、`{` の後に空白を挟んで `"` が続く文字列を正規表現で求める）と `optional_args`（`args` と同じ）を任意とし、他のキーを許さない'
   - item: 索引の中の場所
     constraint: キーは `.`、リストの要素は `[位置]` で結ぶ（例 `rules[0].read_by[1].tools`）。最上位の違反は `$`
   - item: ルールの場所の実在
@@ -669,7 +669,7 @@ constraints:
     notes: 設定ファイルが指すのに無い索引は `hook_error` に理由を記載する
   - item: 認可
     constraint: 制限なし
-  - item: paths の当たらないエントリ
+  - item: paths の該当しないエントリ
     constraint: '有効なエントリ（`enabled: false`・読み飛ばすエントリ・フックが読めない索引のエントリを除く）のうち `paths` を持つものを、フックと同じ照合（`paths` と `exclude`。`on` は問わない）でプロジェクトのファイルの絶対パスに当て、どれにも該当しないものを返却する。確認するのは `project` の索引と、`include_global` が `true` のときの `global` の索引'
     notes: 書き込み前の検証（インターフェース定義「エントリの書き込み」「エントリの削除」）には含めない。記載するエントリがまだ無いファイルを指すことがあるため
   - item: 辿るファイル
@@ -682,7 +682,7 @@ constraints:
   - item: 続きから辿る
     constraint: '`cursor` を指定したときは、`cursor` の最後のファイルより後のファイルから辿り、`cursor` のまだ該当していないエントリだけを照合する。確認するエントリの一覧（索引・位置・`rev`）のハッシュが `cursor` と違うときは、`cursor` を使用せず最初のファイルから辿る'
     notes: 索引が書き換わると、前の呼び出しで該当したエントリが変わりうるため。再度呼び出すまでの間に増えたファイルのうち、辿り終えた位置より前のものは照合しない
-  - item: 使われていないタグのパターン
+  - item: 使用されていないタグのパターン
     constraint: '`global` と `project` の全ての索引の有効なエントリ（`enabled: false`・読み飛ばすエントリ・フックが読めない索引のエントリを除く）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターンを、dev-docs の使用されているタグに照らす。パターンはフックと同じ照合（glob・正規表現）で、返ったタグそのものか、NFKC と `casefold` で正規化したタグのどちらかに該当すれば使用されているとし、どれにも該当しないものを返却する'
     notes: 書き込み前の検証（インターフェース定義「エントリの書き込み」「エントリの削除」）には含めない。記載する時点で、まだ文書に付けていないタグを指すことがあるため。ドットの道筋のキー（`filter.tags`）はタグとみなさない
   - item: dev-docs への問い合わせ
@@ -692,7 +692,7 @@ constraints:
   - item: 問い合わせと辿る順
     constraint: dev-docs への問い合わせは、ファイルを辿る前に始め、辿るのと並べて行う。辿り終えた後（辿る時間の上限で止まったときを含む）に問い合わせの応答を待ち、待ち時間の上限（207 秒）は問い合わせを始めた時点から数える。1 回の呼び出しの所要時間の上限は、問い合わせの待ち時間（207 秒）と辿る時間（30 秒）の大きい方に、余裕を加えた 212 秒
     decided_by: NFR-122-1#requirements[dev-docs への問い合わせの待ち時間]
-    notes: 続けて行うと 237 秒 + 余裕になる。余裕は、内側の待ち以外の処理（索引の読み取り・JSON Schema・ルールの場所の実在・照合・結果の組み立て）の 1,000 回の実測の p99.9（4.071 秒。p50 1.247 秒・最大 4.781 秒）で、207 + 4.071 = 211.071 を秒に切り上げる（規約『資源の値の決め方』の「入れ子の待ち」）。実測は、手元の索引 3 件（エントリ 152 件）と、タグのパターンを 2 つずつ持つエントリ 152 件の索引（パターン 304 件）を 1 回ずつ順に確認し、1 回の全体の時間から辿る時間を差し引いた残りを測った。照合は、dev-docs が実際に返却する件数（最大 1,081 件）より多い 2,000 件の、どのパターンにも該当しないタグで測った（[実測の記録](https://github.com/shuhei1101/rule-inject/tree/4dee0c9f400d25d24bb562d381904449ac9df54d/dev/pr/90/%E5%AE%9F%E6%B8%AC)）
+    notes: 続けて行うと 237 秒 + 余裕になる。余裕は、内側の待ち以外の処理（索引の読み取り・JSON Schema・ルールの場所の実在・照合・結果の組み立て）の 1,000 回の実測の p99.9（4.071 秒。p50 1.247 秒・最大 4.781 秒）で、207 + 4.071 = 211.071 を秒に切り上げる（規約『資源の値の決め方』の「入れ子の待ち」）。実測は、手元の索引 3 件（エントリ 152 件）と、タグのパターンを 2 つずつ持つエントリ 152 件の索引（パターン 304 件）を 1 回ずつ順に確認し、1 回の全体の時間から辿る時間を除いた残りを測った。照合は、dev-docs が実際に返却する件数（最大 1,081 件）より多い 2,000 件の、どのパターンにも該当しないタグで測った（[実測の記録](https://github.com/shuhei1101/rule-inject/tree/4dee0c9f400d25d24bb562d381904449ac9df54d/dev/pr/90/%E5%AE%9F%E6%B8%AC)）
 refs:
   - SC-122-20#
 test_file: tests/integration/server/test_check_indexes.py

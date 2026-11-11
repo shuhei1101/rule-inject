@@ -37,7 +37,7 @@ def rule_env(
     index_text: Callable[..., str],
     rule_file: Callable[..., Path],
 ) -> tuple[dict[str, str], Path]:
-    """ルールのファイル 1 つ（本文は `test`）を載せた索引を指す環境変数と、そのルールのパスを返す。"""
+    """ルールのファイル 1 つ（本文は `test`）を記載した索引を指す環境変数と、そのルールのパスを返却する。"""
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), paths=["**/*.py"]))
     return settings_env(indexes=[str(index)]), rule
@@ -132,7 +132,7 @@ def test_record_read_when_unwritable(
     state_dir: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """書けないとき理由を返す（正常系）。"""
+    """書き込めないとき理由を返却する（正常系）。"""
     # 準備
     env, rule = rule_env
     state_dir.mkdir()
@@ -163,7 +163,7 @@ def test_record_read_when_mcp_tool(
     read_lines: Callable[[Path], list[str]],
     read_history: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """`read_by` に当たった MCP のツールの呼び出しでルールを記録する（正常系）。"""
+    """`read_by` に該当した MCP のツールの呼び出しでルールを記録する（正常系）。"""
     # 準備
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), read_by=[{"tools": ["mcp__docs__get_doc"]}]))
@@ -190,7 +190,7 @@ def test_record_read_when_read_by_not_matched(
     state_dir: Path,
     session_id: str,
 ) -> None:
-    """`read_by` に当たらない MCP のツールは記録しない（正常系）。"""
+    """`read_by` に該当しない MCP のツールは記録しない（正常系）。"""
     # 準備
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), tools=["mcp__*"]))
@@ -213,7 +213,7 @@ def test_record_read_when_rule_is_url(
     log_folder: Path,
     session_id: str,
 ) -> None:
-    """`rule` が URL のエントリは `read_by` に当たっても記録せず、知らせもしない（正常系）。"""
+    """`rule` が URL のエントリは `read_by` に該当しても記録せず、通知もしない（正常系）。"""
     # 準備
     index = make_index(
         index_text(
@@ -240,7 +240,7 @@ def test_record_read_when_history_unwritable(
     read_lines: Callable[[Path], list[str]],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """履歴に書けないとき既読を残して理由を返す（正常系）。"""
+    """履歴に書き込めないとき既読を残して理由を返却する（正常系）。"""
     # 準備
     env, rule = rule_env
     (state_dir / f"{session_id}.history.jsonl").mkdir(parents=True)
@@ -352,7 +352,7 @@ def test_record_read_when_mcp_document_without_read_by(
     state_dir: Path,
     session_id: str,
 ) -> None:
-    """書式に従う文書がある結果には `read_by` を当てない（正常系）。"""
+    """書式に従う文書がある結果には `read_by` を照合しない（正常系）。"""
     # 準備
     rule = rule_file("python.md", "test")
     index = make_index(index_text(str(rule), read_by=[{"tools": ["mcp__docs__get_doc"]}]))
@@ -428,7 +428,7 @@ def test_record_read_when_settings_unreadable(
     default_log_folder: Path,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないときは記録せずに知らせる（正常系）。"""
+    """設定ファイルが読めないときは記録せずに通知する（正常系）。"""
     # 準備
     rule = rule_file("python.md", "test")
     env = unreadable_env("missing")

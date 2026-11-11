@@ -96,7 +96,7 @@ response:
   - name: pid
     type: int
     description: サーバーのプロセス ID
-    notes: 再起動の後も同じ（インターフェース定義「サーバーの再起動」の制約「起動し直す方法」）
+    notes: 再起動の後も同じ（インターフェース定義「サーバーの再起動」の制約「再起動する方法」）
   - name: started_at
     type: str
     format: date-time

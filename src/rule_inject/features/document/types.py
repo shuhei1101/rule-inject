@@ -9,11 +9,11 @@ from enum import StrEnum
 class DocumentScope(StrEnum):
     """結果の文書の `scope` の値。"""
 
-    # 文書の全文を載せた（既読になる）
+    # 文書の全文を記載した（既読になる）
     FULL = "full"
-    # 文書の一部の見出しだけを載せた
+    # 文書の一部の見出しだけを記載した
     SECTION = "section"
-    # 文書の説明だけを載せた
+    # 文書の説明だけを記載した
     SUMMARY = "summary"
 
 

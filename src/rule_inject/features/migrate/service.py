@@ -23,7 +23,7 @@ MIGRATIONS = (v0_2_3,)
 
 
 def _tool_version() -> str:
-    """動いているツールのバージョンを返す。"""
+    """動いているツールのバージョンを返却する。"""
     return importlib.metadata.version(PACKAGE_NAME)
 
 
@@ -36,7 +36,7 @@ def _version_key(path: Path, version: str) -> tuple[int, ...]:
 
 
 def _load(path: Path) -> tuple[YAML, CommentedMap]:
-    """コメントを残して書き戻せるように設定ファイルを読み取る。"""
+    """コメントを残して書き込めるように設定ファイルを読み取る。"""
     yaml = YAML()
     yaml.preserve_quotes = True
     try:
@@ -61,7 +61,7 @@ def _steps(path: Path, data: CommentedMap) -> tuple[tuple[str, ...], tuple[str, 
 
 
 def plan_migration(path: Path) -> MigrationResult:
-    """設定ファイルに適用する手順を求め、書き換えずに返す。"""
+    """設定ファイルに適用する手順を求め、書き換えずに返却する。"""
     tool_version = _tool_version()
     if not path.is_file():
         return MigrationResult(

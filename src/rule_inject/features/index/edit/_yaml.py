@@ -15,7 +15,7 @@ MAPPING_INDENT = 2
 SEQUENCE_INDENT = 4
 # `  - rule:` の字下げ
 SEQUENCE_OFFSET = 2
-# 値が文字列のリストで、1 行のフロー形式で書くキー
+# 値が文字列のリストで、1 行のフロー形式で記載するキー
 FLOW_LIST_KEYS = ("paths", "exclude", "tools", "on")
 ARGS_KEY = "args"
 READ_BY_KEY = "read_by"
@@ -32,7 +32,7 @@ def round_trip_yaml(
     sequence: int = SEQUENCE_INDENT,
     offset: int = SEQUENCE_OFFSET,
 ) -> YAML:
-    """フックの読み取りが受け付ける書式で書き戻す `YAML` を作る（スレッドをまたいで共有しないため、呼ぶたびに作る）。"""
+    """フックの読み取りが受け付ける書式で書き込む `YAML` を作る（スレッドをまたいで共有しないため、呼ぶたびに作る）。"""
     yaml = YAML()
     yaml.width = YAML_WIDTH
     yaml.indent(mapping=mapping, sequence=sequence, offset=offset)
@@ -56,7 +56,7 @@ def _arguments(value: Mapping[str, Any]) -> CommentedMap:
 
 
 def _read_by_item(value: Any) -> Any:
-    """`read_by` の要素のマップに、`tools` と `args` の書式を当てる。"""
+    """`read_by` の要素のマップに、`tools` と `args` の書式を照合する。"""
     if not isinstance(value, Mapping):
         return value
     item = CommentedMap()
@@ -71,7 +71,7 @@ def _read_by_item(value: Any) -> Any:
 
 
 def _read_tool(value: Mapping[str, Any]) -> CommentedMap:
-    """`read_tool` のマップを `tool`・`args`・`optional_args` の順にし、JSON の文字列を単一引用符で書く。"""
+    """`read_tool` のマップを `tool`・`args`・`optional_args` の順にし、JSON の文字列を単一引用符で記載する。"""
     mapping = CommentedMap()
     ordered = [key for key in READ_TOOL_KEY_ORDER if key in value]
     ordered.extend(key for key in value if key not in READ_TOOL_KEY_ORDER)
@@ -84,7 +84,7 @@ def _read_tool(value: Mapping[str, Any]) -> CommentedMap:
 
 
 def to_yaml_value(key: str, value: Any) -> Any:
-    """ツールの引数の `entry` の値を、キーごとの書式を指定した round-trip の値にする。型の合わない値はそのまま返す。"""
+    """ツールの引数の `entry` の値を、キーごとの書式を指定した round-trip の値にする。型の合わない値はそのまま返却する。"""
     # 文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ
     if key in FLOW_LIST_KEYS and isinstance(value, list):
         return _flow_list(value)

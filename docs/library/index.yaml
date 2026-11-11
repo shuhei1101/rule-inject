@@ -3,7 +3,7 @@ items:
   - page: LIB-122-1.yaml
     summary: フックを呼ぶ Claude Code の CLI
   - page: LIB-122-3.yaml
-    summary: 常駐の MCP サーバーを書く公式の Python SDK
+    summary: 常駐の MCP サーバーを実装する公式の Python SDK
   - page: LIB-122-2.yaml
     summary: 索引を JSON Schema で検証するライブラリ
   - page: LIB-122-4.yaml
@@ -11,4 +11,4 @@ items:
   - page: LIB-122-5.yaml
     summary: 常駐の MCP サーバーを Streamable HTTP で待ち受け、再起動で待ち受けを閉じる ASGI のサーバー
   - page: LIB-122-6.yaml
-    summary: Streamable HTTP の応答を SSE で返し、サーバーの停止を検知すると送信中のストリームを取り消すライブラリ
+    summary: Streamable HTTP の応答を SSE で返却し、サーバーの停止を検知すると送信中のストリームをキャンセルするライブラリ

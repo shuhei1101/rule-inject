@@ -1,4 +1,4 @@
-"""失敗した操作を日付ごとのログ（JSON Lines）へ書き、古いログを削除する。"""
+"""失敗した操作を日付ごとのログ（JSON Lines）へ書き込み、古いログを削除する。"""
 
 from __future__ import annotations
 
@@ -50,17 +50,17 @@ class LogOperation(StrEnum):
 
 
 def _utc_now() -> datetime:
-    """現在の UTC の時刻を返す。"""
+    """現在の UTC の時刻を返却する。"""
     return datetime.now(UTC)
 
 
 def _utc_today() -> date:
-    """今日の UTC の日付を返す。"""
+    """今日の UTC の日付を返却する。"""
     return datetime.now(UTC).date()
 
 
 def log_file_path(log_folder: Path, day: date) -> Path:
-    """その日付のログのファイルのパスを返す。"""
+    """その日付のログのファイルのパスを返却する。"""
     return log_folder / f"{day:%Y%m%d}{LOG_FILE_SUFFIX}"
 
 
@@ -74,7 +74,7 @@ def write_log(
     path: str | None = None,
     now: Callable[[], datetime] = _utc_now,
 ) -> None:
-    """失敗した操作をその時刻の日付のログに 1 行追記し、書けないときは標準エラー出力へ出す。"""
+    """失敗した操作をその時刻の日付のログに 1 行追記し、書き込めないときは標準エラー出力へ出す。"""
     # 時刻は 1 回だけ取り、行の time とファイルの日付を同じ時刻から決める
     moment = now()
     # ER 図「ログ」の列を持つ 1 行の JSON にする
@@ -96,12 +96,12 @@ def write_log(
         ) as log_file:
             log_file.write(line + "\n")
     except OSError:
-        # フックの標準出力は JSON 専用のため、ログに書けない失敗は標準エラー出力へ逃がす
+        # フックの標準出力は JSON 専用のため、ログに書き込めない失敗は標準エラー出力へ逃がす
         print(line, file=sys.stderr)
 
 
 def _file_date(name: str) -> date | None:
-    """ログのファイル名から日付を読み、ログのファイル名でなければ None を返す。"""
+    """ログのファイル名から日付を読み、ログのファイル名でなければ None を返却する。"""
     matched = LOG_FILE_PATTERN.fullmatch(name)
     if matched is None:
         return None
@@ -119,14 +119,14 @@ def sweep_logs(
     *,
     today: Callable[[], date] = _utc_today,
 ) -> tuple[LogDeleteError, ...]:
-    """日付が保持日数以上前のログのファイルを削除し、削除できなかったものを返す。"""
+    """日付が保持日数以上前のログのファイルを削除し、削除できなかったものを返却する。"""
     try:
         entries = list(os.scandir(log_folder))
     except FileNotFoundError:
         # ログのフォルダがまだ無ければ掃除するものが無い（フォルダは作らない）
         return ()
     current = today()
-    # 暦の範囲を超えるほど大きい保持日数は、削除するものが無いとして日付の引き算をしない
+    # 暦の範囲を超えるほど大きい保持日数は、削除するものが無いとして日付の取得し算をしない
     if retention_days > (current - date.min).days:
         return ()
     # この日付以前のログのファイルが、保持日数を過ぎたもの
@@ -154,7 +154,7 @@ def sweep_logs(
 
 
 def delete_legacy_log(state_folder: Path) -> LogDeleteError | None:
-    """記録フォルダに残った変更前のログを削除し、削除できなければ失敗を返す。"""
+    """記録フォルダに残った変更前のログを削除し、削除できなければ失敗を返却する。"""
     legacy_log = state_folder / LEGACY_LOG_FILE_NAME
     try:
         # シンボリックリンクを辿らずに調べ、通常のファイルだけを削除する

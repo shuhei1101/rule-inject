@@ -43,7 +43,7 @@ flows:
         participant ST as 記録ファイル
 
         CC->>S: 標準入力（SessionStart・source: compact）
-        S->>ST: 有無を見る（残っている）
+        S->>ST: 有無を確認する（残っている）
         S-->>CC: additionalContext（削除できなかったこと）<br>終了コード 0
       ```
     expected:
@@ -68,14 +68,14 @@ flows:
         participant ST as 記録ファイル
 
         CC->>S: 標準入力（SessionStart・source: compact）
-        S->>ST: 有無を見る（無い）
+        S->>ST: 有無を確認する（無い）
         S-->>CC: 出力なし<br>終了コード 0
       ```
     expected:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_no_record_after_compact
-  - name: 異常系（設定ファイルが読めない・理由を載せる）
+  - name: 異常系（設定ファイルが読めない・理由を記載する）
     summary: 圧縮の後に設定ファイルが読めないとき、理由を通知する
     setup:
       - name: Mock

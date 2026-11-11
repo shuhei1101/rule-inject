@@ -25,7 +25,7 @@ START = ["systemctl", "--user", "start", "--no-block", "--", "rule-inject"]
 
 @pytest.fixture
 def listening_port() -> Iterator[int]:
-    """127.0.0.1 の空いているポートで待ち受け、そのポートを返す。"""
+    """127.0.0.1 の空いているポートで待ち受け、そのポートを返却する。"""
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         listener.listen(1)
@@ -42,7 +42,7 @@ def closed_port() -> int:
 
 @pytest.fixture
 def fake_systemctl(monkeypatch: pytest.MonkeyPatch) -> Callable[..., list[dict[str, Any]]]:
-    """subprocess.run を差し替え、受け取った引数と timeout の並びを返す factory。"""
+    """subprocess.run を差し替え、受け取った引数と timeout の並びを返却する factory。"""
 
     def _install(
         *, is_enabled: int | Exception = 0, start: int | Exception = 0

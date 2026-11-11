@@ -69,7 +69,7 @@ functions:
     exceptions:
       - name: ToolError
         condition: '`_project_settings` が送出する、または `_decode_scan_cursor` が送出する'
-        message: '`_project_settings` と同じ、または `cursor` が使えない旨'
+        message: '`_project_settings` と同じ、または `cursor` を使用できない旨'
     unit_tests:
       - name: test_check_indexes
         case: 正常
@@ -187,7 +187,7 @@ functions:
     exceptions:
       - name: ToolError
         condition: 文字列が読み込めない、または `project_dir`・`include_global` が前の呼び出しと違う
-        message: '`cursor` が使えない旨と、`cursor` を省いて最初から辿るか前の呼び出しと同じ値で渡す旨'
+        message: '`cursor` を使用できない旨と、`cursor` を省いて最初から辿るか前の呼び出しと同じ値で指定する旨'
     unit_tests:
       - name: test_decode_scan_cursor
         case: 正常

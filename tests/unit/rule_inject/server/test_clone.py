@@ -17,7 +17,7 @@ GIT_IDENTITY = ["-c", "user.name=test", "-c", "user.email=test@example.com"]
 
 
 def _git(cwd: Path, *args: str) -> str:
-    """cwd で git を実行し、標準出力を返す。"""
+    """cwd で git を実行し、標準出力を返却する。"""
     completed = subprocess.run(
         ["git", *GIT_IDENTITY, *args], cwd=cwd, capture_output=True, text=True, check=True
     )
@@ -26,7 +26,7 @@ def _git(cwd: Path, *args: str) -> str:
 
 @dataclass(frozen=True)
 class Repos:
-    """上流の bare リポジトリと、そこから取ったクローンと、上流へ commit を積む作業用のクローン。"""
+    """上流の bare リポジトリと、そこから取ったクローンと、上流へ commit を追加する作業用のクローン。"""
 
     upstream: Path
     clone: Path
@@ -53,10 +53,10 @@ def repos(tmp_path: Path) -> Repos:
 
 @pytest.fixture
 def push_commit() -> Callable[[Path, str], str]:
-    """repo にファイルを 1 つ足して commit し、上流があれば push して、commit を返す factory。"""
+    """repo にファイルを 1 つ追加して commit し、上流があれば push して、commit を返却する factory。"""
 
     def _push(repo: Path, name: str, *, push: bool = True) -> str:
-        """repo に name のファイルを足して commit する。"""
+        """repo に name のファイルを追加して commit する。"""
         (repo / name).write_text(name, encoding="utf-8")
         _git(repo, "add", name)
         _git(repo, "commit", "-m", name)
@@ -89,7 +89,7 @@ def recording_run() -> tuple[RunCommand, list[list[str]]]:
 
 
 def _stub_run(returncode: int, stdout: str = "", stderr: str = "") -> RunCommand:
-    """常に同じ結果を返す `RunCommand`。"""
+    """常に同じ結果を返却する `RunCommand`。"""
     from rule_inject.server.clone import CommandResult
 
     def _run(
@@ -99,14 +99,14 @@ def _stub_run(returncode: int, stdout: str = "", stderr: str = "") -> RunCommand
         timeout: float,
         env: Mapping[str, str] | None = None,
     ) -> CommandResult:
-        """決めた結果を返す。"""
+        """決めた結果を返却する。"""
         return CommandResult(returncode=returncode, stdout=stdout, stderr=stderr)
 
     return _run
 
 
 def test_find_clone(tmp_path: Path) -> None:
-    """version.ini を持つフォルダを返す（正常系）。"""
+    """version.ini を持つフォルダを返却する（正常系）。"""
     from rule_inject.server.clone import find_clone
 
     # 準備
@@ -210,7 +210,7 @@ def test_pull_when_dirty(
 
 
 def test_plan_migrations(tmp_path: Path) -> None:
-    """migrations を返す（正常系）。"""
+    """migrations を返却する（正常系）。"""
     from rule_inject.server.clone import plan_migrations
 
     # 準備

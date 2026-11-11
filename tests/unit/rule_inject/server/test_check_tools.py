@@ -15,13 +15,13 @@ from mcp.server.mcpserver.exceptions import ToolError
 SCAN_TIME_LIMIT = 30
 # dev-docs への問い合わせの待ち時間の上限（秒）。待ち終えられる値
 DEV_DOCS_TIMEOUT = 108
-# 設定ファイルの `global.dev_docs_url` に書く接続先
+# 設定ファイルの `global.dev_docs_url` に書き込む接続先
 DEV_DOCS_URL = "http://docs.example/mcp"
 
 
 @pytest.fixture
 def project_dir(tmp_path: Path) -> Path:
-    """ツールに渡すプロジェクトの直下。"""
+    """ツールに引き渡すプロジェクトの直下。"""
     path = tmp_path / "project"
     path.mkdir()
     return path
@@ -34,7 +34,7 @@ def unmatched_env(
     rule_file: Callable[..., Path],
     server_env: Callable[..., dict[str, str]],
 ) -> dict[str, str]:
-    """`global.indexes` とプロジェクトの索引の両方に、どのファイルにも当たらないエントリを 1 つずつ置いた設定ファイルを指す環境変数。"""
+    """`global.indexes` とプロジェクトの索引の両方に、どのファイルにも該当しないエントリを 1 つずつ配置した設定ファイルを指す環境変数。"""
     app = project_dir / "src" / "app.py"
     app.parent.mkdir()
     app.write_text("", encoding="utf-8")
@@ -62,7 +62,7 @@ def build_tag_env(
     rule_file: Callable[..., Path],
     server_env: Callable[..., dict[str, str]],
 ) -> Callable[..., dict[str, str]]:
-    """`global.indexes` とプロジェクトの索引に、`pyhton` のパターンを持つエントリを 1 つずつ置いた設定ファイルを指す環境変数を返す factory。"""
+    """`global.indexes` とプロジェクトの索引に、`pyhton` のパターンを持つエントリを 1 つずつ配置した設定ファイルを指す環境変数を返却する factory。"""
 
     def _make(*, key: str = "filter[tags]", project_extra: str = "") -> dict[str, str]:
         """`args` のキーと、プロジェクトの索引に加えるエントリ（YAML）を指定して環境変数を作る。"""
@@ -93,16 +93,16 @@ def build_tag_env(
 def stub_fetch_used_tags(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Callable[..., list[tuple[str, str]]]:
-    """`fetch_used_tags` を決めた結果を返す関数に差し替え、受けた接続先と `project_dir` の記録を返す factory。"""
+    """`fetch_used_tags` を決めた結果を返却する関数に差し替え、受けた接続先と `project_dir` の記録を返却する factory。"""
 
     def _install(tags: tuple[str, ...], reason: str | None) -> list[tuple[str, str]]:
-        """tags と reason を持つ `UsedTags` を返す関数に差し替える。"""
+        """tags と reason を持つ `UsedTags` を返却する関数に差し替える。"""
         from rule_inject.server.dev_docs import UsedTags
 
         calls: list[tuple[str, str]] = []
 
         async def fake(url: str, project_dir: str, **_: float) -> UsedTags:
-            """呼び出しを記録して、決めた結果を返す。"""
+            """呼び出しを記録して、決めた結果を返却する。"""
             calls.append((url, project_dir))
             return UsedTags(tags=tags, reason=reason)
 
@@ -153,7 +153,7 @@ def test_check_indexes_when_unmatched(
     project_dir: Path,
     unmatched_env: dict[str, str],
 ) -> None:
-    """プロジェクトの索引の `paths` の当たらないエントリだけを載せて数える（正常系）。"""
+    """プロジェクトの索引の `paths` の該当しないエントリだけを記載して数える（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -183,7 +183,7 @@ def test_check_indexes_when_include_global(
     project_dir: Path,
     unmatched_env: dict[str, str],
 ) -> None:
-    """`include_global` でユーザー全体の索引も載せ、数えない（正常系）。"""
+    """`include_global` でユーザー全体の索引も記載し、数えない（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -215,7 +215,7 @@ def test_check_indexes_when_time_limit(
     project_dir: Path,
     unmatched_env: dict[str, str],
 ) -> None:
-    """辿る時間の上限で止まると続きの位置を返し、渡すと続きから辿る（正常系）。"""
+    """辿る時間の上限で止まると続きの位置を返却し、引き渡すと続きから辿る（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -261,7 +261,7 @@ def test_check_indexes_when_cursor_invalid(
     project_dir: Path,
     unmatched_env: dict[str, str],
 ) -> None:
-    """使えない `cursor` を断る（異常系）。"""
+    """使用できない `cursor` を断る（異常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -285,7 +285,7 @@ def test_check_indexes_when_tag_unused(
     build_tag_env: Callable[..., dict[str, str]],
     stub_fetch_used_tags: Callable[..., list[tuple[str, str]]],
 ) -> None:
-    """使われていないタグのパターンを全ての索引に載せ、数えない（正常系）。"""
+    """使用されていないタグのパターンを全ての索引に記載し、数えない（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -325,7 +325,7 @@ def test_check_indexes_when_tag_check_skipped(
     build_tag_env: Callable[..., dict[str, str]],
     stub_fetch_used_tags: Callable[..., list[tuple[str, str]]],
 ) -> None:
-    """dev-docs に届かないときはタグの確かめだけを飛ばす（正常系）。"""
+    """dev-docs に届かないときはタグの確認だけを飛ばす（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -392,13 +392,13 @@ def test_check_indexes_when_query_parallel(
     from rule_inject.server.check_tools import check_indexes
     from rule_inject.server.dev_docs import UsedTags
 
-    # 準備: 問い合わせが始まったら Event を立て、辿る側がそれを待てたかを記録する
+    # 準備: 問い合わせが始まったら Event を設定し、辿る側がそれを待てたかを記録する
     started = threading.Event()
     observed: list[bool] = []
     real_scan = check_tools.scan_unmatched
 
     async def fake_fetch(url: str, project_dir: str, **_: float) -> UsedTags:
-        """呼ばれたら Event を立てて、使われているタグを返す。"""
+        """呼ばれたら Event を設定して、使用中のタグを返却する。"""
         started.set()
         return UsedTags(tags=("a",), reason=None)
 

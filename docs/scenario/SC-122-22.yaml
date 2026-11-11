@@ -31,7 +31,7 @@ scenarios:
         S->>SD: ユニットが有効かを確認する
         SD-->>S: 有効
         S->>SD: 起動を依頼する（待たない）
-        S-->>CC: /mcp で接続し直す案内（additionalContext）
+        S-->>CC: /mcp で再接続する案内（additionalContext）
         SD->>SV: 起動する
         SV->>SV: RULE_INJECT_PORT で待ち受ける
       ```
@@ -62,7 +62,7 @@ scenarios:
         CC->>S: セッションの開始
         S->>SV: 応答を確認する
         SV-->>S: 応答する
-        S-->>CC: 何も返さない
+        S-->>CC: 何も返却しない
       ```
     expected:
       - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
@@ -94,7 +94,7 @@ scenarios:
         SV--xS: 応答しない
         S->>SD: ユニットが有効かを確認する
         SD-->>S: 有効でない
-        S-->>CC: 何も返さない
+        S-->>CC: 何も返却しない
       ```
     expected:
       - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
@@ -123,7 +123,7 @@ scenarios:
         SV--xS: 応答しない
         S->>SD: ユニットが有効かを確認する
         SD-->>S: ユニットが無い
-        S-->>CC: 何も返さない
+        S-->>CC: 何も返却しない
       ```
     expected:
       - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない

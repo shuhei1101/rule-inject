@@ -9,7 +9,7 @@ items:
   - page: MOD-122-38.py.yaml
     summary: 索引のチェックのツールと続きの位置の変換
   - page: MOD-122-41.py.yaml
-    summary: dev-docs から使われているタグを引くクライアント
+    summary: dev-docs から使用中のタグを取得するクライアント
   - page: MOD-122-42.py.yaml
     summary: 既読の記録の確認・削除のツール
   - page: MOD-122-44.py.yaml
@@ -21,7 +21,7 @@ items:
   - page: MOD-122-40.py.yaml
     summary: 処理中の呼び出しの数と再起動の状態、停止の進め方
   - page: MOD-122-39.py.yaml
-    summary: クローンのバージョン・commit・上流の取り込み・依存の入れ直し・移し替えの確かめ
+    summary: クローンのバージョン・commit・上流の取り込み・依存の再インストール・移し替えの確認
   - page: MOD-122-53.yaml
     summary: 起動の入口・コンポジションルート・ツールの本体と応答の形式
   - page: MOD-122-54.yaml
@@ -35,7 +35,7 @@ items:
   - page: MOD-122-60.yaml
     summary: セッションごとの既読の記録の読み・追記・削除
   - page: MOD-122-61.yaml
-    summary: 止める案内・止めない案内・失敗の知らせの文面
+    summary: 止める案内・止めない案内・失敗の通知の文面
   - page: MOD-122-59.yaml
     summary: 記録フォルダ・場所の解決・ログ・例外
   - page: MOD-122-55.yaml
@@ -73,11 +73,11 @@ items:
   - page: MOD-122-10.py.yaml
     summary: 問題の種類・問題・チェックの結果・辿る位置・タグのパターンの型
   - page: MOD-122-8.py.yaml
-    summary: 索引のチェックと、書く前と書いた後の問題の比較
+    summary: 索引のチェックと、書き込む前と書き込んだ後の問題の比較
   - page: MOD-122-7.py.yaml
-    summary: プロジェクトのファイルを辿り、paths の当たらないエントリを返す
+    summary: プロジェクトのファイルを辿り、paths の該当しないエントリを返却する
   - page: MOD-122-9.py.yaml
-    summary: タグのパターンを集め、使われているタグに当たらないものを返す
+    summary: タグのパターンを集め、使用中のタグに該当しないものを返却する
   - page: MOD-122-13.py.yaml
     summary: 書き込みのチェックの関数型・索引のロック・編集の結果
   - page: MOD-122-11.py.yaml
@@ -89,7 +89,7 @@ items:
   - page: MOD-122-19.py.yaml
     summary: 記録ファイルの読み・追記・削除・掃除と、既読の履歴の追記・読みと、本文のハッシュ
   - page: MOD-122-5.py.yaml
-    summary: 案内が読むルールの最小の型と、案内文と載せた場所
+    summary: 案内が読むルールの最小の型と、案内文と記載した場所
   - page: MOD-122-4.py.yaml
     summary: 案内文の組み立てと文面の定数
   - page: MOD-122-3.py.yaml
@@ -119,7 +119,7 @@ items:
   - page: MOD-122-50.py.yaml
     summary: '!{名前} を環境変数の値へ展開する'
   - page: MOD-122-47.py.yaml
-    summary: 失敗を日付ごとのログ（JSON Lines）へ書き、古いログを削除する
+    summary: 失敗を日付ごとのログ（JSON Lines）へ書き込み、古いログを削除する
   - page: MOD-122-51.py.yaml
     summary: 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り
   - page: MOD-122-33.py.yaml

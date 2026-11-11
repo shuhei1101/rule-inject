@@ -28,7 +28,7 @@ from rule_inject.shared.errors import (
     describe,
 )
 
-# 記録ファイル名に使える session_id の形式
+# 記録ファイル名に使用できる session_id の形式
 SESSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 RECORD_SUFFIX = ".txt"
 # 案内済みの記録ファイルは `{session_id}{GUIDED_SUFFIX}`
@@ -48,22 +48,22 @@ SECONDS_PER_DAY = 86_400
 
 
 def _utc_now() -> datetime:
-    """現在の UTC の時刻を返す。"""
+    """現在の UTC の時刻を返却する。"""
     return datetime.now(UTC)
 
 
 def _record_path(state_dir: Path, session_id: str, suffix: str = RECORD_SUFFIX) -> Path:
-    """そのセッションの記録ファイル（既読・案内済み・既読の履歴）のパスを返す。"""
+    """そのセッションの記録ファイル（既読・案内済み・既読の履歴）のパスを返却する。"""
     return state_dir / f"{session_id}{suffix}"
 
 
 def is_valid_session_id(session_id: object) -> TypeGuard[str]:
-    """session_id が記録ファイル名に使える形式かを返す。"""
+    """session_id が記録ファイル名に使用できる形式かを返却する。"""
     return isinstance(session_id, str) and SESSION_ID_PATTERN.fullmatch(session_id) is not None
 
 
 def _read_lines(path: Path) -> tuple[str, ...]:
-    """記録ファイルの空行を除いた行を、行の順に返す（ファイルが無ければ空）。"""
+    """記録ファイルの空行を除いた行を、行の順に返却する（ファイルが無ければ空）。"""
     try:
         text = path.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -80,14 +80,14 @@ def _append_lines(
     lines: Sequence[str],
     error: type[RuleInjectError] = RecordWriteError,
 ) -> None:
-    """行を 1 行ずつ記録ファイルへ追記する（空なら書かない）。書けないときは error を送出する。"""
+    """行を 1 行ずつ記録ファイルへ追記する（空なら書き込まない）。書き込めないときは error を送出する。"""
     if not lines:
         return
     try:
         state_dir.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
         raise error(path=str(state_dir), reason=describe(exc)) from exc
-    # 全行を 1 つにまとめ、追記専用で 1 回に書く
+    # 全行を 1 つにまとめ、追記専用で 1 回に書き込む
     data = "".join(f"{line}\n" for line in lines).encode("utf-8")
     try:
         descriptor = os.open(path, APPEND_FLAGS, RECORD_FILE_MODE)
@@ -97,9 +97,9 @@ def _append_lines(
             os.close(descriptor)
     except OSError as exc:
         raise error(path=str(path), reason=describe(exc)) from exc
-    # 一部だけ書けた行は次の追記と混ざるため、失敗として扱う
+    # 一部だけ書き込めた行は次の追記と混ざるため、失敗として扱う
     if written != len(data):
-        raise error(path=str(path), reason="記録の一部しか書けませんでした")
+        raise error(path=str(path), reason="記録の一部しか書き込めませんでした")
 
 
 def _delete_file(path: Path) -> None:
@@ -114,14 +114,14 @@ def _delete_file(path: Path) -> None:
 
 
 def list_read_entries(state_dir: Path, session_id: str) -> tuple[ReadEntry, ...]:
-    """そのセッションの既読の行を、記録ファイルの行の順に返す（ファイルが無ければ空）。ハッシュを持たない行は空のハッシュで残す。"""
+    """そのセッションの既読の行を、記録ファイルの行の順に返却する（ファイルが無ければ空）。ハッシュを持たない行は空のハッシュで残す。"""
     entries: list[ReadEntry] = []
     for line in _read_lines(_record_path(state_dir, session_id)):
         location, _, file_hash = line.partition(FIELD_SEPARATOR)
         # 場所が空の行は読み飛ばす
         if not location:
             continue
-        # ハッシュを持たない行は、空のハッシュにして残す（確認のツールが changed として返すため）
+        # ハッシュを持たない行は、空のハッシュにして残す（確認のツールが changed として返却するため）
         entries.append(
             ReadEntry(
                 location=location,
@@ -132,12 +132,12 @@ def list_read_entries(state_dir: Path, session_id: str) -> tuple[ReadEntry, ...]
 
 
 def read_record(state_dir: Path, session_id: str) -> frozenset[ReadEntry]:
-    """そのセッションの既読の行の集合を返す（ファイルが無ければ空）。ハッシュを持たない行は既読として扱わない。"""
+    """そのセッションの既読の行の集合を返却する（ファイルが無ければ空）。ハッシュを持たない行は既読として扱わない。"""
     return frozenset(entry for entry in list_read_entries(state_dir, session_id) if entry.hash)
 
 
 def read_guided(state_dir: Path, session_id: str) -> frozenset[str]:
-    """そのセッションで止めずに案内した場所の集合を返す（ファイルが無ければ空）。"""
+    """そのセッションで止めずに案内した場所の集合を返却する（ファイルが無ければ空）。"""
     # 重なりは 1 つになる
     return frozenset(_read_lines(_record_path(state_dir, session_id, GUIDED_SUFFIX)))
 
@@ -196,13 +196,13 @@ def delete_guided(state_dir: Path, session_id: str) -> None:
 
 
 def record_exists(state_dir: Path, session_id: str) -> bool:
-    """そのセッションの記録ファイルがあるかを返す。"""
+    """そのセッションの記録ファイルがあるかを返却する。"""
     return _record_path(state_dir, session_id).is_file()
 
 
 def _swept_session_id(name: str) -> str | None:
-    """掃除の対象の記録ファイルの名前から session_id を取り出し、対象の名前でなければ None を返す。"""
-    # 案内済みの末尾を先に外す（`.guided.txt` も `.txt` で終わるため）
+    """掃除の対象の記録ファイルの名前から session_id を取り出し、対象の名前でなければ None を返却する。"""
+    # 案内済みの末尾を先に除外する（`.guided.txt` も `.txt` で終わるため）
     for suffix in (GUIDED_SUFFIX, HISTORY_SUFFIX, RECORD_SUFFIX):
         if name.endswith(suffix):
             session_id = name.removesuffix(suffix)
@@ -217,7 +217,7 @@ def sweep_records(
     now: Callable[[], float] = time.time,
     retention_days: int,
 ) -> tuple[RecordDeleteError, ...]:
-    """保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを削除し、削除できなかったものを返す。"""
+    """保持期間を過ぎた別のセッションの既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルを削除し、削除できなかったものを返却する。"""
     try:
         entries = list(os.scandir(state_dir))
     except FileNotFoundError:
@@ -249,7 +249,7 @@ def sweep_records(
 
 
 def hash_locations(locations: Sequence[str]) -> tuple[ReadEntry, ...]:
-    """場所ごとに今のルールのファイルの本文のハッシュを取り、既読の行にして返す（読めない場所は含めない）。"""
+    """場所ごとに今のルールのファイルの本文のハッシュを取り、既読の行にして返却する（読めない場所は含めない）。"""
     entries: list[ReadEntry] = []
     for location in locations:
         try:
@@ -265,7 +265,7 @@ def hash_locations(locations: Sequence[str]) -> tuple[ReadEntry, ...]:
 def current_read_locations(
     entries: frozenset[ReadEntry], locations: Iterable[str]
 ) -> frozenset[str]:
-    """当たったルールの場所のうち、既読の行に場所と今の本文のハッシュの組があるものを返す。"""
+    """該当したルールの場所のうち、既読の行に場所と今の本文のハッシュの組があるものを返却する。"""
     recorded = {entry.location for entry in entries}
     # 既読の行に場所が無いものは、ハッシュを取らずに未読とする
     candidates = [location for location in dict.fromkeys(locations) if location in recorded]
@@ -274,7 +274,7 @@ def current_read_locations(
 
 
 def list_rule_states(entries: Sequence[ReadEntry]) -> tuple[tuple[str, ReadState], ...]:
-    """既読の行の場所ごとに、今の本文が既読にした時点と同じかを、場所が初めて現れた順に返す。"""
+    """既読の行の場所ごとに、今の本文が既読にした時点と同じかを、場所が初めて現れた順に返却する。"""
     locations = tuple(dict.fromkeys(entry.location for entry in entries))
     current_hashes = {entry.location: entry.hash for entry in hash_locations(locations)}
     recorded = frozenset(entries)
@@ -292,7 +292,7 @@ def list_rule_states(entries: Sequence[ReadEntry]) -> tuple[tuple[str, ReadState
 
 
 def _history_entry(line: str) -> HistoryEntry | None:
-    """既読の履歴の 1 行を読む。読めない行・必要な値が文字列でない行・知らない読み方の行は None を返す。"""
+    """既読の履歴の 1 行を読む。読めない行・必要な値が文字列でない行・知らない読み方の行は None を返却する。"""
     try:
         data = json.loads(line)
     except ValueError:
@@ -317,14 +317,14 @@ def _history_entry(line: str) -> HistoryEntry | None:
 
 
 def read_history(state_dir: Path, session_id: str) -> tuple[HistoryEntry, ...]:
-    """そのセッションの既読の履歴を全行読み、読めた行を行の順に返す（ファイルが無ければ空）。"""
+    """そのセッションの既読の履歴を全行読み、読めた行を行の順に返却する（ファイルが無ければ空）。"""
     lines = _read_lines(_record_path(state_dir, session_id, HISTORY_SUFFIX))
     entries = (_history_entry(line) for line in lines)
     return tuple(entry for entry in entries if entry is not None)
 
 
 def list_record_sessions(state_dir: Path) -> tuple[RecordSession, ...]:
-    """記録フォルダの既読の記録ファイルを持つセッションを、最終更新の新しい順に返す（記録フォルダが無ければ空）。"""
+    """記録フォルダの既読の記録ファイルを持つセッションを、最終更新の新しい順に返却する（記録フォルダが無ければ空）。"""
     try:
         directory = list(os.scandir(state_dir))
     except FileNotFoundError:
@@ -338,7 +338,7 @@ def list_record_sessions(state_dir: Path) -> tuple[RecordSession, ...]:
         if entry.name.endswith(GUIDED_SUFFIX) or not entry.name.endswith(RECORD_SUFFIX):
             continue
         session_id = entry.name.removesuffix(RECORD_SUFFIX)
-        # 記録ファイル名に使えない名前と、シンボリックリンク・フォルダは対象にしない
+        # 記録ファイル名に使用できない名前と、シンボリックリンク・フォルダは対象にしない
         if not is_valid_session_id(session_id) or not entry.is_file(follow_symlinks=False):
             continue
         try:

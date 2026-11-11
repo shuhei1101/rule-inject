@@ -20,7 +20,7 @@ def validator() -> Any:
 
 
 def test_load_validator() -> None:
-    """同梱の Schema が Schema として正しく、書式どおりの索引を通す（正常系）。"""
+    """同梱の Schema が Schema として正しく、書式どおりの索引を受け付ける（正常系）。"""
     from rule_inject.features.index.check import load_validator
 
     # 準備
@@ -51,7 +51,7 @@ def test_load_validator() -> None:
 
 
 def test_check_index_when_missing(tmp_path: Path, validator: Any) -> None:
-    """無い索引を hook_error で返す（正常系）。"""
+    """無い索引を hook_error で返却する（正常系）。"""
     from rule_inject.features.index.check import check_index
 
     # 準備
@@ -70,7 +70,7 @@ def test_check_index_text(
     rule_file: Callable[..., Path],
     validator: Any,
 ) -> None:
-    """問題の無い索引では問題を返さない（正常系）。"""
+    """問題の無い索引では問題を返却しない（正常系）。"""
     from rule_inject.features.index.check import check_index_text
 
     # 準備
@@ -83,7 +83,7 @@ def test_check_index_text(
 
 
 def test_check_index_text_when_unparsable(tmp_path: Path, validator: Any) -> None:
-    """フックが読めない索引はその理由だけを返す（正常系）。"""
+    """フックが読めない索引はその理由だけを返却する（正常系）。"""
     from rule_inject.features.index.check import check_index_text
 
     # 準備
@@ -120,7 +120,7 @@ def test_check_index_text_when_violation(
 
 
 def test_check_index_text_when_missing_rule(tmp_path: Path, validator: Any) -> None:
-    """ルールの場所にファイルが無いエントリを返し、無効のエントリは確かめない（正常系）。"""
+    """ルールの場所にファイルが無いエントリを返却し、無効のエントリは確認しない（正常系）。"""
     from rule_inject.features.index.check import check_index_text
 
     # 準備
@@ -134,7 +134,7 @@ def test_check_index_text_when_missing_rule(tmp_path: Path, validator: Any) -> N
 
 
 def test_check_index_text_when_skipped(tmp_path: Path, validator: Any) -> None:
-    """フックが読み飛ばすエントリを返し、場所は確かめない（正常系）。"""
+    """フックが読み飛ばすエントリを返却し、場所は確認しない（正常系）。"""
     from rule_inject.features.index import read_index_text
     from rule_inject.features.index.check import check_index_text
 
@@ -151,7 +151,7 @@ def test_check_index_text_when_skipped(tmp_path: Path, validator: Any) -> None:
 
 
 def test_new_problems_when_existing() -> None:
-    """もとからある問題は位置がずれても返さない（正常系）。"""
+    """もとからある問題は位置がずれても返却しない（正常系）。"""
     from rule_inject.features.index.check.service import new_problems
     from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 
@@ -187,7 +187,7 @@ def test_new_problems_when_existing() -> None:
 
 
 def test_new_problems_when_changed_entry() -> None:
-    """書いたエントリの問題は書く前に同じ理由があっても返す（正常系）。"""
+    """書き込んだエントリの問題は書き込む前に同じ理由があっても返却する（正常系）。"""
     from rule_inject.features.index.check.service import new_problems
     from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 
@@ -208,7 +208,7 @@ def test_new_problems_when_changed_entry() -> None:
 
 
 def test_new_problems_when_hook_error() -> None:
-    """書いた後にフックが読めなければそれを返す（正常系）。"""
+    """書き込んだ後にフックが読めなければそれを返却する（正常系）。"""
     from rule_inject.features.index.check.service import new_problems
     from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 
@@ -216,7 +216,7 @@ def test_new_problems_when_hook_error() -> None:
     problem = IndexProblem(
         kind="hook_error",
         location="$",
-        reason="3行目: 最上位のキーはインデントなしで書いてください",
+        reason="3行目: 最上位のキーはインデントなしで記載してください",
         position=None,
         rev=None,
     )
@@ -233,7 +233,7 @@ def test_check_change(
     rule_file: Callable[..., Path],
     validator: Any,
 ) -> None:
-    """新しく出た問題を行で返す（正常系）。"""
+    """新しく出た問題を行で返却する（正常系）。"""
     from rule_inject.features.index import entry_revs
     from rule_inject.features.index.check import check_change
 

@@ -22,7 +22,7 @@ verification:
     | 0.5 | 0 | 3 回とも `SSE stream ended without a response` | 0.51〜1.50 秒 |
     | 1.0 | 0.2 | 3 回とも `SSE stream ended without a response` | 1.31〜1.38 秒 |
 
-    応答を送信し終える前に `should_exit` が真になると、POST の応答のストリームは `timeout_graceful_shutdown` を待たずに取り消される。
+    応答を送信し終える前に `should_exit` が真になると、POST の応答のストリームは `timeout_graceful_shutdown` を待たずにキャンセルされる。
 version:
   current: 3.5.0
   checked_on: '2026-11-10'
@@ -40,19 +40,19 @@ catalogs:
     entries:
       - name: EventSourceResponse
         kind: クラス
-        purpose: SSE のストリームを返却する応答。停止を検知すると、送信しているストリームを取り消す
+        purpose: SSE のストリームを返却する応答。停止を検知すると、送信しているストリームをキャンセルする
         params:
           - name: shutdown_grace_period
             type: '`float`'
             required: false
             default: '`0`'
-            description: 停止を検知してから、ストリームを取り消すまでに待つ秒数
+            description: 停止を検知してから、ストリームをキャンセルするまでに待つ秒数
       - name: AppStatus.enable_automatic_graceful_drain
         kind: 属性
         purpose: 既定の `True` のとき、uvicorn の `Server.should_exit` を停止の合図として扱う
 notes:
   停止の検知: |-
     ストリームを開いたイベントループごとに監視のタスクを 1 つ動かし、0.5 秒ごとに、SIGTERM のハンドラから取り出した uvicorn の `Server` の `should_exit` を確認する。
-    真であれば、そのイベントループの全ての `EventSourceResponse` を `shutdown_grace_period` の後に取り消す。
-    確認が 0.5 秒ごとのため、`should_exit` を真にしてから取り消すまでの時間は 0〜0.5 秒で変動する。
+    真であれば、そのイベントループの全ての `EventSourceResponse` を `shutdown_grace_period` の後にキャンセルする。
+    確認が 0.5 秒ごとのため、`should_exit` を真にしてからキャンセルするまでの時間は 0〜0.5 秒で変動する。
 id: LIB-122-6

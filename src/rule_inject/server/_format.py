@@ -105,7 +105,7 @@ def respond(result: BaseModel, format: ResponseFormat) -> CallToolResult:
 
 
 def _text_length(result: BaseModel, format: ResponseFormat) -> int:
-    """応答の text の字数を返す。"""
+    """応答の text の字数を返却する。"""
     content = respond(result, format).content[0]
     return len(content.text) if isinstance(content, TextContent) else 0
 
@@ -113,8 +113,8 @@ def _text_length(result: BaseModel, format: ResponseFormat) -> int:
 def fit_page(
     build: Callable[[int], BaseModel], count: int, format: ResponseFormat
 ) -> tuple[BaseModel, int]:
-    """応答の text が上限に収まるまで、一覧の末尾から要素を切る。収まる最大の件数の応答と、その件数を返す。"""
-    # 件数を二分探索で減らす（0 件でも超えるときは 0 件の応答を返す）
+    """応答の text が上限に収まるまで、一覧の末尾から要素を切る。収まる最大の件数の応答と、その件数を返却する。"""
+    # 件数を二分探索で減らす（0 件でも超えるときは 0 件の応答を返却する）
     low, high = 0, count
     while low < high:
         middle = (low + high + 1) // 2

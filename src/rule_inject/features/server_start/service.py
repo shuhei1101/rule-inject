@@ -17,7 +17,7 @@ SYSTEMCTL_TIMEOUT_SECONDS = 0.3
 
 
 def server_responds(port: int, *, timeout: float = PROBE_TIMEOUT_SECONDS) -> bool:
-    """`LOOPBACK` のポートへ TCP で接続できるかを返す。"""
+    """`LOOPBACK` のポートへ TCP で接続できるかを返却する。"""
     try:
         with socket.create_connection((LOOPBACK, port), timeout=timeout):
             return True
@@ -27,7 +27,7 @@ def server_responds(port: int, *, timeout: float = PROBE_TIMEOUT_SECONDS) -> boo
 
 
 def _systemctl(args: list[str], timeout: float) -> int:
-    """`systemctl --user` を入出力を捨てて実行し、終了コードを返す。"""
+    """`systemctl --user` を入出力を捨てて実行し、終了コードを返却する。"""
     completed = subprocess.run(
         ["systemctl", "--user", *args],
         stdin=subprocess.DEVNULL,
@@ -40,8 +40,8 @@ def _systemctl(args: list[str], timeout: float) -> int:
 
 
 def request_unit_start(service: str, *, timeout: float = SYSTEMCTL_TIMEOUT_SECONDS) -> UnitStart:
-    """ユニットが有効なときだけ `systemctl --user start --no-block` で起動を依頼し、結果を返す。"""
-    # 1. ユニットが有効かを確かめる
+    """ユニットが有効なときだけ `systemctl --user start --no-block` で起動を依頼し、結果を返却する。"""
+    # 1. ユニットが有効かを確認する
     try:
         enabled = _systemctl(["is-enabled", "--quiet", "--", service], timeout)
     except FileNotFoundError:

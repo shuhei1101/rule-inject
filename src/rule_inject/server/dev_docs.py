@@ -1,4 +1,4 @@
-"""dev-docs の `search_docs` で、使われているタグを引くクライアント。"""
+"""dev-docs の `search_docs` で、使用中のタグを取得するクライアント。"""
 
 from __future__ import annotations
 
@@ -17,49 +17,49 @@ from mcp.types import CallToolResult, TextContent
 
 from rule_inject.shared.errors import describe
 
-# 使われているタグを引く dev-docs のツール
+# 使用中のタグを取得する dev-docs のツール
 SEARCH_DOCS_TOOL = "search_docs"
-# `search_docs` に渡す固定の引数（これに `cwd` を加える）
+# `search_docs` に引き渡す固定の引数（これに `cwd` を加える）
 TAG_GROUP_ARGUMENTS = {"source": "*", "group_by": "tags", "format": "json"}
-# dev-docs がタグを持たない文書をまとめて返す `groups[].value`。使われているタグに含めない
+# dev-docs がタグを持たない文書をまとめて返却する `groups[].value`。使用中のタグに含めない
 NO_TAG_LABEL = "（なし）"
-# 応答を読めないときの理由に載せる、応答の文字列の字数の上限
+# 応答を読めないときの理由に記載する、応答の文字列の字数の上限
 UNREADABLE_EXCERPT_CHARS = 200
 
 
 @dataclass(frozen=True, slots=True)
 class UsedTags:
-    """`fetch_used_tags` の結果。引けたタグか、引けなかった理由のどちらかを持つ。"""
+    """`fetch_used_tags` の結果。取得できたタグか、取得できなかった理由のどちらかを持つ。"""
 
     # `groups[].value` の並び。`reason` があるときは空
     tags: tuple[str, ...]
-    # タグを引けなかった理由（接続先の URL を含む）。引けたときは None
+    # タグを取得できなかった理由（接続先の URL を含む）。取得できたときは None
     reason: str | None
 
 
 @asynccontextmanager
 async def _open_session(url: str) -> AsyncIterator[ClientSession]:
-    """接続先へ Streamable HTTP で接続し、初期化したセッションを渡す。抜けるときにセッションとストリームを閉じる。"""
+    """接続先へ Streamable HTTP で接続し、初期化したセッションを引き渡す。抜けるときにセッションとストリームを閉じる。"""
     async with streamable_http_client(url) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
         yield session
 
 
 def _skipped(reason: str) -> UsedTags:
-    """タグを引けなかった結果を作る。"""
+    """タグを取得できなかった結果を作る。"""
     return UsedTags(tags=(), reason=reason)
 
 
 def _parse_tags(url: str, project_dir: str, result: Any) -> UsedTags:
-    """`search_docs` の結果から、使われているタグか引けなかった理由を作る。"""
+    """`search_docs` の結果から、使用中のタグか取得できなかった理由を作る。"""
     text = (
         "".join(item.text for item in result.content if isinstance(item, TextContent))
         if isinstance(result, CallToolResult)
         else ""
     )
-    # ツールがエラーを返したときは、その文面を理由にする
+    # ツールがエラーを返却したときは、その文面を理由にする
     if isinstance(result, CallToolResult) and result.is_error:
-        return _skipped(f"{url} が {SEARCH_DOCS_TOOL} のエラーを返した: {text}")
+        return _skipped(f"{url} が {SEARCH_DOCS_TOOL} のエラーを返却した: {text}")
     try:
         body = json.loads(text)
     except ValueError:
@@ -68,7 +68,7 @@ def _parse_tags(url: str, project_dir: str, result: Any) -> UsedTags:
     # `total_count` が整数でない応答は読めない
     if not isinstance(total, int) or isinstance(total, bool):
         return _skipped(f"{url} の応答を読めない: {text[:UNREADABLE_EXCERPT_CHARS]}")
-    # 読める文書が 0 件のときは `groups` が返らず、全てのパターンが使われていないと誤って報告してしまう
+    # 読める文書が 0 件のときは `groups` が返らず、全てのパターンが使用されていないと誤って報告してしまう
     if total == 0:
         return _skipped(f"{url} から {project_dir} で読める文書が 0 件だった")
     groups = body.get("groups", [])
@@ -89,7 +89,7 @@ async def _search_tags(
     project_dir: str,
     open_session: Callable[[str], AbstractAsyncContextManager[ClientSession]],
 ) -> UsedTags:
-    """セッションを開いて `search_docs` を呼び、接続・通信に失敗したときは理由を返す。"""
+    """セッションを開いて `search_docs` を呼び、接続・通信に失敗したときは理由を返却する。"""
     result: Any = None
     failure: str | None = None
     try:
@@ -112,7 +112,7 @@ async def fetch_used_tags(
     timeout: float,  # noqa: ASYNC109 - 待ち時間の上限は呼び出し元が決める値として受ける
     open_session: Callable[[str], AbstractAsyncContextManager[ClientSession]] = _open_session,
 ) -> UsedTags:
-    """dev-docs の `search_docs` を `group_by: tags` で 1 回呼び、使われているタグを返す。届かないときは例外にせず理由を返す。"""
+    """dev-docs の `search_docs` を `group_by: tags` で 1 回呼び、使用中のタグを返却する。届かないときは例外にせず理由を返却する。"""
     try:
         async with asyncio.timeout(timeout):
             return await _search_tags(url, project_dir, open_session)

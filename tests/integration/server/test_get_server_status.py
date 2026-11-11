@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_normal(start_server: Callable[..., Any], config_text: Callable[..., str]) -> None:
-    """待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit・設定ファイルを返す（正常系）。"""
+    """待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit・設定ファイルを返却する（正常系）。"""
     # 準備
     server = start_server(config_text)
     version = (REPO_ROOT / "version.ini").read_text(encoding="utf-8").splitlines()[0].strip()
@@ -43,7 +43,7 @@ def test_normal(start_server: Callable[..., Any], config_text: Callable[..., str
 def test_normal_when_settings_unreadable(
     shared_server: Any, invalid_config: Callable[[], str]
 ) -> None:
-    """設定ファイルが読めなくてもエラーにせず、読めない理由を載せて返す（正常系）。"""
+    """設定ファイルが読めなくてもエラーにせず、読めない理由を記載して返却する（正常系）。"""
     # 準備
     config = invalid_config()
     # 実行
@@ -59,7 +59,7 @@ def test_normal_when_settings_unreadable(
 
 
 def test_normal_when_not_git_clone(tmp_path: Path) -> None:
-    """commit を引けないときは `commit` を `null` にして返す（正常系）。"""
+    """commit を取得できないときは `commit` を `null` にして返却する（正常系）。"""
     from rule_inject.server.app import build_server
     from rule_inject.server.control import ServerControl
 

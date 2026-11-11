@@ -39,21 +39,21 @@ TREE_GROUP_KEYS = ("and", "or")
 NEGATED_OPS = frozenset({"ne", "not_contains", "not_exists"})
 # Read で読めないため読み飛ばす `rule` の頭
 URL_SCHEMES = ("http://", "https://")
-# エントリを照合に使わない `enabled` の値
+# エントリを照合に使用しない `enabled` の値
 DISABLED_VALUE = "false"
-# エントリのバージョンに使う SHA-256 の 16 進の先頭の字数
+# エントリのバージョンに使用する SHA-256 の 16 進の先頭の字数
 REV_LENGTH = 12
 
 
 def _compile_pattern(source: str) -> MatchPattern:
-    """索引に書かれたパターンを `MatchPattern` にする。`re:` で始まれば残りを正規表現にコンパイルする。"""
+    """索引に書き込まれたパターンを `MatchPattern` にする。`re:` で始まれば残りを正規表現にコンパイルする。"""
     if source.startswith(REGEX_PREFIX):
         return MatchPattern(source=source, regex=re.compile(source[len(REGEX_PREFIX) :]))
     return MatchPattern(source=source, regex=None)
 
 
 def _compile_patterns(sources: Sequence[str]) -> tuple[MatchPattern, ...]:
-    """パターンの並びを `MatchPattern` の並びにする。読めない正規表現は、書かれたパターンと理由を持つ IndexReadError にする。"""
+    """パターンの並びを `MatchPattern` の並びにする。読めない正規表現は、記載されたパターンと理由を持つ IndexReadError にする。"""
     patterns: list[MatchPattern] = []
     for source in sources:
         try:
@@ -77,7 +77,7 @@ def _build_read_tool(raw: Mapping[str, str] | None) -> ReadTool | None:
     """読み取った `read_tool`（JSON の文字列のまま）を、引数を読んだ ReadTool にする。"""
     if raw is None:
         return None
-    # `parse_index` が JSON のオブジェクトとして読めることを確かめ済み
+    # `parse_index` が JSON のオブジェクトとして読めることを確認済み
     return ReadTool(
         tool=raw["tool"],
         args=json.loads(raw.get("args", "{}")),
@@ -109,13 +109,13 @@ def _build_entry(
 
 def entry_rev(raw: Mapping[str, Any]) -> str:
     """エントリのキーと値から、書式によらないバージョンを求める。"""
-    # キーの順に並べた JSON の SHA-256 の先頭を使う（コメント・引用符・字下げは入らない）
+    # キーの順に並べた JSON の SHA-256 の先頭を使用する（コメント・引用符・字下げは入らない）
     canonical = json.dumps(raw, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:REV_LENGTH]
 
 
 def entry_revs(text: str) -> tuple[str, ...]:
-    """索引の内容から、エントリごとのバージョンを位置の順に返す。読めなければ ValueError を送出する。"""
+    """索引の内容から、エントリごとのバージョンを位置の順に返却する。読めなければ ValueError を送出する。"""
     return tuple(entry_rev(raw) for raw in parse_index(text)[1])
 
 
@@ -127,9 +127,9 @@ def _outcome(
     env: Mapping[str, str],
     fallback_on: frozenset[Operation],
 ) -> EntryOutcome:
-    """エントリ 1 つを、無効・読み飛ばし・有効のどれかにして返す。"""
+    """エントリ 1 つを、無効・読み飛ばし・有効のどれかにして返却する。"""
     rev = entry_rev(raw)
-    # 無効のエントリは照合に使わないため、展開・解決・コンパイルの前に外して理由も残さない
+    # 無効のエントリは照合に使用しないため、展開・解決・コンパイルの前に除外して理由も残さない
     if raw.get(ENABLED_KEY) == DISABLED_VALUE:
         return EntryOutcome(
             position=position, raw=raw, rev=rev, status="disabled", entry=None, reason=None
@@ -162,7 +162,7 @@ def _outcome(
 
 
 def read_index_text(index_path: str, text: str, env: Mapping[str, str]) -> IndexContent:
-    """索引の内容を読み、エントリごとの位置・バージョン・照合に使うかを返す。読めなければ IndexReadError を送出する。"""
+    """索引の内容を読み、エントリごとの位置・バージョン・照合に使用するかを返却する。読めなければ IndexReadError を送出する。"""
     try:
         default_on, raw_entries = parse_index(text)
     except ValueError as exc:
@@ -177,7 +177,7 @@ def read_index_text(index_path: str, text: str, env: Mapping[str, str]) -> Index
 
 
 def read_index(index_path: str, env: Mapping[str, str]) -> IndexContent:
-    """索引 1 つを読み、エントリごとの位置・バージョン・照合に使うかを返す。読めなければ IndexReadError を送出する。"""
+    """索引 1 つを読み、エントリごとの位置・バージョン・照合に使用するかを返却する。読めなければ IndexReadError を送出する。"""
     try:
         text = Path(index_path).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
@@ -186,7 +186,7 @@ def read_index(index_path: str, env: Mapping[str, str]) -> IndexContent:
 
 
 def load_indexes(index_paths: Sequence[str], env: Mapping[str, str]) -> IndexLoadResult:
-    """設定が決めた索引を渡された順に読み、読めたエントリと読めなかった索引・読み飛ばしたエントリを返す。"""
+    """設定が決めた索引を引き渡された順に読み、読めたエントリと読めなかった索引・読み飛ばしたエントリを返却する。"""
     entries: list[IndexEntry] = []
     failures: list[IndexReadError] = []
     for index_path in index_paths:
@@ -196,7 +196,7 @@ def load_indexes(index_paths: Sequence[str], env: Mapping[str, str]) -> IndexLoa
         except IndexReadError as exc:
             failures.append(exc)
             continue
-        # 有効なエントリは照合に使い、読み飛ばしたエントリは理由を残す（無効のエントリはどちらにも入れない）
+        # 有効なエントリは照合に使用し、読み飛ばしたエントリは理由を残す（無効のエントリはどちらにも入れない）
         for outcome in content.outcomes:
             if outcome.status == "effective" and outcome.entry is not None:
                 entries.append(outcome.entry)
@@ -206,7 +206,7 @@ def load_indexes(index_paths: Sequence[str], env: Mapping[str, str]) -> IndexLoa
 
 
 def _translate_alternatives(pattern: str, start: int) -> tuple[str, int] | None:
-    """`{a,b}` の候補を正規表現の選択に読み替え、`}` の次の位置とともに返す。閉じていなければ None。"""
+    """`{a,b}` の候補を正規表現の選択に読み替え、`}` の次の位置とともに返却する。閉じていなければ None。"""
     end = pattern.find("}", start)
     if end == -1:
         return None
@@ -244,7 +244,7 @@ def _translate(pattern: str) -> str:
 
 
 def _glob_match(pattern: str, path: str) -> bool:
-    """`**` をフォルダをまたぐ一致として扱い、絶対パスに glob を当てる。"""
+    """`**` をフォルダをまたぐ一致として扱い、絶対パスに glob を照合する。"""
     return re.fullmatch(_translate(pattern), path) is not None
 
 
@@ -253,7 +253,7 @@ def merge_matched(rules: Sequence[MatchedRule]) -> list[MatchedRule]:
     merged: dict[str, MatchedRule] = {}
     for rule in rules:
         current = merged.get(rule.location)
-        # 初めて出た場所はそのまま置く
+        # 初めて出た場所はそのまま配置する
         if current is None:
             merged[rule.location] = MatchedRule(
                 location=rule.location,
@@ -271,7 +271,7 @@ def merge_matched(rules: Sequence[MatchedRule]) -> list[MatchedRule]:
 
 
 def _unique_read_tools(read_tools: Sequence[ReadTool]) -> tuple[ReadTool, ...]:
-    """参照するツールを、同じ値（`tool`・`args`・`optional_args` が等しい）の 2 つ目以降を落として返す。"""
+    """参照するツールを、同じ値（`tool`・`args`・`optional_args` が等しい）の 2 つ目以降を落として返却する。"""
     unique: list[ReadTool] = []
     for read_tool in read_tools:
         if read_tool not in unique:
@@ -294,14 +294,14 @@ def _merge(entries: Sequence[IndexEntry], operation: Operation) -> list[MatchedR
 
 
 def _fnmatch_glob(pattern: str, value: str) -> bool:
-    """ツール名と引数の値に glob を当てる（`fnmatch` の引数の順をパターン・値にそろえる）。"""
+    """ツール名と引数の値に glob を照合する（`fnmatch` の引数の順をパターン・値にそろえる）。"""
     return fnmatch.fnmatchcase(value, pattern)
 
 
 def _match_pattern(
     pattern: MatchPattern, value: str, *, glob_match: Callable[[str, str], bool]
 ) -> bool:
-    """値にパターンを当てる。正規表現は部分一致、glob は渡された照合で当てる。"""
+    """値にパターンを照合する。正規表現は部分一致、glob は引き渡された照合で照合する。"""
     if pattern.regex is not None:
         return pattern.regex.search(value) is not None
     return glob_match(pattern.source, value)
@@ -319,11 +319,11 @@ def _expand_arrays(nodes: Sequence[Any]) -> list[Any]:
 
 
 def _tree_values(node: Any, field: str) -> list[Any]:
-    """条件の木を `and`・`or` の入れ子までたどり、`field` が一致する条件の `values` をつないで返す。木として読めなければ空。"""
+    """条件の木を `and`・`or` の入れ子までたどり、`field` が一致する条件の `values` をつないで返却する。木として読めなければ空。"""
     if not isinstance(node, Mapping):
         return []
     values: list[Any] = []
-    # 束は、中の節を深さを問わずたどる（`not` の中はたどらない）
+    # 束は、中の条件を深さを問わずたどる（`not` の中はたどらない）
     for group_key in TREE_GROUP_KEYS:
         children = node.get(group_key)
         if isinstance(children, list):
@@ -365,12 +365,12 @@ def _argument_values(
 
 
 def match_arg_pattern(pattern: MatchPattern, value: str) -> bool:
-    """引数の値 1 つにパターンを当てる（正規表現は部分一致、glob は `fnmatch.fnmatchcase`）。"""
+    """引数の値 1 つにパターンを照合する（正規表現は部分一致、glob は `fnmatch.fnmatchcase`）。"""
     return _match_pattern(pattern, value, glob_match=_fnmatch_glob)
 
 
 def _match_args(conditions: Sequence[ArgCondition], tool_input: Mapping[str, Any]) -> bool:
-    """全てのキーについて、値のどれかがパターンのどれかに当たるか。値が 1 つも無いキーは当たらない。"""
+    """全てのキーについて、値のどれかがパターンのどれかに該当するか。値が 1 つも無いキーは該当しない。"""
     return all(
         any(
             match_arg_pattern(pattern, value)
@@ -382,7 +382,7 @@ def _match_args(conditions: Sequence[ArgCondition], tool_input: Mapping[str, Any
 
 
 def entry_matches_path(entry: IndexEntry, path: str) -> bool:
-    """エントリ 1 件が対象の絶対パスに当たるかを返す。`paths` のどれかに当たり、`exclude` のどれにも当たらなければ当たる。"""
+    """エントリ 1 件が対象の絶対パスに該当するかを返却する。`paths` のどれかに該当し、`exclude` のどれにも該当しなければ該当する。"""
     return any(
         _match_pattern(pattern, path, glob_match=_glob_match) for pattern in entry.paths
     ) and not any(
@@ -391,7 +391,7 @@ def entry_matches_path(entry: IndexEntry, path: str) -> bool:
 
 
 def match_path(entries: Sequence[IndexEntry], path: str, operation: Operation) -> list[MatchedRule]:
-    """対象のパスに当たるエントリをルールごとに 1 件へまとめる。"""
+    """対象のパスに該当するエントリをルールごとに 1 件へまとめる。"""
     matched = [entry for entry in entries if entry_matches_path(entry, path)]
     return _merge(matched, operation)
 
@@ -399,7 +399,7 @@ def match_path(entries: Sequence[IndexEntry], path: str, operation: Operation) -
 def match_tool(
     entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
 ) -> list[MatchedRule]:
-    """MCP のツール名と引数に当たるエントリをルールごとに 1 件へまとめる。"""
+    """MCP のツール名と引数に該当するエントリをルールごとに 1 件へまとめる。"""
     matched = [
         entry
         for entry in entries
@@ -414,8 +414,8 @@ def match_tool(
 def match_read_by(
     entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
 ) -> list[str]:
-    """MCP のツールの呼び出しが `read_by` に当たるエントリのルールの場所を、索引の順に重なりを落として返す。"""
-    # 案内用の tools・args は見ず、read_by の要素のどれか 1 つに当たるエントリだけを選ぶ
+    """MCP のツールの呼び出しが `read_by` に該当するエントリのルールの場所を、索引の順に重なりを落として返却する。"""
+    # 案内用の tools・args は確認せず、read_by の要素のどれか 1 つに該当するエントリだけを選ぶ
     locations = [
         entry.location
         for entry in entries
@@ -432,7 +432,7 @@ def match_read_by(
 
 
 def _json_equal(written: Any, actual: Any) -> bool:
-    """2 つの JSON の値が等しいかを返す（真偽値と数値を区別し、オブジェクトはキーの順を問わず、配列は順まで比べる）。"""
+    """2 つの JSON の値が等しいかを返却する（真偽値と数値を区別し、オブジェクトはキーの順を問わず、配列は順まで比べる）。"""
     # 真偽値は真偽値とだけ比べる（Python では True == 1 のため型で分ける）
     if isinstance(written, bool) or isinstance(actual, bool):
         return type(written) is type(actual) and written == actual
@@ -457,7 +457,7 @@ def _json_equal(written: Any, actual: Any) -> bool:
 
 
 def _read_tool_matches(read_tool: ReadTool, tool_name: str, tool_input: Mapping[str, Any]) -> bool:
-    """呼び出しが `read_tool` に一致するか（`args` の全てのキーが最上位にあり値が等しい。`optional_args` は見ない）。"""
+    """呼び出しが `read_tool` に一致するか（`args` の全てのキーが最上位にあり値が等しい。`optional_args` は確認しない）。"""
     return read_tool.tool == tool_name and all(
         key in tool_input and _json_equal(value, tool_input[key])
         for key, value in read_tool.args.items()
@@ -467,8 +467,8 @@ def _read_tool_matches(read_tool: ReadTool, tool_name: str, tool_input: Mapping[
 def match_read_tool(
     entries: Sequence[IndexEntry], tool_name: str, tool_input: Mapping[str, Any]
 ) -> list[str]:
-    """MCP のツールの呼び出しが `read_tool` に一致するエントリのルールの場所を、索引の順に重なりを落として返す。"""
-    # 案内用の tools・args と read_by は見ず、read_tool に一致するエントリだけを選ぶ
+    """MCP のツールの呼び出しが `read_tool` に一致するエントリのルールの場所を、索引の順に重なりを落として返却する。"""
+    # 案内用の tools・args と read_by は確認せず、read_tool に一致するエントリだけを選ぶ
     locations = [
         entry.location
         for entry in entries
@@ -479,5 +479,5 @@ def match_read_tool(
 
 
 def rule_locations(entries: Sequence[IndexEntry]) -> frozenset[str]:
-    """索引に載ったルールの場所の集合を返す。"""
+    """索引に載ったルールの場所の集合を返却する。"""
     return frozenset(entry.location for entry in entries)

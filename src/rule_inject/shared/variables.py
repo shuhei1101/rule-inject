@@ -21,17 +21,17 @@ class Expansion:
 
 
 def expand_variables(text: str, env: Mapping[str, str]) -> Expansion:
-    """文字列の `!{名前}` を環境変数の値に置き換え、展開できなかった名前と一緒に返す。"""
+    """文字列の `!{名前}` を環境変数の値に置き換え、展開できなかった名前と一緒に返却する。"""
     unresolved: list[str] = []
 
     def _replace(matched: re.Match[str]) -> str:
-        """設定された名前は値に、無い名前はそのまま残して控える。"""
+        """設定された名前は値に、無い名前はそのまま残して記録する。"""
         name = matched.group(1)
         if name in env:
             return env[name]
         unresolved.append(name)
         return matched.group(0)
 
-    # 1 回の置き換えで前から順に展開する（置き換えた値の中の参照は展開し直さない）
+    # 1 回の置き換えで前から順に展開する（置き換えた値の中の参照は再展開しない）
     expanded = VARIABLE_PATTERN.sub(_replace, text)
     return Expansion(text=expanded, unresolved=tuple(dict.fromkeys(unresolved)))

@@ -44,13 +44,13 @@ def test_build_guidance_when_blocking() -> None:
     assert result.text.startswith(BLOCKING_HEADER)
     assert BLOCKING_HEADER == (
         "この操作に関連する未読のルールがあります。"
-        "下のルールを参照してから、同じ操作をやり直してください。"
+        "下のルールを参照してから、同じ操作を再試行してください。"
     )
     assert result.text.index("/r/write.md") < result.text.index("/r/read.md")
 
 
 def test_build_guidance_when_not_blocking() -> None:
-    """止めない案内は「やり直してください」を含まない（正常系）。"""
+    """止めない案内は「再試行してください」を含まない（正常系）。"""
     # 準備
     rules = [MatchedRule(location="/r/read.md", blocking=False)]
     # 実行
@@ -62,7 +62,7 @@ def test_build_guidance_when_not_blocking() -> None:
         "必要に応じて下のルールを参照してください。"
         "この案内はルールごとにセッションで 1 回だけ表示します。"
     )
-    assert "やり直してください" not in result.text
+    assert "再試行してください" not in result.text
 
 
 def test_build_guidance_when_too_long(hundred_rules: list[MatchedRule]) -> None:
@@ -75,7 +75,7 @@ def test_build_guidance_when_too_long(hundred_rules: list[MatchedRule]) -> None:
 
 
 def test_build_guidance_when_shown(hundred_rules: list[MatchedRule]) -> None:
-    """載せた場所だけを shown に返す（正常系）。"""
+    """記載した場所だけを shown に返却する（正常系）。"""
     # 実行
     result = build_guidance(hundred_rules, limit=10000)
     # 検証
@@ -84,7 +84,7 @@ def test_build_guidance_when_shown(hundred_rules: list[MatchedRule]) -> None:
 
 
 def test_build_guidance_when_read_tools() -> None:
-    """参照するツールの行と添え書きを載せる（正常系）。"""
+    """参照するツールの行と注記を記載する（正常系）。"""
     # 準備
     read_tool = ReadTool(
         tool="mcp__docs__search_docs",
@@ -108,12 +108,12 @@ def test_build_guidance_when_read_tools() -> None:
     assert READ_TOOL_NOTE == (
         "`ツール:` の行があるルールは、そのツールで参照してください。"
         "記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。"
-        "ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。"
+        "ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。"
     )
 
 
 def test_build_guidance_when_no_read_tools() -> None:
-    """参照するツールが無ければ Read の添え書きにする（正常系）。"""
+    """参照するツールが無ければ Read の注記にする（正常系）。"""
     # 準備
     rules = [MatchedRule(location="/r/b.md", blocking=True)]
     # 実行
@@ -124,7 +124,7 @@ def test_build_guidance_when_no_read_tools() -> None:
 
 
 def test_build_guidance_when_read_tool_too_long() -> None:
-    """パスの行とツールの行を分けて載せない（正常系）。"""
+    """パスの行とツールの行を分けて記載しない（正常系）。"""
     # 準備
     read_tool = ReadTool(tool="mcp__docs__search_docs", args={"q": "x" * 40}, optional_args={})
     rules = [
@@ -143,7 +143,7 @@ def test_build_guidance_when_read_tool_too_long() -> None:
 
 
 def test_build_guidance_when_tool_rule_omitted() -> None:
-    """ツールの行を載せなければ Read の添え書きにする（正常系）。"""
+    """ツールの行を記載しなければ Read の注記にする（正常系）。"""
     # 準備
     read_tool = ReadTool(tool="mcp__docs__search_docs", args={"q": "x" * 200}, optional_args={})
     rules = [
@@ -161,7 +161,7 @@ def test_build_guidance_when_tool_rule_omitted() -> None:
 
 
 def test_tool_line() -> None:
-    """書いた順の JSON にする（正常系）。"""
+    """記載した順の JSON にする（正常系）。"""
     # 準備
     ordered = ReadTool(
         tool="mcp__docs__search_docs",
@@ -217,7 +217,7 @@ def test_build_search_guidance() -> None:
     )
     assert "- /r/a.md" in result.text
     assert "- /r/b.md" in result.text
-    assert "やり直してください" not in result.text
+    assert "再試行してください" not in result.text
     assert result.shown == ("/r/a.md", "/r/b.md")
 
 
@@ -243,7 +243,7 @@ def test_build_search_guidance_when_too_long(hundred_rules: list[MatchedRule]) -
 
 
 def test_build_search_guidance_when_read_tools() -> None:
-    """参照するツールの行と添え書きを載せる（正常系）。"""
+    """参照するツールの行と注記を記載する（正常系）。"""
     # 準備
     read_tool = ReadTool(
         tool="mcp__docs__search_docs",
@@ -263,7 +263,7 @@ def test_build_search_guidance_when_read_tools() -> None:
 
 
 def test_build_server_start_notice() -> None:
-    """サービス名と接続し直す方法を載せる（正常系）。"""
+    """サービス名と再接続する方法を記載する（正常系）。"""
     # 実行
     notice = build_server_start_notice("rule-inject-ut")
     # 検証

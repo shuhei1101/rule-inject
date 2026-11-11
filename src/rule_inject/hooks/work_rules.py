@@ -1,4 +1,4 @@
-"""圧縮の後の通知（SessionStart）。圧縮の前に削除できずに残った既読の記録と、設定ファイルが読めない理由を知らせる。"""
+"""圧縮の後の通知（SessionStart）。圧縮の前に削除できずに残った既読の記録と、設定ファイルが読めない理由を通知する。"""
 
 from __future__ import annotations
 
@@ -21,23 +21,23 @@ LEFTOVER_NOTICE = (
 
 
 def work_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
-    """圧縮の後に、削除できずに残った記録か設定ファイルが読めない理由を知らせる。知らせが無ければ None を返す。"""
+    """圧縮の後に、削除できずに残った記録か設定ファイルが読めない理由を通知する。通知が無ければ None を返却する。"""
     session_id = payload.get("session_id")
-    # 圧縮の後に始まったときだけ確かめる。それ以外は設定ファイルも読まずに何も返さない
+    # 圧縮の後に始まったときだけ確認する。それ以外は設定ファイルも読まずに何も返却しない
     if payload.get("source") != COMPACT_SOURCE or not is_valid_session_id(session_id):
         return None
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
-        # 設定ファイルが読めなければ、既定値でも動かさず、理由を知らせる
+        # 設定ファイルが読めなければ、既定値でも動かさず、理由を通知する
         notice = settings_failure_notice(Component.WORK_RULES, exc, env, session_id)
         return _context(notice)
     folder = settings.state_dir
     # 削除できずに残った記録ファイルがあるか
     if not record_exists(folder, session_id):
-        # 無い: 知らせることが無い
+        # 無い: 通知することが無い
         return None
-    # ある: 記録ファイルとログの場所を知らせる
+    # ある: 記録ファイルとログの場所を通知する
     log_path = log_file_path(settings.log_dir, datetime.now(UTC).date())
     return _context(LEFTOVER_NOTICE.format(record=folder / f"{session_id}.txt", log=log_path))
 

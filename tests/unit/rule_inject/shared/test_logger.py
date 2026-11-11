@@ -14,12 +14,12 @@ from rule_inject.shared.logger import Component, LogOperation, write_log
 
 
 def _fixed_now() -> datetime:
-    """固定の UTC の時刻を返す。"""
+    """固定の UTC の時刻を返却する。"""
     return datetime(2026, 9, 29, 8, 0, 0, tzinfo=UTC)
 
 
 def _fixed_today() -> date:
-    """固定の UTC の今日の日付を返す。"""
+    """固定の UTC の今日の日付を返却する。"""
     return date(2026, 9, 29)
 
 
@@ -56,7 +56,7 @@ def test_write_log_when_unwritable(
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """書けないとき標準エラー出力へ出す（異常系）。"""
+    """書き込めないとき標準エラー出力へ出す（異常系）。"""
     # 準備
     log_folder.mkdir()
     unwritable(log_folder, 0o555)
@@ -77,7 +77,7 @@ def test_write_log_when_date_changes(
     log_folder: Path,
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """日付が変わると別のファイルに書く（正常系）。"""
+    """日付が変わると別のファイルに書き込む（正常系）。"""
     # 実行
     write_log(
         log_folder,
@@ -99,7 +99,7 @@ def test_write_log_when_date_changes(
 
 
 def test_log_file_path() -> None:
-    """日付を頭に置いた名前になる（正常系）。"""
+    """日付を頭に配置した名前になる（正常系）。"""
     # 実行
     result = logger.log_file_path(Path("/l"), date(2026, 9, 29))
     # 検証
@@ -183,7 +183,7 @@ def test_sweep_logs_when_undeletable(
     write_dated_log: Callable[[date], Path],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """削除できないログのファイルを返す（異常系）。"""
+    """削除できないログのファイルを返却する（異常系）。"""
     # 準備
     expired_file = write_dated_log(date(2026, 9, 26))
     unwritable(log_folder, 0o555)
@@ -210,7 +210,7 @@ def test_delete_legacy_log(state_dir: Path) -> None:
 
 
 def _no_state_folder(state_dir: Path) -> None:
-    """記録フォルダが無い配置にする（何も置かない）。"""
+    """記録フォルダが無い配置にする（何も配置しない）。"""
 
 
 def _no_legacy_log(state_dir: Path) -> None:
@@ -250,7 +250,7 @@ def test_delete_legacy_log_when_undeletable(
     state_dir: Path,
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """削除できないとき失敗を返す（異常系）。"""
+    """削除できないとき失敗を返却する（異常系）。"""
     # 準備
     state_dir.mkdir()
     legacy_log = state_dir / "rule-inject.log"

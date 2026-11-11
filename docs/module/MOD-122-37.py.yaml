@@ -23,7 +23,7 @@ constants:
     title: サーバーの instructions
     container: server/app.py
     summary: '`MCPServer` の `instructions`。インターフェース定義「サーバーの起動」の制約「instructions」の文面'
-    value: '`rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、案内されたルールを参照してから Edit で中身を記載する。この MCP のツールは、ルールと索引そのものを扱う作業で呼ぶ。今効いているルールの一覧は list_rules、ファイルやツールの呼び出しにヒットするルールの検索は search_rules、索引のエントリの編集と索引のチェックは write_index_entry・delete_index_entry・check_indexes、既読の記録の確認と削除は get_read_records・delete_read_records、設定ファイルを書き換えた後の読み直しとサーバーの状態の確認・再起動・更新は reload_settings・get_server_status・restart_server・update_server で行う。ルールの本文は、案内された場所を Read で参照する。プロジェクトのコードや文書は grep・Read で探す。どのルールがヒットするかは、索引を grep・Read せずに search_rules で調べる。索引は Edit で編集せず、write_index_entry・delete_index_entry で編集する。エントリを書き換え・削除する前に、list_rules で position と rev を取得する。ルールが案内されないときは、search_rules でヒットするかを確認してから、get_read_records で既読かを確認する。`'
+    value: '`rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、案内されたルールを参照してから Edit で中身を記載する。この MCP のツールは、ルールと索引そのものを扱う作業で呼ぶ。有効なルールの一覧は list_rules、ファイルやツールの呼び出しにヒットするルールの検索は search_rules、索引のエントリの編集と索引のチェックは write_index_entry・delete_index_entry・check_indexes、既読の記録の確認と削除は get_read_records・delete_read_records、設定ファイルを書き換えた後の再読込とサーバーの状態の確認・再起動・更新は reload_settings・get_server_status・restart_server・update_server で行う。ルールの本文は、案内された場所を Read で参照する。プロジェクトのコードや文書は grep・Read で探す。どのルールがヒットするかは、索引を grep・Read せずに search_rules で調べる。索引は Edit で編集せず、write_index_entry・delete_index_entry で編集する。エントリを書き換え・削除する前に、list_rules で position と rev を取得する。ルールが案内されないときは、search_rules でヒットするかを確認してから、get_read_records で既読かを確認する。`'
     refs:
       - IF-122-6#constraints[instructions]
 functions:

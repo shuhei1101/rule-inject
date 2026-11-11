@@ -20,7 +20,7 @@ FAILURE_EXIT_CODE = 1
 
 
 def main() -> None:
-    """手順の算出か適用を実行し、結果を JSON で標準出力へ書く。"""
+    """手順の算出か適用を実行し、結果を JSON で標準出力へ書き込む。"""
     parser = argparse.ArgumentParser(prog="rule_inject.migrate")
     parser.add_argument("--plan", action="store_true", help="手順を示すだけで書き換えない")
     plan_only = parser.parse_args().plan

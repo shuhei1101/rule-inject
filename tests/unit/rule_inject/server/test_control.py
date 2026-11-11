@@ -28,12 +28,12 @@ def test_guard() -> None:
     seen: list[int] = []
 
     def sync_tool(value: int) -> int:
-        """処理中の数を控えて値を返す。"""
+        """処理中の数を記録して値を返却する。"""
         seen.append(control._in_flight)
         return value
 
     async def async_tool(value: int) -> int:
-        """処理中の数を控えて値を返す。"""
+        """処理中の数を記録して値を返却する。"""
         seen.append(control._in_flight)
         return value
 
@@ -57,7 +57,7 @@ def test_guard_when_restarting() -> None:
     called: list[int] = []
 
     def tool() -> None:
-        """呼ばれたことを控える。"""
+        """呼ばれたことを記録する。"""
         called.append(1)
 
     async def scenario() -> None:
@@ -110,7 +110,7 @@ def test_begin_restart_when_restarting() -> None:
     errors: list[str] = []
 
     async def scenario() -> int:
-        """再起動を 2 回始め、作られたタスクの数を返す。"""
+        """再起動を 2 回始め、作られたタスクの数を返却する。"""
         control.begin_restart()
         try:
             control.begin_restart()
@@ -137,7 +137,7 @@ def test_begin_restart_when_updating() -> None:
     errors: list[str] = []
 
     async def scenario() -> int:
-        """更新の途中に再起動を始め、作られたタスクの数を返す。"""
+        """更新の途中に再起動を始め、作られたタスクの数を返却する。"""
         try:
             control.begin_restart()
         except RestartInProgressError as exc:
@@ -163,7 +163,7 @@ def test_finish_update_and_restart() -> None:
     control.begin_update()
 
     async def scenario() -> int:
-        """更新を終えて再起動を始め、作られたタスクの数を返す。"""
+        """更新を終えて再起動を始め、作られたタスクの数を返却する。"""
         control.finish_update_and_restart()
         return len(asyncio.all_tasks()) - 1
 
@@ -188,7 +188,7 @@ def test_drain_and_stop() -> None:
     observed: list[bool] = []
 
     async def slow_tool() -> None:
-        """0.3 秒かかる呼び出し。途中で止める合図が出ていないかを控える。"""
+        """0.3 秒かかる呼び出し。途中で止める合図が出ていないかを記録する。"""
         await asyncio.sleep(0.3)
         observed.append(server.should_exit)
 
@@ -224,7 +224,7 @@ def test_drain_and_stop_when_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
         await asyncio.sleep(60)
 
     async def scenario() -> float:
-        """終わらない呼び出しを処理中にしたまま再起動を始め、止まるまでの秒数を返す。"""
+        """終わらない呼び出しを処理中にしたまま再起動を始め、止まるまでの秒数を返却する。"""
         call = asyncio.create_task(control.guard(endless_tool)())
         await asyncio.sleep(0.05)
         started = time.monotonic()
@@ -269,13 +269,13 @@ def test_drain_and_stop_when_request_in_flight() -> None:
     sent: list[MutableMapping[str, Any]] = []
 
     async def slow_app(scope: Any, receive: Any, send: Any) -> None:
-        """0.3 秒待ってから応答を送信する。送信の前に止める合図が出ていないかを控える。"""
+        """0.3 秒待ってから応答を送信する。送信の前に止める合図が出ていないかを記録する。"""
         await asyncio.sleep(0.3)
         observed.append(server.should_exit)
         await send({"type": "http.response.body", "body": b"done", "more_body": False})
 
     async def send(message: MutableMapping[str, Any]) -> None:
-        """送信した応答を控える。"""
+        """送信した応答を記録する。"""
         sent.append(message)
 
     async def scenario() -> None:
@@ -306,13 +306,13 @@ def test_track() -> None:
     response = {"type": "http.response.body", "body": b"ok", "more_body": False}
 
     async def app(scope: Any, receive: Any, send: Any) -> None:
-        """処理中の要求の数を控えてから応答を送信する。"""
+        """処理中の要求の数を記録してから応答を送信する。"""
         await asyncio.sleep(0.05)
         seen.append(control._requests)
         await send(response)
 
     async def send(message: MutableMapping[str, Any]) -> None:
-        """送信した応答を控える。"""
+        """送信した応答を記録する。"""
         sent.append(message)
 
     # 実行
@@ -332,7 +332,7 @@ def test_track_when_get() -> None:
     seen: list[int] = []
 
     async def app(scope: Any, receive: Any, send: Any) -> None:
-        """処理中の要求の数を控える。"""
+        """処理中の要求の数を記録する。"""
         seen.append(control._requests)
 
     async def send(message: MutableMapping[str, Any]) -> None:

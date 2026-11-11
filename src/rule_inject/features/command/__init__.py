@@ -1,4 +1,4 @@
-"""Bash のコマンドから読むファイルのパスを取り出し、検索の結果からファイルを拾う。"""
+"""Bash のコマンドから読むファイルのパスを取り出し、検索の結果からファイルを取得する。"""
 
 from rule_inject.features.command.service import (
     FULL_READ_COMMANDS,

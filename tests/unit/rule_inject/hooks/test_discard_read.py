@@ -35,7 +35,7 @@ def test_discard_read_when_undeletable(
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """削除できないときログに書く（正常系）。"""
+    """削除できないときログに書き込む（正常系）。"""
     # 準備
     write_record(["/r/a.md"])
     unwritable(state_dir, 0o555)
@@ -73,7 +73,7 @@ def test_discard_read_when_settings_unreadable(
     hook_payload: Callable[..., dict[str, Any]],
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないときはログに書くだけで何も削除しない（正常系）。"""
+    """設定ファイルが読めないときはログに書き込むだけで何も削除しない（正常系）。"""
     # 準備
     env = unreadable_env("unknown_key")
     record_file = xdg_state_home / "rule-inject" / f"{session_id}.txt"

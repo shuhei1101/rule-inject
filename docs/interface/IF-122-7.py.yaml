@@ -108,7 +108,7 @@ flows:
         participant IF as list_rules
 
         C->>IF: project_dir（相対パス）
-        IF-->>C: isError: true（絶対パスで渡す旨）
+        IF-->>C: isError: true（絶対パスで指定する旨）
       ```
     expected:
       - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
@@ -135,7 +135,7 @@ flows:
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
-  - name: 正常系（参照するツールを書いたエントリがある）
+  - name: 正常系（参照するツールを記載したエントリがある）
     summary: '`read_tool` を記載したエントリは索引に記載したままの値を、記載しないエントリは `None` を返却する'
     setup:
       - name: Mock
@@ -296,7 +296,7 @@ response_example: |-
   ```json
   {
     "success": true,
-    "output": "索引 2 件・効いているエントリ 2 件・読めない索引 0 件・読み飛ばしたエントリ 0 件・無効のエントリ 0 件",
+    "output": "索引 2 件・有効なエントリ 2 件・読めない索引 0 件・読み飛ばしたエントリ 0 件・無効のエントリ 0 件",
     "config_path": "/home/user/.config/rule-inject/settings.yaml",
     "indexes": ["/home/user/.config/rule-inject/rules.yaml", "/home/user/project/rules.yaml"],
     "entries": [
@@ -333,7 +333,7 @@ exceptions:
 error_format: 'MCP のツールの結果を `isError: true` にし、text に理由を 1 行で入れる。structuredContent は返却しない'
 constraints:
   - item: 読む索引
-    constraint: フックと同じ規則（設定ファイルの `global.indexes`・該当した `projects[].indexes`・既定の置き場所）を、`project_dir` を `CLAUDE_PROJECT_DIR` として適用する
+    constraint: フックと同じ規則（設定ファイルの `global.indexes`・該当した `projects[].indexes`・既定の配置場所）を、`project_dir` を `CLAUDE_PROJECT_DIR` として適用する
     notes: 規則はインターフェース定義「ルール案内」の制約「索引」。フックと同じコードで読む
   - item: 変数参照
     constraint: '`rule` の `!{名前}` はサーバーを起動した環境の環境変数で展開する'

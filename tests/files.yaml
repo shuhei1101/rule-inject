@@ -347,8 +347,8 @@ files:
       - to: src/rule_inject/features/index/check/service.py
         type: tests
   - path: unit/rule_inject/features/index/check/test_tags.py
-    name: 使われていないタグのパターンの検出の単体テスト
-    description: 使われていないタグのパターンの検出の振る舞いを確認する単体テストで、使われていないタグのパターンの検出を修正したときに実行する。
+    name: 使用されていないタグのパターンの検出の単体テスト
+    description: 使用されていないタグのパターンの検出の振る舞いを確認する単体テストで、使用されていないタグのパターンの検出を修正したときに実行する。
     tags:
       - topic:索引のチェック
       - topic:タグ
@@ -421,8 +421,8 @@ files:
       - to: src/rule_inject/features/migrate/service.py
         type: tests
   - path: unit/rule_inject/features/record/test_service.py
-    name: 既読の記録ファイルの読み書きの単体テスト
-    description: 既読の記録ファイルの読み書きの振る舞いを確認する単体テストで、既読の記録ファイルの読み書きを修正したときに実行する。
+    name: 既読の記録ファイルの読み込み・書き込みの単体テスト
+    description: 既読の記録ファイルの読み込み・書き込みの振る舞いを確認する単体テストで、既読の記録ファイルの読み込み・書き込みを修正したときに実行する。
     tags:
       - topic:既読の記録
       - tool:pytest
@@ -564,8 +564,8 @@ files:
       - to: src/rule_inject/server/control.py
         type: tests
   - path: unit/rule_inject/server/test_dev_docs.py
-    name: 使われているタグを引くクライアントの単体テスト
-    description: 使われているタグを取得するクライアントの振る舞いを確認する単体テストで、使われているタグを取得するクライアントを修正したときに実行する。
+    name: 使用中のタグを取得するクライアントの単体テスト
+    description: 使用中のタグを取得するクライアントの振る舞いを確認する単体テストで、使用中のタグを取得するクライアントを修正したときに実行する。
     tags:
       - topic:タグ
       - topic:索引のチェック

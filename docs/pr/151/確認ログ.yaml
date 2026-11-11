@@ -1,0 +1,7 @@
+confirmations:
+  - topic: プラグインが Claude Code へ出す案内・応答・instructions の文言の置き換え
+    decision: 表のとおり置き換える（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit: 6b9edfb21208a2c5045fa8f3a5eb343fb9f93d5b
+    thread: https://github.com/shuhei1101/rule-inject/pull/151#discussion_r4534510533

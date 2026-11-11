@@ -27,7 +27,7 @@ functions:
       type: None
       description: 常に出力しない
     process: |-
-      1. session_id の形式が外れていれば何もしない
+      1. session_id の形式に合わなければ何もしない
       2. `load_settings(env)` で設定を読み込む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き込んで終える（何も削除しない）
       3. `delete_record` と `delete_guided` を `settings.state_dir` で順に呼ぶ。片方が RecordDeleteError でももう片方を呼び、それぞれ `settings.log_dir` のログ（`delete_record`）へ書き込む
     unit_tests:

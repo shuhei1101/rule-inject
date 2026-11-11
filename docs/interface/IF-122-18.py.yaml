@@ -59,7 +59,7 @@ flows:
     expected:
       - 終了コードが `0`
     test: test_normal_when_no_record
-  - name: 異常系（記録を削除できない・ログに書く）
+  - name: 異常系（記録を削除できない・ログに書き込む）
     summary: 記録ファイルを削除できないとき、圧縮は止めずにログと標準エラー出力に書き込む
     setup:
       - name: Mock
@@ -79,7 +79,7 @@ flows:
 
         CC->>C: 標準入力（session_id・trigger）
         C->>ST: 削除する（削除できない）
-        C->>C: ログに書けないため標準エラー出力へ出す
+        C->>C: ログに書き込めないため標準エラー出力へ出す
         C-->>CC: 終了コード 0
       ```
     expected:
@@ -88,7 +88,7 @@ flows:
       - 記録ファイルが残っている（圧縮の後の通知が通知する）
       - 終了コードが `0`
     test: test_error_when_record_undeletable
-  - name: 異常系（設定ファイルが読めない・ログに書く）
+  - name: 異常系（設定ファイルが読めない・ログに書き込む）
     summary: 設定ファイルが読めないとき、何も削除せずにログに書き込む
     setup:
       - name: Mock

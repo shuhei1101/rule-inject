@@ -36,8 +36,8 @@ from rule_inject.shared.settings import PROJECT_DIR_ENV, Settings, config_path, 
 def get_server_status(
     *, env: Mapping[str, str], control: ServerControl, clone: Path, run: RunCommand
 ) -> CallToolResult:
-    """待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返す。"""
-    # 設定ファイルが読めなくてもエラーにせず、読めない理由を載せる
+    """待ち受けのポート・プロセス・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返却する。"""
+    # 設定ファイルが読めなくてもエラーにせず、読めない理由を記載する
     try:
         _read_settings(None, env)
         config = ConfigState(path=_read_config_path(env), readable=True, error=None)
@@ -64,7 +64,7 @@ def get_server_status(
 
 
 def reload_settings(*, project_dir: str | None = None, env: Mapping[str, str]) -> CallToolResult:
-    """設定ファイルを読み直し、読めたかと読んだ値を返す。"""
+    """設定ファイルを再読込、読めたかと読んだ値を返却する。"""
     settings = _read_settings(project_dir, env)
     path = _read_config_path(env)
     result = ReloadSettingsResult(
@@ -81,11 +81,11 @@ def reload_settings(*, project_dir: str | None = None, env: Mapping[str, str]) -
 
 
 async def restart_server(*, control: ServerControl) -> CallToolResult:
-    """再起動を始める。停止は、この応答を返し終えた後に control が作ったタスクが進める。"""
+    """再起動を始める。停止は、この応答を返却し終えた後に control が作ったタスクが進める。"""
     control.begin_restart()
     result = RestartResult(
         success=True,
-        output="再起動を始めました。接続し直してから get_server_status で確かめてください",
+        output="再起動を始めました。再接続してから get_server_status で確認してください",
         pid=control.pid,
         restarting=True,
     )
@@ -95,12 +95,12 @@ async def restart_server(*, control: ServerControl) -> CallToolResult:
 async def update_server(
     *, env: Mapping[str, str], control: ServerControl, clone: Path, run: RunCommand
 ) -> CallToolResult:
-    """クローンへ上流の commit を取り込み、依存を入れ直し、移し替えが要らなければ再起動を始める。"""
+    """クローンへ上流の commit を取り込み、依存を再インストール、移し替えが要らなければ再起動を始める。"""
     control.begin_update()
     try:
         # git・uv はブロックするため、スレッドで動かしてイベントループを止めない
         outcome = await asyncio.to_thread(pull, clone, run=run)
-        # 取り込む commit が無い: 何も変えずに返す
+        # 取り込む commit が無い: 何も変えずに返却する
         if not outcome.pulled:
             return _update_result(
                 "up_to_date", outcome.before, outcome.after, [], "最新のため何も変えませんでした"
@@ -122,7 +122,7 @@ async def update_server(
                 "設定の移し替えが要るため再起動していません。"
                 "/rule-inject:global-setup で移し替えてから restart_server を呼んでください",
             )
-        # 移し替えが要らない: 更新の印を下ろすのと再起動の開始を 1 回で行う
+        # 移し替えが要らない: 更新のマーカーを下ろすのと再起動の開始を 1 回で行う
         control.finish_update_and_restart()
         return _update_result(
             "restarting",
@@ -148,7 +148,7 @@ def _update_result(
 def _read_settings(project_dir: str | None, env: Mapping[str, str]) -> Settings:
     """フックと同じ規則で設定を読む。project_dir があればそのプロジェクトとして読む。"""
     if project_dir is not None and not os.path.isabs(project_dir):
-        raise ToolError(f"project_dir は絶対パスで渡してください: {project_dir}")
+        raise ToolError(f"project_dir は絶対パスで指定してください: {project_dir}")
     values = {key: value for key, value in env.items() if key != PROJECT_DIR_ENV}
     if project_dir is not None:
         values[PROJECT_DIR_ENV] = project_dir

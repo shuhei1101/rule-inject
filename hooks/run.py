@@ -14,21 +14,21 @@ from pathlib import Path
 
 # フックの Python の最低のバージョン（これより古い python3 ではパッケージを import しない）
 MIN_PYTHON = (3, 12)
-# バージョンが足りないことを知らせられる出来事（ほかの出来事は additionalContext を持たない）
+# バージョンが足りないことを通知できる出来事（ほかの出来事は additionalContext を持たない）
 NOTICE_EVENTS = ("PreToolUse", "PostToolUse", "SessionStart")
-# バージョンが足りなくても知らせを返さないフック（同じ SessionStart の work_rules が知らせる）
+# バージョンが足りなくても通知を返却しないフック（同じ SessionStart の work_rules が通知する）
 SILENT_HOOKS = ("sweep_read", "start_server")
 LOG_FILE_SUFFIX = "_rule-inject.log"
 
 
 def _log_dir() -> Path:
-    """既定のログのフォルダを決める（設定ファイルは読まない。パッケージを使わない、古いバージョンでも読める書き方）。"""
+    """既定のログのフォルダを決める（設定ファイルは読まない。パッケージを使用しない、古いバージョンでも読める記法）。"""
     state_home = os.environ.get("XDG_STATE_HOME") or "~/.local/state"
     return Path(state_home).expanduser() / "rule-inject" / "logs"
 
 
 def _report_old_python(hook_name: str) -> int:
-    """バージョンが足りないことを知らせ、ログへ 1 行書いて終える。"""
+    """バージョンが足りないことを通知し、ログへ 1 行書き込んで終える。"""
     major, minor, micro = sys.version_info[:3]
     required = f"{MIN_PYTHON[0]}.{MIN_PYTHON[1]}"
     reason = (
@@ -40,8 +40,8 @@ def _report_old_python(hook_name: str) -> int:
         payload = {}
     session_id = payload.get("session_id") if isinstance(payload, dict) else None
     event = payload.get("hook_event_name") if isinstance(payload, dict) else None
-    # ログへ書けなければ、同じ 1 行を標準エラー出力へ出す
-    # datetime.UTC は 3.11 以降のため、古いバージョンでも読める timezone.utc を使う
+    # ログへ書き込めなければ、同じ 1 行を標準エラー出力へ出す
+    # datetime.UTC は 3.11 以降のため、古いバージョンでも読める timezone.utc を使用する
     now = datetime.now(timezone.utc)  # noqa: UP017
     line = json.dumps(
         {
@@ -57,13 +57,13 @@ def _report_old_python(hook_name: str) -> int:
     try:
         folder = _log_dir()
         folder.mkdir(parents=True, exist_ok=True)
-        # 今日（UTC）の日付のログのファイルに書く
+        # 今日（UTC）の日付のログのファイルに書き込む
         with (folder / f"{now:%Y%m%d}{LOG_FILE_SUFFIX}").open("a", encoding="utf-8") as log_file:
             log_file.write(line + "\n")
     except OSError:
         print(line, file=sys.stderr)
-    # additionalContext を持てる出来事にだけ知らせる（PreCompact などは黙って終える）
-    # sweep_read・start_server は同じ SessionStart の work_rules が知らせるため、知らせを重ねない
+    # additionalContext を持てる出来事にだけ通知する（PreCompact などは黙って終える）
+    # sweep_read・start_server は同じ SessionStart の work_rules が通知するため、通知を重ねない
     if event in NOTICE_EVENTS and hook_name not in SILENT_HOOKS:
         output = {
             "hookSpecificOutput": {"hookEventName": event, "additionalContext": reason + "。"}
@@ -73,10 +73,10 @@ def _report_old_python(hook_name: str) -> int:
 
 
 def main(argv: list[str]) -> int:
-    """引数で指したフックを動かして終了コードを返す（常に 0）。"""
+    """引数で指したフックを動かして終了コードを返却する（常に 0）。"""
     if tuple(sys.version_info[:2]) < MIN_PYTHON:
         return _report_old_python(argv[0])
-    # バージョンを確かめた後で、同梱のパッケージを import できるようにする
+    # バージョンを確認した後で、同梱のパッケージを import できるようにする
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from rule_inject.hooks import HOOKS
     from rule_inject.hooks._runner import run_hook

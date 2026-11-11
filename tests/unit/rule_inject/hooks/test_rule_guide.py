@@ -22,10 +22,10 @@ def guide_env(
     settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
 ) -> Callable[[str], dict[str, str]]:
-    """索引の文字列を書き、設定ファイルの `global.indexes` で指す環境変数を返す factory。"""
+    """索引の文字列を書き込み、設定ファイルの `global.indexes` で指す環境変数を返却する factory。"""
 
     def _env(text: str) -> dict[str, str]:
-        """text を索引として置き、その索引を指す設定ファイルを `RULE_INJECT_CONFIG` で指す。"""
+        """text を索引として配置し、その索引を指す設定ファイルを `RULE_INJECT_CONFIG` で指す。"""
         return settings_env(indexes=[str(make_index(text))])
 
     return _env
@@ -150,7 +150,7 @@ def test_handle_when_index_unreadable(
     hook_payload: Callable[..., dict[str, Any]],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """索引が読めないとき止めずに理由を載せる（正常系）。"""
+    """索引が読めないとき止めずに理由を記載する（正常系）。"""
     # 準備
     missing = tmp_path / "missing.yaml"
     broken = make_index("rules:\n  - foo: bar\n", "broken.yaml")
@@ -180,7 +180,7 @@ def test_handle_when_record_unreadable(
     unwritable: Callable[[Path, int], Path],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """記録が読めないとき止めずに理由を載せる（正常系）。"""
+    """記録が読めないとき止めずに理由を記載する（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
     record_file = unwritable(write_record([f"{RULE}\t{HASH_TEST}"]), 0o000)
@@ -230,7 +230,7 @@ def test_handle_when_guided_recorded(
     hook_payload: Callable[..., dict[str, Any]],
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """止めない案内に載せた場所だけを案内済みにする（正常系）。"""
+    """止めない案内に記載した場所だけを案内済みにする（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
     guided_file = state_dir / f"{session_id}.guided.txt"
@@ -265,7 +265,7 @@ def test_handle_when_guided_unwritable(
     unwritable: Callable[[Path, int], Path],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """案内済みに書けなくても案内を出す（正常系）。"""
+    """案内済みに書き込めなくても案内を出す（正常系）。"""
     # 準備
     env = guide_env(index_text(RULE, paths=["**/*.py"], on=["write"]))
     state_dir.mkdir()
@@ -291,7 +291,7 @@ def test_handle_when_mcp_args(
     index_text: Callable[..., str],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """MCP のツールの引数で当てる（正常系）。"""
+    """MCP のツールの引数で照合する（正常系）。"""
     # 準備
     env = guide_env(
         index_text(RULE, tools=["mcp__*__search_*"], args={"kind": ["rule"]}, on=["mcp"]),
@@ -350,7 +350,7 @@ def test_handle_when_settings_unreadable(
     default_log_folder: Path,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないときは照合せずに知らせる（正常系）。"""
+    """設定ファイルが読めないときは照合せずに通知する（正常系）。"""
     # 準備
     env = unreadable_env("unknown_key")
     payload = hook_payload(
@@ -411,7 +411,7 @@ def test_handle_when_read_tools_merged(
     guide_env: Callable[[str], dict[str, str]],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """複数のパスに当たった同じルールの参照するツールをまとめる（正常系）。"""
+    """複数のパスに該当した同じルールの参照するツールをまとめる（正常系）。"""
     # 準備
     env = guide_env(
         "rules:\n"
@@ -450,7 +450,7 @@ def test_handle_when_read_tool_invalid(
     hook_payload: Callable[..., dict[str, Any]],
     read_daily_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """書式の誤った `read_tool` の索引は読めない索引として知らせる（正常系）。"""
+    """書式の誤った `read_tool` の索引は読めない索引として通知する（正常系）。"""
     # 準備
     env = guide_env(
         "rules:\n"

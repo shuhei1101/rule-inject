@@ -48,7 +48,7 @@ data_models:
   - name: RuleEntry
     title: 有効なエントリ
     container: server/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     role: DTO
     summary: インターフェース定義「ルールの一覧」の `entries[]`
     properties:
@@ -88,7 +88,7 @@ data_models:
   - name: IndexIssue
     title: 索引ごとの理由
     container: server/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     role: DTO
     summary: '`unreadable_indexes[]`'
     properties:
@@ -101,7 +101,7 @@ data_models:
   - name: EntryIssue
     title: 照合に使用しないエントリ
     container: server/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     role: DTO
     summary: '`skipped_entries[]` と `disabled_entries[]`'
     properties:
@@ -123,7 +123,7 @@ data_models:
   - name: ListRulesResult
     title: ルールの一覧の応答
     container: server/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     role: DTO
     summary: インターフェース定義「ルールの一覧」のレスポンス
     properties:
@@ -160,7 +160,7 @@ data_models:
   - name: RuleMatch
     title: ヒットしたルール
     container: server/types.py
-    usecase: 操作に当たるルールを検索する
+    usecase: 操作に該当するルールを検索する
     role: DTO
     summary: '`matched[]`'
     properties:
@@ -176,7 +176,7 @@ data_models:
   - name: EntryRef
     title: エントリの場所
     container: server/types.py
-    usecase: 操作に当たるルールを検索する
+    usecase: 操作に該当するルールを検索する
     role: DTO
     summary: '`matched[].entries[]`'
     properties:
@@ -189,7 +189,7 @@ data_models:
   - name: SearchRulesResult
     title: ルールの検索の応答
     container: server/types.py
-    usecase: 操作に当たるルールを検索する
+    usecase: 操作に該当するルールを検索する
     role: DTO
     summary: インターフェース定義「ルールの検索」のレスポンス
     properties:
@@ -350,7 +350,7 @@ data_models:
   - name: ReadSummary
     title: 参照方法ごとの既読のまとめ
     container: server/types.py
-    usecase: 既読の記録を確かめる
+    usecase: 既読の記録を確認する
     role: DTO
     summary: インターフェース定義「既読の記録の確認」の `rules[].reads[]`
     properties:
@@ -369,7 +369,7 @@ data_models:
   - name: RuleRead
     title: 既読のルール
     container: server/types.py
-    usecase: 既読の記録を確かめる
+    usecase: 既読の記録を確認する
     role: DTO
     summary: インターフェース定義「既読の記録の確認」の `rules[]`
     properties:
@@ -385,7 +385,7 @@ data_models:
   - name: RecordSessionItem
     title: 既読の記録のあるセッション
     container: server/types.py
-    usecase: 既読の記録を確かめる
+    usecase: 既読の記録を確認する
     role: DTO
     summary: インターフェース定義「既読の記録の確認」の `sessions[]`
     properties:
@@ -401,7 +401,7 @@ data_models:
   - name: ReadRecordsResult
     title: 既読の記録の確認の応答
     container: server/types.py
-    usecase: 既読の記録を確かめる
+    usecase: 既読の記録を確認する
     role: DTO
     summary: インターフェース定義「既読の記録の確認」のレスポンス
     properties:
@@ -526,7 +526,7 @@ data_models:
   - name: ReloadSettingsResult
     title: 設定の再読込の応答
     container: server/types.py
-    usecase: MCPサーバーの設定を読み直す
+    usecase: MCPサーバーの設定を再読込する
     role: DTO
     summary: インターフェース定義「設定の再読込」のレスポンス
     properties:

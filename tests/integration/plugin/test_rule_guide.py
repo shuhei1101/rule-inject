@@ -20,10 +20,10 @@ HASH_RULE = "sha256:2bd9e5f1266128992c621bc85f433d4ab35c1307ec01c91c7e1efef9068d
 def write_index(
     make_index: Callable[..., Path], index_text: Callable[..., str]
 ) -> Callable[..., Path]:
-    """エントリを並べた索引を書き、そのパスを返す factory。"""
+    """エントリを並べた索引を書き込み、そのパスを返却する factory。"""
 
     def _write(*entries: dict[str, Any]) -> Path:
-        """entries を索引の YAML にして書く。"""
+        """entries を索引の YAML にして書き込む。"""
         return make_index(index_text(*entries))
 
     return _write
@@ -36,7 +36,7 @@ def write_payload(
     """まだ無い .py のパスを Write する PreToolUse の入力を作る factory。"""
 
     def _make(relative: str = "src/app.py") -> dict[str, Any]:
-        """tmp_path の下の relative を書く Write の入力を返す。"""
+        """tmp_path の下の relative を記載する Write の入力を返却する。"""
         return hook_payload(
             "PreToolUse",
             tool_name="Write",
@@ -71,7 +71,7 @@ def test_normal_when_already_read(
     rule_file: Callable[..., Path],
     write_record: Callable[..., Path],
 ) -> None:
-    """当たるルールが既読なら何も出さない（正常系）。"""
+    """該当するルールが既読なら何も出さない（正常系）。"""
     # 準備
     rule = rule_file("python.md")
     index = write_index({"rule": str(rule), "paths": ["**/*.py"], "on": ["write"]})
@@ -92,7 +92,7 @@ def test_normal_when_not_blocked(
     hook_payload: Callable[..., dict[str, Any]],
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """操作の種別が `on` に当たらない未読のルールは止めずに案内し、案内済みにする（正常系）。"""
+    """操作の種別が `on` に該当しない未読のルールは止めずに案内し、案内済みにする（正常系）。"""
     # 準備
     index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
     payload = hook_payload(
@@ -106,7 +106,7 @@ def test_normal_when_not_blocked(
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert RULE in output["additionalContext"]
-    assert "やり直してください" not in output["additionalContext"]
+    assert "再試行してください" not in output["additionalContext"]
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0
 
@@ -140,7 +140,7 @@ def test_normal_when_mcp_tool(
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`tools` の glob に当たる MCP のツールの呼び出しを止める（正常系）。"""
+    """`tools` の glob に該当する MCP のツールの呼び出しを止める（正常系）。"""
     # 準備
     index = write_index({"rule": RULE, "tools": ["mcp__*__create_*"]})
     payload = hook_payload("PreToolUse", tool_name="mcp__github__create_issue", tool_input={})
@@ -182,7 +182,7 @@ def test_normal_when_excluded(
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`exclude` に当たるパスには案内しない（正常系）。"""
+    """`exclude` に該当するパスには案内しない（正常系）。"""
     # 準備
     index = write_index(
         {"rule": RULE, "paths": ["**/*.py"], "exclude": ["**/tests/**"], "on": ["write"]}
@@ -213,7 +213,7 @@ def test_normal_when_guidance_too_long(
     write_payload: Callable[..., dict[str, Any]],
     hundred_entries: list[dict[str, Any]],
 ) -> None:
-    """案内が 10,000 字を超えるとき、収まる分だけ載せて残りの件数を添える（正常系）。"""
+    """案内が 10,000 字を超えるとき、収まる分だけ記載して残りの件数を添える（正常系）。"""
     # 準備
     index = write_index(*hundred_entries)
     # 実行
@@ -231,7 +231,7 @@ def test_error_when_index_unreadable(
     make_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """索引が無いか書式に合わないとき、操作を止めずに理由を載せる（異常系）。"""
+    """索引が無いか書式に合わないとき、操作を止めずに理由を記載する（異常系）。"""
     # 準備
     missing = tmp_path / "missing.yaml"
     broken = make_index("rules:\n  - foo: bar\n", "broken.yaml")
@@ -253,7 +253,7 @@ def test_error_when_record_unreadable(
     unwritable: Callable[[Path, int], Path],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """記録ファイルが読めないとき、操作を止めずに理由を載せ、ログに書く（異常系）。"""
+    """記録ファイルが読めないとき、操作を止めずに理由を記載し、ログに書き込む（異常系）。"""
     # 準備
     index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
     record_file = unwritable(write_record([RULE]), 0o000)
@@ -298,7 +298,7 @@ def read_payload(
     """まだ無い .py のパスを Read する PreToolUse の入力を作る factory。"""
 
     def _make(relative: str = "src/app.py") -> dict[str, Any]:
-        """tmp_path の下の relative を読む Read の入力を返す。"""
+        """tmp_path の下の relative を読む Read の入力を返却する。"""
         return hook_payload(
             "PreToolUse",
             tool_name="Read",
@@ -401,7 +401,7 @@ def test_normal_when_projects_matched(
     index_text: Callable[..., str],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`match` が当たった `projects` の要素の索引だけを、並びの順に追加して案内する（正常系）。"""
+    """`match` が該当した `projects` の要素の索引だけを、並びの順に追加して案内する（正常系）。"""
     # 準備
     entry = {"paths": ["**/*.py"], "on": ["write"]}
     make_index(index_text({"rule": "/r/a.md", **entry}), "rules/a.yaml")
@@ -434,7 +434,7 @@ def test_normal_when_worktree_matched(
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を当てる（正常系）。"""
+    """`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を照合する（正常系）。"""
     # 準備
     index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
     worktree = tmp_path / "repo" / ".claude" / "worktrees" / "feature"
@@ -461,7 +461,7 @@ def test_error_when_settings_unreadable(
     write_payload: Callable[..., dict[str, Any]],
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を載せる（異常系）。"""
+    """設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を記載する（異常系）。"""
     # 準備
     make_index(
         index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
@@ -507,7 +507,7 @@ def test_error_when_rule_variable_unset(
     write_payload: Callable[..., dict[str, Any]],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """未設定の名前が残ったエントリを読み飛ばし、止めずに理由を載せる（異常系）。"""
+    """未設定の名前が残ったエントリを読み飛ばし、止めずに理由を記載する（異常系）。"""
     # 準備
     index = write_index(
         {"rule": '"!{UNSET_DIR}/python.md"', "paths": ["**/*.py"], "on": ["write"]},
@@ -537,7 +537,7 @@ def test_error_when_guided_record_unwritable(
     unwritable: Callable[[Path, int], Path],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く（異常系）。"""
+    """案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む（異常系）。"""
     # 準備
     index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
     state_dir.mkdir()
@@ -567,7 +567,7 @@ def test_normal_when_mcp_args_match(
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`args` のパターンに引数の値が当たる MCP のツールの呼び出しを止める（正常系）。"""
+    """`args` のパターンに引数の値が該当する MCP のツールの呼び出しを止める（正常系）。"""
     # 準備
     index = write_index(MCP_SEARCH_ENTRY)
     payload = hook_payload(
@@ -589,7 +589,7 @@ def test_normal_when_mcp_args_unmatched(
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """ツール名に当たっても、`args` のキーが無いか値が当たらなければ案内しない（正常系）。"""
+    """ツール名に該当しても、`args` のキーが無いか値が該当しなければ案内しない（正常系）。"""
     # 準備
     index = write_index(MCP_SEARCH_ENTRY)
     payload = hook_payload(
@@ -616,7 +616,7 @@ def test_normal_when_mcp_filter_tree_match(
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が当たる MCP のツールの呼び出しを止める（正常系）。"""
+    """`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が該当する MCP のツールの呼び出しを止める（正常系）。"""
     # 準備
     index = write_index(MCP_FILTER_TREE_ENTRY)
     payload = hook_payload(
@@ -650,7 +650,7 @@ def test_normal_when_mcp_filter_tree_negated(
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """パターンに当たる値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない（正常系）。"""
+    """パターンに該当する値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない（正常系）。"""
     # 準備
     index = write_index(MCP_FILTER_TREE_ENTRY)
     payload = hook_payload(
@@ -696,7 +696,7 @@ def test_error_when_regex_unreadable(
     write_payload: Callable[..., dict[str, Any]],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """コンパイルできない正規表現を持つエントリを読み飛ばし、止めずに理由を載せる（異常系）。"""
+    """コンパイルできない正規表現を持つエントリを読み飛ばし、止めずに理由を記載する（異常系）。"""
     # 準備
     broken_rule = "/r/broken.md"
     index = write_index(
@@ -725,7 +725,7 @@ def test_error_when_rule_is_url(
     write_payload: Callable[..., dict[str, Any]],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """`rule` が URL のエントリを読み飛ばし、止めずに理由を載せる（異常系）。"""
+    """`rule` が URL のエントリを読み飛ばし、止めずに理由を記載する（異常系）。"""
     # 準備
     url_rule = "https://example.com/python.md"
     index = write_index(
@@ -777,7 +777,7 @@ def test_normal_when_entry_disabled(
     write_index: Callable[..., Path],
     hook_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`enabled: false` のエントリにだけ当たる MCP のツールの呼び出しでは、止めずに何も出さない（正常系）。"""
+    """`enabled: false` のエントリにだけ該当する MCP のツールの呼び出しでは、止めずに何も出さない（正常系）。"""
     # 準備
     index = write_index({"rule": RULE, "tools": ["mcp__*__create_*"], "enabled": False})
     payload = hook_payload("PreToolUse", tool_name="mcp__github__create_issue", tool_input={})
@@ -809,7 +809,7 @@ def test_normal_when_disabled_and_enabled_entries(
     output = json.loads(completed.stdout)["hookSpecificOutput"]
     assert "permissionDecision" not in output
     assert output["additionalContext"].count(RULE) == 1
-    assert "やり直してください" not in output["additionalContext"]
+    assert "再試行してください" not in output["additionalContext"]
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0
 
@@ -819,7 +819,7 @@ def test_error_when_enabled_not_boolean(
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`enabled` が `true` / `false` 以外の索引は、操作を止めずに場所と理由を載せる（異常系）。"""
+    """`enabled` が `true` / `false` 以外の索引は、操作を止めずに場所と理由を記載する（異常系）。"""
     # 準備
     index = write_index(
         {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "enabled": '"no"'},
@@ -851,7 +851,7 @@ def test_normal_when_blocked_with_read_tool(
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`read_tool` を持つエントリの未読のルールで Write を止め、パスの下にツールの名前と引数を載せる（正常系）。"""
+    """`read_tool` を持つエントリの未読のルールで Write を止め、パスの下にツールの名前と引数を記載する（正常系）。"""
     # 準備
     index = write_index(
         {"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "read_tool": READ_TOOL}
@@ -911,7 +911,7 @@ def test_normal_when_read_tool_mixed(
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`read_tool` を持つルールにだけツールの行を置き、持たないルールはパスの行だけにする（正常系）。"""
+    """`read_tool` を持つルールにだけツールの行を配置し、持たないルールはパスの行だけにする（正常系）。"""
     # 準備
     other = "/r/other.md"
     index = write_index(
@@ -932,7 +932,7 @@ def test_normal_when_read_tools_merged(
     write_index: Callable[..., Path],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """同じルールのエントリ 3 つの `read_tool` を、同じ値は 1 つにして当たった順に並べる（正常系）。"""
+    """同じルールのエントリ 3 つの `read_tool` を、同じ値は 1 つにして該当した順に並べる（正常系）。"""
     # 準備
     other_tool = {"tool": "mcp__docs__search_docs", "args": '{"filter": {"field": "id"}}'}
     index = write_index(
@@ -959,7 +959,7 @@ def test_error_when_read_tool_invalid(
     write_payload: Callable[..., dict[str, Any]],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を載せる（異常系）。"""
+    """`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を記載する（異常系）。"""
     # 準備
     index = write_index(
         {

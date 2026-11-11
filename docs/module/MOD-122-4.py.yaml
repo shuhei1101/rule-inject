@@ -15,7 +15,7 @@ constants:
     title: 止める案内の冒頭
     container: features/guidance/service.py
     summary: 止めるときの案内文の冒頭
-    value: '`この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。`'
+    value: '`この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作を再試行してください。`'
   - name: NON_BLOCKING_HEADER
     title: 止めない案内の冒頭
     container: features/guidance/service.py
@@ -30,7 +30,7 @@ constants:
     title: 参照するツールの補足
     container: features/guidance/service.py
     summary: 記載したルールに `ツール:` の行が 1 つでもあるときの 2 行目（参照の方法）
-    value: '`` `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。 ``'
+    value: '`` `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。 ``'
   - name: READ_NOTE
     title: Read で参照する補足
     container: features/guidance/service.py
@@ -45,7 +45,7 @@ constants:
     title: サーバーの起動の案内
     container: features/guidance/service.py
     summary: サーバーの起動の補助が起動を依頼したときに記載する文面（`{service}` にサービス名を入れる）
-    value: '`rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {service} へ起動を依頼しました。サーバーが待ち受けを始めるまで数十秒かかります。このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に接続し直すと使用できます。`'
+    value: '`rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {service} へ起動を依頼しました。サーバーが待ち受けを始めるまで数十秒かかります。このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に再接続すると使用できます。`'
 functions:
   - name: build_guidance
     title: 案内文の組み立て
@@ -72,7 +72,7 @@ functions:
     process: |-
       1. 止めるルールを先に、元の順を保って並べる
       2. 冒頭の後に、ルールごとに `- {場所}` の行と、`read_tools` ごとの `ツール:` の行（`_tool_line`）を 1 件として追加し、末尾に残りの件数の行を追加しても `limit` を超えないところまで記載する（1 件の途中では切らない）
-      3. 記載しきれなかったときは `ほか {N} 件のルールは、上のルールを参照して操作をやり直したときに表示します。` を末尾に追加する
+      3. 記載しきれなかったときは `ほか {N} 件のルールは、上のルールを参照して操作を再試行したときに表示します。` を末尾に追加する
       4. 2 行目（冒頭の次の行）に、記載したルールに `ツール:` の行が 1 つでもあれば `READ_TOOL_NOTE`、無ければ `READ_NOTE` を配置する。`read_tools` を持つルールが 1 つでもあるときは、手順 2 の字数に `READ_TOOL_NOTE` の分を含めて数え、無いときは `READ_NOTE` の分を含めて数える
     unit_tests:
       - name: test_build_guidance_when_blocking
@@ -86,7 +86,7 @@ functions:
         summary: 止めない案内
         condition: 止めないルールだけ
         mock: なし
-        expected: '`NON_BLOCKING_HEADER` で始まり、「やり直してください」を含まない'
+        expected: '`NON_BLOCKING_HEADER` で始まり、「再試行してください」を含まない'
       - name: test_build_guidance_when_too_long
         case: 正常
         summary: 上限を超える分を件数にする
@@ -200,7 +200,7 @@ functions:
         summary: 読み込むかは任意と伝える案内
         condition: '`read_tools` が空のルール 2 件'
         mock: なし
-        expected: '`SEARCH_HEADER` で始まり 2 行の場所がある。「やり直してください」を含まない。`shown` が 2 件'
+        expected: '`SEARCH_HEADER` で始まり 2 行の場所がある。「再試行してください」を含まない。`shown` が 2 件'
       - name: test_build_search_guidance_when_unchecked
         case: 正常
         summary: 照合しなかった件数を添える

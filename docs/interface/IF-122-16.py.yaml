@@ -26,7 +26,7 @@ flows:
         participant HS as 既読の履歴
 
         CC->>P: 標準入力（Read・ルールの場所・読んだ範囲）
-        P->>P: 読んだ範囲がファイル全体かを見る（全体）
+        P->>P: 読んだ範囲がファイル全体かを確認する（全体）
         P->>IDX: 読む
         P->>P: ルールの本文のハッシュを取る
         P->>ST: ルールの場所とハッシュを追記する
@@ -90,14 +90,14 @@ flows:
         participant IDX as 索引
 
         CC->>P: 標準入力（Read・関係のないパス）
-        P->>IDX: 読む（当たらない）
+        P->>IDX: 読む（該当しない）
         P-->>CC: 終了コード 0
       ```
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
     test: test_normal_when_not_rule
-  - name: 異常系（既読の記録に書けない・理由を載せる）
+  - name: 異常系（既読の記録に書き込めない・理由を記載する）
     summary: 記録のフォルダに書き込めないとき、既読にできなかった理由を記載する
     setup:
       - name: Mock
@@ -118,8 +118,8 @@ flows:
         participant ST as 記録ファイル
 
         CC->>P: 標準入力（Read・ルールの場所）
-        P->>ST: 追記する（書けない）
-        P->>P: ログにも書けないため標準エラー出力へ出す
+        P->>ST: 追記する（書き込めない）
+        P->>P: ログにも書き込めないため標準エラー出力へ出す
         P-->>CC: additionalContext（既読にできなかった場所と理由）<br>終了コード 0
       ```
     expected:
@@ -150,7 +150,7 @@ flows:
 
         CC->>P: 標準入力（MCP のツール名・引数・結果）
         P->>P: 結果から文書を取り出す（書式に従う文書が無い）
-        P->>IDX: read_by のツール名と引数に当たるエントリを選ぶ
+        P->>IDX: read_by のツール名と引数に該当するエントリを選ぶ
         P->>P: ルールの本文のハッシュを取る
         P->>ST: ルールの場所とハッシュを追記する
         P->>HS: 読み方 mcp の行を追記する
@@ -162,7 +162,7 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_read_by_mcp_tool
-  - name: 正常系（read_byに当たらない）
+  - name: 正常系（read_byに該当しない）
     summary: '`read_by` の引数に該当しない呼び出しと、案内用の `tools` だけに該当する呼び出しでは記録しない'
     setup:
       - name: Mock
@@ -181,7 +181,7 @@ flows:
         participant IDX as 索引
 
         CC->>P: 標準入力（MCP のツール名・引数）
-        P->>IDX: read_by に当たるエントリを選ぶ（当たらない）
+        P->>IDX: read_by に該当するエントリを選ぶ（該当しない）
         P-->>CC: 終了コード 0
       ```
     expected:
@@ -189,7 +189,7 @@ flows:
       - 既読の履歴ファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_read_by_not_matched
-  - name: 異常系（既読の履歴に書けない・理由を載せる）
+  - name: 異常系（既読の履歴に書き込めない・理由を記載する）
     summary: 既読の履歴に書き込めないとき、既読にはしたうえで書き込めなかった理由を記載する
     setup:
       - name: Mock
@@ -213,9 +213,9 @@ flows:
 
         CC->>P: 標準入力（Read・ルールの場所）
         P->>ST: ルールの場所を追記する
-        P->>HS: 追記する（書けない）
-        P->>P: ログにも書けないため標準エラー出力へ出す
-        P-->>CC: additionalContext（既読の履歴に書けなかった場所と理由）<br>終了コード 0
+        P->>HS: 追記する（書き込めない）
+        P->>P: ログにも書き込めないため標準エラー出力へ出す
+        P-->>CC: additionalContext（既読の履歴に書き込めなかった場所と理由）<br>終了コード 0
       ```
     expected:
       - 記録ファイルにルールの場所が 1 行ある
@@ -272,7 +272,7 @@ flows:
         participant P as 既読の記録
 
         CC->>P: 標準入力（Read・ルールの場所・読んだ範囲）
-        P->>P: 読んだ範囲がファイル全体かを見る（一部）
+        P->>P: 読んだ範囲がファイル全体かを確認する（一部）
         P-->>CC: 終了コード 0
       ```
     expected:
@@ -304,7 +304,7 @@ flows:
         CC->>P: 標準入力（MCP のツール名・引数・結果）
         P->>P: 結果を JSON として読み、文字列の値から文書を取り出す
         P->>IDX: 読む
-        P->>P: scope が full でルールの場所に当たる文書を選ぶ
+        P->>P: scope が full でルールの場所に該当する文書を選ぶ
         P->>P: ルールの本文のハッシュを取る
         P->>ST: ルールの場所とハッシュを追記する
         P->>HS: 読み方 mcp の行を追記する
@@ -366,7 +366,7 @@ flows:
 
         CC->>P: 標準入力（MCP のツール名・引数・結果）
         P->>P: 結果から文書を取り出す（閉じタグが無く、書式に従う文書が無い）
-        P->>IDX: read_by に当たるエントリを選ぶ（当たらない）
+        P->>IDX: read_by に該当するエントリを選ぶ（該当しない）
         P-->>CC: 終了コード 0
       ```
     expected:
@@ -374,7 +374,7 @@ flows:
       - 既読の履歴ファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_mcp_document_unclosed
-  - name: 異常系（設定ファイルが読めない・理由を載せる）
+  - name: 異常系（設定ファイルが読めない・理由を記載する）
     summary: 設定ファイルが読めないとき、何も記録せずに理由を記載する
     setup:
       - name: Mock
@@ -429,14 +429,14 @@ flows:
         participant IDX as 索引
 
         CC->>P: 標準入力（Read・ルールの場所）
-        P->>IDX: 読む（無効のエントリを外すため当たらない）
+        P->>IDX: 読む（無効のエントリを除外するため該当しない）
         P-->>CC: 終了コード 0
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
       - 終了コードが `0`
     test: test_normal_when_entry_disabled
-  - name: 正常系（無効のエントリのread_byに当たる）
+  - name: 正常系（無効のエントリのread_byに該当する）
     summary: '`enabled: false` のエントリの `read_by` に該当する MCP のツールの呼び出しでは記録しない'
     setup:
       - name: Mock
@@ -455,7 +455,7 @@ flows:
 
         CC->>P: 標準入力（MCP のツール名・引数・結果）
         P->>P: 結果から文書を取り出す（書式に従う文書が無い）
-        P->>IDX: read_by に当たるエントリを選ぶ（無効のエントリを外すため当たらない）
+        P->>IDX: read_by に該当するエントリを選ぶ（無効のエントリを除外するため該当しない）
         P-->>CC: 終了コード 0
     expected:
       - 記録ファイルが作られていない
@@ -482,7 +482,7 @@ flows:
 
         CC->>P: 標準入力（Bash・コマンド）
         P->>P: 読むコマンドの引数からパスを取り出す
-        P->>IDX: 読む（無効のエントリを外すため当たらない）
+        P->>IDX: 読む（無効のエントリを除外するため該当しない）
         P-->>CC: 終了コード 0
     expected:
       - 記録ファイルが作られていない
@@ -602,15 +602,15 @@ request:
 exceptions:
   - name: なし（正常終了）
     condition: 記録できたとき・記録する場所が無いときは、標準出力に何も出さず終了コード 0 で終える
-  - name: OSError（既読の記録に書けない）
+  - name: OSError（既読の記録に書き込めない）
     condition: 記録フォルダ（設定ファイルの `global.state_dir`）が作れない・書き込めない（権限・容量）
     notes: フックの中で捕まえ、`hookSpecificOutput.additionalContext`（PostToolUse）へ「既読にできなかったルールの場所と理由」を記載し、ログへ `write_record` を書き込んで終了コード 0 で終える
   - name: Exception（想定外の例外）
     condition: 上のどれにも該当しない例外
     notes: 最上位で捕まえ、`additionalContext` へ「既読の記録が動かなかったこと」とログの場所を記載し、ログへ `unexpected` を書き込んで終了コード 0 で終える
-  - name: OSError（既読の履歴に書けない）
+  - name: OSError（既読の履歴に書き込めない）
     condition: 既読の記録には書き込めたが、既読の履歴ファイルを作れない・書き込めない（権限・容量・同じ名前のフォルダがある）
-    notes: フックの中で捕まえ、既読の記録は残したまま、`additionalContext` へ「既読の履歴に書けなかったルールの場所と理由」を記載し、ログへ `write_history` を書き込んで終了コード 0 で終える。既読にはなっているため操作は止まらない
+    notes: フックの中で捕まえ、既読の記録は残したまま、`additionalContext` へ「既読の履歴に書き込めなかったルールの場所と理由」を記載し、ログへ `write_history` を書き込んで終了コード 0 で終える。既読にはなっているため操作は止まらない
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: フックの中で捕まえ、既定値で動かさず何も記録しない。`additionalContext`（PostToolUse）へ設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える
@@ -618,7 +618,7 @@ constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
     decided_by: NFR-122-1#requirements[フックの実行時間]
-  - item: 記録の置き場所
+  - item: 記録の配置場所
     constraint: '`{state_dir}/{session_id}.txt`（1 行 = 場所とハッシュの組）'
     notes: 書式は ER 図「既読の記録」
   - item: 記録する場所
@@ -627,7 +627,7 @@ constraints:
   - item: ログ
     constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。書き込めないときは標準エラー出力へ出す
     notes: 記録にもログにも書き込めないときも `additionalContext` で理由が見える
-  - item: 既読の履歴の置き場所
+  - item: 既読の履歴の配置場所
     constraint: '`{state_dir}/{session_id}.history.jsonl`（1 行 = 1 回の既読の JSON）'
     notes: 書式は ER 図「既読の記録」。既読の記録へ書き込んだ後に書き込む。読み方は Read が `read`、Bash が `bash`、MCP のツールが `mcp`
   - item: Read の全体の判定

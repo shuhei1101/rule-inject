@@ -165,7 +165,7 @@ constraints:
   - item: MCP のエンドポイント
     constraint: '`http://127.0.0.1:{ポート}/mcp`'
     notes: Claude Code はプラグインの `.mcp.json` の `http://127.0.0.1:${RULE_INJECT_PORT:-8783}/mcp` で接続する
-  - item: 設定ファイルの読み直し
+  - item: 設定ファイルの再読込
     constraint: 起動時に読み、待ち受けのポート以外は各ツールの呼び出しのたびに再度読み込む
     notes: 索引と設定ファイルを修正した結果を、再起動せずに次のツールの呼び出しで有効にする
   - item: 待ち受けの方法
@@ -179,7 +179,7 @@ constraints:
     constraint: 制限なし
     notes: ループバックだけで待ち受け、同じ端末の利用者だけが呼べる
   - item: instructions
-    constraint: '`initialize` の応答の `instructions` に、新しいファイルは Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する、という決まりと、その後ろに rule-inject の MCP のツールの使い分けを事実の文で記載する。4,096 字以内。使い分けは、この MCP のツールを呼ぶ場面（今効いているルールの一覧・ファイルやツールの呼び出しにヒットするルールの検索・索引のエントリの編集と索引のチェック・既読の記録の確認と削除・設定ファイルを書き換えた後の読み直しとサーバーの状態の確認・再起動・更新）、呼ばない場面（ルールの本文は案内された場所を Read で参照する・プロジェクトのコードや文書は grep・Read で探す・どのルールがヒットするかは索引を grep・Read せず `search_rules` で調べる・索引は Edit で編集せず `write_index_entry`・`delete_index_entry` で編集する）、ツール間の順序（エントリを書き換え・削除する前に `list_rules` で `position` と `rev` を取得する・ルールが案内されないときは `search_rules` でヒットするかを確認してから `get_read_records` で既読かを確認する）とする。ツールの引数と応答の説明は記載しない'
+    constraint: '`initialize` の応答の `instructions` に、新しいファイルは Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する、という決まりと、その後ろに rule-inject の MCP のツールの選び方を事実の文で記載する。4,096 字以内。選び方は、この MCP のツールを呼ぶ場面（有効なルールの一覧・ファイルやツールの呼び出しにヒットするルールの検索・索引のエントリの編集と索引のチェック・既読の記録の確認と削除・設定ファイルを書き換えた後の再読込とサーバーの状態の確認・再起動・更新）、呼ばない場面（ルールの本文は案内された場所を Read で参照する・プロジェクトのコードや文書は grep・Read で探す・どのルールがヒットするかは索引を grep・Read せず `search_rules` で調べる・索引は Edit で編集せず `write_index_entry`・`delete_index_entry` で編集する）、ツール間の順序（エントリを書き換え・削除する前に `list_rules` で `position` と `rev` を取得する・ルールが案内されないときは `search_rules` でヒットするかを確認してから `get_read_records` で既読かを確認する）とする。ツールの引数と応答の説明は記載しない'
     notes: 接続のたびに同じ文面。設定ファイルでは変えられない。SessionStart のフックはこの決まりを記載しない（[圧縮の後の通知](id:IF-122-15)）
 refs:
   - SC-122-4#

@@ -35,7 +35,7 @@ from rule_inject.server.types import (
 )
 from rule_inject.shared.errors import IndexReadError
 
-# `paths` の当たらないエントリの検出を、続きから辿るための `cursor` の中身のキー
+# `paths` の該当しないエントリの検出を、続きから辿るための `cursor` の中身のキー
 CURSOR_KEYS = (
     "project_dir",
     "include_global",
@@ -61,15 +61,15 @@ def _encode_scan_cursor(cursor: ScanCursor, project_dir: str, include_global: bo
 
 
 def _cursor_error(reason: str) -> ToolError:
-    """`cursor` が使えないことを、直し方を添えた ToolError にする。"""
+    """`cursor` が使用できないことを、修正し方を添えた ToolError にする。"""
     return ToolError(
-        f"cursor が使えません（{reason}）。cursor を省いて最初から辿るか、"
-        "前の呼び出しと同じ project_dir・include_global で渡してください"
+        f"cursor を使用できません（{reason}）。cursor を省いて最初から辿るか、"
+        "前の呼び出しと同じ project_dir・include_global で指定してください"
     )
 
 
 def _is_entry_key(value: Any) -> bool:
-    """確かめるエントリの索引・位置・バージョンの組か。"""
+    """確認するエントリの索引・位置・バージョンの組か。"""
     return (
         isinstance(value, list)
         and len(value) == len(("index", "position", "rev"))
@@ -81,13 +81,13 @@ def _is_entry_key(value: Any) -> bool:
 
 
 def _decode_scan_cursor(cursor: str, project_dir: str, include_global: bool) -> ScanCursor:
-    """`_encode_scan_cursor` の文字列を続きの位置に戻し、呼び出しの `project_dir`・`include_global` と合うかを確かめる。"""
+    """`_encode_scan_cursor` の文字列を続きの位置に戻し、呼び出しの `project_dir`・`include_global` と合うかを確認する。"""
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
         payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
     except ValueError as exc:
         raise _cursor_error("読めない文字列") from exc
-    # 項目の型を確かめる
+    # 項目の型を確認する
     if (
         not isinstance(payload, dict)
         or any(key not in payload for key in CURSOR_KEYS)
@@ -150,7 +150,7 @@ def _unmatched_paths(problems: tuple[IndexProblem, ...]) -> list[dict[str, Any]]
 
 
 def _unused_tag_entries(patterns: Sequence[TagPattern]) -> list[dict[str, Any]]:
-    """使われていないタグのパターンを、位置・バージョン・場所・キー・書いたままのパターンの一覧にする。"""
+    """使用されていないタグのパターンを、位置・バージョン・場所・キー・記載したままのパターンの一覧にする。"""
     return [
         {
             "position": pattern.position,
@@ -174,15 +174,15 @@ async def check_indexes(
     scan_time_limit: float,
     dev_docs_timeout: float,
 ) -> CallToolResult:
-    """プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・ルールの場所にファイルが無いエントリ・`paths` の当たらないエントリ・使われていないタグのパターンを返す。"""
+    """プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・ルールの場所にファイルが無いエントリ・`paths` の該当しないエントリ・使用されていないタグのパターンを返却する。"""
     settings = _project_settings(project_dir, env)
     scan_cursor = (
         _decode_scan_cursor(cursor, project_dir, include_global) if cursor is not None else None
     )
     reports: list[IndexReport] = []
-    # フックが読めた索引（使われていないタグのパターンは `global` と `project` の全てを確かめる）
+    # フックが読めた索引（使用されていないタグのパターンは `global` と `project` の全てを確認する）
     readable: list[IndexContent] = []
-    # `paths` の当たらないエントリを確かめる索引（読めた索引のうち `project`、`include_global` なら全て）
+    # `paths` の該当しないエントリを確認する索引（読めた索引のうち `project`、`include_global` なら全て）
     contents: list[IndexContent] = []
     for index in settings.indexes:
         origin: Literal["global", "project"] = (
@@ -194,7 +194,7 @@ async def check_indexes(
             try:
                 content = read_index(index, env)
             except IndexReadError:
-                # 読み取りの失敗は `hook_error` に載せ済み
+                # 読み取りの失敗は `hook_error` に記載済み
                 continue
             readable.append(content)
             if origin == "project" or include_global:
@@ -216,7 +216,7 @@ async def check_indexes(
     unmatched_by_index = {check.index: check.problems for check in scan.checks}
     for report in reports:
         report.unmatched_paths = _unmatched_paths(unmatched_by_index.get(report.index, ()))
-    # タグの確かめ: パターンが無ければ問い合わせず、引けなければ飛ばし、引けたら使われていないものを索引ごとに載せる
+    # タグの確認: パターンが無ければ問い合わせず、取得できなければ飛ばし、取得できたら使用されていないものを索引ごとに記載する
     if used is None:
         tag_check = TagCheckReport(state="no_patterns", reason=None)
     elif used.reason is not None:
@@ -254,7 +254,7 @@ async def check_indexes(
             if scan.completed
             else (
                 f"辿る時間の上限（{scan_time_limit:g} 秒）で止まりました。"
-                "next_cursor を cursor に渡して呼び直すと、続きから辿ります"
+                "next_cursor を cursor に指定して再度呼び出すと、続きから辿ります"
             ),
             next_cursor=next_cursor,
         ),

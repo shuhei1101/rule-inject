@@ -1,4 +1,4 @@
-"""フックが返す案内文の組み立て。"""
+"""フックが返却する案内文の組み立て。"""
 
 from rule_inject.features.guidance.service import (
     BLOCKING_HEADER,

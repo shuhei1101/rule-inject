@@ -26,7 +26,7 @@ scenarios:
         participant FS as ルールの本文
 
         CL->>SV: 確認（セッション）
-        SV->>CF: 記録フォルダを引く
+        SV->>CF: 記録フォルダを取得する
         CF-->>SV: 記録フォルダ
         SV->>ST: そのセッションの既読の行を読む
         ST-->>SV: 場所とハッシュ
@@ -85,7 +85,7 @@ scenarios:
         participant DIR as 記録フォルダ
 
         CL->>SV: 確認（セッションなし）
-        SV->>CF: 記録フォルダを引く
+        SV->>CF: 記録フォルダを取得する
         CF-->>SV: 記録フォルダ
         SV->>DIR: 既読の記録のファイルを並べる
         DIR-->>SV: セッションと最終更新の時刻

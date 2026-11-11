@@ -89,7 +89,7 @@ selection:
   candidates: 公式の Python SDK（`mcp`）だけを候補にした。
   decision: 構成方針（MCP サーバーは Python の uv のプロジェクト）に合う公式の実装で、stdio のサーバーを数行で実装できる。
   consequences: |-
-    2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の書き方は使用しない。メジャーバージョンで API が変わるので `<3` で固定する。
+    2.x で `FastMCP` が `MCPServer`（`mcp.server.mcpserver`）に改名されているため、1.x の記法は使用しない。メジャーバージョンで API が変わるので `<3` で固定する。
 
     プラグインの MCP サーバーを廃止し（[MCP サーバーと read_rules の廃止](https://github.com/shuhei1101/rule-inject/pull/44)）、プラグインの依存から除外した。
 used_in:

@@ -1,4 +1,4 @@
-"""検索結果の案内（PostToolUse）。検索の結果に出たファイルに当たる未読・未案内のルールを案内する。"""
+"""検索結果の案内（PostToolUse）。検索の結果に出たファイルに該当する未読・未案内のルールを案内する。"""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ NOTICE_SEPARATOR = "\n\n"
 
 
 def _result_lines(payload: Mapping[str, Any]) -> tuple[list[str], Path] | None:
-    """結果の行と、その相対パスを解く基準を返す（検索の結果でなければ None）。"""
+    """結果の行と、その相対パスを解く基準を返却する（検索の結果でなければ None）。"""
     tool_name = payload["tool_name"]
     response = payload.get("tool_response")
     # 結果が辞書で届かなければ、読める行が無い
@@ -64,7 +64,7 @@ def _log_record_failure(
     session_id: str,
     failure: RecordReadError | RecordWriteError,
 ) -> None:
-    """記録の読み書きの失敗をログへ書く（案内は止めない）。"""
+    """記録の読み込み・書き込みの失敗をログへ書き込む（案内は止めない）。"""
     write_log(
         log_folder,
         component=Component.SEARCH_GUIDE,
@@ -76,7 +76,7 @@ def _log_record_failure(
 
 
 def _build(rules: Sequence[MatchedRule], unchecked: int, notices: Sequence[str]) -> Guidance | None:
-    """知らせの分を引いた字数に収めた案内文を組み立てる（案内するルールが無ければ None）。"""
+    """通知の分を除いた字数に収めた案内文を組み立てる（案内するルールが無ければ None）。"""
     if not rules:
         return None
     budget = GUIDANCE_LIMIT - (
@@ -86,9 +86,9 @@ def _build(rules: Sequence[MatchedRule], unchecked: int, notices: Sequence[str])
 
 
 def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
-    """検索の結果に出たファイルに当たる未読・未案内のルールを案内する PostToolUse の出力を作る。"""
+    """検索の結果に出たファイルに該当する未読・未案内のルールを案内する PostToolUse の出力を作る。"""
     session_id = payload.get("session_id")
-    # 案内済みを記録できないと毎回同じ案内が出るため、形式が外れた session_id では何も出さない
+    # 案内済みを記録できないと毎回同じ案内が出るため、形式に合わない session_id では何も出さない
     if not is_valid_session_id(session_id):
         return None
     result_lines = _result_lines(payload)
@@ -98,7 +98,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
     found = extract_result_paths(lines, base)
     if not found.paths:
         return None
-    # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに知らせだけを返す
+    # 設定ファイルが読めなければ、既定値でも動かさず、照合せずに通知だけを返却する
     try:
         settings = load_settings(env)
     except SettingsReadError as exc:
@@ -108,7 +108,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
     log_folder = settings.log_dir
     log_path = log_file_path(log_folder, datetime.now(UTC).date())
     notices: list[str] = []
-    # 読めない索引と読み飛ばしたエントリは、ログと知らせの文に回して、読めたエントリでの案内は続ける
+    # 読めない索引と読み飛ばしたエントリは、ログと通知の文に回して、読めたエントリでの案内は続ける
     loaded = load_indexes(settings.indexes, env)
     for failure in loaded.failures:
         write_log(
@@ -121,17 +121,17 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
         )
     if loaded.failures:
         notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
-    # 読む操作として当たるルールを、場所ごとに 1 件へまとめる（出た順。参照するツールも合わせる）
+    # 読む操作として該当するルールを、場所ごとに 1 件へまとめる（出た順。参照するツールも合わせる）
     matched_rules = merge_matched(
         [rule for path in found.paths for rule in match_path(loaded.entries, path, "read")]
     )
     matched = [rule.location for rule in matched_rules]
-    # 既読と案内済みを除く（読んだ後に本文が変わったルールは既読にしない）。読めない記録は空として扱い、理由を知らせる
+    # 既読と案内済みを除く（読んだ後に本文が変わったルールは既読にしない）。読めない記録は空として扱い、理由を通知する
     excluded: set[str] = set()
     if matched:
 
         def read_current(directory: Path, session: str) -> frozenset[str]:
-            """既読の記録のうち、今の本文のハッシュの組がある場所を返す。"""
+            """既読の記録のうち、今の本文のハッシュの組がある場所を返却する。"""
             return current_read_locations(read_record(directory, session), matched)
 
         for read, summary in (
@@ -145,16 +145,16 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
                 notices.append(build_failure_notice(summary, [exc], log_path))
     remaining = [rule for rule in matched_rules if rule.location not in excluded]
     guidance = _build(remaining, found.unchecked, notices)
-    # 案内に載せた場所だけを案内済みにする。書けなければ案内は出して理由を知らせる
+    # 案内に記載した場所だけを案内済みにする。書き込めなければ案内は出して理由を通知する
     if guidance is not None and guidance.shown:
         try:
             append_guided(folder, session_id, guidance.shown)
         except RecordWriteError as exc:
             _log_record_failure(log_folder, LogOperation.WRITE_RECORD, session_id, exc)
             notices.append(
-                build_failure_notice("案内済みの記録に書けませんでした。", [exc], log_path)
+                build_failure_notice("案内済みの記録に書き込めませんでした。", [exc], log_path)
             )
-            # 知らせの分を引いた字数に、案内を収め直す
+            # 通知の分を除いた字数に、案内を再度収める
             guidance = _build(remaining, found.unchecked, notices)
     text = NOTICE_SEPARATOR.join(
         part for part in (guidance.text if guidance else "", *notices) if part

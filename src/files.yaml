@@ -91,7 +91,7 @@ files:
         type: implements
   - path: rule_inject/features/index/check/service.py
     name: 索引のチェック
-    description: 索引をスキーマに通して問題を並べ、書き込む前と後の問題を比べ、索引のチェックの判定を変えるときに参照する。
+    description: 索引をスキーマで検査して問題を並べ、書き込む前と後の問題を比べ、索引のチェックの判定を変えるときに参照する。
     tags:
       - topic:索引のチェック
       - tool:jsonschema
@@ -99,8 +99,8 @@ files:
       - to: MOD-122-8
         type: implements
   - path: rule_inject/features/index/check/tags.py
-    name: 使われていないタグのパターンの検出
-    description: 索引のタグのパターンを集めて使われているタグのどれにもヒットしないものを返却し、タグの検査の処理を修正するときに参照する。
+    name: 使用されていないタグのパターンの検出
+    description: 索引のタグのパターンを集めて使用中のタグのどれにもヒットしないものを返却し、タグの検査の処理を修正するときに参照する。
     tags:
       - topic:索引のチェック
       - topic:タグ
@@ -188,7 +188,7 @@ files:
       - to: MOD-122-18
         type: implements
   - path: rule_inject/features/record/service.py
-    name: 既読の記録ファイルの読み書き
+    name: 既読の記録ファイルの読み込み・書き込み
     description: セッションごとの既読の記録・案内済みの記録・既読の履歴の読み・追記・削除・掃除を受け持ち、既読の保存の仕組みを修正するときに参照する。
     tags:
       - topic:既読の記録
@@ -223,7 +223,7 @@ files:
         type: implements
   - path: rule_inject/hooks/discard_read.py
     name: 既読の記録の破棄
-    description: 圧縮の前（PreCompact）に、そのセッションの既読の記録と案内済みの記録を削除し、圧縮後に案内を受け直す仕組みを修正するときに参照する。
+    description: 圧縮の前（PreCompact）に、そのセッションの既読の記録と案内済みの記録を削除し、圧縮後に案内を再度受ける仕組みを修正するときに参照する。
     tags:
       - topic:フック
       - topic:既読の記録
@@ -271,7 +271,7 @@ files:
         type: implements
   - path: rule_inject/hooks/start_server.py
     name: サーバーの起動の補助
-    description: セッションの開始時（SessionStart）に応答しない MCP サーバーのユニットへ起動を依頼して接続し直す案内を返却し、起動の補助の流れを修正するときに参照する。
+    description: セッションの開始時（SessionStart）に応答しない MCP サーバーのユニットへ起動を依頼して再接続する案内を返却し、起動の補助の流れを修正するときに参照する。
     tags:
       - topic:フック
       - topic:MCPサーバー
@@ -378,7 +378,7 @@ files:
         type: implements
   - path: rule_inject/server/clone.py
     name: クローンの操作
-    description: サーバーが動いているクローンのバージョン・commit・上流の取り込み・依存の入れ直し・移し替えの要否の確認を受け持ち、更新の git・uv の呼び方を修正するときに参照する。
+    description: サーバーが動いているクローンのバージョン・commit・上流の取り込み・依存の再インストール・移し替えの要否の確認を受け持ち、更新の git・uv の呼び方を修正するときに参照する。
     tags:
       - topic:MCPサーバー
     related:
@@ -396,8 +396,8 @@ files:
       - to: IF-122-3
         type: implements
   - path: rule_inject/server/dev_docs.py
-    name: 使われているタグを引くクライアント
-    description: dev-docs の search_docs へ接続して使われているタグを取得し、索引のタグの検査が使用するタグの取得を修正するときに参照する。
+    name: 使用中のタグを取得するクライアント
+    description: dev-docs の search_docs へ接続して使用中のタグを取得し、索引のタグの検査が使用するタグの取得を修正するときに参照する。
     tags:
       - topic:タグ
       - topic:索引のチェック
@@ -458,7 +458,7 @@ files:
         type: implements
   - path: rule_inject/shared/errors.py
     name: 共通の例外
-    description: 設定ファイル・索引・既読の記録・既読の履歴・ログの読み書きで起きる例外を定め、例外の種類を調べるときに参照する。
+    description: 設定ファイル・索引・既読の記録・既読の履歴・ログの読み込み・書き込みで起きる例外を定め、例外の種類を調べるときに参照する。
     tags:
       - topic:例外
     related:

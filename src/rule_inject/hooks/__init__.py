@@ -1,4 +1,4 @@
-"""Claude Code が呼ぶフックの入口。run.py の引数の名前から、処理と知らせ方を引く。"""
+"""Claude Code が呼ぶフックの入口。run.py の引数の名前から、処理と通知方を取得する。"""
 
 from __future__ import annotations
 
@@ -17,13 +17,11 @@ from rule_inject.shared.logger import Component
 
 
 def _notice_of(event: str, subject: str) -> UnexpectedNotifier:
-    """想定外の例外を、additionalContext で知らせる関数を作る。"""
+    """想定外の例外を、additionalContext で通知する関数を作る。"""
 
     def _notify(message: str, log_path: Path) -> dict[str, Any]:
-        """何が動かなかったかと、ログの場所を知らせる。"""
-        text = (
-            f"{subject}が動きませんでした（{message}）。詳しくはログ（{log_path}）を見てください。"
-        )
+        """何が動かなかったかと、ログの場所を通知する。"""
+        text = f"{subject}が動きませんでした（{message}）。詳しくはログ（{log_path}）を確認してください。"
         return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
 
     return _notify
@@ -34,7 +32,7 @@ def _silent(message: str, log_path: Path) -> None:
     return
 
 
-# run.py の引数の名前 → 出した元・処理・想定外の例外の知らせ方
+# run.py の引数の名前 → 出した元・処理・想定外の例外の通知方
 HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
     "rule_guide": (Component.RULE_GUIDE, guide_rules, _notice_of("PreToolUse", "ルールの案内")),
     "record_read": (Component.RECORD_READ, record_read, _notice_of("PostToolUse", "既読の記録")),

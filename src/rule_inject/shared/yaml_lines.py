@@ -8,7 +8,7 @@ LIST_ITEM_MARK = "- "
 QUOTE_CHARS = "\"'"
 # 開き引用符と閉じ引用符で最低でも 2 字になる
 MIN_QUOTED_LENGTH = 2
-# 引用符なしの値の先頭に置けない、YAML では別の意味になる文字
+# 引用符なしの値の先頭に配置できない、YAML では別の意味になる文字
 RESERVED_HEADS = "{|>&!%@`*"
 
 
@@ -50,7 +50,7 @@ def tokenize(text: str) -> list[Line]:
             continue
         content = body.lstrip()
         if "\t" in body[: len(body) - len(content)]:
-            raise yaml_error(number, "インデントにタブは使えません")
+            raise yaml_error(number, "インデントにタブは使用できません")
         lines.append(Line(number=number, indent=len(body) - len(content), text=content))
     return lines
 
@@ -60,7 +60,7 @@ def parse_scalar(text: str, number: int) -> str:
     text = text.strip()
     if not text:
         raise yaml_error(number, "値が空です")
-    # 引用符あり: 閉じ引用符が末尾にあることを確かめる
+    # 引用符あり: 閉じ引用符が末尾にあることを確認する
     if text[0] in QUOTE_CHARS:
         quote = text[0]
         if len(text) < MIN_QUOTED_LENGTH or text[-1] != quote:
@@ -108,7 +108,7 @@ def parse_flow_list(text: str, number: int) -> list[str]:
 
 
 def read_block_list(lines: list[Line], start: int, min_indent: int) -> tuple[list[str], int]:
-    """`- a` の行が続く限りブロックのリストを読み、次に読む行の位置を返す。"""
+    """`- a` の行が続く限りブロックのリストを読み、次に読む行の位置を返却する。"""
     items: list[str] = []
     position = start
     while position < len(lines):
@@ -124,14 +124,14 @@ def split_key(line: Line) -> tuple[str, str]:
     """`key: value` の行をキーと値に分ける。"""
     key, separator, rest = line.text.partition(":")
     if not separator or not key.strip() or " " in key.strip():
-        raise yaml_error(line.number, "`キー: 値` の形式で書いてください")
+        raise yaml_error(line.number, "`キー: 値` の形式で記載してください")
     return key.strip(), rest
 
 
 def read_value(
     lines: list[Line], line: Line, next_position: int, key: str, rest: str, min_indent: int
 ) -> tuple[str | list[str], int]:
-    """キーの値を読み、次に読む行の位置を返す。値が無ければ続く行のブロックのリストを読む。"""
+    """キーの値を読み、次に読む行の位置を返却する。値が無ければ続く行のブロックのリストを読む。"""
     rest = rest.strip()
     # 同じ行に値がある: フローのリストか文字列
     if rest.startswith("["):

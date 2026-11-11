@@ -39,7 +39,7 @@ def test_tokenize() -> None:
 
 
 def test_tokenize_when_hash_in_word() -> None:
-    """語の途中の `#` はコメントにしない（正常系）。"""
+    """単語の途中の `#` はコメントにしない（正常系）。"""
     # 実行
     result = tokenize("a: b#c\n")
     # 検証
@@ -49,7 +49,7 @@ def test_tokenize_when_hash_in_word() -> None:
 def test_tokenize_when_tab_indent() -> None:
     """タブのインデントを拒む（異常系）。"""
     # 実行・検証
-    with pytest.raises(ValueError, match=r"^2行目: インデントにタブは使えません$"):
+    with pytest.raises(ValueError, match=r"^2行目: インデントにタブは使用できません$"):
         tokenize("a:\n\t- x\n")
 
 
@@ -135,7 +135,7 @@ def test_parse_flow_list_when_empty_item() -> None:
 
 
 def test_read_block_list() -> None:
-    """続く要素の行を読み、次の位置を返す（正常系）。"""
+    """続く要素の行を読み、次の位置を返却する（正常系）。"""
     # 準備
     lines = tokenize('a:\n  - x\n  - "y"\nb: 1\n')
     # 実行
@@ -177,7 +177,7 @@ def test_split_key_when_invalid(text: str) -> None:
     # 準備
     line = Line(number=1, indent=0, text=text)
     # 実行・検証
-    with pytest.raises(ValueError, match=r"^1行目: `キー: 値` の形式で書いてください$"):
+    with pytest.raises(ValueError, match=r"^1行目: `キー: 値` の形式で記載してください$"):
         split_key(line)
 
 

@@ -17,7 +17,7 @@ OUTPUT = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalConte
 
 
 def _handle_output(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any]:
-    """出力する JSON を返す処理。"""
+    """出力する JSON を返却する処理。"""
     return OUTPUT
 
 
@@ -32,7 +32,7 @@ def _handle_error(payload: dict[str, Any], env: Mapping[str, str]) -> None:
 
 
 def _notice_of_unexpected(message: str, log_path: Path) -> dict[str, Any]:
-    """想定外の例外の文面とログの場所を載せた知らせを作る。"""
+    """想定外の例外の文面とログの場所を記載した通知を作る。"""
     return {"hookSpecificOutput": {"additionalContext": f"{message} / {log_path}"}}
 
 
@@ -108,7 +108,7 @@ def test_run_hook_when_unexpected_and_settings_unreadable(
     session_id: str,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めなくても想定外の例外を既定のログのフォルダへ書く（正常系）。"""
+    """設定ファイルが読めなくても想定外の例外を既定のログのフォルダへ書き込む（正常系）。"""
     # 準備
     env = unreadable_env("broken")
     stdin = io.StringIO(json.dumps({"session_id": session_id}))
@@ -135,7 +135,7 @@ def test_log_settings_failure(
     session_id: str,
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """既定のログのフォルダへ書く（正常系）。"""
+    """既定のログのフォルダへ書き込む（正常系）。"""
     # 準備
     error = SettingsReadError("/c/settings.yaml", "FileNotFoundError: 無い")
     env = {"XDG_STATE_HOME": str(xdg_state_home)}

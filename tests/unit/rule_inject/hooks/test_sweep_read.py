@@ -33,7 +33,7 @@ def test_sweep_read_when_invalid_session_id(
     hook_payload: Callable[..., dict[str, Any]],
     write_aged_record: Callable[..., Path],
 ) -> None:
-    """session_id の形式が外れていれば何も削除しない（正常系）。"""
+    """session_id の形式に合わなければ何も削除しない（正常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31)
     payload = hook_payload("SessionStart", source="startup", session_id="../x")
@@ -52,7 +52,7 @@ def test_sweep_read_when_undeletable(
     unwritable: Callable[[Path, int], Path],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """削除できず、ログにも書けないとき標準エラー出力に書く（正常系）。"""
+    """削除できず、ログにも書き込めないとき標準エラー出力に書き込む（正常系）。"""
     # 準備
     write_aged_record("expired-session", 31)
     unwritable(state_dir, 0o555)
@@ -129,7 +129,7 @@ def test_sweep_read_when_settings_unreadable(
     hook_payload: Callable[..., dict[str, Any]],
     default_log_folder: Path,
 ) -> None:
-    """設定ファイルが読めないときはログに書くだけで何も削除しない（正常系）。"""
+    """設定ファイルが読めないときはログに書き込むだけで何も削除しない（正常系）。"""
     # 準備
     env = unreadable_env("retention_zero")
     today = datetime.now(UTC).date()

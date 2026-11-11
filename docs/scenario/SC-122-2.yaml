@@ -1,6 +1,6 @@
 id: SC-122-2
 visibility: internal
-title: "MCPサーバーの設定を読み直す"
+title: "MCPサーバーの設定を再読込する"
 scenarios:
   - name: 正常シナリオ
     setup:

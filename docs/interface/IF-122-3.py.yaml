@@ -22,9 +22,9 @@ flows:
         IF-->>C: pid・restarting
         IF->>IF: 処理中の呼び出しの終わりを待つ（待ち受けは続ける）
         IF->>IF: 待ち受けを閉じる
-        IF->>SV: 同じプロセスで起動し直す
+        IF->>SV: 同じプロセスで再起動する
         SV->>SV: 同じポートで待ち受ける
-        C->>SV: 接続し直して get_server_status
+        C->>SV: 再接続して get_server_status
         SV-->>C: 新しい started_at
     expected:
       - 再起動の応答の `restarting` が `true` で、`pid` が記録した値と同じ
@@ -48,7 +48,7 @@ flows:
         IF-->>C: restarting
         IF->>IF: 処理中の check_indexes の終わりを待つ
         IF-->>C: check_indexes の応答
-        IF->>IF: 待ち受けを閉じて起動し直す
+        IF->>IF: 待ち受けを閉じて再起動する
     expected:
       - 処理中だった `check_indexes` が、`isError` でない応答を返却している
       - 再接続した後の `get_server_status` の `started_at` が新しい
@@ -75,7 +75,7 @@ flows:
       - '待つ間に呼んだ `list_rules` も `isError: true` で、再起動の途中である旨が載っている'
       - 再接続した後の `get_server_status` の `started_at` が、1 回目の再起動の後に 1 回だけ新しくなっている
     test: test_error_when_restart_in_progress
-lead: 処理中の呼び出しの終わりを待って同じプロセスのまま起動し直すツールの入出力を定め、サーバーの再起動を修正するときに参照する。
+lead: 処理中の呼び出しの終わりを待って同じプロセスのまま再起動するツールの入出力を定め、サーバーの再起動を修正するときに参照する。
 identifier: restart_server
 idempotent: false
 side_effects: 待ち受けを閉じて再起動する（`destructiveHint`）。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書き込まない
@@ -100,7 +100,7 @@ response:
     description: 常に `true`
 response_example: |-
   ```json
-  {"success": true, "output": "再起動を始めました。接続し直してから get_server_status で確かめてください", "pid": 4242, "restarting": true}
+  {"success": true, "output": "再起動を始めました。再接続してから get_server_status で確認してください", "pid": 4242, "restarting": true}
   ```
 response_notes: 応答を返却し終えてから停止を始める。再起動の結果は、再接続した後の `get_server_status` の `started_at` で確認する。
 exceptions:
@@ -121,10 +121,10 @@ constraints:
     constraint: インターフェース定義「サーバーの起動」が作った `uvicorn.Server` の `should_exit` を `True` にして閉じる。`uvicorn.Config` の `timeout_graceful_shutdown` に非機能要件の決定値を指定し、SSE のストリーム（`GET /mcp` のストリームと、停止の待ちを過ぎた呼び出しの POST の応答）は、外部ライブラリ [sse-starlette](id:LIB-122-6) が `should_exit` に気づいた時点でキャンセルする。`timeout_graceful_shutdown` は、SSE でない残りの接続とタスクが閉じないときの上限にする
     decided_by: NFR-122-1#requirements[待ち受けを閉じた後の接続の待ち]
     notes: 上限を指定するのは、クライアントが閉じない接続で停止が終わらなくなるのを防ぐため。処理中の呼び出しは停止の待ちで応答を送信し終えるまで待っているため、閉じた後に残るのは SSE のストリームと、停止の待ちを過ぎた呼び出しだけ
-  - item: 起動し直す方法
+  - item: 再起動する方法
     constraint: '`uvicorn.Server.serve` が返った後、`os.execv(sys.executable, [sys.executable, "-m", "rule_inject.server"])` で同じプロセスを置き換える'
     notes: systemd --user の unit・`uv run`・前面のどれで起動したプロセスでも、PID と親を変えずに続く。環境変数は引き継ぐため、`RULE_INJECT_PORT` と `RULE_INJECT_CONFIG` は起動時の値のまま
-  - item: 起動し直した後
+  - item: 再起動した後
     constraint: インターフェース定義「サーバーの起動」と同じ順（設定ファイルとポートを確認してから待ち受ける）で起動する
     notes: 起動に失敗したときは、サーバーの起動と同じく標準エラーへ理由を書き込んで 0 以外の終了コードで終わる
   - item: 状態

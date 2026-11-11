@@ -53,7 +53,7 @@ def test_is_valid_session_id(session_id: str) -> None:
     ],
 )
 def test_is_valid_session_id_when_invalid(value: object) -> None:
-    """形式が外れた値を拒む（正常系）。"""
+    """形式に合わない値を拒む（正常系）。"""
     # 実行
     result = is_valid_session_id(value)
     # 検証
@@ -65,7 +65,7 @@ def test_read_record(
     session_id: str,
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """行を集合で返す（正常系）。"""
+    """行を集合で返却する（正常系）。"""
     # 準備
     write_record(
         [
@@ -107,7 +107,7 @@ def test_read_record_when_without_hash(
 
 
 def test_read_record_when_missing(state_dir: Path, session_id: str) -> None:
-    """ファイルが無ければ空を返す（正常系）。"""
+    """ファイルが無ければ空を返却する（正常系）。"""
     # 実行
     result = read_record(state_dir, session_id)
     # 検証
@@ -162,7 +162,7 @@ def test_append_record(
 
 
 def test_append_record_when_empty(state_dir: Path, session_id: str) -> None:
-    """空なら書かない（正常系）。"""
+    """空なら書き込まない（正常系）。"""
     # 実行
     append_record(state_dir, session_id, [])
     # 検証
@@ -233,7 +233,7 @@ def test_record_exists(
     session_id: str,
     write_record: Callable[[Sequence[str]], Path],
 ) -> None:
-    """記録ファイルの有無を返す（正常系）。"""
+    """記録ファイルの有無を返却する（正常系）。"""
     # 準備
     write_record(["/r/a.md"])
     # 実行
@@ -327,7 +327,7 @@ def test_sweep_records_when_undeletable(
     write_aged_record: Callable[..., Path],
     unwritable: Callable[[Path, int], Path],
 ) -> None:
-    """削除できない記録ファイルを返す（異常系）。"""
+    """削除できない記録ファイルを返却する（異常系）。"""
     # 準備
     expired = write_aged_record("expired-session", 31, base=now())
     unwritable(state_dir, 0o555)
@@ -392,7 +392,7 @@ def test_read_guided(
     write_record: Callable[[Sequence[str]], Path],
     write_guided: Callable[[Sequence[str]], Path],
 ) -> None:
-    """案内済みの記録を集合で返す（正常系）。"""
+    """案内済みの記録を集合で返却する（正常系）。"""
     # 準備
     write_record([f"/r/a.md\t{HASH_A}"])
     write_guided(["/r/b.md", "/r/b.md"])
@@ -403,7 +403,7 @@ def test_read_guided(
 
 
 def test_read_guided_when_missing(state_dir: Path, session_id: str) -> None:
-    """ファイルが無ければ空を返す（正常系）。"""
+    """ファイルが無ければ空を返却する（正常系）。"""
     # 実行
     result = service.read_guided(state_dir, session_id)
     # 検証
@@ -502,7 +502,7 @@ def test_append_history(
     """場所ごとに JSON を 1 行ずつ追記する（正常系）。"""
 
     def fixed_now() -> datetime:
-        """固定した現在の時刻を返す。"""
+        """固定した現在の時刻を返却する。"""
         return datetime(2026, 10, 24, 9, 30, 0, 500_000, tzinfo=UTC)
 
     # 実行
@@ -535,7 +535,7 @@ def test_append_history(
 
 
 def test_append_history_when_empty(state_dir: Path, session_id: str) -> None:
-    """空なら書かない（正常系）。"""
+    """空なら書き込まない（正常系）。"""
     # 実行
     append_history(state_dir, session_id, [], method=ReadMethod.READ, tool="Read")
     # 検証
@@ -543,7 +543,7 @@ def test_append_history_when_empty(state_dir: Path, session_id: str) -> None:
 
 
 def test_append_history_when_unwritable(state_dir: Path, session_id: str) -> None:
-    """書けないとき HistoryWriteError にする（異常系）。"""
+    """書き込めないとき HistoryWriteError にする（異常系）。"""
     # 準備
     history = state_dir / f"{session_id}.history.jsonl"
     history.mkdir(parents=True)
@@ -617,7 +617,7 @@ def test_current_read_locations_when_changed(tmp_path: Path) -> None:
 
 
 def test_current_read_locations_when_reread(tmp_path: Path) -> None:
-    """読み直した新しいハッシュの行があれば既読にする（正常系）。"""
+    """再読込した新しいハッシュの行があれば既読にする（正常系）。"""
     # 準備
     rule = tmp_path / "rule.md"
     rule.write_text("changed", encoding="utf-8")
@@ -672,7 +672,7 @@ def test_list_read_entries(
 
 
 def test_list_read_entries_when_missing(state_dir: Path, session_id: str) -> None:
-    """記録の無いセッションは空を返す（正常系）。"""
+    """記録の無いセッションは空を返却する（正常系）。"""
     # 実行
     result = service.list_read_entries(state_dir, session_id)
     # 検証
@@ -680,7 +680,7 @@ def test_list_read_entries_when_missing(state_dir: Path, session_id: str) -> Non
 
 
 def test_list_rule_states(tmp_path: Path) -> None:
-    """場所ごとに既読・本文が変わった・ファイルが無いを返す（正常系）。"""
+    """場所ごとに既読・本文が変わった・ファイルが無いを返却する（正常系）。"""
     # 準備
     current = tmp_path / "current.md"
     current.write_text("test", encoding="utf-8")
@@ -710,7 +710,7 @@ def test_list_rule_states(tmp_path: Path) -> None:
 
 
 def test_read_history(state_dir: Path, session_id: str) -> None:
-    """読める行を行の順に返し、壊れた行を読み飛ばす（正常系）。"""
+    """読める行を行の順に返却し、壊れた行を読み飛ばす（正常系）。"""
     # 準備
     service.append_history(
         state_dir,
@@ -755,7 +755,7 @@ def test_read_history(state_dir: Path, session_id: str) -> None:
 
 
 def test_list_record_sessions(state_dir: Path) -> None:
-    """既読の記録ファイルだけを最終更新の新しい順に返す（正常系）。"""
+    """既読の記録ファイルだけを最終更新の新しい順に返却する（正常系）。"""
     # 準備
     state_dir.mkdir()
     newer = state_dir / "a.txt"
@@ -778,7 +778,7 @@ def test_list_record_sessions(state_dir: Path) -> None:
 
 
 def test_list_record_sessions_when_missing(state_dir: Path) -> None:
-    """記録フォルダが無ければ空を返す（正常系）。"""
+    """記録フォルダが無ければ空を返却する（正常系）。"""
     # 実行
     result = service.list_record_sessions(state_dir)
     # 検証

@@ -35,7 +35,7 @@ def test_load_indexes(
     make_index: Callable[..., Path],
     index_text: Callable[..., str],
 ) -> None:
-    """渡された索引を順に読む（正常系）。"""
+    """引き渡された索引を順に読む（正常系）。"""
     # 準備
     first = make_index(index_text("./u.md"), "first/index.yaml")
     second = make_index(index_text("../r/p.md"), "second/idx.yaml")
@@ -205,7 +205,7 @@ def test_load_indexes_when_empty() -> None:
 def test_load_indexes_when_entry_disabled(
     make_index: Callable[..., Path],
 ) -> None:
-    """`enabled: false` のエントリを外す（正常系）。"""
+    """`enabled: false` のエントリを除外する（正常系）。"""
     # 準備
     index = make_index(
         "rules:\n"
@@ -225,7 +225,7 @@ def test_load_indexes_when_entry_disabled(
 
 
 def test_match_path(make_entry: Callable[..., Any]) -> None:
-    """当たるエントリを選ぶ（正常系）。"""
+    """該当するエントリを選ぶ（正常系）。"""
     # 準備
     entries = [
         make_entry("/r/py.md", paths=["**/*.py"], on=["write"]),
@@ -238,7 +238,7 @@ def test_match_path(make_entry: Callable[..., Any]) -> None:
 
 
 def test_match_path_when_excluded(make_entry: Callable[..., Any]) -> None:
-    """外すパスには当てない（正常系）。"""
+    """除外するパスには照合しない（正常系）。"""
     # 準備
     entries = [make_entry("/r/py.md", paths=["**/*.py"], exclude=["**/tests/**"])]
     # 実行
@@ -286,7 +286,7 @@ def test_match_path_when_regex(
     path: str,
     expected: list[MatchedRule],
 ) -> None:
-    """`re:` のパターンに部分一致で当て、正規表現の `exclude` で外す（正常系）。"""
+    """`re:` のパターンに部分一致で照合し、正規表現の `exclude` で除外する（正常系）。"""
     # 準備
     entries = [
         make_entry(
@@ -303,7 +303,7 @@ def test_match_path_when_regex(
 
 
 def test_match_path_when_read_tool(make_entry: Callable[..., Any]) -> None:
-    """当たったエントリの `read_tool` を載せる（正常系）。"""
+    """該当したエントリの `read_tool` を記載する（正常系）。"""
     # 準備
     tool_a = ReadTool(tool="mcp__a__get", args={"id": "a"}, optional_args={})
     tool_a_again = ReadTool(tool="mcp__a__get", args={"id": "a"}, optional_args={})
@@ -340,7 +340,7 @@ def test_merge_matched() -> None:
 
 
 def test_match_tool(make_entry: Callable[..., Any]) -> None:
-    """ツール名の glob に当てる（正常系）。"""
+    """ツール名の glob に照合する（正常系）。"""
     # 準備
     entries = [make_entry("/r/create.md", tools=["mcp__*__create_*"])]
     # 実行
@@ -350,7 +350,7 @@ def test_match_tool(make_entry: Callable[..., Any]) -> None:
 
 
 def test_match_tool_when_not_matched(make_entry: Callable[..., Any]) -> None:
-    """当たらないツール名は空を返す（正常系）。"""
+    """該当しないツール名は空を返却する（正常系）。"""
     # 準備
     entries = [make_entry("/r/create.md", tools=["mcp__*__create_*"])]
     # 実行
@@ -360,7 +360,7 @@ def test_match_tool_when_not_matched(make_entry: Callable[..., Any]) -> None:
 
 
 def test_match_tool_when_args_match(make_entry: Callable[..., Any]) -> None:
-    """引数の条件が全て当たれば当てる（正常系）。"""
+    """引数の条件が全て該当すれば照合する（正常系）。"""
     # 準備
     entries = [
         make_entry(
@@ -377,7 +377,7 @@ def test_match_tool_when_args_match(make_entry: Callable[..., Any]) -> None:
 
 
 def test_match_tool_when_args_partly_unmatched(make_entry: Callable[..., Any]) -> None:
-    """引数の条件が 1 つでも当たらなければ当てない（正常系）。"""
+    """引数の条件が 1 つでも該当しなければ照合しない（正常系）。"""
     # 準備
     entries = [
         make_entry(
@@ -393,7 +393,7 @@ def test_match_tool_when_args_partly_unmatched(make_entry: Callable[..., Any]) -
 
 
 def test_match_tool_when_regex_tool(make_entry: Callable[..., Any]) -> None:
-    """ツール名の正規表現に部分一致で当てる（正常系）。"""
+    """ツール名の正規表現に部分一致で照合する（正常系）。"""
     # 準備
     entries = [make_entry("/r/create.md", tools=["re:__create_"])]
     # 実行
@@ -403,7 +403,7 @@ def test_match_tool_when_regex_tool(make_entry: Callable[..., Any]) -> None:
 
 
 def test_match_read_by(make_entry: Callable[..., Any]) -> None:
-    """`read_by` のツール名と引数に当てる（正常系）。"""
+    """`read_by` のツール名と引数に照合する（正常系）。"""
     # 準備
     entries = [
         make_entry(
@@ -418,7 +418,7 @@ def test_match_read_by(make_entry: Callable[..., Any]) -> None:
 
 
 def test_match_read_by_when_args_unmatched(make_entry: Callable[..., Any]) -> None:
-    """引数が当たらなければ当てない（正常系）。"""
+    """引数が該当しなければ照合しない（正常系）。"""
     # 準備
     entries = [
         make_entry(
@@ -433,7 +433,7 @@ def test_match_read_by_when_args_unmatched(make_entry: Callable[..., Any]) -> No
 
 
 def test_match_read_by_when_any_condition(make_entry: Callable[..., Any]) -> None:
-    """要素のどれか 1 つに当たれば当てる（正常系）。"""
+    """要素のどれか 1 つに該当すれば照合する（正常系）。"""
     # 準備
     entries = [
         make_entry(
@@ -448,7 +448,7 @@ def test_match_read_by_when_any_condition(make_entry: Callable[..., Any]) -> Non
 
 
 def test_match_read_by_when_guide_only(make_entry: Callable[..., Any]) -> None:
-    """案内の `tools` に当たるだけでは当てない（正常系）。"""
+    """案内の `tools` に該当するだけでは照合しない（正常系）。"""
     # 準備
     entries = [make_entry("/r/doc.md", tools=["mcp__*"])]
     # 実行
@@ -475,7 +475,7 @@ SEARCH_ARGS = {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sec
 
 
 def test_match_read_tool(make_entry: Callable[..., Any]) -> None:
-    """ツール名と引数が一致する呼び出しに当てる（正常系）。"""
+    """ツール名と引数が一致する呼び出しに照合する（正常系）。"""
     # 準備
     read_tool = ReadTool(tool="mcp__docs__search_docs", args=SEARCH_ARGS, optional_args={})
     entries = [make_entry("/r/doc.md", read_tool=read_tool)]
@@ -516,7 +516,7 @@ def test_match_read_tool(make_entry: Callable[..., Any]) -> None:
 def test_match_read_tool_when_args_unmatched(
     make_entry: Callable[..., Any], tool_input: dict[str, Any]
 ) -> None:
-    """引数の値が違うか無ければ当てない（正常系）。"""
+    """引数の値が違うか無ければ照合しない（正常系）。"""
     # 準備
     read_tool = ReadTool(tool="mcp__docs__search_docs", args=SEARCH_ARGS, optional_args={})
     entries = [make_entry("/r/doc.md", read_tool=read_tool)]
@@ -527,7 +527,7 @@ def test_match_read_tool_when_args_unmatched(
 
 
 def test_match_read_tool_when_tool_unmatched(make_entry: Callable[..., Any]) -> None:
-    """ツール名が違えば当てない（パターンとして読まない）（正常系）。"""
+    """ツール名が違えば照合しない（パターンとして読まない）（正常系）。"""
     # 準備
     read_tool = ReadTool(tool="mcp__docs__search_*", args={}, optional_args={})
     entries = [make_entry("/r/doc.md", read_tool=read_tool)]
@@ -561,7 +561,7 @@ def test_match_read_tool_when_scalar_not_string(
 
 
 def test_match_read_tool_when_without_args(make_entry: Callable[..., Any]) -> None:
-    """`args` の無い `read_tool` はツール名だけで当てる（正常系）。"""
+    """`args` の無い `read_tool` はツール名だけで照合する（正常系）。"""
     # 準備
     read_tool = ReadTool(tool="mcp__docs__search_docs", args={}, optional_args={})
     entries = [make_entry("/r/doc.md", read_tool=read_tool)]
@@ -581,7 +581,7 @@ def test_match_read_tool_when_without_args(make_entry: Callable[..., Any]) -> No
 def test_match_read_tool_when_optional_args(
     make_entry: Callable[..., Any], tool_input: dict[str, Any]
 ) -> None:
-    """`optional_args` は省いても違う値でも当てる（正常系）。"""
+    """`optional_args` は省いても違う値でも照合する（正常系）。"""
     # 準備
     read_tool = ReadTool(
         tool="mcp__docs__search_docs",
@@ -628,7 +628,7 @@ def test_json_equal(actual: Any, expected: bool) -> None:
 
 
 def test_rule_locations(make_entry: Callable[..., Any]) -> None:
-    """重なりを落とした集合を返す（正常系）。"""
+    """重なりを落とした集合を返却する（正常系）。"""
     # 準備
     entries = [
         make_entry("/r/a.md", paths=["**/*.py"]),
@@ -700,7 +700,7 @@ def test_compile_pattern_when_invalid_regex() -> None:
 
 
 def test_match_pattern_when_regex_partial() -> None:
-    """正規表現は部分一致で当たる（正常系）。"""
+    """正規表現は部分一致で該当する（正常系）。"""
     # 準備
     pattern = MatchPattern(source="re:src/", regex=re.compile("src/"))
     # 実行
@@ -740,7 +740,7 @@ def test_argument_values_when_scalars() -> None:
 
 
 def test_argument_values_when_missing() -> None:
-    """無いキーは空を返す（正常系）。"""
+    """無いキーは空を返却する（正常系）。"""
     # 実行
     result = _argument_values({"a": "x"}, "a.b")
     # 検証
@@ -780,7 +780,7 @@ def test_argument_values_when_tree_in_array() -> None:
 
 
 def test_match_args_when_empty() -> None:
-    """条件が空なら当たる（正常系）。"""
+    """条件が空なら該当する（正常系）。"""
     # 実行
     result = _match_args([], {})
     # 検証
@@ -788,7 +788,7 @@ def test_match_args_when_empty() -> None:
 
 
 def test_match_args_when_tree(index_conditions: Callable[..., Any]) -> None:
-    """入れ子の and・or の中の条件の値に当たる（正常系）。"""
+    """入れ子の and・or の中の条件の値に該当する（正常系）。"""
     # 準備
     conditions = index_conditions({"filter[tags]": ["python"]})
     tool_input = {
@@ -806,7 +806,7 @@ def test_match_args_when_tree(index_conditions: Callable[..., Any]) -> None:
 
 
 def test_match_args_when_tree_negated_only(index_conditions: Callable[..., Any]) -> None:
-    """条件の木の否定の中にだけある値には当てない（正常系）。"""
+    """条件の木の否定の中にだけある値には照合しない（正常系）。"""
     # 準備
     conditions = index_conditions({"filter[tags]": ["python"]})
     tool_input = {"filter": {"not": {"field": "tags", "op": "in", "values": ["python"]}}}
@@ -819,7 +819,7 @@ def test_match_args_when_tree_negated_only(index_conditions: Callable[..., Any])
 def test_read_index(
     make_index: Callable[..., Path],
 ) -> None:
-    """エントリごとの位置・バージョン・状態を返す（正常系）。"""
+    """エントリごとの位置・バージョン・状態を返却する（正常系）。"""
     from rule_inject.features.index import entry_rev, read_index
 
     # 準備
@@ -951,7 +951,7 @@ def test_read_index_text_when_tree_key() -> None:
 def test_entry_revs(
     tmp_path: Path,
 ) -> None:
-    """一覧と同じバージョンを返す（正常系）。"""
+    """一覧と同じバージョンを返却する（正常系）。"""
     from rule_inject.features.index import entry_revs, read_index_text
 
     # 準備
@@ -984,7 +984,7 @@ def test_entry_revs_when_unparsable() -> None:
 
 
 def test_entry_matches_path(make_entry: Callable[..., Any]) -> None:
-    """当たるパスと外すパスを見分ける（正常系）。"""
+    """該当するパスと除外するパスを見分ける（正常系）。"""
     from rule_inject.features.index.service import entry_matches_path
 
     # 準備
@@ -1006,7 +1006,7 @@ def test_entry_matches_path(make_entry: Callable[..., Any]) -> None:
     ],
 )
 def test_match_arg_pattern(source: str, value: str, expected: bool) -> None:
-    """glob は全体、正規表現は部分に当てる（正常系）。"""
+    """glob は全体、正規表現は部分に照合する（正常系）。"""
     from rule_inject.features.index.service import match_arg_pattern
 
     # 準備

@@ -21,16 +21,16 @@ OpenSession = Callable[[str], AbstractAsyncContextManager[Any]]
 
 
 class FakeSession:
-    """受けた呼び出しを記録し、決めた結果を返す dev-docs のセッションの偽物。"""
+    """受けた呼び出しを記録し、決めた結果を返却する dev-docs のセッションの偽物。"""
 
     def __init__(self, result: CallToolResult, delay: float, calls: list[dict[str, Any]]) -> None:
-        """返す結果と、返す前に待つ秒数と、呼び出しを記録するリストを持つ。"""
+        """返却する結果と、返却する前に待つ秒数と、呼び出しを記録するリストを持つ。"""
         self._result = result
         self._delay = delay
         self._calls = calls
 
     async def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> CallToolResult:
-        """ツール名と引数を記録し、delay 秒待ってから結果を返す。"""
+        """ツール名と引数を記録し、delay 秒待ってから結果を返却する。"""
         self._calls.append({"name": name, "arguments": arguments})
         await asyncio.sleep(self._delay)
         return self._result
@@ -38,7 +38,7 @@ class FakeSession:
 
 @pytest.fixture
 def fake_open_session() -> Callable[..., tuple[OpenSession, list[dict[str, Any]]]]:
-    """決めた結果を返す偽のセッションを開く関数と、受けた呼び出しの記録を返す factory。"""
+    """決めた結果を返却する偽のセッションを開く関数と、受けた呼び出しの記録を返却する factory。"""
 
     def _make(
         text: str, *, is_error: bool = False, delay: float = 0.0
@@ -49,7 +49,7 @@ def fake_open_session() -> Callable[..., tuple[OpenSession, list[dict[str, Any]]
 
         @asynccontextmanager
         async def open_session(url: str) -> AsyncIterator[FakeSession]:
-            """接続先を記録し、偽のセッションを渡す。"""
+            """接続先を記録し、偽のセッションを引き渡す。"""
             calls.append({"url": url})
             yield FakeSession(result, delay, calls)
 
@@ -61,7 +61,7 @@ def fake_open_session() -> Callable[..., tuple[OpenSession, list[dict[str, Any]]
 def test_fetch_used_tags(
     fake_open_session: Callable[..., tuple[OpenSession, list[dict[str, Any]]]],
 ) -> None:
-    """groups の値を使われているタグにする（正常系）。"""
+    """groups の値を使用中のタグにする（正常系）。"""
     from rule_inject.server.dev_docs import fetch_used_tags
 
     # 準備
@@ -89,7 +89,7 @@ def test_fetch_used_tags(
 def test_fetch_used_tags_when_no_tag_group(
     fake_open_session: Callable[..., tuple[OpenSession, list[dict[str, Any]]]],
 ) -> None:
-    """タグを持たない文書のグループは使われているタグに含めない（正常系）。"""
+    """タグを持たない文書のグループは使用中のタグに含めない（正常系）。"""
     from rule_inject.server.dev_docs import fetch_used_tags
 
     # 準備
@@ -110,7 +110,7 @@ def test_fetch_used_tags_when_no_tag_group(
 def test_fetch_used_tags_when_no_documents(
     fake_open_session: Callable[..., tuple[OpenSession, list[dict[str, Any]]]],
 ) -> None:
-    """読める文書が 0 件なら飛ばす理由を返す（正常系）。"""
+    """読める文書が 0 件なら飛ばす理由を返却する（正常系）。"""
     from rule_inject.server.dev_docs import fetch_used_tags
 
     # 準備
@@ -175,7 +175,7 @@ def test_fetch_used_tags_when_unreadable(
 def test_fetch_used_tags_when_timeout(
     fake_open_session: Callable[..., tuple[OpenSession, list[dict[str, Any]]]],
 ) -> None:
-    """待ち時間の上限を超えたら飛ばす理由を返す（正常系）。"""
+    """待ち時間の上限を超えたら飛ばす理由を返却する（正常系）。"""
     from rule_inject.server.dev_docs import fetch_used_tags
 
     # 準備
@@ -192,7 +192,7 @@ def test_fetch_used_tags_when_timeout(
 
 
 def test_fetch_used_tags_when_unreachable() -> None:
-    """接続できないときは飛ばす理由を返す（正常系）。"""
+    """接続できないときは飛ばす理由を返却する（正常系）。"""
     from rule_inject.server.dev_docs import fetch_used_tags
 
     # 準備: 接続先のポートは、SO_REUSEADDR を付けずに bind して listen しないまま握る

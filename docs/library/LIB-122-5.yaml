@@ -32,7 +32,7 @@ catalogs:
             type: '`int | None`'
             required: false
             default: '`None`'
-            description: 待ち受けを閉じた後、残った接続とタスクの終わりを待つ上限（秒）。`None` は上限なし。過ぎたら残りのタスクを取り消す
+            description: 待ち受けを閉じた後、残った接続とタスクの終わりを待つ上限（秒）。`None` は上限なし。過ぎたら残りのタスクをキャンセルする
       - name: Server
         kind: クラス
         purpose: '`Config` で待ち受ける。`run()` は Ctrl+C・SIGTERM で止まるまで戻らない'

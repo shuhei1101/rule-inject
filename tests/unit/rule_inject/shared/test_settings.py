@@ -29,7 +29,7 @@ def test_load_settings(
     project_dir: Path,
     make_settings: Callable[..., Path],
 ) -> None:
-    """設定ファイルの値を使う（正常系）。"""
+    """設定ファイルの値を使用する（正常系）。"""
     # 準備
     (project_dir / "rules.yaml").write_text("rules: []\n", encoding="utf-8")
     config = make_settings(
@@ -57,7 +57,7 @@ def test_load_settings(
 
 
 def test_load_settings_when_no_config(tmp_path: Path, project_dir: Path) -> None:
-    """`RULE_INJECT_CONFIG` が無ければ既定値を使う（正常系）。"""
+    """`RULE_INJECT_CONFIG` が無ければ既定値を使用する（正常系）。"""
     # 準備
     user_index = tmp_path / "xdg_config" / "rule-inject" / "rules.yaml"
     user_index.parent.mkdir(parents=True)
@@ -80,7 +80,7 @@ def test_load_settings_when_no_config(tmp_path: Path, project_dir: Path) -> None
 
 
 def test_load_settings_when_default_missing(tmp_path: Path, project_dir: Path) -> None:
-    """既定の置き場所に索引が無ければ並べない（正常系）。"""
+    """既定の配置場所に索引が無ければ並べない（正常系）。"""
     # 準備
     (tmp_path / "xdg_config").mkdir()
     env = {
@@ -97,7 +97,7 @@ def test_load_settings_when_projects_order(
     project_dir: Path,
     make_settings: Callable[..., Path],
 ) -> None:
-    """当たった要素を並びの順に重ねる（正常系）。"""
+    """該当した要素を並びの順に重ねる（正常系）。"""
     # 準備
     config = make_settings(
         "global:\n"
@@ -122,7 +122,7 @@ def test_load_settings_when_indexes_empty(
     project_dir: Path,
     make_settings: Callable[..., Path],
 ) -> None:
-    """空の並びは既定の置き場所も読まない（正常系）。"""
+    """空の並びは既定の配置場所も読まない（正常系）。"""
     # 準備
     user_index = tmp_path / "xdg_config" / "rule-inject" / "rules.yaml"
     user_index.parent.mkdir(parents=True)
@@ -146,7 +146,7 @@ def test_load_settings_when_no_project_dir(
     project_dir: Path,
     make_settings: Callable[..., Path],
 ) -> None:
-    """`CLAUDE_PROJECT_DIR` が無ければどの要素も当てない（正常系）。"""
+    """`CLAUDE_PROJECT_DIR` が無ければどの要素も照合しない（正常系）。"""
     # 準備
     config = make_settings(
         "global:\n"
@@ -294,7 +294,7 @@ def test_load_settings_when_not_utf8(tmp_path: Path) -> None:
     ],
 )
 def test_matches_project_when_absolute(current_dir: str, expected: bool) -> None:
-    """絶対パスはそのパスと配下に当てる（正常系）。"""
+    """絶対パスはそのパスと配下に照合する（正常系）。"""
     # 実行
     result = _matches_project("/w/repo", current_dir)
     # 検証
@@ -309,7 +309,7 @@ def test_matches_project_when_absolute(current_dir: str, expected: bool) -> None
     ],
 )
 def test_matches_project_when_name(current_dir: str, expected: bool) -> None:
-    """プロジェクト名はフォルダ名で当てる（正常系）。"""
+    """プロジェクト名はフォルダ名で照合する（正常系）。"""
     # 実行
     result = _matches_project("repo", current_dir)
     # 検証
@@ -325,7 +325,7 @@ def test_matches_project_when_name(current_dir: str, expected: bool) -> None:
     ],
 )
 def test_matches_project_when_worktree(match: str, expected: bool) -> None:
-    """worktree は本体で当てる（正常系）。"""
+    """worktree は本体で照合する（正常系）。"""
     # 実行
     result = _matches_project(match, "/w/repo/.claude/worktrees/feat")
     # 検証
@@ -466,7 +466,7 @@ def test_load_settings_when_project_indexes(
 def test_load_settings_when_state_dir_env(
     tmp_path: Path, make_settings: Callable[..., Path]
 ) -> None:
-    """環境変数の状態の置き場所が設定ファイルより優先する（正常系）。"""
+    """環境変数の状態の配置場所が設定ファイルより優先する（正常系）。"""
     # 準備
     config = make_settings(f"global:\n  state_dir: {tmp_path / 'a'}\n")
     env = {"RULE_INJECT_CONFIG": str(config), "RULE_INJECT_STATE_DIR": str(tmp_path / "b")}
@@ -478,7 +478,7 @@ def test_load_settings_when_state_dir_env(
 
 
 def test_config_path(isolated_home: Path) -> None:
-    """環境変数のパスを返す（正常系）。"""
+    """環境変数のパスを返却する（正常系）。"""
     # 実行
     result = config_path({"RULE_INJECT_CONFIG": "~/c.yaml"})
     # 検証
@@ -486,7 +486,7 @@ def test_config_path(isolated_home: Path) -> None:
 
 
 def test_config_path_when_default() -> None:
-    """既定のパスを返す（正常系）。"""
+    """既定のパスを返却する（正常系）。"""
     # 実行
     result = config_path({"XDG_CONFIG_HOME": "/x"})
     # 検証
@@ -494,7 +494,7 @@ def test_config_path_when_default() -> None:
 
 
 def test_backup_dir() -> None:
-    """設定フォルダの下を返す（正常系）。"""
+    """設定フォルダの下を返却する（正常系）。"""
     # 実行
     result = backup_dir({"XDG_CONFIG_HOME": "/x"})
     # 検証

@@ -15,7 +15,7 @@ class ReadMethod(StrEnum):
     READ = "read"
     # Bash の読むコマンドで読んだ
     BASH = "bash"
-    # MCP のツールの結果の文書か、`read_by` に当たった MCP のツールの呼び出しで読んだ
+    # MCP のツールの結果の文書か、`read_by` に該当した MCP のツールの呼び出しで読んだ
     MCP = "mcp"
 
 

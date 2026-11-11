@@ -1,4 +1,4 @@
-"""設定ファイル・索引・既読の記録・既読の履歴・ログの読み書きの例外。"""
+"""設定ファイル・索引・既読の記録・既読の履歴・ログの読み込み・書き込みの例外。"""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class IndexReadError(RuleInjectError):
 
 
 class IndexEditError(RuleInjectError):
-    """索引を編集できない（読めない・位置が無い・バージョンが合わない・書いた後の索引がチェックに通らない）。"""
+    """索引を編集できない（読めない・位置が無い・バージョンが合わない・書き込んだ後の索引がチェックに通らない）。"""
 
 
 class RecordReadError(RuleInjectError):

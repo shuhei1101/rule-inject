@@ -12,7 +12,7 @@ SEARCH_PATH = "/p/src/a.py"
 
 
 def _path_index(tmp_path: Path, make_index: Callable[..., Path]) -> Path:
-    """`.py` に当たる、`on: [write]` と `on: [read]` のエントリ（ルールの場所は別々）を持つ索引を置く。"""
+    """`.py` に該当する、`on: [write]` と `on: [read]` のエントリ（ルールの場所は別々）を持つ索引を配置する。"""
     return make_index(
         f"rules:\n"
         f"  - rule: {tmp_path}/rules/write.md\n"
@@ -30,7 +30,7 @@ def test_normal_when_searched_by_path(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """パスに当たる 2 つのルールを、止めるかとともに返す（正常系）。"""
+    """パスに該当する 2 つのルールを、止めるかとともに返却する（正常系）。"""
     # 準備
     server = running_server(_path_index(tmp_path, make_index))
     # 実行
@@ -54,7 +54,7 @@ def test_normal_when_searched_by_tool(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """ツール名と引数に当たるルールを返す（正常系）。"""
+    """ツール名と引数に該当するルールを返却する（正常系）。"""
     # 準備
     index = make_index(
         f"rules:\n"
@@ -86,7 +86,7 @@ def test_normal_when_no_rule_matched(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """無効のエントリだけが当たるときは空で返す（正常系）。"""
+    """無効のエントリだけが該当するときは空で返却する（正常系）。"""
     # 準備
     index = make_index(
         f'rules:\n  - rule: {tmp_path}/rules/off.md\n    paths: ["**/*.py"]\n    enabled: false\n'

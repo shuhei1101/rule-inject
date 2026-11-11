@@ -20,7 +20,7 @@ enums:
   - name: EntryStatus
     title: エントリの状態
     container: features/index/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     summary: 索引を読み込んだときのエントリごとの扱い（Literal）
     values:
       - value: effective
@@ -152,7 +152,7 @@ data_models:
   - name: EntryOutcome
     title: エントリの読み取り結果
     container: features/index/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     role: DTO
     summary: 索引の 1 エントリの位置・記載された値・バージョンと、照合に使用するか
     properties:
@@ -177,7 +177,7 @@ data_models:
   - name: IndexContent
     title: 索引の読み取り結果
     container: features/index/types.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     role: DTO
     summary: 読み込めた索引 1 つのエントリごとの読み取り結果
     properties:

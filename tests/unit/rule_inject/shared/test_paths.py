@@ -24,7 +24,7 @@ def test_resolve_location_when_home(isolated_home: Path) -> None:
 
 
 def test_default_state_dir_when_xdg_state_home() -> None:
-    """XDG_STATE_HOME の下を使う（正常系）。"""
+    """XDG_STATE_HOME の下を使用する（正常系）。"""
     # 実行
     result = paths.default_state_dir({"XDG_STATE_HOME": "/s"})
     # 検証
@@ -32,7 +32,7 @@ def test_default_state_dir_when_xdg_state_home() -> None:
 
 
 def test_default_state_dir_when_no_env(isolated_home: Path) -> None:
-    """既定の場所を使う（正常系）。"""
+    """既定の場所を使用する（正常系）。"""
     # 実行
     result = paths.default_state_dir({})
     # 検証
@@ -40,7 +40,7 @@ def test_default_state_dir_when_no_env(isolated_home: Path) -> None:
 
 
 def test_default_log_dir_when_xdg_state_home() -> None:
-    """XDG_STATE_HOME の下を使う（正常系）。"""
+    """XDG_STATE_HOME の下を使用する（正常系）。"""
     # 実行
     result = paths.default_log_dir({"XDG_STATE_HOME": "/s"})
     # 検証
@@ -48,7 +48,7 @@ def test_default_log_dir_when_xdg_state_home() -> None:
 
 
 def test_default_log_dir_when_no_env(isolated_home: Path) -> None:
-    """既定の場所を使う（正常系）。"""
+    """既定の場所を使用する（正常系）。"""
     # 実行
     result = paths.default_log_dir({})
     # 検証

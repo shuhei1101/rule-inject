@@ -55,7 +55,7 @@ functions:
         expected: 'True'
       - name: test_is_valid_session_id_when_invalid
         case: 正常
-        summary: 形式が外れた値を拒む
+        summary: 形式に合わない値を拒む
         condition: '`../x`、空文字、129 文字、None'
         mock: なし
         expected: すべて False

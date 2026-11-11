@@ -21,10 +21,10 @@ HASH_RULE = "sha256:2bd9e5f1266128992c621bc85f433d4ab35c1307ec01c91c7e1efef9068d
 def write_index(
     make_index: Callable[..., Path], index_text: Callable[..., str]
 ) -> Callable[..., Path]:
-    """エントリを並べた索引を書き、そのパスを返す factory。"""
+    """エントリを並べた索引を書き込み、そのパスを返却する factory。"""
 
     def _write(*entries: dict[str, Any]) -> Path:
-        """entries を索引の YAML にして書く。"""
+        """entries を索引の YAML にして書き込む。"""
         return make_index(index_text(*entries))
 
     return _write
@@ -32,7 +32,7 @@ def write_index(
 
 @pytest.fixture
 def two_rule_index(write_index: Callable[..., Path]) -> Path:
-    """`.py` と `.md` に当たる、別のルールを指すエントリを 1 つずつ持つ索引。"""
+    """`.py` と `.md` に該当する、別のルールを指すエントリを 1 つずつ持つ索引。"""
     return write_index(
         {"rule": RULE, "paths": ["**/*.py"], "on": ["write"]},
         {"rule": OTHER_RULE, "paths": ["**/*.md"], "on": ["write"]},
@@ -41,7 +41,7 @@ def two_rule_index(write_index: Callable[..., Path]) -> Path:
 
 @pytest.fixture
 def src_files(tmp_path: Path) -> Path:
-    """`src/app.py` と `src/doc.md` を置き、`src` のパスを返す。"""
+    """`src/app.py` と `src/doc.md` を配置し、`src` のパスを返却する。"""
     folder = tmp_path / "src"
     folder.mkdir()
     (folder / "app.py").write_text("print()\n", encoding="utf-8")
@@ -67,7 +67,7 @@ def search_payload(hook_payload: Callable[..., dict[str, Any]]) -> Callable[...,
 
 @pytest.fixture
 def many_filenames(tmp_path: Path) -> list[str]:
-    """実在する 105 件のファイル名（先頭に `.md` を 1 件、続けて `.txt` を 99 件、その後に `.py` を 1 件と `.txt` を 4 件）を置いて並べる。"""
+    """実在する 105 件のファイル名（先頭に `.md` を 1 件、続けて `.txt` を 99 件、その後に `.py` を 1 件と `.txt` を 4 件）を配置して並べる。"""
     names = (
         ["a.md"]
         + [f"t{number:03d}.txt" for number in range(99)]
@@ -88,7 +88,7 @@ def test_normal(
     search_payload: Callable[..., dict[str, Any]],
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """Grep のファイル名の結果に当たる未読のルールを案内し、案内済みにする（正常系）。"""
+    """Grep のファイル名の結果に該当する未読のルールを案内し、案内済みにする（正常系）。"""
     # 準備
     payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
     # 実行
@@ -99,7 +99,7 @@ def test_normal(
     assert "permissionDecision" not in output
     assert RULE in output["additionalContext"]
     assert "参照は任意" in output["additionalContext"]
-    assert "やり直してください" not in output["additionalContext"]
+    assert "再試行してください" not in output["additionalContext"]
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0
 
@@ -110,7 +110,7 @@ def test_normal_when_grep_content(
     src_files: Path,
     search_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """Grep の `content` の各行の最初の `:` より前から拾ったパスで案内する（正常系）。"""
+    """Grep の `content` の各行の最初の `:` より前から取得したパスで案内する（正常系）。"""
     # 準備
     payload = search_payload(
         "Grep", {"mode": "content", "filenames": [], "content": "src/app.py:1:needle"}
@@ -128,7 +128,7 @@ def test_normal_when_glob(
     src_files: Path,
     search_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """Glob の `filenames` から拾ったパスで案内する（正常系）。"""
+    """Glob の `filenames` から取得したパスで案内する（正常系）。"""
     # 準備
     payload = search_payload("Glob", {"filenames": ["src/app.py"], "numFiles": 1})
     # 実行
@@ -144,7 +144,7 @@ def test_normal_when_bash_search(
     src_files: Path,
     search_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """`find` と `grep -n` の標準出力から拾ったパスで案内する（正常系）。"""
+    """`find` と `grep -n` の標準出力から取得したパスで案内する（正常系）。"""
     # 準備
     payload = search_payload(
         "Bash",
@@ -253,7 +253,7 @@ def test_error_when_index_unreadable(
     search_payload: Callable[..., dict[str, Any]],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """索引が読めないとき、読めた索引で案内を続け、理由を載せる（異常系）。"""
+    """索引が読めないとき、読めた索引で案内を続け、理由を記載する（異常系）。"""
     # 準備
     broken = make_index("rules:\n  - foo: bar\n", "broken.yaml")
     payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
@@ -279,7 +279,7 @@ def test_error_when_guided_record_unwritable(
     unwritable: Callable[[Path, int], Path],
     read_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """案内済みの記録に書けないとき、案内を出したうえで理由を載せ、ログに書く（異常系）。"""
+    """案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む（異常系）。"""
     # 準備
     state_dir.mkdir()
     unwritable(state_dir, 0o500)
@@ -334,7 +334,7 @@ def test_error_when_settings_unreadable(
     settings_text: Callable[..., str],
     read_default_log: Callable[[], list[dict[str, Any]]],
 ) -> None:
-    """設定ファイルが読めないとき、案内せずに理由を載せる（異常系）。"""
+    """設定ファイルが読めないとき、案内せずに理由を記載する（異常系）。"""
     # 準備
     make_index(index_text({"rule": RULE, "paths": ["**/*.py"]}), "rules.yaml")
     payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
@@ -359,7 +359,7 @@ def test_normal_when_entry_disabled(
     src_files: Path,
     search_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """検索の結果に出たファイルが `enabled: false` のエントリにだけ当たるとき、案内せず案内済みにもしない（正常系）。"""
+    """検索の結果に出たファイルが `enabled: false` のエントリにだけ該当するとき、案内せず案内済みにもしない（正常系）。"""
     # 準備
     index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"], "enabled": False})
     payload = search_payload("Grep", {"mode": "files_with_matches", "filenames": ["src/app.py"]})
@@ -382,7 +382,7 @@ def test_normal_with_read_tool(
     session_id: str,
     read_lines: Callable[[Path], list[str]],
 ) -> None:
-    """検索の結果に出たファイルに当たる `read_tool` を持つエントリのルールを、ツールの名前と引数を添えて案内する（正常系）。"""
+    """検索の結果に出たファイルに該当する `read_tool` を持つエントリのルールを、ツールの名前と引数を添えて案内する（正常系）。"""
     # 準備
     index = make_index(
         index_text(

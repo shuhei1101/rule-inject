@@ -43,7 +43,7 @@ overview:
       label: 照合
     - from: HOOK
       to: STATE
-      label: 読み書き
+      label: 読み込み・書き込み
     - from: CC
       to: SRV
       label: ツールの呼び出し（HTTP）

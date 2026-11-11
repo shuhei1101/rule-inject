@@ -1,4 +1,4 @@
-"""コンポジションルート。依存を作ってツールへ渡し、`MCPServer` に 11 のツールを登録する。"""
+"""コンポジションルート。依存を作ってツールへ引き渡し、`MCPServer` に 11 のツールを登録する。"""
 
 from collections.abc import Mapping
 from functools import partial
@@ -18,18 +18,18 @@ from rule_inject.server.types import ResponseFormat
 
 # MCPServer の名前
 SERVER_NAME = "rule-inject"
-# 接続時の initialize の応答で返す instructions（新しいファイルの作り方の決まりと、MCP のツールの使い分け）
+# 接続時の initialize の応答で返却する instructions（新しいファイルの作り方の決まりと、MCP のツールの選び方）
 SERVER_INSTRUCTIONS = (
     "rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。"
     "新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、"
     "案内されたルールを参照してから Edit で中身を記載する。"
     # 呼ぶ場面: 作業の分類ごとにツール名を対応づける
     "この MCP のツールは、ルールと索引そのものを扱う作業で呼ぶ。"
-    "今効いているルールの一覧は list_rules、"
+    "有効なルールの一覧は list_rules、"
     "ファイルやツールの呼び出しにヒットするルールの検索は search_rules、"
     "索引のエントリの編集と索引のチェックは write_index_entry・delete_index_entry・check_indexes、"
     "既読の記録の確認と削除は get_read_records・delete_read_records、"
-    "設定ファイルを書き換えた後の読み直しとサーバーの状態の確認・再起動・更新は"
+    "設定ファイルを書き換えた後の再読込とサーバーの状態の確認・再起動・更新は"
     " reload_settings・get_server_status・restart_server・update_server で行う。"
     # 呼ばない場面: grep・Read で足りる作業と、grep・Read・Edit の代わりにツールを呼ぶ作業
     "ルールの本文は、案内された場所を Read で参照する。"
@@ -59,21 +59,21 @@ def build_server(
     scan_time_limit: float = UNMATCHED_SCAN_TIME_LIMIT,
     dev_docs_timeout: float = DEV_DOCS_TIMEOUT,
 ) -> MCPServer:
-    """依存を作ってツールへ渡し、11 のツールを登録した `MCPServer` を返す。"""
+    """依存を作ってツールへ引き渡し、11 のツールを登録した `MCPServer` を返却する。"""
     validator = load_validator()
     locks = IndexLocks()
     check = partial(check_change, env=env, validator=validator)
     server = MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
 
     # 依存（env・validator・locks・check_change・scan_time_limit・dev_docs_timeout・control・clone・run_command）を閉じ込め、引数をツールの引数だけにした関数を登録する
-    # （partial で渡すと、依存の引数がツールの引数の Schema に残るため）
+    # （partial で引き渡すと、依存の引数がツールの引数の Schema に残るため）
     def list_rules(
         project_dir: str,
         limit: Annotated[int, LIST_LIMIT_FIELD] = tools.DEFAULT_LIST_LIMIT,
         cursor: Annotated[str | None, CURSOR_FIELD] = None,
         format: ResponseFormat = "markdown",
     ) -> CallToolResult:
-        """プロジェクトで今効いているルール（読む索引とエントリ）と、読めなかった索引・読み飛ばしたエントリ・無効のエントリを返す。"""
+        """プロジェクトで有効なルール（読む索引とエントリ）と、読めなかった索引・読み飛ばしたエントリ・無効のエントリを返却する。"""
         return tools.list_rules(
             project_dir=project_dir, limit=limit, cursor=cursor, format=format, env=env
         )
@@ -86,7 +86,7 @@ def build_server(
         arguments: dict[str, Any] | None = None,
         format: ResponseFormat = "markdown",
     ) -> CallToolResult:
-        """ファイルのパス（operation とともに）か MCP のツールの呼び出し（tool_name と arguments）に当たるルールと、未読のときに操作を止めるかを返す。"""
+        """ファイルのパス（operation とともに）か MCP のツールの呼び出し（tool_name と arguments）に該当するルールと、未読のときに操作を止めるかを返却する。"""
         return tools.search_rules(
             project_dir=project_dir,
             path=path,
@@ -103,7 +103,7 @@ def build_server(
         include_global: bool = False,
         cursor: str | None = None,
     ) -> CallToolResult:
-        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも当たらないエントリが無いか・タグのパターンが dev-docs の使われているどのタグにも当たらないエントリが無いかで確かめる。include_global でユーザー全体の索引の paths の当たらないエントリも確かめ、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に渡して呼び直す。dev-docs に届かないときはタグの確かめだけを飛ばし、tag_check に理由を返す。"""
+        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも該当しないエントリが無いか・タグのパターンが dev-docs の使用中のどのタグにも該当しないエントリが無いかで確認する。include_global でユーザー全体の索引の paths の該当しないエントリも確認し、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に引き渡して再度呼び出す。dev-docs に届かないときはタグの確認だけを飛ばし、tag_check に理由を返却する。"""
         return await check_tools.check_indexes(
             project_dir=project_dir,
             format=format,
@@ -124,7 +124,7 @@ def build_server(
         remove_keys: list[str] | None = None,
         dry_run: bool = False,
     ) -> CallToolResult:
-        """設定ファイルで読む索引に、エントリを末尾へ新規作成する（position なし）か、位置で指したエントリのキーを書き換える（position と expected_rev）。書いた後の索引に新しい問題が出るときは書き込まない。"""
+        """設定ファイルで読む索引に、エントリを末尾へ新規作成する（position なし）か、位置で指したエントリのキーを書き換える（position と expected_rev）。書き込んだ後の索引に新しい問題が出るときは書き込まない。"""
         return tools.write_index_entry(
             project_dir=project_dir,
             index=index,
@@ -162,36 +162,36 @@ def build_server(
         cursor: Annotated[str | None, CURSOR_FIELD] = None,
         format: ResponseFormat = "markdown",
     ) -> CallToolResult:
-        """セッションの既読のルールごとに、今の本文が既読にした時点と同じか（current・changed・missing）と、既読の履歴に残る読んだ方法を返す。session_id を省くと、既読の記録のあるセッションの一覧を最終更新の新しい順に返す。"""
+        """セッションの既読のルールごとに、今の本文が既読にした時点と同じか（current・changed・missing）と、既読の履歴に残る読んだ方法を返却する。session_id を省くと、既読の記録のあるセッションの一覧を最終更新の新しい順に返却する。"""
         return record_tools.get_read_records(
             session_id=session_id, limit=limit, cursor=cursor, format=format, env=env
         )
 
     def delete_read_records(session_id: str) -> CallToolResult:
-        """セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返す。削除したルールは、フックの次の呼び出しから未読として案内される。既読の履歴は削除しない。"""
+        """セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返却する。削除したルールは、フックの次の呼び出しから未読として案内される。既読の履歴は削除しない。"""
         return record_tools.delete_read_records(session_id=session_id, env=env)
 
     def get_server_status() -> CallToolResult:
-        """サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返す。再起動の途中でも答える。"""
+        """サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返却する。再起動の途中でも応答する。"""
         return admin_tools.get_server_status(env=env, control=control, clone=clone, run=run_command)
 
     def reload_settings(project_dir: str | None = None) -> CallToolResult:
-        """設定ファイルを読み直し、読めたかと読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）を返す。project_dir を渡すと、そのプロジェクトで読む索引を返す。"""
+        """設定ファイルを再読込、読めたかと読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）を返却する。project_dir を引き渡すと、そのプロジェクトで読む索引を返却する。"""
         return admin_tools.reload_settings(project_dir=project_dir, env=env)
 
     async def restart_server() -> CallToolResult:
-        """応答を返した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま起動し直す。接続し直してから get_server_status の started_at で確かめる。"""
+        """応答を返却した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま再起動する。再接続してから get_server_status の started_at で確認する。"""
         return await admin_tools.restart_server(control=control)
 
     async def update_server() -> CallToolResult:
-        """サーバーのクローンで上流の commit を fast-forward で取り込み、依存を入れ直し、設定の移し替えが要らなければ再起動する。移し替えが要るときは再起動せず、手順と global-setup を返す。"""
+        """サーバーのクローンで上流の commit を fast-forward で取り込み、依存を再インストール、設定の移し替えが要らなければ再起動する。移し替えが要るときは再起動せず、手順と global-setup を返却する。"""
         return await admin_tools.update_server(
             env=env, control=control, clone=clone, run=run_command
         )
 
     read_only = ToolAnnotations(read_only_hint=True, open_world_hint=False)
     destructive = ToolAnnotations(destructive_hint=True, open_world_hint=False)
-    # 状態の確認は再起動の途中でも答え、再起動は begin_restart が自分で断るため、包まずに登録する
+    # 状態の確認は再起動の途中でも応答し、再起動は begin_restart が自分で断るため、包まずに登録する
     server.add_tool(get_server_status, annotations=read_only, structured_output=False)
     server.add_tool(restart_server, annotations=destructive, structured_output=False)
     # それ以外は、再起動の途中なら断り、処理中の数を数える
