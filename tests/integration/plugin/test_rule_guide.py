@@ -355,7 +355,7 @@ def test_normal_when_default_index(
     index_text: Callable[..., str],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """設定ファイルが無いとき、既定の置き場所の索引で案内する（正常系）。"""
+    """設定ファイルが無いとき、既定の配置場所の索引で案内する（正常系）。"""
     # 準備
     make_index(
         index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
@@ -379,7 +379,7 @@ def test_normal_when_indexes_empty(
     index_text: Callable[..., str],
     write_payload: Callable[..., dict[str, Any]],
 ) -> None:
-    """当たった `projects` の要素の `indexes` が空の並びのとき、プロジェクトの既定の置き場所の索引を読まない（正常系）。"""
+    """該当した `projects` の要素の `indexes` が空の並びのとき、プロジェクトの既定の配置場所の索引を読まない（正常系）。"""
     # 準備
     make_index(
         index_text({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]}),
