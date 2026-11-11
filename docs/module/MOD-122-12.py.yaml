@@ -64,13 +64,13 @@ functions:
       description: 書き込んだ位置・バージョン・差分
     process: |-
       1. `locks.lock_for(index_path)` の中で以下をする
-      2. 索引を UTF-8 で改行を変えずに読み込み、最初の改行が `\r\n` ならそれを記録して全て `\n` にそろえる（以降の「書く前の内容」はそろえた内容）。`ruamel.yaml.util.load_yaml_guess_indent` が字下げ `ind` とリストの字下げ `bsi` を推定できたら、`round_trip_yaml()` の字下げを `indent(mapping=ind - bsi, sequence=ind, offset=bsi)` にしてから読み込む。読み込めない・YAML として解釈できない・最上位がマップでないときは `IndexEditError`
+      2. 索引を UTF-8 で改行を変えずに読み込み、最初の改行が `\r\n` ならそれを記録して全て `\n` にそろえる（以降の「書き込む前の内容」はそろえた内容）。`ruamel.yaml.util.load_yaml_guess_indent` が字下げ `ind` とリストの字下げ `bsi` を推定できたら、`round_trip_yaml()` の字下げを `indent(mapping=ind - bsi, sequence=ind, offset=bsi)` にしてから読み込む。読み込めない・YAML として解釈できない・最上位がマップでないときは `IndexEditError`
       3. `position` が無いとき: `rules` が無いか、値が空（`None`）か空のフロー形式のリスト（`[]`）なら、ブロックのリストにする。`entry` のキーを `ENTRY_KEY_ORDER` の順に `to_yaml_value` で値にした `CommentedMap` を `rules` の末尾に追加し、その位置を書き込んだ位置にする
-      4. `position` があるとき: `rules` のエントリの数以上なら `IndexEditError`（位置が無い旨とエントリの数）。`entry_revs(書く前の内容)[position]` が `expected_rev` と違えば `IndexEditError`（今のバージョンと、一覧を再取得してから再度呼び出す旨）。`entry_revs` が ValueError を送出したときは `IndexEditError`（フックの読み取りが読み込めずバージョンを確認されない旨、その理由、索引を手で修正する旨）。`entry` のキーを `to_yaml_value` で置き換え（既にあるキーはその場で、無いキーは `ENTRY_KEY_ORDER` でそのキーより前のキーのうち最後のものの後ろ、並びに無いキーは末尾に追加）、`remove_keys` のキーを削除する
-      5. 書き込んだ後の内容を文字列へ書き出し、`entry_revs(書いた後の内容)[書き込んだ位置]` をバージョンにする。ValueError のときはバージョンを `None` にする（`check_change` がフックの読み取りの失敗を返却する）。round-trip で読み込んだマップは書き換えにだけ使用し、バージョンの元にしない
+      4. `position` があるとき: `rules` のエントリの数以上なら `IndexEditError`（位置が無い旨とエントリの数）。`entry_revs(書き込む前の内容)[position]` が `expected_rev` と違えば `IndexEditError`（今のバージョンと、一覧を再取得してから再度呼び出す旨）。`entry_revs` が ValueError を送出したときは `IndexEditError`（フックの読み取りが読み込めずバージョンを確認されない旨、その理由、索引を手で修正する旨）。`entry` のキーを `to_yaml_value` で置き換え（既にあるキーはその場で、無いキーは `ENTRY_KEY_ORDER` でそのキーより前のキーのうち最後のものの後ろ、並びに無いキーは末尾に追加）、`remove_keys` のキーを削除する
+      5. 書き込んだ後の内容を文字列へ書き出し、`entry_revs(書き込んだ後の内容)[書き込んだ位置]` をバージョンにする。ValueError のときはバージョンを `None` にする（`check_change` がフックの読み取りの失敗を返却する）。round-trip で読み込んだマップは書き換えにだけ使用し、バージョンの元にしない
          - 書式を保てたかを確認する。対象の範囲は `delete_entry` の手順 2 と同じ規則で求める。書き込んだ後の内容では、書き込んだ後の内容を再読込した書き込んだ位置のエントリの範囲（`rules` を作らない新規作成は、始まりを新しいエントリの先頭の行にする。前のエントリの後ろのコメント行は外の行）。書き込む前の内容では、`position` があればそのエントリの範囲で、無ければ空。手順 3 で `rules` を作った・ブロックにしたときは、両方の範囲に `rules` のキーの行を含める
          - それぞれから対象の範囲の行を除いた行の並びが違えば `IndexEditError`（索引の書式を保って書き込めない旨、最初に違った書き込む前の行の番号（`parse_index` と同じ 1 始まりの `{番号}行目`）、索引を手で修正する旨）。`dry_run` のときも同じ
-      6. `check_change(index_path, 書く前の内容, 書いた後の内容, バージョン)` が行を返却したら `IndexEditError`（書き込んだ後の索引がチェックに通らない旨と、その行を全て）。`dry_run` のときも同じ
+      6. `check_change(index_path, 書き込む前の内容, 書き込んだ後の内容, バージョン)` が行を返却したら `IndexEditError`（書き込んだ後の索引がチェックに通らない旨と、その行を全て）。`dry_run` のときも同じ
       7. 書き込む前と書き込んだ後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る
       8. `dry_run` でなければ、書き込んだ後の内容の改行を手順 2 で記録した改行に戻し、`_replace_file` で置き換える
     exceptions:

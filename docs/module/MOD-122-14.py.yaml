@@ -661,7 +661,7 @@ functions:
   - name: read_index
     title: 索引 1 つの読み取り
     container: features/index/service.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     summary: 索引 1 つを読み込み、エントリごとに位置・バージョン・照合に使用するかを返却する
     kind: 関数
     scope: public
@@ -687,9 +687,9 @@ functions:
       1. `parse_index` に引き渡す。ValueError は `IndexReadError`（path は索引の場所、reason は `describe(exc)`）を送出する
       2. エントリごとに `entry_rev(raw)` を求める
       3. `enabled` が `false` のエントリは、展開・解決・コンパイルをせずに `disabled` にする
-      4. `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは `skipped`（reason は `rule {書かれた rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）
+      4. `rule` を `expand_variables(rule, env)` で展開する。未設定の名前が残ったエントリは `skipped`（reason は `rule {記載された rule} の変数参照を展開できない: {名前を「、」で並べたもの}`）
       5. 展開した `rule` が `URL_SCHEMES` のどれかで始まるエントリは `skipped`（reason は `rule {展開した rule} は URL のため Read で読めない`）
-      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args`・`optional_args` は `json.loads` で読み込んだ辞書）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {書かれたパターン} の正規表現を読めない: {re.error の理由}`）
+      6. `paths`・`exclude`・`tools`・`args`・`read_by` の `tools`・`args` の各パターンを `_compile_pattern` で `MatchPattern` にし、`read_tool` を `ReadTool`（`args`・`optional_args` は `json.loads` で読み込んだ辞書）にする。コンパイルできないパターンを持つエントリは `skipped`（reason は `パターン {記載されたパターン} の正規表現を読めない: {re.error の理由}`）
       7. 残りは、展開した `rule` を索引ファイルのフォルダから解き、`on` が無ければ索引の `default_on`（無ければ `DEFAULT_ON`）で埋めた `IndexEntry` を持つ `effective` にする
     exceptions:
       - name: IndexReadError

@@ -17,13 +17,13 @@ constants:
   - name: CURSOR_PATTERN
     title: 続きの位置の書式
     container: server/tools.py
-    summary: '`list_rules`・`get_read_records` の `cursor` が受け付ける値（一覧の並びの中の位置を 10 進で記載した文字列）。引数の Schema の `pattern` に配置し、外れた値は SDK の引数の検証で断る'
+    summary: '`list_rules`・`get_read_records` の `cursor` が受け付ける値（一覧の並びの中の位置を 10 進で記載した文字列）。引数の Schema の `pattern` に配置し、形式に合わない値は SDK の引数の検証で断る'
     value: '`r"^[0-9]+$"`'
 functions:
   - name: list_rules
     title: ルールの一覧
     container: server/tools.py
-    usecase: 効いているルールの一覧を見る
+    usecase: 有効なルールの一覧を確認する
     summary: インターフェース定義「ルールの一覧」のツールの本体
     kind: 関数
     scope: public
@@ -79,7 +79,7 @@ functions:
   - name: search_rules
     title: ルールの検索
     container: server/tools.py
-    usecase: 操作に当たるルールを検索する
+    usecase: 操作に該当するルールを検索する
     summary: インターフェース定義「ルールの検索」のツールの本体
     kind: 関数
     scope: public
@@ -135,7 +135,7 @@ functions:
     exceptions:
       - name: ToolError
         condition: 手順 1 の引数の組み合わせの誤り、または `_project_settings` が送出する
-        message: 渡し方。`_project_settings` のときはその理由
+        message: 指定の方法。`_project_settings` のときはその理由
     unit_tests:
       - name: test_search_rules_when_same_rule
         case: 正常
@@ -220,7 +220,7 @@ functions:
       1. `position` があって `expected_rev` が無い、`position` が無いのに `remove_keys` がある、`entry` と `remove_keys` に同じキーがあるときは `ToolError`（引き渡し方）
       2. `_project_settings(project_dir, env)` で設定を読み込み、`_editable_index(index, settings)` で書き込む索引を決める
       3. `write_entry` を呼ぶ。`IndexEditError` は `ToolError`（`{path}: {reason}`）
-      4. `output` を `{index} の rules[{position}] を書き込みました`（`dry_run` のときは `…を書き込まずに確かめました`）にして返却する
+      4. `output` を `{index} の rules[{position}] を書き込みました`（`dry_run` のときは `…を書き込まずに確認しました`）にして返却する
     exceptions:
       - name: ToolError
         condition: 手順 1 の誤り、または `_project_settings`・`_editable_index` が送出する、または `write_entry` が `IndexEditError` を送出する
@@ -284,7 +284,7 @@ functions:
     process: |-
       1. `write_index_entry` の手順 2 と同じく索引を決める
       2. `delete_entry` を呼ぶ。`IndexEditError` は `ToolError`（`{path}: {reason}`）
-      3. `output` を `{index} の rules[{position}] を削除しました`（`dry_run` のときは `…を削除せずに確かめました`）にして返却する
+      3. `output` を `{index} の rules[{position}] を削除しました`（`dry_run` のときは `…を削除せずに確認しました`）にして返却する
     exceptions:
       - name: ToolError
         condition: '`_project_settings`・`_editable_index` が送出する、または `delete_entry` が `IndexEditError` を送出する'
@@ -316,7 +316,7 @@ functions:
     exceptions:
       - name: ToolError
         condition: '`project_dir` が絶対パスでない、または設定ファイルが読み込めない'
-        message: 絶対パスで渡す旨、または設定ファイルの場所と理由
+        message: 絶対パスで指定する旨、または設定ファイルの場所と理由
     unit_tests:
       - name: test_project_settings_when_project_matched
         case: 正常

@@ -112,7 +112,7 @@ functions:
     exceptions:
       - name: ValueError
         condition: 行頭の空白にタブがある
-        message: '`{行番号}行目: インデントにタブは使えません`'
+        message: '`{行番号}行目: インデントにタブは使用できません`'
     unit_tests:
       - name: test_tokenize
         case: 正常
@@ -131,7 +131,7 @@ functions:
         summary: タブのインデントを拒む
         condition: 2 行目の行頭にタブ
         mock: なし
-        expected: '`2行目: インデントにタブは使えません` の ValueError'
+        expected: '`2行目: インデントにタブは使用できません` の ValueError'
         exception: 行頭の空白にタブがある
   - name: parse_scalar
     title: 文字列の読み取り
@@ -361,7 +361,7 @@ functions:
     exceptions:
       - name: ValueError
         condition: '`:` が無い・キーが空・キーに半角スペースを含む'
-        message: '`{行番号}行目: `キー: 値` の形式で書いてください`'
+        message: '`{行番号}行目: `キー: 値` の形式で記載してください`'
     unit_tests:
       - name: test_split_key
         case: 正常

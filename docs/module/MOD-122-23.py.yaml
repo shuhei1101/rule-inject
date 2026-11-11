@@ -8,9 +8,9 @@ constants:
     summary: run.py の引数の名前から、出した元・処理・想定外の例外の通知方法を取得する
     entries:
       - key: rule_guide
-        value: '`("rule_guide", guide_rules, 止めずに additionalContext で知らせる)`'
+        value: '`("rule_guide", guide_rules, 止めずに additionalContext で通知する)`'
       - key: record_read
-        value: '`("record_read", record_read, additionalContext で知らせる)`'
+        value: '`("record_read", record_read, additionalContext で通知する)`'
       - key: discard_read
         value: '`("discard_read", discard_read, 出力しない)`'
       - key: work_rules
@@ -18,7 +18,7 @@ constants:
       - key: sweep_read
         value: '`("sweep_read", sweep_read, 出力しない)`'
       - key: search_guide
-        value: '`("search_guide", search_guide, additionalContext で知らせる)`'
+        value: '`("search_guide", search_guide, additionalContext で通知する)`'
       - key: start_server
         value: '`("start_server", start_server, 出力しない)`'
 lead: フックの名前と、その処理の関数の対応表を定め、フックを追加・削除するときに参照する。

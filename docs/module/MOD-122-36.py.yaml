@@ -55,7 +55,7 @@ functions:
   - name: reload_settings
     title: 設定の再読込
     container: server/admin_tools.py
-    usecase: MCPサーバーの設定を読み直す
+    usecase: MCPサーバーの設定を再読込する
     summary: インターフェース定義「設定の再読込」のツールの本体
     kind: 関数
     scope: public
@@ -80,7 +80,7 @@ functions:
     exceptions:
       - name: ToolError
         condition: 設定ファイルが読み込めない、または `project_dir` が絶対パスでない
-        message: 設定ファイルの場所と理由、または絶対パスで渡す旨
+        message: 設定ファイルの場所と理由、または絶対パスで指定する旨
     unit_tests:
       - name: test_reload_settings
         case: 正常
@@ -196,7 +196,7 @@ functions:
   - name: _read_settings
     title: 設定の読み取り
     container: server/admin_tools.py
-    usecase: MCPサーバーの設定を読み直す
+    usecase: MCPサーバーの設定を再読込する
     summary: フックと同じ規則で設定を読み込む。`project_dir` があればそのプロジェクトとして、無ければ `CLAUDE_PROJECT_DIR` 無しで読み込む
     kind: 関数
     scope: internal
@@ -218,11 +218,11 @@ functions:
     exceptions:
       - name: ToolError
         condition: '`project_dir` が絶対パスでない、または設定ファイルが読み込めない'
-        message: 絶対パスで渡す旨、または設定ファイルの場所と理由
+        message: 絶対パスで指定する旨、または設定ファイルの場所と理由
   - name: _read_config_path
     title: 読み込んだ設定ファイルの場所
     container: server/admin_tools.py
-    usecase: MCPサーバーの設定を読み直す
+    usecase: MCPサーバーの設定を再読込する
     summary: '`shared.settings.config_path(env)` にファイルがあればその場所、無ければ `None` を返却する'
     kind: 関数
     scope: internal

@@ -117,7 +117,7 @@ functions:
         message: path は設定ファイルの場所、reason は `describe(exc)`（行番号を含む）
       - name: SettingsReadError
         condition: 3 の値の誤り、6 の `PORT_ENV` の値の誤り
-        message: 'path は設定ファイルの場所（`PORT_ENV` の誤りは `RULE_INJECT_PORT`）、reason は `{キー}: {書かれた値} は {許す値}ではない`（例 `global.log_retention_days: 0 は 1 以上の整数ではない`・`RULE_INJECT_PORT: 80 は 1024〜65535 の整数ではない`）'
+        message: 'path は設定ファイルの場所（`PORT_ENV` の誤りは `RULE_INJECT_PORT`）、reason は `{キー}: {記載された値} は {許す値}ではない`（例 `global.log_retention_days: 0 は 1 以上の整数ではない`・`RULE_INJECT_PORT: 80 は 1024〜65535 の整数ではない`）'
     unit_tests:
       - name: test_load_settings
         case: 正常

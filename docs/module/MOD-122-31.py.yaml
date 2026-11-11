@@ -27,7 +27,7 @@ functions:
       type: None
       description: 常に出力しない
     process: |-
-      1. session_id の形式が外れていれば何もしない
+      1. session_id の形式に合わなければ何もしない
       2. `load_settings(env)` で設定を読み込む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き込んで終える（何も削除しない）
       3. 失敗は全て `write_log(settings.log_dir, component=sweep_read, ...)` で記載する
       4. `sweep_records(settings.state_dir, session_id, retention_days=settings.record_retention_days)` を呼び、返った RecordDeleteError ごとにログ（`delete_record`）へ書き込む
@@ -42,7 +42,7 @@ functions:
         expected: 記録ファイルが無い
       - name: test_sweep_read_when_invalid_session_id
         case: 正常
-        summary: session_id の形式が外れていれば何も削除しない
+        summary: session_id の形式に合わなければ何も削除しない
         condition: '`session_id` が `../x`、最終更新が 31 日前の記録ファイル'
         mock: なし
         expected: 記録ファイルが残る

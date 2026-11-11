@@ -58,7 +58,7 @@ functions:
         mock: なし
         expected: '`None`。ログのファイルが無い'
     process: |-
-      1. `source` が `compact` でないか、session_id の形式が外れていれば、設定ファイルを読み込まずに `None` を返却する
+      1. `source` が `compact` でないか、session_id の形式に合わなければ、設定ファイルを読み込まずに `None` を返却する
       2. `load_settings(env)` で設定を読み込む。SettingsReadError なら `settings_failure_notice` でログ（`read_settings`）へ記録し、その通知を additionalContext で返却する
       3. `record_exists(settings.state_dir, session_id)` が真なら `LEFTOVER_NOTICE`（記録ファイルと `settings.log_dir` の場所）を additionalContext で返却する。偽なら `None` を返却する
 lead: 圧縮の後に、削除できずに残った既読の記録と設定ファイルが読めない理由を通知するフックの処理を定め、圧縮の後の通知を修正するときに参照する。

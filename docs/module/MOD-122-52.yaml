@@ -1,7 +1,7 @@
 id: MOD-122-52
 visibility: internal
 title: "MCP サーバー / エントリの編集"
-lead: 索引のエントリを round-trip で作成・書き換え・削除し、対象以外の行を変えずに書き戻すサブフィーチャーの構成を定め、索引の編集処理を修正するときに参照する。
+lead: 索引のエントリを round-trip で作成・書き換え・削除し、対象以外の行を変えずに書き込むサブフィーチャーの構成を定め、索引の編集処理を修正するときに参照する。
 directory: |-
   ```text
   src/rule_inject/features/index/edit/

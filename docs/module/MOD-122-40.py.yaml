@@ -128,7 +128,7 @@ classes:
         exceptions:
           - name: RestartInProgressError
             condition: 再起動を始めた後に呼ばれた
-            message: 再起動の途中である旨と、接続し直してから `get_server_status` で確かめる旨
+            message: 再起動の途中である旨と、再接続してから `get_server_status` で確認する旨
         unit_tests:
           - name: test_guard
             case: 正常
@@ -248,7 +248,7 @@ classes:
           description: なし
         process: |-
           1. `async with asyncio.timeout(STOP_DRAIN_TIMEOUT)` の中で、`_in_flight` と `_requests` がどちらも 0 になるまで `DRAIN_POLL_INTERVAL` ごとに見直す。上限を過ぎたら待つのをやめる（`TimeoutError` を捕まえ、残った呼び出しと要求の数をログに書き込む）
-          2. `_server.should_exit = True` を設定する。`uvicorn.Server.serve` は待ち受けを閉じて返る。SSE のストリームは sse-starlette が `should_exit` に気づいて取り消し、SSE でない残りの接続は `GRACEFUL_SHUTDOWN_TIMEOUT` で切る
+          2. `_server.should_exit = True` を設定する。`uvicorn.Server.serve` は待ち受けを閉じて返る。SSE のストリームは sse-starlette が `should_exit` に気づいてキャンセルし、SSE でない残りの接続は `GRACEFUL_SHUTDOWN_TIMEOUT` で切る
         unit_tests:
           - name: test_drain_and_stop
             case: 正常
@@ -309,6 +309,6 @@ classes:
             exception: 包んだアプリが例外を送出した
 notes:
   停止の 2 工程: |-
-    処理中のツールの呼び出しと POST の要求の応答は `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は sse-starlette が取り消し、SSE でない接続は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
-    `should_exit` を設定すると sse-starlette が送信中の POST の応答も取り消すため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
+    処理中のツールの呼び出しと POST の要求の応答は `_drain_and_stop` が `STOP_DRAIN_TIMEOUT` まで待ち、待ち受けを閉じた後に残る接続（`GET /mcp` の SSE のストリーム）は sse-starlette がキャンセルし、SSE でない接続は uvicorn が `GRACEFUL_SHUTDOWN_TIMEOUT` で切る。
+    `should_exit` を設定すると sse-starlette が送信中の POST の応答もキャンセルするため、ツールの関数が戻っただけでは止めず、`track` で要求の応答を送信し終えるまでを数える。
 lead: 処理中の呼び出しの数と再起動の状態、停止の進め方を定め、サーバーの再起動や停止を修正するときに参照する。
