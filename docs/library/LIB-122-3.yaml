@@ -15,6 +15,18 @@ catalogs:
       - name: MCPServer
         kind: クラス
         purpose: stdio か Streamable HTTP の MCP サーバーを作る（`mcp.server.mcpserver`）
+        params:
+          - name: name
+            type: '`str | None`'
+            required: false
+            default: '`None`'
+            description: サーバーの名前
+          - name: instructions
+            type: '`str | None`'
+            required: false
+            default: '`None`'
+            description: '`initialize` の応答の `instructions` に入る文面'
+            notes: Claude Code は接続時に server instructions を参照する（[Connect Claude Code to tools via MCP](https://code.claude.com/docs/en/mcp)。上限 4,096 字）
       - name: MCPServer.tool
         kind: デコレータ
         purpose: 関数をツールとして登録し、引数の型と docstring から入力の Schema と説明を作る

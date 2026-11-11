@@ -318,5 +318,5 @@ constraints:
   - item: 設定ファイル
     constraint: ルール案内の制約「設定ファイル」と同じく読む。使用するキーは `global.state_dir`・`global.log_dir`・`global.record_retention_days`・`global.log_retention_days`
 notes:
-  作業の決まりの注入との分担: 同じ `SessionStart` で動く作業の決まりの注入とは別のフックにする。注入は標準出力へ additionalContext を返却し、掃除は何も返却しない。始まったセッション自身の記録ファイルを削除しないため、注入の圧縮の後の削除できずに残った記録の確認とぶつからない
+  圧縮の後の通知との分担: 同じ `SessionStart` で動く圧縮の後の通知とは別のフックにする。通知は標準出力へ additionalContext を返却し、掃除は何も返却しない。始まったセッション自身の記録ファイルを削除しないため、通知の圧縮の後の削除できずに残った記録の確認とぶつからない
 test_file: tests/integration/plugin/test_sweep_read.py

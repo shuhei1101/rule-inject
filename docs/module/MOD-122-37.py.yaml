@@ -19,6 +19,13 @@ constants:
     container: server/app.py
     summary: 非機能要件「dev-docs への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
     value: '`207`'
+  - name: SERVER_INSTRUCTIONS
+    title: サーバーの instructions
+    container: server/app.py
+    summary: '`MCPServer` の `instructions`。インターフェース定義「サーバーの起動」の制約「instructions」の文面'
+    value: '`rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、案内されたルールを参照してから Edit で中身を記載する。`'
+    refs:
+      - IF-122-6#constraints[instructions]
 functions:
   - name: build_server
     title: サーバーの組み立て
@@ -66,7 +73,7 @@ functions:
       description: ツールを登録したサーバー
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
-      2. `MCPServer(SERVER_NAME)` を作る
+      2. `MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)` を作る
       3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` が `destructiveHint: true` で、全て `openWorldHint: false`
       4. `get_server_status` と `restart_server` を除くツールを `control.guard` で包んでから登録する（再起動の途中は断り、処理中の数を数える）。`restart_server` は `begin_restart` が自分で断る
       5. サーバーを返却する
@@ -84,4 +91,10 @@ functions:
         mock: '`uvicorn.Server`（`should_exit` だけを持つ代わり）'
         expected: '`list_rules` が再起動の途中の `isError: true`、`get_server_status` が `restarting: true` を返却する'
         exception: 再起動を始めた後に呼ばれた
-lead: MCP サーバーを組み立てるコンポジションルートとツールの登録を定め、ツールを追加するときや依存を差し替えるときに参照する。
+      - name: test_build_server_instructions
+        case: 正常
+        summary: instructions を指定する
+        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
+        mock: なし
+        expected: サーバーの `instructions` が `SERVER_INSTRUCTIONS` で、4,096 字以内
+lead: MCP サーバーを組み立てるコンポジションルートとツール・接続時の instructions の登録を定め、ツールや instructions を追加するときや依存を差し替えるときに参照する。

@@ -36,7 +36,7 @@ functions:
       - name: test_main
         case: 正常
         summary: 子プロセスとして動かして終了コード 0
-        condition: '`python3 hooks/run.py work_rules` に SessionStart の JSON を引き渡す'
+        condition: 'そのセッションの既読の記録ファイルを配置し、`python3 hooks/run.py work_rules` に SessionStart（`source: compact`）の JSON を引き渡す'
         mock: なし
         expected: 終了コード 0、標準出力に additionalContext
       - name: test_main_when_python_too_old

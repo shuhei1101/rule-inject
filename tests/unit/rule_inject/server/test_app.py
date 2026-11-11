@@ -67,6 +67,23 @@ def test_build_server(clone_dir: Path) -> None:
     }
 
 
+def test_build_server_instructions(clone_dir: Path) -> None:
+    """instructions を指定する（正常系）。"""
+    from rule_inject.server.app import SERVER_INSTRUCTIONS, build_server
+    from rule_inject.server.control import ServerControl
+
+    # 準備
+    control = ServerControl(port=8783)
+    # 実行
+    server = build_server({}, control=control, clone=clone_dir)
+    # 検証
+    assert server.instructions == SERVER_INSTRUCTIONS
+    assert len(SERVER_INSTRUCTIONS) <= 4096
+    assert "Write" in SERVER_INSTRUCTIONS
+    assert "空の内容" in SERVER_INSTRUCTIONS
+    assert "Edit" in SERVER_INSTRUCTIONS
+
+
 def test_build_server_when_restarting(clone_dir: Path) -> None:
     """再起動の途中は状態の確認だけを受け付ける（異常系）。"""
     from rule_inject.server.app import build_server

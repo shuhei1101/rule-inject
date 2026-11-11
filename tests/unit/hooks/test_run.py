@@ -8,7 +8,7 @@ import json
 import os
 import subprocess
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
@@ -54,10 +54,12 @@ def without_rule_inject(
 def test_main(
     hook_env: dict[str, str],
     hook_payload: Callable[..., dict[str, Any]],
+    write_record: Callable[[Sequence[str]], Path],
 ) -> None:
     """子プロセスとして動かして終了コード 0 を返す（正常系）。"""
     # 準備
-    payload = hook_payload("SessionStart", source="startup")
+    write_record(["/r/a.md"])
+    payload = hook_payload("SessionStart", source="compact")
     # 実行
     completed = subprocess.run(
         [sys.executable, str(RUN_PY), "work_rules"],

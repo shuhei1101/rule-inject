@@ -96,8 +96,8 @@ files:
       - to: IF-122-17
         type: see_also
   - path: integration/plugin/test_work_rules.py
-    name: 作業の決まりの注入フックの結合テスト
-    description: 作業の決まりの注入のフックを子プロセスとして起動し、標準入力の JSON から出力までを確認する結合テストで、作業の決まりの注入のフックを修正したときに実行する。
+    name: 圧縮の後の通知フックの結合テスト
+    description: 圧縮の後の通知のフックを子プロセスとして起動し、標準入力の JSON から出力までを確認する結合テストで、圧縮の後の通知のフックを修正したときに実行する。
     tags:
       - topic:フック
       - tool:claude-code
@@ -500,8 +500,8 @@ files:
       - to: src/rule_inject/hooks/sweep_read.py
         type: tests
   - path: unit/rule_inject/hooks/test_work_rules.py
-    name: 作業の決まりの注入の単体テスト
-    description: 作業の決まりの注入の振る舞いを確認する単体テストで、作業の決まりの注入を修正したときに実行する。
+    name: 圧縮の後の通知の単体テスト
+    description: 圧縮の後の通知の振る舞いを確認する単体テストで、圧縮の後の通知を修正したときに実行する。
     tags:
       - topic:フック
       - tool:pytest

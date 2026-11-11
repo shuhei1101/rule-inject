@@ -1,0 +1,31 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-6.yaml
+    impact: changed
+    detail: 新しいファイルの作り方の決まりを、セッションの開始時のフックではなく MCP サーバーへの接続時の instructions で受け取る。メインのセッションに加えてサブエージェントにも届く
+    depends_on: []
+docs:
+  - page: docs/guide/コアコンセプト-ルールの案内.md
+    new: false
+    change: 新しいファイルは空で作る決まりを記載するのを、SessionStart フックから MCP サーバーの instructions に修正する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:45:39.448298+00:00'
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: サーバーが接続時に instructions で新しいファイルの作り方の決まりを渡すことと、サーバーが止まっているとその決まりは届かないことを `## フックとの関係` に追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-10T20:45:39.448298+00:00'
+  - page: docs/glossary/GLO-122-1.yaml
+    change: '用語 `work-rules`（作業の決まり）の description を、MCP サーバーが接続時の instructions で記載する決まりに修正する（develop の #140 の取り込みで入った）'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T01:02:18.828761+00:00'
+scope_out:
+  - item: knowledge の判定フローチャート『エージェントに渡す文・処理の置き場所』の ※3 が、MCP を持たないプラグインの例に rule-inject の新しいファイルの作り方を挙げていること
+    reason: 別のリポジトリ（knowledge）の文書で、この作業 PR がマージされて初めて例が実体と合わなくなる
+    plan: shuhei1101/knowledge#258
+  - item: instructions に、rule-inject の MCP のツールの使い分け（いつこの MCP を探すか・grep・Read との使い分け・ツール間の順序）を書き足すこと
+    reason: Issue と決定 D-387 が移す対象にしたのは、SessionStart で注入している新しいファイルの作り方の決まりだけ。規約『注入文の書き分けと書き方』は最小の文から始めると定めている。インターフェース定義のレビューで、この PR では書き足さないと確定した
+    plan: '#146'

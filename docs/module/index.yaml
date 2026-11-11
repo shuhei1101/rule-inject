@@ -35,7 +35,7 @@ items:
   - page: MOD-122-60.yaml
     summary: セッションごとの既読の記録の読み・追記・削除
   - page: MOD-122-61.yaml
-    summary: 止める案内・止めない案内・失敗の知らせ・作業の決まりの文面
+    summary: 止める案内・止めない案内・失敗の知らせの文面
   - page: MOD-122-59.yaml
     summary: 記録フォルダ・場所の解決・ログ・例外
   - page: MOD-122-55.yaml
@@ -59,7 +59,7 @@ items:
   - page: MOD-122-31.py.yaml
     summary: 既読の記録の掃除（SessionStart）
   - page: MOD-122-32.py.yaml
-    summary: 作業の決まりの注入（SessionStart）
+    summary: 圧縮の後の通知（SessionStart）
   - page: MOD-122-30.py.yaml
     summary: サーバーの起動の補助（SessionStart）
   - page: MOD-122-28.py.yaml

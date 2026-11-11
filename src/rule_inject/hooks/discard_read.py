@@ -29,7 +29,7 @@ def discard_read(payload: dict[str, Any], env: Mapping[str, str]) -> None:
         try:
             delete(settings.state_dir, session_id)
         except RecordDeleteError as exc:
-            # 削除できずに残った記録は、圧縮の後の作業の決まりの注入が見つけて知らせる
+            # 削除できずに残った記録は、圧縮の後の通知が見つけて知らせる
             write_log(
                 settings.log_dir,
                 component=Component.DISCARD_READ,

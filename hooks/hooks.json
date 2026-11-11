@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "_description": "新しいファイルは空で作ってから中身を書く決まりを載せる",
+            "_description": "圧縮の後に、削除できずに残った既読の記録と設定ファイルが読めない理由を通知する",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" work_rules",
             "timeout": 1
           },

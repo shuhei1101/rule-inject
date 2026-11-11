@@ -18,7 +18,7 @@ directory: |-
   ├── search_guide.py             # 検索結果の案内（PostToolUse）
   ├── discard_read.py             # 既読の記録の破棄（PreCompact）
   ├── sweep_read.py               # 既読の記録の掃除（SessionStart）
-  ├── work_rules.py               # 作業の決まりの注入（SessionStart）
+  ├── work_rules.py               # 圧縮の後の通知（SessionStart）
   └── start_server.py             # サーバーの起動の補助（SessionStart）
   ```
 notes:
@@ -31,5 +31,5 @@ notes:
     | PostToolUse | 既読の記録 | `Read\|Bash\|mcp__.*` |
     | PostToolUse | 検索結果の案内 | `Grep\|Glob\|Bash` |
     | PreCompact | 既読の記録の破棄 | なし |
-    | SessionStart | 作業の決まりの注入・既読の記録の掃除・サーバーの起動の補助（この順に並べる） | なし |
+    | SessionStart | 圧縮の後の通知・既読の記録の掃除・サーバーの起動の補助（この順に並べる） | なし |
   Python のバージョン: フックは利用者の `python3` で動くため、`rule_inject` のコードは Python 3.12 より新しい構文・標準ライブラリを使用しない。`pyproject.toml` の `requires-python` は `>=3.12`

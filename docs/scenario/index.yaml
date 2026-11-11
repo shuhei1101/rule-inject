@@ -7,7 +7,7 @@ items:
   - page: SC-122-11.yaml
     summary: 会話の圧縮の前に、そのセッションの既読の記録を捨てる
   - page: SC-122-6.yaml
-    summary: 新しいファイルは空で作ってから書く決まりをコンテキストへ載せる
+    summary: MCP サーバーへの接続時に、新しいファイルは空で作ってから記載する決まりを instructions で受け取る
   - page: SC-122-21.yaml
     summary: セッションの開始時に、最終更新から保持期間を過ぎた既読の記録ファイルを削除する
   - page: SC-122-10.yaml
