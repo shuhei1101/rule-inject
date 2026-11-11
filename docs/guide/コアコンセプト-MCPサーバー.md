@@ -15,21 +15,39 @@
 新しいファイルを空で作ってから中身を記載する決まりと、どの作業でこのサーバーのツールを呼び、どの作業で grep・Read を使用するかの使い分けは、サーバーが接続時の instructions で届ける。
 サーバーが止まっている間は、この決まりと使い分けは届かない。
 
-```mermaid
-flowchart TD
-  CC([Claude Code])
-  HK[フック]
-  SV[MCP サーバー]
-  CF[(設定ファイル)]
-  IX[(索引)]
+<!-- flow -->
 
-  CC -->|ツールを呼ぶ直前| HK
-  CC -->|HTTP の MCP| SV
-  HK -->|読む| CF
-  HK -->|読む| IX
-  SV -->|読む| CF
-  SV -->|読む・書く| IX
+```json
+{
+  "title": "MCP サーバーとフックの関係",
+  "scope": "Claude Code から設定ファイル・索引まで",
+  "updated": "2026-11-11",
+  "width": 720,
+  "height": 460,
+  "frame": {"title": "rule-inject", "x": 20, "y": 100, "w": 680, "h": 340},
+  "lanes": [
+    {"label": "処理", "kind": "mcp", "y": 140, "h": 130},
+    {"label": "データ", "kind": "data", "y": 295, "h": 125}
+  ],
+  "nodes": [
+    {"id": "cc", "kind": "external", "x": 290, "y": 20, "w": 180, "h": 56, "name": "Claude Code"},
+    {"id": "hook", "kind": "script", "x": 100, "y": 180, "w": 180, "h": 64, "name": "フック"},
+    {"id": "server", "kind": "mcp", "x": 480, "y": 180, "w": 180, "h": 64, "name": "MCP サーバー"},
+    {"id": "config", "kind": "data", "x": 100, "y": 330, "w": 180, "h": 64, "name": "設定ファイル"},
+    {"id": "index", "kind": "data", "x": 480, "y": 330, "w": 180, "h": 64, "name": "索引"}
+  ],
+  "wires": [
+    {"id": "w-cc-hook", "from": "cc", "to": "hook", "line": "flow", "points": [[290, 48], [190, 48], [190, 180]], "label": "ツールを呼ぶ直前", "labelAt": [190, 140]},
+    {"id": "w-cc-server", "from": "cc", "to": "server", "line": "flow", "points": [[470, 48], [570, 48], [570, 180]], "label": "HTTP の MCP", "labelAt": [570, 140]},
+    {"id": "w-hook-config", "from": "hook", "to": "config", "line": "read", "points": [[150, 244], [150, 330]], "label": "読む", "labelAt": [150, 310]},
+    {"id": "w-hook-index", "from": "hook", "to": "index", "line": "read", "points": [[250, 244], [250, 285], [530, 285], [530, 330]], "label": "読む", "labelAt": [530, 310]},
+    {"id": "w-server-config", "from": "server", "to": "config", "line": "read", "points": [[510, 244], [510, 262], [230, 262], [230, 330]], "label": "読む", "labelAt": [230, 310]},
+    {"id": "w-server-index", "from": "server", "to": "index", "line": "write", "points": [[620, 244], [620, 330]], "label": "読む・書く", "labelAt": [620, 287]}
+  ]
+}
 ```
+
+<!-- /flow -->
 
 ## ツール
 
