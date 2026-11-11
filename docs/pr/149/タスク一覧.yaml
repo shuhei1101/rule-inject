@@ -76,7 +76,9 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T01:48:04.977630+00:00'
   - process: 結合テスト作成
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T05:08:35.139324+00:00'
   - process: E2E テスト作成
     status: skipped
     reason: 0.x の間は E2E を作らず、develop から E2E のテストを削除している（#119）

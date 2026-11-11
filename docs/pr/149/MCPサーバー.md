@@ -34,3 +34,9 @@
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
 | --- | --- | --- | --- | --- |
 | [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/caa7b12/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | `test_build_server_instructions` に全てのツールの名前と `Read`・`grep` の確認を追加<br>`テスト結果/20261111104557_caa7b12_単体テスト.log`<br>lint: `テスト結果/20261111104619_caa7b12_lint.log` |
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_server_start.py](https://github.com/shuhei1101/rule-inject/blob/df50731/tests/integration/server/test_server_start.py) | 全実行 | 変更 | ✅ | `test_normal` に `list_rules`・`search_rules`・`check_indexes`・`Read`・`grep` の確認を追加<br>`tests/integration` の 182 テスト pass<br>`テスト結果/20261111140151_df50731_結合テスト.log`<br>lint: `テスト結果/20261111140201_df50731_lint.log` |

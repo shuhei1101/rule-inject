@@ -1,0 +1,32 @@
+$ uv run pytest tests/integration
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-server-add-tool-usage-to-mcp-instructions
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 182 items
+
+tests/integration/plugin/test_discard_read.py ....                       [  2%]
+tests/integration/plugin/test_migrate_settings.py ......                 [  5%]
+tests/integration/plugin/test_record_read.py ...................         [ 15%]
+tests/integration/plugin/test_rule_guide.py ............................ [ 31%]
+.........                                                                [ 36%]
+tests/integration/plugin/test_search_guide.py ..............             [ 43%]
+tests/integration/plugin/test_start_server.py .......                    [ 47%]
+tests/integration/plugin/test_sweep_read.py .........                    [ 52%]
+tests/integration/plugin/test_work_rules.py ....                         [ 54%]
+tests/integration/server/test_check_indexes.py .................         [ 64%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 70%]
+tests/integration/server/test_delete_read_records.py ...                 [ 71%]
+tests/integration/server/test_get_read_records.py .....                  [ 74%]
+tests/integration/server/test_get_server_status.py ...                   [ 76%]
+tests/integration/server/test_list_rules.py ......                       [ 79%]
+tests/integration/server/test_reload_settings.py ...                     [ 81%]
+tests/integration/server/test_restart_server.py ...                      [ 82%]
+tests/integration/server/test_search_rules.py .....                      [ 85%]
+tests/integration/server/test_server_start.py .....                      [ 88%]
+tests/integration/server/test_update_server.py ......                    [ 91%]
+tests/integration/server/test_write_index_entry.py ...............       [100%]
+
+======================= 182 passed in 367.99s (0:06:07) ========================
+exit 0
