@@ -1,5 +1,5 @@
 # Rule Inject
 
-Claude Code がファイルを触る前に、そのファイルに当たるルールをコンテキストへ案内するプラグイン。
+Claude Code がファイルを触る前に、そのファイルに該当するルールをコンテキストへ案内するプラグイン。
 
 ドキュメント: https://shuhei1101.github.io/rule-inject/
