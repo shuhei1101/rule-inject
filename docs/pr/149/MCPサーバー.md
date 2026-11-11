@@ -26,3 +26,11 @@
 | インターフェース定義設計 | `9b08d0a..6423844` | IF-122-6 |
 | インターフェース定義設計 | `800a005..2cc7a24` | レビューの指摘の修正 |
 | モジュール構成設計 | `9d13249..e9e5cc7` | MOD-122-37 |
+
+## テスト結果
+
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/unit/rule_inject/server/test_app.py](https://github.com/shuhei1101/rule-inject/blob/caa7b12/tests/unit/rule_inject/server/test_app.py) | 全実行 | 変更 | ✅ | `test_build_server_instructions` に全てのツールの名前と `Read`・`grep` の確認を追加<br>`テスト結果/20261111104557_caa7b12_単体テスト.log`<br>lint: `テスト結果/20261111104619_caa7b12_lint.log` |

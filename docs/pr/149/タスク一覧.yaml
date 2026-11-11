@@ -63,12 +63,18 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T01:37:54.755083+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: docs/guide/コアコンセプト-MCPサーバー.md の instructions の説明
+    updated_by: planner
+    updated_at: '2026-11-11T01:41:16.558460+00:00'
   - process: 単体テスト作成
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T01:44:48.626537+00:00'
   - process: 実装
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T01:48:04.977630+00:00'
   - process: 結合テスト作成
     status: todo
   - process: E2E テスト作成
