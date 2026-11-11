@@ -1,0 +1,1 @@
+# 公開ドキュメント（docs/guide/）の Mermaid の図を mdmark のフロー図へ書き換える
