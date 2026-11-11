@@ -43,4 +43,9 @@ lint（ruff・mypy・import-linter）は違反なし（`テスト結果/20261111
 
 ### 結合
 
-（結合テスト作成の工程で記入する）
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_server_start.py](https://github.com/shuhei1101/rule-inject/blob/b93a34d/tests/integration/server/test_server_start.py) | 全実行 | 変更 | ✅ | docstring 1 か所の置き換え<br>`テスト結果/20261111104729_5e7fd76_結合テスト.log` |
+| [tests/integration/server/test_write_index_entry.py](https://github.com/shuhei1101/rule-inject/blob/b93a34d/tests/integration/server/test_write_index_entry.py) | 全実行 | 実行のみ | ✅ | エラーの文言を変えた索引の編集の回帰確認<br>`テスト結果/20261111104729_5e7fd76_結合テスト.log` |
+
+lint は結合テストの変更の後も違反なし（`テスト結果/20261111104912_5e7fd76_lint.log`）。

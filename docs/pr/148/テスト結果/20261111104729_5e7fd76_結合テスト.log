@@ -1,0 +1,14 @@
+$ uv run pytest tests/integration/plugin/test_rule_guide.py tests/integration/server/test_server_start.py tests/integration/server/test_write_index_entry.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-docs-replace-ai-slop-in-flow-names
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 57 items
+
+tests/integration/plugin/test_rule_guide.py ............................ [ 49%]
+.........                                                                [ 64%]
+tests/integration/server/test_server_start.py .....                      [ 73%]
+tests/integration/server/test_write_index_entry.py ...............       [100%]
+
+======================== 57 passed in 80.73s (0:01:20) =========================
