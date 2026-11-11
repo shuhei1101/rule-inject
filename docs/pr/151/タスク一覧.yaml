@@ -35,8 +35,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T05:25:43.479705+00:00'
   - process: 単一ユースケース設計
-    status: todo
+    status: done
     note: docs/scenario のシナリオと目次の単語を置き換える（流れは変えない）
+    updated_by: planner
+    updated_at: '2026-11-11T05:38:00.565203+00:00'
   - process: モック作成
     status: skipped
     reason: 画面を持たない

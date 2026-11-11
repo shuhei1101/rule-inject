@@ -27,3 +27,9 @@ origin/develop [639080c](https://github.com/shuhei1101/rule-inject/commit/639080
 | ツールの説明文 | 同上。同じ項目を説明する `docs/guide/MCPツール.md` も同じ言い回しにする | - |
 | docstring・コメント | 同上 | 処理は変えない |
 | エラー・違反・応答の文言、`index.schema.yaml` の title・description | 同上。文言を記載する設計書・公開ドキュメントとテストの期待値も同じ文言にする | - |
+
+## 設計書の確定コミット
+
+| 工程 | 範囲 | 補足 |
+| --- | --- | --- |
+| 単一ユースケース設計 | `639080c..d2ddca3` | - |
