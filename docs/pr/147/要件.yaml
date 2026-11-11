@@ -1,0 +1,23 @@
+docs:
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: Mermaid の図を mdmark の flow の構成図へ描き直す
+    status: todo
+  - page: docs/guide/コアコンセプト-ルールの案内.md
+    new: false
+    change: Mermaid の図を mdmark の flow のフロー図へ描き直す
+    status: todo
+  - page: docs/guide/ルールにするか文書にするかを決める.md
+    new: false
+    change: Mermaid の図をテンプレート『判定フローチャート』の描き方で mdmark の flow へ描き直す
+    status: todo
+scope_out:
+  - item: インターフェース定義・シナリオの Mermaid の図（29 件）
+    reason: Schema が flow を mermaid と定めており、Schema の変更を待つ
+    plan: '#145'
+  - item: schemas/ の Mermaid
+    reason: AI Monitor から配布された Schema で、このリポジトリでは変えない
+    plan: none
+  - item: docs/pr/ の Mermaid
+    reason: 過去の PR ドキュメントで、公開ドキュメントではない
+    plan: none
