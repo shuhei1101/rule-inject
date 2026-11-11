@@ -35,8 +35,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T01:19:36.908037+00:00'
   - process: 単一ユースケース設計
-    status: todo
+    status: done
     note: SC-122-19・20 の図のメッセージの語句を置き換える
+    updated_by: planner
+    updated_at: '2026-11-11T01:23:47.826099+00:00'
   - process: モック作成
     status: skipped
     reason: 画面を持たない
