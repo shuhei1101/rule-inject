@@ -28,7 +28,7 @@ def _log_dir() -> Path:
 
 
 def _report_old_python(hook_name: str) -> int:
-    """バージョンが足りないことを通知し、ログへ 1 行書いて終える。"""
+    """バージョンが足りないことを通知し、ログへ 1 行書き込んで終える。"""
     major, minor, micro = sys.version_info[:3]
     required = f"{MIN_PYTHON[0]}.{MIN_PYTHON[1]}"
     reason = (

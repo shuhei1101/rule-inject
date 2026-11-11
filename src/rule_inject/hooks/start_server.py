@@ -16,7 +16,7 @@ from rule_inject.shared.settings import load_settings
 
 def start_server(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
     """サーバーが応答せずユニットが有効なときだけ起動を依頼し、`/mcp` で再接続する案内を返却する。"""
-    # 1. ログに記載するセッション（形式に合わなくても補助は行う）
+    # 1. ログに書き込むセッション（形式に合わなくても補助は行う）
     written = payload.get("session_id")
     session_id = written if is_valid_session_id(written) else None
     # 2. 設定を読む。読めなければ既定のログのフォルダへ書き込んで何もしない

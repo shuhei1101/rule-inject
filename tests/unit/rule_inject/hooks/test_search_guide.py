@@ -24,7 +24,7 @@ def guide_env(
     settings_env: Callable[..., dict[str, str]],
     make_index: Callable[..., Path],
 ) -> Callable[[str], dict[str, str]]:
-    """索引の文字列を記載し、設定ファイルの `global.indexes` で指す環境変数を返却する factory。"""
+    """索引の文字列を書き込み、設定ファイルの `global.indexes` で指す環境変数を返却する factory。"""
 
     def _env(text: str) -> dict[str, str]:
         """text を索引として配置し、その索引を指す設定ファイルを `RULE_INJECT_CONFIG` で指す。"""

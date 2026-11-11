@@ -157,7 +157,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     if not unread and not notices:
         return None
     guidance = _build(unread, notices)
-    # 止めない案内に記載した場所だけを案内済みにする。記載できなければ案内は出して理由を通知する
+    # 止めない案内に記載した場所だけを案内済みにする。書き込めなければ案内は出して理由を通知する
     if session_id is not None and track_guided and guidance is not None and guidance.shown:
         try:
             append_guided(folder, session_id, guidance.shown)
@@ -166,7 +166,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             notices.append(
                 build_failure_notice("案内済みの記録に書き込めませんでした。", [exc], log_path)
             )
-            # 通知の分を除いた字数に、案内を収め修正する
+            # 通知の分を除いた字数に、案内を再度収める
             guidance = _build(unread, notices)
     return _output(guidance, unread, notices)
 

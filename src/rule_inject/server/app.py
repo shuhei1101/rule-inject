@@ -124,7 +124,7 @@ def build_server(
         remove_keys: list[str] | None = None,
         dry_run: bool = False,
     ) -> CallToolResult:
-        """設定ファイルで読む索引に、エントリを末尾へ新規作成する（position なし）か、位置で指したエントリのキーを書き換える（position と expected_rev）。記載した後の索引に新しい問題が出るときは書き込まない。"""
+        """設定ファイルで読む索引に、エントリを末尾へ新規作成する（position なし）か、位置で指したエントリのキーを書き換える（position と expected_rev）。書き込んだ後の索引に新しい問題が出るときは書き込まない。"""
         return tools.write_index_entry(
             project_dir=project_dir,
             index=index,

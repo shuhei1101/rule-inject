@@ -162,7 +162,7 @@ def test_append_record(
 
 
 def test_append_record_when_empty(state_dir: Path, session_id: str) -> None:
-    """空なら記載しない（正常系）。"""
+    """空なら書き込まない（正常系）。"""
     # 実行
     append_record(state_dir, session_id, [])
     # 検証
@@ -535,7 +535,7 @@ def test_append_history(
 
 
 def test_append_history_when_empty(state_dir: Path, session_id: str) -> None:
-    """空なら記載しない（正常系）。"""
+    """空なら書き込まない（正常系）。"""
     # 実行
     append_history(state_dir, session_id, [], method=ReadMethod.READ, tool="Read")
     # 検証

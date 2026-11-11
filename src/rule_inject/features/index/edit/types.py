@@ -40,7 +40,7 @@ class IndexLocks:
 
 
 class CheckChange(Protocol):
-    """記載する前と記載した後の索引の内容を受け、新しく出た問題を `{索引の中の場所}: {理由}` の行で返却する。"""
+    """書き込む前と書き込んだ後の索引の内容を受け、新しく出た問題を `{索引の中の場所}: {理由}` の行で返却する。"""
 
     def __call__(
         self, index_path: str, before_text: str, after_text: str, changed_rev: str | None, /

@@ -136,7 +136,7 @@ def _check_target(index_path: str, text: str, rules: CommentedSeq, position: int
 
 
 def _unified_diff(index_path: str, before: str, after: str) -> str:
-    """記載する前と記載した後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る。"""
+    """書き込む前と書き込んだ後の unified diff（前後 3 行、ファイル名は索引のファイル名）を作る。"""
     name = Path(index_path).name
     return "".join(
         difflib.unified_diff(
@@ -205,12 +205,12 @@ def _check_layout(
     after_lines: Sequence[str],
     after_range: tuple[int, int],
 ) -> None:
-    """記載する前と記載した後で、対象のエントリの外の行が変わらないことを確認する。変われば IndexEditError を送出する。"""
+    """書き込む前と書き込んだ後で、対象のエントリの外の行が変わらないことを確認する。変われば IndexEditError を送出する。"""
     before_outside = _outside_lines(before_lines, before_range)
     after_outside = _outside_lines(after_lines, after_range)
     if before_outside == after_outside:
         return
-    # 最初に違った行を、記載する前の内容での行の番号（`parse_index` と同じ 1 始まり）にして通知する
+    # 最初に違った行を、書き込む前の内容での行の番号（`parse_index` と同じ 1 始まり）にして通知する
     first_diff = next(
         (
             number
@@ -252,7 +252,7 @@ def write_entry(
         before, newline = _read_text(index_path)
         yaml = _index_yaml(index_path, before)
         data = _load(yaml, index_path, before)
-        # 書式を保てたかの確認に使用する、記載する前の内容の行の範囲は、書き換える前に求める
+        # 書式を保てたかの確認に使用する、書き込む前の内容の行の範囲は、書き換える前に求める
         before_data = _load(round_trip_yaml(), index_path, before)
         before_lines = before.splitlines()
         rules = _entries(index_path, data)
@@ -264,7 +264,7 @@ def write_entry(
         if position is None:
             if rules_created:
                 data[RULES_KEY] = rules
-                # 記載する前の内容に `rules` のキーの行があれば、その行も対象の範囲に含める
+                # 書き込む前の内容に `rules` のキーの行があれば、その行も対象の範囲に含める
                 if RULES_KEY in before_data:
                     key_line = before_data.lc.key(RULES_KEY)[0]
                     before_range = (key_line, key_line)
@@ -285,14 +285,14 @@ def write_entry(
                 target.pop(key, None)
             before_range = _entry_line_range(before_lines, before_data, position)
         after = _dump(yaml, data)
-        # 書式を保てたかを確認する。記載したエントリの外の行が変わるときは書き込まない
+        # 書式を保てたかを確認する。書き込んだエントリの外の行が変わるときは書き込まない
         after_lines = after.splitlines()
         after_data = _load(round_trip_yaml(), index_path, after)
         after_range = _entry_line_range(after_lines, after_data, written_position)
         if rules_created:
             after_range = (after_data.lc.key(RULES_KEY)[0], after_range[1])
         elif position is None:
-            # 新規作成したエントリは、直前のコメントを含めない（前のエントリの後ろのコメントは、記載する前から外の行）
+            # 新規作成したエントリは、直前のコメントを含めない（前のエントリの後ろのコメントは、書き込む前から外の行）
             entry_start = after_data[RULES_KEY].lc.item(written_position)[0]
             after_range = (entry_start, after_range[1])
         _check_layout(index_path, before_lines, before_range, after_lines, after_range)

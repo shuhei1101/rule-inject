@@ -47,7 +47,7 @@ class ArgCondition:
     field: str | None = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
-        """キーを道筋と `field` に分けて持つ（照合のたびに分け修正しない）。"""
+        """キーを道筋と `field` に分けて持つ（照合のたびに再度分けない）。"""
         tree_key = TREE_KEY_PATTERN.match(self.key)
         # frozen のため object.__setattr__ で入れる
         object.__setattr__(self, "path", tree_key["path"] if tree_key else self.key)

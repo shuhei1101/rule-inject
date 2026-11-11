@@ -107,7 +107,7 @@ def _failure_context(summary: str, error: RuleInjectError, log_path: Path) -> di
 
 
 def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
-    """既読にする場所を既読の記録と既読の履歴へ書き込み、記載できなければ理由を返却する。"""
+    """既読にする場所を既読の記録と既読の履歴へ書き込み、書き込めなければ理由を返却する。"""
     session_id = payload.get("session_id")
     if not is_valid_session_id(session_id):
         return None

@@ -187,7 +187,7 @@ def test_new_problems_when_existing() -> None:
 
 
 def test_new_problems_when_changed_entry() -> None:
-    """記載したエントリの問題は記載する前に同じ理由があっても返却する（正常系）。"""
+    """書き込んだエントリの問題は書き込む前に同じ理由があっても返却する（正常系）。"""
     from rule_inject.features.index.check.service import new_problems
     from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 
@@ -208,7 +208,7 @@ def test_new_problems_when_changed_entry() -> None:
 
 
 def test_new_problems_when_hook_error() -> None:
-    """記載した後にフックが読めなければそれを返却する（正常系）。"""
+    """書き込んだ後にフックが読めなければそれを返却する（正常系）。"""
     from rule_inject.features.index.check.service import new_problems
     from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 

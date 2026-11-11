@@ -36,7 +36,7 @@ def _version_key(path: Path, version: str) -> tuple[int, ...]:
 
 
 def _load(path: Path) -> tuple[YAML, CommentedMap]:
-    """コメントを残して記載し戻せるように設定ファイルを読み取る。"""
+    """コメントを残して書き込めるように設定ファイルを読み取る。"""
     yaml = YAML()
     yaml.preserve_quotes = True
     try:

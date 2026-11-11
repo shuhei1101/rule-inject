@@ -345,7 +345,7 @@ files:
         type: implements
   - path: rule_inject/server/_format.py
     name: 応答の形式と長さの切り詰め
-    description: ツールの応答を JSON か Markdown に整形して長いときは切り詰め、ツールの応答の確認した目を変えるときに参照する。
+    description: ツールの応答を JSON か Markdown に整形して長いときは切り詰め、ツールの応答の見た目を変えるときに参照する。
     tags:
       - topic:MCPツール
       - tool:mcp

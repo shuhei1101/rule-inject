@@ -9,7 +9,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
-# 1 行のフロー形式のリストを折り返却しない行の長さ
+# 1 行のフロー形式のリストを折り返さない行の長さ
 YAML_WIDTH = 4096
 MAPPING_INDENT = 2
 SEQUENCE_INDENT = 4

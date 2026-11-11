@@ -22,7 +22,7 @@ class IndexReadError(RuleInjectError):
 
 
 class IndexEditError(RuleInjectError):
-    """索引を編集できない（読めない・位置が無い・バージョンが合わない・記載した後の索引がチェックに通らない）。"""
+    """索引を編集できない（読めない・位置が無い・バージョンが合わない・書き込んだ後の索引がチェックに通らない）。"""
 
 
 class RecordReadError(RuleInjectError):

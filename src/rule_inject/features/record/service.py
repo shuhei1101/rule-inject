@@ -80,7 +80,7 @@ def _append_lines(
     lines: Sequence[str],
     error: type[RuleInjectError] = RecordWriteError,
 ) -> None:
-    """行を 1 行ずつ記録ファイルへ追記する（空なら記載しない）。書き込めないときは error を送出する。"""
+    """行を 1 行ずつ記録ファイルへ追記する（空なら書き込まない）。書き込めないときは error を送出する。"""
     if not lines:
         return
     try:

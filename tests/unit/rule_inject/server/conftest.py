@@ -13,7 +13,7 @@ def server_env(
     tmp_path: Path,
     make_settings: Callable[..., Path],
 ) -> Callable[..., dict[str, str]]:
-    """設定ファイルを記載して `RULE_INJECT_CONFIG` で指した、サーバーを起動した環境変数を返却する factory。"""
+    """設定ファイルを書き込んで `RULE_INJECT_CONFIG` で指した、サーバーを起動した環境変数を返却する factory。"""
 
     def _make(text: str) -> dict[str, str]:
         """text を設定ファイルに書き込み、それを指す環境変数を返却する。"""

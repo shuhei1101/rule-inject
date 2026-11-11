@@ -53,7 +53,7 @@ def make_files(project: Path) -> Callable[..., None]:
 
 @pytest.fixture
 def read_contents(make_index: Callable[..., Path]) -> Callable[..., list[Any]]:
-    """索引の YAML を記載し、読み取り結果（IndexContent）の並びを返却する factory。"""
+    """索引の YAML を書き込み、読み取り結果（IndexContent）の並びを返却する factory。"""
 
     def _read(*texts: str) -> list[Any]:
         """texts を索引ごとのファイルに書き込み、`read_index` で読む。"""

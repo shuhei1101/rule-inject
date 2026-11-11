@@ -1,4 +1,4 @@
-"""索引のチェックと、記載する前と記載した後の問題の比較。"""
+"""索引のチェックと、書き込む前と書き込んだ後の問題の比較。"""
 
 from __future__ import annotations
 
@@ -162,7 +162,7 @@ def check_index_text(
 
 
 def _problem_key(problem: IndexProblem) -> tuple[str, str | None, str, str]:
-    """記載する前と記載した後で同じ問題かを比べる鍵を返却する（位置は新規作成・削除でずれるため比べない）。"""
+    """書き込む前と書き込んだ後で同じ問題かを比べる鍵を返却する（位置は新規作成・削除でずれるため比べない）。"""
     location = ENTRY_LOCATION_PATTERN.sub(ENTRY_LOCATION_PLACEHOLDER, problem.location)
     return (problem.kind, problem.rev, location, problem.reason)
 
@@ -170,13 +170,13 @@ def _problem_key(problem: IndexProblem) -> tuple[str, str | None, str, str]:
 def new_problems(
     before: IndexCheck, after: IndexCheck, changed_rev: str | None
 ) -> tuple[IndexProblem, ...]:
-    """記載した後の索引の問題のうち、記載する前に無かったものを返却する。"""
-    # 記載した後にフックが読めなければ、それだけを返却する（記載する前も読めなかった場合も含む）
+    """書き込んだ後の索引の問題のうち、書き込む前に無かったものを返却する。"""
+    # 書き込んだ後にフックが読めなければ、それだけを返却する（書き込む前も読めなかった場合も含む）
     hook_errors = tuple(problem for problem in after.problems if problem.kind == "hook_error")
     if hook_errors:
         return hook_errors
     existing = {_problem_key(problem) for problem in before.problems}
-    # 記載したエントリの問題は、記載する前に同じ理由があっても新しい問題として扱う
+    # 書き込んだエントリの問題は、書き込む前に同じ理由があっても新しい問題として扱う
     return tuple(
         problem
         for problem in after.problems
@@ -194,7 +194,7 @@ def check_change(
     env: Mapping[str, str],
     validator: Validator,
 ) -> tuple[str, ...]:
-    """記載する前と記載した後の索引を確認し、新しく出た問題を `{索引の中の場所}: {理由}` の行で返却する。"""
+    """書き込む前と書き込んだ後の索引を確認し、新しく出た問題を `{索引の中の場所}: {理由}` の行で返却する。"""
     before = check_index_text(index_path, before_text, env, validator=validator)
     after = check_index_text(index_path, after_text, env, validator=validator)
     return tuple(

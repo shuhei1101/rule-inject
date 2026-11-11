@@ -145,7 +145,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
                 notices.append(build_failure_notice(summary, [exc], log_path))
     remaining = [rule for rule in matched_rules if rule.location not in excluded]
     guidance = _build(remaining, found.unchecked, notices)
-    # 案内に記載した場所だけを案内済みにする。記載できなければ案内は出して理由を通知する
+    # 案内に記載した場所だけを案内済みにする。書き込めなければ案内は出して理由を通知する
     if guidance is not None and guidance.shown:
         try:
             append_guided(folder, session_id, guidance.shown)
@@ -154,7 +154,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
             notices.append(
                 build_failure_notice("案内済みの記録に書き込めませんでした。", [exc], log_path)
             )
-            # 通知の分を除いた字数に、案内を収め修正する
+            # 通知の分を除いた字数に、案内を再度収める
             guidance = _build(remaining, found.unchecked, notices)
     text = NOTICE_SEPARATOR.join(
         part for part in (guidance.text if guidance else "", *notices) if part

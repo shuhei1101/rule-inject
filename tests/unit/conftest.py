@@ -56,7 +56,7 @@ def log_folder(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def make_settings(tmp_path: Path) -> Callable[..., Path]:
-    """設定ファイルの YAML を記載し、そのパスを返却する factory。"""
+    """設定ファイルの YAML を書き込み、そのパスを返却する factory。"""
 
     def _make(text: str, name: str = "settings.yaml") -> Path:
         """text を tmp_path/config の下の name に書き込む。"""
@@ -75,10 +75,10 @@ def settings_env(
     log_folder: Path,
     tmp_path: Path,
 ) -> Callable[..., dict[str, str]]:
-    """設定ファイルを記載して `RULE_INJECT_CONFIG` で指した、フックに引き渡す環境変数を返却する factory。"""
+    """設定ファイルを書き込んで `RULE_INJECT_CONFIG` で指した、フックに引き渡す環境変数を返却する factory。"""
 
     def _make(**global_values: Any) -> dict[str, str]:
-        """記録フォルダとログのフォルダに global の値を重ねた設定ファイルを記載する。"""
+        """記録フォルダとログのフォルダに global の値を重ねた設定ファイルを書き込む。"""
         values: dict[str, Any] = {"state_dir": str(state_dir), "log_dir": str(log_folder)}
         values.update(global_values)
         lines = ["global:"]
@@ -164,7 +164,7 @@ def unwritable() -> Iterator[Callable[[Path, int], Path]]:
 
 @pytest.fixture
 def make_index(tmp_path: Path) -> Callable[..., Path]:
-    """索引の YAML を記載し、そのパスを返却する factory。"""
+    """索引の YAML を書き込み、そのパスを返却する factory。"""
 
     def _make(text: str, name: str = "index.yaml") -> Path:
         """text を tmp_path の下の name に書き込む。"""
@@ -315,7 +315,7 @@ def rule_file(tmp_path: Path) -> Callable[..., Path]:
 
 @pytest.fixture
 def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], Path]:
-    """既読の記録ファイルを、行を 1 行ずつ記載して配置する factory（既読の行は `{場所}\\t{ハッシュ}`）。"""
+    """既読の記録ファイルを、行を 1 行ずつ書き込んで配置する factory（既読の行は `{場所}\\t{ハッシュ}`）。"""
 
     def _write(lines: Sequence[str]) -> Path:
         """lines を 1 行ずつ、このセッションの記録ファイルに書き込む。"""
@@ -329,7 +329,7 @@ def write_record(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], 
 
 @pytest.fixture
 def write_guided(state_dir: Path, session_id: str) -> Callable[[Sequence[str]], Path]:
-    """案内済みの記録ファイルを、場所を 1 行ずつ記載して配置する factory。"""
+    """案内済みの記録ファイルを、場所を 1 行ずつ書き込んで配置する factory。"""
 
     def _write(locations: Sequence[str]) -> Path:
         """locations を 1 行ずつ、このセッションの案内済みの記録ファイルに書き込む。"""

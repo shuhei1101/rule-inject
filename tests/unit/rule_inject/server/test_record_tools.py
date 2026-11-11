@@ -29,7 +29,7 @@ def write_session_record(state_dir: Path) -> Callable[..., Path]:
     """指定のセッションの既読の記録を、最終更新を決めて配置する factory。"""
 
     def _write(target_session_id: str, lines: Sequence[str], modified: int) -> Path:
-        """target_session_id の記録ファイルに lines を記載し、最終更新を modified（UNIX 時刻の秒）にする。"""
+        """target_session_id の記録ファイルに lines を書き込み、最終更新を modified（UNIX 時刻の秒）にする。"""
         path = state_dir / f"{target_session_id}.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")

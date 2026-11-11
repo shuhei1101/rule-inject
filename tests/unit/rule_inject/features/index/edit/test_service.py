@@ -388,7 +388,7 @@ def test_write_entry_when_indent_and_newline(
     update: bool,
     expected: str,
 ) -> None:
-    """索引の字下げと改行を保って記載する（正常系）。"""
+    """索引の字下げと改行を保って書き込む（正常系）。"""
     from rule_inject.features.index import entry_revs
 
     # 準備
