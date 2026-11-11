@@ -100,7 +100,7 @@ flows:
       - 案内済みの記録にルールの場所が 1 行ある
       - 終了コードが `0`
     test: test_normal_when_not_blocked
-  - name: 正常系（Bashで読む対象に当たる）
+  - name: 正常系（Bashで読む対象に該当する）
     summary: 読むコマンドの引数から取り出したパスで照合して止める
     setup:
       - name: Mock
@@ -130,7 +130,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_read_by_bash
-  - name: 正常系（MCPのツールに当たる）
+  - name: 正常系（MCPのツールに該当する）
     summary: '`tools` の glob に該当する MCP のツールの呼び出しを止める'
     setup:
       - name: Mock
@@ -159,7 +159,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_mcp_tool
-  - name: 正常系（同じルールに複数のエントリが当たる）
+  - name: 正常系（同じルールに複数のエントリが該当する）
     summary: 同じルールのエントリ 2 つを 1 件にまとめ、どちらかが止めるなら止める
     setup:
       - name: Mock
@@ -187,7 +187,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が 1 回だけ載っている'
     test: test_normal_when_duplicate_entries
-  - name: 正常系（外すパスに当たる）
+  - name: 正常系（除外するパスに該当する）
     summary: '`exclude` に該当するパスには案内しない'
     setup:
       - name: Mock
@@ -242,7 +242,7 @@ flows:
       - 止めるルールが止めないルールより前に並んでいる
       - 記載しきれなかったルールの件数が末尾に載っている
     test: test_normal_when_guidance_too_long
-  - name: 異常系（索引が読めない・止めずに理由を載せる）
+  - name: 異常系（索引が読めない・止めずに理由を記載する）
     summary: 索引が無いか書式に合わないとき、操作を止めずに理由を記載する
     setup:
       - name: Mock
@@ -267,7 +267,7 @@ flows:
       - '`additionalContext` に 2 つの索引の場所と理由が載っている'
       - 終了コードが `0`
     test: test_error_when_index_unreadable
-  - name: 異常系（既読の記録が読めない・止めずに理由を載せる）
+  - name: 異常系（既読の記録が読めない・止めずに理由を記載する）
     summary: 記録ファイルが読めないとき、操作を止めずに理由を記載し、ログに書き込む
     setup:
       - name: Mock
@@ -297,7 +297,7 @@ flows:
       - 'ログに `operation: read_record` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_record_unreadable
-  - name: 正常系（Grepで読む対象に当たる）
+  - name: 正常系（Grepで読む対象に該当する）
     summary: 組み込みの Grep が指すファイルで照合して止める
     setup:
       - name: Mock
@@ -383,8 +383,8 @@ flows:
       - 2 回とも `permissionDecision` が `deny`
       - 案内済みの記録ファイルが無い
     test: test_normal_when_blocked_twice
-  - name: 正常系（既定の置き場所の索引）
-    summary: 設定ファイルが無いとき、既定の置き場所の索引で案内する
+  - name: 正常系（既定の配置場所の索引）
+    summary: 設定ファイルが無いとき、既定の配置場所の索引で案内する
     setup:
       - name: Mock
         description: なし
@@ -403,10 +403,10 @@ flows:
       sequenceDiagram
         participant CC as Claude Code
         participant H as ルール案内
-        participant IDX as 既定の置き場所の索引
+        participant IDX as 既定の配置場所の索引
 
         CC->>H: 標準入力（Write・対象のパス）
-        H->>H: 設定ファイルが無いため既定の置き場所を索引にする
+        H->>H: 設定ファイルが無いため既定の配置場所を索引にする
         H->>IDX: 読む（ユーザーの既定は無いため読まない）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
@@ -422,7 +422,7 @@ flows:
         description: なし
         notes: '-'
       - name: 索引
-        description: 既定の置き場所のフローと同じ `rules.yaml` を配置する
+        description: 既定の配置場所のフローと同じ `rules.yaml` を配置する
         notes: '設定ファイルの `projects` に、`CLAUDE_PROJECT_DIR` のフォルダ名を `match` に持ち `indexes: []` の要素を配置する'
       - name: 入力
         description: 止めて案内するフローと同じ
@@ -469,7 +469,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` に展開したルールの場所（`{RULES_DIR の値}/python.md`）が載り、`!{RULES_DIR}` が載っていない'
     test: test_normal_when_rule_has_variable
-  - name: 異常系（ルールの場所の変数参照を展開できない・止めずに理由を載せる）
+  - name: 異常系（ルールの場所の変数参照を展開できない・止めずに理由を記載する）
     summary: 未設定の名前が残ったエントリを読み飛ばし、理由を記載する
     setup:
       - name: Mock
@@ -500,7 +500,7 @@ flows:
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_rule_variable_unset
-  - name: 異常系（案内済みの記録に書けない・止めずに理由を載せる）
+  - name: 異常系（案内済みの記録に書けない・止めずに理由を記載する）
     summary: 案内済みの記録に書き込めないとき、案内を出したうえで理由を記載し、ログに書き込む
     setup:
       - name: Mock
@@ -530,7 +530,7 @@ flows:
       - 'ログに `operation: write_record` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_guided_record_unwritable
-  - name: 正常系（MCPのツールの引数に当たる）
+  - name: 正常系（MCPのツールの引数に該当する）
     summary: '`args` のパターンに引数の値が該当する MCP のツールの呼び出しを止める'
     setup:
       - name: Mock
@@ -561,7 +561,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_mcp_args_match
-  - name: 正常系（MCPのツールの引数に当たらない）
+  - name: 正常系（MCPのツールの引数に該当しない）
     summary: ツール名に該当しても、`args` のキーが無いか値が該当しなければ案内しない
     setup:
       - name: Mock
@@ -589,7 +589,7 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_mcp_args_unmatched
-  - name: 正常系（正規表現のパスに当たる）
+  - name: 正常系（正規表現のパスに該当する）
     summary: '`re:` で始まる `paths` のパターンに部分一致するパスの Write を止める'
     setup:
       - name: Mock
@@ -619,7 +619,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_regex_path
-  - name: 異常系（読めない正規表現・止めずに理由を載せる）
+  - name: 異常系（読めない正規表現・止めずに理由を記載する）
     summary: コンパイルできない正規表現を持つエントリを読み飛ばし、理由を記載する
     setup:
       - name: Mock
@@ -650,7 +650,7 @@ flows:
       - 'ログに `operation: read_index` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_regex_unreadable
-  - name: 異常系（URLのルール・止めずに理由を載せる）
+  - name: 異常系（URLのルール・止めずに理由を記載する）
     summary: '`rule` が URL のエントリを読み飛ばし、理由を記載する'
     setup:
       - name: Mock
@@ -712,7 +712,7 @@ flows:
       - '`permissionDecisionReason` にルールの場所が載っている'
       - 終了コードが `0`
     test: test_normal_when_rule_changed_after_read
-  - name: 正常系（当たったプロジェクトの索引を追加する）
+  - name: 正常系（該当したプロジェクトの索引を追加する）
     summary: '`match` が該当した `projects` の要素の索引だけを、並びの順に追加して案内する'
     setup:
       - name: Mock
@@ -750,7 +750,7 @@ flows:
       - '`permissionDecisionReason` に索引 c のルールの場所が載っていない'
       - 終了コードが `0`
     test: test_normal_when_projects_matched
-  - name: 正常系（worktreeを本体のフォルダ名で当てる）
+  - name: 正常系（worktreeを本体のフォルダ名で照合する）
     summary: '`.claude/worktrees/` の下で起動したとき、本体のフォルダ名で `projects` の要素を適用する'
     setup:
       - name: Mock
@@ -786,7 +786,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_worktree_matched
-  - name: 異常系（設定ファイルが読めない・止めずに理由を載せる）
+  - name: 異常系（設定ファイルが読めない・止めずに理由を記載する）
     summary: 設定ファイルが知らないキーを持つとき、既定値で動かさず、操作を止めずに理由を記載する
     setup:
       - name: Mock
@@ -796,7 +796,7 @@ flows:
         description: '`RULE_INJECT_CONFIG` が指すファイルが、`projects` の要素に知らないキー `index` を持つ'
         notes: '`indexes` の記載の誤り'
       - name: 索引
-        description: 既定の置き場所のフローと同じ `rules.yaml` を `CLAUDE_PROJECT_DIR` の直下に配置する
+        description: 既定の配置場所のフローと同じ `rules.yaml` を `CLAUDE_PROJECT_DIR` の直下に配置する
         notes: 既定値で動かさないことを確認する
       - name: ログ
         description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
@@ -824,7 +824,7 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
-  - name: 正常系（無効のエントリに当たる）
+  - name: 正常系（無効のエントリに該当する）
     summary: '`enabled: false` のエントリにだけ該当する MCP のツールの呼び出しでは、止めずに何も出さない'
     setup:
       - name: Mock
@@ -883,7 +883,7 @@ flows:
       - '`additionalContext` にルールの場所が 1 回だけ載り、「やり直してください」を含まない'
       - 終了コードが `0`
     test: test_normal_when_disabled_and_enabled_entries
-  - name: 異常系（enabledが真偽値でない・止めずに理由を載せる）
+  - name: 異常系（enabledが真偽値でない・止めずに理由を記載する）
     summary: '`enabled` が `true` / `false` 以外の索引は読めない索引として扱い、操作を止めずに場所と理由を記載する'
     setup:
       - name: Mock
@@ -909,7 +909,7 @@ flows:
       - '`additionalContext` に索引の場所と、`enabled` の値が許さない値である理由が載っている'
       - 終了コードが `0`
     test: test_error_when_enabled_not_boolean
-  - name: 正常系（MCPのツールの引数の条件の木に当たる）
+  - name: 正常系（MCPのツールの引数の条件の木に該当する）
     summary: '`args` の `{道筋}[{field}]` のパターンに、条件の木の入れ子の束の中の値が該当する MCP のツールの呼び出しを止める'
     setup:
       - name: Mock
@@ -938,7 +938,7 @@ flows:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
     test: test_normal_when_mcp_filter_tree_match
-  - name: 正常系（条件の木の否定の中だけに当たる）
+  - name: 正常系（条件の木の否定の中だけに該当する）
     summary: パターンに該当する値が `not` の中か否定の `op` の条件にしか無い呼び出しは案内しない
     setup:
       - name: Mock
@@ -1082,7 +1082,7 @@ flows:
       - '`permissionDecisionReason` にルールの場所の行が 1 行だけある'
       - その下に `ツール:` の行が 2 行あり、1 つ目のエントリの `read_tool`、3 つ目のエントリの `read_tool` の順
     test: test_normal_when_read_tools_merged
-  - name: 異常系（参照するツールの書式が誤り・止めずに理由を載せる）
+  - name: 異常系（参照するツールの書式が誤り・止めずに理由を記載する）
     summary: '`read_tool` が `tool` を持たない索引は読めない索引として扱い、操作を止めずに場所と理由を記載する'
     setup:
       - name: Mock

@@ -102,7 +102,7 @@ flows:
       - '対象のエントリに `enabled: false` が記載されている'
       - 索引を `load_indexes` で読むと、対象のエントリが読めたエントリに入っていない
     test: test_normal_when_entry_disabled
-  - name: 正常系（書き込まずに確かめる）
+  - name: 正常系（書き込まずに確認する）
     summary: '`dry_run` でチェックと差分だけを返却する'
     setup:
       - name: Mock
@@ -315,7 +315,7 @@ flows:
       - '結果が `isError: true` で、今のバージョンと一覧を再取得する旨が載っている'
       - 索引のファイルがテストが書き換えた後のバイト列のまま
     test: test_error_when_rev_mismatch
-  - name: 異常系（書いた後の索引がチェックに通らない・ToolError）
+  - name: 異常系（書き込んだ後の索引がチェックに通らない・ToolError）
     summary: Schema に違反するエントリの新規作成を断る
     setup:
       - name: Mock
@@ -399,7 +399,7 @@ flows:
       - '結果が `isError: true` で、索引の書式を保って書き込めない旨、`rules[1]` の `paths` の行の番号、索引を手で修正する旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま
     test: test_error_when_layout_not_kept
-  - name: 正常系（参照するツールを書く）
+  - name: 正常系（参照するツールを記載する）
     summary: 位置で指したエントリに `read_tool` を記載し、`read_by` の後ろに並べる
     setup:
       - name: Mock
@@ -549,12 +549,12 @@ exceptions:
   - name: ToolError（バージョンが合わない）
     condition: '`expected_rev` が今のエントリのバージョンと違う'
     notes: 今のバージョンと、一覧を再取得してから再度呼び出す旨を返却する
-  - name: ToolError（書いた後の索引がチェックに通らない）
+  - name: ToolError（書き込んだ後の索引がチェックに通らない）
     condition: 書き込んだ後の索引をフックが読めない、または書き込む前の索引に無かった問題（JSON Schema の違反・ルールの場所にファイルが無いエントリ）が出る
     notes: 書き込まずに、新しく出た問題ごとの索引の中の場所と理由を返却する
   - name: ToolError（フックが読めない索引）
     condition: '`position` を指定し、索引が YAML としては読めるがフックの読み取りが読めない（エントリのバージョンを求められない）'
-    notes: 書き込まずに、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨を返却する。`position` を指定しない新規作成も、書き込んだ後の索引をフックが読めないため「書いた後の索引がチェックに通らない」で断る
+    notes: 書き込まずに、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨を返却する。`position` を指定しない新規作成も、書き込んだ後の索引をフックが読めないため「書き込んだ後の索引がチェックに通らない」で断る
   - name: ToolError（索引の書式を保てない）
     condition: 書き出した内容で、対象のエントリの外の行が変わる（他のエントリが `~`・アンカーなど round-trip が書き換える表記を持つ）
     notes: 書き込まずに、索引の書式を保って書き込めない旨、最初に変わる行の番号、索引を手で修正する旨を返却する

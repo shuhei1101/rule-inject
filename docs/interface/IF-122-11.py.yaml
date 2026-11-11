@@ -161,7 +161,7 @@ flows:
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
-  - name: 正常系（pathsがどのファイルにも当たらない）
+  - name: 正常系（pathsがどのファイルにも該当しない）
     summary: プロジェクトの索引の `paths` の該当しないエントリを返却し、ユーザー全体の索引の分は返却しない
     setup:
       - name: Mock
@@ -201,7 +201,7 @@ flows:
       - '`problem_count` が 3'
       - '`unmatched_scan.completed` が `true` で、`scanned_files` が 1（`.git` の下を数えない）'
     test: test_normal_when_paths_unmatched
-  - name: 正常系（ユーザー全体の索引も確かめる）
+  - name: 正常系（ユーザー全体の索引も確認する）
     summary: '`include_global` が `true` のとき、ユーザー全体の索引の `paths` の該当しないエントリも返却し、`problem_count` には数えない'
     setup:
       - name: Mock
@@ -310,7 +310,7 @@ flows:
       - 2 回目の `unmatched_scan.scanned_files` が 1（1 回目からの合計でない）で、`completed` が `false`
       - 2 回目の `next_cursor` が 1 回目の `next_cursor` と違う
     test: test_normal_when_index_changed_since_cursor
-  - name: 異常系（cursorが使えない・ToolError）
+  - name: 異常系（cursorを使用できない・ToolError）
     summary: 読めない `cursor` と、別の `project_dir` で返却した `cursor` をエラーにする
     setup:
       - name: Mock
@@ -329,7 +329,7 @@ flows:
     expected:
       - 'どちらの呼び出しも結果が `isError: true` で、`cursor` を省いて再度呼び出す旨が載っている'
     test: test_error_when_cursor_invalid
-  - name: 正常系（タグのパターンが使われているどのタグにも当たらない）
+  - name: 正常系（タグのパターンが使用中のどのタグにも該当しない）
     summary: dev-docs の使用されているタグに該当しないタグのパターンを、全ての索引について返却し、`problem_count` には数えない
     setup:
       - name: Mock
@@ -394,7 +394,7 @@ flows:
       - どの索引の `unused_tag_patterns` も空
       - '`missing_rules` にファイルが無いエントリが載り、`problem_count` が 1'
     test: test_normal_when_dev_docs_unreachable
-  - name: 正常系（dev-docsが0件を返す）
+  - name: 正常系（dev-docsが0件を返却する）
     summary: dev-docs が読める文書を 0 件と返却したときは、全てのパターンを使用されていないと報告せず、タグの確認を飛ばして理由を返却する
     setup:
       - name: Mock
@@ -648,7 +648,7 @@ exceptions:
   - name: ToolError（設定ファイルが読めない）
     condition: インターフェース定義「ルールの一覧」と同じ
     notes: 設定ファイルの場所と理由を返却する
-  - name: ToolError（cursor が使えない）
+  - name: ToolError（cursor を使用できない）
     condition: '`cursor` が読めない、または `project_dir`・`include_global` が `cursor` を返却した呼び出しと違う'
     notes: '`cursor` を省いて再度呼び出す旨を返却する'
 error_format: インターフェース定義「ルールの一覧」と同じ
