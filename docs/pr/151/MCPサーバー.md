@@ -35,3 +35,4 @@ origin/develop [639080c](https://github.com/shuhei1101/rule-inject/commit/639080
 | 単一ユースケース設計 | `639080c..d2ddca3` | - |
 | 単一ユースケース設計 | `7a678c1..301f987` | レビューの指摘の修正 |
 | インターフェース定義設計 | `b4b2ed3..e3e35e6` | - |
+| モジュール構成設計 | `fb77cde..a2fe577` | - |
