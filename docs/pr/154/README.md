@@ -1,0 +1,1 @@
+# schemas・skills・.claude-plugin・docs の目次と索引に残る AI slop の単語を置き換える
