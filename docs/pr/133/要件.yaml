@@ -20,7 +20,7 @@ docs:
 scope_out:
   - item: knowledge の判定フローチャート『エージェントに渡す文・処理の置き場所』の ※3 が、MCP を持たないプラグインの例に rule-inject の新しいファイルの作り方を挙げていること
     reason: 別のリポジトリ（knowledge）の文書で、この作業 PR がマージされて初めて例が実体と合わなくなる
-    plan: to_file
+    plan: shuhei1101/knowledge#258
   - item: instructions に、rule-inject の MCP のツールの使い分け（いつこの MCP を探すか・grep・Read との使い分け・ツール間の順序）を書き足すこと
     reason: Issue と決定 D-387 が移す対象にしたのは、SessionStart で注入している新しいファイルの作り方の決まりだけ。規約『注入文の書き分けと書き方』は最小の文から始めると定めている。インターフェース定義のレビューで、この PR では書き足さないと確定した
-    plan: to_file
+    plan: '#146'
