@@ -103,107 +103,159 @@ docs:
   - page: docs/guide/MCPツール.md
     new: false
     change: ツールの説明の単語を置き換える（server/types.py・app.py の説明文と合わせる）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/README.md
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/files.yml
     new: false
     change: ページの説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/index.yaml
     new: false
     change: ページの説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/セットアップ.md
     new: false
     change: 手順の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/ルールにするか文書にするかを決める.md
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/使い方.md
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/環境変数.md
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/guide/設定ファイル.md
     new: false
     change: キーの説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/config/CFG-122-1.yaml
     new: false
     change: キーの説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/config/README.md
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/config/index.yaml
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/library/LIB-122-3.yaml
     new: false
     change: 利用方法の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/library/LIB-122-4.yaml
     new: false
     change: 利用方法の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/library/LIB-122-5.yaml
     new: false
     change: 利用方法の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/library/LIB-122-6.yaml
     new: false
     change: 利用方法の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/library/README.md
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/library/index.yaml
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/external-api/API-122-1.yaml
     new: false
     change: 利用方法の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/external-api/README.md
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/external-api/index.yaml
     new: false
     change: 目次の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/nonfunctional/NFR-122-1.yaml
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: 説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
   - page: docs/glossary/GLO-122-1.yaml
     new: false
     change: 用語の説明の単語を置き換える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-11T10:01:42.647413+00:00'
 scope_out:
   - item: 「読む」と「書く操作」の置き換え
     reason: 起点 Issue の終わりの条件が、このプラグインの単語として維持すると定めている
@@ -217,3 +269,6 @@ scope_out:
   - item: schemas/・skills/・.claude-plugin/・docs/README.md に残る AI slop の単語の置き換え
     reason: 起点 Issue の範囲（src・tests・hooks・設計書・docs/guide）の外
     plan: '#152'
+  - item: 'docs/guide の分類名・ページ名「使い方」（`category`・`permalink: /使い方/`・ページ `使い方.md`・目次の分類）'
+    reason: 公開ドキュメントの分類と URL の名前で、置き換えると公開済みの URL とサイドバーの構成が変わる。文中の単語の置き換えと別に、公開 URL を変えるかを判断する
+    plan: to_file
