@@ -70,8 +70,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-11T10:02:05.554355+00:00'
   - process: 単体テスト作成
-    status: todo
+    status: done
     note: tests/unit の docstring と、置き換える文言を照合する期待値を修正する
+    updated_by: planner
+    updated_at: '2026-11-11T10:18:49.810173+00:00'
   - process: 実装
     status: todo
     note: src・hooks の docstring・コメント・ツールの説明文・エラーと案内の文言の単語を置き換える

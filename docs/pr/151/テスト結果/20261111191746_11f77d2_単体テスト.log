@@ -1,0 +1,425 @@
+$ uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-docs-replace-ai-slop-words-repo-wide
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 555 items
+
+tests/unit/hooks/test_run.py ....                                        [  0%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  3%]
+................                                                         [  6%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [  8%]
+tests/unit/rule_inject/features/guidance/test_service.py F...F.......... [ 10%]
+                                                                         [ 10%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 12%]
+tests/unit/rule_inject/features/index/check/test_service.py ...........  [ 14%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 14%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 17%]
+.....FFFF........                                                        [ 20%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 20%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ...              [ 21%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 24%]
+...............................................................          [ 35%]
+tests/unit/rule_inject/features/index/test_yaml.py ....................  [ 39%]
+tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py .....  [ 40%]
+tests/unit/rule_inject/features/migrate/test_service.py ........         [ 41%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 44%]
+.............................                                            [ 49%]
+tests/unit/rule_inject/features/server_start/test_service.py .........   [ 51%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 52%]
+tests/unit/rule_inject/hooks/test_record_read.py .................       [ 55%]
+tests/unit/rule_inject/hooks/test_rule_guide.py ................         [ 58%]
+tests/unit/rule_inject/hooks/test_runner.py .....                        [ 59%]
+tests/unit/rule_inject/hooks/test_search_guide.py ........               [ 60%]
+tests/unit/rule_inject/hooks/test_start_server.py ........               [ 61%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 63%]
+tests/unit/rule_inject/hooks/test_work_rules.py .....                    [ 64%]
+tests/unit/rule_inject/migrate/test_main.py ...                          [ 64%]
+tests/unit/rule_inject/server/test_admin_tools.py .........              [ 66%]
+tests/unit/rule_inject/server/test_app.py ...                            [ 67%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 69%]
+tests/unit/rule_inject/server/test_clone.py ..........                   [ 70%]
+tests/unit/rule_inject/server/test_control.py .............              [ 73%]
+tests/unit/rule_inject/server/test_dev_docs.py ........                  [ 74%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 75%]
+tests/unit/rule_inject/server/test_main.py ....                          [ 76%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 77%]
+tests/unit/rule_inject/server/test_tools.py .............                [ 79%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 81%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 83%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 87%]
+..........................                                               [ 92%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ..........           [ 94%]
+tests/unit/rule_inject/shared/test_variables.py .....                    [ 95%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ...F...............FFF. [ 99%]
+...                                                                      [100%]
+
+=================================== FAILURES ===================================
+______________________ test_build_guidance_when_blocking _______________________
+
+    def test_build_guidance_when_blocking() -> None:
+        """止める案内は止めるルールを先に並べる（正常系）。"""
+        # 準備
+        rules = [
+            MatchedRule(location="/r/read.md", blocking=False),
+            MatchedRule(location="/r/write.md", blocking=True),
+        ]
+        # 実行
+        result = build_guidance(rules)
+        # 検証
+        assert result.text.startswith(BLOCKING_HEADER)
+>       assert BLOCKING_HEADER == (
+            "この操作に関連する未読のルールがあります。"
+            "下のルールを参照してから、同じ操作を再試行してください。"
+        )
+E       AssertionError: assert 'この操作に関連する未読の...操作をやり直してください。' == 'この操作に関連する未読の...操作を再試行してください。'
+E         
+E         - この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作を再試行してください。
+E         ?                                        ^^^
+E         + この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作をやり直してください。
+E         ?                                        ^^^
+
+tests/unit/rule_inject/features/guidance/test_service.py:45: AssertionError
+_____________________ test_build_guidance_when_read_tools ______________________
+
+    def test_build_guidance_when_read_tools() -> None:
+        """参照するツールの行と注記を記載する（正常系）。"""
+        # 準備
+        read_tool = ReadTool(
+            tool="mcp__docs__search_docs",
+            args={"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]},
+            optional_args={},
+        )
+        rules = [
+            MatchedRule(location="/r/a.md", blocking=True, read_tools=(read_tool,)),
+            MatchedRule(location="/r/b.md", blocking=True),
+        ]
+        # 実行
+        result = build_guidance(rules)
+        # 検証
+        assert result.text.splitlines() == [
+            BLOCKING_HEADER,
+            READ_TOOL_NOTE,
+            "- /r/a.md",
+            '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}',
+            "- /r/b.md",
+        ]
+>       assert READ_TOOL_NOTE == (
+            "`ツール:` の行があるルールは、そのツールで参照してください。"
+            "記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。"
+            "ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。"
+        )
+E       AssertionError: assert '`ツール:` の行がある...ad で参照してください。' == '`ツール:` の行がある...ad で参照してください。'
+E         
+E         Skipping 58 identical leading characters in diff, use -v to show
+E         - 数は任意です。ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。
+E         ?           ^ ^^^
+E         + 数は任意です。ツールが使えない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。
+E         ?           ^ ^
+
+tests/unit/rule_inject/features/guidance/test_service.py:108: AssertionError
+________________ test_write_entry_when_layout_not_kept[update] _________________
+
+make_index = <function make_index.<locals>._make at 0x7be3b08ffce0>
+make_check = <function make_check.<locals>._make at 0x7be3b08ff4c0>
+write = <function write.<locals>._write at 0x7be3b0693e20>, position = 0
+entry = {'paths': ['**/*.rs']}, dry_run = False
+
+    @pytest.mark.parametrize(
+        ("position", "entry", "dry_run"),
+        [
+            pytest.param(0, {"paths": ["**/*.rs"]}, False, id="update"),
+            pytest.param(None, {"rule": "c.md"}, False, id="new"),
+            pytest.param(0, {"paths": ["**/*.rs"]}, True, id="update_dry_run"),
+            pytest.param(None, {"rule": "c.md"}, True, id="new_dry_run"),
+        ],
+    )
+    def test_write_entry_when_layout_not_kept(
+        make_index: Callable[..., Path],
+        make_check: Callable[..., CheckSpy],
+        write: Callable[..., Any],
+        position: int | None,
+        entry: dict[str, Any],
+        dry_run: bool,
+    ) -> None:
+        """対象のエントリの外の行が変わる書き込みは断る（異常系）。"""
+        from rule_inject.features.index import entry_revs
+        from rule_inject.shared.errors import IndexEditError
+    
+        # 準備
+        text = "rules:\n  - rule: a.md\n    paths: [x]\n  - rule: b.md\n    paths: [docs/**, ~]\n"
+        index = make_index(text)
+        before = index.read_bytes()
+        check, calls = make_check()
+        expected_rev = entry_revs(text)[0] if position is not None else None
+        # 実行・検証
+        with pytest.raises(IndexEditError) as raised:
+            write(
+                index,
+                entry,
+                check,
+                position=position,
+                expected_rev=expected_rev,
+                dry_run=dry_run,
+            )
+>       assert "書式を保って書き込めない" in raised.value.reason
+E       AssertionError: assert '書式を保って書き込めない' in '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください'
+E        +  where '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください' = IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n0/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください').reason
+E        +    where IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n0/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') = <ExceptionInfo IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n0/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') tblen=4>.value
+
+tests/unit/rule_inject/features/index/edit/test_service.py:447: AssertionError
+__________________ test_write_entry_when_layout_not_kept[new] __________________
+
+make_index = <function make_index.<locals>._make at 0x7be3b0693b00>
+make_check = <function make_check.<locals>._make at 0x7be3b0690ae0>
+write = <function write.<locals>._write at 0x7be3b0692d40>, position = None
+entry = {'rule': 'c.md'}, dry_run = False
+
+    @pytest.mark.parametrize(
+        ("position", "entry", "dry_run"),
+        [
+            pytest.param(0, {"paths": ["**/*.rs"]}, False, id="update"),
+            pytest.param(None, {"rule": "c.md"}, False, id="new"),
+            pytest.param(0, {"paths": ["**/*.rs"]}, True, id="update_dry_run"),
+            pytest.param(None, {"rule": "c.md"}, True, id="new_dry_run"),
+        ],
+    )
+    def test_write_entry_when_layout_not_kept(
+        make_index: Callable[..., Path],
+        make_check: Callable[..., CheckSpy],
+        write: Callable[..., Any],
+        position: int | None,
+        entry: dict[str, Any],
+        dry_run: bool,
+    ) -> None:
+        """対象のエントリの外の行が変わる書き込みは断る（異常系）。"""
+        from rule_inject.features.index import entry_revs
+        from rule_inject.shared.errors import IndexEditError
+    
+        # 準備
+        text = "rules:\n  - rule: a.md\n    paths: [x]\n  - rule: b.md\n    paths: [docs/**, ~]\n"
+        index = make_index(text)
+        before = index.read_bytes()
+        check, calls = make_check()
+        expected_rev = entry_revs(text)[0] if position is not None else None
+        # 実行・検証
+        with pytest.raises(IndexEditError) as raised:
+            write(
+                index,
+                entry,
+                check,
+                position=position,
+                expected_rev=expected_rev,
+                dry_run=dry_run,
+            )
+>       assert "書式を保って書き込めない" in raised.value.reason
+E       AssertionError: assert '書式を保って書き込めない' in '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください'
+E        +  where '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください' = IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n1/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください').reason
+E        +    where IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n1/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') = <ExceptionInfo IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n1/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') tblen=4>.value
+
+tests/unit/rule_inject/features/index/edit/test_service.py:447: AssertionError
+____________ test_write_entry_when_layout_not_kept[update_dry_run] _____________
+
+make_index = <function make_index.<locals>._make at 0x7be3b0693380>
+make_check = <function make_check.<locals>._make at 0x7be3b0691940>
+write = <function write.<locals>._write at 0x7be3b06922a0>, position = 0
+entry = {'paths': ['**/*.rs']}, dry_run = True
+
+    @pytest.mark.parametrize(
+        ("position", "entry", "dry_run"),
+        [
+            pytest.param(0, {"paths": ["**/*.rs"]}, False, id="update"),
+            pytest.param(None, {"rule": "c.md"}, False, id="new"),
+            pytest.param(0, {"paths": ["**/*.rs"]}, True, id="update_dry_run"),
+            pytest.param(None, {"rule": "c.md"}, True, id="new_dry_run"),
+        ],
+    )
+    def test_write_entry_when_layout_not_kept(
+        make_index: Callable[..., Path],
+        make_check: Callable[..., CheckSpy],
+        write: Callable[..., Any],
+        position: int | None,
+        entry: dict[str, Any],
+        dry_run: bool,
+    ) -> None:
+        """対象のエントリの外の行が変わる書き込みは断る（異常系）。"""
+        from rule_inject.features.index import entry_revs
+        from rule_inject.shared.errors import IndexEditError
+    
+        # 準備
+        text = "rules:\n  - rule: a.md\n    paths: [x]\n  - rule: b.md\n    paths: [docs/**, ~]\n"
+        index = make_index(text)
+        before = index.read_bytes()
+        check, calls = make_check()
+        expected_rev = entry_revs(text)[0] if position is not None else None
+        # 実行・検証
+        with pytest.raises(IndexEditError) as raised:
+            write(
+                index,
+                entry,
+                check,
+                position=position,
+                expected_rev=expected_rev,
+                dry_run=dry_run,
+            )
+>       assert "書式を保って書き込めない" in raised.value.reason
+E       AssertionError: assert '書式を保って書き込めない' in '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください'
+E        +  where '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください' = IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n2/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください').reason
+E        +    where IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n2/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') = <ExceptionInfo IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n2/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') tblen=4>.value
+
+tests/unit/rule_inject/features/index/edit/test_service.py:447: AssertionError
+______________ test_write_entry_when_layout_not_kept[new_dry_run] ______________
+
+make_index = <function make_index.<locals>._make at 0x7be3b06914e0>
+make_check = <function make_check.<locals>._make at 0x7be3b0691760>
+write = <function write.<locals>._write at 0x7be3b06913a0>, position = None
+entry = {'rule': 'c.md'}, dry_run = True
+
+    @pytest.mark.parametrize(
+        ("position", "entry", "dry_run"),
+        [
+            pytest.param(0, {"paths": ["**/*.rs"]}, False, id="update"),
+            pytest.param(None, {"rule": "c.md"}, False, id="new"),
+            pytest.param(0, {"paths": ["**/*.rs"]}, True, id="update_dry_run"),
+            pytest.param(None, {"rule": "c.md"}, True, id="new_dry_run"),
+        ],
+    )
+    def test_write_entry_when_layout_not_kept(
+        make_index: Callable[..., Path],
+        make_check: Callable[..., CheckSpy],
+        write: Callable[..., Any],
+        position: int | None,
+        entry: dict[str, Any],
+        dry_run: bool,
+    ) -> None:
+        """対象のエントリの外の行が変わる書き込みは断る（異常系）。"""
+        from rule_inject.features.index import entry_revs
+        from rule_inject.shared.errors import IndexEditError
+    
+        # 準備
+        text = "rules:\n  - rule: a.md\n    paths: [x]\n  - rule: b.md\n    paths: [docs/**, ~]\n"
+        index = make_index(text)
+        before = index.read_bytes()
+        check, calls = make_check()
+        expected_rev = entry_revs(text)[0] if position is not None else None
+        # 実行・検証
+        with pytest.raises(IndexEditError) as raised:
+            write(
+                index,
+                entry,
+                check,
+                position=position,
+                expected_rev=expected_rev,
+                dry_run=dry_run,
+            )
+>       assert "書式を保って書き込めない" in raised.value.reason
+E       AssertionError: assert '書式を保って書き込めない' in '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください'
+E        +  where '索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください' = IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n3/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください').reason
+E        +    where IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n3/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') = <ExceptionInfo IndexEditError('/tmp/pytest-of-shuhei2441/pytest-7500/test_write_entry_when_layout_n3/index.yaml: 索引の書式を保って書けない（対象のエントリの外の 5行目が変わる）。索引を手で直してください') tblen=4>.value
+
+tests/unit/rule_inject/features/index/edit/test_service.py:447: AssertionError
+________________________ test_tokenize_when_tab_indent _________________________
+
+    def test_tokenize_when_tab_indent() -> None:
+        """タブのインデントを拒む（異常系）。"""
+        # 実行・検証
+>       with pytest.raises(ValueError, match=r"^2行目: インデントにタブは使用できません$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       - 2行目: インデントにタブは使えません
+E       ?                ^
+E       + 2行目: インデントにタブは使用できません
+E       ?                ^^^
+
+tests/unit/rule_inject/shared/test_yaml_lines.py:52: AssertionError
+____________________ test_split_key_when_invalid[no_colon] _____________________
+
+text = 'abc'
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            pytest.param("abc", id="no_colon"),
+            pytest.param(": x", id="empty_key"),
+            pytest.param("a b: x", id="space_in_key"),
+        ],
+    )
+    def test_split_key_when_invalid(text: str) -> None:
+        """キーの形式でない行を拒む（異常系）。"""
+        # 準備
+        line = Line(number=1, indent=0, text=text)
+        # 実行・検証
+>       with pytest.raises(ValueError, match=r"^1行目: `キー: 値` の形式で記載してください$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       - 1行目: `キー: 値` の形式で書いてください
+E       ?                  ^^
+E       + 1行目: `キー: 値` の形式で記載してください
+E       ?                  ^^^
+
+tests/unit/rule_inject/shared/test_yaml_lines.py:180: AssertionError
+____________________ test_split_key_when_invalid[empty_key] ____________________
+
+text = ': x'
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            pytest.param("abc", id="no_colon"),
+            pytest.param(": x", id="empty_key"),
+            pytest.param("a b: x", id="space_in_key"),
+        ],
+    )
+    def test_split_key_when_invalid(text: str) -> None:
+        """キーの形式でない行を拒む（異常系）。"""
+        # 準備
+        line = Line(number=1, indent=0, text=text)
+        # 実行・検証
+>       with pytest.raises(ValueError, match=r"^1行目: `キー: 値` の形式で記載してください$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       - 1行目: `キー: 値` の形式で書いてください
+E       ?                  ^^
+E       + 1行目: `キー: 値` の形式で記載してください
+E       ?                  ^^^
+
+tests/unit/rule_inject/shared/test_yaml_lines.py:180: AssertionError
+__________________ test_split_key_when_invalid[space_in_key] ___________________
+
+text = 'a b: x'
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            pytest.param("abc", id="no_colon"),
+            pytest.param(": x", id="empty_key"),
+            pytest.param("a b: x", id="space_in_key"),
+        ],
+    )
+    def test_split_key_when_invalid(text: str) -> None:
+        """キーの形式でない行を拒む（異常系）。"""
+        # 準備
+        line = Line(number=1, indent=0, text=text)
+        # 実行・検証
+>       with pytest.raises(ValueError, match=r"^1行目: `キー: 値` の形式で記載してください$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       - 1行目: `キー: 値` の形式で書いてください
+E       ?                  ^^
+E       + 1行目: `キー: 値` の形式で記載してください
+E       ?                  ^^^
+
+tests/unit/rule_inject/shared/test_yaml_lines.py:180: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/rule_inject/features/guidance/test_service.py::test_build_guidance_when_blocking
+FAILED tests/unit/rule_inject/features/guidance/test_service.py::test_build_guidance_when_read_tools
+FAILED tests/unit/rule_inject/features/index/edit/test_service.py::test_write_entry_when_layout_not_kept[update]
+FAILED tests/unit/rule_inject/features/index/edit/test_service.py::test_write_entry_when_layout_not_kept[new]
+FAILED tests/unit/rule_inject/features/index/edit/test_service.py::test_write_entry_when_layout_not_kept[update_dry_run]
+FAILED tests/unit/rule_inject/features/index/edit/test_service.py::test_write_entry_when_layout_not_kept[new_dry_run]
+FAILED tests/unit/rule_inject/shared/test_yaml_lines.py::test_tokenize_when_tab_indent
+FAILED tests/unit/rule_inject/shared/test_yaml_lines.py::test_split_key_when_invalid[no_colon]
+FAILED tests/unit/rule_inject/shared/test_yaml_lines.py::test_split_key_when_invalid[empty_key]
+FAILED tests/unit/rule_inject/shared/test_yaml_lines.py::test_split_key_when_invalid[space_in_key]
+======================= 10 failed, 545 passed in 41.54s ========================
