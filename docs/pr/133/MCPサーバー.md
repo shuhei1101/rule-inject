@@ -36,4 +36,7 @@
 
 ### 結合
 
-結合テスト作成の工程で記入する。
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_server_start.py](https://github.com/shuhei1101/rule-inject/blob/7236b29/tests/integration/server/test_server_start.py) | `test_normal` | 変更 | ✅ | `initialize` の応答の `instructions` の確認を追加<br>`テスト結果/20261111093707_7236b29_結合テスト.log` |
+| [tests/integration/server/conftest.py](https://github.com/shuhei1101/rule-inject/blob/7236b29/tests/integration/server/conftest.py) | `RunningServer.instructions` | 変更 | ✅ | `initialize` の応答の `instructions` を返すヘルパーを追加<br>`テスト結果/20261111093707_7236b29_結合テスト.log` |
