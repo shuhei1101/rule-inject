@@ -15,3 +15,8 @@
 | ファイル | 中身 |
 | --- | --- |
 | [要件](./要件.md) | 要望の整理 |
+
+## テスト結果
+
+コード・テストを変えず、規約『V字モデル』の対応表で関係する単体・結合テストが無いため、実行していない。
+`dev-docs.yaml` は project-index の [schemas/project-index.schema.json](https://github.com/shuhei1101/project-index/blob/c552062/schemas/project-index.schema.json) で検査して違反 0 件だった。
