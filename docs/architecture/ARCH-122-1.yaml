@@ -79,7 +79,6 @@ subsystems:
     runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
     refs:
       - IF-122-6#
-    status: planned
 lead: rule-inject のサブシステムと、Claude Code・ルールの配置場所との境界を示し、機能をどのサブシステムに配置するかを決めるときに参照する。
 external_systems:
   - name: Claude Code
@@ -94,7 +93,6 @@ external_systems:
     direction: 双方向
     protocol: MCP（Streamable HTTP）
     detail: API-122-1#
-    status: planned
 constraints: |-
   - フックは Python の標準ライブラリだけで実装する
   - フックは MCP サーバーが停止していても案内できる

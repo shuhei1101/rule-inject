@@ -45,7 +45,6 @@ tables:
         type: string
         not_null: true
         description: 解決後の絶対パス。改行を含まない
-    status: planned
   - name: '{state_dir}/{session_id}.history.jsonl'
     title: 既読の履歴
     datastore: JSON Lines（UTF-8、1 行 = 1 回の既読）
@@ -85,4 +84,3 @@ tables:
         type: string
         not_null: true
         description: 既読にしたルールの場所。既読の記録の値と同じ
-    status: planned

@@ -496,7 +496,6 @@ request:
     location: argument
     description: ユーザー全体の索引（`global.indexes`、無ければユーザーの既定の索引）の `paths` の該当しないエントリも確認するか
     notes: 既定ではプロジェクトの索引だけを確認する。ユーザー全体の索引の違反・ファイルが無いエントリ・読み飛ばすエントリは、この引数によらず今どおり確認する
-    status: planned
   - name: cursor
     type: str | None
     required: false
@@ -504,7 +503,6 @@ request:
     location: argument
     description: 前の呼び出しの `unmatched_scan.next_cursor`。指定すると、`paths` の該当しないエントリの検出を前の呼び出しが止まった続きから行う
     notes: '`project_dir`・`include_global` は前の呼び出しと同じ値で指定する。違反・ファイルが無いエントリ・読み飛ばすエントリの確認は、この引数によらず毎回全て行う'
-    status: planned
 response:
   - name: success
     type: bool
