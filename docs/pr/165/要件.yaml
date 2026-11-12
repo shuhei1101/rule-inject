@@ -1,0 +1,11 @@
+scope_out:
+  - item: '`docs/external-api/API-122-1.yaml` の `dev-docs.yaml` の 2 か所（61・80 行目）'
+    reason: 61 行目は配信元の設定一般、80 行目は knowledge の設定を指し、rule-inject の直下のファイルを指さない
+    plan: none
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-20.yaml
+    impact: none
+    detail: 使用されているタグを配信元から引く。配信元の設定のファイル名は端末の設定が指すため、流れは変わらない
+    depends_on: []
+docs: []
