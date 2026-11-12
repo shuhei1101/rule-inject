@@ -75,8 +75,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T08:51:57.878748+00:00'
   - process: 実装
-    status: todo
+    status: done
     note: settings.py の既定値、settings.sample.yaml、dev_docs.py・settings.py・app.py（reload_settings の docstring を含む）・check_tools.py・types.py・tags.py の接続先の呼び名
+    updated_by: planner
+    updated_at: '2026-11-12T08:54:50.426982+00:00'
   - process: 結合テスト作成
     status: todo
     note: conftest.py・test_check_indexes.py・test_restart_server.py の偽の接続先の呼び名（関数名は変えない）
