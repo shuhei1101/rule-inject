@@ -1,5 +1,5 @@
 端末の設定の配信元の設定のパスの書き換え:
-  説明: 端末の設定 ~/.config/dev-docs/settings.yaml の配信元 rule-inject の config を /mnt/c/Users/shuhe/repo/rule-inject/dev-docs.yaml から /mnt/c/Users/shuhe/repo/rule-inject/project-index.yaml へ書き換え、配信している dev-docs に管理用 MCP の reload で読み直させる。書き換える前の件数を search_docs（source が rule-inject・view が count）で控えておく
+  説明: 端末の設定 ~/.config/dev-docs/settings.yaml の配信元 rule-inject の config を /mnt/c/Users/shuhe/repo/rule-inject/dev-docs.yaml から /mnt/c/Users/shuhe/repo/rule-inject/project-index.yaml へ書き換え、配信している dev-docs に管理用 MCP の reload で読み直させる。書き換える前の件数を search_docs（source が rule-inject・view が count）で記録しておく
   タグ: [設定の書き換え, 再読み込み]
   実行者: tester
   時期: master へ入った後
