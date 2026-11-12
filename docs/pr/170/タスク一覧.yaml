@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T19:23:16.849723+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: rules.yaml の read_tool を持つエントリに、dev-docs の名前の search_docs の呼び出しで既読にする read_by を加える
+    updated_by: planner
+    updated_at: '2026-11-12T19:38:56.566011+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えない

@@ -8,7 +8,9 @@ docs:
   - page: rules.yaml
     new: false
     change: read_tool を持つエントリに、dev-docs のプラグインの MCP の名前の search_docs で同じ文書を引いた呼び出しを既読にする read_by を加える
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T19:38:53.251638+00:00'
 scope_out:
   - item: 案内の `ツール:` の行に dev-docs のプラグインの MCP の名前も載せる
     reason: dev-docs のプラグインのプロファイルでは project-index のツールを使えず、案内はパスを Read で参照する旨に落ちて動く（docs/guide/索引の書式.md の read_tool）。read_by で dev-docs の名前の呼び出しも既読になる
