@@ -1,0 +1,14 @@
+端末の設定の配信元の設定のパスの書き換え:
+  説明: 端末の設定 ~/.config/dev-docs/settings.yaml の配信元 rule-inject の config を /mnt/c/Users/shuhe/repo/rule-inject/dev-docs.yaml から /mnt/c/Users/shuhe/repo/rule-inject/project-index.yaml へ書き換え、dev-docs に管理用 MCP の reload で読み直させる。dev-docs は配信元の設定をクローンの develop のリビジョンから読むため、作業 PR が develop へ入ると develop:dev-docs.yaml が無くなり、次の読み直しで rule-inject の配信が止まる。マージの直後に実行する。適用前の件数は実行スクリプトが ~/.config/dev-docs/settings.yaml.count-pr165 へ記録する。切り戻しは、作業 PR を develop から revert した後（develop:dev-docs.yaml がある）にだけ使う
+  タグ: [設定の書き換え, 再読み込み]
+  実行者: planner
+  時期: マージの後
+  回数: 1 回限り
+  可逆: true
+  疎通確認: 端末の設定の配信元の設定のパスの書き換え/疎通確認.py
+  実行: 端末の設定の配信元の設定のパスの書き換え/実行.py
+  確認: 端末の設定の配信元の設定のパスの書き換え/確認.py
+  切り戻し: 端末の設定の配信元の設定のパスの書き換え/切り戻し.py
+  失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: dev-docs の GET /_api/settings/sources の rule-inject の行の config が [/mnt/c/Users/shuhe/repo/rule-inject/project-index.yaml]、status が serving で、develop の worktree を作業場所にした search_docs（source が rule-inject・view が count）の件数が ~/.config/dev-docs/settings.yaml.count-pr165 に記録した適用前の件数と同じ
+  状態: "-"

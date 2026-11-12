@@ -1,0 +1,2 @@
+前提確認: failed
+git -C /mnt/c/Users/shuhe/repo/rule-inject cat-file -e develop:project-index.yaml: fatal: path 'project-index.yaml' does not exist in 'develop'（作業 PR が develop へ入っていないか、クローンの develop が古い）
