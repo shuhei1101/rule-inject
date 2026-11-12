@@ -114,3 +114,9 @@ scope_out:
   - item: 配信元の設定ファイル `dev-docs.yaml` と、ルールにするか文書にするかを決めるページなど、配信元・画面としての dev-docs の記述
     reason: project-index#15 の要件で `dev-docs.yaml` の移行が未確定で、今回の接続先の書き換えと目的が異なる
     plan: to_file
+  - item: '`docs/guide/MCPツール.md` の `check_indexes` の説明の「索引ごとには問い合わせ修正しない」'
+    reason: 規約『文章の書き方』に外れる意味の通らない文で、この PR より前からある。今回の要望に含まれない
+    plan: '#160'
+  - item: 'ARCH-122-1 の外部システム project-index の行の `status: planned`'
+    reason: 実装済みなのに `planned` のままで、この PR より前からある。今回の要望に含まれない
+    plan: '#161'
