@@ -234,22 +234,22 @@ requirements:
     introduced:
       pr: 69
   - id: NFR-13
-    name: dev-docs への問い合わせの待ち時間
+    name: project-index への問い合わせの待ち時間
     english_name: dev_docs_query_timeout
     category: 性能
     external_constraint: 未確定（Claude Code が HTTP の MCP のツールの呼び出しを待つ時間の既定値は公開されていない）
     source_kind: 制限なし
     value: '207'
     unit: 秒
-    rationale: '`check_indexes` が dev-docs の `search_docs`（`source: "*"`・`group_by: tags`）を 1 回呼び出すときの、接続から応答までの上限。
+    rationale: '`check_indexes` が project-index の `search_docs`（`source: "*"`・`group_by: tags`）を 1 回呼び出すときの、接続から応答までの上限。
 
       規約『資源の値の決め方』の「下流を待つタイムアウト」で、実測の p99.9 + その 50% とする。
 
       配信元ごとに 1,000 回測った p99.9 の大きい方（文書 51 件の配信元の 137.6 秒）に 68.8 秒を加算し、137.6 + 68.8 ≈ 207 秒（内訳）'
-    measurement: 'dev-docs が配信する文書の数ごとに `search_docs`（`source: "*"`・`group_by: tags`・`format: json`・`cwd` に配信元の中）を 1,000 回呼び出し、接続から応答までの時間の p99.9 を測る。
+    measurement: 'project-index が配信する文書の数ごとに `search_docs`（`source: "*"`・`group_by: tags`・`format: json`・`cwd` に配信元の中）を 1,000 回呼び出し、接続から応答までの時間の p99.9 を測る。
 
-      応答しない偽の dev-docs に向けて `check_indexes` を呼び出し、応答までの時間と `tag_check.state` を確認する'
-    overflow: 上限を超えたら問い合わせをやめ、使用されていないタグのパターンの確認だけを飛ばして `tag_check.state` を `skipped`、`reason` に上限の秒数を記載する。ほかの確認の結果は今どおり返却する（インターフェース定義「索引のチェック」の制約「dev-docs への問い合わせ」）
+      応答しない偽の project-index に向けて `check_indexes` を呼び出し、応答までの時間と `tag_check.state` を確認する'
+    overflow: 上限を超えたら問い合わせをやめ、使用されていないタグのパターンの確認だけを飛ばして `tag_check.state` を `skipped`、`reason` に上限の秒数を記載する。ほかの確認の結果は今どおり返却する（インターフェース定義「索引のチェック」の制約「project-index への問い合わせ」）
     breakdown:
       - part: 文書 51 件の配信元への応答
         value: 1,000 回で 31.3〜171.2 秒（p50 37.9 秒・p99 114.3 秒・p99.9 137.6 秒）
@@ -289,9 +289,9 @@ requirements:
       - part: プロジェクトのファイルを辿る時間
         value: 30 秒
         notes: 非機能要件「プロジェクトのファイルを辿る時間」
-      - part: dev-docs への問い合わせの待ち時間
+      - part: project-index への問い合わせの待ち時間
         value: 207 秒
-        notes: 非機能要件「dev-docs への問い合わせの待ち時間」
+        notes: 非機能要件「project-index への問い合わせの待ち時間」
       - part: 余裕
         value: 118.5 秒
         notes: 内側の待ちの合計 237 秒の 50%（実測が無いときの規約の既定）
