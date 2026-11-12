@@ -45,12 +45,12 @@ constants:
     summary: 'MCP サーバーのポートを指す環境変数の名前'
     value: '`"RULE_INJECT_PORT"`'
   - name: DEFAULT_DEV_DOCS_URL
-    title: dev-docsの接続先の既定
+    title: project-indexの接続先の既定
     container: shared/settings.py
-    summary: 設定ファイルに `global.dev_docs_url` が無いときの dev-docs の接続先
-    value: '`"http://127.0.0.1:8781/mcp"`'
+    summary: 設定ファイルに `global.dev_docs_url` が無いときの project-index の接続先
+    value: '`"http://127.0.0.1:8786/mcp"`'
   - name: DEV_DOCS_URL_SCHEMES
-    title: dev-docsの接続先に許すスキーム
+    title: project-indexの接続先に許すスキーム
     container: shared/settings.py
     summary: '`global.dev_docs_url` の先頭に許す文字列'
     value: '`("http://", "https://")`'
@@ -106,7 +106,7 @@ functions:
          - 続けて、ヒットした要素の `indexes` の値を要素の順に `resolve_location(値, CLAUDE_PROJECT_DIR)` で解いて並べる
          - ヒットした要素のどれも `indexes` を持たなければ、`{CLAUDE_PROJECT_DIR}/{PROJECT_INDEX_DEFAULT}` がファイルとしてあるときだけ並べる（`CLAUDE_PROJECT_DIR` が無ければ並べない）
          - ヒットした要素とプロジェクトの既定の配置場所から並べた索引を `project_indexes` にも入れる
-      6. `state_dir` は `STATE_DIR_ENV` があれば `default_state_dir(env)`、無ければ `global` の値（`~` を展開）か `default_state_dir(env)`。`log_dir` は `global` の値（`~` を展開）か `default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（1024〜65535 の整数でなければ誤り）、無ければ `DEFAULT_SERVER_PORT`。dev-docs の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`。サービス名は `global` の値か、無ければ `DEFAULT_SERVER_SERVICE`
+      6. `state_dir` は `STATE_DIR_ENV` があれば `default_state_dir(env)`、無ければ `global` の値（`~` を展開）か `default_state_dir(env)`。`log_dir` は `global` の値（`~` を展開）か `default_log_dir(env)`。保持日数は `global` の値か、無ければ `DEFAULT_RECORD_RETENTION_DAYS`・`DEFAULT_LOG_RETENTION_DAYS`。ポートは `PORT_ENV` が空でなければその値（1024〜65535 の整数でなければ誤り）、無ければ `DEFAULT_SERVER_PORT`。project-index の接続先は `global` の値か、無ければ `DEFAULT_DEV_DOCS_URL`。サービス名は `global` の値か、無ければ `DEFAULT_SERVER_SERVICE`
       7. `Settings` を返却する
     exceptions:
       - name: SettingsReadError
@@ -238,14 +238,14 @@ functions:
         expected: '`indexes` は両方を並べ、`project_indexes` は要素の索引（またはプロジェクトの既定の索引）だけ'
       - name: test_load_settings_when_dev_docs_url
         case: 正常
-        summary: dev-docs の接続先を設定ファイルから読み込み、無ければ既定にする
+        summary: project-index の接続先を設定ファイルから読み込み、無ければ既定にする
         condition: '`global.dev_docs_url: https://docs.example/mcp` の設定ファイルと、`dev_docs_url` を記載しない設定ファイル（パラメータ展開）'
         mock: なし
-        expected: '`dev_docs_url` が `https://docs.example/mcp` と `http://127.0.0.1:8781/mcp`'
+        expected: '`dev_docs_url` が `https://docs.example/mcp` と `http://127.0.0.1:8786/mcp`'
       - name: test_load_settings_when_invalid_dev_docs_url
         case: 異常
         summary: http か https で始まらない接続先を誤りにする
-        condition: '`global.dev_docs_url` が `127.0.0.1:8781/mcp`・`ftp://h/mcp`（パラメータ展開）'
+        condition: '`global.dev_docs_url` が `127.0.0.1:8786/mcp`・`ftp://h/mcp`（パラメータ展開）'
         mock: なし
         expected: SettingsReadError（reason に `global.dev_docs_url` と値）。既定の接続先に置き換えない
       - name: test_load_settings_when_state_dir_env
@@ -396,7 +396,7 @@ data_models:
         description: '`indexes` のうち、ヒットした `projects` の要素の `indexes` とプロジェクトの既定の配置場所から入ったもの（`indexes` と同じ順）。フックは使用しない'
       - name: dev_docs_url
         type: str
-        description: '`check_indexes` が使用されているタグを取得する dev-docs の MCP サーバーの URL。フックは使用しない'
+        description: '`check_indexes` が使用されているタグを取得する project-index の MCP サーバーの URL。フックは使用しない'
       - name: server_service
         type: str
         description: 応答しない MCP サーバーを起動する systemd --user のユニットのサービス名（`SERVICE_NAME_PATTERN`）

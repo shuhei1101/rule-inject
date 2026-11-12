@@ -1,0 +1,86 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存リポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 設計書は既にあるため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めの依頼ではないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: 設計書の status の値だけを変え、未検証の技術機構に依存しないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: シナリオの振る舞いは変わらないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面に関わる変更ではないため対象外（モック要否）
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面に関わる変更ではないため対象外（モック要否）
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 単一ユースケース設計
+    status: skipped
+    reason: シナリオの振る舞いは変わらないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: モック作成
+    status: skipped
+    reason: 画面に関わる変更ではないため対象外（モック要否）
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: インターフェース定義設計
+    status: skipped
+    reason: IF-122-11 の引数の行の status だけを実装に合わせ、入出力は変えないため、ドキュメント修正で扱う
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面の部品を持たないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たないため対象外（画面設計要否）
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: モジュール構成設計
+    status: skipped
+    reason: モジュールの構成は変わらないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: ドキュメント修正
+    status: done
+    note: 'ARCH-122-1・CFG-122-1・ER-122-2・IF-122-11・LIB-122-3・NFR-122-1 の status: planned の行を実装と照合し、実装済みの行の status を外す'
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:28.090169+00:00'
+  - process: 単体テスト作成
+    status: skipped
+    reason: コードを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 実装
+    status: skipped
+    reason: コードを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'
+  - process: 結合テスト作成
+    status: skipped
+    reason: コードを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:20.219759+00:00'

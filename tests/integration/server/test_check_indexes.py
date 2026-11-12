@@ -349,7 +349,7 @@ def test_normal_when_tag_pattern_unused(
     start_fake_dev_docs: Callable[..., Any],
     running_server: Callable[..., Any],
 ) -> None:
-    """dev-docs の使用中のタグに該当しないタグのパターンを、全ての索引について返却し、`problem_count` には数えない（正常系）。"""
+    """project-index の使用中のタグに該当しないタグのパターンを、全ての索引について返却し、`problem_count` には数えない（正常系）。"""
     # 準備
     fake = start_fake_dev_docs(
         {
@@ -415,7 +415,7 @@ def test_normal_when_dev_docs_unreachable(
     make_index: Callable[..., Path],
     running_server: Callable[..., Any],
 ) -> None:
-    """dev-docs に接続できないときは、タグの確認だけを飛ばして理由を返却し、ツールのエラーにしない（正常系）。"""
+    """project-index に接続できないときは、タグの確認だけを飛ばして理由を返却し、ツールのエラーにしない（正常系）。"""
     # 準備
     rule = make_index("# a\n", "rules/a.md")
     index = make_index(
@@ -451,7 +451,7 @@ def test_normal_when_dev_docs_returns_nothing(
     start_fake_dev_docs: Callable[..., Any],
     running_server: Callable[..., Any],
 ) -> None:
-    """dev-docs が読める文書を 0 件と返却したときは、タグの確認を飛ばして理由を返却する（正常系）。"""
+    """project-index が読める文書を 0 件と返却したときは、タグの確認を飛ばして理由を返却する（正常系）。"""
     # 準備
     fake = start_fake_dev_docs({"total_count": 0, "returned": 0})
     rule = make_index("# a\n", "rules/a.md")

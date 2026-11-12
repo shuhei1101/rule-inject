@@ -1,0 +1,7 @@
+confirmations:
+  - topic: dev-docs#163 とのマージの時期
+    decision: dev-docs#163 がマージされたか、マージの直前になったら `議論中` を外し、planner がマージする（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/159#discussion_r4550531879

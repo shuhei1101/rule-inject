@@ -11,7 +11,7 @@ from rule_inject.features.record.types import ReadMethod, ReadState
 
 # 読むツールの `format`
 type ResponseFormat = Literal["markdown", "json"]
-# 使用されていないタグのパターンの確認の結果（確認した・dev-docs に届かず飛ばした・確認するパターンが無い）
+# 使用されていないタグのパターンの確認の結果（確認した・project-index に届かず飛ばした・確認するパターンが無い）
 type TagCheckState = Literal["checked", "skipped", "no_patterns"]
 # 更新の結果（何も変えなかった・取り込んで再起動を始めた・取り込んだが移し替えが要るため再起動しなかった）
 type UpdateState = Literal["up_to_date", "restarting", "migration_required"]

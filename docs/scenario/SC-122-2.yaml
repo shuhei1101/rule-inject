@@ -21,7 +21,7 @@ scenarios:
         SV-->>CL: 読めた・読んだ値
     expected:
       - 応答に、設定ファイルの場所と読めたことが載っている
-      - 応答に、読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）が載り、追記した索引が読む索引に含まれている
+      - 応答に、読んだ値（読む索引・記録フォルダ・保持日数・project-index の接続先）が載り、追記した索引が読む索引に含まれている
       - 続けて呼んだ `list_rules` の応答の索引に、追記した索引が載っている
     test: test_normal
   - name: 異常シナリオ（設定ファイルが読めない）
@@ -53,6 +53,6 @@ stakeholders:
 trigger: Claude Code が再読込のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code からプラグインの `.mcp.json` の接続先で接続できる
-success_guarantee: 設定ファイルを再度読み込み、読めたかと、読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）を返却する。
+success_guarantee: 設定ファイルを再度読み込み、読めたかと、読んだ値（読む索引・記録フォルダ・保持日数・project-index の接続先）を返却する。
 minimal_guarantee: 設定ファイル・索引・既読の記録を書き換えず、待ち受けを止めない。読めないときは場所と理由を返却する。
 test_file: tests/e2e/単一ユースケース/test_reload_server_settings.py
