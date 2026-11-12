@@ -53,4 +53,4 @@ scope_out:
     plan: none
   - item: 配信元の設定 `dev-docs.yaml` の `project-index.yaml` への改名
     reason: shuhei1101/project-index#27（config を project-index.yaml へ向けた後に search_docs で文書が引けない）が open で、今 rule-inject を配信している dev-docs は dev-docs.yaml を読む。改名すると端末の設定の書き換えも要る。project-index は移行の間 dev-docs.yaml も探す（CFG-1）ため、#27 が直った後に端末の設定と合わせて移す
-    plan: to_file
+    plan: '#164'
