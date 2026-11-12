@@ -37,12 +37,16 @@ docs:
     status: todo
   - page: docs/external-api/API-122-1.yaml
     new: false
-    change: 接続先・公式の URL・検証の記録を project-index の文書の MCP にする
-    status: todo
+    change: タイトル・接続先・公式の URL・決定値の参照を project-index の文書の MCP にし、動作確認を未確認に戻す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:05:25.605327+00:00'
   - page: docs/external-api/README.md
     new: false
     change: 目次の行の名前を project-index にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:05:25.605327+00:00'
   - page: docs/config/CFG-122-1.yaml
     new: false
     change: '`global.dev_docs_url` の既定値・タイトル・説明・理由を project-index の待ち受けにする'
@@ -50,7 +54,9 @@ docs:
   - page: docs/nonfunctional/NFR-122-1.yaml
     new: false
     change: 問い合わせの待ち時間の名前と根拠の接続先の呼び名を project-index にする（`english_name` は変えない）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:05:25.605327+00:00'
   - page: settings.sample.yaml
     new: false
     change: '`dev_docs_url` の値とコメントを project-index の待ち受けにする'

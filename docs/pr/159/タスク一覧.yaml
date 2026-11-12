@@ -45,8 +45,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T07:36:17.235393+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: IF-122-11 の接続先の呼び名、IF-122-12 の応答の例の既定値
+    updated_by: planner
+    updated_at: '2026-11-12T08:05:31.348995+00:00'
   - process: 部品設計
     status: skipped
     reason: 画面を持たない
