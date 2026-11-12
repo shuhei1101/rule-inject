@@ -49,3 +49,12 @@
 | [tests/unit/rule_inject/server/test_dev_docs.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/unit/rule_inject/server/test_dev_docs.py) | 全実行 | 変更 | ✅ | 接続先の値と呼び名だけを書き換えた<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
 | [tests/unit/rule_inject/server/test_check_tools.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/unit/rule_inject/server/test_check_tools.py) | 全実行 | 変更 | ✅ | コメントと docstring の呼び名だけを書き換えた<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
 | `tests/unit` のほかのファイル | 全実行 | 実行のみ | ✅ | 555 テスト pass<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_check_indexes.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/integration/server/test_check_indexes.py) | 全実行 | 変更 | ✅ | docstring の偽の接続先の呼び名だけを書き換えた<br>`テスト結果/20261112210303_031237c_結合テスト.log` |
+| [tests/integration/server/test_restart_server.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/integration/server/test_restart_server.py) | 全実行 | 変更 | ✅ | 接続先の呼び名だけを書き換えた<br>`テスト結果/20261112210303_031237c_結合テスト.log` |
+| [tests/integration/server/conftest.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/integration/server/conftest.py) | - | 変更 | ✅ | 偽の接続先のサーバー名とコメントを project-index にした<br>`テスト結果/20261112210303_031237c_結合テスト.log` |
+| `tests/integration` のほかのファイル | 全実行 | 実行のみ | ✅ | 182 テスト pass（全件）<br>`テスト結果/20261112210303_031237c_結合テスト.log` |
