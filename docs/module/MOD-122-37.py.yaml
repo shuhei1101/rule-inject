@@ -15,9 +15,9 @@ constants:
     summary: 非機能要件「プロジェクトのファイルを辿る時間」の決定値（秒）。`build_server` の `scan_time_limit` の既定
     value: '`30`'
   - name: DEV_DOCS_TIMEOUT
-    title: dev-docsへの問い合わせの待ち時間の上限
+    title: project-indexへの問い合わせの待ち時間の上限
     container: server/app.py
-    summary: 非機能要件「dev-docs への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
+    summary: 非機能要件「project-index への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
     value: '`207`'
   - name: SERVER_INSTRUCTIONS
     title: サーバーの instructions
@@ -51,7 +51,7 @@ functions:
         required: false
         default: DEV_DOCS_TIMEOUT
         passing: keyword
-        description: '`check_indexes` の dev-docs への問い合わせの待ち時間の上限（秒）'
+        description: '`check_indexes` の project-index への問い合わせの待ち時間の上限（秒）'
       - name: control
         type: ServerControl
         required: true

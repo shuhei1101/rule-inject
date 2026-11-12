@@ -282,17 +282,17 @@ settings:
     introduced:
       pr: 57
   - key: global.dev_docs_url
-    title: dev-docsの接続先
+    title: project-indexの接続先
     file: ~/.config/rule-inject/settings.yaml
     type: str
     required: false
-    default: http://127.0.0.1:8781/mcp
-    description: '`check_indexes` が、使用されているタグを取得する dev-docs の MCP サーバーの URL。フックは使用しない'
+    default: http://127.0.0.1:8786/mcp
+    description: '`check_indexes` が、使用されているタグを取得する project-index の MCP サーバーの URL。フックは使用しない'
     reload: immediate
     allowed: '`http://` か `https://` で始まる URL。それ以外の値は設定ファイルの誤りとして扱う'
     refs:
       - API-122-1#base_urls
-    reason: 既定は dev-docs の既定の待ち受けに合わせる。サーバーは全てのプロジェクトで 1 つのため `global` だけに設定する
+    reason: 既定は project-index の既定の待ち受けに合わせる。サーバーは全てのプロジェクトで 1 つのため `global` だけに設定する
     status: planned
     visibility: user
   - key: version

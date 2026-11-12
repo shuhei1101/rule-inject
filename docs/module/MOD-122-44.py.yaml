@@ -22,13 +22,13 @@ enums:
     values:
       - value: checked
         title: 確認した
-        description: dev-docs のタグに照らした
+        description: project-index のタグに照らした
       - value: skipped
         title: 飛ばした
-        description: dev-docs に届かず、または読み込める文書が 0 件で飛ばした
+        description: project-index に届かず、または読み込める文書が 0 件で飛ばした
       - value: no_patterns
         title: 確認するパターンが無い
-        description: タグのパターンが無く、dev-docs に問い合わせなかった
+        description: タグのパターンが無く、project-index に問い合わせなかった
   - name: UpdateState
     title: 更新の結果
     container: server/types.py

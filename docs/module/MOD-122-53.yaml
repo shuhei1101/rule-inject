@@ -10,7 +10,7 @@ directory: |-
   ├── app.py           # コンポジションルート（build_server）とツールの登録
   ├── tools.py         # ルールの一覧・検索・エントリの書き込み・削除のツールの本体と、設定・書き込める索引の解決
   ├── check_tools.py   # 索引のチェックのツールの本体と、続きの位置の文字列の変換
-  ├── dev_docs.py      # dev-docs の search_docs で使用されているタグを取得するクライアント
+  ├── dev_docs.py      # project-index の search_docs で使用されているタグを取得するクライアント
   ├── record_tools.py  # 既読の記録の確認・削除のツールの本体
   ├── types.py         # ResponseFormat と応答のモデル（Pydantic）
   └── _format.py       # 応答の形式（JSON / Markdown）と長さの切り詰め
