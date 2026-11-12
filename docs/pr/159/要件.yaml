@@ -56,8 +56,8 @@ docs:
     change: '`dev_docs_url` の値とコメントを project-index の待ち受けにする'
     status: todo
 scope_out:
-  - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py`・非機能要件の `english_name` の識別子の書き換え
-    reason: キーの書き換えは設定ファイルの移し替えを伴う破壊的変更になる。呼び名の書き換えの範囲（要件の `未確定`）と合わせてレビューで確定する
+  - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py`・テスト関数の名前・非機能要件の `english_name` の識別子の書き換え
+    reason: キーの書き換えは設定ファイルの移し替えを伴う破壊的変更になり、識別子は利用者の目に触れる接続先の呼び名ではない
     plan: none
   - item: '`docs/pr/102/` の反映作業のスクリプトに残る完全名'
     reason: 実行済みの記録のため書き換えない

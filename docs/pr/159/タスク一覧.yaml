@@ -35,8 +35,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T07:36:17.235393+00:00'
   - process: 単一ユースケース設計
-    status: todo
+    status: done
     note: SC-122-20・SC-122-2 の接続先の呼び名と、要件の未確定（呼び名を書き換える範囲）
+    updated_by: planner
+    updated_at: '2026-11-12T07:43:23.639527+00:00'
   - process: モック作成
     status: skipped
     reason: 画面を持たない
