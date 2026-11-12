@@ -1,0 +1,1 @@
+# dev-docs の文書の MCP のツールの完全名と check_indexes の接続先の既定値を、project-index へ書き換える
