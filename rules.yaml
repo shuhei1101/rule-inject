@@ -12,51 +12,123 @@ rules:
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-naming"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-core-naming"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-type-hint.yaml"
     paths:
       - "**/*.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-type-hint"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-core-type-hint"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-language-rules.yaml"
     paths:
       - "**/*.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-language-rules"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-core-language-rules"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-architecture-layout.yaml"
     paths:
       - "**/src/**/*.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-architecture-layout"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-architecture-layout"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-architecture-dependency-management.yaml"
     paths:
       - "**/src/**/*.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-architecture-dependency-management"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-architecture-dependency-management"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-shared-logger.yaml"
     paths:
       - "**/shared/logger.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-shared-logger"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-shared-logger"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-testing-layers.yaml"
     paths:
       - "**/tests/**/*.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-testing-layers"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-testing-layers"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-testing-mock.yaml"
     paths:
       - "**/tests/integration/**/*.py"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-testing-mock"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-testing-mock"
   - rule: "!{KNOWLEDGE_ROOT}/docs/rule/python-core-style.yaml"
     paths:
       - "**/pyproject.toml"
     read_tool:
       tool: mcp__plugin_project-index_project-index__search_docs
       args: '{"source": "knowledge", "filter": {"field": "id", "op": "eq", "values": ["python-core-style"]}, "view": "full"}'
+    read_by:
+      - tools:
+          - "mcp__plugin_dev-docs_dev-docs__search_docs"
+        args:
+          source:
+            - "knowledge"
+          filter[id]:
+            - "python-core-style"
