@@ -1,0 +1,7 @@
+docs:
+  - page: docs/guide/MCPツール.md
+    new: false
+    change: '`check_indexes` の節の「索引ごとには問い合わせ修正しない」を「索引ごとには再度問い合わせない」に修正する（IF-122-11 の制約と同じ意味）'
+    status: todo
+use_cases: []
+scope_out: []
