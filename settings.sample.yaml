@@ -16,8 +16,8 @@ global:
   record_retention_days: 30
   # ログを残す日数。1 以上の整数（既定: 3）
   log_retention_days: 3
-  # check_indexes が使用されているタグを取得する dev-docs の MCP サーバーの URL。http:// か https:// で始まる（既定: http://127.0.0.1:8781/mcp）
-  dev_docs_url: http://127.0.0.1:8781/mcp
+  # check_indexes が使用されているタグを取得する project-index の MCP サーバーの URL。http:// か https:// で始まる（既定: http://127.0.0.1:8786/mcp）
+  dev_docs_url: http://127.0.0.1:8786/mcp
   # セッションの開始時に応答しない MCP サーバーを起動する systemd --user のユニットのサービス名。英数字・_・- の 1〜64 文字（既定: rule-inject）
   server_service: rule-inject
 projects:

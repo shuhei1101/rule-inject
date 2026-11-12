@@ -104,7 +104,7 @@ files:
     tags:
       - topic:索引のチェック
       - topic:タグ
-      - tool:dev-docs
+      - tool:project-index
     related:
       - to: MOD-122-9
         type: implements
@@ -397,11 +397,11 @@ files:
         type: implements
   - path: rule_inject/server/dev_docs.py
     name: 使用中のタグを取得するクライアント
-    description: dev-docs の search_docs へ接続して使用中のタグを取得し、索引のタグの検査が使用するタグの取得を修正するときに参照する。
+    description: project-index の search_docs へ接続して使用中のタグを取得し、索引のタグの検査が使用するタグの取得を修正するときに参照する。
     tags:
       - topic:タグ
       - topic:索引のチェック
-      - tool:dev-docs
+      - tool:project-index
       - tool:mcp
     related:
       - to: MOD-122-41
