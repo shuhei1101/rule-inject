@@ -75,9 +75,18 @@ lead: 文書を配信元ごとに配信してタグや種類で検索・集計�
 used_in:
   - src/rule_inject/server/check_tools.py
 verification:
-  state: 未確認
-  date: '2026-11-01'
-  detail: '文書の MCP は [shuhei1101/project-index#15](https://github.com/shuhei1101/project-index/pull/15) で、ツールの名前・入力・出力を変えずに dev-docs から移った。2026-11-12 時点で手元の端末に project-index が常駐しておらず（`http://127.0.0.1:8786/mcp` に接続できない）、移った後の応答を確認していない'
+  state: 済
+  date: '2026-11-12'
+  detail: 'project-index の develop の 6f739dd（[project-index#15](https://github.com/shuhei1101/project-index/pull/15) の c19c617 を含む）を、`PROJECT_INDEX_PORT=8786 project-index serve` で起動した。端末の設定は、dev-docs の端末の設定と同じ配信元の並び（knowledge の develop の 11150b1 を含む）を一時のファイルにコピーして使用した。
+
+
+    | 呼び出し | 引数 | 結果 |
+
+    | --- | --- | --- |
+
+    | rule-inject の `fetch_used_tags` | `check_indexes` と同じ（`{"source": "*", "group_by": "tags", "format": "json"}`、`cwd`: rule-inject のクローン） | 21.9 秒でタグ 799 件が返却され、`{` で始まる値は 0 件 |
+
+    | `check_indexes` | `filter[tags]` に `topic:フロントエンド`・`scope:next`・`re:^topic:`・`re:^scope:`・`topic:存在しないタグ` を持つ一時の索引、`global.dev_docs_url` に `http://127.0.0.1:8786/mcp` | 10.6 秒で `tag_check.state` が `checked`、`unused_tag_patterns` は `topic:存在しないタグ` の 1 件だけ |'
 base_urls:
   - env: 既定
     url: http://127.0.0.1:8786/mcp
