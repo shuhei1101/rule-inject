@@ -4,20 +4,11 @@ use_cases:
     impact: none
     detail: 既読の記録の仕組みは変えず、このリポジトリの索引に既読にする呼び出しを加えるだけ
     depends_on: []
-docs:
-  - page: rules.yaml
-    new: false
-    change: read_tool を持つエントリに、dev-docs のプラグインの MCP の名前の search_docs で同じ文書を引いた呼び出しを既読にする read_by を加える
-    status: done
-    updated_by: planner
-    updated_at: '2026-11-12T19:38:53.251638+00:00'
+docs: []
 scope_out:
   - item: 案内の `ツール:` の行に dev-docs のプラグインの MCP の名前も載せる
-    reason: dev-docs のプラグインのプロファイルでは project-index のツールを使えず、案内はパスを Read で参照する旨に落ちて動く（docs/guide/索引の書式.md の read_tool）。read_by で dev-docs の名前の呼び出しも既読になる
+    reason: dev-docs のプラグインのプロファイルでは project-index のツールを使えず、案内はパスを Read で参照する旨に落ちて動く（docs/guide/索引の書式.md の read_tool）
     plan: none
   - item: 索引の書式の read_tool.tool に複数のツールの名前を書けるようにするコードの変更
-    reason: read_by の正規表現で既読の両対応は足り、切り替えの途中だけの需要で書式を広げない
+    reason: 'dev-docs の名前の view: full の呼び出しは、結果の文書のパスで既読になり（要件.md の実測）、read_tool の名前に頼らない'
     plan: none
-  - item: 切り替えを終えた後の read_by の削除
-    reason: ローカルのプラグインを project-index に切り替え終えた後（MindStella の話し合いのタスク T-12）でないと削除できない
-    plan: to_file
