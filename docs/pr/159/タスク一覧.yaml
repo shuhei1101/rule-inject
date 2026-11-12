@@ -60,8 +60,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T07:36:17.235393+00:00'
   - process: モジュール構成設計
-    status: todo
+    status: done
     note: MOD-122-49 の既定値とテストの期待値、MOD-122-9・37・38・41・44・53 の接続先の呼び名
+    updated_by: planner
+    updated_at: '2026-11-12T08:36:50.562623+00:00'
   - process: ドキュメント修正
     status: todo
     note: rules.yaml の tool、docs/guide のツールの完全名・既定値・接続先（コアコンセプト-MCPサーバー を含む）、ARCH-122-1・API-122-1・CFG-122-1・NFR-122-1・TP-122-1 の接続先、docs/module/index.yaml・src/files.yaml の概要

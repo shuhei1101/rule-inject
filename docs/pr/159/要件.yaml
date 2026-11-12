@@ -50,7 +50,9 @@ docs:
   - page: docs/config/CFG-122-1.yaml
     new: false
     change: '`global.dev_docs_url` の既定値・タイトル・説明・理由を project-index の待ち受けにする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:36:43.330986+00:00'
   - page: docs/nonfunctional/NFR-122-1.yaml
     new: false
     change: 問い合わせの待ち時間の名前と根拠の接続先の呼び名を project-index にする（`english_name` は変えない）
@@ -68,7 +70,9 @@ docs:
   - page: docs/module/index.yaml
     new: false
     change: MOD-122-41 の行の概要の接続先を project-index にし、README.md を生成し直す
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:36:43.330986+00:00'
   - page: docs/test-procedure/TP-122-1.yaml
     new: false
     change: 起動を待つ偽の接続先の呼び名を project-index にする
