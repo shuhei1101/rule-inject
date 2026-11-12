@@ -1,0 +1,69 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存リポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 設計書が揃っているため対象外
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めの依頼ではない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: project-index#15 で同じツールの名前・入力・出力のまま移しており、未検証の機構に依存しない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: 複合ユースケースの流れは変わらない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: 単一ユースケース設計
+    status: todo
+    note: SC-122-20・SC-122-2 の接続先の呼び名と、要件の未確定（呼び名を書き換える範囲）
+  - process: モック作成
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: インターフェース定義設計
+    status: todo
+    note: IF-122-11 の接続先の呼び名、IF-122-12 の応答の例の既定値
+  - process: 部品設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-12T07:36:17.235393+00:00'
+  - process: モジュール構成設計
+    status: todo
+    note: MOD-122-49 の既定値とテストの期待値、MOD-122-37・38・41・44 の接続先の呼び名
+  - process: ドキュメント修正
+    status: todo
+    note: rules.yaml の tool、docs/guide のツールの完全名と既定値、ARCH-122-1・API-122-1・CFG-122-1・NFR-122-1 の接続先
+  - process: 単体テスト作成
+    status: todo
+  - process: 実装
+    status: todo
+  - process: 結合テスト作成
+    status: todo

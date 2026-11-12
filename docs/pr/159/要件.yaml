@@ -1,0 +1,70 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-20.yaml
+    impact: changed
+    detail: 索引のチェックが使用中のタグを問い合わせる先を project-index にする
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-2.yaml
+    impact: following
+    detail: 再読込で返す接続先の呼び名と既定値を、索引をチェックするの変更に追随させる
+    depends_on:
+      - docs/scenario/SC-122-20.yaml
+docs:
+  - page: rules.yaml
+    new: false
+    change: エントリの `tool` を `mcp__plugin_project-index_project-index__search_docs` にする
+    status: todo
+  - page: docs/guide/コアコンセプト-ルールの案内.md
+    new: false
+    change: 例のツールの完全名を project-index のプラグインの名前にする
+    status: todo
+  - page: docs/guide/索引の書式.md
+    new: false
+    change: 例の `tool` を project-index のプラグインの名前にする
+    status: todo
+  - page: docs/guide/設定ファイル.md
+    new: false
+    change: '`dev_docs_url` の既定値と接続先の説明を project-index にする'
+    status: todo
+  - page: docs/guide/MCPツール.md
+    new: false
+    change: '`check_indexes` の問い合わせ先と `dev_docs_url` の説明を project-index にする'
+    status: todo
+  - page: docs/architecture/ARCH-122-1.yaml
+    new: false
+    change: 外部システム dev-docs を project-index にする
+    status: todo
+  - page: docs/external-api/API-122-1.yaml
+    new: false
+    change: 接続先・公式の URL・検証の記録を project-index の文書の MCP にする
+    status: todo
+  - page: docs/external-api/README.md
+    new: false
+    change: 目次の行の名前を project-index にする
+    status: todo
+  - page: docs/config/CFG-122-1.yaml
+    new: false
+    change: '`global.dev_docs_url` の既定値・タイトル・説明・理由を project-index の待ち受けにする'
+    status: todo
+  - page: docs/nonfunctional/NFR-122-1.yaml
+    new: false
+    change: 問い合わせの待ち時間の名前と根拠の接続先の呼び名を project-index にする（`english_name` は変えない）
+    status: todo
+  - page: settings.sample.yaml
+    new: false
+    change: '`dev_docs_url` の値とコメントを project-index の待ち受けにする'
+    status: todo
+scope_out:
+  - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py`・非機能要件の `english_name` の識別子の書き換え
+    reason: キーの書き換えは設定ファイルの移し替えを伴う破壊的変更になる。呼び名の書き換えの範囲（要件の `未確定`）と合わせてレビューで確定する
+    plan: none
+  - item: '`docs/pr/102/` の反映作業のスクリプトに残る完全名'
+    reason: 実行済みの記録のため書き換えない
+    plan: none
+  - item: IF-122-14 のテストの入力の `mcp__dev-docs__search_docs`
+    reason: ツール名の照合を示す例の値で、実在のプラグインの完全名を指していない
+    plan: none
+  - item: 配信元の設定ファイル `dev-docs.yaml` と、ルールにするか文書にするかを決めるページなど、配信元・画面としての dev-docs の記述
+    reason: project-index#15 の要件で `dev-docs.yaml` の移行が未確定で、今回の接続先の書き換えと目的が異なる
+    plan: to_file
