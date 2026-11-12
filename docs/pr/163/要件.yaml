@@ -1,0 +1,48 @@
+docs:
+  - page: dev-docs.yaml
+    new: false
+    change: 配信元の設定を project-index の設定（project-index.yaml・project-index の schema）へ移すか、dev-docs.yaml のまま $schema だけを直すかを決めて反映する
+    status: todo
+  - page: docs/guide/ルールにするか文書にするかを決める.md
+    new: false
+    change: 冒頭リード・r2 の結果・※5 の「dev-docs の文書」とその説明を、project-index の文書へ書き換える
+    status: todo
+  - page: docs/guide/README.md
+    new: false
+    change: ルールにするか文書にするかを決めるの行の概要の dev-docs を書き換える
+    status: todo
+  - page: docs/guide/使用方法.md
+    new: false
+    change: ルールにするか文書にするかを決めるの行の概要の dev-docs を書き換える
+    status: todo
+  - page: docs/guide/index.yaml
+    new: false
+    change: ルールにするか文書にするかを決めるの summary の dev-docs を書き換える
+    status: todo
+  - page: docs/guide/files.yml
+    new: false
+    change: ルールにするか文書にするかを決めるの description の dev-docs を書き換える
+    status: todo
+  - page: schemas/common.schema.yaml
+    new: false
+    change: visibility の説明の「dev-docs の画面」を書き換える
+    status: todo
+  - page: schemas/component.schema.yaml
+    new: false
+    change: 状態で上書きする引数の説明の「dev-docs の画面」を書き換える
+    status: todo
+  - page: schemas/glossary.schema.yaml
+    new: false
+    change: 冒頭の説明の「dev-docs の文書の行」を書き換える
+    status: todo
+  - page: schemas/screen.schema.yaml
+    new: false
+    change: 列の表示の説明の「dev-docs の画面」を書き換える
+    status: todo
+scope_out:
+  - item: '`check_indexes` の問い合わせ先・`dev_docs_url`・ツールの完全名としての dev-docs の記述（`docs/guide/MCPツール.md`・`設定ファイル.md`・`コアコンセプト-MCPサーバー.md`・`コアコンセプト-ルールの案内.md`・`索引の書式.md`・`docs/external-api/API-122-1.yaml` など）'
+    reason: '接続先・ツールの完全名の書き換えは #158（作業 PR #159）が持つ'
+    plan: '#158'
+  - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py` などの識別子の書き換え
+    reason: '#159 で対応しないと決めた識別子で、配信元・画面としての記述ではない'
+    plan: none
