@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T08:36:50.562623+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: rules.yaml の tool、docs/guide のツールの完全名・既定値・接続先（コアコンセプト-MCPサーバー を含む）、ARCH-122-1・API-122-1・CFG-122-1・NFR-122-1・TP-122-1 の接続先、docs/module/index.yaml・src/files.yaml の概要
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:14.631585+00:00'
   - process: 単体テスト作成
     status: todo
     note: test_settings.py・test_dev_docs.py の既定値、test_check_tools.py などの docstring・コメントの接続先の呼び名

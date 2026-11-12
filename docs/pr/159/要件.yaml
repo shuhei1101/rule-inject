@@ -14,27 +14,39 @@ docs:
   - page: rules.yaml
     new: false
     change: エントリの `tool` を `mcp__plugin_project-index_project-index__search_docs` にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
     change: 例のツールの完全名を project-index のプラグインの名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/guide/索引の書式.md
     new: false
     change: 例の `tool` を project-index のプラグインの名前にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/guide/設定ファイル.md
     new: false
     change: '`dev_docs_url` の既定値と接続先の説明を project-index にする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/guide/MCPツール.md
     new: false
     change: '`check_indexes` の問い合わせ先と `dev_docs_url` の説明を project-index にする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: 外部システム dev-docs を project-index にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/external-api/API-122-1.yaml
     new: false
     change: タイトル・接続先・公式の URL・決定値の参照を project-index の文書の MCP にし、動作確認を未確認に戻す
@@ -62,11 +74,15 @@ docs:
   - page: settings.sample.yaml
     new: false
     change: '`dev_docs_url` の値とコメントを project-index の待ち受けにする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
     change: '`check_indexes` の問い合わせ先を project-index にする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/module/index.yaml
     new: false
     change: MOD-122-41 の行の概要の接続先を project-index にし、README.md を生成し直す
@@ -76,11 +92,15 @@ docs:
   - page: docs/test-procedure/TP-122-1.yaml
     new: false
     change: 起動を待つ偽の接続先の呼び名を project-index にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: src/files.yaml
     new: false
     change: '`dev_docs.py`・`tags.py` の行の description とタグ `tool:dev-docs` を project-index にする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T08:43:09.177318+00:00'
 scope_out:
   - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py`・テスト関数の名前・非機能要件の `english_name` の識別子の書き換え
     reason: キーの書き換えは設定ファイルの移し替えを伴う破壊的変更になり、識別子は利用者の目に触れる接続先の呼び名ではない
