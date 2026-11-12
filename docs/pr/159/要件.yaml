@@ -49,7 +49,7 @@ docs:
     updated_at: '2026-11-12T08:43:09.177318+00:00'
   - page: docs/external-api/API-122-1.yaml
     new: false
-    change: タイトル・接続先・公式の URL・決定値の参照を project-index の文書の MCP にし、動作確認を未確認に戻す
+    change: タイトル・接続先・公式の URL・決定値の参照を project-index の文書の MCP にし、project-index で動作を確認した結果を記録する
     status: done
     updated_by: planner
     updated_at: '2026-11-12T08:05:25.605327+00:00'
