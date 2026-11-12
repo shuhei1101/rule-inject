@@ -1,0 +1,1 @@
+# ルール索引の文書の MCP の既読を、切り替えの途中も dev-docs と project-index の両方の名前で取る
