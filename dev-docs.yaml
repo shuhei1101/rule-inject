@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/dev-docs/e1740866425c5c8c49bbd2ebc610fbcbdf8061fd/schemas/dev-docs.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/project-index/c552062f75e45aa81587209ba0f86bcb67dc1bab/schemas/project-index.schema.json
 version: "3"
 name: rule-inject
 worktrees: [".claude/worktrees/*"]
