@@ -1,8 +1,8 @@
 id: API-122-1
 visibility: internal
-title: "dev-docs"
+title: "project-index"
 version:
-  api_version: バージョンを持たない（MCP のツールの引数は dev-docs の develop に従う）
+  api_version: バージョンを持たない（MCP のツールの引数は project-index の develop に従う）
   checked_on: '2026-10-30'
 auth:
   method: なし（127.0.0.1 で待ち受けるローカルのサーバー）
@@ -58,7 +58,7 @@ endpoints:
       - name: groups[].value
         type: str
         description: タグ（まとめた値の代表の表記）
-        notes: "タグを持たない文書は、値が `（なし）` のグループにまとめて返却される（dev-docs の [`NONE_LABEL`](https://github.com/shuhei1101/dev-docs/blob/develop/src/dev_docs/features/search/service.py)）。rule-inject はこの値を使用されているタグに含めない。\n`tags` を `- name: ...` の要素で持つ配信元は、配信元の `dev-docs.yaml` の `metadata`（`tags: tags[].name`）でタグの名前を返却する。その対応が無い配信元は、辞書を文字列にした値（`{'name': ...}`）を返却する"
+        notes: "タグを持たない文書は、値が `（なし）` のグループにまとめて返却される（project-index の [`NONE_LABEL`](https://github.com/shuhei1101/project-index/blob/c19c617d9b61cf5fbfd3c6e386e468e690e6f4ba/src/project_index/features/search/service.py)）。rule-inject はこの値を使用されているタグに含めない。\n`tags` を `- name: ...` の要素で持つ配信元は、配信元の `dev-docs.yaml` の `metadata`（`tags: tags[].name`）でタグの名前を返却する。その対応が無い配信元は、辞書を文字列にした値（`{'name': ...}`）を返却する"
       - name: groups[].count
         type: int
         description: そのタグが付いた文書の数
@@ -70,28 +70,28 @@ endpoints:
       - code: '200'
         condition: 'ツールを呼び出せた（引数の誤りも `isError: true` の結果として 200 で返却される）'
       - code: 接続できない
-        condition: dev-docs が起動していない・接続先が違う
-lead: 文書を配信元ごとに配信してタグや種類で検索・集計する dev-docs の MCP サーバーの利用方法を定め、索引のタグの検査で使用中のタグを取得する処理を修正するときに参照する。
+        condition: project-index が起動していない・接続先が違う
+lead: 文書を配信元ごとに配信してタグや種類で検索・集計する project-index の文書の MCP サーバーの利用方法を定め、索引のタグの検査で使用中のタグを取得する処理を修正するときに参照する。
 used_in:
   - src/rule_inject/server/check_tools.py
 verification:
   state: 済
-  date: '2026-11-01'
-  detail: '手元で常駐している dev-docs（`http://127.0.0.1:8781/mcp`）を dev-docs の管理ツールの `restart` で再起動し、dev-docs の develop の d358fe3（[metadata のタグの取り出しを含む dev-docs の変更](https://github.com/shuhei1101/dev-docs/pull/50) の 9bac461 を含む）と knowledge の develop の eb35a25 の `dev-docs.yaml` で応答させた。
+  date: '2026-11-12'
+  detail: 'project-index の develop の 6f739dd（[project-index#15](https://github.com/shuhei1101/project-index/pull/15) の c19c617 を含む）を、`PROJECT_INDEX_PORT=8786 project-index serve` で起動した。端末の設定は、dev-docs の端末の設定と同じ配信元の並び（knowledge の develop の 11150b1 を含む）を一時のファイルにコピーして使用した。
 
 
     | 呼び出し | 引数 | 結果 |
 
     | --- | --- | --- |
 
-    | rule-inject の `fetch_used_tags` | `check_indexes` と同じ（`{"source": "*", "group_by": "tags", "format": "json"}`、`cwd`: rule-inject のクローン） | 約 35 秒でタグ 800 件が返却され、`{` で始まる値は 0 件 |
+    | rule-inject の `fetch_used_tags` | `check_indexes` と同じ（`{"source": "*", "group_by": "tags", "format": "json"}`、`cwd`: rule-inject のクローン） | 21.9 秒でタグ 799 件が返却され、`{` で始まる値は 0 件 |
 
-    | `check_indexes` | `filter[tags]` に `topic:フロントエンド`・`scope:next`・`re:^topic:`・`re:^scope:`・`topic:存在しないタグ` を持つ一時の索引 | `tag_check.state` が `checked`、`unused_tag_patterns` は `topic:存在しないタグ` の 1 件だけ |'
+    | `check_indexes` | `filter[tags]` に `topic:フロントエンド`・`scope:next`・`re:^topic:`・`re:^scope:`・`topic:存在しないタグ` を持つ一時の索引、`global.dev_docs_url` に `http://127.0.0.1:8786/mcp` | 10.6 秒で `tag_check.state` が `checked`、`unused_tag_patterns` は `topic:存在しないタグ` の 1 件だけ |'
 base_urls:
   - env: 既定
-    url: http://127.0.0.1:8781/mcp
-official_url: https://github.com/shuhei1101/dev-docs
+    url: http://127.0.0.1:8786/mcp
+official_url: https://github.com/shuhei1101/project-index
 error_format: '引数の誤りは MCP のツールの結果の `isError: true` で返却され、本文に項目のパス・期待する型・実際の値が含まれる。'
-timeout: 非機能要件「dev-docs への問い合わせの待ち時間」
+timeout: 非機能要件「project-index への問い合わせの待ち時間」
 refs:
-  - NFR-122-1#requirements[dev-docs への問い合わせの待ち時間]
+  - NFR-122-1#requirements[project-index への問い合わせの待ち時間]

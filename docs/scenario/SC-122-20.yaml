@@ -211,10 +211,10 @@ scenarios:
   - name: 正常シナリオ（タグのパターンが使用中のどのタグにも該当しない）
     setup:
       - name: Mock
-        description: '違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は、テストが起動した文書の MCP サーバーに差し替え、`search_docs` の `group_by: tags` に決まったタグの一覧を返却させる'
+        description: '違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。project-index は、テストが起動した文書の MCP サーバーに差し替え、`search_docs` の `group_by: tags` に決まったタグの一覧を返却させる'
         notes: '例: `python`・`mcp` の 2 つのタグを返却する'
       - name: 設定ファイル
-        description: 違反が無いシナリオの設定に、dev-docs の接続先として差し替えた文書の MCP サーバーを指す
+        description: 違反が無いシナリオの設定に、project-index の接続先として差し替えた文書の MCP サーバーを指す
       - name: 索引
         description: 'MCP のツールの引数の条件の木の `field: tags` の値に適用するエントリを 2 つ持ち、各 `rule` の場所にルールの本文があり、各 `paths` を持たない YAML'
         notes: '例: 使用されているタグにヒットする `re:^python` と、どのタグにもヒットしない `re:^rust`'
@@ -224,10 +224,10 @@ scenarios:
         participant SV as MCP サーバー
         participant CF as 設定ファイル
         participant IDX as 索引
-        participant DD as dev-docs
+        participant DD as project-index
 
         CL->>SV: チェック（プロジェクトの直下）
-        SV->>CF: プロジェクトに該当する索引と dev-docs の接続先を取得する
+        SV->>CF: プロジェクトに該当する索引と project-index の接続先を取得する
         CF-->>SV: 索引の場所と接続先
         SV->>IDX: フックと同じ読み取りで読む
         IDX-->>SV: 読めた
@@ -241,12 +241,12 @@ scenarios:
       - 応答に、タグの確認を飛ばしたことが載っていない
       - 索引のファイルが書き換わっていない
     test: test_normal_when_tag_pattern_unused
-  - name: 異常シナリオ（dev-docsに届かない）
+  - name: 異常シナリオ（project-indexに届かない）
     setup:
       - name: Mock
-        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。dev-docs は起動しない
+        description: 違反が無いシナリオと同じ（SDK のクライアントでツールを呼ぶ）。project-index は起動しない
       - name: 設定ファイル
-        description: 違反が無いシナリオの設定に、dev-docs の接続先として待ち受けていないポートを指す
+        description: 違反が無いシナリオの設定に、project-index の接続先として待ち受けていないポートを指す
       - name: 索引
         description: タグのパターンが使用されているどのタグにもヒットしないシナリオと同じ YAML に、`rule` の場所にファイルが無いエントリを 1 つ加えたもの
         notes: タグの確認を飛ばしても、ほかの問題を返却することを見分ける
@@ -257,10 +257,10 @@ scenarios:
         participant CF as 設定ファイル
         participant IDX as 索引
         participant FS as ルールの本文
-        participant DD as dev-docs
+        participant DD as project-index
 
         CL->>SV: チェック（プロジェクトの直下）
-        SV->>CF: プロジェクトに該当する索引と dev-docs の接続先を取得する
+        SV->>CF: プロジェクトに該当する索引と project-index の接続先を取得する
         CF-->>SV: 索引の場所と接続先
         SV->>IDX: フックと同じ読み取りで読む
         IDX-->>SV: 読めた
@@ -270,7 +270,7 @@ scenarios:
         DD--xSV: 接続できない
         SV-->>CL: ファイルが無いエントリと、タグの確認を飛ばしたこと
     expected:
-      - 応答に、タグの確認を飛ばしたことと、dev-docs に接続できなかった理由が載っている
+      - 応答に、タグの確認を飛ばしたことと、project-index に接続できなかった理由が載っている
       - 応答の使用されていないタグのパターンに、どのエントリも載っていない
       - 応答に、`rule` の場所にファイルが無いエントリが載っている
       - ツールはエラーを返却しない

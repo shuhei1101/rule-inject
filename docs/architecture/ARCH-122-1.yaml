@@ -26,7 +26,7 @@ overview:
       label: MCP サーバー
       kind: system
     - id: DD
-      label: dev-docs
+      label: project-index
       kind: external
   edges:
     - from: U
@@ -89,7 +89,7 @@ external_systems:
     notes:
       事前確認: 不要（Claude Code がフックを起動する）
     detail: LIB-122-1#
-  - name: dev-docs
+  - name: project-index
     purpose: '`check_indexes` で、使用されているタグを取得する'
     direction: 双方向
     protocol: MCP（Streamable HTTP）

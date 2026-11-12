@@ -8,7 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-# 偽の dev-docs が応答を返却するまでの秒数（check_indexes を処理中のままにする時間）
+# 偽の project-index が応答を返却するまでの秒数（check_indexes を処理中のままにする時間）
 SLOW_DEV_DOCS_SEC = 10
 # 処理中の呼び出しを始めてから、再起動を呼ぶまでの秒数
 CALL_START_SEC = 1
@@ -21,7 +21,7 @@ def _slow_server(
     config_text: Callable[..., str],
     project_dir: Path,
 ) -> Any:
-    """タグのパターンを持つ索引と、応答の遅い偽の dev-docs を指した設定ファイルで、サーバーを起動する。"""
+    """タグのパターンを持つ索引と、応答の遅い偽の project-index を指した設定ファイルで、サーバーを起動する。"""
     fake = start_fake_dev_docs(
         {"total_count": 1, "groups": [{"value": "python", "count": 1}]}, delay=SLOW_DEV_DOCS_SEC
     )

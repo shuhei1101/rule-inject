@@ -43,7 +43,7 @@ SERVER_INSTRUCTIONS = (
 )
 # `check_indexes` がプロジェクトのファイルを辿る時間の上限（秒）
 UNMATCHED_SCAN_TIME_LIMIT = 30
-# `check_indexes` が dev-docs への問い合わせの応答を待つ時間の上限（秒）
+# `check_indexes` が project-index への問い合わせの応答を待つ時間の上限（秒）
 DEV_DOCS_TIMEOUT = 207
 LIST_LIMIT_FIELD = Field(ge=1, le=tools.MAX_LIST_LIMIT)
 CURSOR_FIELD = Field(pattern=tools.CURSOR_PATTERN)
@@ -103,7 +103,7 @@ def build_server(
         include_global: bool = False,
         cursor: str | None = None,
     ) -> CallToolResult:
-        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも該当しないエントリが無いか・タグのパターンが dev-docs の使用中のどのタグにも該当しないエントリが無いかで確認する。include_global でユーザー全体の索引の paths の該当しないエントリも確認し、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に引き渡して再度呼び出す。dev-docs に届かないときはタグの確認だけを飛ばし、tag_check に理由を返却する。"""
+        """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも該当しないエントリが無いか・タグのパターンが project-index の使用中のどのタグにも該当しないエントリが無いかで確認する。include_global でユーザー全体の索引の paths の該当しないエントリも確認し、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に引き渡して再度呼び出す。project-index に届かないときはタグの確認だけを飛ばし、tag_check に理由を返却する。"""
         return await check_tools.check_indexes(
             project_dir=project_dir,
             format=format,
@@ -176,7 +176,7 @@ def build_server(
         return admin_tools.get_server_status(env=env, control=control, clone=clone, run=run_command)
 
     def reload_settings(project_dir: str | None = None) -> CallToolResult:
-        """設定ファイルを再読込、読めたかと読んだ値（読む索引・記録フォルダ・保持日数・dev-docs の接続先）を返却する。project_dir を引き渡すと、そのプロジェクトで読む索引を返却する。"""
+        """設定ファイルを再読込、読めたかと読んだ値（読む索引・記録フォルダ・保持日数・project-index の接続先）を返却する。project_dir を引き渡すと、そのプロジェクトで読む索引を返却する。"""
         return admin_tools.reload_settings(project_dir=project_dir, env=env)
 
     async def restart_server() -> CallToolResult:

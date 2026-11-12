@@ -54,7 +54,7 @@ functions:
         type: float
         required: true
         passing: injected
-        description: dev-docs への問い合わせの待ち時間の上限（秒）
+        description: project-index への問い合わせの待ち時間の上限（秒）
     returns:
       type: CallToolResult
       description: '`respond(CheckIndexesResult, format)`'
@@ -110,19 +110,19 @@ functions:
         expected: 両方の索引が `unused_tag_patterns` 1 件（`location` `args`・`key` `filter[tags]`・`pattern` `pyhton`・`rev`）を持つ。`tag_check.state` が `checked`、`problem_count` が 0。`fetch_used_tags` の呼び出しが 1 回で、接続先が `Settings.dev_docs_url`、`cwd` に引き渡す値が `project_dir`
       - name: test_check_indexes_when_tag_check_skipped
         case: 正常
-        summary: dev-docs に届かないときはタグの確認だけを飛ばす
+        summary: project-index に届かないときはタグの確認だけを飛ばす
         condition: 前のテストの索引に、ファイルの無いルールのエントリを 1 件加える
         mock: '`fetch_used_tags` を `UsedTags(tags=(), reason="x")` を返却する関数に差し替える'
         expected: '`tag_check` が `skipped`・`reason` `x`。どの索引の `unused_tag_patterns` も空。`missing_rules` 1 件で `problem_count` が 1'
       - name: test_check_indexes_when_no_tag_patterns
         case: 正常
-        summary: タグのパターンが無ければ dev-docs に問い合わせない
+        summary: タグのパターンが無ければ project-index に問い合わせない
         condition: '`args: {"filter.tags": ["go"]}` だけを持つ索引'
         mock: '`fetch_used_tags` を呼ばれた回数を数える関数に差し替える'
         expected: '`tag_check` が `no_patterns`・`reason` None。`fetch_used_tags` が呼ばれていない'
       - name: test_check_indexes_when_query_parallel
         case: 正常
-        summary: dev-docs への問い合わせを、ファイルを辿るのと並べて行う
+        summary: project-index への問い合わせを、ファイルを辿るのと並べて行う
         condition: タグのパターンを 1 つ持つ索引
         mock: '`fetch_used_tags` を、呼ばれたら `threading.Event` を設定して `UsedTags(tags=("a",), reason=None)` を返却する関数に、`scan_unmatched` を、その Event を 5 秒まで待ち、待てたかを記録して本物を呼ぶ関数に差し替える'
         expected: 偽の `scan_unmatched` が Event を待てている（辿り終える前に問い合わせが始まっている）。`tag_check.state` が `checked`

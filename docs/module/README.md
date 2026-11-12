@@ -12,7 +12,7 @@
 | [MCP サーバー / サーバー / app.py](./MOD-122-37.py.yaml) | コンポジションルートとツールの登録 |
 | [MCP サーバー / サーバー / tools.py](./MOD-122-43.py.yaml) | ルールの一覧・検索・エントリの書き込み・削除のツール |
 | [MCP サーバー / サーバー / check_tools.py](./MOD-122-38.py.yaml) | 索引のチェックのツールと続きの位置の変換 |
-| [MCP サーバー / サーバー / dev_docs.py](./MOD-122-41.py.yaml) | dev-docs から使用中のタグを取得するクライアント |
+| [MCP サーバー / サーバー / dev_docs.py](./MOD-122-41.py.yaml) | project-index から使用中のタグを取得するクライアント |
 | [MCP サーバー / サーバー / record_tools.py](./MOD-122-42.py.yaml) | 既読の記録の確認・削除のツール |
 | [MCP サーバー / サーバー / types.py](./MOD-122-44.py.yaml) | 応答の形式の種類と応答のモデル |
 | [MCP サーバー / サーバー / _format.py](./MOD-122-35.py.yaml) | 応答の形式と長さの切り詰め |

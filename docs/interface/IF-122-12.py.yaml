@@ -112,7 +112,7 @@ response:
     description: ログの保持日数
   - name: dev_docs_url
     type: str
-    description: '`check_indexes` が問い合わせる dev-docs の接続先'
+    description: '`check_indexes` が問い合わせる project-index の接続先'
 response_example: |-
   ```json
   {
@@ -123,7 +123,7 @@ response_example: |-
     "state_dir": "/home/user/.local/state/rule-inject",
     "record_retention_days": 30,
     "log_retention_days": 3,
-    "dev_docs_url": "http://127.0.0.1:8781/mcp"
+    "dev_docs_url": "http://127.0.0.1:8786/mcp"
   }
   ```
 response_notes: '待ち受けのポートは起動したプロセスの環境変数 `RULE_INJECT_PORT` だけから読み、動いているプロセスでは変わらないため返却しない（`get_server_status` の `port`）。'

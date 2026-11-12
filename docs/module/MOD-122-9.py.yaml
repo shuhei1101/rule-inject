@@ -12,7 +12,7 @@ constants:
   - name: TAG_NORMALIZATION_FORM
     title: タグの正規化の形式
     container: features/index/check/tags.py
-    summary: dev-docs がタグを数える前にかける Unicode の正規化の形式（この後に `casefold` する）
+    summary: project-index がタグを数える前にかける Unicode の正規化の形式（この後に `casefold` する）
     value: '`"NFKC"`'
 functions:
   - name: tag_patterns
@@ -65,7 +65,7 @@ functions:
         type: Sequence[str]
         required: true
         passing: positional
-        description: dev-docs が返却した使用されているタグ（`groups[].value`）
+        description: project-index が返却した使用されているタグ（`groups[].value`）
     returns:
       type: tuple[TagPattern, ...]
       description: ヒットしないパターン（`patterns` の順）
@@ -85,4 +85,4 @@ functions:
         condition: パターン `python3` と、タグ `Ｐｙｔｈｏｎ３`（全角）
         mock: なし
         expected: 空
-lead: 索引のタグのパターンを集め、dev-docs で使用されているタグにヒットしないものを検出する関数を定め、タグのチェックを修正するときに参照する。
+lead: 索引のタグのパターンを集め、project-index で使用されているタグにヒットしないものを検出する関数を定め、タグのチェックを修正するときに参照する。

@@ -392,7 +392,7 @@ def test_load_settings_when_invalid_port_env() -> None:
         ),
         pytest.param(
             "global:\n  log_retention_days: 5\n",
-            "http://127.0.0.1:8781/mcp",
+            "http://127.0.0.1:8786/mcp",
             id="default",
         ),
     ],
@@ -402,7 +402,7 @@ def test_load_settings_when_dev_docs_url(
     global_text: str,
     expected: str,
 ) -> None:
-    """dev-docs の接続先を設定ファイルから読み、無ければ既定にする（正常系）。"""
+    """project-index の接続先を設定ファイルから読み、無ければ既定にする（正常系）。"""
     # 準備
     config = make_settings(global_text)
     env = {"RULE_INJECT_CONFIG": str(config)}
@@ -415,7 +415,7 @@ def test_load_settings_when_dev_docs_url(
 @pytest.mark.parametrize(
     "value",
     [
-        pytest.param("127.0.0.1:8781/mcp", id="no_scheme"),
+        pytest.param("127.0.0.1:8786/mcp", id="no_scheme"),
         pytest.param("ftp://h/mcp", id="ftp"),
     ],
 )

@@ -200,7 +200,7 @@ async def check_indexes(
             if origin == "project" or include_global:
                 contents.append(content)
     patterns = tag_patterns(readable)
-    # dev-docs への問い合わせはファイルを辿る前に始め、辿り終えた後に応答を待つ（問い合わせと辿るのを並べて行う）
+    # project-index への問い合わせはファイルを辿る前に始め、辿り終えた後に応答を待つ（問い合わせと辿るのを並べて行う）
     async with asyncio.TaskGroup() as group:
         used_task = (
             group.create_task(

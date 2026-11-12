@@ -313,11 +313,11 @@ def limited_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Running
     _stop(server)
 
 
-# 偽の dev-docs を起動するコード。`search_docs` が受けた引数を 1 行ずつ記録し、`FAKE_DELAY` 秒待ってから決めた応答の文字列を返却する
+# 偽の project-index を起動するコード。`search_docs` が受けた引数を 1 行ずつ記録し、`FAKE_DELAY` 秒待ってから決めた応答の文字列を返却する
 FAKE_DEV_DOCS_CODE = (
     "import json, os, time\n"
     "from mcp.server.mcpserver import MCPServer\n"
-    "server = MCPServer('dev-docs')\n"
+    "server = MCPServer('project-index')\n"
     "@server.tool()\n"
     "def search_docs(\n"
     "    source: str = '', group_by: str = '', format: str = 'markdown', cwd: str = ''\n"
@@ -334,7 +334,7 @@ FAKE_DEV_DOCS_CODE = (
 
 @dataclass
 class FakeDevDocs:
-    """起動した偽の dev-docs の接続先と、受けた `search_docs` の引数の記録。"""
+    """起動した偽の project-index の接続先と、受けた `search_docs` の引数の記録。"""
 
     url: str
     calls_path: Path
@@ -349,11 +349,11 @@ class FakeDevDocs:
 
 @pytest.fixture
 def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[..., FakeDevDocs]]:
-    """`search_docs` が決めた応答を返却する偽の dev-docs を子プロセスとして起動する factory。終わったら止める。"""
+    """`search_docs` が決めた応答を返却する偽の project-index を子プロセスとして起動する factory。終わったら止める。"""
     processes: list[subprocess.Popen[bytes]] = []
 
     def _start(response: Mapping[str, Any], *, delay: float = 0) -> FakeDevDocs:
-        """response の JSON を delay 秒待ってから返却する偽の dev-docs を空いているポートで起動し、待ち受けるまで待つ。"""
+        """response の JSON を delay 秒待ってから返却する偽の project-index を空いているポートで起動し、待ち受けるまで待つ。"""
         directory = tmp_path / "fake_dev_docs"
         directory.mkdir(exist_ok=True)
         response_path = directory / "response.json"
@@ -361,7 +361,7 @@ def start_fake_dev_docs(tmp_path: Path) -> Iterator[Callable[..., FakeDevDocs]]:
         calls_path = directory / "calls.jsonl"
 
         def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
-            """port で偽の dev-docs を起動する（標準エラーは起動の確認のためファイルへ書き込む）。"""
+            """port で偽の project-index を起動する（標準エラーは起動の確認のためファイルへ書き込む）。"""
             env = dict(os.environ)
             env.update(
                 FAKE_PORT=str(port),
@@ -412,7 +412,7 @@ def config_text() -> Callable[..., str]:
         project_indexes: Sequence[Path] = (),
         dev_docs_url: str | None = None,
     ) -> str:
-        """引き渡した索引・プロジェクトの要素・dev-docs の接続先を記載した設定ファイルの文字列を作る。"""
+        """引き渡した索引・プロジェクトの要素・project-index の接続先を記載した設定ファイルの文字列を作る。"""
         lines: list[str] = []
         # global のキーがあるときだけ見出しを配置する
         if dev_docs_url is not None or global_indexes:

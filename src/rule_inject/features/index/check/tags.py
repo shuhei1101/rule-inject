@@ -12,7 +12,7 @@ from rule_inject.features.index.types import ArgCondition, IndexContent
 
 # 使用中のかを確認する、条件の木のキーの `field`
 TAG_FIELD = "tags"
-# dev-docs がタグを数える前にかける Unicode の正規化の形式（この後に `casefold` する）
+# project-index がタグを数える前にかける Unicode の正規化の形式（この後に `casefold` する）
 TAG_NORMALIZATION_FORM: Literal["NFKC"] = "NFKC"
 
 

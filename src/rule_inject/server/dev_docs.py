@@ -1,4 +1,4 @@
-"""dev-docs の `search_docs` で、使用中のタグを取得するクライアント。"""
+"""project-index の `search_docs` で、使用中のタグを取得するクライアント。"""
 
 from __future__ import annotations
 
@@ -17,11 +17,11 @@ from mcp.types import CallToolResult, TextContent
 
 from rule_inject.shared.errors import describe
 
-# 使用中のタグを取得する dev-docs のツール
+# 使用中のタグを取得する project-index のツール
 SEARCH_DOCS_TOOL = "search_docs"
 # `search_docs` に引き渡す固定の引数（これに `cwd` を加える）
 TAG_GROUP_ARGUMENTS = {"source": "*", "group_by": "tags", "format": "json"}
-# dev-docs がタグを持たない文書をまとめて返却する `groups[].value`。使用中のタグに含めない
+# project-index がタグを持たない文書をまとめて返却する `groups[].value`。使用中のタグに含めない
 NO_TAG_LABEL = "（なし）"
 # 応答を読めないときの理由に記載する、応答の文字列の字数の上限
 UNREADABLE_EXCERPT_CHARS = 200
@@ -112,7 +112,7 @@ async def fetch_used_tags(
     timeout: float,  # noqa: ASYNC109 - 待ち時間の上限は呼び出し元が決める値として受ける
     open_session: Callable[[str], AbstractAsyncContextManager[ClientSession]] = _open_session,
 ) -> UsedTags:
-    """dev-docs の `search_docs` を `group_by: tags` で 1 回呼び、使用中のタグを返却する。届かないときは例外にせず理由を返却する。"""
+    """project-index の `search_docs` を `group_by: tags` で 1 回呼び、使用中のタグを返却する。届かないときは例外にせず理由を返却する。"""
     try:
         async with asyncio.timeout(timeout):
             return await _search_tags(url, project_dir, open_session)

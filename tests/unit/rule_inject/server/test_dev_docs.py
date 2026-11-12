@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 from mcp.types import CallToolResult, TextContent
 
-DEV_DOCS_URL = "http://127.0.0.1:8781/mcp"
+DEV_DOCS_URL = "http://127.0.0.1:8786/mcp"
 PROJECT_DIR = "/p/project"
 # 待ち時間の上限（秒）。応答を待ち終えられる値
 TIMEOUT = 5.0
@@ -21,7 +21,7 @@ OpenSession = Callable[[str], AbstractAsyncContextManager[Any]]
 
 
 class FakeSession:
-    """受けた呼び出しを記録し、決めた結果を返却する dev-docs のセッションの偽物。"""
+    """受けた呼び出しを記録し、決めた結果を返却する project-index のセッションの偽物。"""
 
     def __init__(self, result: CallToolResult, delay: float, calls: list[dict[str, Any]]) -> None:
         """返却する結果と、返却する前に待つ秒数と、呼び出しを記録するリストを持つ。"""

@@ -9,7 +9,7 @@ items:
   - page: MOD-122-38.py.yaml
     summary: 索引のチェックのツールと続きの位置の変換
   - page: MOD-122-41.py.yaml
-    summary: dev-docs から使用中のタグを取得するクライアント
+    summary: project-index から使用中のタグを取得するクライアント
   - page: MOD-122-42.py.yaml
     summary: 既読の記録の確認・削除のツール
   - page: MOD-122-44.py.yaml

@@ -95,7 +95,7 @@
 
 ## check_indexes
 
-プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにもヒットしないエントリ・dev-docs の使用中のどのタグにもヒットしないタグのパターンを返却する。
+プロジェクトで読む索引ごとに、フックが読めない理由・JSON Schema への違反・`rule` の場所にファイルが無いエントリ・`paths` がプロジェクトのどのファイルにもヒットしないエントリ・project-index の使用中のどのタグにもヒットしないタグのパターンを返却する。
 索引の問題はエラーにせず応答に記載する。
 
 索引ごとに、フックと同じ読み取り、JSON Schema、`rule` の場所の実在の順に確認する。
@@ -129,7 +129,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 | `indexes[].skipped_entries[]` | オブジェクトのリスト | フックが読み飛ばすエントリの `position` と `reason` |
 | `indexes[].unmatched_paths[]` | オブジェクトのリスト | `paths` がプロジェクトのどのファイルにもヒットしないエントリの `position`・`rev`・解いた `rule`。`origin` が `global` の索引は `include_global` が `true` のときだけ記載する |
 | `indexes[].unused_tag_patterns[]` | オブジェクトのリスト | 使用中のどのタグにもヒットしないタグのパターンの `position`・`rev`・`location`（`args` か `read_by[1].args`）・`key`（`filter[tags]`）・`pattern`（索引に記載したまま）。`global` と `project` のどちらの索引も記載する |
-| `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確認の結果。`checked` は dev-docs のタグに照らした、`skipped` は dev-docs に届かない、または読める文書が 0 件で飛ばした、`no_patterns` は確認するパターンが無く dev-docs に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
+| `tag_check.state` | `checked` / `skipped` / `no_patterns` | タグのパターンの確認の結果。`checked` は project-index のタグに照らした、`skipped` は project-index に届かない、または読める文書が 0 件で飛ばした、`no_patterns` は確認するパターンが無く project-index に問い合わせなかった。`checked` 以外のときはどの索引の `unused_tag_patterns` も空 |
 | `tag_check.reason` | 文字列 / `null` | 飛ばした理由。`skipped` のとき、接続先と、接続できない・待ち時間の上限を超えた・エラーを返却した・読める文書が 0 件だったのどれかを含む。それ以外は `null` |
 
 <!-- /table -->
@@ -144,10 +144,10 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 - `next_cursor` を `cursor` に指定して再度呼び出すと、続きから辿る。`project_dir`・`include_global` は前の呼び出しと同じ値で指定する。確認するエントリが前の呼び出しの後に変わっていたときは、`cursor` を使用せず最初のファイルから再度辿る
 - `hook_error`・`violations`・`missing_rules`・`skipped_entries` の確認は、`cursor` によらず毎回全て行う
 - `unused_tag_patterns` で確認するのは、有効なエントリ（`unmatched_paths` と同じ除外）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターン。ドットの道筋のキー（`filter.tags`）は確認しない
-- パターンは、フックと同じ照合（glob・正規表現）で、dev-docs が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかにヒットすれば使用中とする
-- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の dev-docs の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使用中のタグを取得する。索引ごとには問い合わせ修正しない
-- dev-docs への問い合わせは、`paths` のヒットしないエントリを確認するファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
-- dev-docs に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返却する。ほかの確認は変わらない
+- パターンは、フックと同じ照合（glob・正規表現）で、project-index が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかにヒットすれば使用中とする
+- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の project-index の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使用中のタグを取得する。索引ごとには問い合わせ修正しない
+- project-index への問い合わせは、`paths` のヒットしないエントリを確認するファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
+- project-index に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返却する。ほかの確認は変わらない
 - `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths`・`unused_tag_patterns` を含めない
 
 `cursor` が読めないとき、または `project_dir`・`include_global` が `cursor` を返却した呼び出しと違うときは、`isError: true` になり、`cursor` を省いて再度呼び出す旨を返却する。
@@ -364,7 +364,7 @@ Claude Code の許可の設定で削除だけを止められるように、書�
 | `state_dir` | 文字列 | 既読の記録とログを配置する記録フォルダ |
 | `record_retention_days` | 整数 | 既読の記録の保持期間（日） |
 | `log_retention_days` | 整数 | ログの保持日数 |
-| `dev_docs_url` | 文字列 | `check_indexes` が問い合わせる dev-docs の接続先 |
+| `dev_docs_url` | 文字列 | `check_indexes` が問い合わせる project-index の接続先 |
 
 <!-- /table -->
 

@@ -13,7 +13,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 # 辿る時間の上限（秒）。辿り終えられる値
 SCAN_TIME_LIMIT = 30
-# dev-docs への問い合わせの待ち時間の上限（秒）。待ち終えられる値
+# project-index への問い合わせの待ち時間の上限（秒）。待ち終えられる値
 DEV_DOCS_TIMEOUT = 108
 # 設定ファイルの `global.dev_docs_url` に書き込む接続先
 DEV_DOCS_URL = "http://docs.example/mcp"
@@ -325,7 +325,7 @@ def test_check_indexes_when_tag_check_skipped(
     build_tag_env: Callable[..., dict[str, str]],
     stub_fetch_used_tags: Callable[..., list[tuple[str, str]]],
 ) -> None:
-    """dev-docs に届かないときはタグの確認だけを飛ばす（正常系）。"""
+    """project-index に届かないときはタグの確認だけを飛ばす（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -358,7 +358,7 @@ def test_check_indexes_when_no_tag_patterns(
     build_tag_env: Callable[..., dict[str, str]],
     stub_fetch_used_tags: Callable[..., list[tuple[str, str]]],
 ) -> None:
-    """タグのパターンが無ければ dev-docs に問い合わせない（正常系）。"""
+    """タグのパターンが無ければ project-index に問い合わせない（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server.check_tools import check_indexes
 
@@ -386,7 +386,7 @@ def test_check_indexes_when_query_parallel(
     build_tag_env: Callable[..., dict[str, str]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """dev-docs への問い合わせを、ファイルを辿るのと並べて行う（正常系）。"""
+    """project-index への問い合わせを、ファイルを辿るのと並べて行う（正常系）。"""
     from rule_inject.features.index.check import load_validator
     from rule_inject.server import check_tools
     from rule_inject.server.check_tools import check_indexes
