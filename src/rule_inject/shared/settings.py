@@ -48,8 +48,8 @@ PORT_ENV = "RULE_INJECT_PORT"
 DEFAULT_SERVER_SERVICE = "rule-inject"
 # `global.server_service` に許す値（`fullmatch` で照合する）
 SERVICE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,64}")
-# 設定ファイルに `global.dev_docs_url` が無いときの dev-docs の接続先
-DEFAULT_DEV_DOCS_URL = "http://127.0.0.1:8781/mcp"
+# 設定ファイルに `global.dev_docs_url` が無いときの project-index の接続先
+DEFAULT_DEV_DOCS_URL = "http://127.0.0.1:8786/mcp"
 # `global.dev_docs_url` の先頭に許す文字列
 DEV_DOCS_URL_SCHEMES = ("http://", "https://")
 
@@ -67,7 +67,7 @@ class Settings:
     log_retention_days: int
     # MCP サーバーが待ち受けるポート（フックはサーバーの起動の補助だけが使用する）
     server_port: int
-    # `check_indexes` が使用中のタグを取得する dev-docs の MCP サーバーの URL（フックは使用しない）
+    # `check_indexes` が使用中のタグを取得する project-index の MCP サーバーの URL（フックは使用しない）
     dev_docs_url: str
     # 応答しない MCP サーバーを起動する systemd --user のユニットのサービス名
     server_service: str
@@ -127,7 +127,7 @@ def _resolve_server_port(env: Mapping[str, str]) -> int:
 
 
 def _resolve_dev_docs_url(config: str, global_values: Mapping[str, object]) -> str:
-    """設定ファイルの dev-docs の接続先、無ければ既定の接続先を返却する。"""
+    """設定ファイルの project-index の接続先、無ければ既定の接続先を返却する。"""
     written = global_values.get("dev_docs_url")
     if written is None:
         return DEFAULT_DEV_DOCS_URL
