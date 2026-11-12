@@ -126,7 +126,7 @@ documents:
     title: 公開ドキュメント
     alias_type: doc
     paths: [docs/guide/files.yml, docs/_root/files.yml]
-    exclude: ["*.yaml", "*.yml", README.md, index.md, はじめに.md, 使い方.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
+    exclude: ["*.yaml", "*.yml", README.md, index.md, はじめに.md, 使用方法.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
     schema: schemas/files.schema.yaml
     records: files
     body_file: path

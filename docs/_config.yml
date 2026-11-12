@@ -2,7 +2,7 @@
 # docs/ 配下を Jekyll サイトとしてビルドする
 
 title: rule-inject
-description: rule-inject の使い方と変更履歴
+description: rule-inject の使用方法と変更履歴
 
 # GitHub Pages のプロジェクトサイトはリポジトリ名がパスプレフィクスになる
 # 例: https://shuhei1101.github.io/rule-inject/ で配信されるので baseurl を明示
@@ -37,11 +37,13 @@ kramdown:
 # - jekyll-relative-links: [foo](foo.md) を [foo](foo.html) 相当に自動書き換え
 # - jekyll-github-metadata: site.github.repository_nwo（ビルドしたリポジトリ）を入れる
 #   （載せないと cwd に Gemfile が無いローカルビルドで読み込まれず、起票の宛先が空になる）
+# - jekyll-redirect-from: front matter の redirect_from の旧 URL から、そのページへ転送する
 plugins:
   - jekyll-optional-front-matter
   - jekyll-readme-index
   - jekyll-relative-links
   - jekyll-github-metadata
+  - jekyll-redirect-from
 
 # 共通の部品（レイアウト・include・データ・アセット）は _theme/ にまとめる
 # 取り込みのコマンド（python -m ai_monitor.distribution import-site）が _theme/ をまとめて置き換える
@@ -63,6 +65,11 @@ defaults:
       path: ""
     values:
       layout: default
+  # 分類のトップページは publish が front matter を permalink だけで書き出すため、旧 URL からの転送をここで指定する
+  - scope:
+      path: guide/使用方法.md
+    values:
+      redirect_from: /使い方/
 
 # jekyll-optional-front-matter を全ファイルに適用する
 optional_front_matter:

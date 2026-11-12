@@ -2,16 +2,16 @@
 tabs:
   - name: はじめに
     page: guide/はじめに.md
-  - name: 使い方
-    page: guide/使い方.md
+  - name: 使用方法
+    page: guide/使用方法.md
   - name: リファレンス
     page: guide/リファレンス.md
 pages:
   guide/変更履歴.md: はじめに
   guide/コアコンセプト-ルールの案内.md: はじめに
   guide/コアコンセプト-MCPサーバー.md: はじめに
-  guide/セットアップ.md: 使い方
-  guide/ルールにするか文書にするかを決める.md: 使い方
+  guide/セットアップ.md: 使用方法
+  guide/ルールにするか文書にするかを決める.md: 使用方法
   guide/環境変数.md: リファレンス
   guide/設定ファイル.md: リファレンス
   guide/索引の書式.md: リファレンス

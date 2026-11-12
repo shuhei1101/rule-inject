@@ -29,7 +29,7 @@ files:
     tags:
       - topic:セットアップ手順
       - tool:claude-code
-    category: 使い方
+    category: 使用方法
     visibility: public
   - path: ルールにするか文書にするかを決める.md
     name: ルールにするか文書にするかの判定
@@ -37,7 +37,7 @@ files:
     tags:
       - topic:判定フローチャート
       - topic:ルールの案内
-    category: 使い方
+    category: 使用方法
     visibility: public
   - path: 環境変数.md
     name: 環境変数
