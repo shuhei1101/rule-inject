@@ -1,0 +1,32 @@
+$ PAGES_REPO_NWO=shuhei1101/rule-inject jekyll build -s docs -d /tmp/ri157-site
+Configuration file: docs/_config.yml
+To use retry middleware with Faraday v2.0+, install `faraday-retry` gem
+            Source: docs
+       Destination: /tmp/ri157-site
+ Incremental build: disabled. Enable with --incremental
+      Generating... 
+                    done in 0.948 seconds.
+ Auto-regeneration: disabled. Use --watch to enable.
+
+$ cat /tmp/ri157-site/使い方/index.html
+<!DOCTYPE html>
+<html lang="en-US">
+  <meta charset="utf-8">
+  <title>Redirecting&hellip;</title>
+  <link rel="canonical" href="/rule-inject/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95/">
+  <script>location="/rule-inject/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95/"</script>
+  <meta http-equiv="refresh" content="0; url=/rule-inject/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95/">
+  <meta name="robots" content="noindex">
+  <h1>Redirecting&hellip;</h1>
+  <a href="/rule-inject/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95/">Click here if you are not redirected.</a>
+</html>
+
+$ head -c 300 /tmp/ri157-site/使用方法/index.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rule-inject</title>
+  <link rel="stylesheet" href="/rule-inject/assets/style.css">
+  <!-- Mermaid は設計書の図の検査と同じ版に固定した�
