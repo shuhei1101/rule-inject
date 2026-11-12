@@ -2,27 +2,39 @@ docs:
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: 'サブシステム「MCP サーバー」と外部システム project-index の行の `status: planned` を外す'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:24.775766+00:00'
   - page: docs/config/CFG-122-1.yaml
     new: false
     change: '`settings` の 28 行（default_on・rules[] のキー・global のキー・環境変数・version 等）の `status: planned` を、実装と照合したうえで外す'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:24.775766+00:00'
   - page: docs/er/ER-122-2.yaml
     new: false
     change: 'テーブル「案内済みの記録」「既読の履歴」の `status: planned` を外す'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:24.775766+00:00'
   - page: docs/interface/IF-122-11.py.yaml
     new: false
     change: '引数 `include_global`・`cursor` の `status: planned` を外す'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:24.775766+00:00'
   - page: docs/library/LIB-122-3.yaml
     new: false
     change: '`streamable_http_client` の行の `status: planned` を外す'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:24.775766+00:00'
   - page: docs/nonfunctional/NFR-122-1.yaml
     new: false
     change: 'NFR-7・NFR-9〜NFR-16 の `status: planned` を、実装と照合したうえで外す'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T15:05:24.775766+00:00'
 scope_out:
   - item: '実装を終えた作業 PR で、設計で付けた `status: planned` を外す手順を決めること'
     reason: '#52・#57・#59・#69・#77・#102・#106・#110・#112・#159 が設計で `planned` を付け、実装の後も外していない。手順は AI Monitor 側のルールで、このリポジトリの要望に含まれない。起票するかはレビューで確定する'
