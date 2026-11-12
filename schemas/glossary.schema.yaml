@@ -2,7 +2,7 @@ $schema: https://json-schema.org/draft/2020-12/schema
 title: 用語集
 description: |-
   ドメイン用語と使用しない言い方の一覧。1 プロジェクト 1 ファイル。
-  dev-docs の文書の行が `alias_type: term`・`records: terms` で参照し、各要素を 1 件の用語にする。
+  project-index の配信元の設定の文書の行が `alias_type: term`・`records: terms` で参照し、各要素を 1 件の用語にする。
 x-kind: glossary
 x-folder: docs/glossary
 x-id-prefix: GLO

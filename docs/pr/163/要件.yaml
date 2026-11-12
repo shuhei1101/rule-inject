@@ -1,0 +1,56 @@
+docs:
+  - page: dev-docs.yaml
+    new: false
+    change: 名前は dev-docs.yaml のまま、$schema を project-index の schema（project-index.schema.json）にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+  - page: docs/guide/ルールにするか文書にするかを決める.md
+    new: false
+    change: 冒頭リード・r2 の結果・※5 の「dev-docs の文書」とその説明を、project-index の文書へ書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+  - page: docs/guide/README.md
+    new: false
+    change: ルールにするか文書にするかを決めるの行の概要の dev-docs を書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+  - page: docs/guide/使用方法.md
+    new: false
+    change: ルールにするか文書にするかを決めるの行の概要の dev-docs を書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+  - page: docs/guide/index.yaml
+    new: false
+    change: ルールにするか文書にするかを決めるの summary の dev-docs を書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+  - page: docs/guide/files.yml
+    new: false
+    change: ルールにするか文書にするかを決めるの description の dev-docs を書き換える
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+  - page: schemas/glossary.schema.yaml
+    new: false
+    change: 冒頭の説明の「dev-docs の文書の行」を project-index の配信元の設定の文書の行にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-12T12:52:06.510302+00:00'
+scope_out:
+  - item: '`check_indexes` の問い合わせ先・`dev_docs_url`・ツールの完全名としての dev-docs の記述（`docs/guide/MCPツール.md`・`設定ファイル.md`・`コアコンセプト-MCPサーバー.md`・`コアコンセプト-ルールの案内.md`・`索引の書式.md`・`docs/external-api/API-122-1.yaml` など）'
+    reason: '接続先・ツールの完全名の書き換えは #158（作業 PR #159）が持つ'
+    plan: '#158'
+  - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py` などの識別子の書き換え
+    reason: '#159 で対応しないと決めた識別子で、配信元・画面としての記述ではない'
+    plan: none
+  - item: '`schemas/common.schema.yaml`・`component.schema.yaml`・`screen.schema.yaml` の「dev-docs の画面」'
+    reason: 画面は project-index へ移らず dev-docs に残り、project-index の読み取り API を使う（project-index のアーキテクチャ図 ARCH-1 の外部システム「dev-docs の画面のサーバー」）。今の記述のまま正しい
+    plan: none
+  - item: 配信元の設定 `dev-docs.yaml` の `project-index.yaml` への改名
+    reason: shuhei1101/project-index#27（config を project-index.yaml へ向けた後に search_docs で文書が引けない）が open で、今 rule-inject を配信している dev-docs は dev-docs.yaml を読む。改名すると端末の設定の書き換えも要る。project-index は移行の間 dev-docs.yaml も探す（CFG-1）ため、#27 が直った後に端末の設定と合わせて移す
+    plan: '#164'
