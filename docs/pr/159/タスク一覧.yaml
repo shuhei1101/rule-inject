@@ -70,8 +70,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T08:43:14.631585+00:00'
   - process: 単体テスト作成
-    status: todo
+    status: done
     note: test_settings.py・test_dev_docs.py の既定値、test_check_tools.py などの docstring・コメントの接続先の呼び名
+    updated_by: planner
+    updated_at: '2026-11-12T08:51:57.878748+00:00'
   - process: 実装
     status: todo
     note: settings.py の既定値、settings.sample.yaml、dev_docs.py・settings.py・app.py（reload_settings の docstring を含む）・check_tools.py・types.py・tags.py の接続先の呼び名
