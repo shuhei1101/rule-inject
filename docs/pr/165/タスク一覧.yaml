@@ -75,8 +75,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T14:33:54.712269+00:00'
   - process: 実装
-    status: todo
+    status: done
     note: リポジトリの直下の `dev-docs.yaml` を `project-index.yaml` へ改名し、反映作業のスクリプトを書く
+    updated_by: planner
+    updated_at: '2026-11-12T14:56:16.844824+00:00'
   - process: 結合テスト作成
     status: skipped
     reason: コードは変わらない
