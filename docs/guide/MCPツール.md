@@ -145,7 +145,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 - `hook_error`・`violations`・`missing_rules`・`skipped_entries` の確認は、`cursor` によらず毎回全て行う
 - `unused_tag_patterns` で確認するのは、有効なエントリ（`unmatched_paths` と同じ除外）の `args` と `read_by[].args` のうち、キーが `[tags]` で終わる条件のパターン。ドットの道筋のキー（`filter.tags`）は確認しない
 - パターンは、フックと同じ照合（glob・正規表現）で、project-index が返却したタグそのものか、NFKC と `casefold` で正規化したタグのどちらかにヒットすれば使用中とする
-- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の project-index の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使用中のタグを取得する。索引ごとには問い合わせ修正しない
+- 確認するパターンが 1 つ以上あるときだけ、1 回の呼び出しにつき 1 回、設定ファイルの `global.dev_docs_url` の project-index の `search_docs` を `source: "*"`・`group_by: "tags"`・`cwd: project_dir` で呼び、使用中のタグを取得する。索引ごとには再度問い合わせない
 - project-index への問い合わせは、`paths` のヒットしないエントリを確認するファイルの走査と並べて行う。応答を待つ時間は問い合わせを始めてから 207 秒までで、1 回の呼び出しは長くて 212 秒かかる
 - project-index に接続できない・待ち時間の上限を超えた・`isError` が `true` のとき、`project_dir` から読める文書が 0 件のときは、ツールのエラーにせず `tag_check.state` を `skipped` にして理由を返却する。ほかの確認は変わらない
 - `write_index_entry`・`delete_index_entry` の書き込み前のチェックには、`unmatched_paths`・`unused_tag_patterns` を含めない
