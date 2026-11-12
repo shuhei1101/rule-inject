@@ -80,5 +80,8 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-12T08:54:50.426982+00:00'
   - process: 結合テスト作成
-    status: todo
+    status: done
     note: conftest.py・test_check_indexes.py・test_restart_server.py の偽の接続先の呼び名（関数名は変えない）
+    agent: planner
+    updated_by: planner
+    updated_at: '2026-11-12T12:18:36.291650+00:00'
