@@ -40,3 +40,12 @@
 ## テスト結果
 
 ドキュメント修正（索引 `rules.yaml`・`docs/guide`・`settings.sample.yaml`・`src/files.yaml`・アーキテクチャ図・テスト実行方法）は、規約『V字モデル』の対応表で対応する単体・結合テストが無い（文書と索引の値だけを書き換え、コードを変えない）。
+
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/unit/rule_inject/shared/test_settings.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/unit/rule_inject/shared/test_settings.py) | 全実行 | 変更 | ✅ | 既定の接続先の期待値を 8786 にした<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
+| [tests/unit/rule_inject/server/test_dev_docs.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/unit/rule_inject/server/test_dev_docs.py) | 全実行 | 変更 | ✅ | 接続先の値と呼び名だけを書き換えた<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
+| [tests/unit/rule_inject/server/test_check_tools.py](https://github.com/shuhei1101/rule-inject/blob/beabb2fddebe4fbbfc81e2156fa7eb9e3d921e8b/tests/unit/rule_inject/server/test_check_tools.py) | 全実行 | 変更 | ✅ | コメントと docstring の呼び名だけを書き換えた<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
+| `tests/unit` のほかのファイル | 全実行 | 実行のみ | ✅ | 555 テスト pass<br>`テスト結果/20261112175421_831f194_単体テスト.log` |
