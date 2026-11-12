@@ -55,6 +55,22 @@ docs:
     new: false
     change: '`dev_docs_url` の値とコメントを project-index の待ち受けにする'
     status: todo
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: '`check_indexes` の問い合わせ先を project-index にする'
+    status: todo
+  - page: docs/module/index.yaml
+    new: false
+    change: MOD-122-41 の行の概要の接続先を project-index にし、README.md を生成し直す
+    status: todo
+  - page: docs/test-procedure/TP-122-1.yaml
+    new: false
+    change: 起動を待つ偽の接続先の呼び名を project-index にする
+    status: todo
+  - page: src/files.yaml
+    new: false
+    change: '`dev_docs.py`・`tags.py` の行の description とタグ `tool:dev-docs` を project-index にする'
+    status: todo
 scope_out:
   - item: 設定のキー `dev_docs_url`・モジュール `dev_docs.py`・テスト関数の名前・非機能要件の `english_name` の識別子の書き換え
     reason: キーの書き換えは設定ファイルの移し替えを伴う破壊的変更になり、識別子は利用者の目に触れる接続先の呼び名ではない
