@@ -1,0 +1,1 @@
+# 配信元の設定 dev-docs.yaml を project-index.yaml へ改名し、端末の設定の config を書き換える
