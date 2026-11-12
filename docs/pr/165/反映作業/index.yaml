@@ -1,15 +1,14 @@
 端末の設定の配信元の設定のパスの書き換え:
-  説明: 端末の設定 ~/.config/dev-docs/settings.yaml の配信元 rule-inject の config を /mnt/c/Users/shuhe/repo/rule-inject/dev-docs.yaml から /mnt/c/Users/shuhe/repo/rule-inject/project-index.yaml へ書き換え、配信している dev-docs のサーバーを起動し直して読み直させる
-  タグ: [設定の書き換え, 再起動]
+  説明: 端末の設定 ~/.config/dev-docs/settings.yaml の配信元 rule-inject の config を /mnt/c/Users/shuhe/repo/rule-inject/dev-docs.yaml から /mnt/c/Users/shuhe/repo/rule-inject/project-index.yaml へ書き換え、配信している dev-docs に管理用 MCP の reload で読み直させる。書き換える前の件数を search_docs（source が rule-inject・view が count）で控えておく
+  タグ: [設定の書き換え, 再読み込み]
   実行者: tester
   時期: master へ入った後
   回数: 1 回限り
-  起動し直す対象: dev-docs
   可逆: true
-  疎通確認: null
-  実行: null
-  確認: null
-  切り戻し: null
+  疎通確認: 端末の設定の配信元の設定のパスの書き換え/疎通確認.py
+  実行: 端末の設定の配信元の設定のパスの書き換え/実行.py
+  確認: 端末の設定の配信元の設定のパスの書き換え/確認.py
+  切り戻し: 端末の設定の配信元の設定のパスの書き換え/切り戻し.py
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
   確認方法: 端末の設定の配信元 rule-inject の config が project-index.yaml を指し、search_docs（source が rule-inject・view が count）の件数が書き換える前と同じになっている
   状態: "-"
