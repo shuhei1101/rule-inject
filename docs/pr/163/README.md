@@ -1,0 +1,1 @@
+# 配信元・画面としての dev-docs の記述と dev-docs.yaml を、project-index への移行に合わせて見直す
