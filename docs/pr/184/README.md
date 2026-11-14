@@ -1,0 +1,1 @@
+# project-index.yaml の instructions の files.yml の範囲を docs/guide/files.yml に合わせる
