@@ -4,15 +4,19 @@
 import sys
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 SETTINGS = Path.home() / ".config/ai-monitor/settings.yaml"
 REMOVED = "/mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml"
 KEPT = "/mnt/c/Users/shuhe/repo/rule-inject/rules.yaml"
 
-data = yaml.safe_load(SETTINGS.read_text(encoding="utf-8")) or {}
+data = YAML(typ="safe").load(SETTINGS.read_text(encoding="utf-8")) or {}
 indexes = next(
-    (list(p.get("rule_indexes") or []) for p in data.get("projects") or [] if p.get("name") == "rule-inject"),
+    (
+        list(p.get("rule_indexes") or [])
+        for p in data.get("projects") or []
+        if p.get("name") == "rule-inject"
+    ),
     None,
 )
 print(f"rule-inject の rule_indexes: {indexes}")

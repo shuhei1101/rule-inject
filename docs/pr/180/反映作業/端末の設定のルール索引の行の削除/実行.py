@@ -9,7 +9,7 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 SETTINGS = Path.home() / ".config/ai-monitor/settings.yaml"
 BACKUP = Path.home() / ".config/ai-monitor/settings.yaml.bak-pr180"
@@ -20,7 +20,7 @@ PROJECT = "rule-inject"
 
 
 def rule_indexes(text: str) -> list[str]:
-    data = yaml.safe_load(text) or {}
+    data = YAML(typ="safe").load(text) or {}
     for project in data.get("projects") or []:
         if project.get("name") == PROJECT:
             return list(project.get("rule_indexes") or [])
@@ -42,12 +42,16 @@ if args and not dry_run:
 if not SETTINGS.is_file():
     fail("前提確認", f"test -f {SETTINGS}", "ファイルがありません")
 if Path(REMOVED).exists():
-    fail("前提確認", f"test ! -e {REMOVED}", "削除する索引がまだクローン本体にあります（master へ入った後に実行する）")
+    fail(
+        "前提確認",
+        f"test ! -e {REMOVED}",
+        "削除する索引がまだクローン本体にあります（master へ入った後に実行する）",
+    )
 current = SETTINGS.read_text(encoding="utf-8")
 try:
     before = rule_indexes(current)
 except Exception as exc:  # noqa: BLE001
-    fail("前提確認", f"yaml.safe_load({SETTINGS})", exc)
+    fail("前提確認", f"YAML(typ='safe').load({SETTINGS})", exc)
 if KEPT not in before:
     fail("前提確認", f"grep {KEPT} {SETTINGS}", "直下の rules.yaml が rule_indexes にありません")
 print("前提確認: ok")
@@ -60,7 +64,11 @@ if removed == 0:
     print("設定の書き換え: skipped")
     sys.exit(0)
 if removed > 1:
-    fail("前提確認", f"grep -c '- {REMOVED}' {SETTINGS}", f"{removed} 行あり、想定の上限 1 行を超えています")
+    fail(
+        "前提確認",
+        f"grep -c '- {REMOVED}' {SETTINGS}",
+        f"{removed} 行あり、想定の上限 1 行を超えています",
+    )
 new_text = "".join(new_lines)
 sys.stdout.writelines(difflib.unified_diff(lines, new_lines, str(SETTINGS), str(SETTINGS)))
 if dry_run:
@@ -72,7 +80,7 @@ if dry_run:
 try:
     after = rule_indexes(new_text)
 except Exception as exc:  # noqa: BLE001
-    fail("検証", "yaml.safe_load(書き換えた内容)", exc)
+    fail("検証", "YAML(typ='safe').load(書き換えた内容)", exc)
 if REMOVED in after or after != [i for i in before if i != REMOVED]:
     fail("検証", "rule_indexes の比較", f"書き換え後の rule_indexes が想定と違います: {after}")
 print("検証: ok")
@@ -95,5 +103,9 @@ if any("rule_indexes" in item for item in unapplied):
     fail("設定の再読込", "POST /reload", json.dumps(body, ensure_ascii=False))
 print("設定の再読込: changed")
 if REMOVED in rule_indexes(SETTINGS.read_text(encoding="utf-8")):
-    fail("反映の確認", f"yaml.safe_load({SETTINGS})", f"rule_indexes に {REMOVED} が残っています")
+    fail(
+        "反映の確認",
+        f"YAML(typ='safe').load({SETTINGS})",
+        f"rule_indexes に {REMOVED} が残っています",
+    )
 print("反映の確認: ok")

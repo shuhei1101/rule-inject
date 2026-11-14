@@ -1,5 +1,5 @@
 端末の設定のルール索引の行の削除:
-  説明: AI Monitor の端末の設定 ~/.config/ai-monitor/settings.yaml の rule-inject の rule_indexes から /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml の行を削除し、モニターに設定を読み直させる。端末の設定はクローン本体（master）のファイルを指すため、master へ入って docs/rules.yaml が無くなった後に実行する。適用前の設定は実行スクリプトが ~/.config/ai-monitor/settings.yaml.bak-pr180 へ退避する。スクリプトは PyYAML を読み込める python3 で起動する
+  説明: AI Monitor の端末の設定 ~/.config/ai-monitor/settings.yaml の rule-inject の rule_indexes から /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml の行を削除し、モニターに設定を読み直させる。端末の設定はクローン本体（master）のファイルを指すため、master へ入って docs/rules.yaml が無くなった後に実行する。適用前の設定は実行スクリプトが ~/.config/ai-monitor/settings.yaml.bak-pr180 へ退避する。スクリプトはリポジトリの直下で uv run python -B で起動する
   タグ: [設定の書き換え, 再読み込み]
   実行者: tester
   時期: master へ入った後
