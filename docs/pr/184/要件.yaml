@@ -2,4 +2,6 @@ docs:
   - page: project-index.yaml
     new: false
     change: instructions の 2 行目の files.yml の範囲から、削除した docs/_root/files.yml が持っていた「docs/ の直下のファイル」を除き、公開ドキュメント（docs/guide/）だけにする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T10:20:01.966551+00:00'

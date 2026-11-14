@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-14T10:15:51.585347+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: project-index.yaml の instructions の 2 行目
+    updated_by: planner
+    updated_at: '2026-11-14T10:20:06.512553+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えない
