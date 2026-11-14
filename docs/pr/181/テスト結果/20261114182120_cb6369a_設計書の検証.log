@@ -1,0 +1,72 @@
+$ cd /mnt/c/Users/shuhe/repo/ai-monitor/.claude/worktrees/develop && PYTHONPATH=src uv run python -m ai_monitor.design_docs validate --root {作業ツリーの直下}
+（作業ブランチ cb6369a。project-index.yaml を dev-docs.yaml の名前で一時的に指し、commit しない）
+docs/scenario/SC-122-1.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_server_status.py
+docs/scenario/SC-122-10.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_old_log_cleaned.py
+docs/scenario/SC-122-11.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_record_discarded_on_compact.py
+docs/scenario/SC-122-12.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_search_rules_for_operation.py
+docs/scenario/SC-122-13.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_read_default_settings.py
+docs/scenario/SC-122-14.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_delete_read_records.py
+docs/scenario/SC-122-15.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_read_records.py
+docs/scenario/SC-122-16.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py
+docs/scenario/SC-122-17.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_guidance_for_search_results.py
+docs/scenario/SC-122-18.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_setup_terminal.py
+docs/scenario/SC-122-19.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_edit_index_entries.py
+docs/scenario/SC-122-2.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_reload_server_settings.py
+docs/scenario/SC-122-20.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_check_indexes.py
+docs/scenario/SC-122-21.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_ended_session_records_cleaned.py
+docs/scenario/SC-122-22.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
+docs/scenario/SC-122-23.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_read_rule_then_touch_file.py
+docs/scenario/SC-122-24.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
+docs/scenario/SC-122-25.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py
+docs/scenario/SC-122-3.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_restart_server.py
+docs/scenario/SC-122-4.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_run_resident_mcp_server.py
+docs/scenario/SC-122-5.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_update_rule_inject.py
+docs/scenario/SC-122-6.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py
+docs/scenario/SC-122-7.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_register_repository_index.py
+docs/scenario/SC-122-8.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_rule_read_recorded.py
+docs/scenario/SC-122-9.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_effective_rules.py
+exit: 1
+
+$ uv run python -I check.py {knowledge の design-schemas/v8.2.0 の schemas} {作業ツリーの直下}（種類ごとに JSON Schema 2020-12 で検査。不合格 / 件数）
+architecture: 0/1
+nonfunctional: 0/1
+scenario: 0/25
+interface: 0/22
+module: 0/62
+config: 0/1
+er: 0/2
+external-api: 0/1
+library: 0/6
+test-procedure: 0/1
+layout: 0/1
+data: 0/4
+
+$ 目次・文書の一覧を schemas/design/index.schema.yaml・schemas/knowledge-files.schema.yaml で検査（ファイルごとのエラーの件数）
+schemas/knowledge-files.schema.yaml /files.yaml 0 []
+schemas/knowledge-files.schema.yaml /src/files.yaml 0 []
+schemas/knowledge-files.schema.yaml /hooks/files.yaml 0 []
+schemas/knowledge-files.schema.yaml /tests/files.yaml 0 []
+schemas/knowledge-files.schema.yaml /skills/files.yaml 0 []
+schemas/knowledge-files.schema.yaml /docs/guide/files.yml 0 []
+schemas/knowledge-files.schema.yaml /docs/_root/files.yml 0 []
+schemas/design/index.schema.yaml /docs/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/architecture/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/config/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/data/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/er/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/external-api/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/glossary/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/guide/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/interface/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/layout/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/library/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/module/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/nonfunctional/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/scenario/index.yaml 0 []
+schemas/design/index.schema.yaml /docs/test-procedure/index.yaml 0 []
+
+$ 用語集を作業ツリーの schemas/glossary.schema.yaml（common.schema.yaml を解決）で検査（エラーの件数）
+docs/glossary/GLO-122-1.yaml: 0 []
+
+$ ER の tables[].source・columns[].source が指すデータの設計書とキーの実在を確認（見つからない参照の件数）
+参照 18 件、見つからない 0 件
