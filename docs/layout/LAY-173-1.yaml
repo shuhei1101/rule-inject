@@ -341,5 +341,9 @@ gitignore:
     reason: pytest のキャッシュ
   - pattern: .ruff_cache/
     reason: ruff のキャッシュ
+  - pattern: tmp/
+    reason: 作業中の一時ファイル
+  - pattern: .claude/worktrees/
+    reason: 作業ブランチの worktree
 refs:
   - ARCH-122-1#
