@@ -1,0 +1,1 @@
+# 空のルール索引 docs/rules.yaml を削除し、ルール索引を直下の rules.yaml にまとめる
