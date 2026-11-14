@@ -8,10 +8,10 @@ fields:
   title: ルールの場所
   type: string
   required: true
-  description: 解決後の絶対パス。改行とタブを含まない
+  description: 既読にしたルールの解決後の絶対パス
 - key: hash
   title: 本文のハッシュ
   type: string
   required: true
-  description: 既読にした時点のルールのファイルの中身（バイト列）の SHA-256。案内する側が今のハッシュと比べ、違えば未読として扱う。ハッシュを持たない行（この列を追加する前の書式）は既読として扱わない
+  description: 既読にした時点のルールのファイルの中身（バイト列）の SHA-256。案内する側が今のハッシュと比べ、違えば未読として扱う
   example: sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08

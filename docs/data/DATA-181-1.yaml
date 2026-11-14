@@ -8,7 +8,7 @@ fields:
   title: 時刻
   type: datetime
   required: true
-  description: UTC のタイムゾーン付き ISO 8601（`2026-09-29T08:00:00+00:00`）
+  description: 失敗した時刻（UTC）
 - key: component
   title: 出した元
   type: string
@@ -20,7 +20,7 @@ fields:
   required: false
   description: 入力にあればその値
 - key: operation
-  title: 失敗した操作
+  title: 失敗の操作
   type: string
   required: true
   description: '`read_settings` / `read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `check_unit` / `start_unit` / `unexpected` のいずれか'

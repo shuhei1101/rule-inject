@@ -20,15 +20,16 @@ tables:
     columns:
       - name: location
         title: ルールの場所
+        source: 'DATA-181-2#fields[location]'
         type: string
         not_null: true
-        description: 解決後の絶対パス。改行とタブを含まない
+        description: '行の 1 列目。改行とタブを含まない'
       - name: hash
         title: 本文のハッシュ
+        source: 'DATA-181-2#fields[hash]'
         type: string
         not_null: true
-        description: 既読にした時点のルールのファイルの中身（バイト列）の SHA-256。案内する側が今のハッシュと比べ、違えば未読として扱う。ハッシュを持たない行（この列を追加する前の書式）は既読として扱わない
-        example: sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+        description: '行の 2 列目（タブの後）。ハッシュを持たない行（この列を追加する前の書式）は既読として扱わない'
   - name: '{state_dir}/{session_id}.guided.txt'
     title: 案内済みの記録
     source: 'DATA-181-3#'
@@ -44,9 +45,10 @@ tables:
     columns:
       - name: location
         title: ルールの場所
+        source: 'DATA-181-3#fields[location]'
         type: string
         not_null: true
-        description: 解決後の絶対パス。改行を含まない
+        description: '1 行に 1 つ。改行を含まない'
   - name: '{state_dir}/{session_id}.history.jsonl'
     title: 既読の履歴
     source: 'DATA-181-4#'
@@ -61,29 +63,31 @@ tables:
     columns:
       - name: time
         title: 時刻
+        source: 'DATA-181-4#fields[time]'
         type: string
         not_null: true
-        description: 既読にした時刻（UTC の ISO 8601、秒まで）
-        example: '2026-10-24T09:30:00Z'
+        description: 'ISO 8601 の文字列（秒まで、`Z` で終わる）'
       - name: session_id
         title: セッション
+        source: 'DATA-181-4#fields[session_id]'
         type: string
         not_null: true
-        description: 既読にしたセッションの識別子。ファイル名の `session_id` と同じ
+        description: 'ファイル名の `session_id` と同じ値を書く'
       - name: method
         title: 既読の方法
+        source: 'DATA-181-4#fields[method]'
         type: string
         not_null: true
-        description: 既読にした方法
-        enum_values: "'read'（Read）/ 'bash'（Bash の読み込みのコマンド）/ 'mcp'（MCP のツールの結果に含まれた文書か、read_by にヒットした MCP のツール）"
+        description: 'データのキーの値をそのまま書く'
       - name: tool
         title: ツール名
+        source: 'DATA-181-4#fields[tool]'
         type: string
         not_null: true
-        description: 既読にしたツールの名前（`Read`・`Bash`・MCP のツールの完全名）
-        example: mcp__docs__get_doc
+        description: 'データのキーの値をそのまま書く'
       - name: location
         title: ルールの場所
+        source: 'DATA-181-4#fields[location]'
         type: string
         not_null: true
-        description: 既読にしたルールの場所。既読の記録の値と同じ
+        description: 'データのキーの値をそのまま書く'

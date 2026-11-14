@@ -8,4 +8,4 @@ fields:
   title: ルールの場所
   type: string
   required: true
-  description: 解決後の絶対パス。改行を含まない
+  description: 止めずに案内したルールの解決後の絶対パス

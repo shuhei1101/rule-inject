@@ -8,7 +8,7 @@ fields:
   title: 時刻
   type: datetime
   required: true
-  description: 既読にした時刻（UTC の ISO 8601、秒まで）
+  description: 既読にした時刻（UTC）
   example: '2026-10-24T09:30:00Z'
 - key: session_id
   title: セッション

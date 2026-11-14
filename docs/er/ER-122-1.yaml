@@ -24,31 +24,37 @@ tables:
     columns:
       - name: time
         title: 時刻
+        source: 'DATA-181-1#fields[time]'
         type: string
         not_null: true
-        description: UTC のタイムゾーン付き ISO 8601（`2026-09-29T08:00:00+00:00`）
+        description: 'タイムゾーン付き ISO 8601 の文字列（`2026-09-29T08:00:00+00:00`）'
       - name: component
         title: 出した元
+        source: 'DATA-181-1#fields[component]'
         type: string
         not_null: true
-        description: インターフェース定義の識別子（`rule_guide` / `record_read` / `discard_read` / `work_rules` / `sweep_read` / `start_server`）
+        description: 'データのキーの値をそのまま書く'
       - name: session_id
         title: セッション
+        source: 'DATA-181-1#fields[session_id]'
         type: string
         not_null: false
-        description: 入力にあればその値
+        description: 'データのキーの値をそのまま書く'
       - name: operation
-        title: 失敗した操作
+        title: 失敗の操作
+        source: 'DATA-181-1#fields[operation]'
         type: string
         not_null: true
-        description: '`read_settings` / `read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `check_unit` / `start_unit` / `unexpected` のいずれか'
+        description: 'データのキーの値をそのまま書く'
       - name: path
         title: 対象のパス
+        source: 'DATA-181-1#fields[path]'
         type: string
         not_null: false
-        description: 失敗した操作の対象のファイルかフォルダ
+        description: 'データのキーの値をそのまま書く'
       - name: reason
         title: 理由
+        source: 'DATA-181-1#fields[reason]'
         type: string
         not_null: true
-        description: 例外のクラス名と文面
+        description: 'データのキーの値をそのまま書く'
