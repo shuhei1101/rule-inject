@@ -1,0 +1,1 @@
+# .gitignore と設計書の gitignore[] に tmp/ と .claude/worktrees/ を追加する
