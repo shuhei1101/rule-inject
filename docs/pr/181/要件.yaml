@@ -25,7 +25,7 @@ docs:
     updated_at: '2026-11-14T08:51:40.642636+00:00'
   - page: files.yaml
     new: false
-    change: 削除したコピーを指す先頭の yaml-language-server の行を削除する（src・hooks・tests・skills の files.yaml、docs/guide・docs/_root の files.yml も同じ）
+    change: 削除したコピーを指す先頭の yaml-language-server の行を削除する（src・hooks・tests・skills の files.yaml、docs/guide の files.yml も同じ）
     status: done
     updated_by: planner
     updated_at: '2026-11-14T08:51:40.642636+00:00'
@@ -84,4 +84,7 @@ scope_out:
   - item: 開発コマンドの設計書の新設
     reason: 要望に含まれない。この PR の後に knowledge の dev_command の Schema の参照で作る
     plan: '#176'
+  - item: project-index.yaml の instructions の「`docs/` の直下のファイルは `files.yml`」の記述
+    reason: '#180 で docs/_root/files.yml を削除した後も記述が残り、指す先が実在しない。今回の要望（Schema の参照の切り替え）に含まれない'
+    plan: '#182'
 use_cases: []
