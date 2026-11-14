@@ -116,7 +116,7 @@ entries:
                 contents: '公開ドキュメントの一覧から生成したプロジェクト固有のタブ'
                 content_types: [pages]
                 generated_from:
-                  path: docs/guide/files.yml
+                  path: docs/guide/
                   command: CMD-183-1#categories[ビルド・生成]
           - type: folder
             name: _includes
@@ -155,6 +155,27 @@ entries:
             content_types: [index]
             generated_from:
               path: docs/guide/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
+          - type: file
+            name: はじめに.md
+            contents: '公開ドキュメントの一覧から生成した分類のトップページ'
+            content_types: [guide]
+            generated_from:
+              path: docs/guide/
+              command: CMD-183-1#categories[ビルド・生成]
+          - type: file
+            name: 使用方法.md
+            contents: '公開ドキュメントの一覧から生成した分類のトップページ'
+            content_types: [guide]
+            generated_from:
+              path: docs/guide/
+              command: CMD-183-1#categories[ビルド・生成]
+          - type: file
+            name: リファレンス.md
+            contents: '公開ドキュメントの一覧から生成した分類のトップページ'
+            content_types: [guide]
+            generated_from:
+              path: docs/guide/
               command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: architecture
