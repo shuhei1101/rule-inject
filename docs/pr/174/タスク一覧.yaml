@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-14T07:14:49.219697+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: docs/interface/ の 16 件と docs/scenario/ の 13 件の flow の図を mdmark の map の図へ書き換える
+    updated_by: planner
+    updated_at: '2026-11-14T07:28:44.619472+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えないため対象外
