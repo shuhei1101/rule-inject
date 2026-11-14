@@ -5,6 +5,7 @@ lead: フックが失敗した操作を後から追えるように書き出す�
 tables:
   - name: '{log_dir}/{yyyymmdd}_rule-inject.log'
     title: ログ
+    source: 'DATA-181-1#'
     datastore: JSON Lines（UTF-8、1 行 = 1 件）
     summary: 失敗した操作とその理由
     scale: '1 日 1 ファイル。失敗が続いても 1 ファイル数 MB で、残るのは非機能要件「ログの保持日数」の分のファイル'

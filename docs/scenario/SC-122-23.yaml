@@ -279,7 +279,6 @@ scenarios:
       - SC-122-8#scenarios[正常シナリオ（Readで読む）]
       - SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]
 lead: 未読のルールで止められ、ルールの本文を読んでから同じ操作を再試行して通る一連の流れを示し、案内と既読の記録の連携を変えるときに参照する。
-issue: 2
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: ユーザー

@@ -37,7 +37,6 @@ scenarios:
       - 新しいログのファイルが残っている
     test: test_normal
 lead: セッションの開始時にフックが保持日数を過ぎたログのファイルを削除する流れを示し、ログの掃除を変えるときに参照する。
-issue: 11
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 notes:

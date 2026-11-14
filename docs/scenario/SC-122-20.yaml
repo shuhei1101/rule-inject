@@ -306,7 +306,6 @@ scenarios:
       - 応答のその索引に、フックが読めない理由が載っていない
     test: test_normal_when_read_tool_violates_schema
 lead: Claude Code が MCP サーバーのチェックのツールで索引ごとの問題を受け取る流れを示し、索引のチェックを変えるときに参照する。
-issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

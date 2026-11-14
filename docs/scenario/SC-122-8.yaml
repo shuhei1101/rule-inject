@@ -259,7 +259,6 @@ scenarios:
       - そのセッションの既読の履歴に、読み方が `mcp` でツール名 `mcp__docs__search_docs` とルールの場所を持つ行がある
     test: test_normal_when_read_by_guided_tool
 lead: ルールの本文を読んだ後にフックがその場所を既読として記録する流れを示し、既読の記録の判定を変えるときに参照する。
-issue: 2
 primary_actor: Claude Code のセッション
 trigger: Read か Bash のツールが索引に載ったルールの場所を読み終えるか、MCP のツールの呼び出しが終わる
 test_file: tests/e2e/単一ユースケース/test_rule_read_recorded.py

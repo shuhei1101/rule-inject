@@ -93,7 +93,6 @@ scenarios:
       - ログのファイルに `read_settings` の行がある
     test: test_error_when_unreadable
 lead: 環境変数が無いときにフックとサーバーが既定の場所の設定ファイルを読み込む流れを示し、設定ファイルの場所の決め方を変えるときに参照する。
-issue: 105
 primary_actor: 利用者
 stakeholders:
   - name: 利用者

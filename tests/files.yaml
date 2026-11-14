@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../schemas/files.schema.yaml
 files:
   - path: integration/conftest.py
     name: 結合テストの共通設定

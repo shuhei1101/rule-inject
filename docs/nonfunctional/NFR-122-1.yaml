@@ -226,8 +226,6 @@ requirements:
       - part: Linux のファイルシステムを辿る速さ
         value: 約 78 万ファイル/秒
         notes: ホームの `.cache` 487,983 ファイル 0.62 秒（同日、ページキャッシュに格納された状態）
-    introduced:
-      pr: 69
   - id: NFR-13
     name: project-index への問い合わせの待ち時間
     english_name: dev_docs_query_timeout
@@ -292,8 +290,6 @@ requirements:
       - part: 決定値
         value: 356 秒
         notes: 237 + 118.5 = 355.5 を秒に切り上げ
-    introduced:
-      pr: 110
   - id: NFR-15
     name: 待ち受けを閉じた後の接続の待ち
     english_name: graceful_shutdown_timeout
@@ -310,8 +306,6 @@ requirements:
       ループバックで応答を送信し終える時間の実測が無いため、3 秒を仮の値とし、測定は今後の作業とする
     measurement: 再起動の応答を返却した直後に待ち受けを閉じ、接続が全て閉じるか切られるまでの時間を、SSE のストリームを開いたクライアントがある状態と無い状態で 1,000 回測る
     overflow: 上限を超えた接続は uvicorn が切り、停止を続ける。SSE のストリームを持つクライアントは再接続する
-    introduced:
-      pr: 110
   - id: NFR-16
     name: 更新のコマンドの打ち切り
     english_name: update_command_timeout
@@ -336,8 +330,6 @@ requirements:
       - part: migrate --plan
         value: 最大 5.66 秒 → 57 秒
         notes: '`uv run --extra server python -m rule_inject.migrate --plan` を 3 回（5.66・2.47・4.05 秒、同日）'
-    introduced:
-      pr: 110
   - id: NFR-17
     name: サーバーの応答の確認の待ち
     english_name: server_probe_timeout

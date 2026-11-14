@@ -2,9 +2,3 @@ id: MOD-122-56
 visibility: internal
 title: "プラグイン / コマンドの解析"
 lead: Bash のコマンドから読むファイルのパスと検索結果の実在するファイルを取り出すモジュールの構成を定め、コマンドの解析を修正するときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/command/
-  ├── __init__.py   # 公開 API
-  └── service.py    # 読み込むコマンドの引数からパスを取り出し、検索の結果の行からパスを取得する
-  ```

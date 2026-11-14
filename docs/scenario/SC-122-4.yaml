@@ -94,7 +94,6 @@ scenarios:
       - 標準エラーに、設定ファイルの場所と読めない理由が載っている
     test: test_error_when_settings_unreadable
 lead: 利用者がローカルのクローンから MCP サーバーを起動して Claude Code が接続する流れを示し、サーバーの常駐のさせ方を変えるときに参照する。
-issue: 58
 primary_actor: 利用者
 stakeholders:
   - name: 利用者

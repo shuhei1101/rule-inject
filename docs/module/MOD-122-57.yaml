@@ -2,12 +2,5 @@ id: MOD-122-57
 visibility: internal
 title: "プラグイン / サーバーの起動"
 lead: 応答しない MCP サーバーの systemd --user のユニットへ起動を依頼するモジュールの構成を定め、サーバーの起動の補助を修正するときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/server_start/
-  ├── __init__.py   # 公開 API
-  ├── types.py      # UnitStart（起動の依頼の結果）
-  └── service.py    # server_responds（応答の確認）・request_unit_start（ユニットの起動の依頼）と待ちの定数
-  ```
 notes:
   外部との境界: ソケットと `systemctl` の呼び出しはこの分類だけが持つ。フック（`start_server`）はこの分類の関数を呼び、単体テストでは関数ごと差し替える

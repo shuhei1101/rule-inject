@@ -13,6 +13,7 @@ rule-inject のドキュメント全体の目次
 | [interface](./interface/) | サブシステムの外部インターフェースと処理フロー（サブシステム結合テストの元） |
 | [module](./module/) | クラス / 関数 / 関数型 インデックス（単体テストの元） |
 | [config](./config/) | 設定と環境変数のキー定義 |
+| [data](./data/) | フックが書き込み・参照するデータの構造 |
 | [er](./er/) | データストア（テキストファイル）の定義 |
 | [architecture](./architecture/) | システム全体構成（Claude Code・フック・索引の関係） |
 | [nonfunctional](./nonfunctional/) | 外部の制約から逆算したアプリ側の決定値（非機能要件テストの元） |

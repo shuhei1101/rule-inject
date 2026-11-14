@@ -57,7 +57,6 @@ scenarios:
       - 新しい既読の履歴ファイルが残っている
     test: test_normal
 lead: セッションの開始時にフックが保持期間を過ぎた既読の記録ファイルを削除する流れを示し、既読の記録の掃除を変えるときに参照する。
-issue: 5
 primary_actor: Claude Code のセッション
 trigger: セッションの開始（新規・再開・`/clear`・圧縮の後）
 notes:

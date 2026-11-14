@@ -115,7 +115,6 @@ scenarios:
       - 記録フォルダの外のファイルを読んでいない
     test: test_error_when_session_id_invalid
 lead: Claude Code が MCP サーバーの確認のツールでセッションの既読のルールと読んだ方法を受け取る流れを示し、既読の記録の確認を変えるときに参照する。
-issue: 65
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

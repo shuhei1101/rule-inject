@@ -278,7 +278,6 @@ scenarios:
       - 結果に適用しなかった手順が記載されている
     test: test_error_when_declined
 lead: 利用者がスキルで端末の設定・サーバーの起動・フックの確認までを終える流れを示し、端末のセットアップを変えるときに参照する。
-issue: 105
 primary_actor: 利用者
 stakeholders:
   - name: 利用者

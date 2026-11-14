@@ -1,0 +1,33 @@
+id: DATA-181-4
+visibility: internal
+title: 'データ: 既読の履歴'
+lead: セッションでルールを既読にした 1 回の記録。フックが書き込み、MCP サーバーとほかの仕組みが参照する。
+datastore: JSON Lines
+fields:
+- key: time
+  title: 時刻
+  type: datetime
+  required: true
+  description: 既読にした時刻（UTC の ISO 8601、秒まで）
+  example: '2026-10-24T09:30:00Z'
+- key: session_id
+  title: セッション
+  type: string
+  required: true
+  description: 既読にしたセッションの識別子。ファイル名の `session_id` と同じ
+- key: method
+  title: 既読の方法
+  type: enum
+  required: true
+  description: 既読にした方法。'read'（Read）/ 'bash'（Bash の読み込みのコマンド）/ 'mcp'（MCP のツールの結果に含まれた文書か、read_by にヒットした MCP のツール）
+- key: tool
+  title: ツール名
+  type: string
+  required: true
+  description: 既読にしたツールの名前（`Read`・`Bash`・MCP のツールの完全名）
+  example: mcp__docs__get_doc
+- key: location
+  title: ルールの場所
+  type: string
+  required: true
+  description: 既読にしたルールの場所。既読の記録の値と同じ

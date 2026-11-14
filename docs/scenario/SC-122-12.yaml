@@ -103,7 +103,6 @@ scenarios:
       - ツールの結果がエラーで、ファイルのパスかツール名のどちらか 1 つを指定する旨が載っている
     test: test_error_when_both_path_and_tool
 lead: Claude Code が MCP サーバーの検索のツールで操作にヒットするルールと止めるかを受け取る流れを示し、ルールの検索を変えるときに参照する。
-issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

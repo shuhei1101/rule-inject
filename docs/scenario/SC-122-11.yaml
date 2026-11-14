@@ -38,7 +38,6 @@ scenarios:
       - そのセッションの既読の履歴に、圧縮の前に本文を読んだルールの場所の行が残っている
     test: test_normal
 lead: 会話の圧縮のときにフックがセッションの既読の記録を破棄し、圧縮後に再度案内する流れを示し、既読の記録の破棄を変えるときに参照する。
-issue: 2
 primary_actor: Claude Code のセッション
 trigger: 会話の圧縮（手動の `/compact` か自動）
 test_file: tests/e2e/単一ユースケース/test_record_discarded_on_compact.py

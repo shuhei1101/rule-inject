@@ -624,7 +624,6 @@ scenarios:
       - 同じ文面に、ツールが使用できないときはパスを Read で参照する旨が載っている
     test: test_normal_when_not_blocked_with_read_tool
 lead: ツールを呼ぶ直前にフックが操作の対象にヒットする未読のルールを案内する流れを示し、ルール案内の止め方や文面を変えるときに参照する。
-issue: 2
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ
 preconditions:

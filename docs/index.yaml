@@ -11,6 +11,8 @@ items:
     summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
   - page: config/
     summary: 設定と環境変数のキー定義
+  - page: data/
+    summary: フックが書き込み・参照するデータの構造
   - page: er/
     summary: データストア（テキストファイル）の定義
   - page: architecture/

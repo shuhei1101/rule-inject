@@ -47,7 +47,6 @@ scenarios:
       - SC-122-14#scenarios[正常シナリオ]
       - SC-122-16#scenarios[正常シナリオ（止めて案内する）]
 lead: 既読のルールを確認してから既読の記録を削除し、未読として案内を再度受ける一連の流れを示し、既読の記録の確認と削除を変えるときに参照する。
-issue: 65
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: ユーザー

@@ -2,16 +2,6 @@ id: MOD-122-54
 visibility: internal
 title: "MCP サーバー / 索引のチェック"
 lead: 索引の読み取り・スキーマ・ルールの場所の実在・ヒットしないエントリとタグを確認するサブフィーチャーの構成を定め、索引のチェックを修正するときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/index/check/
-  ├── __init__.py         # 公開 API（load_validator / check_index / check_index_text / check_change / scan_unmatched / tag_patterns / unused_tag_patterns）
-  ├── types.py            # ProblemKind・IndexProblem・IndexCheck・ScanCursor・UnmatchedScan・TagPattern
-  ├── service.py          # 索引のチェックと、書き込む前と書き込んだ後の問題の比較
-  ├── scan.py             # プロジェクトのファイルを辿り、paths のヒットしないエントリを返却する
-  ├── tags.py             # タグのパターンを集め、使用されているタグにヒットしないものを返却する
-  └── index.schema.yaml   # 索引の JSON Schema（2020-12）
-  ```
 notes:
   索引の JSON Schema: |-
     `index.schema.yaml` は JSON Schema 2020-12 を YAML で記載し、フックの読み取り（`parse_index`）が受け付ける範囲の内側だけを許可する。

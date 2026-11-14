@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../../schemas/files.schema.yaml
 files:
   - path: ../rules.yaml
     name: このリポジトリのルール索引
