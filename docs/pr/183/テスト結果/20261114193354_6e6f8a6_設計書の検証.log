@@ -1,0 +1,28 @@
+（作業ブランチ 6e6f8a6。project-index.yaml を dev-docs.yaml の名前で一時的に指し、commit しない。shuhei1101/ai-monitor#3448）
+
+$ cd /mnt/c/Users/shuhe/repo/ai-monitor/.claude/worktrees/develop && PYTHONPATH=src uv run python -m ai_monitor.design_docs validate docs/dev-command/CMD-183-1.yaml docs/dev-command/index.yaml docs/layout/LAY-173-1.yaml docs/index.yaml --root {作業ツリー}
+exit=0
+
+$ （同じ場所で）PYTHONPATH=src uv run python -m ai_monitor.design_docs publish --check --root {作業ツリー}
+exit=0
+
+$ （設計書の検証は分類への参照の解決先を確かめないため）LAY-173-1 の generated_from ごとに、command の分類が CMD-183-1 にあるか・path とエントリが実在するかを確かめる
+docs/README.md <- docs/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/_theme <- ai-monitor-theme.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/_theme/_data/nav.project.yml <- docs/guide/files.yml CMD-183-1#categories[ビルド・生成] OK
+docs/guide/README.md <- docs/guide/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/architecture/README.md <- docs/architecture/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/nonfunctional/README.md <- docs/nonfunctional/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/scenario/README.md <- docs/scenario/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/interface/README.md <- docs/interface/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/module/README.md <- docs/module/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/config/README.md <- docs/config/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/data/README.md <- docs/data/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/er/README.md <- docs/er/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/external-api/README.md <- docs/external-api/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/library/README.md <- docs/library/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/test-procedure/README.md <- docs/test-procedure/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/glossary/README.md <- docs/glossary/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/layout/README.md <- docs/layout/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/dev-command/README.md <- docs/dev-command/index.yaml CMD-183-1#categories[ビルド・生成] OK
+docs/generated <- docs/ CMD-183-1#categories[ビルド・生成] OK
