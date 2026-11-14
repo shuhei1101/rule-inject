@@ -1,0 +1,7 @@
+use_cases: []
+docs:
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: gitignore[] に tmp/（一時ファイル）と .claude/worktrees/（作業ブランチの worktree）を reason つきで追加する
+    status: todo
+scope_out: []
