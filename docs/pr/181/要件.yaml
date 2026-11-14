@@ -1,0 +1,53 @@
+docs:
+  - page: project-index.yaml
+    new: false
+    change: documents[].schema を knowledge の Schema（schemas/design/{種類}・index・knowledge-files）の source・path・ref つきの参照へ切り替え、instructions の Schema の説明を合わせる。glossary の行は要件.md の未確定のとおり
+    status: todo
+  - page: schemas/architecture.schema.yaml
+    new: false
+    change: AI Monitor から配られた Schema のコピーを削除する（schemas/ の他の {種類}.schema.yaml・files・index・common も同じ。glossary とそれが指す common は要件.md の未確定のとおり）
+    status: todo
+  - page: schemas/conversions/versions.yaml
+    new: false
+    change: 設計書の変換（versions.yaml・v0.4.0.py）を削除する
+    status: todo
+  - page: pyproject.toml
+    new: false
+    change: ruff・pyright の schemas/conversions の除外を削除する
+    status: todo
+  - page: files.yaml
+    new: false
+    change: 先頭の yaml-language-server の $schema を削除したコピーから knowledge の knowledge-files.schema.yaml へ合わせる（src・hooks・tests・skills の files.yaml、docs/guide・docs/_root の files.yml も同じ）
+    status: todo
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: schemas のエントリと lead を、残る Schema（またはフォルダの削除）と conversions の削除に合わせる
+    status: todo
+  - page: docs/scenario/SC-122-1.yaml
+    new: false
+    change: issue キーを knowledge の scenario の Schema に合わせる（docs/scenario/ の全てのシナリオも同じ）
+    status: todo
+  - page: docs/module/MOD-122-52.yaml
+    new: false
+    change: directory キーと data_models の properties[].name の型を knowledge の module の Schema に合わせる（検査に不合格の docs/module/ の 13 件も同じ）
+    status: todo
+  - page: docs/nonfunctional/NFR-122-1.yaml
+    new: false
+    change: introduced キーを knowledge の nonfunctional の Schema に合わせる
+    status: todo
+  - page: docs/config/CFG-122-1.yaml
+    new: false
+    change: introduced キーを knowledge の config の Schema に合わせる
+    status: todo
+  - page: docs/er/ER-122-1.yaml
+    new: false
+    change: tables[].source を knowledge の er の Schema に合わせて記載する（ER-122-2 も同じ。指すデータの設計書は要件.md の未確定のとおり）
+    status: todo
+scope_out:
+  - item: テスト実行方法の層ごとの実行場所と GitHub Actions の workflow
+    reason: 要望に含まれない。この PR の後に knowledge の Schema の参照で着手する
+    plan: '#172'
+  - item: 開発コマンドの設計書の新設
+    reason: 要望に含まれない。この PR の後に knowledge の dev_command の Schema の参照で作る
+    plan: '#176'
+use_cases: []
