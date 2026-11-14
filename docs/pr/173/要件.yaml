@@ -43,8 +43,8 @@ docs:
     updated_at: '2026-11-14T07:37:16.697085+00:00'
 scope_out:
   - item: 既存の種類の schemas/ のコピーから knowledge のスキーマの参照への切り替え
-    reason: shuhei1101/ai-monitor#3188 の反映作業で、配布元が版の追従 Issue としてこのリポジトリへ起票する範囲のため、この作業 PR の要望に含めない。追従 Issue が未起票のため、マージ提案の前に open の追従 Issue を探して番号へ書き換え、無ければ起票する
-    plan: to_file
+    reason: shuhei1101/ai-monitor#3188 の反映作業の範囲で、この作業 PR の要望に含めない
+    plan: '#178'
   - item: .gitignore に tmp/ と .claude/worktrees/ が無い（観点「管理しないもの」）
     reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
     plan: '#175'
