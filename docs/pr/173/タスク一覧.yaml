@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-14T07:09:18.808530+00:00'
   - process: ドキュメント修正
-    status: todo
-    note: docs/layout/LAY-173-1.yaml の作成・project-index.yaml の layout の行の追加・docs/layout/ と docs/ の目次の更新・レビューの観点で見つかった問題の起票
+    status: done
+    note: docs/layout/LAY-173-1.yaml の作成・project-index.yaml の layout の行の追加・docs/layout/ と docs/ の目次の更新・レビューの観点で見つかった問題の起票（#175・#176・#177）。コードを変えないため、関係する単体・結合テストは無い
+    updated_by: planner
+    updated_at: '2026-11-14T07:24:50.283811+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えないため

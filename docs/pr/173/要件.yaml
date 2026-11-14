@@ -2,32 +2,50 @@ docs:
   - page: docs/layout/LAY-173-1.yaml
     new: true
     change: リポジトリのフォルダ構成の設計書を knowledge のテンプレート『フォルダ構成』の書式で新設
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
   - page: docs/layout/index.yaml
     new: true
     change: layout のフォルダの目次を新設
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
   - page: docs/layout/README.md
     new: true
     change: docs/layout/index.yaml から生成
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
   - page: docs/index.yaml
     new: false
     change: layout/ の行を追加
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
   - page: docs/README.md
     new: false
     change: docs/index.yaml から生成し直す
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
   - page: project-index.yaml
     new: false
     change: documents[] に layout の種類の行を追加し、knowledge のスキーマをリビジョンつきで指す
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
 scope_out:
-  - item: レビューの観点で見つかったフォルダ構成の問題の対処（フォルダの移動・.gitignore の修正）
-    reason: Issue の要望で、対処は別の Issue に分ける
-    plan: to_file
   - item: 既存の種類の schemas/ のコピーから knowledge のスキーマの参照への切り替え
     reason: shuhei1101/ai-monitor#3188 の反映作業で、配布元が版の追従 Issue としてこのリポジトリへ起票する範囲のため、この作業 PR の要望に含めない。追従 Issue が未起票のため、マージ提案の前に open の追従 Issue を探して番号へ書き換え、無ければ起票する
     plan: to_file
+  - item: .gitignore に tmp/ と .claude/worktrees/ が無い（観点「管理しないもの」）
+    reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
+    plan: '#175'
+  - item: 開発コマンドの設計書が無く、生成物（docs/**/README.md・docs/_theme/）の generated_from を記載できない（観点「管理しないもの」）
+    reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
+    plan: '#176'
+  - item: ルール索引が rules.yaml と空の docs/rules.yaml に分かれ、docs/ の直下に役割が混ざる（観点「同じ種類が散る」「種類が混ざる」）
+    reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
+    plan: '#177'
 use_cases: []
