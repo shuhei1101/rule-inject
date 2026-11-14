@@ -1,0 +1,1 @@
+# 配信元の設定の Schema を knowledge の Schema の参照へ切り替え、schemas/ の Schema のコピーを削除する
