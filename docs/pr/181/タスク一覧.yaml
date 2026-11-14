@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-14T08:33:56.162838+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: project-index.yaml の Schema の参照の切り替え、schemas/ のコピーと conversions/ の削除、設計書の Schema への追随（要件.yaml の docs）
+    updated_by: planner
+    updated_at: '2026-11-14T08:56:26.688432+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えないため対象外
