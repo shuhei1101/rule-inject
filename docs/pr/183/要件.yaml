@@ -1,0 +1,37 @@
+docs:
+  - page: docs/dev-command/CMD-183-1.yaml
+    new: true
+    change: 開発コマンドの設計書を knowledge のテンプレート『開発コマンド』の書式で新設し、ビルド・生成の分類に目次の README.md の生成と共通レイアウトのコピーのコマンドを記載する
+    status: todo
+  - page: docs/dev-command/index.yaml
+    new: true
+    change: dev-command のフォルダの目次を新設
+    status: todo
+  - page: docs/dev-command/README.md
+    new: true
+    change: docs/dev-command/index.yaml から生成
+    status: todo
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: docs/ と各フォルダの README.md・docs/_theme/ のエントリに generated_from（生成元のパスと開発コマンドの分類への参照）を記載し、docs/dev-command/ のエントリを追加する
+    status: todo
+  - page: docs/index.yaml
+    new: false
+    change: dev-command/ の行を追加
+    status: todo
+  - page: docs/README.md
+    new: false
+    change: docs/index.yaml から生成し直す
+    status: todo
+  - page: project-index.yaml
+    new: false
+    change: documents[] に dev_command の種類の行を追加し、knowledge の schemas/design/dev_command.schema.yaml をリビジョンつきで指す
+    status: todo
+  - page: docs/_config.yml
+    new: false
+    change: exclude に dev-command/ を追加し、内部の設計書を GitHub Pages に出さない
+    status: todo
+scope_out:
+  - item: project-index.yaml の instructions から、削除した docs/_root/files.yml を指す記述を除く修正
+    reason: 同じファイルの別の箇所で、要望に含まれない
+    plan: '#182'
