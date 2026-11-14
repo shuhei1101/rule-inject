@@ -1,0 +1,345 @@
+id: LAY-173-1
+visibility: internal
+title: rule-inject
+repository: shuhei1101/rule-inject
+lead: |-
+  プラグインのコードは `src/`、フックの登録は `hooks/`、スキルは `skills/`、テストは `tests/` に分ける。
+  設計書と公開ドキュメントの原本は `docs/` の種類のフォルダ、knowledge から参照しないスキーマは `schemas/` に配置する。
+tags:
+  - name: topic:フォルダ
+    main: true
+  - name: topic:構成
+  - name: topic:リポジトリ
+  - name: topic:gitignore
+content_types:
+  - name: design_doc
+    group: role
+    summary: 設計書の原本（YAML）
+  - name: index
+    group: role
+    summary: フォルダの目次の原本と、そこから生成した README.md
+  - name: guide
+    group: role
+    summary: 公開ドキュメントの原本（Markdown）
+  - name: pr_doc
+    group: role
+    summary: 作業 PR ごとの計画書・テスト結果・反映作業
+  - name: schema
+    group: role
+    summary: 設計書と文書の一覧を検査する JSON Schema
+  - name: source
+    group: role
+    summary: プラグインと MCP サーバーのコード
+  - name: test
+    group: role
+    summary: 単体・結合・非機能要件のテスト
+  - name: hook
+    group: role
+    summary: Claude Code のフックの登録と起動
+  - name: skill
+    group: role
+    summary: スキルの本体
+  - name: plugin_manifest
+    group: role
+    summary: プラグインとマーケットプレイスの定義
+  - name: file_list
+    group: role
+    summary: YAML の設計書でないファイルの名前・概要文・タグの一覧（files.yaml・files.yml）
+  - name: rule_index
+    group: role
+    summary: このリポジトリで作業するときに rule-inject が案内するルールの索引
+  - name: tool_config
+    group: role
+    summary: Python の環境・依存・MCP の接続・project-index の配信元・Git の設定
+  - name: version
+    group: role
+    summary: リリースのバージョンと、追従している AI Monitor のバージョン
+  - name: pages
+    group: feature
+    summary: 公開ドキュメントの GitHub Pages への配信
+entries:
+  - type: folder
+    name: .claude-plugin
+    contents: プラグイン rule-inject と、マーケットプレイスの定義
+    content_types: [plugin_manifest]
+    children:
+      - type: file
+        name: plugin.json
+        contents: プラグイン rule-inject の定義
+        content_types: [plugin_manifest]
+      - type: file
+        name: marketplace.json
+        contents: プラグイン rule-inject を掲載するマーケットプレイスの定義
+        content_types: [plugin_manifest]
+  - type: folder
+    name: docs
+    contents: 設計書と公開ドキュメントの原本。種類のフォルダと、作業 PR の計画の `pr/` に分ける
+    children:
+      - type: file
+        name: index.yaml
+        contents: '`docs/` の目次の原本'
+        content_types: [index]
+      - type: file
+        name: README.md
+        contents: '`index.yaml` から生成した `docs/` の目次'
+        content_types: [index]
+      - type: file
+        name: index.md
+        contents: GitHub Pages のトップページ
+        content_types: [pages]
+      - type: file
+        name: _config.yml
+        contents: GitHub Pages の Jekyll の設定
+        content_types: [pages]
+      - type: file
+        name: rules.yaml
+        contents: 環境変数が指す 2 つめのルール索引
+        content_types: [rule_index]
+      - type: folder
+        name: _root
+        contents: '`docs/` の直下の YAML でないファイルの一覧'
+        content_types: [file_list]
+        children:
+          - type: file
+            name: files.yml
+            contents: '`docs/rules.yaml` の名前・概要文・タグ'
+            content_types: [file_list]
+      - type: folder
+        name: _theme
+        contents: AI Monitor からコピーした GitHub Pages の共通レイアウト・スクリプト・スタイル
+        content_types: [pages]
+        children:
+          - type: folder
+            name: _data
+            contents: サイドバーとナビゲーションの定義
+            content_types: [pages]
+            naming: ['nav.yml', 'nav.project.yml']
+          - type: folder
+            name: _includes
+            contents: レイアウトが埋め込む HTML の部品
+            content_types: [pages]
+          - type: folder
+            name: _layouts
+            contents: ページのレイアウト
+            content_types: [pages]
+          - type: folder
+            name: assets
+            contents: ページのスクリプトとスタイル
+            content_types: [pages]
+            children:
+              - type: folder
+                name: vendor
+                contents: ページが読み込む外部ライブラリ
+                content_types: [pages]
+          - type: file
+            name: llms.txt
+            contents: LLM 向けのページの一覧
+            content_types: [pages]
+          - type: file
+            name: search.json
+            contents: サイト内検索の索引
+            content_types: [pages]
+      - type: folder
+        name: guide
+        contents: 公開ドキュメント（はじめに・使用方法・リファレンス）と、その一覧・目次・mdmark の設定
+        content_types: [guide]
+        naming: ['{page}.md', 'files.yml', 'mdmark.config.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: architecture
+        contents: アーキテクチャ図の設計書
+        content_types: [design_doc]
+        naming: ['ARCH-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: nonfunctional
+        contents: 非機能要件の設計書
+        content_types: [design_doc]
+        naming: ['NFR-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: scenario
+        contents: 単一・複合ユースケースのシナリオの設計書
+        content_types: [design_doc]
+        naming: ['SC-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: interface
+        contents: インターフェース定義の設計書
+        content_types: [design_doc]
+        naming: ['IF-{pr}-{n}.yaml', 'IF-{pr}-{n}.py.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: module
+        contents: モジュール構成の設計書
+        content_types: [design_doc]
+        naming: ['MOD-{pr}-{n}.yaml', 'MOD-{pr}-{n}.py.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: config
+        contents: 設定の設計書
+        content_types: [design_doc]
+        naming: ['CFG-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: er
+        contents: ER 図の設計書
+        content_types: [design_doc]
+        naming: ['ER-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: external-api
+        contents: 外部 API の設計書
+        content_types: [design_doc]
+        naming: ['API-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: library
+        contents: 外部ライブラリの設計書
+        content_types: [design_doc]
+        naming: ['LIB-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: test-procedure
+        contents: テスト実行方法の設計書
+        content_types: [design_doc]
+        naming: ['TP-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: glossary
+        contents: 用語集
+        content_types: [design_doc]
+        naming: ['GLO-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: layout
+        contents: フォルダ構成の設計書
+        content_types: [design_doc]
+        naming: ['LAY-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
+        name: pr
+        contents: 作業 PR ごとの PR ドキュメント
+        children:
+          - type: folder
+            name: '{pr}'
+            contents: 1 つの作業 PR の計画書・タスク一覧・要件・確認ログと、テスト結果・反映作業のフォルダ
+            content_types: [pr_doc]
+      - type: folder
+        name: generated
+        contents: YAML の設計書から生成した Markdown
+  - type: folder
+    name: hooks
+    contents: Claude Code に登録するフックと、フックを起動するスクリプト
+    content_types: [hook]
+    children:
+      - type: file
+        name: hooks.json
+        contents: フックの matcher・timeout・コマンドの登録
+        content_types: [hook]
+      - type: file
+        name: run.py
+        contents: '`src/` を import の探索に追加して、引数で指したフックを起動するスクリプト'
+        content_types: [hook]
+      - type: file
+        name: files.yaml
+        contents: '`hooks/` のファイルの名前・概要文・タグ'
+        content_types: [file_list]
+  - type: folder
+    name: schemas
+    contents: knowledge から参照しない設計書と文書の一覧の JSON Schema と、スキーマのバージョンの変換
+    content_types: [schema]
+    naming: ['{kind}.schema.yaml']
+    children:
+      - type: folder
+        name: conversions
+        contents: スキーマのバージョンごとに設計書を変換するスクリプトとバージョンの一覧
+        content_types: [schema]
+  - type: folder
+    name: skills
+    contents: プラグインのスキル
+    content_types: [skill]
+    children:
+      - type: folder
+        name: global-setup
+        contents: 端末の設定・MCP サーバーの起動・フックの確認を用意するスキル
+        content_types: [skill]
+      - type: folder
+        name: setup
+        contents: リポジトリの索引を参照される状態にしてチェックするスキル
+        content_types: [skill]
+      - type: file
+        name: files.yaml
+        contents: '`skills/` のファイルの名前・概要文・タグ'
+        content_types: [file_list]
+  - type: folder
+    name: src
+    contents: コード（src レイアウトのため、パッケージ 1 つだけを配置する）
+    children:
+      - type: folder
+        name: rule_inject
+        contents: フックの処理と常駐の MCP サーバーのコード
+        content_types: [source]
+        convention: python-architecture-layout
+      - type: file
+        name: files.yaml
+        contents: '`src/` のファイルの名前・概要文・タグと、実装する設計書への関連'
+        content_types: [file_list]
+  - type: folder
+    name: tests
+    contents: 単体・結合・非機能要件のテスト
+    content_types: [test]
+    convention: python-testing-layers
+  - type: file
+    name: .gitignore
+    contents: Git で管理しないパターン
+    content_types: [tool_config]
+  - type: file
+    name: .mcp.json
+    contents: このリポジトリで作業するときに接続する MCP サーバー
+    content_types: [tool_config]
+  - type: file
+    name: .python-version
+    contents: uv が使用する Python のバージョン
+    content_types: [tool_config]
+  - type: file
+    name: pyproject.toml
+    contents: パッケージの定義と、依存・lint・型検査・テストの設定
+    content_types: [tool_config]
+  - type: file
+    name: uv.lock
+    contents: 依存のロック
+    content_types: [tool_config]
+  - type: file
+    name: project-index.yaml
+    contents: project-index の配信元の設定
+    content_types: [tool_config]
+  - type: file
+    name: files.yaml
+    contents: リポジトリの直下のファイルの名前・概要文・タグ
+    content_types: [file_list]
+  - type: file
+    name: rules.yaml
+    contents: このリポジトリで作業するときに rule-inject が案内するルールの索引
+    content_types: [rule_index]
+  - type: file
+    name: settings.sample.yaml
+    contents: 利用者がコピーする端末の設定ファイルのサンプル
+  - type: file
+    name: ai-monitor-theme.yaml
+    contents: GitHub Pages の共通レイアウトを AI Monitor からコピーするかの設定と、コピーしたバージョン
+    content_types: [pages]
+  - type: file
+    name: version.ini
+    contents: rule-inject のリリースのバージョン
+    content_types: [version]
+  - type: file
+    name: ai-monitor-version.ini
+    contents: 追従している AI Monitor のバージョン
+    content_types: [version]
+  - type: file
+    name: README.md
+    contents: rule-inject の概要と公開ドキュメントの場所
+  - type: file
+    name: CLAUDE.md
+    contents: Claude Code がリポジトリを開いたときに読み込む指示
+gitignore:
+  - pattern: docs/generated/
+    reason: YAML の設計書から生成する Markdown
+  - pattern: .venv/
+    reason: uv が作る仮想環境
+  - pattern: __pycache__/
+    reason: Python のバイトコードのキャッシュ
+  - pattern: .pytest_cache/
+    reason: pytest のキャッシュ
+  - pattern: .ruff_cache/
+    reason: ruff のキャッシュ
+refs:
+  - ARCH-122-1#

@@ -1,0 +1,57 @@
+docs:
+  - page: docs/layout/LAY-173-1.yaml
+    new: true
+    change: リポジトリのフォルダ構成の設計書を knowledge のテンプレート『フォルダ構成』の書式で新設
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: docs/layout/index.yaml
+    new: true
+    change: layout のフォルダの目次を新設
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: docs/layout/README.md
+    new: true
+    change: docs/layout/index.yaml から生成
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: docs/index.yaml
+    new: false
+    change: layout/ の行を追加
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: docs/README.md
+    new: false
+    change: docs/index.yaml から生成し直す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: project-index.yaml
+    new: false
+    change: documents[] に layout の種類の行を追加して knowledge のスキーマをリビジョンつきで指し、instructions の書式の記述を行の schema を指す記述に修正
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: docs/_config.yml
+    new: false
+    change: exclude に layout/ を追加し、内部の設計書の目次を GitHub Pages に出さない
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:37:16.697085+00:00'
+scope_out:
+  - item: 既存の種類の schemas/ のコピーから knowledge のスキーマの参照への切り替え
+    reason: shuhei1101/ai-monitor#3188 の反映作業の範囲で、この作業 PR の要望に含めない
+    plan: '#178'
+  - item: .gitignore に tmp/ と .claude/worktrees/ が無い（観点「管理しないもの」）
+    reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
+    plan: '#175'
+  - item: 開発コマンドの設計書が無く、生成物（docs/**/README.md・docs/_theme/）の generated_from を記載できない（観点「管理しないもの」）
+    reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
+    plan: '#176'
+  - item: ルール索引が rules.yaml と空の docs/rules.yaml に分かれ、docs/ の直下に役割が混ざる（観点「同じ種類が散る」「種類が混ざる」）
+    reason: Issue の要望で、レビューで見つかった問題の対処は別の Issue に分ける
+    plan: '#177'
+use_cases: []

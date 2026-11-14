@@ -23,5 +23,7 @@ items:
     summary: 採用済みの外部 API のリファレンス
   - page: library/
     summary: 採用済みの外部ライブラリ / 外部ツールのリファレンス
+  - page: layout/
+    summary: リポジトリのフォルダとファイルの配置
   - page: glossary/
     summary: rule-inject のドメイン用語と、使用しない言い方の一覧

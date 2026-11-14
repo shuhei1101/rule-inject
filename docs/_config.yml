@@ -105,6 +105,7 @@ exclude:
   - external-api/
   - glossary/
   - interface/
+  - layout/
   - library/
   - module/
   - nonfunctional/
