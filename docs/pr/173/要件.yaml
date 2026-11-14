@@ -1,0 +1,33 @@
+docs:
+  - page: docs/layout/LAY-173-1.yaml
+    new: true
+    change: リポジトリのフォルダ構成の設計書を knowledge のテンプレート『フォルダ構成』の書式で新設
+    status: todo
+  - page: docs/layout/index.yaml
+    new: true
+    change: layout のフォルダの目次を新設
+    status: todo
+  - page: docs/layout/README.md
+    new: true
+    change: docs/layout/index.yaml から生成
+    status: todo
+  - page: docs/index.yaml
+    new: false
+    change: layout/ の行を追加
+    status: todo
+  - page: docs/README.md
+    new: false
+    change: docs/index.yaml から生成し直す
+    status: todo
+  - page: project-index.yaml
+    new: false
+    change: documents[] に layout の種類の行を追加し、knowledge のスキーマをリビジョンつきで指す
+    status: todo
+scope_out:
+  - item: レビューの観点で見つかったフォルダ構成の問題の対処（フォルダの移動・.gitignore の修正）
+    reason: Issue の要望で、対処は別の Issue に分ける
+    plan: to_file
+  - item: 既存の種類の schemas/ のコピーから knowledge のスキーマの参照への切り替え
+    reason: shuhei1101/ai-monitor#3188 の反映作業で、配布元が版の追従 Issue としてこのリポジトリへ起票する範囲のため、この作業 PR の要望に含めない。追従 Issue が未起票のため、マージ提案の前に open の追従 Issue を探して番号へ書き換え、無ければ起票する
+    plan: to_file
+use_cases: []
