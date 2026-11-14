@@ -91,19 +91,6 @@ entries:
         name: _config.yml
         contents: GitHub Pages の Jekyll の設定
         content_types: [pages]
-      - type: file
-        name: rules.yaml
-        contents: 環境変数が指す 2 つめのルール索引
-        content_types: [rule_index]
-      - type: folder
-        name: _root
-        contents: '`docs/` の直下の YAML でないファイルの一覧'
-        content_types: [file_list]
-        children:
-          - type: file
-            name: files.yml
-            contents: '`docs/rules.yaml` の名前・概要文・タグ'
-            content_types: [file_list]
       - type: folder
         name: _theme
         contents: AI Monitor からコピーした GitHub Pages の共通レイアウト・スクリプト・スタイル
