@@ -4,7 +4,7 @@ title: rule-inject
 repository: shuhei1101/rule-inject
 lead: |-
   プラグインのコードは `src/`、フックの登録は `hooks/`、スキルは `skills/`、テストは `tests/` に分ける。
-  設計書と公開ドキュメントの原本は `docs/` の種類のフォルダ、設計書のスキーマは `schemas/` に配置する。
+  設計書と公開ドキュメントの原本は `docs/` の種類のフォルダ、knowledge から参照しないスキーマは `schemas/` に配置する。
 tags:
   - name: topic:フォルダ
     main: true
@@ -234,7 +234,7 @@ entries:
         content_types: [file_list]
   - type: folder
     name: schemas
-    contents: 設計書と文書の一覧を検査する JSON Schema と、スキーマのバージョンの変換
+    contents: knowledge から参照しない設計書と文書の一覧の JSON Schema と、スキーマのバージョンの変換
     content_types: [schema]
     naming: ['{kind}.schema.yaml']
     children:

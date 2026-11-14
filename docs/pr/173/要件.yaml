@@ -31,10 +31,16 @@ docs:
     updated_at: '2026-11-14T07:22:54.962954+00:00'
   - page: project-index.yaml
     new: false
-    change: documents[] に layout の種類の行を追加し、knowledge のスキーマをリビジョンつきで指す
+    change: documents[] に layout の種類の行を追加して knowledge のスキーマをリビジョンつきで指し、instructions の書式の記述を行の schema を指す記述に修正
     status: done
     updated_by: planner
     updated_at: '2026-11-14T07:22:54.962954+00:00'
+  - page: docs/_config.yml
+    new: false
+    change: exclude に layout/ を追加し、内部の設計書の目次を GitHub Pages に出さない
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T07:37:16.697085+00:00'
 scope_out:
   - item: 既存の種類の schemas/ のコピーから knowledge のスキーマの参照への切り替え
     reason: shuhei1101/ai-monitor#3188 の反映作業で、配布元が版の追従 Issue としてこのリポジトリへ起票する範囲のため、この作業 PR の要望に含めない。追従 Issue が未起票のため、マージ提案の前に open の追従 Issue を探して番号へ書き換え、無ければ起票する
