@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-14T08:22:21.852139+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: docs/rules.yaml・docs/_root/files.yml の削除と、project-index.yaml・docs/_config.yml・docs/layout/LAY-173-1.yaml の修正（更新ドキュメントの表）
+    updated_by: planner
+    updated_at: '2026-11-14T08:28:00.925607+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えない
@@ -74,7 +76,7 @@ tasks:
     updated_at: '2026-11-14T08:22:21.852139+00:00'
   - process: 実装
     status: skipped
-    reason: コードを変えない（反映作業のスクリプトはドキュメント修正と同じフェーズで書く）
+    reason: コードを変えない
     updated_by: planner
     updated_at: '2026-11-14T08:22:21.852139+00:00'
   - process: 結合テスト作成

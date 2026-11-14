@@ -3,23 +3,33 @@ docs:
   - page: docs/rules.yaml
     new: false
     change: '空のルール索引（`rules: []` だけ）を削除する'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:27:48.654376+00:00'
   - page: docs/_root/files.yml
     new: false
     change: 唯一の行 `../rules.yaml` が無くなるため、ファイルごと削除する（`docs/_root/` も無くなる）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:27:48.654376+00:00'
   - page: project-index.yaml
     new: false
     change: 配信元 `docs` の `paths` から `docs/_root/files.yml` を削除する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:27:48.654376+00:00'
   - page: docs/_config.yml
     new: false
     change: '`exclude` から `rules.yaml` を削除する'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:27:48.654376+00:00'
   - page: docs/layout/LAY-173-1.yaml
     new: false
     change: '`docs` の子から `rules.yaml` と `_root` の行を削除し、ルール索引を直下の `rules.yaml` だけにする'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:27:48.654376+00:00'
 scope_out:
   - item: 直下の `rules.yaml` の中身（ルールのエントリ）の見直し
     reason: 要望は空の索引の削除で、案内するルールは変えない
