@@ -13,6 +13,8 @@ scenarios:
       - name: 索引
         description: '操作の対象のパスにヒットし、`on: [write]` のエントリを持つ索引'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -27,6 +29,8 @@ scenarios:
         IDX-->>H: 該当するルール
         H-->>CC: 操作を止めて案内する
       ```
+
+      <!-- /map -->
     expected:
       - 操作が止まり、案内にルールの場所が記載されている
     test: test_normal
@@ -40,6 +44,8 @@ scenarios:
         description: プロジェクトの直下の `rules.yaml` に、操作の対象のパスにヒットするエントリを記載する
         notes: 設定なしのときの既定の配置場所
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -52,6 +58,8 @@ scenarios:
         IDX-->>H: 該当するルール
         H-->>CC: 操作を止めて案内する
       ```
+
+      <!-- /map -->
     expected:
       - 操作が止まり、案内にルールの場所が記載されている
       - 案内に設定ファイルの誤りが載っていない
@@ -65,6 +73,8 @@ scenarios:
       - name: 設定ファイル
         description: '`{XDG_CONFIG_HOME}/rule-inject/settings.yaml` に知らないキーを記載する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -76,6 +86,8 @@ scenarios:
         CF-->>H: 読み取れない（知らないキー）
         H-->>CC: ファイルの場所と理由を案内する
       ```
+
+      <!-- /map -->
     expected:
       - 案内に既定の場所のパスと読み取れない理由が記載されている
       - ログのファイルに `read_settings` の行がある

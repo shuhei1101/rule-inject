@@ -14,6 +14,8 @@ flows:
         description: 索引を記載した設定ファイル
         notes: '`RULE_INJECT_CONFIG` で指し、`RULE_INJECT_PORT` に空いているポートを指定する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant U as 利用者
@@ -26,6 +28,8 @@ flows:
         U->>SV: MCP の initialize（/mcp）
         SV-->>U: 応答（instructions）
       ```
+
+      <!-- /map -->
     expected:
       - '`127.0.0.1` の `RULE_INJECT_PORT` のポートだけで待ち受けている'
       - '`http://127.0.0.1:{ポート}/mcp` へ MCP のクライアントで接続でき、ツールの一覧に `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`・`get_server_status`・`reload_settings`・`restart_server`・`update_server` が並ぶ'
@@ -40,6 +44,8 @@ flows:
         description: 正常系と同じ設定ファイルで待ち受けているサーバー
         notes: 待ち受けを確認してから止める
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant U as 利用者
@@ -49,6 +55,8 @@ flows:
         SV->>SV: 待ち受けを閉じる
         SV-->>U: 標準エラーに終了の処理<br>終了コード 143
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが SIGTERM で終わったことを示す（シェルでは 143、`subprocess` の `returncode` では -15）
       - 標準エラーに `Application shutdown complete.` と `Finished server process` が出ている
@@ -63,6 +71,8 @@ flows:
       - name: 環境変数
         description: '`RULE_INJECT_PORT` にテストが待ち受けているポートを指定する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant U as 利用者
@@ -72,6 +82,8 @@ flows:
         SV->>SV: 待ち受けに失敗する
         SV-->>U: 標準エラーにポートと理由<br>0 以外の終了コード
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0 以外
       - 標準エラーに、ポートの番号と使用されている旨が載っている
@@ -84,6 +96,8 @@ flows:
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant U as 利用者
@@ -95,6 +109,8 @@ flows:
         CF-->>SV: 知らないキー
         SV-->>U: 標準エラーに設定ファイルの場所と理由<br>0 以外の終了コード
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0 以外
       - 標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
@@ -108,6 +124,8 @@ flows:
       - name: 設定ファイル
         description: '`global.server_port` を持つ設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant U as 利用者
@@ -119,6 +137,8 @@ flows:
         CF-->>SV: 廃止したキー
         SV-->>U: 標準エラーに場所と移し替えの案内<br>0 以外の終了コード
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0 以外
       - 標準エラーに、設定ファイルの場所と `global.server_port`・`global-setup` が記載されている

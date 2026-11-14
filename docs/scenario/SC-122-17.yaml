@@ -19,6 +19,8 @@ scenarios:
         description: プロンプトで、プロジェクトのフォルダを Grep で検索し、ヒットしたファイルの名前だけを回答するよう指示する
         notes: '`--allowedTools` で Grep だけを許可し、フォルダを検索させる（ファイルを指す Grep は `PreToolUse` の案内に該当する）'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -39,6 +41,8 @@ scenarios:
         P->>GD: ルールの場所を追加する
         P-->>CC: ルールの場所と、読むかは任意であることをコンテキストへ記載する
       ```
+
+      <!-- /map -->
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）に、読むかは任意と伝える検索結果の案内の文面とルールの場所が載っている
@@ -60,6 +64,8 @@ scenarios:
         description: プロンプトで、プロジェクトのフォルダを Bash の `find` で探し、見つかったファイルの名前だけを回答するよう指示する
         notes: '`--allowedTools` で Bash を許可し、Grep・Glob を `--disallowedTools` で除外して探し方を 1 つに定める'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -80,6 +86,8 @@ scenarios:
         P->>GD: ルールの場所を追加する
         P-->>CC: ルールの場所と、読むかは任意であることをコンテキストへ記載する
       ```
+
+      <!-- /map -->
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）に、検索結果の案内の文面とルールの場所が載っている
@@ -101,6 +109,8 @@ scenarios:
         description: プロンプトで、同じ検索をもう一度 Grep で行うよう指示する
         notes: '`--allowedTools` で Grep だけを許可する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -120,6 +130,8 @@ scenarios:
         GD-->>P: 案内済み
         P-->>CC: 何も返却しない
       ```
+
+      <!-- /map -->
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - この実行で増えたセッションの記録（transcript）に、検索結果の案内の文面が載っていない
@@ -140,6 +152,8 @@ scenarios:
       - name: 操作
         description: 正常シナリオと同じ（プロジェクトのフォルダを Grep で検索し、ヒットしたファイルの名前だけを回答する）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -160,6 +174,8 @@ scenarios:
         P->>GD: ルールの場所を追加する
         P-->>CC: 参照するツールと引数・ルールの場所と、読むかは任意であることをコンテキストへ記載する
       ```
+
+      <!-- /map -->
     expected:
       - '`claude -p` の結果の `permission_denials` が空'
       - セッションの記録（transcript）の検索結果の案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている

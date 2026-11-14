@@ -19,6 +19,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -32,6 +34,8 @@ flows:
         H->>ST: そのセッションの既読を読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールのパスと、Read で参照してから同じ操作を再試行する旨が載っている'
@@ -49,6 +53,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -62,6 +68,8 @@ flows:
         H->>H: ルールの今のハッシュを取り、記録のハッシュと比べる（同じため既読）
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 終了コードが `0`
@@ -79,6 +87,8 @@ flows:
         description: '`tool_name: Read`、`tool_input.file_path` は `.py` のパス'
         notes: 読む操作は `on` に無い
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -94,6 +104,8 @@ flows:
         H->>GD: ルールの場所を追記する
         H-->>CC: additionalContext（案内）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` にルールの場所が載り、「再試行してください」を含まない'
@@ -113,6 +125,8 @@ flows:
         description: '`tool_name: Bash`、`tool_input.command` は `cd src && cat app.py | head -n 5`'
         notes: 実在する `.py` を `cwd` の下に配置する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -126,6 +140,8 @@ flows:
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -142,6 +158,8 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__github__create_issue`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -155,6 +173,8 @@ flows:
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -172,6 +192,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -183,6 +205,8 @@ flows:
         H->>H: 該当した 2 エントリをルールの場所ごとに 1 件にまとめる
         H-->>CC: permissionDecision: deny + 案内（場所 1 件）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が 1 回だけ載っている'
@@ -199,6 +223,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`tests/` の下の `.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -210,6 +236,8 @@ flows:
         H->>H: exclude に該当するためエントリを除外する
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 終了コードが `0`
@@ -226,6 +254,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -237,6 +267,8 @@ flows:
         H->>H: 止めるルールを先に並べ、<br>10,000 字に収まる分と残りの件数を記載する
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecisionReason` が 10,000 字以内'
       - 止めるルールが止めないルールより前に並んでいる
@@ -252,6 +284,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -262,6 +296,8 @@ flows:
         H->>IDX: 読む（読めない）
         H-->>CC: additionalContext（読めなかった索引の場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に 2 つの索引の場所と理由が載っている'
@@ -279,6 +315,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -291,6 +329,8 @@ flows:
         H->>LOG: read_record を追記する
         H-->>CC: additionalContext（記録ファイルの場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に記録ファイルの場所と理由が載っている'
@@ -309,6 +349,8 @@ flows:
       - name: 入力
         description: '`tool_name: Grep`、`tool_input.path` は実在する `.py` のファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -321,6 +363,8 @@ flows:
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -339,6 +383,8 @@ flows:
       - name: 入力
         description: 止めずに案内するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -351,6 +397,8 @@ flows:
         H->>GD: 案内済みを読む（案内済み）
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 案内済みの記録の行が増えていない
@@ -368,6 +416,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ入力を 2 回続けて指定する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -379,6 +429,8 @@ flows:
         CC->>H: 標準入力（同じ入力）
         H-->>CC: permissionDecision: deny + 案内
       ```
+
+      <!-- /map -->
     expected:
       - 2 回とも `permissionDecision` が `deny`
       - 案内済みの記録ファイルが無い
@@ -399,6 +451,8 @@ flows:
         description: 止めて案内するフローと同じ
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -410,6 +464,8 @@ flows:
         H->>IDX: 読む（ユーザーの既定は無いため読まない）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載り、索引が読めなかった通知が記載されていない'
@@ -428,6 +484,8 @@ flows:
         description: 止めて案内するフローと同じ
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -437,6 +495,8 @@ flows:
         H->>H: 空の並びのため既定の配置場所を読まない
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 終了コードが `0`
@@ -454,6 +514,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -465,6 +527,8 @@ flows:
         H->>H: rule の変数参照を展開して場所を解く
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` に展開したルールの場所（`{RULES_DIR の値}/python.md`）が載り、`!{RULES_DIR}` が載っていない'
@@ -480,6 +544,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -493,6 +559,8 @@ flows:
         H->>LOG: read_index を追記する
         H-->>CC: additionalContext（索引の場所・rule・展開できない名前）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所・エントリの `rule`・`UNSET_DIR` が載っている'
@@ -512,6 +580,8 @@ flows:
       - name: 入力
         description: 止めずに案内するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -524,6 +594,8 @@ flows:
         H->>LOG: write_record を追記する
         H-->>CC: additionalContext（案内と、記録ファイルの場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` にルールの場所と、案内済みの記録ファイルの場所と理由が載っている'
@@ -544,6 +616,8 @@ flows:
         description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{query: "x", tags: ["go", "python"], filter: {kind: "rule"}}`'
         notes: 配列の 2 つ目の要素とオブジェクトの子で該当する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -557,6 +631,8 @@ flows:
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -574,6 +650,8 @@ flows:
         description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{query: "x", tags: ["go"]}`'
         notes: '`tags` の値が該当せず、`filter.kind` のキーが無い'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -585,6 +663,8 @@ flows:
         H->>H: 引数が該当しないためエントリを除外する
         H-->>CC: 標準出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 終了コードが `0`
@@ -602,6 +682,8 @@ flows:
         description: '`tool_name: Write`、`tool_input.file_path` は `{一時フォルダ}/src/app.py`'
         notes: パスの先頭はパターンに無く、部分一致で該当する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -615,6 +697,8 @@ flows:
         H->>ST: 既読を読む（未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -630,6 +714,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -643,6 +729,8 @@ flows:
         H->>LOG: read_index を追記する
         H-->>CC: additionalContext（索引の場所・パターン・理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所・`re:[`・コンパイルできない理由が載っている'
@@ -661,6 +749,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -674,6 +764,8 @@ flows:
         H->>LOG: read_index を追記する
         H-->>CC: additionalContext（索引の場所・rule・理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所・`https://example.com/python.md`・Read で読めない旨が載っている'
@@ -694,6 +786,8 @@ flows:
       - name: 入力
         description: 止めて案内するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -707,6 +801,8 @@ flows:
         H->>H: ルールの今のハッシュを取り、記録のハッシュと比べる（違うため未読）
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -731,6 +827,8 @@ flows:
         description: 止めて案内するフローと同じ
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -744,6 +842,8 @@ flows:
         H->>IDX: 索引 a・索引 b を順に読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` に索引 a と索引 b のルールの場所が載っている'
@@ -769,6 +869,8 @@ flows:
         description: 止めて案内するフローと同じ
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -782,6 +884,8 @@ flows:
         H->>IDX: 読む
         H-->>CC: permissionDecision: deny + 案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` にルールの場所が載っている'
@@ -805,6 +909,8 @@ flows:
         description: 止めて案内するフローと同じ
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -817,6 +923,8 @@ flows:
         H->>LOG: 既定のログのフォルダへ read_settings を追記する
         H-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に設定ファイルの場所と知らないキー `index` が載っている'
@@ -976,6 +1084,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -989,6 +1099,8 @@ flows:
         H->>ST: そのセッションの既読を読む（未読）
         H-->>CC: permissionDecision: deny + 場所とツールの行を並べた案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が `deny`'
       - '`permissionDecisionReason` のパスの行の次の行が `  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}（省略可: {"sections": ["命名"]}）`'
@@ -1008,6 +1120,8 @@ flows:
       - name: 入力
         description: '`tool_name: Read`、`tool_input.file_path` は `.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -1023,6 +1137,8 @@ flows:
         H->>GD: ルールの場所を追記する
         H-->>CC: additionalContext（場所とツールの行を並べた案内）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` の場所の行の次の行が `  ツール: mcp__docs__search_docs {}`'
@@ -1041,6 +1157,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -1051,6 +1169,8 @@ flows:
         H->>IDX: 読む
         H-->>CC: permissionDecision: deny + 2 件の案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecisionReason` の 1 つ目のルールの場所の次の行が `ツール:` の行'
       - '`permissionDecisionReason` の 2 つ目のルールの場所の次に `ツール:` の行が無い'
@@ -1067,6 +1187,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、3 つのエントリに該当するパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -1078,6 +1200,8 @@ flows:
         H->>H: 同じルールの場所のエントリを 1 件にまとめ、read_tool の重なりを除く
         H-->>CC: permissionDecision: deny + 1 件の案内<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecisionReason` にルールの場所の行が 1 行だけある'
       - その下に `ツール:` の行が 2 行あり、1 つ目のエントリの `read_tool`、3 つ目のエントリの `read_tool` の順
@@ -1092,6 +1216,8 @@ flows:
       - name: 入力
         description: '`tool_name: Write`、`tool_input.file_path` は `.py` のパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -1102,6 +1228,8 @@ flows:
         H->>IDX: 読む（read_tool の書式の誤り）
         H-->>CC: additionalContext（索引の場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`permissionDecision` が無い'
       - '`additionalContext` に索引の場所と、`read_tool` の `tool` が無い旨が載っている'

@@ -18,6 +18,8 @@ flows:
       - name: 引数
         description: '`position: 0` と 1 つ目のエントリの `expected_rev`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -34,6 +36,8 @@ flows:
         IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: rule・diff
       ```
+
+      <!-- /map -->
     expected:
       - 索引から 1 つ目のエントリが無くなり、2 つ目のエントリとそのコメントは変わっていない
       - 応答の `rule` が削除したエントリの `rule` で、`written` が `true`
@@ -51,6 +55,8 @@ flows:
       - name: 引数
         description: '正常系と同じ引数と `dry_run: true`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -63,6 +69,8 @@ flows:
         IF->>IF: エントリを除く
         IF-->>C: written: false・diff
       ```
+
+      <!-- /map -->
     expected:
       - '`written` が `false` で、`diff` に削除するエントリの行が載っている'
       - 索引のファイルが削除の前のバイト列のまま
@@ -79,6 +87,8 @@ flows:
       - name: 引数
         description: '`position: 0` と 1 つ目のエントリの `expected_rev`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -92,6 +102,8 @@ flows:
         IF->>IDX: 一時ファイルに書き込み、置き換える
         IF-->>C: rule・diff
       ```
+
+      <!-- /map -->
     expected:
       - '`written` が `true` で、索引のエントリが `paths: []` を持つ 1 つだけ'
       - 残ったエントリの行が削除の前のまま
@@ -104,6 +116,8 @@ flows:
       - name: 引数
         description: '`project_dir` に相対パスを指定する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -112,6 +126,8 @@ flows:
         C->>IF: project_dir（相対パス）
         IF-->>C: isError: true（絶対パスで指定する旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
     test: test_error_when_project_dir_not_absolute
@@ -126,6 +142,8 @@ flows:
         description: エントリを 1 つ持つ
         notes: 削除の前のバイト列を記録する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -137,6 +155,8 @@ flows:
         CF-->>IF: 知らないキー
         IF-->>C: isError: true（設定ファイルの場所と理由）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
       - 索引のファイルが削除の前のバイト列のまま
@@ -154,6 +174,8 @@ flows:
       - name: 引数
         description: '`index` に対象のファイル、`position: 0` とそのエントリの `expected_rev`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -165,6 +187,8 @@ flows:
         CF-->>IF: 読む索引（index を含まない）
         IF-->>C: isError: true（設定ファイルで読む索引でない旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、設定ファイルで読む索引でない旨が載っている'
       - 対象のファイルが削除の前のバイト列のまま
@@ -180,6 +204,8 @@ flows:
         description: 閉じていないフロー形式のリストを持ち、YAML として読めない
         notes: 削除の前のバイト列を記録する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -191,6 +217,8 @@ flows:
         IDX-->>IF: 読めない
         IF-->>C: isError: true（索引の場所と理由）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、索引の場所と読めない理由が載っている'
       - 索引のファイルが削除の前のバイト列のまま
@@ -208,6 +236,8 @@ flows:
       - name: 引数
         description: '`position: 1` と任意の `expected_rev`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -219,6 +249,8 @@ flows:
         IDX-->>IF: エントリ 1 つ
         IF-->>C: isError: true（位置が無い旨とエントリの数）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、位置が無い旨とエントリの数 1 が載っている'
       - 索引のファイルが削除の前のバイト列のまま
@@ -236,6 +268,8 @@ flows:
       - name: 引数
         description: '`position: 0` と、書き換える前に取った `expected_rev`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -247,6 +281,8 @@ flows:
         IDX-->>IF: 書き換えられたエントリ
         IF-->>C: isError: true（今のバージョンと再取得する旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、今のバージョンと一覧を再取得する旨が載っている'
       - 索引のファイルがテストが書き換えた後のバイト列のまま
@@ -264,6 +300,8 @@ flows:
       - name: 引数
         description: '`position: 0` と任意の `expected_rev`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -275,6 +313,8 @@ flows:
         IDX-->>IF: フックの読み取りが読めない内容
         IF-->>C: isError: true（フックが読めない理由と手で修正する旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、フックが読めない理由（行の番号を含む）と、索引を手で修正する旨が載っている'
       - 索引のファイルが書き込みの前のバイト列のまま

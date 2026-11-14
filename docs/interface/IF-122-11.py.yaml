@@ -15,6 +15,8 @@ flows:
       - name: 索引
         description: 索引の書式どおりのエントリだけを持ち、各 `rule` の場所にルールの本文がある
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -33,6 +35,8 @@ flows:
         FS-->>IF: ある
         IF-->>C: problem_count 0
       ```
+
+      <!-- /map -->
     expected:
       - '`problem_count` が 0'
       - '`indexes` に索引の場所が載り、`hook_error` が `None` で `violations`・`missing_rules`・`skipped_entries` が空'
@@ -50,6 +54,8 @@ flows:
         description: '1 つ目のエントリが `paths: []` を持つ'
         notes: フックは読めるが、Schema は要素が 1 つ以上のリストを求める
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -62,6 +68,8 @@ flows:
         IF->>IF: JSON Schema に照らす（違反）
         IF-->>C: violations
       ```
+
+      <!-- /map -->
     expected:
       - '`violations` に `location` が `rules[0].paths` の違反と理由が載っている'
       - '`hook_error` が `None`'
@@ -76,6 +84,8 @@ flows:
       - name: 索引
         description: 2 行にまたがるフロー形式のリストを含む
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -87,6 +97,8 @@ flows:
         IDX-->>IF: 読めない（行と理由）
         IF-->>C: hook_error
       ```
+
+      <!-- /map -->
     expected:
       - '`hook_error` に行の番号を含む理由が載っている'
       - '`violations`・`missing_rules` が空'
@@ -101,6 +113,8 @@ flows:
       - name: 索引
         description: 2 つ目のエントリの `rule` の場所にファイルが無い
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -116,6 +130,8 @@ flows:
         FS-->>IF: 無い場所が 1 つ
         IF-->>C: missing_rules
       ```
+
+      <!-- /map -->
     expected:
       - '`missing_rules` に `position` が 1 で、解いたルールの場所を持つ行が載っている'
       - '`problem_count` が 1'
@@ -128,6 +144,8 @@ flows:
       - name: 引数
         description: '`project_dir` に相対パスを指定する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -136,6 +154,8 @@ flows:
         C->>IF: project_dir（相対パス）
         IF-->>C: isError: true（絶対パスで指定する旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
     test: test_error_when_project_dir_not_absolute
@@ -147,6 +167,8 @@ flows:
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -158,6 +180,8 @@ flows:
         CF-->>IF: 知らないキー
         IF-->>C: isError: true（設定ファイルの場所と理由）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
@@ -428,6 +452,8 @@ flows:
         description: 1 つ目のエントリの `read_tool` が `args` だけを持つ（`tool` が無い）
         notes: ルール案内の制約「参照するツールの書式」のとおり、フックも読めない
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -439,6 +465,8 @@ flows:
         IDX-->>IF: 読めない（read_tool の書式の誤り）
         IF-->>C: hook_error
       ```
+
+      <!-- /map -->
     expected:
       - '`hook_error` に、`read_tool` の `tool` が無い旨が載っている'
       - '`violations` が空（JSON Schema には照らさない）'
@@ -454,6 +482,8 @@ flows:
         description: '1 つ目のエントリの `read_tool` が `tool: mcp__docs__search_docs` と、`args` に空のオブジェクトの JSON の文字列 `{}` を持つ'
         notes: フックは読めるが、Schema は `args` を記載するときキーを 1 つ以上求める
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -466,6 +496,8 @@ flows:
         IF->>IF: JSON Schema に照らす（違反）
         IF-->>C: violations
       ```
+
+      <!-- /map -->
     expected:
       - '`violations` に `location` が `rules[0].read_tool.args` の違反と理由が載っている'
       - '`hook_error` が `None`'

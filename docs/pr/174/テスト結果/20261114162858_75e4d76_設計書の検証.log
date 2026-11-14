@@ -1,0 +1,65 @@
+# 作業ブランチ（75e4d76）。project-index.yaml を dev-docs.yaml の名前で一時的に写して実行し、写したファイルは削除した
+$ cd /mnt/c/Users/shuhe/repo/ai-monitor/.claude/worktrees/develop && PYTHONPATH=src uv run python -m ai_monitor.design_docs validate --root /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/docs-design-mermaid-to-mdmark-map
+docs/scenario/SC-122-1.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_server_status.py
+docs/scenario/SC-122-10.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_old_log_cleaned.py
+docs/scenario/SC-122-11.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_record_discarded_on_compact.py
+docs/scenario/SC-122-12.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_search_rules_for_operation.py
+docs/scenario/SC-122-13.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_read_default_settings.py
+docs/scenario/SC-122-14.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_delete_read_records.py
+docs/scenario/SC-122-15.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_read_records.py
+docs/scenario/SC-122-16.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py
+docs/scenario/SC-122-17.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_guidance_for_search_results.py
+docs/scenario/SC-122-18.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_setup_terminal.py
+docs/scenario/SC-122-19.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_edit_index_entries.py
+docs/scenario/SC-122-2.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_reload_server_settings.py
+docs/scenario/SC-122-20.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_check_indexes.py
+docs/scenario/SC-122-21.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_ended_session_records_cleaned.py
+docs/scenario/SC-122-22.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
+docs/scenario/SC-122-23.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_read_rule_then_touch_file.py
+docs/scenario/SC-122-24.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
+docs/scenario/SC-122-25.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py
+docs/scenario/SC-122-3.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_restart_server.py
+docs/scenario/SC-122-4.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_run_resident_mcp_server.py
+docs/scenario/SC-122-5.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_update_rule_inject.py
+docs/scenario/SC-122-6.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py
+docs/scenario/SC-122-7.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_register_repository_index.py
+docs/scenario/SC-122-8.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_rule_read_recorded.py
+docs/scenario/SC-122-9.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_effective_rules.py
+(exit 1)
+
+# base ブランチ（origin/develop c10f84d）で同じ手順で実行した結果
+$ cd /mnt/c/Users/shuhe/repo/ai-monitor/.claude/worktrees/develop && PYTHONPATH=src uv run python -m ai_monitor.design_docs validate --root /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/develop
+docs/scenario/SC-122-1.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_server_status.py
+docs/scenario/SC-122-10.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_old_log_cleaned.py
+docs/scenario/SC-122-11.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_record_discarded_on_compact.py
+docs/scenario/SC-122-12.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_search_rules_for_operation.py
+docs/scenario/SC-122-13.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_read_default_settings.py
+docs/scenario/SC-122-14.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_delete_read_records.py
+docs/scenario/SC-122-15.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_read_records.py
+docs/scenario/SC-122-16.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_unread_rule_guidance.py
+docs/scenario/SC-122-17.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_guidance_for_search_results.py
+docs/scenario/SC-122-18.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_setup_terminal.py
+docs/scenario/SC-122-19.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_edit_index_entries.py
+docs/scenario/SC-122-2.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_reload_server_settings.py
+docs/scenario/SC-122-20.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_check_indexes.py
+docs/scenario/SC-122-21.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_ended_session_records_cleaned.py
+docs/scenario/SC-122-22.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_stopped_server_started_at_session_start.py
+docs/scenario/SC-122-23.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_read_rule_then_touch_file.py
+docs/scenario/SC-122-24.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_delete_read_records_then_guided_again.py
+docs/scenario/SC-122-25.yaml:test_file: 対応テストファイルがありません: tests/e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py
+docs/scenario/SC-122-3.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_restart_server.py
+docs/scenario/SC-122-4.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_run_resident_mcp_server.py
+docs/scenario/SC-122-5.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_update_rule_inject.py
+docs/scenario/SC-122-6.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py
+docs/scenario/SC-122-7.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_register_repository_index.py
+docs/scenario/SC-122-8.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_rule_read_recorded.py
+docs/scenario/SC-122-9.yaml:test_file: 対応テストファイルがありません: tests/e2e/単一ユースケース/test_view_effective_rules.py
+(exit 1)
+
+# 2 つの出力の差分
+$ diff validate_base.txt validate_head.txt
+(差分なし)
+
+# 書き換えの前後で、flow の値が map の範囲で囲んだだけになっていることの照合
+$ python -I check.py {変更した 29 件}
+wrapped 201 bad 0

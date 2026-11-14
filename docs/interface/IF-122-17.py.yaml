@@ -19,6 +19,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -31,6 +33,8 @@ flows:
         C->>ST: 保持期間を過ぎた記録ファイルを削除する
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 保持期間を過ぎた既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルが無い
       - 保持期間の内側の既読の記録ファイル・案内済みの記録ファイル・既読の履歴ファイルが残っている
@@ -49,6 +53,8 @@ flows:
       - name: 入力
         description: '`source: resume`、`session_id` は始まったセッション'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -60,6 +66,8 @@ flows:
         C->>C: 始まったセッションのファイルを除く
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 始まったセッションの記録ファイルが残っている
       - 別のセッションの記録ファイルが無い
@@ -75,6 +83,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -84,6 +94,8 @@ flows:
         C->>C: 記録フォルダが無い
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録フォルダを作らない
       - 終了コードが `0`
@@ -101,6 +113,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -112,6 +126,8 @@ flows:
         C->>C: ログに書き込めないため標準エラー出力へ出す
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - '標準エラー出力に `component: sweep_read`・`operation: delete_record` の 1 行がある'
@@ -129,6 +145,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -141,6 +159,8 @@ flows:
         C->>LG: 日付が保持日数以上前のファイルを削除する
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 3 日前のログのファイルが無い
       - 今日と 2 日前のログのファイルが残っている
@@ -162,6 +182,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -175,6 +197,8 @@ flows:
         C->>LG: 日付が 1 日以上前のログのファイルを削除する
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルが無い
       - 1 日前のログのファイルが無い
@@ -192,6 +216,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -203,6 +229,8 @@ flows:
         C->>C: ログに書き込めないため標準エラー出力へ出す
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - '標準エラー出力に `component: sweep_read`・`operation: delete_log` の 1 行がある'
@@ -220,6 +248,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -230,6 +260,8 @@ flows:
         C->>ST: 変更前のログを削除する
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録フォルダの `rule-inject.log` が無い
       - 標準出力が空
@@ -251,6 +283,8 @@ flows:
         description: '`source: startup`'
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -263,6 +297,8 @@ flows:
         C->>LG: 既定のログのフォルダへ read_settings を追記する
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 3 日前のログのファイルが残っている
       - '今日のログのファイルに `operation: read_settings` の行が 1 行ある'

@@ -15,6 +15,8 @@ scenarios:
         description: スキルが `~/.config/systemd/user/{サービス名}.service` に配置し、`systemctl --user enable --now` で起動する
         notes: テストの後始末で `disable` してユニットを削除する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -33,6 +35,8 @@ scenarios:
         H-->>SK: 案内
         SK-->>U: 作ったもの・結果を示す
       ```
+
+      <!-- /map -->
     expected:
       - 既定のパスに、今のバージョンの `version` と指定した索引と指定したサービス名を持つ端末の設定がある
       - '`settings.json` の `env` に `RULE_INJECT_CONFIG` が無い'
@@ -51,6 +55,8 @@ scenarios:
         description: サービス名は正常シナリオと同じ。了承の引数 `--yes` を指定する
         notes: '`--yes` は確認に了承として回答する。`-p` では質問できないため引数で決める'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -69,6 +75,8 @@ scenarios:
         SK->>ST: env に RULE_INJECT_PORT を記載する
         SK-->>U: 適用した手順とバックアップのパスを示す
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定に `global.server_port` が無く、`version` が今のバージョンになっている
       - '`settings.json` の `env` に、元の `global.server_port` の値の `RULE_INJECT_PORT` がある'
@@ -87,6 +95,8 @@ scenarios:
       - name: サーバーのユニット
         description: 正常シナリオと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -99,6 +109,8 @@ scenarios:
         SK->>ST: env に RULE_INJECT_CONFIG を記載する
         SK-->>U: env に記載したキーを示す
       ```
+
+      <!-- /map -->
     expected:
       - 指したパスに端末の設定がある
       - '`settings.json` の `env` に `RULE_INJECT_CONFIG` があり、ほかのキーが変わっていない'
@@ -114,6 +126,8 @@ scenarios:
       - name: 引数
         description: サービス名は正常シナリオと同じ。了承の引数 `--yes` を指定する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -128,6 +142,8 @@ scenarios:
         SK->>CC: 登録を削除する
         SK-->>U: 削除した登録を示す
       ```
+
+      <!-- /map -->
     expected:
       - ユーザースコープの `rule-inject` の登録が無い
       - 結果に削除した登録が記載されている
@@ -141,6 +157,8 @@ scenarios:
       - name: 端末の設定
         description: '`version` がツールのバージョンより新しい端末の設定'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -152,6 +170,8 @@ scenarios:
         MG-->>SK: 設定が新しい
         SK-->>U: 両方のバージョンとプラグインの更新を案内して止まる
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定と `settings.json` が変わっていない
       - 結果に設定のバージョンとツールのバージョンが記載されている
@@ -167,6 +187,8 @@ scenarios:
       - name: 引数
         description: サービス名は正常シナリオと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -178,6 +200,8 @@ scenarios:
         SV-->>SK: 待ち受けに失敗する
         SK-->>U: ログの場所と修正方法を示して止まる
       ```
+
+      <!-- /map -->
     expected:
       - 結果に、ポートが使用されている旨とログの場所が記載されている
     test: test_error_when_port_in_use
@@ -193,6 +217,8 @@ scenarios:
         description: '`RULE_INJECT_PORT` のポートで起動したサーバー'
         notes: テストが前面で起動する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -210,6 +236,8 @@ scenarios:
         H-->>SK: 案内
         SK-->>U: 接続の結果を示す
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定と `settings.json` が変わっていない
       - サーバーのユニットが作られていない
@@ -227,6 +255,8 @@ scenarios:
         description: 断る引数 `--no` を指定する
         notes: '`--no` は確認に断りとして回答する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -240,6 +270,8 @@ scenarios:
         U-->>SK: 断る
         SK-->>U: 適用しなかった手順を示して止まる
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定と `settings.json` が変わっていない
       - サーバーのユニットが作られていない

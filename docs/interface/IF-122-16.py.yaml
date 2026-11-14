@@ -17,6 +17,8 @@ flows:
       - name: 入力
         description: '`tool_name: Read`、`tool_input.file_path` はルールの場所、`tool_response.file` は `startLine: 1`・`numLines` と `totalLines` がルールのファイルの行数'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -33,6 +35,8 @@ flows:
         P->>HS: 読み方 read の行を追記する
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: read`・`tool: Read`・`location` がルールの場所の行が 1 行ある'
@@ -51,6 +55,8 @@ flows:
         description: '`tool_name: Bash`、`tool_input.command` は `cat {ルールの場所の相対パス}`'
         notes: '`cwd` からの相対パスで指定し、絶対パスへ解くことを確認する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -67,6 +73,8 @@ flows:
         P->>HS: 読み方 bash の行を追記する
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルに、ルールの場所の絶対パスとルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: bash`・`tool: Bash` の行が 1 行ある'
@@ -83,6 +91,8 @@ flows:
       - name: 入力
         description: '`tool_name: Read`、`tool_input.file_path` は索引に載っていないパス'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -93,6 +103,8 @@ flows:
         P->>IDX: 読む（該当しない）
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -111,6 +123,8 @@ flows:
       - name: 入力
         description: 'Read で読むフローと同じ（`tool_name: Read`、ルールの場所、全体を読んだ `tool_response.file`）'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -122,6 +136,8 @@ flows:
         P->>P: ログにも書き込めないため標準エラー出力へ出す
         P-->>CC: additionalContext（既読にできなかった場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`additionalContext` にルールの場所と理由が載っている'
       - '標準エラー出力に `operation: write_record` の 1 行がある'
@@ -140,6 +156,8 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: python}`、`tool_response` は `<document>` も `path`・`scope` も持たない文字列 `{"result": "{ルールの本文}"}`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -156,6 +174,8 @@ flows:
         P->>HS: 読み方 mcp の行を追記する
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: mcp`・`tool: mcp__docs__get_doc`・`location` がルールの場所の行が 1 行ある'
@@ -174,6 +194,8 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: typescript}`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -184,6 +206,8 @@ flows:
         P->>IDX: read_by に該当するエントリを選ぶ（該当しない）
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -204,6 +228,8 @@ flows:
       - name: 入力
         description: 'Read で読むフローと同じ（`tool_name: Read`、ルールの場所、全体を読んだ `tool_response.file`）'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -217,6 +243,8 @@ flows:
         P->>P: ログにも書き込めないため標準エラー出力へ出す
         P-->>CC: additionalContext（既読の履歴に書き込めなかった場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルにルールの場所が 1 行ある
       - '`additionalContext` にルールの場所と、既読の履歴に書き込めなかった理由が載っている'
@@ -235,6 +263,8 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__docs__get_doc`、`tool_input: {id: python}`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -246,6 +276,8 @@ flows:
         P->>P: rule が URL のエントリを読み飛ばす
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -266,6 +298,8 @@ flows:
         description: '`tool_name: Read`、`tool_input.file_path` はルールの場所、`tool_response.file` は `startLine: 5`・`numLines: 7`・`totalLines: 11`'
         notes: 末尾まで届いても先頭を読んでいない範囲にし、`startLine` も判定に使用することを確認する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -275,6 +309,8 @@ flows:
         P->>P: 読んだ範囲がファイル全体かを確認する（一部）
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -293,6 +329,8 @@ flows:
         description: '`tool_name: mcp__docs__search_docs`、`tool_response` は 1 つ目のルールを `<document path="{1 つ目の場所}" scope="full">…</document>`、2 つ目のルールを `scope="summary"` で包んだ markdown を `result` に持つ JSON の文字列'
         notes: 属性の `"` が JSON の中で `\"` になった形式で指定し、JSON として読んでから探すことを確認する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -310,6 +348,8 @@ flows:
         P->>HS: 読み方 mcp の行を追記する
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルに、1 つ目のルールの場所とそのファイルの SHA-256 の行だけがある
       - '既読の履歴に `method: mcp`・`tool: mcp__docs__search_docs`・`location` が 1 つ目のルールの場所の行が 1 行だけある'
@@ -327,6 +367,8 @@ flows:
       - name: 入力
         description: '`tool_name: mcp__docs__search_docs`、`tool_response` は `{"items": [{"path": "{ルールの場所}", "scope": "full", "body": "…"}]}` の文字列'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -341,6 +383,8 @@ flows:
         P->>ST: ルールの場所とハッシュを追記する
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
       - 終了コードが `0`
@@ -358,6 +402,8 @@ flows:
         description: '`tool_name: mcp__docs__search_docs`、`tool_response` は `<document path="{ルールの場所}" scope="full">` で始まり `</document>` の無い文字列'
         notes: ツール名を `read_by` と照合せず、どちらの照合でも記録されないことを確認する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -369,6 +415,8 @@ flows:
         P->>IDX: read_by に該当するエントリを選ぶ（該当しない）
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルが作られていない
       - 既読の履歴ファイルが作られていない
@@ -393,6 +441,8 @@ flows:
         description: '`tool_name: Read` でルールのファイル全体を読んだ結果'
         notes: '-'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -405,6 +455,8 @@ flows:
         R->>LOG: 既定のログのフォルダへ read_settings を追記する
         R-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`additionalContext` に設定ファイルの場所と理由が載っている'
       - 既定の記録フォルダに既読の記録ファイルが無い
@@ -502,6 +554,8 @@ flows:
         description: '`tool_name: mcp__docs__search_docs`、`tool_input` は `{"sections": ["命名"], "view": "full", "filter": {"values": ["python"], "op": "eq", "field": "id"}}`、`tool_response` はルールの場所の `<document path="..." scope="section">` で包んだ文字列'
         notes: '`tool_input` のキーの順を `args` と変え、`args` に無い `view` を加える'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -518,6 +572,8 @@ flows:
         P->>HS: 読み方 mcp の行を追記する
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 記録ファイルに、ルールの場所とルールのファイルの SHA-256 の行が 1 行ある
       - '既読の履歴に `method: mcp`・`tool: mcp__docs__search_docs`・`location` がルールの場所の行が 1 行ある'
@@ -536,6 +592,8 @@ flows:
         description: '`tool_name: mcp__docs__search_docs` で、`tool_input` に `sections` が `["例外"]` のものと、`{"filter": {"field": "id", "op": "eq", "values": ["python"]}}` だけのものの 2 回を順に指定する。`tool_response` はどちらも `scope="section"` の文書'
         notes: 1 回目は `sections` の値が違い、2 回目は `sections` のキーが無い
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -547,6 +605,8 @@ flows:
         P->>IDX: read_tool に一致するエントリを選ぶ（一致しない）
         P-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - どちらの回も、記録ファイルが作られていない
       - 標準出力が空

@@ -19,6 +19,8 @@ flows:
       - name: 入力
         description: '`session_id` は対象のセッション、`trigger: manual`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -30,6 +32,8 @@ flows:
         C->>ST: そのセッションの案内済みの記録ファイルを削除する
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 対象のセッションの記録ファイルが無い
       - 対象のセッションの案内済みの記録ファイルが無い
@@ -47,6 +51,8 @@ flows:
       - name: 入力
         description: '`trigger: auto`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -56,6 +62,8 @@ flows:
         C->>C: 削除するファイルが無い
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが `0`
     test: test_normal_when_no_record
@@ -71,6 +79,8 @@ flows:
       - name: 入力
         description: '`trigger: manual`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -82,6 +92,8 @@ flows:
         C->>C: ログに書き込めないため標準エラー出力へ出す
         C-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - '標準エラー出力に `operation: delete_record` の 1 行がある'
@@ -100,6 +112,8 @@ flows:
       - name: 入力
         description: '`trigger: auto`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -112,6 +126,8 @@ flows:
         D->>LOG: 既定のログのフォルダへ read_settings を追記する
         D-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 既定の記録フォルダの記録ファイルが残っている
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'

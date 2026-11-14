@@ -16,6 +16,8 @@ flows:
       - name: 索引
         description: 'ユーザーの索引とプロジェクトの索引に、`on` を記載しないエントリと `on: [write]` のエントリを 1 つずつ'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -30,6 +32,8 @@ flows:
         IDX-->>IF: エントリ
         IF-->>C: config_path・indexes・entries
       ```
+
+      <!-- /map -->
     expected:
       - '`config_path` が `RULE_INJECT_CONFIG` の場所'
       - '`indexes` がユーザーの索引・プロジェクトの索引の順'
@@ -47,6 +51,8 @@ flows:
         description: 'プロジェクトの索引に、展開できない `!{名前}` を `rule` に持つエントリと `enabled: false` のエントリを追加する'
         notes: 変数参照の名前は環境変数に設定しない
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -61,6 +67,8 @@ flows:
         IDX-->>IF: エントリ・読めない索引
         IF-->>C: entries・unreadable_indexes・skipped_entries・disabled_entries
       ```
+
+      <!-- /map -->
     expected:
       - '`unreadable_indexes` に無い索引の場所と理由が載っている'
       - '`skipped_entries` に変数参照を展開できないエントリの位置と、理由に展開できない名前が載っている'
@@ -76,6 +84,8 @@ flows:
       - name: 引数
         description: '`limit: 3` で呼び、返った `next_cursor` を `cursor` に指定してもう 1 回呼ぶ'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -89,6 +99,8 @@ flows:
         IF->>IDX: 読む
         IF-->>C: 残り 1 件・next_cursor なし
       ```
+
+      <!-- /map -->
     expected:
       - 1 回目の `entries` が 3 件で `next_cursor` がある
       - 2 回目の `entries` が残りの 1 件で `next_cursor` が `None`
@@ -102,6 +114,8 @@ flows:
       - name: 引数
         description: '`project_dir` に相対パスを指定する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -110,6 +124,8 @@ flows:
         C->>IF: project_dir（相対パス）
         IF-->>C: isError: true（絶対パスで指定する旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、絶対パスで指定する旨が載っている'
     test: test_error_when_project_dir_not_absolute
@@ -121,6 +137,8 @@ flows:
       - name: 設定ファイル
         description: '`global` に知らないキーを持つ設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -132,6 +150,8 @@ flows:
         CF-->>IF: 知らないキー
         IF-->>C: isError: true（設定ファイルの場所と理由）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
@@ -145,6 +165,8 @@ flows:
       - name: 索引
         description: '`read_tool` に `tool: mcp__docs__search_docs` と `args` の JSON の文字列 `{"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}` を記載したエントリと、記載しないエントリを 1 つずつ'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -156,6 +178,8 @@ flows:
         IDX-->>IF: エントリ
         IF-->>C: entries
       ```
+
+      <!-- /map -->
     expected:
       - 1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が記載した JSON の文字列のまま
       - 2 つ目のエントリの `read_tool` が `None`

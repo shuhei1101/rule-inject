@@ -19,6 +19,8 @@ scenarios:
         description: プロンプトで、新しいファイルを作るときの手順を、接続している MCP サーバーの instructions から読み取って回答するよう指示する
         notes: ツールは呼ばせない（`--max-turns 1`）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -27,6 +29,8 @@ scenarios:
         CC->>SV: initialize
         SV-->>CC: instructions（空で作ってから記載する決まり）
       ```
+
+      <!-- /map -->
     expected:
       - '`system` の `init` の行の `mcp_servers` で、`plugin:rule-inject:rule-inject` の `status` が `connected`'
       - 回答に、Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する手順が載っている
@@ -47,6 +51,8 @@ scenarios:
         description: 正常シナリオと同じプロンプト
         notes: ツールは呼ばせない（`--max-turns 1`）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -55,6 +61,8 @@ scenarios:
         CC->>SV: initialize
         SV--xCC: 接続できない
       ```
+
+      <!-- /map -->
     expected:
       - '`system` の `init` の行の `mcp_servers` で、`plugin:rule-inject:rule-inject` の `status` が `failed`'
       - 回答に、空で作ってから記載する手順が載っていない
