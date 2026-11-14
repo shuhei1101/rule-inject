@@ -90,6 +90,10 @@ try:
         body = json.loads(res.read() or b"{}")
 except Exception as exc:  # noqa: BLE001
     fail("設定の再読込", "POST /reload", exc)
-if body.get("ignored") or body.get("dropped"):
+unapplied = [str(item) for key in ("ignored", "dropped") for item in body.get(key) or []]
+if any("rule_indexes" in item for item in unapplied):
     fail("設定の再読込", "POST /reload", json.dumps(body, ensure_ascii=False))
 print("設定の再読込: changed")
+if REMOVED in rule_indexes(SETTINGS.read_text(encoding="utf-8")):
+    fail("反映の確認", f"yaml.safe_load({SETTINGS})", f"rule_indexes に {REMOVED} が残っています")
+print("反映の確認: ok")
