@@ -21,6 +21,7 @@ rule-inject のドキュメント全体の目次
 | [external-api](./external-api/) | 採用済みの外部 API のリファレンス |
 | [library](./library/) | 採用済みの外部ライブラリ / 外部ツールのリファレンス |
 | [layout](./layout/) | リポジトリのフォルダとファイルの配置 |
+| [dev-command](./dev-command/) | 開発で使用するコマンド |
 | [glossary](./glossary/) | rule-inject のドメイン用語と、使用しない言い方の一覧 |
 
 <!-- /table -->

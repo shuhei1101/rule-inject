@@ -27,5 +27,7 @@ items:
     summary: 採用済みの外部ライブラリ / 外部ツールのリファレンス
   - page: layout/
     summary: リポジトリのフォルダとファイルの配置
+  - page: dev-command/
+    summary: 開発で使用するコマンド
   - page: glossary/
     summary: rule-inject のドメイン用語と、使用しない言い方の一覧

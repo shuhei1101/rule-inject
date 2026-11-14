@@ -83,6 +83,9 @@ entries:
         name: README.md
         contents: '`index.yaml` から生成した `docs/` の目次'
         content_types: [index]
+        generated_from:
+          path: docs/index.yaml
+          command: CMD-183-1#categories[ビルド・生成]
       - type: file
         name: index.md
         contents: GitHub Pages のトップページ
@@ -95,12 +98,26 @@ entries:
         name: _theme
         contents: AI Monitor からコピーした GitHub Pages の共通レイアウト・スクリプト・スタイル
         content_types: [pages]
+        generated_from:
+          path: ai-monitor-theme.yaml
+          command: CMD-183-1#categories[ビルド・生成]
         children:
           - type: folder
             name: _data
             contents: サイドバーとナビゲーションの定義
             content_types: [pages]
-            naming: ['nav.yml', 'nav.project.yml']
+            children:
+              - type: file
+                name: nav.yml
+                contents: AI Monitor からコピーしたサイドバーとナビゲーションの定義
+                content_types: [pages]
+              - type: file
+                name: nav.project.yml
+                contents: '公開ドキュメントの一覧から生成したプロジェクト固有のタブ'
+                content_types: [pages]
+                generated_from:
+                  path: docs/guide/files.yml
+                  command: CMD-183-1#categories[ビルド・生成]
           - type: folder
             name: _includes
             contents: レイアウトが埋め込む HTML の部品
@@ -130,72 +147,197 @@ entries:
         name: guide
         contents: 公開ドキュメント（はじめに・使用方法・リファレンス）と、その一覧・目次・mdmark の設定
         content_types: [guide]
-        naming: ['{page}.md', 'files.yml', 'mdmark.config.yaml', 'index.yaml', 'README.md']
+        naming: ['{page}.md', 'files.yml', 'mdmark.config.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/guide/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: architecture
         contents: アーキテクチャ図の設計書
         content_types: [design_doc]
-        naming: ['ARCH-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['ARCH-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/architecture/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: nonfunctional
         contents: 非機能要件の設計書
         content_types: [design_doc]
-        naming: ['NFR-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['NFR-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/nonfunctional/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: scenario
         contents: 単一・複合ユースケースのシナリオの設計書
         content_types: [design_doc]
-        naming: ['SC-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['SC-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/scenario/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: interface
         contents: インターフェース定義の設計書
         content_types: [design_doc]
-        naming: ['IF-{pr}-{n}.yaml', 'IF-{pr}-{n}.py.yaml', 'index.yaml', 'README.md']
+        naming: ['IF-{pr}-{n}.yaml', 'IF-{pr}-{n}.py.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/interface/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: module
         contents: モジュール構成の設計書
         content_types: [design_doc]
-        naming: ['MOD-{pr}-{n}.yaml', 'MOD-{pr}-{n}.py.yaml', 'index.yaml', 'README.md']
+        naming: ['MOD-{pr}-{n}.yaml', 'MOD-{pr}-{n}.py.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/module/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: config
         contents: 設定の設計書
         content_types: [design_doc]
-        naming: ['CFG-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['CFG-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/config/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: data
         contents: データの設計書
         content_types: [design_doc]
-        naming: ['DATA-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['DATA-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/data/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: er
         contents: ER 図の設計書
         content_types: [design_doc]
-        naming: ['ER-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['ER-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/er/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: external-api
         contents: 外部 API の設計書
         content_types: [design_doc]
-        naming: ['API-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['API-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/external-api/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: library
         contents: 外部ライブラリの設計書
         content_types: [design_doc]
-        naming: ['LIB-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['LIB-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/library/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: test-procedure
         contents: テスト実行方法の設計書
         content_types: [design_doc]
-        naming: ['TP-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['TP-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/test-procedure/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: glossary
         contents: 用語集
         content_types: [design_doc]
-        naming: ['GLO-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['GLO-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/glossary/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: layout
         contents: フォルダ構成の設計書
         content_types: [design_doc]
-        naming: ['LAY-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+        naming: ['LAY-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/layout/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
+      - type: folder
+        name: dev-command
+        contents: 開発コマンドの設計書
+        content_types: [design_doc]
+        naming: ['CMD-{pr}-{n}.yaml', 'index.yaml']
+        children:
+          - type: file
+            name: README.md
+            contents: '`index.yaml` から生成した目次'
+            content_types: [index]
+            generated_from:
+              path: docs/dev-command/index.yaml
+              command: CMD-183-1#categories[ビルド・生成]
       - type: folder
         name: pr
         contents: 作業 PR ごとの PR ドキュメント
@@ -207,6 +349,9 @@ entries:
       - type: folder
         name: generated
         contents: YAML の設計書から生成した Markdown
+        generated_from:
+          path: docs/
+          command: CMD-183-1#categories[ビルド・生成]
   - type: folder
     name: hooks
     contents: Claude Code に登録するフックと、フックを起動するスクリプト
