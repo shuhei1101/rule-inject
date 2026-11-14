@@ -1,0 +1,3 @@
+前提確認: failed
+$ test ! -e /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml
+削除する索引がまだクローン本体にあります（master へ入った後に実行する）

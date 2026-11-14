@@ -1,14 +1,14 @@
 端末の設定のルール索引の行の削除:
-  説明: AI Monitor の端末の設定 ~/.config/ai-monitor/settings.yaml の rule-inject の rule_indexes から /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml の行を削除し、モニターに設定を読み直させる。端末の設定はクローン本体（master）のファイルを指すため、master へ入って docs/rules.yaml が無くなった後に実行する
+  説明: AI Monitor の端末の設定 ~/.config/ai-monitor/settings.yaml の rule-inject の rule_indexes から /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml の行を削除し、モニターに設定を読み直させる。端末の設定はクローン本体（master）のファイルを指すため、master へ入って docs/rules.yaml が無くなった後に実行する。適用前の設定は実行スクリプトが ~/.config/ai-monitor/settings.yaml.bak-pr180 へ退避する。スクリプトは PyYAML を読み込める python3 で起動する
   タグ: [設定の書き換え, 再読み込み]
   実行者: tester
   時期: master へ入った後
   回数: 1 回限り
   可逆: true
-  疎通確認: null
-  実行: null
-  確認: null
-  切り戻し: null
+  疎通確認: 端末の設定のルール索引の行の削除/疎通確認.py
+  実行: 端末の設定のルール索引の行の削除/実行.py
+  確認: 端末の設定のルール索引の行の削除/確認.py
+  切り戻し: 端末の設定のルール索引の行の削除/切り戻し.py
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
-  確認方法: ~/.config/ai-monitor/settings.yaml の rule-inject の rule_indexes と、rule-inject の設定ファイル（環境変数 RULE_INJECT_CONFIG が指すファイル）の rule-inject の projects[].indexes に /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml が無く、/mnt/c/Users/shuhe/repo/rule-inject/rules.yaml が残っている
+  確認方法: ~/.config/ai-monitor/settings.yaml の rule-inject の rule_indexes に /mnt/c/Users/shuhe/repo/rule-inject/docs/rules.yaml が無く、/mnt/c/Users/shuhe/repo/rule-inject/rules.yaml が残っている
   状態: "-"
