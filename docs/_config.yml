@@ -109,7 +109,6 @@ exclude:
   - library/
   - module/
   - nonfunctional/
-  - rules.yaml
   - scenario/
   - test-procedure/
   - pr/

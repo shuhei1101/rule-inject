@@ -1,3 +1,0 @@
-# rule-inject のルール索引
-# rule: 索引ファイルからの相対パス / paths: 適用するファイルの glob（クォート必須）
-rules: []
