@@ -163,6 +163,19 @@ documents:
       name: title
       description: lead
       visibility: visibility
+  - id: dev_command
+    title: 開発コマンド
+    alias_type: doc
+    paths: ["docs/dev-command/*.yaml"]
+    exclude: [index.yaml]
+    schema:
+      source: knowledge
+      path: schemas/design/dev_command.schema.yaml
+      ref: design-schemas/v8.2.0
+    metadata:
+      name: title
+      description: lead
+      visibility: visibility
   - id: glossary
     title: 用語集
     paths: ["docs/glossary/*.yaml"]
