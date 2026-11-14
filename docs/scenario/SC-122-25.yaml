@@ -84,7 +84,6 @@ scenarios:
       - SC-122-12#scenarios[正常シナリオ（該当するルールが無い）]
       - SC-122-16#scenarios[正常シナリオ（無効のエントリに該当する）]
 lead: 索引のエントリを修正して検索で確認した後、修正したエントリで案内が出る一連の流れを示し、索引の編集と案内の連携を変えるときに参照する。
-issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: ユーザー

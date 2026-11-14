@@ -2,10 +2,3 @@ id: MOD-122-60
 visibility: internal
 title: "プラグイン / 既読の記録"
 lead: セッションごとの既読の記録・案内済みの記録・既読の履歴の読み込み・書き込みと掃除のモジュールの構成を定め、既読の記録を修正するときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/record/
-  ├── __init__.py   # 公開 API
-  ├── types.py      # ReadMethod・ReadState・ReadEntry・HistoryEntry・RecordSession
-  └── service.py    # 記録ファイルの読み込み・追記・削除・掃除と、既読の履歴の追記・読み込みと、本文のハッシュ
-  ```

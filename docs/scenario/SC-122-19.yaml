@@ -241,7 +241,6 @@ scenarios:
       - 索引をフックと同じ読み取りで読むと、そのエントリが参照するツールと引数を持って読める
     test: test_normal_when_read_tool_written
 lead: Claude Code が MCP サーバーの編集のツールで索引のエントリを作成・編集・削除する流れを示し、索引のエントリの編集を変えるときに参照する。
-issue: 58
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

@@ -76,7 +76,7 @@ data_models:
       - name: args
         type: dict[str, list[str]]
         description: 同上
-      - name: on
+      - name: 'on'
         type: list[Operation]
         description: '`default_on` を埋めた操作の種別（`OPERATIONS` の順）'
       - name: read_by

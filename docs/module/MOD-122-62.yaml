@@ -2,11 +2,3 @@ id: MOD-122-62
 visibility: internal
 title: "プラグイン / 索引"
 lead: 索引を読み込んで操作の対象やツールの呼び出しにヒットするルールを照合するモジュールの構成を定め、ルールの照合を修正するときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/index/
-  ├── __init__.py   # 公開 API（load_indexes / read_index / read_index_text / entry_rev / entry_revs / match_path / match_tool / merge_matched / match_read_by / match_read_tool / match_arg_pattern / rule_locations）
-  ├── types.py      # Operation・EntryStatus・MatchPattern・ArgCondition・ReadByCondition・ReadTool・IndexEntry・EntryOutcome・IndexContent・MatchedRule・IndexLoadResult
-  ├── _yaml.py      # 索引の YAML の一部だけを読み込む（行・文字列・リストの読み取りは shared/yaml_lines.py）
-  └── service.py    # 索引の読み込みと照合・エントリのバージョン
-  ```

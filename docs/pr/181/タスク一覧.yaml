@@ -1,0 +1,86 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存リポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 設計書はそろっているため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めを依頼する Issue でないため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: knowledge の Schema の参照は layout の行で動いており、未検証の機構が無いため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: ユースケースの振る舞いを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面に関わる変更が無いため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面に関わる変更が無いため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 単一ユースケース設計
+    status: skipped
+    reason: シナリオの記述は Schema の書式への追随だけで、ユースケースの振る舞いを変えないため、ドキュメント修正で扱う
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: モック作成
+    status: skipped
+    reason: 画面に関わる変更が無いため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: インターフェース定義設計
+    status: skipped
+    reason: インターフェースを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面に関わる変更が無いため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面に関わる変更が無いため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: モジュール構成設計
+    status: skipped
+    reason: モジュールの構成を変えず、設計書の書式の追随だけのため、ドキュメント修正で扱う
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: ドキュメント修正
+    status: done
+    note: project-index.yaml の Schema の参照の切り替え、schemas/ のコピーと conversions/ の削除、設計書の Schema への追随（要件.yaml の docs）
+    updated_by: planner
+    updated_at: '2026-11-14T08:56:26.688432+00:00'
+  - process: 単体テスト作成
+    status: skipped
+    reason: コードを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 実装
+    status: skipped
+    reason: コードを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'
+  - process: 結合テスト作成
+    status: skipped
+    reason: コードを変えないため対象外
+    updated_by: planner
+    updated_at: '2026-11-14T08:33:56.162838+00:00'

@@ -120,7 +120,6 @@ scenarios:
       - 続けて呼んだ状態の確認の起動した時刻が更新の前と同じ
     test: test_error_when_uncommitted_changes
 lead: Claude Code が MCP サーバーの更新のツールで上流の commit を取り込んで再起動する流れを示し、rule-inject の更新を変えるときに参照する。
-issue: 107
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

@@ -71,7 +71,6 @@ scenarios:
     refs:
       - SC-122-22#
 lead: Claude Code のセッションとサブエージェントが MCP サーバーへの接続時に instructions で作業の決まりを受け取る流れを示し、作業の決まりの届け方を変えるときに参照する。
-issue: 124
 primary_actor: Claude Code のセッション（サブエージェントを含む）
 trigger: MCP サーバーへの接続（セッションの開始・`/mcp` での再接続）
 test_file: tests/e2e/単一ユースケース/test_receive_work_rules_on_mcp_connect.py

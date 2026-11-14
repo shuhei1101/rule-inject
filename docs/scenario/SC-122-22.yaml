@@ -146,7 +146,6 @@ scenarios:
       - 'セッションが回答して終わり、ログに `component: start_server` の行が無い'
     test: test_normal_when_no_unit
 lead: セッションの開始時にフックが応答しない MCP サーバーのユニットへ起動を依頼する流れを示し、サーバーの起動の補助を変えるときに参照する。
-issue: 111
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

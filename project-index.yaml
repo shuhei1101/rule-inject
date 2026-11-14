@@ -4,7 +4,7 @@ name: rule-inject
 worktrees: [".claude/worktrees/*"]
 description: Claude Code がファイルを触る前に、そのファイルに該当するルールを案内するプラグインの設計書・公開ドキュメント・ソースコード・テスト
 instructions: |-
-  設計書（`docs/` の種類のフォルダ）と各フォルダの `index.yaml` は YAML が原本で、種類ごとの行に分かれる。書式は種類ごとの行の `schema` が指すスキーマが持ち、他の設計書は `{ID}#{項目のパス}` で指す。
+  設計書（`docs/` の種類のフォルダ）と各フォルダの `index.yaml` は YAML が原本で、種類ごとの行に分かれる。書式は knowledge の `schemas/design/{種類}.schema.yaml`（`documents[].schema` の `ref` のタグ）が持ち（用語集は `schemas/glossary.schema.yaml`）、他の設計書は `{ID}#{項目のパス}` で指す。
   公開ドキュメント（`docs/guide/`）と `docs/` の直下のファイルは `files.yml`、リポジトリの直下・ソースコード（`src/`・`hooks/`）・テスト（`tests/`）・スキル（`skills/`）のファイルは `files.yaml` が名前・概要文・タグ・関連を持つ。各文書の公開範囲は `visibility`（`public` / `internal`）で、YAML の文書はキー、Markdown は `files.yml` の行が持つ。
   コードは `implements` で設計書を、テストは `tests` でコードを指す。設計書からコードを辿るときは `trace_related` を使用する。
 documents:
@@ -13,7 +13,10 @@ documents:
     alias_type: doc
     paths: ["docs/architecture/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/architecture.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/architecture.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -23,7 +26,10 @@ documents:
     alias_type: doc
     paths: ["docs/nonfunctional/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/nonfunctional.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/nonfunctional.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -33,7 +39,10 @@ documents:
     alias_type: doc
     paths: ["docs/scenario/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/scenario.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/scenario.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -43,7 +52,10 @@ documents:
     alias_type: doc
     paths: ["docs/interface/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/interface.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/interface.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -53,7 +65,10 @@ documents:
     alias_type: doc
     paths: ["docs/module/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/module.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/module.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -63,7 +78,10 @@ documents:
     alias_type: doc
     paths: ["docs/config/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/config.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/config.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -73,7 +91,23 @@ documents:
     alias_type: doc
     paths: ["docs/er/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/er.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/er.schema.yaml
+      ref: design-schemas/v8.2.0
+    metadata:
+      name: title
+      description: lead
+      visibility: visibility
+  - id: data
+    title: データ
+    alias_type: doc
+    paths: ["docs/data/*.yaml"]
+    exclude: [index.yaml]
+    schema:
+      source: knowledge
+      path: schemas/design/data.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -83,7 +117,10 @@ documents:
     alias_type: doc
     paths: ["docs/external-api/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/external-api.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/external_api.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -93,7 +130,10 @@ documents:
     alias_type: doc
     paths: ["docs/library/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/library.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/library.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       description: lead
@@ -103,7 +143,10 @@ documents:
     alias_type: doc
     paths: ["docs/test-procedure/*.yaml"]
     exclude: [index.yaml]
-    schema: schemas/test-procedure.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/test_procedure.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       name: title
       visibility: visibility
@@ -132,7 +175,10 @@ documents:
     paths:
       - docs/index.yaml
       - "docs/*/index.yaml"
-    schema: schemas/index.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/design/index.schema.yaml
+      ref: design-schemas/v8.2.0
     metadata:
       description: summary
   - id: docs
@@ -140,7 +186,10 @@ documents:
     alias_type: doc
     paths: [docs/guide/files.yml]
     exclude: ["*.yaml", "*.yml", README.md, index.md, はじめに.md, 使用方法.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
-    schema: schemas/files.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/knowledge-files.schema.yaml
+      ref: design-schemas/v8.2.0
     records: files
     body_file: path
     metadata:
@@ -148,30 +197,45 @@ documents:
   - id: src
     title: ソースコード
     paths: [src/files.yaml]
-    schema: schemas/files.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/knowledge-files.schema.yaml
+      ref: design-schemas/v8.2.0
     records: files
     body_file: path
   - id: hooks
     title: フックの起動
     paths: [hooks/files.yaml]
-    schema: schemas/files.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/knowledge-files.schema.yaml
+      ref: design-schemas/v8.2.0
     records: files
     body_file: path
   - id: tests
     title: テスト
     paths: [tests/files.yaml]
-    schema: schemas/files.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/knowledge-files.schema.yaml
+      ref: design-schemas/v8.2.0
     records: files
     body_file: path
   - id: skills
     title: スキル
     paths: [skills/files.yaml]
-    schema: schemas/files.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/knowledge-files.schema.yaml
+      ref: design-schemas/v8.2.0
     records: files
     body_file: path
   - id: root
     title: リポジトリの直下のファイル
     paths: [files.yaml]
-    schema: schemas/files.schema.yaml
+    schema:
+      source: knowledge
+      path: schemas/knowledge-files.schema.yaml
+      ref: design-schemas/v8.2.0
     records: files
     body_file: path

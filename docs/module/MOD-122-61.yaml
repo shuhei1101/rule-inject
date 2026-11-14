@@ -2,10 +2,3 @@ id: MOD-122-61
 visibility: internal
 title: "プラグイン / 案内"
 lead: フックが返却する案内文を組み立てるモジュールの構成を定め、案内の文面を変えるときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/guidance/
-  ├── __init__.py   # 公開 API
-  ├── types.py      # GuidedRule（案内が読み込むルールの最小の型）・GuidedReadTool（案内が読み込む参照のツールの最小の型）・Guidance（案内文と記載した場所）
-  └── service.py    # 案内文の組み立てと文面の定数
-  ```

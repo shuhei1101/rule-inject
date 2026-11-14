@@ -77,7 +77,6 @@ scenarios:
       - 記録フォルダの内外のどのファイルも削除していない
     test: test_error_when_session_id_invalid
 lead: Claude Code が MCP サーバーの削除のツールでセッションの既読の記録を削除する流れを示し、既読の記録の削除を変えるときに参照する。
-issue: 65
 primary_actor: Claude Code のセッション
 stakeholders:
   - name: 利用者

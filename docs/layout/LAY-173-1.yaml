@@ -162,6 +162,11 @@ entries:
         content_types: [design_doc]
         naming: ['CFG-{pr}-{n}.yaml', 'index.yaml', 'README.md']
       - type: folder
+        name: data
+        contents: データの設計書
+        content_types: [design_doc]
+        naming: ['DATA-{pr}-{n}.yaml', 'index.yaml', 'README.md']
+      - type: folder
         name: er
         contents: ER 図の設計書
         content_types: [design_doc]
@@ -221,14 +226,9 @@ entries:
         content_types: [file_list]
   - type: folder
     name: schemas
-    contents: knowledge から参照しない設計書と文書の一覧の JSON Schema と、スキーマのバージョンの変換
+    contents: knowledge から参照しない用語集の JSON Schema と、それが参照する共通の型
     content_types: [schema]
     naming: ['{kind}.schema.yaml']
-    children:
-      - type: folder
-        name: conversions
-        contents: スキーマのバージョンごとに設計書を変換するスクリプトとバージョンの一覧
-        content_types: [schema]
   - type: folder
     name: skills
     contents: プラグインのスキル

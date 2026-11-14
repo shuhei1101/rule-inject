@@ -1,0 +1,90 @@
+docs:
+  - page: project-index.yaml
+    new: false
+    change: documents[].schema を knowledge の Schema（schemas/design/{種類}・index・knowledge-files）の source・path・ref つきの参照へ切り替え、data の行を追加し、instructions の Schema の説明を合わせる。glossary の行は schemas/glossary.schema.yaml のまま
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: schemas/architecture.schema.yaml
+    new: false
+    change: AI Monitor から配られた Schema のコピーを削除する（schemas/ の他の {種類}.schema.yaml・files・index も同じ。glossary とそれが指す common は残す）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: schemas/conversions/versions.yaml
+    new: false
+    change: 設計書の変換（versions.yaml・v0.4.0.py）を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: pyproject.toml
+    new: false
+    change: ruff・pyright の schemas/conversions の除外を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: files.yaml
+    new: false
+    change: 削除したコピーを指す先頭の yaml-language-server の行を削除する（src・hooks・tests・skills の files.yaml、docs/guide の files.yml も同じ）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: schemas のエントリを用語集の Schema と共通の型だけにし、conversions を削除し、docs/data のエントリを追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/scenario/SC-122-1.yaml
+    new: false
+    change: issue キーを削除する（docs/scenario/ の全てのシナリオも同じ）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/module/MOD-122-52.yaml
+    new: false
+    change: directory キーを削除する（MOD-122-53〜62 も同じ）。MOD-122-15・MOD-122-44 の data_models の properties[].name の on を文字列にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/nonfunctional/NFR-122-1.yaml
+    new: false
+    change: introduced キーを削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/config/CFG-122-1.yaml
+    new: false
+    change: introduced キーを削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/er/ER-122-1.yaml
+    new: false
+    change: tables[].source で保存するデータの設計書（DATA-181-1。ER-122-2 は DATA-181-2〜4）を指す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:40.642636+00:00'
+  - page: docs/data/DATA-181-1.yaml
+    new: true
+    change: ER のテーブルごとに保存するデータの設計書を作る（ログ。DATA-181-2〜4 は既読の記録・案内済みの記録・既読の履歴）。docs/data/index.yaml と README.md も作る
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:46.260505+00:00'
+  - page: docs/index.yaml
+    new: false
+    change: data/ の行を追加し、README.md・_config.yml を生成し直す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-14T08:51:46.260505+00:00'
+scope_out:
+  - item: テスト実行方法の層ごとの実行場所と GitHub Actions の workflow
+    reason: 要望に含まれない。この PR の後に knowledge の Schema の参照で着手する
+    plan: '#172'
+  - item: 開発コマンドの設計書の新設
+    reason: 要望に含まれない。この PR の後に knowledge の dev_command の Schema の参照で作る
+    plan: '#176'
+  - item: project-index.yaml の instructions の「`docs/` の直下のファイルは `files.yml`」の記述
+    reason: '#180 で docs/_root/files.yml を削除した後も記述が残り、指す先が実在しない。今回の要望（Schema の参照の切り替え）に含まれない'
+    plan: '#182'
+use_cases: []

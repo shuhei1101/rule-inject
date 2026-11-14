@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../../schemas/files.schema.yaml
 files:
   - path: 変更履歴.md
     name: 変更履歴

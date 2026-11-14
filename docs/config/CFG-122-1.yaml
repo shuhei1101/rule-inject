@@ -256,8 +256,6 @@ settings:
     reload: immediate
     allowed: '`true` / `false`。それ以外の値はその索引を読み込めない索引として扱う'
     visibility: user
-    introduced:
-      pr: 57
   - key: global.dev_docs_url
     title: project-indexの接続先
     file: ~/.config/rule-inject/settings.yaml

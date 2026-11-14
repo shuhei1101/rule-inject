@@ -1,0 +1,11 @@
+id: DATA-181-3
+visibility: internal
+title: 'データ: 案内済みの記録'
+lead: セッションで止めずに案内したルールの場所の 1 行。ルール案内と検索結果の案内のフックが書き込み・参照する。
+datastore: テキストファイル
+fields:
+- key: location
+  title: ルールの場所
+  type: string
+  required: true
+  description: 止めずに案内したルールの解決後の絶対パス

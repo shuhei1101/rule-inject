@@ -2,10 +2,3 @@ id: MOD-122-55
 visibility: internal
 title: "プラグイン / MCPの結果の文書"
 lead: MCP のツールの結果から文書の場所と範囲を取り出すモジュールの構成を定め、MCP で受け取った文書を既読にする処理を修正するときに参照する。
-directory: |-
-  ```text
-  src/rule_inject/features/document/
-  ├── __init__.py   # 公開 API
-  ├── types.py      # ResultDocument・DocumentScope
-  └── service.py    # MCP のツールの結果から文書を取り出す
-  ```

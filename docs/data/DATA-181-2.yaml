@@ -1,0 +1,17 @@
+id: DATA-181-2
+visibility: internal
+title: 'データ: 既読の記録'
+lead: セッションで本文を参照したルールの場所とハッシュの組の 1 行。フックが書き込み、案内する側のフックが参照する。
+datastore: テキストファイル
+fields:
+- key: location
+  title: ルールの場所
+  type: string
+  required: true
+  description: 既読にしたルールの解決後の絶対パス
+- key: hash
+  title: 本文のハッシュ
+  type: string
+  required: true
+  description: 既読にした時点のルールのファイルの中身（バイト列）の SHA-256。案内する側が今のハッシュと比べ、違えば未読として扱う
+  example: sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08

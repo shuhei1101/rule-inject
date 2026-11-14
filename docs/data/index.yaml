@@ -1,0 +1,10 @@
+summary: フックが書き込み・参照するデータの構造
+items:
+  - page: DATA-181-1.yaml
+    summary: フックが失敗した操作のログの 1 行
+  - page: DATA-181-2.yaml
+    summary: セッションごとの既読のルールの場所とハッシュの 1 行
+  - page: DATA-181-3.yaml
+    summary: セッションごとの止めずに案内したルールの場所の 1 行
+  - page: DATA-181-4.yaml
+    summary: セッションごとのルールを既読にした 1 回の記録

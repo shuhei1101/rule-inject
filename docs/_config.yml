@@ -101,6 +101,7 @@ exclude:
   - README.md
   - architecture/
   - config/
+  - data/
   - er/
   - external-api/
   - glossary/

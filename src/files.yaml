@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../schemas/files.schema.yaml
 files:
   - path: rule_inject/features/command/service.py
     name: 読むコマンドのパスの取り出し

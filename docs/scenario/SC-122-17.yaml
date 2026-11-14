@@ -182,7 +182,6 @@ scenarios:
       - 同じ文面に、ツールが使用できないときはパスを Read で参照する旨が載っている
     test: test_normal_with_read_tool
 lead: 検索のツールを呼んだ直後にフックが結果に出たファイルのルールを止めずに案内する流れを示し、検索結果の案内を変えるときに参照する。
-issue: 16
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Grep・Glob・検索の Bash を呼び、結果が返る
 preconditions:

@@ -2,25 +2,6 @@ id: MOD-122-58
 visibility: internal
 title: "プラグイン / フック"
 lead: Claude Code が呼ぶフックの入口と標準入出力・想定外の例外の扱いの構成を定め、フックを追加・修正するときに参照する。
-directory: |-
-  ```text
-  .claude-plugin/
-  ├── plugin.json                 # プラグインの名前（rule-inject）
-  └── marketplace.json            # このリポジトリを marketplace（rule-inject）として記載する定義。プラグインはリポジトリの直下（`./`）の 1 つ
-  hooks/
-  ├── hooks.json                  # フックの matcher・timeout（1 秒）・コマンド
-  └── run.py                      # src/ を sys.path に追加して引数のフックを動かす
-  src/rule_inject/hooks/
-  ├── __init__.py
-  ├── _runner.py                  # 標準入出力・想定外の例外・ログ・設定ファイルの誤りのログの共通処理
-  ├── rule_guide.py               # ルール案内（PreToolUse）
-  ├── record_read.py              # 既読の記録（PostToolUse）
-  ├── search_guide.py             # 検索結果の案内（PostToolUse）
-  ├── discard_read.py             # 既読の記録の破棄（PreCompact）
-  ├── sweep_read.py               # 既読の記録の掃除（SessionStart）
-  ├── work_rules.py               # 圧縮の後の通知（SessionStart）
-  └── start_server.py             # サーバーの起動の補助（SessionStart）
-  ```
 notes:
   hooks.json: |-
     どのフックも `timeout: 1`、コマンドは `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/run.py" {名前}`。
