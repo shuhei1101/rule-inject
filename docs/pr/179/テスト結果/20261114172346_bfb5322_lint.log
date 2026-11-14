@@ -1,0 +1,40 @@
+$ (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; for d in docs/pr/*/反映作業/*/; do uv run mypy "$d"*.py || rc=1; done; uv run lint-imports || rc=1; exit $rc)
+Using CPython 3.12.13
+Creating virtual environment at: .venv
+   Building rule-inject @ file:///mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-gitignore-add-tmp-and-worktrees
+      Built rule-inject @ file:///mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-gitignore-add-tmp-and-worktrees
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 47 packages in 2m 19s
+All checks passed!
+419 files already formatted
+Success: no issues found in 132 source files
+Success: no issues found in 5 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 65 files, 174 dependencies.
+------------------------------------
+
+hooks と server は features を使用し、features は shared を使用する KEPT
+features の機能どうしは import しない KEPT
+
+Contracts: 2 kept, 0 broken.
+exit: 0
