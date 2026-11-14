@@ -19,6 +19,8 @@ scenarios:
         description: '`--allowedTools` でサーバーの編集・検索のツールと、Write・Edit を許可する'
         notes: 編集・検索・書く操作を別々の `claude -p` で指示し、2 回目からは `--resume {session_id}` で続ける。対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|ルールの場所・対象のパスの glob・書く操作を必須とするエントリ| UC1([索引のエントリを編集する:正常シナリオ（エントリを新規作成する）])
@@ -30,6 +32,8 @@ scenarios:
         click UC2 "id:SC-122-12#scenarios[正常シナリオ（ファイルのパスで検索する）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（止めて案内する）]"
       ```
+
+      <!-- /map -->
     expected:
       - 索引のファイルに、作成したエントリが追加されている
       - 検索のツールの結果に、作成したエントリのルールの場所と、未読のときに操作を止めることが載っている
@@ -55,6 +59,8 @@ scenarios:
         description: エントリを新規作成するシナリオと同じ（サーバーの編集・検索のツールと、Write・Edit を許可する）
         notes: 対象のファイルはまだ無いパスにし、書き込まれたかで結末を見分ける
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|エントリに enabled: false を記載する編集| UC1([索引のエントリを編集する:正常シナリオ（エントリを無効にする）])
@@ -66,6 +72,8 @@ scenarios:
         click UC2 "id:SC-122-12#scenarios[正常シナリオ（該当するルールが無い）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（無効のエントリに該当する）]"
       ```
+
+      <!-- /map -->
     expected:
       - '索引のファイルの対象のエントリに `enabled: false` が記載されている'
       - 検索のツールの結果に、ヒットするルールが無い

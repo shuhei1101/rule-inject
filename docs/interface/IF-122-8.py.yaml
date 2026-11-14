@@ -18,6 +18,8 @@ flows:
       - name: 引数
         description: '`.py` の絶対パスと `operation: write`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -33,6 +35,8 @@ flows:
         IF->>IF: パスと write で照合する
         IF-->>C: matched 2 件
       ```
+
+      <!-- /map -->
     expected:
       - '`matched` に 2 つのルールの場所が載っている'
       - '`on: [write]` のルールの `blocking` が `true`、`on: [read]` のルールの `blocking` が `false`'
@@ -50,6 +54,8 @@ flows:
       - name: 引数
         description: パターンに該当する `tool_name` と、`doc_path` が `dev/` で始まる `arguments`
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -65,6 +71,8 @@ flows:
         IF->>IF: ツール名と引数を mcp で照合する
         IF-->>C: matched 1 件
       ```
+
+      <!-- /map -->
     expected:
       - '`matched` にエントリのルールの場所が載り、`blocking` が `true`'
       - '`operation` が `mcp`'
@@ -81,6 +89,8 @@ flows:
       - name: 引数
         description: ファイルのパスで検索するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -92,6 +102,8 @@ flows:
         IDX-->>IF: 無効のエントリだけ
         IF-->>C: matched 空
       ```
+
+      <!-- /map -->
     expected:
       - '`success` が `true` で `matched` が空'
     test: test_normal_when_no_rule_matched
@@ -103,6 +115,8 @@ flows:
       - name: 引数
         description: '`project_dir` に加え、`path`・`operation` と `tool_name` を指定する'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -111,6 +125,8 @@ flows:
         C->>IF: path と tool_name の両方
         IF-->>C: isError: true（どちらか 1 つを指定する旨）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、`path` か `tool_name` のどちらか 1 つを指定する旨が載っている'
     test: test_error_when_both_path_and_tool
@@ -124,6 +140,8 @@ flows:
       - name: 引数
         description: ファイルのパスで検索するフローと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as クライアント
@@ -135,6 +153,8 @@ flows:
         CF-->>IF: 知らないキー
         IF-->>C: isError: true（設定ファイルの場所と理由）
       ```
+
+      <!-- /map -->
     expected:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable

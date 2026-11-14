@@ -15,6 +15,8 @@ flows:
       - name: 引数
         description: '`--plan`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as global-setup
@@ -25,6 +27,8 @@ flows:
         IF-->>CF: 参照する
         IF-->>C: 手順
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0
       - 標準出力の JSON の `steps` に手順が 1 件以上ある
@@ -38,6 +42,8 @@ flows:
       - name: 設定ファイル
         description: '`version` が無く、`global.server_port: 9000` とコメントを持つ設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as global-setup
@@ -50,6 +56,8 @@ flows:
         IF->>CF: 書き換える
         IF-->>C: 適用した手順・バックアップのパス・env の値
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0
       - 設定ファイルに `global.server_port` が無く、`version` があり、コメントが残っている
@@ -64,6 +72,8 @@ flows:
       - name: 設定ファイル
         description: '`version` が今のバージョンの設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as global-setup
@@ -74,6 +84,8 @@ flows:
         IF-->>CF: 参照する
         IF-->>C: 空の手順
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0
       - 標準出力の JSON の `steps` が空
@@ -87,6 +99,8 @@ flows:
       - name: 環境変数
         description: '`XDG_CONFIG_HOME` をファイルの無い一時フォルダへ向ける'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as global-setup
@@ -95,6 +109,8 @@ flows:
         C->>IF: 実行する
         IF-->>C: 空の手順
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 0
       - 標準出力の JSON の `steps` が空
@@ -107,6 +123,8 @@ flows:
       - name: 設定ファイル
         description: '`version` がツールのバージョンより新しい設定ファイル'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as global-setup
@@ -117,6 +135,8 @@ flows:
         IF-->>CF: 参照する
         IF-->>C: 標準エラーに両方のバージョン<br>終了コード 6
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 6
       - 標準エラーに設定のバージョンとツールのバージョンが記載されている
@@ -130,6 +150,8 @@ flows:
       - name: 設定ファイル
         description: YAML として読み取れない設定ファイル
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as global-setup
@@ -140,6 +162,8 @@ flows:
         IF-->>CF: 参照する
         IF-->>C: 標準エラーに場所と理由<br>終了コード 1
       ```
+
+      <!-- /map -->
     expected:
       - 終了コードが 1
       - 標準エラーに設定ファイルの場所と理由が記載されている

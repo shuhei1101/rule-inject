@@ -17,6 +17,8 @@ scenarios:
         description: プロンプトで、ツールを呼ばずに 1 単語で回答するよう指示する
         notes: '`--max-turns 1`。セッションの開始で掃除が走ればよく、ツールは呼ばせない'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -28,6 +30,8 @@ scenarios:
         LG-->>S: ファイル名の日付
         S->>LG: 日付が保持日数以上前のファイルを削除する
       ```
+
+      <!-- /map -->
     expected:
       - 古いログのファイルが無い
       - 新しいログのファイルが残っている

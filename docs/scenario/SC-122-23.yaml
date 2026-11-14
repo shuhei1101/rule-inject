@@ -16,6 +16,8 @@ scenarios:
         description: '`--allowedTools` で Write と Edit を許可する'
         notes: Claude Code は作業の決まりに従い、対象のファイルを Write で空で作ってから Edit で中身を書き込むことがある
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|対象のファイルを書く操作| UC1([未読のルールの案内を受ける:正常シナリオ（止めて案内する）])
@@ -27,6 +29,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（Readで読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - 1 回目の書く操作は止められ、案内にルールのパスと、Read で参照してから同じ操作を再試行する旨が載っている
       - Read の結果に、ルールの本文が載っている
@@ -50,6 +54,8 @@ scenarios:
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|対象のファイルを書く操作| UC1([未読のルールの案内を受ける:正常シナリオ（止めて案内する）])
@@ -61,6 +67,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（Bashで読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - 1 回目の書く操作は止められ、案内にルールの場所が載っている
       - 再試行した書く操作は止められず、対象のファイルに中身が書き込まれている
@@ -86,6 +94,8 @@ scenarios:
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|会話の圧縮| UC0([圧縮で既読の記録が捨てられる:正常シナリオ])
@@ -99,6 +109,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（Readで読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - 圧縮の後の 1 回目の書く操作は止められ、案内にルールの場所が載っている
       - 本文を Read で再度読んだ後の書く操作は止められず、対象のファイルに中身が書き込まれている
@@ -123,6 +135,8 @@ scenarios:
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|対象のファイルを書く操作| UC1([未読のルールの案内を受ける:正常シナリオ（止めて案内する）])
@@ -134,6 +148,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（文書のMCPの結果で読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - 1 回目の書く操作は止められ、案内にルールの場所が載っている
       - '`search_docs` の結果に、ルールの本文が載っている'
@@ -160,6 +176,8 @@ scenarios:
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
         notes: 対象のファイルは正常シナリオと別の、まだ無いパスにする
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|ルールが変わった後に対象のファイルを書く操作| UC1([未読のルールの案内を受ける:正常シナリオ（読んだ後に変わったルールを案内する）])
@@ -171,6 +189,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（Readで読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - ルールが変わった後の 1 回目の書く操作は止められ、案内にルールの場所が載っている
       - Read の結果に、書き換えた後のルールの本文が載っている
@@ -196,6 +216,8 @@ scenarios:
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|対象のファイルを書く操作| UC1([未読のルールの案内を受ける:正常シナリオ（参照するツールを添えて止めて案内する）])
@@ -207,6 +229,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（案内されたツールと引数で読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - 1 回目の書く操作は止められ、案内に索引に記載したツールと引数と、代わりに Read で読むルールの場所が載っている
       - '`search_docs` が、索引に記載した引数で呼ばれている'
@@ -230,6 +254,8 @@ scenarios:
       - name: 書く操作の許可
         description: 正常シナリオと同じ（`--allowedTools` で Write と Edit を許可する）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       flowchart TD
         S0([Claude Code]) -->|対象のファイルを書く操作| UC1([未読のルールの案内を受ける:正常シナリオ（参照するツールを添えて止めて案内する）])
@@ -241,6 +267,8 @@ scenarios:
         click UC2 "id:SC-122-8#scenarios[正常シナリオ（Readで読む）]"
         click UC3 "id:SC-122-16#scenarios[正常シナリオ（既読のため案内しない）]"
       ```
+
+      <!-- /map -->
     expected:
       - 1 回目の書く操作は止められ、案内に索引に記載したツールと引数と、代わりに Read で読むルールの場所が載っている
       - Read の結果に、ルールの本文が載っている

@@ -13,6 +13,8 @@ scenarios:
       - name: 索引
         description: リポジトリの直下の `rules.yaml`
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -26,6 +28,8 @@ scenarios:
         SV-->>SK: 参照する索引と問題
         SK-->>U: 既定で参照される旨とチェックの結果を示す
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定が変わっていない
       - 結果に `rules.yaml` のパスとチェックの結果が記載されている
@@ -41,6 +45,8 @@ scenarios:
       - name: 引数
         description: リポジトリの中の `rules/project.yaml` をスキルの引数で指定する
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -54,6 +60,8 @@ scenarios:
         SV-->>SK: 参照する索引と問題
         SK-->>U: 記載した要素とチェックの結果を示す
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定の `projects` に、リポジトリを指す `match` と索引の `indexes` を持つ要素がある
       - 結果に記載した要素とチェックの結果が記載されている
@@ -65,6 +73,8 @@ scenarios:
       - name: 環境変数
         description: '`XDG_CONFIG_HOME` をファイルの無いテスト用のフォルダへ向ける'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -73,6 +83,8 @@ scenarios:
         U->>SK: 実行する
         SK-->>U: global-setup を案内して止まる
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定が作られていない
       - 結果に `global-setup` の案内が記載されている
@@ -86,6 +98,8 @@ scenarios:
       - name: 索引
         description: リポジトリの直下に `rules.yaml` を配置せず、引数も指定しない
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -95,6 +109,8 @@ scenarios:
         SK->>SK: rules.yaml が無い
         SK-->>U: 索引の書式の案内を示して止まる
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定が変わっていない
       - 結果に索引が無い旨が記載されている
@@ -110,6 +126,8 @@ scenarios:
       - name: 索引
         description: 正常シナリオと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         actor U as 利用者
@@ -121,6 +139,8 @@ scenarios:
         SV-->>SK: 接続できない
         SK-->>U: サーバーの起動の案内を示して止まる
       ```
+
+      <!-- /map -->
     expected:
       - 端末の設定が変わっていない
       - 結果に `global-setup` かサーバーの起動の案内が記載されている

@@ -18,6 +18,8 @@ scenarios:
         description: プロンプトで、ツールを呼ばずに 1 単語で回答するよう指示する
         notes: '`--max-turns 1`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -35,6 +37,8 @@ scenarios:
         SD->>SV: 起動する
         SV->>SV: RULE_INJECT_PORT で待ち受ける
       ```
+
+      <!-- /map -->
     expected:
       - セッションの記録（transcript）に、`/mcp` で再接続する案内の文面が載っている
       - 'セッションの開始から 40 秒以内（[PR #112「常駐の MCP サーバーが落ちていたとき、SessionStart のフックで起動を補助する」](https://github.com/shuhei1101/rule-inject/pull/112) の PoC 検証の最大 26.0 秒に余裕 50% を加えて切り上げた値）に、サーバーが `RULE_INJECT_PORT` で待ち受けている'
@@ -53,6 +57,8 @@ scenarios:
       - name: 操作
         description: 正常シナリオと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -64,6 +70,8 @@ scenarios:
         SV-->>S: 応答する
         S-->>CC: 何も返却しない
       ```
+
+      <!-- /map -->
     expected:
       - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
       - ユニットの起動の時刻（`ActiveEnterTimestamp`）がセッションの開始の前のまま
@@ -82,6 +90,8 @@ scenarios:
       - name: 操作
         description: 正常シナリオと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -96,6 +106,8 @@ scenarios:
         SD-->>S: 有効でない
         S-->>CC: 何も返却しない
       ```
+
+      <!-- /map -->
     expected:
       - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
       - 'ユニットが `inactive` のままで、ログに `component: start_server` の行が無い'
@@ -111,6 +123,8 @@ scenarios:
       - name: 操作
         description: 正常シナリオと同じ
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -125,6 +139,8 @@ scenarios:
         SD-->>S: ユニットが無い
         S-->>CC: 何も返却しない
       ```
+
+      <!-- /map -->
     expected:
       - セッションの記録に、`/mcp` で再接続する案内の文面が載っていない
       - 'セッションが回答して終わり、ログに `component: start_server` の行が無い'

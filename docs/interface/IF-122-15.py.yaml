@@ -13,6 +13,8 @@ flows:
       - name: 入力
         description: '`hook_event_name: SessionStart`、`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -21,6 +23,8 @@ flows:
         CC->>S: 標準入力（SessionStart）
         S-->>CC: 出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 終了コードが `0`
@@ -36,6 +40,8 @@ flows:
       - name: 入力
         description: '`source: compact`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -46,6 +52,8 @@ flows:
         S->>ST: 有無を確認する（残っている）
         S-->>CC: additionalContext（削除できなかったこと）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`additionalContext` に記録を削除できなかったことと記録ファイル・ログの場所が載っている'
       - '`additionalContext` に空で作ってから記載する決まりが載っていない'
@@ -61,6 +69,8 @@ flows:
       - name: 入力
         description: '`source: compact`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -71,6 +81,8 @@ flows:
         S->>ST: 有無を確認する（無い）
         S-->>CC: 出力なし<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - 終了コードが `0`
@@ -87,6 +99,8 @@ flows:
       - name: 入力
         description: '`hook_event_name: SessionStart`、`source: compact`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -99,6 +113,8 @@ flows:
         S->>LOG: 既定のログのフォルダへ read_settings を追記する
         S-->>CC: additionalContext（設定ファイルの場所と理由）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`additionalContext` に設定ファイルの場所と理由が載っている'
       - '`additionalContext` に空で作ってから記載する決まりが載っていない'

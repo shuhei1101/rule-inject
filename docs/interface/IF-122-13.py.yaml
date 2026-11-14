@@ -18,6 +18,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -34,6 +36,8 @@ flows:
         SD-->>S: 終了コード 0
         S-->>CC: additionalContext（/mcp で再接続する案内）<br>終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`systemctl` が `--user is-enabled --quiet -- rule-inject-it`、`--user start --no-block -- rule-inject-it` の順に 1 回ずつ呼ばれている'
       - '`additionalContext` に、サービス名と、`/mcp` で `rule-inject` に再接続する旨が載っている'
@@ -52,6 +56,8 @@ flows:
       - name: 入力
         description: '`source: resume`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -63,6 +69,8 @@ flows:
         SV-->>S: 接続できる
         S-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`systemctl` が呼ばれていない'
       - 標準出力が空
@@ -81,6 +89,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -95,6 +105,8 @@ flows:
         SD-->>S: 終了コード 1
         S-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`systemctl` が `is-enabled` の 1 回だけ呼ばれている'
       - 標準出力が空
@@ -114,6 +126,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -126,6 +140,8 @@ flows:
         S->>S: systemctl が見つからない
         S-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - ログのファイルが無い
@@ -143,6 +159,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -156,6 +174,8 @@ flows:
         S->>LG: start_unit を追記する
         S-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - 標準出力が空
       - '今日のログのファイルに `component: start_server`・`operation: start_unit` の行が 1 行あり、`reason` に終了コード 5 が載っている'
@@ -173,6 +193,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -186,6 +208,8 @@ flows:
         S->>LG: check_unit を追記する
         S-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`systemctl` の `start` が呼ばれていない'
       - 標準出力が空
@@ -204,6 +228,8 @@ flows:
       - name: 入力
         description: '`source: startup`'
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant CC as Claude Code
@@ -216,6 +242,8 @@ flows:
         S->>LG: 既定のログのフォルダへ read_settings を追記する
         S-->>CC: 終了コード 0
       ```
+
+      <!-- /map -->
     expected:
       - '`systemctl` が呼ばれていない'
       - 標準出力が空

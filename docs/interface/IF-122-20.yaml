@@ -11,6 +11,8 @@ flows:
       - name: Mock
         description: なし（手順はスキルの本文で、自動のテストでは確認しない）
     flow: |-
+      <!-- map -->
+
       ```mermaid
       sequenceDiagram
         participant C as 利用者
@@ -25,6 +27,8 @@ flows:
         SV-->>IF: ツールの一覧
         IF-->>C: 作ったもの・env に記載したキー・接続の結果
       ```
+
+      <!-- /map -->
     expected:
       - 結果に端末の設定のパスと接続の結果が記載されている
 lead: 端末ごとの設定ファイルの作成か移し替え・サーバーの起動と接続の確認・フックの確認の手順を定め、端末のセットアップを修正するときに参照する。
