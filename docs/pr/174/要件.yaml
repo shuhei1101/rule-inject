@@ -187,3 +187,6 @@ scope_out:
   - item: docs/_theme/ の Mermaid を描く処理
     reason: map の図も ```mermaid のコードブロックを持ち、公開ドキュメントの画面は今の処理で描けるため変えない
     plan: none
+  - item: AI Monitor の設計書の検証のコマンドが dev-docs.yaml だけを参照し、project-index.yaml へ改名したこのリポジトリで実行できない
+    reason: AI Monitor の src/ai_monitor/design_docs/__main__.py の不具合で、今回の要望に含まれない。この PR では project-index.yaml を dev-docs.yaml の名前で一時的にコピーして実行した
+    plan: shuhei1101/ai-monitor#3441
