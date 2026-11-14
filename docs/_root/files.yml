@@ -1,7 +1,0 @@
-files:
-  - path: ../rules.yaml
-    name: このリポジトリのルール索引
-    description: 環境変数が指す 2 つめのルール索引（今は空）で、索引の配置場所を確認するときに参照する。
-    tags:
-      - topic:ルール索引
-    visibility: internal
