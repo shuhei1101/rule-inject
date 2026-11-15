@@ -18,19 +18,27 @@ docs:
   - page: ai-monitor-version.ini
     new: false
     change: 準拠バージョンを v0.4.0 へ上げる
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-15T06:07:32.131847+00:00'
   - page: ai-monitor-theme.yaml
     new: false
     change: import-site --version v0.4.0 が書く控え（v0.4.0）にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-15T06:07:32.131847+00:00'
   - page: docs/_theme
     new: false
     change: import-site --version v0.4.0 で取り込む（assets/vendor/mdmark/ が増え、レイアウト・assets・llms.txt が変わる）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-15T06:07:32.131847+00:00'
   - page: docs/_config.yml
     new: false
     change: v0.4.0 の配布元で exclude に増えた値のうち、rule-inject に無い値（../CLAUDE.md・checksheet/・component/・dataflow/・design-policy.md・flowchart/・phase-index/・phase/・rule/・screen/・state-transition/・template/）を足す
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-15T06:07:32.131847+00:00'
 scope_out:
   - item: フェーズ手順の読み直し
     reason: rule-inject は固有のエージェント・フェーズを持たず、共通のフェーズ手順は AI Monitor から実行時に読むため、リポジトリに変える成果物が無い
