@@ -15,3 +15,20 @@ mdmark の [shuhei1101/mdmark#477](https://github.com/shuhei1101/mdmark/pull/477
 | ファイル | 中身 |
 | --- | --- |
 | [要件](./要件.md) | 要望の整理 |
+
+## テスト結果
+
+### 単体
+
+なし。Markdown のマーカーと mdmark の設定だけを変え、コードを変えないため、規約『V字モデル』で対応する単体テストが無い。
+
+### 結合
+
+なし。単体と同じ理由で、対応する結合テストが無い。
+
+### mdmark check
+
+| 対象 | 結果 | 補足 |
+| --- | --- | --- |
+| `docs/guide/`（`docs/guide/mdmark.config.yaml`） | ✅ | `legacy_mark` 0 件。`plain_md_with_marks` だけが残る（スコープ外）<br>`テスト結果/20261116002629_fa83ed2_mdmark-check.log` |
+| `docs/` の全ての Markdown（一時の設定で実行） | ✅ | `legacy_mark` 0 件。`map_unknown_*` は一時の設定が `map.kinds` を持たないためで、`docs/guide/` の設定では出ない<br>`テスト結果/20261116002629_fa83ed2_mdmark-check.log` |
