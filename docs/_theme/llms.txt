@@ -14,7 +14,7 @@ excerpt_separator: ""
 {%- assign tab_names = "" | split: "," -%}
 {%- for tab in site.data.nav.tabs -%}
   {%- if tab.from == "project" -%}
-    {%- for ptab in site.data["nav.project"].tabs -%}{%- assign tab_names = tab_names | push: ptab.name -%}{%- endfor -%}
+    {%- for ptab in site.data.navproject.tabs -%}{%- assign tab_names = tab_names | push: ptab.name -%}{%- endfor -%}
   {%- else -%}
     {%- assign tab_names = tab_names | push: tab.name -%}
   {%- endif -%}

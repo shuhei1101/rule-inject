@@ -1,5 +1,5 @@
 {% comment %}
-  上タブ 1 つ分を出す。タブの種別は generated → {タブ名}/README.md の有無、の順で決まる。
+  上タブ 1 つ分を出す。タブの種別は generated → {タブ名}/README.md の有無 → permalink が /{タブ名}/ のページ（分類のトップページ）の有無、の順で決まる。
   include.tab: nav.yml / nav.project.yml の tabs[] の 1 要素
   include.current: 現在のタブ名（body の data-tab）
 {% endcomment %}
@@ -10,7 +10,9 @@
 {% else %}
   {% assign readme_path = tab.name | append: "/README.md" %}
   {% assign matches = site.pages | where: "path", readme_path %}
-  {% unless matches.size > 0 %}{% assign kind = "external" %}{% endunless %}
+  {% assign tab_permalink = "/" | append: tab.name | append: "/" %}
+  {% assign tops = site.pages | where: "permalink", tab_permalink %}
+  {% unless matches.size > 0 or tops.size > 0 %}{% assign kind = "external" %}{% endunless %}
 {% endif %}
 {% case kind %}
   {% when "generated" %}{% assign href = "/" | append: tab.name | append: "/" | relative_url %}

@@ -98,20 +98,32 @@ exclude:
   - vendor
   - node_modules
   # 公開ドキュメントの索引の起点（トップは index.md が持つ。include の **/README.md に当たらない直下だけを外す）
+  - ../CLAUDE.md
   - README.md
   - architecture/
+  - checksheet/
+  - component/
   - config/
   - data/
+  - dataflow/
+  - design-policy.md
   - dev-command/
   - er/
   - external-api/
+  - flowchart/
   - glossary/
   - interface/
   - layout/
   - library/
   - module/
   - nonfunctional/
+  - phase-index/
+  - phase/
+  - rule/
   - scenario/
+  - screen/
+  - state-transition/
+  - template/
   - test-procedure/
   - pr/
   - mock/

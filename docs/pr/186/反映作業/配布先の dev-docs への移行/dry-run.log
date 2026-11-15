@@ -1,0 +1,4 @@
+前提確認: ok
+dev-docs.yaml: failed（/dev-docs:setup /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-distribution-follow-ai-monitor-v0-4-0 で作る）
+配信元の登録: failed（/dev-docs:setup /mnt/c/Users/shuhe/repo/rule-inject/.claude/worktrees/chore-distribution-follow-ai-monitor-v0-4-0 で登録する）
+共通設定の撤去した設計書のツール: ok
