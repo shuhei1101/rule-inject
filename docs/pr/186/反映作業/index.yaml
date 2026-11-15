@@ -106,7 +106,7 @@
   切り戻し: 配布先の規約のパスの追従/切り戻し.py
   失敗時: 実行者が原因を確認して依頼元へ返す
   確認方法: 配布先のリポジトリの rules.yaml・agent_context.yaml に、AI Monitor の docs/rule/・docs/flowchart/・docs/checksheet/・docs/template/ の .md を指す行が無い
-  状態: 未
+  状態: 済
 配布先のデータの設計書の作成:
   説明: 配布先のリポジトリで、ER 図の設計書（docs/er/）の `tables[].source` を持たないテーブルごとに、カラムが保存するキーを並べたデータの設計書（docs/data/）を作成し、テーブルの `source` とカラムの `source` で指す。ER 図の設計書を持たないリポジトリと、全てのテーブルが `source` を持つリポジトリでは何もしない。docs/data/ が .gitignore で除外されているリポジトリでは、除外の行を直してから行う。書き換える ER 図・dev-docs.yaml・docs/data/ に未 commit の変更があると前提確認で止まる。追加する data の行のスキーマの版は、配布先の er の行の schema.ref に揃える。切り戻しは、実行の結果を commit する前に、書き換えたファイルを git の HEAD へ戻し、作成したデータの設計書を削除する。#3430 の反映作業『各プロジェクトのスキーマの参照への移行』の後に行う（https://github.com/shuhei1101/ai-monitor/tree/v0.4.0/docs/pr/3445/%E5%8F%8D%E6%98%A0%E4%BD%9C%E6%A5%AD/%E9%85%8D%E5%B8%83%E5%85%88%E3%81%AE%E3%83%87%E3%83%BC%E3%82%BF%E3%81%AE%E8%A8%AD%E8%A8%88%E6%9B%B8%E3%81%AE%E4%BD%9C%E6%88%90）
   タグ:
