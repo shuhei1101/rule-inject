@@ -1,0 +1,15 @@
+# mdmark の設定。パスと glob は、このファイルのあるフォルダからの相対パスで記載する
+# 端末の設定（~/.config/mdmark/settings.yaml）に重ねて読み込む。guide/ の文書は guide/mdmark.config.yaml で扱う
+
+# この設定・文書が合わせてある mdmark のバージョン（mdmark upgrade が書き換える）
+version: v0.13.0
+
+# mdmark build がまとめる文書と、書き出す先（docs/generated/ は git 管理外）
+build:
+  include: ["**/*.md"]
+  exclude: ["guide/**"]
+  out: generated/docs.html
+
+# mdmark check が、記法を含む .md を .mark.md へ改名するよう提案しない
+check:
+  suggestMarkExtension: false

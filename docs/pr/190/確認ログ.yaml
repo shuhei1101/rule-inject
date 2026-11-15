@@ -1,0 +1,16 @@
+confirmations:
+  - topic: docs/mdmark.config.yaml のキー version
+    decision: 'version: v0.13.0 を記載する（推奨案 A）'
+    decided_by: thumbs_up
+    approver: shuhei1101
+    thread: https://github.com/shuhei1101/rule-inject/pull/190#discussion_r4579241041
+  - topic: docs/mdmark.config.yaml のキー build
+    decision: 'include: ["**/*.md"]・exclude: ["guide/**"]・out: generated/docs.html（推奨案 A）'
+    decided_by: thumbs_up
+    approver: shuhei1101
+    thread: https://github.com/shuhei1101/rule-inject/pull/190#discussion_r4579241389
+  - topic: docs/mdmark.config.yaml のキー check
+    decision: 'check.suggestMarkExtension: false だけを記載する（推奨案 A）'
+    decided_by: thumbs_up
+    approver: shuhei1101
+    thread: https://github.com/shuhei1101/rule-inject/pull/190#discussion_r4579241841
