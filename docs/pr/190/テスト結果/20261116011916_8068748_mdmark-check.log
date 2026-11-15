@@ -1,0 +1,8 @@
+$ cd docs/guide && node {mdmark v0.13.0 の dist/cli.js} check
+ずれ 0 件
+
+$ cd docs && node {mdmark v0.13.0 の dist/cli.js} check
+ずれ 0 件
+
+$ grep -c plain_md_with_marks（上の 2 回の出力）
+0
