@@ -94,6 +94,10 @@ entries:
         name: _config.yml
         contents: GitHub Pages の Jekyll の設定
         content_types: [pages]
+      - type: file
+        name: mdmark.config.yaml
+        contents: '`guide/` を除いた `docs/` の Markdown を点検する mdmark の設定'
+        content_types: [tool_config]
       - type: folder
         name: _theme
         contents: AI Monitor からコピーした GitHub Pages の共通レイアウト・スクリプト・スタイル

@@ -14,6 +14,10 @@ version: v0.13.0
 build:
   include: ["**/*.md"]
   out: ../generated/guide.html
+
+# mdmark check が、記法を含む .md を .mark.md へ改名するよう提案しない
+check:
+  suggestMarkExtension: false
 map:
   kinds:
     script:
