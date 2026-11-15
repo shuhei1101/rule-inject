@@ -1,0 +1,7 @@
+confirmations:
+  - topic: マージ前の反映作業のうち dev-docs.yaml を決め打ちして止まる 3 件（配布先の dev-docs への移行・各プロジェクトのスキーマの参照への移行・配布先のデータの設計書の作成）の扱い
+    decision: 3 件は不要（project-index.yaml に読み替えた確認方法の観測値を実施報告に残す）。残り 3 件を作業名を絞って tester へ再依頼する（推奨案 A）
+    decided_by: reply
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/issues/185#issuecomment-6891244845
