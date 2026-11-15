@@ -1,0 +1,69 @@
+$ cd docs/guide && node {mdmark v0.13.0 の dist/cli.js} check
+MCPツール.md:39: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCPツール.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+コアコンセプト-MCPサーバー.md:18: plain_md_with_marks: 記法を含む文書の拡張子が .md です。コアコンセプト-MCPサーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+コアコンセプト-ルールの案内.md:8: plain_md_with_marks: 記法を含む文書の拡張子が .md です。コアコンセプト-ルールの案内.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+ルールにするか文書にするかを決める.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。ルールにするか文書にするかを決める.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+変更履歴.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。変更履歴.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+索引の書式.md:57: plain_md_with_marks: 記法を含む文書の拡張子が .md です。索引の書式.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+設定ファイル.md:30: plain_md_with_marks: 記法を含む文書の拡張子が .md です。設定ファイル.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+ずれ 8 件
+
+$ cd docs && node {mdmark v0.13.0 の dist/cli.js} check   # docs/ に一時の mdmark.config.yaml（version: v0.13.0、build.include: **/*.md）を置いて実行し、実行後に削除
+guide/コアコンセプト-MCPサーバー.md:18: map_unknown_line: 補足の `layout.hook->config.line` の `read` が設定の `map.lines` にありません。`map.lines` に記載するか、名前を修正してください。既定の線で描いています。
+guide/コアコンセプト-MCPサーバー.md:18: map_unknown_line: 補足の `layout.server->index.line` の `write` が設定の `map.lines` にありません。`map.lines` に記載するか、名前を修正してください。既定の線で描いています。
+guide/コアコンセプト-MCPサーバー.md:18: map_unknown_class: ノードのクラス `script` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-MCPサーバー.md:18: map_unknown_class: ノードのクラス `mcp` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-MCPサーバー.md:18: map_unknown_class: ノードのクラス `data` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-MCPサーバー.md:18: map_unknown_class: ノードのクラス `external` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-ルールの案内.md:8: map_unknown_class: ノードのクラス `start` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-ルールの案内.md:8: map_unknown_class: ノードのクラス `question` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-ルールの案内.md:8: map_unknown_class: ノードのクラス `action` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/コアコンセプト-ルールの案内.md:8: map_unknown_class: ノードのクラス `result` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/ルールにするか文書にするかを決める.md:5: map_unknown_line: 補足の `layout.a1->q1.line` の `loop` が設定の `map.lines` にありません。`map.lines` に記載するか、名前を修正してください。既定の線で描いています。
+guide/ルールにするか文書にするかを決める.md:5: map_unknown_class: ノードのクラス `start` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/ルールにするか文書にするかを決める.md:5: map_unknown_class: ノードのクラス `question` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/ルールにするか文書にするかを決める.md:5: map_unknown_class: ノードのクラス `action` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+guide/ルールにするか文書にするかを決める.md:5: map_unknown_class: ノードのクラス `result` が設定の `map.kinds` にありません。`map.kinds` に記載するか、クラスを修正してください。種類の行の無いノードで描いています。
+README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/MCPツール.md:39: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCPツール.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/コアコンセプト-MCPサーバー.md:18: plain_md_with_marks: 記法を含む文書の拡張子が .md です。コアコンセプト-MCPサーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/コアコンセプト-ルールの案内.md:8: plain_md_with_marks: 記法を含む文書の拡張子が .md です。コアコンセプト-ルールの案内.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/ルールにするか文書にするかを決める.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。ルールにするか文書にするかを決める.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/変更履歴.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。変更履歴.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/索引の書式.md:57: plain_md_with_marks: 記法を含む文書の拡張子が .md です。索引の書式.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+guide/設定ファイル.md:30: plain_md_with_marks: 記法を含む文書の拡張子が .md です。設定ファイル.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+interface/README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+library/README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+module/README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/109/要件.md:28: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/112/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/119/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/122/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/122/要件.md:23: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/141/要件.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/148/要件.md:8: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/151/MCPサーバー.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCPサーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/151/プラグイン.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/154/要件.md:8: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/156/要件.md:9: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/157/要件.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/163/要件.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/174/MCP サーバー.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCP サーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/174/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/23/要件.md:12: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/47/プラグイン.md:39: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/57/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/59/MCPサーバー.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCPサーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/59/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/66/要件.md:21: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/69/MCPサーバー.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCPサーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/76/要件.md:14: plain_md_with_marks: 記法を含む文書の拡張子が .md です。要件.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/77/MCPサーバー.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。MCPサーバー.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+pr/77/プラグイン.md:5: plain_md_with_marks: 記法を含む文書の拡張子が .md です。プラグイン.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+scenario/README.md:7: plain_md_with_marks: 記法を含む文書の拡張子が .md です。README.mark.md に改名するか、拡張子の提案を止めるときは設定の check.suggestMarkExtension を false にしてください。
+ずれ 53 件
+
+$ grep -c legacy_mark（上の 2 回の出力）
+0

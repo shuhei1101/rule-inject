@@ -4,7 +4,7 @@
 
 origin/develop [639080c](https://github.com/shuhei1101/rule-inject/commit/639080c) で NG の単語（「読む」を除く）を持つファイル。
 
-<!-- table: data -->
+<!-- table: {"kind": "data"} -->
 
 | 分類 | ページ / ファイル | 概要 | 補足 |
 | --- | --- | --- | --- |
