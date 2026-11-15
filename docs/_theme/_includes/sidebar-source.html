@@ -1,7 +1,7 @@
 {% comment %}
   サイドバーの元になる目次表を隠し要素として埋める。
   現在のページがタブの中にある場合（共通レイアウトが data_tab を決めた場合）だけ出す（タブの外は領域ごと出さない）。
-  タブ直下の README の `## 目次` 表の行は、ページ列のリンクの行き先で 2 つに分かれる。
+  タブ直下の README（無ければ nav.project.yml の tabs の page のページ = 分類のトップページ）の `## 目次` 表の行は、ページ列のリンクの行き先で 2 つに分かれる。
     - フォルダを指す行（末尾が /）は 1 行 = 1 セクションとし、そのフォルダの README の
       `## 目次` 表をそのセクションのページ一覧として埋める
     - ページを指す行（末尾が .md）はどのセクションにも属さないページとして、セクションより前に埋める
@@ -21,6 +21,13 @@
   {% assign tab = data_tab %}
   {% assign tab_readme_path = tab | append: "/README.md" %}
   {% assign tab_readme = site.pages | where: "path", tab_readme_path | first %}
+  {% comment %} タブ直下の README が無ければ、nav.project.yml の tabs の page（分類のトップページ）の目次表を引く {% endcomment %}
+  {% unless tab_readme %}
+    {% for ptab in site.data.navproject.tabs %}
+      {% if ptab.name == tab and ptab.page %}{% assign tab_readme_path = ptab.page %}{% endif %}
+    {% endfor %}
+    {% assign tab_readme = site.pages | where: "path", tab_readme_path | first %}
+  {% endunless %}
   {% if tab_readme %}
     {% assign tab_page_idx = -1 %}
     {% assign tab_rows = "" | split: "," %}
