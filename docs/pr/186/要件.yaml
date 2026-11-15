@@ -52,3 +52,6 @@ scope_out:
   - item: 反映作業『配布先の dev-docs への移行』『各プロジェクトのスキーマの参照への移行』『配布先のデータの設計書の作成』のスクリプトが dev-docs.yaml を決め打ちし、project-index.yaml へ改名した rule-inject で dry-run が止まる件の修正
     reason: '配布元のスクリプトの不具合で、既に起票されている。作業の中身は #165・#181 で済んでおり、この PR では確認方法の dev-docs.yaml を project-index.yaml に読み替えて確かめる'
     plan: shuhei1101/ai-monitor#3472
+  - item: 上タブに配布元の nav.yml の「使い方」と nav.project.yml の「使用方法」が並んで 4 つになる件（「使い方」は /使い方/ の転送ページ経由で「使用方法」への 2 つ目の入口になる）
+    reason: 'nav.yml は import-site が取り込みのたびに上書きし rule-inject では修正できず、分類名「使用方法」は #157 のユーザー判断で決まっている。配布先が共通のタブを出さない設定は配布元で起票されている'
+    plan: shuhei1101/ai-monitor#3410
