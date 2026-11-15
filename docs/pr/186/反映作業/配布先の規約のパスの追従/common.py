@@ -3,6 +3,9 @@
 import sys
 from pathlib import Path
 
+ARGC_WITH_REPO = 2  # スクリプト名と、配布先のリポジトリの場所
+ARGC_WITH_DRY_RUN = 3  # スクリプト名・配布先のリポジトリの場所・--dry-run
+
 # 書き換える対象のファイル（配布先のリポジトリの直下から）
 TARGETS = ("rules.yaml", "agent_context.yaml")
 # 変換前のパス → 変換後のパス
@@ -61,13 +64,17 @@ MAPPING = {
     "docs/template/フェーズ索引.md": "docs/template/template-phase-index.yaml",
     "docs/template/プロジェクトのエージェント定義.md": "docs/template/template-project-agents.yaml",
     "docs/template/情報収集Issue.md": "docs/template/template-inbox-issue.yaml",
-    "docs/template/連絡ボード.md": "docs/template/template-notice-board.yaml"
+    "docs/template/連絡ボード.md": "docs/template/template-notice-board.yaml",
 }
 
 
 def repo_root(argv: list[str]) -> tuple[Path, bool]:
     """第 1 引数の配布先のリポジトリの直下と、--dry-run の有無を返す（不正なら前提確認で止める）。"""
-    if len(argv) < 2 or len(argv) > 3 or (len(argv) == 3 and argv[2] != "--dry-run"):
+    if (
+        len(argv) < ARGC_WITH_REPO
+        or len(argv) > ARGC_WITH_DRY_RUN
+        or (len(argv) == ARGC_WITH_DRY_RUN and argv[2] != "--dry-run")
+    ):
         print("前提確認: failed")
         print(f"引数: {argv[1:]}")
         sys.exit(1)
@@ -76,7 +83,7 @@ def repo_root(argv: list[str]) -> tuple[Path, bool]:
         print("前提確認: failed")
         print(f"リポジトリでない: {root}")
         sys.exit(1)
-    return root, len(argv) == 3
+    return root, len(argv) == ARGC_WITH_DRY_RUN
 
 
 def rewrite(text: str) -> str:

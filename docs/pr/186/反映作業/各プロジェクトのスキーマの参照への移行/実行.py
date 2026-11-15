@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import copies, fail, parse_args, rewrite  # noqa: E402
+from common import copies, fail, parse_args, rewrite
 
 args = parse_args(sys.argv[1:])
 if args is None:
@@ -23,7 +23,11 @@ text = config.read_text(encoding="utf-8")
 new_text = rewrite(text)
 targets = copies(root)
 if new_text != text:
-    sys.stdout.writelines(difflib.unified_diff(text.splitlines(True), new_text.splitlines(True), str(config), str(config)))
+    sys.stdout.writelines(
+        difflib.unified_diff(
+            text.splitlines(True), new_text.splitlines(True), str(config), str(config)
+        )
+    )
 for path in targets:
     print(f"削除: {path.relative_to(root)}")
 if new_text == text and not targets:
@@ -36,7 +40,7 @@ if dry_run:
     sys.exit(0)
 
 # 適用（一時ファイル → 検証 → 退避 → 置き換え）
-import yaml  # noqa: E402
+import yaml  # type: ignore[import-untyped]  # noqa: E402
 
 work = Path(tempfile.mkdtemp(prefix="schema-migration-"))
 staged = work / "dev-docs.yaml"

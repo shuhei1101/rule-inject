@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import REF, fail, knowledge_clone, parse_args  # noqa: E402
+from common import REF, fail, knowledge_clone, parse_args
 
 args = parse_args(sys.argv[1:])
 if args is None:
@@ -19,7 +19,12 @@ knowledge = knowledge_clone()
 if knowledge is None:
     fail("knowledge のクローン", "端末の project-index の設定に knowledge の配信元がありません")
 print("knowledge のクローン: ok")
-result = subprocess.run(["git", "-C", str(knowledge), "rev-parse", "--verify", f"{REF}^{{commit}}"], capture_output=True, text=True, check=False)
+result = subprocess.run(
+    ["git", "-C", str(knowledge), "rev-parse", "--verify", f"{REF}^{{commit}}"],
+    capture_output=True,
+    text=True,
+    check=False,
+)
 if result.returncode != 0:
     fail("knowledge のタグ", result.stderr)
 print("knowledge のタグ: ok")

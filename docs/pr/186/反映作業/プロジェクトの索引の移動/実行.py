@@ -1,4 +1,5 @@
 """配布先のリポジトリの docs/rules.yaml を直下の rules.yaml へ移し、rule の相対パスを移した先から辿れる形に直す。"""
+
 from __future__ import annotations
 
 import difflib
@@ -8,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 # `rule:` の値のうち、相対パスで書かれたものだけを直す（URL・絶対パス・変数参照はそのまま）
 RULE_LINE = re.compile(r"^(\s*-?\s*rule:\s*)(\S.*?)\s*$")
@@ -54,7 +55,9 @@ def main() -> int:
     # 計画（--dry-run もここを通る）
     before = old.read_text(encoding="utf-8")
     after = plan(before)
-    sys.stdout.writelines(difflib.unified_diff(before.splitlines(True), after.splitlines(True), str(old), str(new)))
+    sys.stdout.writelines(
+        difflib.unified_diff(before.splitlines(True), after.splitlines(True), str(old), str(new))
+    )
     if dry_run:
         print("索引の移動: changed")
         return 0
@@ -65,7 +68,11 @@ def main() -> int:
         print("検証: failed")
         return 1
     print("検証: ok")
-    result = subprocess.run(["git", "-C", str(repo), "mv", "docs/rules.yaml", "rules.yaml"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "-C", str(repo), "mv", "docs/rules.yaml", "rules.yaml"],
+        capture_output=True,
+        text=True,
+    )
     if result.returncode != 0:
         print("索引の移動: failed")
         return 1

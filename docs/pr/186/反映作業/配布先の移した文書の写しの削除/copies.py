@@ -72,7 +72,8 @@ def plan_index(index: str, text: str, removed: set[str]) -> str:
         # エントリの頭: そのエントリの rule が消すファイルを指すかで、エントリごと残すか決める
         if ENTRY_HEAD.match(line):
             match = RULE_LINE.match(line)
-            skipping = bool(match) and rule_path(index, match.group(1)) in removed
+            path = rule_path(index, match.group(1)) if match else None
+            skipping = path is not None and path in removed
         # エントリの外（インデントの無い行）: 除くのを止める
         elif not line.startswith(" "):
             skipping = False
@@ -91,6 +92,6 @@ def dangling_rules(repo: Path) -> list[str]:
         for line in (repo / index).read_text(encoding="utf-8").splitlines():
             match = RULE_LINE.match(line)
             path = rule_path(index, match.group(1)) if match else None
-            if path in moved and not (repo / path).is_file():
+            if match and path in moved and not (repo / path).is_file():
                 found.append(f"{index}: {match.group(1)}")
     return found

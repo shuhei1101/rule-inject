@@ -7,7 +7,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
+
+ARGC_WITH_REPO = 2  # スクリプト名と、配布先のリポジトリの場所
 
 DEV_DOCS_SETTINGS = Path.home() / ".config/dev-docs/settings.yaml"
 AI_MONITOR_SETTINGS = Path.home() / ".config/ai-monitor/settings.yaml"
@@ -25,12 +27,15 @@ REMOVED_TOOLS = (
 
 def main() -> int:
     # 前提確認
-    if len(sys.argv) < 2:
+    if len(sys.argv) < ARGC_WITH_REPO:
         print("前提確認: failed（対象のリポジトリの場所が無い）")
         return 1
     try:
         top = subprocess.run(
-            ["git", "-C", sys.argv[1], "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True
+            ["git", "-C", sys.argv[1], "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
         ).stdout.strip()
     except subprocess.CalledProcessError:
         print("前提確認: failed（リポジトリでない）")
@@ -56,7 +61,11 @@ def main() -> int:
     settings_text = AI_MONITOR_SETTINGS.read_text(encoding="utf-8")
     left = [name for name in REMOVED_TOOLS if name in settings_text]
     if left:
-        print("共通設定の撤去した設計書のツール: failed（agents[].mcp_tools から外す: " + ", ".join(left) + "）")
+        print(
+            "共通設定の撤去した設計書のツール: failed（agents[].mcp_tools から外す: "
+            + ", ".join(left)
+            + "）"
+        )
         status = 1
     else:
         print("共通設定の撤去した設計書のツール: ok")

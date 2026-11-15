@@ -31,7 +31,7 @@ if args is None:
     )
 root, dry_run = args
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
     from ruamel.yaml import YAML
 except ImportError as e:
     fail("前提確認", f"PyYAML と ruamel.yaml が要ります: {e}")
@@ -111,7 +111,7 @@ if rule:
 print("docs/data/ の追跡: ok")
 
 index_path = data_folder / "index.yaml"
-index = (
+index: dict = (
     yaml.safe_load(index_path.read_text(encoding="utf-8"))
     if index_path.is_file()
     else {"summary": INDEX_SUMMARY, "items": []}

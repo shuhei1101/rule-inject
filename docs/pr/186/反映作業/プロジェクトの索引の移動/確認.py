@@ -1,13 +1,16 @@
 """配布先のリポジトリの直下に rules.yaml があり、docs/rules.yaml が無いかを読むだけで確かめる。"""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
+ARGC_WITH_REPO = 2  # スクリプト名と、配布先のリポジトリの場所
+
 
 def main() -> int:
     """2 つのファイルの有無を出す。"""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < ARGC_WITH_REPO:
         print("配布先のリポジトリ: failed")
         return 1
     repo = Path(sys.argv[1])

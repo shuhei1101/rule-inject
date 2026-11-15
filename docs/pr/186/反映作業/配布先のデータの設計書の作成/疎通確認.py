@@ -12,7 +12,7 @@ if args is None:
 root, _ = args
 try:
     import ruamel.yaml  # noqa: F401
-    import yaml  # noqa: F401
+    import yaml  # type: ignore[import-untyped]  # noqa: F401
 except ImportError as e:
     fail("ライブラリ", f"PyYAML と ruamel.yaml が要ります: {e}")
 print("ライブラリ: ok")

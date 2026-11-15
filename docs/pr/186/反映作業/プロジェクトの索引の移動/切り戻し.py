@@ -1,4 +1,5 @@
 """配布先のリポジトリの直下の rules.yaml を docs/rules.yaml へ戻し、rule の相対パスを docs/ からの形に戻す。"""
+
 from __future__ import annotations
 
 import posixpath
@@ -6,6 +7,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+ARGC_WITH_REPO = 2  # スクリプト名と、配布先のリポジトリの場所
 
 RULE_LINE = re.compile(r"^(\s*-?\s*rule:\s*)(\S.*?)\s*$")
 
@@ -19,7 +22,7 @@ def restore(value: str) -> str:
 
 def main() -> int:
     """索引を docs/ へ戻す。"""
-    if len(sys.argv) < 2 or not (Path(sys.argv[1]) / "rules.yaml").is_file():
+    if len(sys.argv) < ARGC_WITH_REPO or not (Path(sys.argv[1]) / "rules.yaml").is_file():
         print("移した索引: failed")
         return 1
     repo = Path(sys.argv[1])
@@ -28,7 +31,11 @@ def main() -> int:
     for line in text.splitlines(keepends=True):
         match = RULE_LINE.match(line)
         lines.append(f"{match.group(1)}{restore(match.group(2))}\n" if match else line)
-    result = subprocess.run(["git", "-C", str(repo), "mv", "rules.yaml", "docs/rules.yaml"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "-C", str(repo), "mv", "rules.yaml", "docs/rules.yaml"],
+        capture_output=True,
+        text=True,
+    )
     if result.returncode != 0:
         print("索引の書き戻し: failed")
         return 1

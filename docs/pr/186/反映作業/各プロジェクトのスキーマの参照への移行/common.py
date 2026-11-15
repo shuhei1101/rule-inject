@@ -4,6 +4,8 @@ import re
 import sys
 from pathlib import Path
 
+ARGC_WITH_DRY_RUN = 2  # 配布先のリポジトリの場所と、--dry-run
+
 REF = "design-schemas/v8.1.0"
 SOURCE = "knowledge"
 # AI Monitor から配ったスキーマのコピーの名前 → knowledge のスキーマのパス（None は参照の行を持たない）
@@ -48,17 +50,23 @@ COPIES = {
 }
 # コピーを置くフォルダ（`docs/` へ移したリポジトリと、`dev/` が残るリポジトリ）
 COPY_DIRS = ("schemas", "dev/テンプレート")
-SCHEMA_LINE = re.compile(r"^(?P<indent>\s*)schema: (?P<path>(?:schemas|dev/テンプレート)/(?P<name>[^/\s]+)\.schema\.yaml)\s*$")
+SCHEMA_LINE = re.compile(
+    r"^(?P<indent>\s*)schema: (?P<path>(?:schemas|dev/テンプレート)/(?P<name>[^/\s]+)\.schema\.yaml)\s*$"
+)
 
 
 def parse_args(argv):
     """第 1 引数のリポジトリの直下と、第 2 引数の `--dry-run` を返す（不正なら None）。"""
-    if not argv or len(argv) > 2 or (len(argv) == 2 and argv[1] != "--dry-run"):
+    if (
+        not argv
+        or len(argv) > ARGC_WITH_DRY_RUN
+        or (len(argv) == ARGC_WITH_DRY_RUN and argv[1] != "--dry-run")
+    ):
         return None
     root = Path(argv[0])
     if not (root / ".git").exists():
         return None
-    return root, len(argv) == 2
+    return root, len(argv) == ARGC_WITH_DRY_RUN
 
 
 def copies(root):
@@ -111,7 +119,12 @@ def knowledge_clone():
             in_knowledge = stripped == f"- id: {SOURCE}"
         elif in_knowledge and stripped.startswith("- /"):
             folder = Path(stripped[2:]).parent
-            result = subprocess.run(["git", "-C", str(folder), "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=False)
+            result = subprocess.run(
+                ["git", "-C", str(folder), "rev-parse", "--show-toplevel"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
             return Path(result.stdout.strip()) if result.returncode == 0 else None
     return None
 

@@ -12,7 +12,7 @@ args = parse_args(sys.argv[1:])
 if args is None:
     fail("前提確認", "第 1 引数に配布先のリポジトリの直下を渡してください")
 root, _ = args
-import yaml  # noqa: E402
+import yaml  # type: ignore[import-untyped]  # noqa: E402
 
 data = {}
 folder = root / DATA_DIR

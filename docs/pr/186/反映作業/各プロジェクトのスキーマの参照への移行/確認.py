@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import SCHEMA_LINE, COPIES, copies, fail, parse_args  # noqa: E402
+from common import COPIES, SCHEMA_LINE, copies, fail, parse_args
 
 args = parse_args(sys.argv[1:])
 if args is None:
