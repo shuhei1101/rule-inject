@@ -28,7 +28,7 @@
   切り戻し: 配布先の移した文書の写しの削除/切り戻し.py
   失敗時: 実行者が原因を確かめて依頼元へ返す
   確認方法: 配布先のリポジトリに、内容が AI Monitor の過去の版と同じ移した文書のファイルが無く、索引（rules.yaml・docs/rules.yaml）に、移した文書のパスを指すのにファイルが無いエントリが無い
-  状態: 未
+  状態: 済
 配布先の dev-docs への移行:
   説明: 配布先のリポジトリの直下に `dev-docs.yaml`（設計書の種類を documents に定義したもの）を置き、`/dev-docs:setup {配布先のパス}` で dev-docs の配信元として登録し、`settings.yaml` の `agents[].mcp_tools` から旧い設計書のツールを外して dev-docs のツールを割り当てる（手順書の設計書のツールが dev-docs のツールに変わるため）。`dev-docs.yaml` の作成と登録はファイルごとの判断を伴うため実行者が `/dev-docs:setup` で行い、実行スクリプトは書き換えずに整ったかを確かめる（書き換えないため切り戻しは持たない）（https://github.com/shuhei1101/ai-monitor/tree/v0.4.0/docs/pr/3119/%E5%8F%8D%E6%98%A0%E4%BD%9C%E6%A5%AD/%E9%85%8D%E5%B8%83%E5%85%88%E3%81%AE%20dev-docs%20%E3%81%B8%E3%81%AE%E7%A7%BB%E8%A1%8C）
   タグ:
