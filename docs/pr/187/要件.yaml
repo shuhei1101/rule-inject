@@ -1,0 +1,161 @@
+use_cases: []
+docs:
+  - page: docs/README.md
+    new: false
+    change: index.yaml から生成した目次のマーカーを publish で JSON の記載へ書き出し直す
+    status: todo
+  - page: docs/guide/MCPツール.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/guide/README.md
+    new: false
+    change: index.yaml から生成した目次のマーカーを publish で JSON の記載へ書き出し直す
+    status: todo
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/guide/コアコンセプト-ルールの案内.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/guide/ルールにするか文書にするかを決める.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/guide/変更履歴.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/guide/索引の書式.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/guide/設定ファイル.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/interface/README.md
+    new: false
+    change: index.yaml から生成した目次のマーカーを publish で JSON の記載へ書き出し直す
+    status: todo
+  - page: docs/library/README.md
+    new: false
+    change: index.yaml から生成した目次のマーカーを publish で JSON の記載へ書き出し直す
+    status: todo
+  - page: docs/module/README.md
+    new: false
+    change: index.yaml から生成した目次のマーカーを publish で JSON の記載へ書き出し直す
+    status: todo
+  - page: docs/pr/109/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/112/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/119/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/122/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/122/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/141/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/148/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/151/MCPサーバー.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/151/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/154/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/156/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/157/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/163/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/174/MCP サーバー.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/174/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/23/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/47/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/57/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/59/MCPサーバー.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/59/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/66/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/69/MCPサーバー.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/76/要件.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/77/MCPサーバー.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/pr/77/プラグイン.md
+    new: false
+    change: マーカーを mdmark upgrade で JSON の記載へ移す
+    status: todo
+  - page: docs/scenario/README.md
+    new: false
+    change: index.yaml から生成した目次のマーカーを publish で JSON の記載へ書き出し直す
+    status: todo
+scope_out:
+  - item: 本文の中でコード表記として引いた今の書き方のマーカー（docs/pr/74/要件.md の表のセル・docs/pr/174/要件.md の箇条書き）
+    reason: マーカーとして読まれない文中の引用で、legacy_mark の対象にならない。過去の作業の記録の文言を変えない
+    plan: none
+  - item: docs/generated/ の Markdown
+    reason: Git で管理しない生成物で、AI Monitor の generate を流すたびに書き出し直される
+    plan: none
