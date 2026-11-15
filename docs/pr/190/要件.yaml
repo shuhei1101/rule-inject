@@ -1,0 +1,14 @@
+docs:
+  - page: docs/guide/mdmark.config.yaml
+    new: false
+    change: check.suggestMarkExtension を false にする
+    status: todo
+  - page: docs/mdmark.config.yaml
+    new: true
+    change: docs/guide/ を除いた docs/ の Markdown を点検の範囲にし、check.suggestMarkExtension を false にする設定を新設する
+    status: todo
+scope_out:
+  - item: 記法を含む文書の拡張子を .mark.md へ改名する
+    reason: README.md と PR ドキュメントは AI Monitor が名前を決めて改名できず、docs/guide/ の残りのページだけを改名するとリンク・索引・公開ページの URL が変わるため、設定で止める
+    plan: none
+use_cases: []
