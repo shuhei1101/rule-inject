@@ -27,6 +27,9 @@ LINES = {
     "==>": {"width": "thick"},
 }
 
+# `--dry-run` を付けたときの引数の数（対象のリポジトリと --dry-run）
+DRY_RUN_ARGC = 2
+
 
 def fail(step: str, detail: str = "") -> None:
     """手順の失敗を出して終える。"""
@@ -40,7 +43,7 @@ def repo_from_args(argv: list[str], *, allow_dry_run: bool) -> tuple[Path, bool]
     """第 1 引数の対象のリポジトリと、`--dry-run` を受け取る（それ以外の引数は前提確認で失敗にする）。"""
     args = argv[1:]
     dry_run = False
-    if allow_dry_run and len(args) == 2 and args[1] == "--dry-run":
+    if allow_dry_run and len(args) == DRY_RUN_ARGC and args[1] == "--dry-run":
         dry_run = True
         args = args[:1]
     if len(args) != 1:
@@ -78,6 +81,14 @@ def missing_kinds(doc: object) -> list[str]:
     mapping = doc.get("map") if isinstance(doc, dict) else None
     kinds = mapping.get("kinds") if isinstance(mapping, dict) else None
     lines = mapping.get("lines") if isinstance(mapping, dict) else None
-    names = [name for name, value in KINDS.items() if not isinstance(kinds, dict) or kinds.get(name) != value]
-    names += [name for name, value in LINES.items() if not isinstance(lines, dict) or lines.get(name) != value]
+    names = [
+        name
+        for name, value in KINDS.items()
+        if not isinstance(kinds, dict) or kinds.get(name) != value
+    ]
+    names += [
+        name
+        for name, value in LINES.items()
+        if not isinstance(lines, dict) or lines.get(name) != value
+    ]
     return names

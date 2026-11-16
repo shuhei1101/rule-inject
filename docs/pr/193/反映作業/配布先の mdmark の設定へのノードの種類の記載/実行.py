@@ -48,7 +48,9 @@ if dry_run:
 fd, tmp = tempfile.mkstemp(dir=repo, suffix=".yaml")
 with os.fdopen(fd, "w", encoding="utf-8") as handle:
     handle.write(new_text)
-if missing_kinds(yaml_rt().load(open(tmp, encoding="utf-8").read())):
+with open(tmp, encoding="utf-8") as handle:
+    written = handle.read()
+if missing_kinds(yaml_rt().load(written)):
     os.unlink(tmp)
     fail("検証")
 print("検証: ok")
