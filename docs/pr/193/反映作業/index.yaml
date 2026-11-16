@@ -1,5 +1,5 @@
 配布先の mdmark の設定へのノードの種類の記載:
-  説明: 配布先のリポジトリの直下の mdmark.config.yaml の map.kinds に、AI Monitor の design_docs generate が生成する図のノードの種類（external・script・data・start・question・action・result）を、AI Monitor の design_docs の定数と同じ値で記載する。ファイルが無ければ作る。ほかのキーは変えない。スクリプトは `uv run --no-project --with ruamel.yaml python -B {スクリプト} {対象のリポジトリ}` で起動する（https://github.com/shuhei1101/ai-monitor/tree/v0.5.0/docs/pr/3462/反映作業/配布先の mdmark の設定へのノードの種類の記載）
+  説明: 配布先のリポジトリの直下の mdmark.config.yaml の map.kinds に、AI Monitor の design_docs generate が生成する図のノードの種類（external・script・data・start・question・action・result）を、AI Monitor の design_docs の定数と同じ値で記載する。ファイルが無ければ作る。ほかのキーは変えない。スクリプトは `uv run --no-project --with ruamel.yaml python -B {スクリプト} {対象のリポジトリ}` で起動する。対象のリポジトリは作業 PR のブランチの worktree の直下にし、作った直下の mdmark.config.yaml を作業 PR へ commit + push する（https://github.com/shuhei1101/ai-monitor/tree/v0.5.0/docs/pr/3462/反映作業/配布先の mdmark の設定へのノードの種類の記載）
   タグ: [設定の追記]
   実行者: planner
   時期: マージの前
