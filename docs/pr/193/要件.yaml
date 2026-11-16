@@ -18,19 +18,27 @@ docs:
   - page: ai-monitor-version.ini
     new: false
     change: 準拠バージョンを v0.5.0 へ上げる
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
   - page: ai-monitor-theme.yaml
     new: false
     change: import-site --version v0.5.0 が書く控え（v0.5.0）にする
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
   - page: docs/_theme
     new: false
     change: import-site --version v0.5.0 で取り込む（assets/vendor/mdmark/ が消え、レイアウト・assets が変わる）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
   - page: docs/mdmark.config.yaml
     new: false
-    change: 反映作業の実行後に docs/ の文書の mdmark check で map_unknown_class が出る場合だけ、map.kinds を記載する
-    status: todo
+    change: map.kinds・map.lines に AI Monitor の design_docs が生成する図の種類を記載する（反映作業を一時的なクローンで流した後も、docs/ の設定で check すると生成した設計書に map_unknown_class が出たため）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
 scope_out:
   - item: フェーズ手順の読み直し
     reason: rule-inject は固有のエージェント・フェーズを持たず、共通のフェーズ手順は AI Monitor から実行時に読むため、リポジトリに変える成果物が無い
@@ -38,3 +46,6 @@ scope_out:
   - item: settings.yaml の agents[].mcp_tools の見直し
     reason: settings.yaml は AI Monitor 本体の設定で、rule-inject のリポジトリに無い
     plan: none
+  - item: design_docs generate が生成した Markdown の先頭の source-hash マーカーが、mdmark check で unknown_mark になる件
+    reason: 生成物（docs/generated/、git 管理外）の書式と mdmark の既知のマーカーの食い違いで、v0.5.0 への追従とは別の原因。rule-inject の成果物では直せない
+    plan: to_file

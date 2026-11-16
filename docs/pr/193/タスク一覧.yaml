@@ -65,7 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-16T15:58:16.697889+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
+    note: ai-monitor-version.ini・ai-monitor-theme.yaml・docs/_theme/・docs/mdmark.config.yaml。v0.4.0..v0.5.0 で変わった規約・テンプレート（マーカーの JSON の記載・結合テストの実行範囲の表・依存先待ちの wait_for_issues）に従っていない成果物は無い
+    updated_by: planner
+    updated_at: '2026-11-16T16:02:15.884383+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: 実装を変えない

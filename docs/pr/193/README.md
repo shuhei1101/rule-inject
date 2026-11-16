@@ -16,3 +16,8 @@ develop の `ai-monitor-version.ini` と `ai-monitor-theme.yaml` は `v0.4.0` �
 | --- | --- |
 | [要件](./要件.md) | 要望の整理 |
 | [反映作業](./反映作業/index.yaml) | 配布先の反映作業の一覧 |
+
+## テスト結果
+
+実装とテストコードを変えず、変更は版の控え・公開サイトのレイアウト・mdmark の設定だけのため、規約『V字モデル』の対応表で関係する単体・結合テストは無い。
+`docs/mdmark.config.yaml` は、反映作業を一時的なクローンで流して設計書を生成し、`map.kinds` を記載する前は生成した設計書の図で `map_unknown_class` が出て、記載した後は出ないことを mdmark check で確かめた。
