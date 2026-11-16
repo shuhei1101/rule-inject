@@ -1,0 +1,48 @@
+use_cases:
+  - kind: composite
+    scenario: docs/scenario/SC-122-23.yaml
+    impact: none
+    detail: 配布物の版を上げるだけで、ルールの案内と既読の記録の流れを変えない
+    depends_on: []
+  - kind: composite
+    scenario: docs/scenario/SC-122-24.yaml
+    impact: none
+    detail: 配布物の版を上げるだけで、既読の記録の確認と削除の流れを変えない
+    depends_on: []
+  - kind: composite
+    scenario: docs/scenario/SC-122-25.yaml
+    impact: none
+    detail: ルール索引は AI Monitor の文書を指す行を持たず、索引の編集と案内の流れを変えない
+    depends_on: []
+docs:
+  - page: ai-monitor-version.ini
+    new: false
+    change: 準拠バージョンを v0.5.0 へ上げる
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
+  - page: ai-monitor-theme.yaml
+    new: false
+    change: import-site --version v0.5.0 が書く控え（v0.5.0）にする
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
+  - page: docs/_theme
+    new: false
+    change: import-site --version v0.5.0 で取り込む（assets/vendor/mdmark/ が消え、レイアウト・assets が変わる）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
+  - page: docs/mdmark.config.yaml
+    new: false
+    change: map.kinds・map.lines に AI Monitor の design_docs が生成する図の種類を記載し、check.ignore に生成した Markdown の source-hash マーカーを記載する（反映作業を一時的なクローンで流した後も、docs/ の設定で check すると生成した設計書に map_unknown_class・unknown_mark が出たため。AI Monitor の v0.5.0 の直下の設定と同じ直し方）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-16T16:01:40.280058+00:00'
+scope_out:
+  - item: フェーズ手順の読み直し
+    reason: rule-inject は固有のエージェント・フェーズを持たず、共通のフェーズ手順は AI Monitor から実行時に読むため、リポジトリに変える成果物が無い
+    plan: none
+  - item: settings.yaml の agents[].mcp_tools の見直し
+    reason: settings.yaml は AI Monitor 本体の設定で、rule-inject のリポジトリに無い
+    plan: none
