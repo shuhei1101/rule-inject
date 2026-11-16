@@ -35,7 +35,7 @@ docs:
     updated_at: '2026-11-16T16:01:40.280058+00:00'
   - page: docs/mdmark.config.yaml
     new: false
-    change: map.kinds・map.lines に AI Monitor の design_docs が生成する図の種類を記載する（反映作業を一時的なクローンで流した後も、docs/ の設定で check すると生成した設計書に map_unknown_class が出たため）
+    change: map.kinds・map.lines に AI Monitor の design_docs が生成する図の種類を記載し、check.ignore に生成した Markdown の source-hash マーカーを記載する（反映作業を一時的なクローンで流した後も、docs/ の設定で check すると生成した設計書に map_unknown_class・unknown_mark が出たため。AI Monitor の v0.5.0 の直下の設定と同じ直し方）
     status: done
     updated_by: planner
     updated_at: '2026-11-16T16:01:40.280058+00:00'
@@ -46,6 +46,3 @@ scope_out:
   - item: settings.yaml の agents[].mcp_tools の見直し
     reason: settings.yaml は AI Monitor 本体の設定で、rule-inject のリポジトリに無い
     plan: none
-  - item: design_docs generate が生成した Markdown の先頭の source-hash マーカーが、mdmark check で unknown_mark になる件
-    reason: 生成物（docs/generated/、git 管理外）の書式と mdmark の既知のマーカーの食い違いで、v0.5.0 への追従とは別の原因。rule-inject の成果物では直せない
-    plan: to_file
