@@ -2,7 +2,8 @@
 # 端末の設定（~/.config/mdmark/settings.yaml）に重ねて読み込む。guide/ の文書は guide/mdmark.config.yaml で扱う
 
 # この設定・文書が合わせてある mdmark のバージョン（mdmark upgrade が書き換える）
-version: v0.13.0
+# develop は develop の最新を参照する。固定するときは v{MAJOR}.{MINOR}.{PATCH} を記載する
+version: develop
 
 # mdmark build がまとめる文書と、書き出す先（docs/generated/ は git 管理外）
 build:

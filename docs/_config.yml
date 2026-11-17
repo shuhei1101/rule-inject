@@ -23,6 +23,11 @@ issue_form:
     - ドキュメントから起票
     - 確認:task-planner
 
+# 本文を描く mdmark の参照。記載しないと develop の最新を参照する
+# 固定するときは次の 2 行の # を削除し、タグ（v{MAJOR}.{MINOR}.{PATCH}）か commit の SHA を記載する
+# mdmark:
+#   version: v0.13.0
+
 # Markdown 処理（kramdown + GFM 互換）
 markdown: kramdown
 kramdown:
