@@ -65,8 +65,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-17T01:48:01.368033+00:00'
   - process: ドキュメント修正
-    status: todo
-    note: docs/mdmark.config.yaml・docs/guide/mdmark.config.yaml の version、docs/_config.yml の mdmark.version、開発コマンド CMD-183-1 の静的検査
+    status: done
+    note: docs/mdmark.config.yaml・docs/guide/mdmark.config.yaml の version、docs/_config.yml の mdmark.version、テスト実行方法 TP-122-1 の lint 層
+    updated_by: planner
+    updated_at: '2026-11-17T01:51:31.432108+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えないため対象外
@@ -74,7 +76,7 @@ tasks:
     updated_at: '2026-11-17T01:48:01.368033+00:00'
   - process: 実装
     status: skipped
-    reason: コードを変えない。mdmark の設定・Pages の設定・開発コマンドの変更はドキュメント修正で扱う
+    reason: コードを変えない。mdmark の設定・Pages の設定・テスト実行方法の変更はドキュメント修正で扱う
     updated_by: planner
     updated_at: '2026-11-17T01:48:01.368033+00:00'
   - process: 結合テスト作成

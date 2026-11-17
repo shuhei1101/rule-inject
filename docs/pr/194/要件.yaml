@@ -2,19 +2,27 @@ docs:
   - page: docs/mdmark.config.yaml
     new: false
     change: '`version` を `develop` にし、固定するときの書き方をコメントに記載する'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-17T01:51:36.599931+00:00'
   - page: docs/guide/mdmark.config.yaml
     new: false
     change: '`version` を `develop` にし、固定するときの書き方をコメントに記載する'
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-17T01:51:36.599931+00:00'
   - page: docs/_config.yml
     new: false
     change: 公開サイトの mdmark をタグか commit に固定する `mdmark.version` の書き方をコメントで記載する（未記載のときテーマは develop の最新を読む）
-    status: todo
-  - page: docs/dev-command/CMD-183-1.yaml
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-17T01:51:36.599931+00:00'
+  - page: docs/test-procedure/TP-122-1.yaml
     new: false
-    change: 静的検査に `npx github:shuhei1101/mdmark#develop check` で文書を点検するコマンドと、固定するときの書き方を記載する
-    status: todo
+    change: lint 層の全件実行に `npx github:shuhei1101/mdmark#develop check` で `docs/`・`docs/guide/` を点検するコマンドを追加し、固定するときの書き方を前提に記載する（判定フローチャート『コマンドの書き先』の静的検査に該当）
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-17T01:51:36.599931+00:00'
 scope_out:
   - item: 公開サイトのテーマ（`docs/_theme/`）が読む mdmark の参照の切り替え
     reason: テーマは AI Monitor の配布物で、v0.5.0 の取り込み（#193）で既定が develop の最新・`site.mdmark.version` で固定する形になっている。配布物の側の切り替えは shuhei1101/ai-monitor#3531 が扱う
