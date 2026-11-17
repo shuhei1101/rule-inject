@@ -1,0 +1,24 @@
+docs:
+  - page: docs/mdmark.config.yaml
+    new: false
+    change: '`version` を `develop` にし、固定するときの書き方をコメントに記載する'
+    status: todo
+  - page: docs/guide/mdmark.config.yaml
+    new: false
+    change: '`version` を `develop` にし、固定するときの書き方をコメントに記載する'
+    status: todo
+  - page: docs/_config.yml
+    new: false
+    change: 公開サイトの mdmark をタグか commit に固定する `mdmark.version` の書き方をコメントで記載する（未記載のときテーマは develop の最新を読む）
+    status: todo
+  - page: docs/dev-command/CMD-183-1.yaml
+    new: false
+    change: 静的検査に `npx github:shuhei1101/mdmark#develop check` で文書を点検するコマンドと、固定するときの書き方を記載する
+    status: todo
+scope_out:
+  - item: 公開サイトのテーマ（`docs/_theme/`）が読む mdmark の参照の切り替え
+    reason: テーマは AI Monitor の配布物で、v0.5.0 の取り込み（#193）で既定が develop の最新・`site.mdmark.version` で固定する形になっている。配布物の側の切り替えは shuhei1101/ai-monitor#3531 が扱う
+    plan: none
+  - item: 直下の `mdmark.config.yaml`（#193 の反映作業で作った図の種類の設定）への `version` の記載
+    reason: 設計書の生成の図の種類だけを持つ設定で、`mdmark check`・`mdmark upgrade` の対象の文書のフォルダの設定ではない
+    plan: none
