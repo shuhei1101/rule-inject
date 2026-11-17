@@ -2,7 +2,8 @@
 # 端末の設定（~/.config/mdmark/settings.yaml）に重ねて読み込む。端末の設定の config.cascade を true にすると、上のフォルダの mdmark.config.yaml も重ねる
 
 # この設定・索引・文書が合わせてある mdmark のバージョン（mdmark upgrade が書き換える）
-version: v0.13.0
+# develop は develop の最新を参照する。固定するときは v{MAJOR}.{MINOR}.{PATCH} を記載する
+version: develop
 
 # 書き出した HTML に埋める拡張のモジュール（使用するときは次の行の # を削除する）
 # extensions: [extensions/example.ts]
