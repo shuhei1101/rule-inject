@@ -1,0 +1,66 @@
+$ uv run pytest tests/unit -q -p no:cacheprovider --continue-on-collection-errors --basetemp=/tmp/rule-inject-pr199-pytest
+（/tmp/pytest-of-shuhei2441 が root の所有で pytest の既定の一時フォルダを使えないため --basetemp を指定）
+
+    ) -> None:
+        """`session_env` の設定ファイルで照合する（正常系）。"""
+        from rule_inject.server.app import build_server
+        from rule_inject.server.control import ServerControl
+    
+        # 準備
+        index = make_index("rules:\n  - rule: /r/a.md\n    paths: ['**/*.py']\n", name="session.yaml")
+        server_config = make_settings("global:\n  indexes: []\n", name="server.yaml")
+        session_config = make_settings(f"global:\n  indexes:\n    - {index}\n", name="session.yaml")
+        server = build_server(
+            {"RULE_INJECT_CONFIG": str(server_config)},
+            control=ServerControl(port=8783),
+            clone=clone_dir,
+        )
+        arguments = {
+            "project_dir": str(tmp_path),
+            "format": "json",
+            "session_env": {"RULE_INJECT_CONFIG": str(session_config)},
+        }
+        # 実行
+        result = asyncio.run(server.call_tool("list_rules", arguments))
+        # 検証
+>       assert result.structured_content["config_path"] == str(session_config)
+E       AssertionError: assert '/tmp/rule-in...g/server.yaml' == '/tmp/rule-in.../session.yaml'
+E         
+E         Skipping 61 identical leading characters in diff, use -v to show
+E         - /config/session.yaml
+E         ?           ^^^^^
+E         + /config/server.yaml
+E         ?           ^^^^
+
+tests/unit/rule_inject/server/test_app.py:181: AssertionError
+___________________________ test_session_environment ___________________________
+
+    def test_session_environment() -> None:
+        """3 つの名前を除いて `session_env` を重ねる（正常系）。"""
+>       from rule_inject.server.app import _session_environment
+E       ImportError: cannot import name '_session_environment' from 'rule_inject.server.app' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-rule-guide-self-read-and-search-config/src/rule_inject/server/app.py)
+
+tests/unit/rule_inject/server/test_app.py:187: ImportError
+_____________________ test_session_environment_when_absent _____________________
+
+    def test_session_environment_when_absent() -> None:
+        """`session_env` が無ければサーバーの環境変数を使用する（正常系）。"""
+>       from rule_inject.server.app import _session_environment
+E       ImportError: cannot import name '_session_environment' from 'rule_inject.server.app' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-rule-guide-self-read-and-search-config/src/rule_inject/server/app.py)
+
+tests/unit/rule_inject/server/test_app.py:209: ImportError
+=========================== short test summary info ============================
+ERROR tests/unit/rule_inject/hooks/test_fill_config.py
+ERROR tests/unit/rule_inject/shared/test_variables.py
+FAILED tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_reading_rule_itself
+FAILED tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_reading_rules_matching_each_other
+FAILED tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_reading_rule_and_other_file
+FAILED tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_reading_rule_by_symlink
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server_session_env
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server_when_session_env
+FAILED tests/unit/rule_inject/server/test_app.py::test_session_environment - ...
+FAILED tests/unit/rule_inject/server/test_app.py::test_session_environment_when_absent
+8 failed, 551 passed, 2 errors in 3.44s
+
+## 実装の前から pass したテスト
+- tests/unit/rule_inject/hooks/test_rule_guide.py::test_handle_when_writing_rule_itself: 書き込みで on: [write] のルールを止める既存の振る舞い（src/rule_inject/hooks/rule_guide.py の _output。最終変更 132eb5f）
