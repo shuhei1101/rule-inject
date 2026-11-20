@@ -67,6 +67,9 @@ enums:
       - value: start_server
         title: サーバーの起動の補助
         description: SessionStart
+      - value: fill_config
+        title: ツールの引数への設定の記入
+        description: PreToolUse の rule-inject の MCP のツールへの記入
 constants:
   - name: LOG_FILE_SUFFIX
     title: ログのファイル名の後半

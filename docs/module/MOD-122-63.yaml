@@ -1,0 +1,123 @@
+id: MOD-122-63
+visibility: internal
+title: プラグイン / フック / fill_config.py
+lead: rule-inject の MCP のツールの呼び出しにセッションの設定を決める環境変数を入れるフックの処理を定め、ツールの引数への設定の記入を修正するときに参照する。
+test_files:
+  - tests/unit/rule_inject/hooks/test_fill_config.py
+constants:
+  - name: TOOL_PREFIX
+    title: rule-inject のツールの名前の前半
+    container: hooks/fill_config.py
+    summary: rule-inject の MCP のツールの完全名の前半
+    value: '`"mcp__plugin_rule-inject_rule-inject__"`'
+  - name: TARGET_TOOLS
+    title: 設定を入れるツール
+    container: hooks/fill_config.py
+    summary: '`session_env` を入れるツールの名前（`TOOL_PREFIX` の後ろ）。サーバー自身を扱うツールは入れない'
+    value: '`frozenset({"list_rules", "search_rules", "check_indexes", "write_index_entry", "delete_index_entry", "get_read_records", "delete_read_records"})`'
+    refs:
+      - IF-122-23#constraints[当てるツール]
+  - name: SESSION_ENV_ARG
+    title: 設定を入れる引数
+    container: hooks/fill_config.py
+    summary: '`updatedInput` に入れる引数の名前'
+    value: '`"session_env"`'
+  - name: DECISION_REASON
+    title: 許可の理由
+    container: hooks/fill_config.py
+    summary: '`permissionDecisionReason` の文面'
+    value: '`"rule-inject のツールの入力にセッションの設定を入れた"`'
+functions:
+  - name: fill_config
+    title: ツールの引数への設定の記入の処理
+    container: hooks/fill_config.py
+    usecase: 操作に該当するルールを検索する
+    summary: 対象のツールの `tool_input` に、セッションの設定を決める環境変数と索引に出る変数参照の値を `session_env` として上書きで入れ、`allow` を返却する
+    kind: フック
+    scope: public
+    inherits: HookHandler
+    args:
+      - name: payload
+        type: dict[str, Any]
+        required: true
+        passing: positional
+        description: PreToolUse の入力
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: フックが受け取った環境変数
+    returns:
+      type: dict[str, Any] | None
+      description: '対象のツールのときは `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "permissionDecisionReason": DECISION_REASON, "updatedInput": …}}`。対象外のツール・`tool_input` がオブジェクトでないときは None'
+    process: |-
+      1. `tool_name` が `TOOL_PREFIX` で始まり、残りが `TARGET_TOOLS` に入っていなければ None を返却する
+      2. `tool_input` が dict でなければ None を返却する（入力を変えない）
+      3. `SESSION_ENV_KEYS` のうち `env` にある名前と値を `session_env` に入れる
+      4. `_index_variable_names(env)` の名前のうち `env` にある名前と値を `session_env` に加える
+      5. `{**tool_input, SESSION_ENV_ARG: session_env}` を `updatedInput` にして、`permissionDecision: allow`・`permissionDecisionReason: DECISION_REASON` とともに返却する
+
+      標準入力が JSON として読めないときは `run_hook` が捕まえ、ログへ `unexpected` を書き込んで何も出さない（`HOOKS` の通知方は出力しない）
+    unit_tests:
+      - name: test_fill_config
+        case: 正常
+        summary: 3 つの環境変数を `session_env` に入れて許可する
+        condition: '`env` に `RULE_INJECT_CONFIG`（変数参照の無い索引を指す設定ファイル）・`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`HOME`。`tool_name` が `search_rules` の完全名、`tool_input` に `path` と別の値の `session_env`'
+        mock: なし（設定ファイルと索引は一時ファイル）
+        expected: '`permissionDecision` が `allow`、`permissionDecisionReason` が `DECISION_REASON`。`updatedInput.session_env` が 3 つのキーだけを持ち値が `env` の値、`updatedInput.path` が `tool_input` と同じ'
+      - name: test_fill_config_when_env_absent
+        case: 正常
+        summary: 無い環境変数はキーに持たない
+        condition: '`env` に `XDG_CONFIG_HOME`（設定ファイルも索引も無い一時フォルダ）だけ'
+        mock: なし
+        expected: '`updatedInput.session_env` が `XDG_CONFIG_HOME` のキーだけを持つ'
+      - name: test_fill_config_when_tool_not_targeted
+        case: 正常
+        summary: 対象外のツールには何も返却しない
+        condition: '`tool_name` が `get_server_status`・`reload_settings`・`restart_server`・`update_server` の完全名と `mcp__other__list_rules`（パラメータ展開）'
+        mock: なし
+        expected: None
+      - name: test_fill_config_when_input_not_object
+        case: 正常
+        summary: '`tool_input` がオブジェクトでなければ何も返却しない'
+        condition: '`tool_input` が文字列'
+        mock: なし
+        expected: None
+      - name: test_fill_config_when_index_has_variable
+        case: 正常
+        summary: 索引に出る変数参照の値も入れる
+        condition: '設定ファイルの `global.indexes` が、`rule: "!{RULE_ROOT}/a.md"` のエントリと `enabled: false`・`rule: "!{OFF_ROOT}/b.md"` のエントリを持つ索引を指す。`env` に `RULE_ROOT`・`OFF_ROOT`・`OTHER`'
+        mock: なし
+        expected: '`updatedInput.session_env` に `RULE_ROOT` がある。`OFF_ROOT`・`OTHER` が無い'
+      - name: test_fill_config_when_variable_unset
+        case: 正常
+        summary: セッションに無い変数参照の名前は入れない
+        condition: '索引が `rule: "!{MISSING}/a.md"` のエントリを持ち、`env` に `MISSING` が無い'
+        mock: なし
+        expected: '`updatedInput.session_env` に `MISSING` が無い'
+      - name: test_fill_config_when_settings_unreadable
+        case: 正常
+        summary: 設定ファイルが読めなくても環境変数を入れる
+        condition: '`RULE_INJECT_CONFIG` が実在しないファイルを指す'
+        mock: なし
+        expected: '`updatedInput.session_env` が `RULE_INJECT_CONFIG` を持ち、`permissionDecision` が `allow`'
+  - name: _index_variable_names
+    title: 索引の変数参照の名前
+    container: hooks/fill_config.py
+    usecase: 操作に該当するルールを検索する
+    summary: セッションの設定で読む索引の、無効でないエントリの `rule` に出る変数参照の名前を返却する
+    kind: 関数
+    scope: internal
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: フックが受け取った環境変数
+    returns:
+      type: tuple[str, ...]
+      description: 変数参照の名前。重なりを落とし、出た順に並べる
+    process: |-
+      1. `load_settings(env)` で設定を読み込む。SettingsReadError なら空のタプルを返却する
+      2. `settings.indexes` を順に `read_index(path, env)` で読み込む（ルール案内と同じ関数）。IndexReadError の索引は飛ばす
+      3. 状態が `disabled` でないエントリの `raw["rule"]` を `variable_names` に引き渡し、名前を集める
