@@ -1,0 +1,62 @@
+$ uv run pytest tests/integration/plugin/test_fill_config.py tests/integration/plugin/test_rule_guide.py tests/integration/server/test_search_rules.py -p no:cacheprovider --basetemp=/tmp/rule-inject-pr199-pytest-it
+（並列数 1。TL-2 は parallelism を持たない。/tmp/pytest-of-shuhei2441 が root の所有のため --basetemp を指定）
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-rule-guide-self-read-and-search-config/.venv/bin/python
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-rule-guide-self-read-and-search-config
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 51 items
+
+tests/integration/plugin/test_fill_config.py::test_normal PASSED         [  1%]
+tests/integration/plugin/test_fill_config.py::test_normal_when_env_absent PASSED [  3%]
+tests/integration/plugin/test_fill_config.py::test_normal_when_tool_not_targeted PASSED [  5%]
+tests/integration/plugin/test_fill_config.py::test_normal_when_input_unparsable PASSED [  7%]
+tests/integration/plugin/test_fill_config.py::test_normal_when_index_has_variable PASSED [  9%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_blocked PASSED [ 11%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_already_read PASSED [ 13%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_not_blocked PASSED [ 15%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_read_by_bash PASSED [ 17%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_mcp_tool PASSED [ 19%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_duplicate_entries PASSED [ 21%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_excluded PASSED [ 23%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_guidance_too_long PASSED [ 25%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_index_unreadable PASSED [ 27%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_record_unreadable PASSED [ 29%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_read_by_grep PASSED [ 31%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_already_guided PASSED [ 33%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_blocked_twice PASSED [ 35%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_default_index PASSED [ 37%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_indexes_empty PASSED [ 39%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_projects_matched PASSED [ 41%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_worktree_matched PASSED [ 43%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_settings_unreadable PASSED [ 45%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_rule_has_variable PASSED [ 47%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_rule_variable_unset PASSED [ 49%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_guided_record_unwritable PASSED [ 50%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_mcp_args_match PASSED [ 52%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_mcp_args_unmatched PASSED [ 54%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_mcp_filter_tree_match PASSED [ 56%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_mcp_filter_tree_negated PASSED [ 58%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_regex_path PASSED [ 60%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_regex_unreadable PASSED [ 62%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_rule_is_url PASSED [ 64%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_rule_changed_after_read PASSED [ 66%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_entry_disabled PASSED [ 68%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_disabled_and_enabled_entries PASSED [ 70%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_enabled_not_boolean PASSED [ 72%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_blocked_with_read_tool PASSED [ 74%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_not_blocked_with_read_tool PASSED [ 76%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_read_tool_mixed PASSED [ 78%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_read_tools_merged PASSED [ 80%]
+tests/integration/plugin/test_rule_guide.py::test_error_when_read_tool_invalid PASSED [ 82%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_reading_rule_itself PASSED [ 84%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_reading_rules_matching_each_other PASSED [ 86%]
+tests/integration/plugin/test_rule_guide.py::test_normal_when_reading_rule_itself_by_bash PASSED [ 88%]
+tests/integration/server/test_search_rules.py::test_normal_when_searched_by_path PASSED [ 90%]
+tests/integration/server/test_search_rules.py::test_normal_when_searched_by_tool PASSED [ 92%]
+tests/integration/server/test_search_rules.py::test_normal_when_no_rule_matched PASSED [ 94%]
+tests/integration/server/test_search_rules.py::test_error_when_both_path_and_tool PASSED [ 96%]
+tests/integration/server/test_search_rules.py::test_error_when_settings_unreadable PASSED [ 98%]
+tests/integration/server/test_search_rules.py::test_normal_when_session_config_specified PASSED [100%]
+
+============================== 51 passed in 3.93s ==============================

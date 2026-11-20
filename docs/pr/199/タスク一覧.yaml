@@ -1,0 +1,84 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存リポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 設計書が既にあるため対象外
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めを依頼する Issue ではない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: 既存の判定の条件と設定の受け渡しの修正で、未検証の技術機構に依存しない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: 複数のユースケースをまたぐ流れは変わらない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: 単一ユースケース設計
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T13:39:54.345764+00:00'
+  - process: モック作成
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: データ設計
+    status: skipped
+    reason: 既読の記録・設定ファイル・索引の構造は変わらない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: インターフェース定義設計
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T13:59:37.064459+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-20T13:31:55.275092+00:00'
+  - process: モジュール構成設計
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:29:51.601607+00:00'
+  - process: ドキュメント修正
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:39:06.269010+00:00'
+  - process: 単体テスト作成
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:45:45.609167+00:00'
+  - process: 実装
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:50:24.948239+00:00'
+  - process: 結合テスト作成
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:57:03.804827+00:00'

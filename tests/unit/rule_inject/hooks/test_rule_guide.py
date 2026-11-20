@@ -473,3 +473,125 @@ def test_handle_when_read_tool_invalid(
     assert "permissionDecision" not in output
     assert "索引を読めませんでした" in output["additionalContext"]
     assert read_daily_log()[0]["operation"] == "read_index"
+
+
+def test_handle_when_reading_rule_itself(
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """ルールのファイル自身を読み込む操作を止めない（正常系）。"""
+    # 準備
+    rule = rule_file("a.md")
+    env = guide_env(index_text(str(rule), paths=["**/*.md"], on=["read"]))
+    payload = hook_payload("PreToolUse", tool_name="Read", tool_input={"file_path": str(rule)})
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is None
+
+
+def test_handle_when_reading_rules_matching_each_other(
+    guide_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """互いのファイルにヒットするルールを止めずに案内する（正常系）。"""
+    # 準備
+    rule_a = rule_file("a.md")
+    rule_b = rule_file("b.md")
+    env = guide_env(
+        "rules:\n"
+        f"  - rule: {rule_a}\n"
+        "    paths: ['**/b.md']\n"
+        "    on: [read]\n"
+        f"  - rule: {rule_b}\n"
+        "    paths: ['**/a.md']\n"
+        "    on: [read]\n"
+    )
+    payload = hook_payload("PreToolUse", tool_name="Read", tool_input={"file_path": str(rule_a)})
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is not None
+    output = result["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert f"- {rule_b}" in output["additionalContext"]
+    assert f"- {rule_a}" not in output["additionalContext"]
+
+
+def test_handle_when_reading_rule_and_other_file(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """ルールでないファイルも読み込むときは自身だけを除いて止める（正常系）。"""
+    # 準備
+    rule_a = rule_file("a.md")
+    rule_r = rule_file("r.md")
+    target = tmp_path / "c.py"
+    target.write_text("print()\n", encoding="utf-8")
+    env = guide_env(
+        "rules:\n"
+        f"  - rule: {rule_a}\n"
+        "    paths: ['**/a.md']\n"
+        "    on: [read]\n"
+        f"  - rule: {rule_r}\n"
+        "    paths: ['**/c.py']\n"
+        "    on: [read]\n"
+    )
+    payload = hook_payload(
+        "PreToolUse", tool_name="Bash", tool_input={"command": f"cat {rule_a} {target}"}
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is not None
+    output = result["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert f"- {rule_r}" in output["permissionDecisionReason"]
+    assert f"- {rule_a}" not in output["permissionDecisionReason"]
+
+
+def test_handle_when_reading_rule_by_symlink(
+    tmp_path: Path,
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """シンボリックリンクを解いてルールの場所と比べる（正常系）。"""
+    # 準備
+    rule = rule_file("a.md")
+    link = tmp_path / "link.md"
+    link.symlink_to(rule)
+    env = guide_env(index_text(str(rule), paths=["**/*.md"], on=["read"]))
+    payload = hook_payload("PreToolUse", tool_name="Read", tool_input={"file_path": str(link)})
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is None
+
+
+def test_handle_when_writing_rule_itself(
+    guide_env: Callable[[str], dict[str, str]],
+    index_text: Callable[..., str],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """ルールのファイル自身への書き込みは今までどおり止める（正常系）。"""
+    # 準備
+    rule = rule_file("a.md")
+    env = guide_env(index_text(str(rule), paths=["**/*.md"], on=["write"]))
+    payload = hook_payload(
+        "PreToolUse", tool_name="Write", tool_input={"file_path": str(rule), "content": ""}
+    )
+    # 実行
+    result = guide_rules(payload, env)
+    # 検証
+    assert result is not None
+    output = result["hookSpecificOutput"]
+    assert output["permissionDecision"] == "deny"
+    assert str(rule) in output["permissionDecisionReason"]

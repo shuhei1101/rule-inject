@@ -1,0 +1,7 @@
+confirmations:
+  - topic: 索引の変数参照（`!{名前}`）をサーバーのツールでもセッションの環境変数で展開するか
+    decision: この PR に含める。フック `fill_config` が索引の `rule` に出る `!{名前}` の値を `session_env` に加える（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/199#discussion_r4643448764

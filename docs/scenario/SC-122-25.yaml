@@ -92,7 +92,7 @@ trigger: Claude Code が、常駐の MCP サーバーの編集のツールで索
 preconditions:
   - プラグインが Claude Code に読み込まれている
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
-  - フックとサーバーが同じ設定ファイルを読み、設定ファイルで指した場所に索引が配置されている
+  - サーバーは、ツールを呼んだセッションのフックと同じ設定ファイルを読み、設定ファイルで指した場所に索引が配置されている
 success_guarantee: 編集のツールが書き込んだエントリは、サーバーを再起動せずに、検索のツールと次のフックの呼び出しの両方で同じヒットの仕方をする。
 minimal_guarantee: 書き込んだ後の索引がチェックに通らないときは索引を書き換えず、フックの案内は編集の前のまま変わらない。
 test_file: tests/e2e/複合ユースケース/test_fix_index_entry_then_check_guidance.py

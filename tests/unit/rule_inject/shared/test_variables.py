@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from rule_inject.shared.variables import expand_variables
+from rule_inject.shared.variables import expand_variables, variable_names
 
 
 def test_expand_variables() -> None:
@@ -47,3 +47,19 @@ def test_expand_variables_when_value_has_reference() -> None:
     result = expand_variables("!{X}", {"X": "!{Y}", "Y": "2"})
     # 検証
     assert result.text == "!{Y}"
+
+
+def test_variable_names() -> None:
+    """名前を出た順に重なりを落として返却する（正常系）。"""
+    # 実行
+    result = variable_names("!{B} x !{A} !{B} !{1X} {C}")
+    # 検証
+    assert result == ("B", "A")
+
+
+def test_variable_names_when_none() -> None:
+    """変数参照が無ければ空（正常系）。"""
+    # 実行
+    result = variable_names("/a/b.md")
+    # 検証
+    assert result == ()

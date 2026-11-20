@@ -74,7 +74,7 @@ functions:
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
       2. `MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)` を作る
-      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` が `destructiveHint: true` で、全て `openWorldHint: false`
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` はツールの引数に `session_env: dict[str, str] | None = None` を持ち、`_session_environment(env, session_env)` の環境変数を `env` として引き渡す（`write_index_entry` の `check_change` も、その環境変数で `partial(check_change, env=..., validator=validator)` を作って引き渡す）。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` が `destructiveHint: true` で、全て `openWorldHint: false`
       4. `get_server_status` と `restart_server` を除くツールを `control.guard` で包んでから登録する（再起動の途中は断り、処理中の数を数える）。`restart_server` は `begin_restart` が自分で断る
       5. サーバーを返却する
     unit_tests:
@@ -97,4 +97,55 @@ functions:
         condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
         mock: なし
         expected: サーバーの `instructions` が `SERVER_INSTRUCTIONS` で、4,096 字以内で、登録した全てのツールの名前と `Read`・`grep` を含む
+      - name: test_build_server_session_env
+        case: 正常
+        summary: 設定を使用するツールだけが `session_env` を引数に持つ
+        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
+        mock: なし
+        expected: '`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` の入力の Schema に `session_env`（必須でない）があり、`get_server_status`・`reload_settings`・`restart_server`・`update_server` には無い'
+      - name: test_build_server_when_session_env
+        case: 正常
+        summary: '`session_env` の設定ファイルで照合する'
+        condition: サーバーの `env` の `RULE_INJECT_CONFIG` が索引の無い設定ファイル、`session_env` の `RULE_INJECT_CONFIG` が索引を 1 つ指す設定ファイル。`call_tool` で `list_rules` を呼ぶ
+        mock: なし（設定ファイルと索引は一時ファイル）
+        expected: '`config_path` が `session_env` の設定ファイル、`indexes` がその索引'
+  - name: _session_environment
+    title: セッションの環境変数の重ね合わせ
+    container: server/app.py
+    usecase: 操作に該当するルールを検索する
+    summary: サーバーの環境変数から `SESSION_ENV_KEYS` を除き、`session_env` を重ねた環境変数を返却する
+    kind: 関数
+    scope: internal
+    args:
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: サーバーを起動した環境変数
+      - name: session_env
+        type: dict[str, str] | None
+        required: true
+        passing: positional
+        description: ツールの引数 `session_env`
+    returns:
+      type: Mapping[str, str]
+      description: ツールが設定・索引・記録フォルダを決める環境変数
+    process: |-
+      1. `session_env` が None なら `env` をそのまま返却する
+      2. `env` から `SESSION_ENV_KEYS` の名前を除いた dict に `session_env` を重ねて返却する（`session_env` の変数参照の名前も重ねる）
+    refs:
+      - IF-122-7#constraints[設定ファイルの決め方]
+    unit_tests:
+      - name: test_session_environment
+        case: 正常
+        summary: 3 つの名前を除いて `session_env` を重ねる
+        condition: '`env` に `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`HOME`、`session_env` に `XDG_CONFIG_HOME`（別の値）と `RULE_ROOT`'
+        mock: なし
+        expected: '`HOME`・`session_env` の `XDG_CONFIG_HOME`・`RULE_ROOT` の 3 つだけを持つ'
+      - name: test_session_environment_when_absent
+        case: 正常
+        summary: '`session_env` が無ければサーバーの環境変数を使用する'
+        condition: '`session_env` が None'
+        mock: なし
+        expected: '`env` と同じ'
 lead: MCP サーバーを組み立てるコンポジションルートとツール・接続時の instructions の登録を定め、ツールや instructions を追加するときや依存を差し替えるときに参照する。

@@ -1235,6 +1235,111 @@ flows:
       - '`additionalContext` に索引の場所と、`read_tool` の `tool` が無い旨が載っている'
       - ログに `read_index` の行がある
     test: test_error_when_read_tool_invalid
+  - name: 正常系（ルールのファイル自身を読む）
+    summary: 読む対象がルールのファイル自身なら、そのルールが未読でも止めない
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
+      - name: 索引
+        description: '`paths: ["**/rules/*.md"]`・`on: [read]` のエントリを 1 つ持ち、`rule` が `rules/` の下のファイルを指す'
+        notes: '`RULE_INJECT_CONFIG` で指した設定ファイルの `global.indexes` で指す'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` はエントリの `rule` のパス'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（Read・ルールのパス）
+        H->>IDX: 読む
+        H->>H: 対象のパスに該当するエントリを選ぶ
+        H->>ST: 既読を読む（未読）
+        H->>H: 対象が読み込んだ索引のルールの場所のため止めず、対象自身のルールを除く
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_reading_rule_itself
+  - name: 正常系（互いのファイルに該当するルールを読む）
+    summary: 読む対象がルールの場所なら、ほかに該当した未読のルールは止めない案内にする
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: '`paths: ["**/rules/*.md"]`・`on: [read]` のエントリを 2 つ持ち、`rule` がそれぞれ `rules/a.md`・`rules/b.md` を指す'
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Read`、`tool_input.file_path` は `rules/a.md`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant GD as 案内済みの記録
+
+        CC->>H: 標準入力（Read・rules/a.md）
+        H->>IDX: 読む
+        H->>ST: 既読を読む（どちらも未読）
+        H->>H: 対象がルールの場所のため止めず、a.md を除く
+        H->>GD: b.md を追記する
+        H-->>CC: additionalContext（b.md の案内）<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`permissionDecision` が無い'
+      - '`additionalContext` に `rules/b.md` が載り、`rules/a.md` が載っていない'
+      - 案内済みの記録に `rules/b.md` が 1 行ある
+    test: test_normal_when_reading_rules_matching_each_other
+  - name: 正常系（Bashでルールのファイル自身を読む）
+    summary: 読むコマンドの引数が全てルールの場所なら止めない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 索引
+        description: ルールのファイル自身を読むフローと同じ
+      - name: 既読の記録
+        description: 空
+      - name: 入力
+        description: '`tool_name: Bash`、`tool_input.command` は `cat {エントリの rule のパス}`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ルール案内
+        participant IDX as 索引
+        participant ST as 既読の記録
+
+        CC->>H: 標準入力（Bash・cat ルールのパス）
+        H->>H: 読むコマンドの引数からパスを取り出す
+        H->>IDX: 読む
+        H->>ST: 既読を読む（未読）
+        H->>H: 読む対象が全てルールの場所のため止めず、対象自身のルールを除く
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_reading_rule_itself_by_bash
 lead: 操作の対象にヒットする未読のルールを、操作を止めるか止めずに案内するフックの入出力を定め、ルール案内の判定や文面を修正するときに参照する。
 idempotent: false
 side_effects: 止めない案内に記載したルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -1397,6 +1502,9 @@ constraints:
   - item: 参照するツールの書式
     constraint: '`read_tool` はオブジェクトで、`tool` に `mcp__` で始まる文字列を持ち、`args`・`optional_args` を持つときは JSON のオブジェクトを表す文字列にする（標準ライブラリの `json` で読む）。許す値の外の値のエントリを持つ索引は、`enabled` が真偽値でないときと同じく読めない索引として扱う'
     notes: '`read_tool` は案内と既読にだけ使用し、操作を止めるかの照合（`paths`・`tools`・`args`）には使用しない'
+  - item: ルールのファイルを読む操作
+    constraint: 操作の種別が `read` で、読む対象のパス（シンボリックリンクを解いた後）が全て、読み込んだ索引の有効なエントリのどれかの `rule` の場所（解いた後）と同じときは、操作を止めない。読む対象と同じ場所のルールは案内に記載せず、ほかに該当した未読のルールは止めない案内（`additionalContext`）に記載する。読む対象にルールの場所でないパスが 1 つでもあるときは、読む対象と同じ場所のルールだけを除いて今までどおり照合する
+    notes: 読んだ後に既読の記録がそのルールを既読にする。2 つのルールが互いのファイルに該当しても、どちらも読める
 identifier: rule_guide
 test_file: tests/integration/plugin/test_rule_guide.py
 notes:

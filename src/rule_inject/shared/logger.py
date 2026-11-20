@@ -32,6 +32,7 @@ class Component(StrEnum):
     SWEEP_READ = "sweep_read"
     SEARCH_GUIDE = "search_guide"
     START_SERVER = "start_server"
+    FILL_CONFIG = "fill_config"
 
 
 class LogOperation(StrEnum):

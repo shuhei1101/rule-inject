@@ -16,7 +16,13 @@ from rule_inject.features.guidance import (
     build_failure_notice,
     build_guidance,
 )
-from rule_inject.features.index import load_indexes, match_path, match_tool, merge_matched
+from rule_inject.features.index import (
+    load_indexes,
+    match_path,
+    match_tool,
+    merge_matched,
+    rule_locations,
+)
 from rule_inject.features.index.types import IndexEntry, MatchedRule, Operation
 from rule_inject.features.record import (
     append_guided,
@@ -74,10 +80,31 @@ def _match(payload: Mapping[str, Any], entries: Sequence[IndexEntry]) -> list[Ma
     if tool_name not in TOOL_OPERATIONS:
         return []
     operation = TOOL_OPERATIONS[tool_name]
+    targets = _target_paths(payload, tool_name)
     matches: list[MatchedRule] = []
-    for path in _target_paths(payload, tool_name):
+    for path in targets:
         matches.extend(match_path(entries, path, operation))
-    return merge_matched(matches)
+    merged = merge_matched(matches)
+    # 読む操作は、ルールのファイル自身を読むことをそのルールの未読で止めない
+    if operation == "read" and targets:
+        return _exempt_rule_reads(merged, targets, entries)
+    return merged
+
+
+def _exempt_rule_reads(
+    matched: Sequence[MatchedRule], targets: Sequence[str], entries: Sequence[IndexEntry]
+) -> list[MatchedRule]:
+    """読む対象と同じ場所のルールを除き、対象が全てルールのファイルなら残りを止めない案内にする。"""
+    # シンボリックリンクを解いた場所で比べる
+    real_targets = {os.path.realpath(target) for target in targets}
+    real_locations = {os.path.realpath(location) for location in rule_locations(entries)}
+    # 読む対象と同じ場所のルールは案内しない（読んだ後に既読の記録が既読にする）
+    remaining = [rule for rule in matched if os.path.realpath(rule.location) not in real_targets]
+    # 対象が全てルールのファイルのとき: ほかにヒットしたルールは止めずに案内する（互いのファイルにヒットするルールも読める）
+    if real_targets <= real_locations:
+        return [dataclasses.replace(rule, blocking=False) for rule in remaining]
+    # ルールでないファイルも読むとき: 自身を除いた残りを今までどおり照合した結果のまま返却する
+    return remaining
 
 
 def _log_record_failure(

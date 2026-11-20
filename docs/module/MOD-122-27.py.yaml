@@ -47,7 +47,7 @@ functions:
     process: |-
       1. `load_settings(env)` で設定を読み込む。SettingsReadError なら `log_settings_failure` でログ（`read_settings`）へ書き込み、`build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], ログの場所)` を additionalContext にして返却する（照合しない）。以降の記録フォルダは `settings.state_dir`、ログのフォルダは `settings.log_dir`
       2. `load_indexes(settings.indexes, env)` で索引を読み込む。読み込めない索引とスキップしたエントリはログ（`read_index`）と通知の文に回す
-      3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）。パスごとの `match_path` の結果は `merge_matched` でルールの場所ごとに 1 件へまとめる（`read_tools` も合わせる）
+      3. ツール名から操作の種別と対象を決める（`mcp__*` は `match_tool(entries, tool_name, tool_input)`、Bash は `extract_read_paths(READ_COMMANDS)`、Grep はファイルを指す `path`、ほかは `file_path` / `notebook_path`）。パスごとの `match_path` の結果は `merge_matched` でルールの場所ごとに 1 件へまとめる（`read_tools` も合わせる）。操作の種別が `read` で対象のパスがあれば、`_exempt_rule_reads` に引き渡す
       4. ヒットしたルールから、`read_record` の既読の行で `current_read_locations` が返却する場所を除く（本文が変わったルールは未読のまま残る）。記録が読み込めなければログ（`read_record`）と通知の文に回し、止めない（`dataclasses.replace(rule, blocking=False)` で `read_tools` は保つ）
       5. 止めるルールがあれば deny と `build_guidance` を返却する（案内済みにはしない）
       6. 止めるルールが無ければ、`read_guided` の案内済みを除く。読み込めなければ未案内として扱い、ログ（`read_record`）と通知の文に回す
@@ -150,4 +150,67 @@ functions:
         condition: '`read_tool` が `tool` を持たないエントリだけの索引と Write'
         mock: なし
         expected: deny を出さず、additionalContext に索引の場所と理由、ログに `read_index`
+      - name: test_handle_when_reading_rule_itself
+        case: 正常
+        summary: ルールのファイル自身を読み込む操作を止めない
+        condition: '`paths: ["**/*.md"]`・`on: [read]` で、ルール `a.md` 自身がヒットするエントリと、`a.md` の Read、既読なし'
+        mock: なし（索引と記録フォルダは一時ファイル）
+        expected: None
+      - name: test_handle_when_reading_rules_matching_each_other
+        case: 正常
+        summary: 互いのファイルにヒットするルールを止めずに案内する
+        condition: 'ルール `a.md` が `b.md` に、ルール `b.md` が `a.md` にヒットするエントリ（どちらも `on: [read]`）と、`a.md` の Read、既読なし'
+        mock: なし
+        expected: deny を出さず、additionalContext に `b.md` があり `a.md` が無い
+      - name: test_handle_when_reading_rule_and_other_file
+        case: 正常
+        summary: ルールでないファイルも読み込むときは自身だけを除いて止める
+        condition: '`cat a.md c.py`（どちらも実在）、`a.md` 自身にヒットするエントリと、ルール `r.md` が `c.py` にヒットするエントリ（どちらも `on: [read]`）'
+        mock: なし
+        expected: deny の理由に `r.md` があり `a.md` が無い
+      - name: test_handle_when_reading_rule_by_symlink
+        case: 正常
+        summary: シンボリックリンクを解いてルールの場所と比べる
+        condition: 'ルール `a.md` 自身にヒットするエントリ（`on: [read]`）と、`a.md` を指すシンボリックリンクの Read'
+        mock: なし
+        expected: None
+      - name: test_handle_when_writing_rule_itself
+        case: 正常
+        summary: ルールのファイル自身への書き込みは今までどおり止める
+        condition: '`on: [write]` で、ルール `a.md` 自身がヒットするエントリと、`a.md` の Write、既読なし'
+        mock: なし
+        expected: permissionDecision が deny、理由に `a.md`
+  - name: _exempt_rule_reads
+    title: ルールのファイルを読み込む操作の除外
+    container: hooks/rule_guide.py
+    usecase: 未読のルールの案内を受ける
+    summary: 読み込む対象と同じ場所のルールを除き、対象が全てルールの場所なら残りを止めない案内にする
+    kind: 関数
+    scope: internal
+    args:
+      - name: matched
+        type: Sequence[MatchedRule]
+        required: true
+        passing: positional
+        description: 照合でヒットしたルール
+      - name: targets
+        type: Sequence[str]
+        required: true
+        passing: positional
+        description: 読み込む対象の絶対パス
+      - name: entries
+        type: Sequence[IndexEntry]
+        required: true
+        passing: positional
+        description: 読み込んだ索引の有効なエントリ
+    returns:
+      type: list[MatchedRule]
+      description: 読み込む対象と同じ場所のルールを除いたルール
+    process: |-
+      1. `targets` と `rule_locations(entries)` を `os.path.realpath` で解く
+      2. `matched` から、場所（解いた後）が解いた `targets` のどれかと同じルールを除く
+      3. 解いた `targets` が全て解いたルールの場所に入っていれば、残りを `dataclasses.replace(rule, blocking=False)` にする（`read_tools` は保つ）
+      4. 残りを返却する
+    refs:
+      - IF-122-14#constraints[ルールのファイルを読む操作]
 lead: ツールの呼び出しの前に操作の対象にヒットする未読のルールを案内するフックの処理を定め、ルール案内を修正するときに参照する。

@@ -122,7 +122,7 @@ stakeholders:
 trigger: Claude Code が既読の記録の確認のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
-  - フックとサーバーが同じ設定ファイルを読む
+  - サーバーは、ツールを呼んだセッションのフックと同じ設定ファイルを読む
 success_guarantee: 既読のルールごとに、今の本文が既読にした時点と同じかと、既読の履歴に残る読んだ方法を返却する。本文が変わったルールは、案内では未読として扱われることが分かる。
 minimal_guarantee: 既読の記録・案内済みの記録・既読の履歴を書き換えない。
 test_file: tests/e2e/単一ユースケース/test_view_read_records.py

@@ -24,7 +24,12 @@
 - 再起動か更新の再起動を始めた後で、まだ待ち受けを閉じていない（`get_server_status` だけは受け付ける）
 
 読む索引と `rule` の変数参照は、フックと同じ規則で決まる。
-変数参照は、サーバーを起動した環境の環境変数で展開する。
+管理のツール以外は、プラグインの `PreToolUse` フックが、呼んだセッションの `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` と、索引の `rule` に出る変数参照の値を引数 `session_env` に入れる。
+サーバーは、自分の環境変数からこの 3 つを除いて `session_env` を重ねた環境変数で、設定ファイル・既定の配置場所を決め、変数参照を展開する。
+`session_env` が無い呼び出しは、サーバーを起動した環境の環境変数で決める。
+
+このフックは呼び出しを `allow` で許可するため、`write_index_entry`・`delete_index_entry`・`delete_read_records` の既定の確認は出ない。
+実行の前に確認したいときは、Claude Code の設定の `permissions.ask` にツール名を記載する。
 
 ## list_rules
 

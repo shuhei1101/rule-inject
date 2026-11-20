@@ -62,6 +62,8 @@ items:
     summary: 圧縮の後の通知（SessionStart）
   - page: MOD-122-30.py.yaml
     summary: サーバーの起動の補助（SessionStart）
+  - page: MOD-122-63.py.yaml
+    summary: ツールの引数への設定の記入（PreToolUse）
   - page: MOD-122-28.py.yaml
     summary: プラグイン / フック / run.py（プラグインの直下）
   - page: MOD-122-15.py.yaml

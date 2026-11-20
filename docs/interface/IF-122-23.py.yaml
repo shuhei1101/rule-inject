@@ -1,0 +1,210 @@
+id: IF-122-23
+visibility: internal
+title: ツールの引数への設定の記入
+lead: rule-inject の MCP のツールの呼び出しに、セッションの設定ファイルの場所を入れるフックの入出力を定め、ツールの引数への設定の記入を修正するときに参照する。
+entry:
+  kind: trigger
+  value: '`PreToolUse` フック（matcher `mcp__plugin_rule-inject_rule-inject__.*`、timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: '`tool_input` にセッションの設定を決める環境変数を `session_env` として入れ、許可する'
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
+      - name: 環境変数
+        description: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` を設定し、関係の無い別の環境変数も 1 つ設定する'
+      - name: 入力
+        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__search_rules`、`tool_input` に別の `session_env` を入れる'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H-->>CC: permissionDecision allow・updatedInput<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`updatedInput.session_env` が `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` の 3 つのキーだけを持ち、値が環境変数の値'
+      - '`updatedInput` の他のキーが `tool_input` と同じ'
+      - '`permissionDecision` が `allow`'
+      - 終了コードが `0`
+    test: test_normal
+  - name: 正常系（環境変数が無い）
+    summary: セッションに無い環境変数は `session_env` のキーに持たない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 環境変数
+        description: '`XDG_CONFIG_HOME` だけを設定し、`RULE_INJECT_CONFIG`・`XDG_STATE_HOME` を設定しない'
+      - name: 入力
+        description: 正常系と同じ
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H-->>CC: permissionDecision allow・updatedInput（session_env は XDG_CONFIG_HOME だけ）<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`updatedInput.session_env` が `XDG_CONFIG_HOME` のキーだけを持つ'
+      - 終了コードが `0`
+    test: test_normal_when_env_absent
+  - name: 正常系（対象外のツール）
+    summary: 設定を引数に取らないツールには何も出さない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__get_server_status`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_tool_not_targeted
+  - name: 正常系（入力が読めない）
+    summary: 標準入力が JSON として読めなければ何も出さない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: JSON でない文字列
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（壊れた JSON）
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_input_unparsable
+  - name: 正常系（索引に変数参照がある）
+    summary: 索引の `rule` に出る `!{名前}` の値も `session_env` に入れる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 設定ファイル
+        description: '`global.indexes` で索引を 1 つ指す'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: '`rule: "!{RULE_ROOT}/a.md"` のエントリを 1 つ持つ'
+      - name: 環境変数
+        description: '`RULE_ROOT` と、索引に出ない別の環境変数を設定する'
+      - name: 入力
+        description: 正常系と同じ
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+        participant IDX as 索引
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H->>IDX: ルール案内と同じ読み取りで読む
+        IDX-->>H: rule に出る変数参照の名前
+        H-->>CC: permissionDecision allow・updatedInput（session_env に RULE_ROOT）<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`updatedInput.session_env` に `RULE_ROOT` とその値がある'
+      - '`updatedInput.session_env` に索引に出ない環境変数が無い'
+      - 終了コードが `0`
+    test: test_normal_when_index_has_variable
+identifier: fill_config
+idempotent: true
+side_effects: なし
+request:
+  - name: '`tool_name`'
+    type: str
+    required: true
+    description: 呼ばれるツールの名前
+    constraints: '`mcp__plugin_rule-inject_rule-inject__` で始まる完全名'
+  - name: '`tool_input`'
+    type: dict
+    required: true
+    description: ツールへの入力
+  - name: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME`'
+    type: str
+    required: false
+    default: なし（`session_env` にそのキーを持たない）
+    description: セッションの設定ファイルと既定の配置場所を決める環境変数
+    notes: フックが受け取った環境変数
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['PreToolUse']
+    description: フックの種類
+    notes: 対象のツールのときだけ出力する
+  - name: '`hookSpecificOutput.permissionDecision`'
+    type: Literal['allow']
+    description: 常に `allow`
+  - name: '`hookSpecificOutput.permissionDecisionReason`'
+    type: str
+    description: 常に `rule-inject のツールの入力にセッションの設定を入れた`
+  - name: '`hookSpecificOutput.updatedInput`'
+    type: dict
+    description: '`tool_input` に `session_env`（セッションにある `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` の名前と値）を上書きで入れたもの'
+exceptions:
+  - name: なし（正常終了）
+    condition: 入力を書き換えて返した、または対象外のツールで何も出さなかった
+    notes: 終了コード 0 で終える
+  - name: なし（入力が読めない）
+    condition: 標準入力が JSON として読めない、または `tool_input` がオブジェクトでない
+    notes: 何も出さず終了コード 0 で終え、入力を変えない
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも該当しない例外
+    notes: 最上位で捕まえ、何も出さずにログへ `unexpected` を書き込んで終了コード 0 で終える
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: NFR-122-1#requirements[フックの実行時間]
+  - item: 当てるツール
+    constraint: '`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`。サーバー自身を扱うツール（`get_server_status`・`reload_settings`・`restart_server`・`update_server`）には当てない'
+    notes: サーバー自身を扱うツールは、サーバーを起動した環境の設定を確かめるため
+  - item: 入れる環境変数
+    constraint: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` と、ツールの引数 `project_dir`（無ければセッションの `CLAUDE_PROJECT_DIR`）をプロジェクトとしてセッションの設定で読み込む索引のエントリの `rule` に出る変数参照（`!{名前}`）の名前のうち、セッションにあるものだけを入れる。ほかの環境変数は入れない'
+    notes: 設定ファイル・既定の索引・既定の記録のフォルダの場所と、ルールの場所を決めるのがこれらの値。索引はルール案内と同じ読み取りで読む。引数は会話の記録に残るため、関係の無い値を出さない（[変数参照の展開の確認ログ](https://github.com/shuhei1101/rule-inject/pull/199#discussion_r4643448764)）
+  - item: 上書き
+    constraint: Claude Code が入れた `session_env` はフックの値で上書きする
+    notes: フックとツールの判定を同じ設定ファイルにそろえるため
+  - item: 許可の判定
+    constraint: 当てるツールの全てに `permissionDecision` の `allow` を返す。設定の deny・ask のルールはフックの返却によらず評価されるが、書き込み・削除のツール（`write_index_entry`・`delete_index_entry`・`delete_read_records`）の既定の確認は出なくなる。ルール案内が同じ呼び出しを止めるときは、Claude Code が `deny` を優先する
+    notes: auto モードでは、`permissionDecision` なしで `updatedInput` を返すと書き換えた呼び出しが拒否されうる（https://code.claude.com/docs/en/hooks）。書き込み・削除を確認してから実行したい利用者は、設定に ask のルールを置く
+  - item: 言語
+    constraint: Python 3 の標準ライブラリだけ
+test_file: tests/integration/plugin/test_fill_config.py
+refs:
+  - SC-122-12#
+  - IF-122-8#

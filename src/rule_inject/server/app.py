@@ -15,6 +15,7 @@ from rule_inject.server import admin_tools, check_tools, record_tools, tools
 from rule_inject.server.clone import RunCommand, run_command
 from rule_inject.server.control import ServerControl
 from rule_inject.server.types import ResponseFormat
+from rule_inject.shared.settings import SESSION_ENV_KEYS
 
 # MCPServer の名前
 SERVER_NAME = "rule-inject"
@@ -50,6 +51,18 @@ CURSOR_FIELD = Field(pattern=tools.CURSOR_PATTERN)
 POSITION_FIELD = Field(ge=0)
 
 
+def _session_environment(
+    env: Mapping[str, str], session_env: dict[str, str] | None
+) -> Mapping[str, str]:
+    """サーバーの環境変数から `SESSION_ENV_KEYS` を除き、ツールを呼んだセッションの `session_env` を重ねる。"""
+    # フックを通らない呼び出しは、サーバーを起動した環境の環境変数で決める
+    if session_env is None:
+        return env
+    # セッションに無い設定の環境変数をサーバーの値で補わないよう、3 つを除いてから重ねる（変数参照の名前も重ねる）
+    base = {key: value for key, value in env.items() if key not in SESSION_ENV_KEYS}
+    return {**base, **session_env}
+
+
 def build_server(
     env: Mapping[str, str],
     *,
@@ -62,20 +75,24 @@ def build_server(
     """依存を作ってツールへ引き渡し、11 のツールを登録した `MCPServer` を返却する。"""
     validator = load_validator()
     locks = IndexLocks()
-    check = partial(check_change, env=env, validator=validator)
     server = MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
 
-    # 依存（env・validator・locks・check_change・scan_time_limit・dev_docs_timeout・control・clone・run_command）を閉じ込め、引数をツールの引数だけにした関数を登録する
+    # 依存（env・validator・locks・scan_time_limit・dev_docs_timeout・control・clone・run_command）を閉じ込め、引数をツールの引数だけにした関数を登録する
     # （partial で引き渡すと、依存の引数がツールの引数の Schema に残るため）
     def list_rules(
         project_dir: str,
         limit: Annotated[int, LIST_LIMIT_FIELD] = tools.DEFAULT_LIST_LIMIT,
         cursor: Annotated[str | None, CURSOR_FIELD] = None,
         format: ResponseFormat = "markdown",
+        session_env: dict[str, str] | None = None,
     ) -> CallToolResult:
         """プロジェクトで有効なルール（読む索引とエントリ）と、読めなかった索引・読み飛ばしたエントリ・無効のエントリを返却する。"""
         return tools.list_rules(
-            project_dir=project_dir, limit=limit, cursor=cursor, format=format, env=env
+            project_dir=project_dir,
+            limit=limit,
+            cursor=cursor,
+            format=format,
+            env=_session_environment(env, session_env),
         )
 
     def search_rules(
@@ -85,6 +102,7 @@ def build_server(
         tool_name: str | None = None,
         arguments: dict[str, Any] | None = None,
         format: ResponseFormat = "markdown",
+        session_env: dict[str, str] | None = None,
     ) -> CallToolResult:
         """ファイルのパス（operation とともに）か MCP のツールの呼び出し（tool_name と arguments）に該当するルールと、未読のときに操作を止めるかを返却する。"""
         return tools.search_rules(
@@ -94,7 +112,7 @@ def build_server(
             tool_name=tool_name,
             arguments=arguments,
             format=format,
-            env=env,
+            env=_session_environment(env, session_env),
         )
 
     async def check_indexes(
@@ -102,6 +120,7 @@ def build_server(
         format: ResponseFormat = "markdown",
         include_global: bool = False,
         cursor: str | None = None,
+        session_env: dict[str, str] | None = None,
     ) -> CallToolResult:
         """プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも該当しないエントリが無いか・タグのパターンが project-index の使用中のどのタグにも該当しないエントリが無いかで確認する。include_global でユーザー全体の索引の paths の該当しないエントリも確認し、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に引き渡して再度呼び出す。project-index に届かないときはタグの確認だけを飛ばし、tag_check に理由を返却する。"""
         return await check_tools.check_indexes(
@@ -109,7 +128,7 @@ def build_server(
             format=format,
             include_global=include_global,
             cursor=cursor,
-            env=env,
+            env=_session_environment(env, session_env),
             validator=validator,
             scan_time_limit=scan_time_limit,
             dev_docs_timeout=dev_docs_timeout,
@@ -123,8 +142,10 @@ def build_server(
         expected_rev: str | None = None,
         remove_keys: list[str] | None = None,
         dry_run: bool = False,
+        session_env: dict[str, str] | None = None,
     ) -> CallToolResult:
         """設定ファイルで読む索引に、エントリを末尾へ新規作成する（position なし）か、位置で指したエントリのキーを書き換える（position と expected_rev）。書き込んだ後の索引に新しい問題が出るときは書き込まない。"""
+        session = _session_environment(env, session_env)
         return tools.write_index_entry(
             project_dir=project_dir,
             index=index,
@@ -133,9 +154,9 @@ def build_server(
             expected_rev=expected_rev,
             remove_keys=remove_keys,
             dry_run=dry_run,
-            env=env,
+            env=session,
             locks=locks,
-            check_change=check,
+            check_change=partial(check_change, env=session, validator=validator),
         )
 
     def delete_index_entry(
@@ -144,6 +165,7 @@ def build_server(
         position: Annotated[int, POSITION_FIELD],
         expected_rev: str,
         dry_run: bool = False,
+        session_env: dict[str, str] | None = None,
     ) -> CallToolResult:
         """設定ファイルで読む索引から、位置と expected_rev で指したエントリを削除する。"""
         return tools.delete_index_entry(
@@ -152,7 +174,7 @@ def build_server(
             position=position,
             expected_rev=expected_rev,
             dry_run=dry_run,
-            env=env,
+            env=_session_environment(env, session_env),
             locks=locks,
         )
 
@@ -161,15 +183,24 @@ def build_server(
         limit: Annotated[int, LIST_LIMIT_FIELD] = tools.DEFAULT_LIST_LIMIT,
         cursor: Annotated[str | None, CURSOR_FIELD] = None,
         format: ResponseFormat = "markdown",
+        session_env: dict[str, str] | None = None,
     ) -> CallToolResult:
         """セッションの既読のルールごとに、今の本文が既読にした時点と同じか（current・changed・missing）と、既読の履歴に残る読んだ方法を返却する。session_id を省くと、既読の記録のあるセッションの一覧を最終更新の新しい順に返却する。"""
         return record_tools.get_read_records(
-            session_id=session_id, limit=limit, cursor=cursor, format=format, env=env
+            session_id=session_id,
+            limit=limit,
+            cursor=cursor,
+            format=format,
+            env=_session_environment(env, session_env),
         )
 
-    def delete_read_records(session_id: str) -> CallToolResult:
+    def delete_read_records(
+        session_id: str, session_env: dict[str, str] | None = None
+    ) -> CallToolResult:
         """セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返却する。削除したルールは、フックの次の呼び出しから未読として案内される。既読の履歴は削除しない。"""
-        return record_tools.delete_read_records(session_id=session_id, env=env)
+        return record_tools.delete_read_records(
+            session_id=session_id, env=_session_environment(env, session_env)
+        )
 
     def get_server_status() -> CallToolResult:
         """サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返却する。再起動の途中でも応答する。"""

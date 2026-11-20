@@ -11,6 +11,17 @@
             "timeout": 1
           }
         ]
+      },
+      {
+        "matcher": "mcp__plugin_rule-inject_rule-inject__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "_description": "rule-inject の MCP のツールの入力に、セッションの設定を決める環境変数と索引の変数参照の値を session_env として入れて許可する",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/run.py\" fill_config",
+            "timeout": 1
+          }
+        ]
       }
     ],
 

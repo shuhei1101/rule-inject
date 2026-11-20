@@ -74,6 +74,14 @@ constants:
     container: shared/settings.py
     summary: '`global.server_service` に許す値'
     value: '`re.compile(r"[A-Za-z0-9_-]{1,64}")`（`fullmatch` で照合する）'
+  - name: SESSION_ENV_KEYS
+    title: セッションの設定を決める環境変数
+    container: shared/settings.py
+    summary: 設定ファイル・既定の索引・既定の記録フォルダの場所を決める環境変数の名前。フック `fill_config` が `session_env` に入れ、サーバーがサーバーの環境変数から除いて `session_env` を重ねる
+    value: '`(CONFIG_ENV, CONFIG_HOME_ENV, STATE_HOME_ENV)`'
+    refs:
+      - IF-122-23#constraints[入れる環境変数]
+      - IF-122-7#constraints[設定ファイルの決め方]
 functions:
   - name: load_settings
     title: 設定の読み込み

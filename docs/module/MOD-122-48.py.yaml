@@ -19,6 +19,11 @@ constants:
     container: shared/paths.py
     summary: 状態の配置場所を上書きする環境変数の名前
     value: '`"RULE_INJECT_STATE_DIR"`'
+  - name: STATE_HOME_ENV
+    title: XDGの状態フォルダの環境変数
+    container: shared/paths.py
+    summary: 既定の記録フォルダの親を指す環境変数の名前
+    value: '`"XDG_STATE_HOME"`'
 functions:
   - name: resolve_location
     title: 場所の解決

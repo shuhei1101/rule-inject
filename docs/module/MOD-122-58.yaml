@@ -9,6 +9,7 @@ notes:
     | イベント | フック | matcher |
     | --- | --- | --- |
     | PreToolUse | ルール案内 | `Read\|Grep\|Edit\|Write\|NotebookEdit\|Bash\|mcp__.*` |
+    | PreToolUse | ツールの引数への設定の記入 | `mcp__plugin_rule-inject_rule-inject__.*` |
     | PostToolUse | 既読の記録 | `Read\|Bash\|mcp__.*` |
     | PostToolUse | 検索結果の案内 | `Grep\|Glob\|Bash` |
     | PreCompact | 既読の記録の破棄 | なし |

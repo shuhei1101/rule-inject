@@ -111,7 +111,7 @@ stakeholders:
 trigger: Claude Code が一覧のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
-  - フックとサーバーが同じ設定ファイルを読む
+  - サーバーは、ツールを呼んだセッションのフックと同じ設定ファイルを読む
 success_guarantee: フックが同じプロジェクトで読む索引とエントリを、フックと同じ規則（設定ファイルの `projects[].match`・既定の索引・変数の展開）で返却する。
 minimal_guarantee: 索引とサーバーの状態を書き換えない。
 test_file: tests/e2e/単一ユースケース/test_view_effective_rules.py

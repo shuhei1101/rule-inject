@@ -55,7 +55,7 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: injected
-        description: サーバーを起動した環境変数
+        description: サーバーを起動した環境変数に、ツールの引数 `session_env` を重ねた環境変数（`app.py` の `_session_environment`）
     returns:
       type: CallToolResult
       description: '`respond(ListRulesResult, format)`'
@@ -123,7 +123,7 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: injected
-        description: サーバーを起動した環境変数
+        description: サーバーを起動した環境変数に、ツールの引数 `session_env` を重ねた環境変数（`app.py` の `_session_environment`）
     returns:
       type: CallToolResult
       description: '`respond(SearchRulesResult, format)`'
@@ -202,7 +202,7 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: injected
-        description: サーバーを起動した環境変数
+        description: サーバーを起動した環境変数に、ツールの引数 `session_env` を重ねた環境変数（`app.py` の `_session_environment`）
       - name: locks
         type: IndexLocks
         required: true
@@ -272,7 +272,7 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: injected
-        description: サーバーを起動した環境変数
+        description: サーバーを起動した環境変数に、ツールの引数 `session_env` を重ねた環境変数（`app.py` の `_session_environment`）
       - name: locks
         type: IndexLocks
         required: true
@@ -306,7 +306,7 @@ functions:
         type: Mapping[str, str]
         required: true
         passing: positional
-        description: サーバーを起動した環境変数
+        description: サーバーを起動した環境変数に、ツールの引数 `session_env` を重ねた環境変数（`app.py` の `_session_environment`）
     returns:
       type: Settings
       description: そのプロジェクトでフックが使用する設定

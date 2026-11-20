@@ -980,3 +980,67 @@ def test_error_when_read_tool_invalid(
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_index"
     assert completed.returncode == 0
+
+
+def test_normal_when_reading_rule_itself(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """読む対象がルールのファイル自身なら、そのルールが未読でも止めない（正常系）。"""
+    # 準備
+    rule = rule_file("a.md")
+    index = write_index({"rule": str(rule), "paths": ["**/rules/*.md"], "on": ["read"]})
+    payload = hook_payload("PreToolUse", tool_name="Read", tool_input={"file_path": str(rule)})
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert completed.returncode == 0
+
+
+def test_normal_when_reading_rules_matching_each_other(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+    read_lines: Callable[[Path], list[str]],
+) -> None:
+    """読む対象がルールの場所なら、ほかに該当した未読のルールは止めない案内にする（正常系）。"""
+    # 準備
+    rule_a = rule_file("a.md")
+    rule_b = rule_file("b.md")
+    index = write_index(
+        {"rule": str(rule_a), "paths": ["**/rules/*.md"], "on": ["read"]},
+        {"rule": str(rule_b), "paths": ["**/rules/*.md"], "on": ["read"]},
+    )
+    payload = hook_payload("PreToolUse", tool_name="Read", tool_input={"file_path": str(rule_a)})
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert "permissionDecision" not in output
+    assert f"- {rule_b}" in output["additionalContext"]
+    assert f"- {rule_a}" not in output["additionalContext"]
+    assert read_lines(state_dir / f"{session_id}.guided.txt") == [str(rule_b)]
+
+
+def test_normal_when_reading_rule_itself_by_bash(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_file: Callable[..., Path],
+) -> None:
+    """読むコマンドの引数が全てルールの場所なら止めない（正常系）。"""
+    # 準備
+    rule = rule_file("a.md")
+    index = write_index({"rule": str(rule), "paths": ["**/rules/*.md"], "on": ["read"]})
+    payload = hook_payload("PreToolUse", tool_name="Bash", tool_input={"command": f"cat {rule}"})
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index)
+    # 検証
+    assert completed.stdout == ""
+    assert completed.returncode == 0

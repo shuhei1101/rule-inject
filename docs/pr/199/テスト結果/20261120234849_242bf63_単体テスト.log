@@ -1,0 +1,7 @@
+$ uv run pytest tests/unit -p no:cacheprovider --basetemp=/tmp/rule-inject-pr199-pytest
+（/tmp/pytest-of-shuhei2441 が root の所有で pytest の既定の一時フォルダを使えないため --basetemp を指定）
+tests/unit/rule_inject/shared/test_variables.py .......                  [ 95%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ....................... [ 99%]
+...                                                                      [100%]
+
+============================= 578 passed in 3.66s ==============================
