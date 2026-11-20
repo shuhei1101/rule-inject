@@ -166,8 +166,7 @@ def test_normal_when_session_config_specified(
     """`session_env` の `RULE_INJECT_CONFIG` が指す設定ファイルで照合し、止めるルールを返却する（正常系）。"""
     # 準備
     index = make_index(
-        f"rules:\n  - rule: {tmp_path}/rules/session.md\n"
-        f'    paths: ["**/*.py"]\n    on: [write]\n',
+        f'rules:\n  - rule: {tmp_path}/rules/session.md\n    paths: ["**/*.py"]\n    on: [write]\n',
         name="session-index.yaml",
     )
     session_config = tmp_path / "session-settings.yaml"
