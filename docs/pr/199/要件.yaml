@@ -1,0 +1,62 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-16.yaml
+    impact: changed
+    detail: ルールのファイル自身を読む操作は、そのルールが未読でも止めずに通す
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-23.yaml
+    impact: following
+    detail: ルールを読んでから同じ操作を再試行する流れで、ルール自身を読む操作が止められないことに追随する
+    depends_on:
+      - docs/scenario/SC-122-16.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-12.yaml
+    impact: changed
+    detail: ルールの検索が、呼んだセッションと同じ設定で照合し、案内と同じ結果を返す
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-9.yaml
+    impact: following
+    detail: 有効なルールの一覧も、呼んだセッションと同じ設定の索引を返す
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-20.yaml
+    impact: following
+    detail: 索引のチェックも、呼んだセッションと同じ設定の索引を対象にする
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-17.yaml
+    impact: run_only
+    detail: 検索の結果に出たファイルの案内が、ルール自身の扱いを変えても壊れないことを確かめる
+    depends_on: []
+docs:
+  - page: docs/guide/MCPツール.md
+    new: false
+    change: search_rules・list_rules・check_indexes が読む設定ファイルの決まり方（呼んだセッションの設定）と config_path の説明を修正する
+    status: todo
+  - page: docs/guide/コアコンセプト-MCPサーバー.md
+    new: false
+    change: 検索・一覧・チェックのツールがセッションの設定で照合することと、案内の結果と一致することを記載する
+    status: todo
+  - page: docs/guide/コアコンセプト-ルールの案内.md
+    new: false
+    change: ルールのファイル自身を読む操作はそのルールの未読で止めないことを記載する
+    status: todo
+  - page: docs/guide/環境変数.md
+    new: false
+    change: RULE_INJECT_CONFIG がサーバーのツールの照合にも使われる経路の説明を修正する
+    status: todo
+  - page: docs/guide/変更履歴.md
+    new: false
+    change: 次のバージョンの行に、ルール自身の読み取りを止めない修正と search_rules の設定の修正を追加する
+    status: todo
+scope_out:
+  - item: ルールのファイル自身を書き換える操作（Edit・Write）をそのルールの未読で止めないこと
+    reason: 書き換える前にルールを読めれば既読になり通るため、読む操作を通せば事象は解消する
+    plan: none
+  - item: 検索結果の案内（止めない案内）でルールのファイル自身を案内から外すこと
+    reason: 止めない案内は読む経路をふさがず、要望の事象に当たらない
+    plan: none
