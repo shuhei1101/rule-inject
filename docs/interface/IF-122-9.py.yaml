@@ -89,6 +89,13 @@ request:
     description: 既読の記録を削除するセッションの識別子
     constraints: フックが記録ファイル名に使用する形式（`is_valid_session_id`）
     notes: インターフェース定義「既読の記録の確認」の `session_id` と同じ
+  - name: config_path
+    type: str
+    required: false
+    default: なし（サーバーを起動した環境の `RULE_INJECT_CONFIG` で決める）
+    location: argument
+    description: 呼んだセッションの設定ファイルの場所
+    notes: インターフェース定義「ルールの一覧」の `config_path` と同じ。記録のフォルダ（`global.state_dir`）をこの設定ファイルから取る
 request_example: |-
   ```json
   {"session_id": "0f6c2a8e-4b1d-4c3a-9e7f-2d5b8a1c6e90"}
@@ -152,6 +159,9 @@ constraints:
     notes: フックの追記は O_APPEND で、無いファイルは再作成する
   - item: 認可
     constraint: 制限なし
+  - item: 設定ファイルの決め方
+    constraint: インターフェース定義「ルールの一覧」の制約「設定ファイルの決め方」と同じ。プロジェクトの直下は重ねない
+    notes: 記録のフォルダはプロジェクトに依らない
 refs:
   - SC-122-14#
 test_file: tests/integration/server/test_delete_read_records.py

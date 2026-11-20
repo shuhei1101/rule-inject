@@ -356,6 +356,13 @@ request:
     default: 'false'
     location: argument
     description: 書き込まずに差分だけを返却するか
+  - name: config_path
+    type: str
+    required: false
+    default: なし（サーバーを起動した環境の `RULE_INJECT_CONFIG` で決める）
+    location: argument
+    description: 呼んだセッションの設定ファイルの場所
+    notes: インターフェース定義「ルールの一覧」の `config_path` と同じ。削除できる索引は、この設定ファイルで読む索引
 request_example: |-
   ```json
   {
@@ -428,6 +435,8 @@ constraints:
   - item: 認可
     constraint: 制限なし
     notes: 書き込める範囲は制約「書き込める索引」で絞る。削除を別のツールにし、利用者が Claude Code の許可の設定で削除だけを止められるようにする
+  - item: 設定ファイルの決め方
+    constraint: インターフェース定義「ルールの一覧」の制約「設定ファイルの決め方」と同じ
 refs:
   - SC-122-19#
 test_file: tests/integration/server/test_delete_index_entry.py

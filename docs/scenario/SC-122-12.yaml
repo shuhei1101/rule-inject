@@ -134,6 +134,37 @@ scenarios:
       - 応答にエントリのルールの場所が載り、止めると載っている
       - 同じ設定ファイル・同じ対象のパス・書く操作でルール案内のフックを起動した結果と、止めるルールが一致する
     test: test_normal_when_session_config_specified
+  - name: 正常シナリオ（引数を指定せずにセッションの設定で検索する）
+    setup:
+      - name: Mock
+        description: なし。実の Claude Code を `claude -p --setting-sources project --plugin-dir {プラグイン}` で動かし、テストが起動した常駐の MCP サーバーへ接続させる
+      - name: サーバーの設定ファイル
+        description: '`projects` にプロジェクトの要素を持たない設定ファイル'
+        notes: サーバーを起動する側の `RULE_INJECT_CONFIG` で指す
+      - name: セッションの設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ設定ファイル'
+        notes: '`claude -p` を起動する側の `RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: 対象のパスにヒットし書く操作を止めるエントリを 1 つ持つ YAML
+      - name: 操作
+        description: プロンプトで、対象のパスへの書く操作に該当するルールを検索のツールで調べるよう指示する
+        notes: 設定ファイルの場所はプロンプトで指定しない
+    flow: |-
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant SV as MCP サーバー
+        participant CF as セッションの設定ファイル
+
+        CC->>H: 検索のツールの呼び出し（設定ファイルの場所なし）
+        H-->>CC: 引数にセッションの設定ファイルの場所を入れる
+        CC->>SV: 検索（セッションの設定ファイルの場所）
+        SV->>CF: プロジェクトに該当する索引を取得する
+        SV-->>CC: 読んだ設定ファイルの場所・ルールの場所と止めるか
+    expected:
+      - セッションの記録（transcript）の検索のツールの結果の設定ファイルの場所が、セッションの設定ファイルの場所
+      - 同じ結果にエントリのルールの場所が載り、止めると載っている
+    test: test_normal_when_session_config_filled_by_hook
 lead: Claude Code が MCP サーバーの検索のツールで操作にヒットするルールと止めるかを受け取る流れを示し、ルールの検索を変えるときに参照する。
 primary_actor: Claude Code のセッション
 stakeholders:

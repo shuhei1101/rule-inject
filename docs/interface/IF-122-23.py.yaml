@@ -1,0 +1,171 @@
+id: IF-122-23
+visibility: internal
+title: ツールの引数への設定の記入
+lead: rule-inject の MCP のツールの呼び出しに、セッションの設定ファイルの場所を入れるフックの入出力を定め、ツールの引数への設定の記入を修正するときに参照する。
+entry:
+  kind: trigger
+  value: '`PreToolUse` フック（matcher `mcp__plugin_rule-inject_rule-inject__.*`、timeout 1 秒）'
+flows:
+  - name: 正常系
+    summary: '`tool_input` にセッションの `RULE_INJECT_CONFIG` を `config_path` として入れ、許可する'
+    setup:
+      - name: Mock
+        description: なし（フックを子プロセスとして起動し、標準入力へ JSON を指定する）
+      - name: 環境変数
+        description: '`RULE_INJECT_CONFIG` に設定ファイルのパスを設定する'
+      - name: 入力
+        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__search_rules`、`tool_input` に別の `config_path` を入れる'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H-->>CC: permissionDecision allow・updatedInput<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`updatedInput.config_path` が環境変数 `RULE_INJECT_CONFIG` の値'
+      - '`updatedInput` の他のキーが `tool_input` と同じ'
+      - '`permissionDecision` が `allow`'
+      - 終了コードが `0`
+    test: test_normal
+  - name: 正常系（RULE_INJECT_CONFIGが無い）
+    summary: セッションに `RULE_INJECT_CONFIG` が無いときは空文字を入れる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 環境変数
+        description: '`RULE_INJECT_CONFIG` を設定しない'
+      - name: 入力
+        description: 正常系と同じ
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H-->>CC: permissionDecision allow・updatedInput（config_path は空文字）<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`updatedInput.config_path` が空文字'
+      - 終了コードが `0`
+    test: test_normal_when_config_env_absent
+  - name: 正常系（対象外のツール）
+    summary: 設定を引数に取らないツールには何も出さない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: '`tool_name: mcp__plugin_rule-inject_rule-inject__get_server_status`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_tool_not_targeted
+  - name: 正常系（入力が読めない）
+    summary: 標準入力が JSON として読めなければ何も出さない
+    setup:
+      - name: Mock
+        description: なし
+      - name: 入力
+        description: JSON でない文字列
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+
+        CC->>H: 標準入力（壊れた JSON）
+        H-->>CC: 標準出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 終了コードが `0`
+    test: test_normal_when_input_unparsable
+identifier: fill_config
+idempotent: true
+side_effects: なし
+request:
+  - name: '`tool_name`'
+    type: str
+    required: true
+    description: 呼ばれるツールの名前
+    constraints: '`mcp__plugin_rule-inject_rule-inject__` で始まる完全名'
+  - name: '`tool_input`'
+    type: dict
+    required: true
+    description: ツールへの入力
+  - name: '`RULE_INJECT_CONFIG`'
+    type: str
+    required: false
+    default: なし（`config_path` に空文字を入れる）
+    description: セッションの設定ファイルの場所
+    notes: フックが受け取った環境変数
+response:
+  - name: '`hookSpecificOutput.hookEventName`'
+    type: Literal['PreToolUse']
+    description: フックの種類
+    notes: 対象のツールのときだけ出力する
+  - name: '`hookSpecificOutput.permissionDecision`'
+    type: Literal['allow']
+    description: 常に `allow`
+  - name: '`hookSpecificOutput.permissionDecisionReason`'
+    type: str
+    description: 常に `rule-inject のツールの入力にセッションの設定ファイルの場所を入れた`
+  - name: '`hookSpecificOutput.updatedInput`'
+    type: dict
+    description: '`tool_input` に `config_path` を上書きで入れたもの'
+exceptions:
+  - name: なし（正常終了）
+    condition: 入力を書き換えて返した、または対象外のツールで何も出さなかった
+    notes: 終了コード 0 で終える
+  - name: なし（入力が読めない）
+    condition: 標準入力が JSON として読めない、または `tool_input` がオブジェクトでない
+    notes: 何も出さず終了コード 0 で終え、入力を変えない
+  - name: Exception（想定外の例外）
+    condition: 上のどれにも該当しない例外
+    notes: 最上位で捕まえ、何も出さずにログへ `unexpected` を書き込んで終了コード 0 で終える
+constraints:
+  - item: タイムアウト
+    constraint: 1 秒（`hooks.json` の `timeout`）
+    decided_by: NFR-122-1#requirements[フックの実行時間]
+  - item: 当てるツール
+    constraint: '`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`。サーバー自身を扱うツール（`get_server_status`・`reload_settings`・`restart_server`・`update_server`）には当てない'
+    notes: サーバー自身を扱うツールは、サーバーを起動した環境の設定を確かめるため
+  - item: 上書き
+    constraint: Claude Code が入れた `config_path` はフックの値で上書きする
+    notes: フックとツールの判定を同じ設定ファイルにそろえるため
+  - item: 許可の判定
+    constraint: '`permissionDecision` に `allow` を返す。ルール案内が同じ呼び出しを止めるときは、Claude Code が `deny` を優先する'
+  - item: 言語
+    constraint: Python 3 の標準ライブラリだけ
+test_file: tests/integration/plugin/test_fill_config.py
+refs:
+  - SC-122-12#
+  - IF-122-8#
