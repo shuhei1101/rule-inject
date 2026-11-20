@@ -8,6 +8,8 @@ from pathlib import Path
 
 # 状態の配置場所を上書きする環境変数
 STATE_DIR_ENV = "RULE_INJECT_STATE_DIR"
+# 既定の記録フォルダの親を指す XDG の状態フォルダの環境変数
+STATE_HOME_ENV = "XDG_STATE_HOME"
 STATE_DIR_NAME = "rule-inject"
 # 既定のログのフォルダの最後の名前（既定の記録フォルダの下）
 LOG_DIR_NAME = "logs"
@@ -21,7 +23,7 @@ def default_state_dir(env: Mapping[str, str]) -> Path:
     if configured:
         return Path(configured).expanduser()
     # XDG の状態フォルダ（無いか空なら ~/.local/state）の下の既定の名前にする
-    state_home = env.get("XDG_STATE_HOME") or DEFAULT_STATE_HOME
+    state_home = env.get(STATE_HOME_ENV) or DEFAULT_STATE_HOME
     return Path(state_home).expanduser() / STATE_DIR_NAME
 
 

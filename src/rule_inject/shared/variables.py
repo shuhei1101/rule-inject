@@ -35,3 +35,8 @@ def expand_variables(text: str, env: Mapping[str, str]) -> Expansion:
     # 1 回の置き換えで前から順に展開する（置き換えた値の中の参照は再展開しない）
     expanded = VARIABLE_PATTERN.sub(_replace, text)
     return Expansion(text=expanded, unresolved=tuple(dict.fromkeys(unresolved)))
+
+
+def variable_names(text: str) -> tuple[str, ...]:
+    """文字列に出る `!{名前}` の名前を、重なりを落として出た順に返却する。"""
+    return tuple(dict.fromkeys(matched.group(1) for matched in VARIABLE_PATTERN.finditer(text)))

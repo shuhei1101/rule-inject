@@ -7,6 +7,7 @@ from typing import Any
 
 from rule_inject.hooks._runner import HookHandler, UnexpectedNotifier
 from rule_inject.hooks.discard_read import discard_read
+from rule_inject.hooks.fill_config import fill_config
 from rule_inject.hooks.record_read import record_read
 from rule_inject.hooks.rule_guide import guide_rules
 from rule_inject.hooks.search_guide import search_guide
@@ -45,4 +46,5 @@ HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
     "work_rules": (Component.WORK_RULES, work_rules, _silent),
     "sweep_read": (Component.SWEEP_READ, sweep_read, _silent),
     "start_server": (Component.START_SERVER, start_server, _silent),
+    "fill_config": (Component.FILL_CONFIG, fill_config, _silent),
 }

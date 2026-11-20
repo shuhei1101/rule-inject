@@ -12,6 +12,7 @@ from rule_inject.shared._settings_yaml import parse_settings
 from rule_inject.shared.errors import SettingsReadError, describe
 from rule_inject.shared.paths import (
     STATE_DIR_ENV,
+    STATE_HOME_ENV,
     default_log_dir,
     default_state_dir,
     resolve_location,
@@ -21,6 +22,8 @@ from rule_inject.shared.paths import (
 CONFIG_ENV = "RULE_INJECT_CONFIG"
 PROJECT_DIR_ENV = "CLAUDE_PROJECT_DIR"
 CONFIG_HOME_ENV = "XDG_CONFIG_HOME"
+# 設定ファイル・既定の索引・既定の記録フォルダの場所を決める環境変数（フックがツールの `session_env` に入れ、サーバーが自分の値と差し替える）
+SESSION_ENV_KEYS = (CONFIG_ENV, CONFIG_HOME_ENV, STATE_HOME_ENV)
 DEFAULT_CONFIG_HOME = "~/.config"
 # `global.indexes` が無いときに読む索引の、設定フォルダからのパス
 USER_INDEX_DEFAULT = "rule-inject/rules.yaml"
