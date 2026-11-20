@@ -623,6 +623,46 @@ scenarios:
       - セッションの記録（transcript）の操作を止めない案内の文面に、ルールのパスと、索引に記載したツールの名前と引数が載っている
       - 同じ文面に、ツールが使用できないときはパスを Read で参照する旨が載っている
     test: test_normal_when_not_blocked_with_read_tool
+  - name: 正常シナリオ（ルールのファイル自身を読む）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: ローカルに配置したルールの Markdown
+        notes: 応答に出たかで読めたことを見分ける文字列を配置する
+      - name: 索引
+        description: ルールのファイル自身にヒットするパスの glob と、読む操作を必須とするエントリを 1 つ持つ YAML
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、ルールのファイルを Read で読むよう指示する
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant FS as ルールのファイル
+
+        CC->>H: Read（ルールのファイルのパス）
+        H->>IDX: 対象のパス・操作の種別に該当するエントリを検索する
+        IDX-->>H: ルールの場所（読む操作が必須）
+        H->>ST: そのセッションの既読を参照する
+        ST-->>H: 未読
+        H->>H: 読む対象がルールのファイル自身のため、そのルールを除く
+        H-->>CC: 何も返却しない
+        CC->>FS: 読む
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 応答にルールのファイルの文字列が出ている
+      - そのセッションの既読の記録に、ルールの場所が載っている
+    test: test_normal_when_reading_rule_itself
 lead: ツールを呼ぶ直前にフックが操作の対象にヒットする未読のルールを案内する流れを示し、ルール案内の止め方や文面を変えるときに参照する。
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ

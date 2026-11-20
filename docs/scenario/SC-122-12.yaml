@@ -102,6 +102,38 @@ scenarios:
     expected:
       - ツールの結果がエラーで、ファイルのパスかツール名のどちらか 1 つを指定する旨が載っている
     test: test_error_when_both_path_and_tool
+  - name: 正常シナリオ（セッションの設定で検索する）
+    setup:
+      - name: Mock
+        description: ファイルのパスで検索するシナリオと同じ（SDK のクライアントでツールを呼ぶ）
+      - name: サーバーの設定ファイル
+        description: '`projects` にプロジェクトの要素を持たない設定ファイル'
+        notes: サーバーを起動する側の `RULE_INJECT_CONFIG` で指す
+      - name: セッションの設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とする要素とプロジェクトの索引を持つ設定ファイル'
+        notes: ツールを呼ぶセッションの `RULE_INJECT_CONFIG` が指すファイル
+      - name: 索引
+        description: 対象のパスにヒットし書く操作を止めるエントリを 1 つ持つ YAML
+      - name: 引数
+        description: プロジェクトの直下・対象のパス・書く操作と、セッションの設定ファイルの場所を指定する
+    flow: |-
+      sequenceDiagram
+        participant CL as MCP クライアント
+        participant SV as MCP サーバー
+        participant CF as セッションの設定ファイル
+        participant IDX as 索引
+
+        CL->>SV: 検索（プロジェクトの直下・対象のパス・書く操作・セッションの設定ファイルの場所）
+        SV->>CF: プロジェクトに該当する索引を取得する
+        CF-->>SV: 索引の場所
+        SV->>IDX: 索引を読み、対象のパスに該当するエントリを検索する
+        IDX-->>SV: エントリ
+        SV-->>CL: 読んだ設定ファイルの場所・ルールの場所と止めるか
+    expected:
+      - 応答の設定ファイルの場所が、セッションの設定ファイルの場所
+      - 応答にエントリのルールの場所が載り、止めると載っている
+      - 同じ設定ファイル・同じ対象のパス・書く操作でルール案内のフックを起動した結果と、止めるルールが一致する
+    test: test_normal_when_session_config_specified
 lead: Claude Code が MCP サーバーの検索のツールで操作にヒットするルールと止めるかを受け取る流れを示し、ルールの検索を変えるときに参照する。
 primary_actor: Claude Code のセッション
 stakeholders:
@@ -110,7 +142,7 @@ stakeholders:
 trigger: Claude Code が検索のツールを呼ぶ
 preconditions:
   - MCP サーバーが常駐し、Claude Code に HTTP の MCP サーバーとして登録されている
-  - フックとサーバーが同じ設定ファイルを読む
+  - サーバーは、ツールを呼んだセッションのフックと同じ設定ファイルを読む
 success_guarantee: フックの `PreToolUse` と同じ索引・同じ照合で、ヒットするルールと止めるかを返却する。既読の記録は参照せず、未読とみなした結果を返却する。
 minimal_guarantee: 索引・既読の記録・サーバーの状態を書き換えない。
 test_file: tests/e2e/単一ユースケース/test_search_rules_for_operation.py
