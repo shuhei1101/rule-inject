@@ -46,3 +46,18 @@
 | 工程 | 結果 | 補足 |
 | --- | --- | --- |
 | ドキュメント修正 | 実行なし | 公開ドキュメント（`docs/guide/`）の修正だけで、対応する単体・結合テストが無い |
+
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/server/test_app.py` | 全実行 | 変更 | ✅ | 4 テストを追加<br>`テスト結果/20261120234849_242bf63_単体テスト.log` |
+| `tests/unit` の残り | 全実行 | 実行のみ | ✅ | 単体テストの全件で 578 テスト pass<br>`テスト結果/20261120234849_242bf63_単体テスト.log` |
+
+単体テストの修正: `tests/unit/rule_inject/server/test_app.py` の `test_build_server_when_session_env` の結果の変数を `Any` にした（`242bf63`）。`call_tool` の戻り値の型が `CallToolResult | InputRequiredResult` で、mypy が `structured_content` の参照を違反にしたため。期待値は変えていない。
+
+lint: `テスト結果/20261120234849_242bf63_lint.log`（違反なし）
+
+### 結合テストの実行範囲
+
+[プラグイン](./プラグイン.mark.md) の `### 結合テストの実行範囲` の表に、MCP サーバーの変更したファイルも並べた。
