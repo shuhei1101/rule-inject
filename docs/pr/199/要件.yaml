@@ -65,19 +65,27 @@ docs:
   - page: docs/guide/MCPツール.md
     new: false
     change: 検索・一覧・チェック・エントリ編集・既読の記録のツールがセッションの設定（引数 session_env）で読むこと、書き込み・削除のツールの確認を出したいときは ask のルールを配置することを記載する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:38:45.645500+00:00'
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
     change: 検索・一覧・チェックのツールがセッションの設定で照合することと、案内の結果と一致することを記載する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:38:45.645500+00:00'
   - page: docs/guide/コアコンセプト-ルールの案内.md
     new: false
     change: ルールのファイル自身を読む操作はそのルールの未読で止めないことを記載する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:38:45.645500+00:00'
   - page: docs/guide/環境変数.md
     new: false
     change: RULE_INJECT_CONFIG がサーバーのツールの照合にも使われる経路の説明を修正する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-20T14:38:45.645500+00:00'
   - page: docs/guide/変更履歴.md
     new: false
     change: 次のバージョンの行に、ルール自身の読み取りを止めない修正と search_rules の設定の修正を追加する
