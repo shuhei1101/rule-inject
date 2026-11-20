@@ -64,7 +64,7 @@ use_cases:
 docs:
   - page: docs/guide/MCPツール.md
     new: false
-    change: search_rules・list_rules・check_indexes が読む設定ファイルの決まり方（呼んだセッションの設定）と config_path の説明を修正する
+    change: 検索・一覧・チェック・エントリ編集・既読の記録のツールがセッションの設定（引数 session_env）で読むこと、書き込み・削除のツールの確認を出したいときは ask のルールを配置することを記載する
     status: todo
   - page: docs/guide/コアコンセプト-MCPサーバー.md
     new: false
@@ -90,5 +90,5 @@ scope_out:
     reason: 止めない案内は読む経路をふさがず、要望の事象に当たらない
     plan: none
   - item: 索引の `rule` の変数参照（`!{名前}`）を、サーバーのツールでもセッションの環境変数で展開すること
-    reason: 展開に使う値はセッションの環境変数全体に依り、ツールの引数でどの変数を渡すかを別に設計する必要がある。今は制約「変数参照」でサーバーの起動の側に同じ環境変数を置く運用を定めている。含めるかはレビューで確定する
+    reason: スコープの追加に当たり、規約『ユーザー確認が必須な事項』の「要件を変える」のため、ユーザーの確認で決める。含める場合は `session_env` に索引の `rule` に出る `!{名前}` の値を加える
     plan: to_file
