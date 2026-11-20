@@ -154,3 +154,39 @@ def test_error_when_settings_unreadable(
     assert result.is_error is True
     assert config in text_of(result)
     assert "foo" in text_of(result)
+
+
+def test_normal_when_session_config_specified(
+    tmp_path: Path,
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    config_text: Callable[..., str],
+    running_server: Callable[..., Any],
+) -> None:
+    """`session_env` の `RULE_INJECT_CONFIG` が指す設定ファイルで照合し、止めるルールを返却する（正常系）。"""
+    # 準備
+    index = make_index(
+        f"rules:\n  - rule: {tmp_path}/rules/session.md\n"
+        f'    paths: ["**/*.py"]\n    on: [write]\n',
+        name="session-index.yaml",
+    )
+    session_config = tmp_path / "session-settings.yaml"
+    session_config.write_text(
+        config_text(match=project_dir, project_indexes=[index]), encoding="utf-8"
+    )
+    server = running_server()
+    # 実行
+    result = server.call(
+        "search_rules",
+        project_dir=str(project_dir),
+        path=SEARCH_PATH,
+        operation="write",
+        format="json",
+        session_env={"RULE_INJECT_CONFIG": str(session_config)},
+    )
+    # 検証
+    content = result.structured_content
+    assert content["config_path"] == str(session_config)
+    assert [(match["rule"], match["blocking"]) for match in content["matched"]] == [
+        (f"{tmp_path}/rules/session.md", True)
+    ]
