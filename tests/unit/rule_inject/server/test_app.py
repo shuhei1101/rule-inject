@@ -123,3 +123,94 @@ def test_build_server_when_restarting(clone_dir: Path) -> None:
     assert status.structured_content["restarting"] is True
     with pytest.raises(ToolError, match="再起動の途中"):
         asyncio.run(refused())
+
+
+def test_build_server_session_env(clone_dir: Path) -> None:
+    """設定を使用するツールだけが `session_env` を引数に持つ（正常系）。"""
+    from rule_inject.server.app import build_server
+    from rule_inject.server.control import ServerControl
+
+    # 準備
+    server = build_server({}, control=ServerControl(port=8783), clone=clone_dir)
+    # 実行
+    tools = asyncio.run(server.list_tools())
+    # 検証
+    with_session_env = sorted(
+        tool.name for tool in tools if "session_env" in tool.input_schema.get("properties", {})
+    )
+    required = {key for tool in tools for key in tool.input_schema.get("required", [])}
+    assert with_session_env == [
+        "check_indexes",
+        "delete_index_entry",
+        "delete_read_records",
+        "get_read_records",
+        "list_rules",
+        "search_rules",
+        "write_index_entry",
+    ]
+    assert "session_env" not in required
+
+
+def test_build_server_when_session_env(
+    clone_dir: Path,
+    tmp_path: Path,
+    make_settings: Any,
+    make_index: Any,
+) -> None:
+    """`session_env` の設定ファイルで照合する（正常系）。"""
+    from rule_inject.server.app import build_server
+    from rule_inject.server.control import ServerControl
+
+    # 準備
+    index = make_index("rules:\n  - rule: /r/a.md\n    paths: ['**/*.py']\n", name="session.yaml")
+    server_config = make_settings("global:\n  indexes: []\n", name="server.yaml")
+    session_config = make_settings(f"global:\n  indexes:\n    - {index}\n", name="session.yaml")
+    server = build_server(
+        {"RULE_INJECT_CONFIG": str(server_config)},
+        control=ServerControl(port=8783),
+        clone=clone_dir,
+    )
+    arguments = {
+        "project_dir": str(tmp_path),
+        "format": "json",
+        "session_env": {"RULE_INJECT_CONFIG": str(session_config)},
+    }
+    # 実行
+    result = asyncio.run(server.call_tool("list_rules", arguments))
+    # 検証
+    assert result.structured_content["config_path"] == str(session_config)
+    assert result.structured_content["indexes"] == [str(index)]
+
+
+def test_session_environment() -> None:
+    """3 つの名前を除いて `session_env` を重ねる（正常系）。"""
+    from rule_inject.server.app import _session_environment
+
+    # 準備
+    env = {
+        "RULE_INJECT_CONFIG": "/server/settings.yaml",
+        "XDG_CONFIG_HOME": "/server/config",
+        "XDG_STATE_HOME": "/server/state",
+        "HOME": "/home/user",
+    }
+    session_env = {"XDG_CONFIG_HOME": "/session/config", "RULE_ROOT": "/rules"}
+    # 実行
+    result = _session_environment(env, session_env)
+    # 検証
+    assert dict(result) == {
+        "HOME": "/home/user",
+        "XDG_CONFIG_HOME": "/session/config",
+        "RULE_ROOT": "/rules",
+    }
+
+
+def test_session_environment_when_absent() -> None:
+    """`session_env` が無ければサーバーの環境変数を使用する（正常系）。"""
+    from rule_inject.server.app import _session_environment
+
+    # 準備
+    env = {"RULE_INJECT_CONFIG": "/server/settings.yaml", "HOME": "/home/user"}
+    # 実行
+    result = _session_environment(env, None)
+    # 検証
+    assert dict(result) == {"RULE_INJECT_CONFIG": "/server/settings.yaml", "HOME": "/home/user"}
