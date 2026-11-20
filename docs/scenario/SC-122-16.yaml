@@ -652,7 +652,7 @@ scenarios:
         IDX-->>H: ルールの場所（読む操作が必須）
         H->>ST: そのセッションの既読を参照する
         ST-->>H: 未読
-        H->>H: 読む対象がルールのファイル自身のため、そのルールを除く
+        H->>H: 読む対象が読み込んだ索引のルールの場所のため止めず、読む対象自身のルールを案内から除く
         H-->>CC: 何も返却しない
         CC->>FS: 読む
       ```
@@ -663,6 +663,51 @@ scenarios:
       - 応答にルールのファイルの文字列が出ている
       - そのセッションの既読の記録に、ルールの場所が載っている
     test: test_normal_when_reading_rule_itself
+  - name: 正常シナリオ（互いのファイルに該当するルールを読む）
+    setup:
+      - name: Mock
+        description: 止めて案内するシナリオと同じ（`claude -p --setting-sources project --plugin-dir {プラグイン}`）
+      - name: ルールの本文
+        description: 同じフォルダに配置した 2 つのルールの Markdown（ルール A・ルール B）
+        notes: それぞれに、応答に出たかで読めたことを見分ける文字列を配置する
+      - name: 索引
+        description: ルール A とルール B それぞれに、両方のファイルにヒットする同じパスの glob と、読む操作を必須とするエントリを持つ YAML
+      - name: 既読の記録
+        description: そのセッションの記録が無い（新しいセッション）
+      - name: 操作
+        description: プロンプトで、ルール A のファイルを Read で読んだ後、ルール B のファイルを Read で読むよう指示する
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as PreToolUse フック
+        participant IDX as 索引
+        participant ST as 既読の記録
+        participant FS as ルールのファイル
+
+        CC->>H: Read（ルール A のパス）
+        H->>IDX: 対象のパス・操作の種別に該当するエントリを検索する
+        IDX-->>H: ルール A・ルール B の場所（読む操作が必須）
+        H->>ST: そのセッションの既読を参照する
+        ST-->>H: どちらも未読
+        H->>H: 読む対象がルールの場所のため止めず、ルール A を案内から除く
+        H-->>CC: 操作を止めず、ルール B の場所をコンテキストへ記載する
+        CC->>FS: ルール A を読む
+        CC->>H: Read（ルール B のパス）
+        H->>ST: そのセッションの既読を参照する
+        ST-->>H: ルール A は既読、ルール B は未読
+        H-->>CC: 何も返却しない（ルール B は読む対象自身）
+        CC->>FS: ルール B を読む
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`claude -p` の結果の `permission_denials` が空'
+      - 応答にルール A とルール B のファイルの文字列が出ている
+      - そのセッションの既読の記録に、ルール A とルール B の場所が載っている
+    test: test_normal_when_reading_rules_matching_each_other
 lead: ツールを呼ぶ直前にフックが操作の対象にヒットする未読のルールを案内する流れを示し、ルール案内の止め方や文面を変えるときに参照する。
 primary_actor: Claude Code のセッション
 trigger: Claude Code が Read / Edit / Write / Bash / MCP のツールを呼ぶ
