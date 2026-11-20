@@ -6,10 +6,9 @@ use_cases:
     depends_on: []
   - kind: single
     scenario: docs/scenario/SC-122-23.yaml
-    impact: following
-    detail: ルールを読んでから同じ操作を再試行する流れで、ルール自身を読む操作が止められないことに追随する
-    depends_on:
-      - docs/scenario/SC-122-16.yaml
+    impact: none
+    detail: 止められたルールを参照して再試行する流れは、ルール自身を読む操作を含まず変わらない
+    depends_on: []
   - kind: single
     scenario: docs/scenario/SC-122-12.yaml
     impact: changed
@@ -32,6 +31,36 @@ use_cases:
     impact: run_only
     detail: 検索の結果に出たファイルの案内が、ルール自身の扱いを変えても壊れないことを確かめる
     depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-19.yaml
+    impact: following
+    detail: 索引のエントリの編集も、呼んだセッションと同じ設定の索引を対象にする
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-14.yaml
+    impact: following
+    detail: 既読の記録の削除も、呼んだセッションと同じ設定の記録の場所を対象にする
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-15.yaml
+    impact: following
+    detail: 既読の記録の確認も、呼んだセッションと同じ設定の記録の場所を対象にする
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-24.yaml
+    impact: following
+    detail: 既読の記録の確認と削除の前提を、呼んだセッションと同じ設定に揃える
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
+  - kind: single
+    scenario: docs/scenario/SC-122-25.yaml
+    impact: following
+    detail: 索引の修正と検索の前提を、呼んだセッションと同じ設定に揃える
+    depends_on:
+      - docs/scenario/SC-122-12.yaml
 docs:
   - page: docs/guide/MCPツール.md
     new: false
