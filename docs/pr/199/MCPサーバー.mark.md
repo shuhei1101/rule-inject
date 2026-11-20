@@ -61,3 +61,9 @@ lint: `テスト結果/20261120234849_242bf63_lint.log`（違反なし）
 ### 結合テストの実行範囲
 
 [プラグイン](./プラグイン.mark.md) の `### 結合テストの実行範囲` の表に、MCP サーバーの変更したファイルも並べた。
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_search_rules.py` | 全実行 | 変更 | ✅ | `test_normal_when_session_config_specified` を追加。6 テスト pass<br>`テスト結果/20261120235550_c0ac8d8_結合テスト.log` |
