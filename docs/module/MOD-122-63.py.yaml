@@ -54,7 +54,7 @@ functions:
       1. `tool_name` が `TOOL_PREFIX` で始まり、残りが `TARGET_TOOLS` に入っていなければ None を返却する
       2. `tool_input` が dict でなければ None を返却する（入力を変えない）
       3. `SESSION_ENV_KEYS` のうち `env` にある名前と値を `session_env` に入れる
-      4. `_index_variable_names(env)` の名前のうち `env` にある名前と値を `session_env` に加える
+      4. `_index_variable_names(env, tool_input.get("project_dir"))` の名前のうち `env` にある名前と値を `session_env` に加える
       5. `{**tool_input, SESSION_ENV_ARG: session_env}` を `updatedInput` にして、`permissionDecision: allow`・`permissionDecisionReason: DECISION_REASON` とともに返却する
 
       標準入力が JSON として読めないときは `run_hook` が捕まえ、ログへ `unexpected` を書き込んで何も出さない（`HOOKS` の通知方は出力しない）
@@ -101,11 +101,17 @@ functions:
         condition: '`RULE_INJECT_CONFIG` が実在しないファイルを指す'
         mock: なし
         expected: '`updatedInput.session_env` が `RULE_INJECT_CONFIG` を持ち、`permissionDecision` が `allow`'
+      - name: test_fill_config_when_project_dir_differs
+        case: 正常
+        summary: ツールの `project_dir` のプロジェクトの索引の変数参照の名前を入れる
+        condition: '`env` の `CLAUDE_PROJECT_DIR` が索引の無いフォルダ。`tool_input.project_dir` が直下に `rule: "!{OTHER_ROOT}/a.md"` の `rules.yaml` を持つ別のフォルダ。`env` に `OTHER_ROOT`'
+        mock: なし（フォルダと索引は一時ファイル）
+        expected: '`updatedInput.session_env` に `OTHER_ROOT` がある'
   - name: _index_variable_names
     title: 索引の変数参照の名前
     container: hooks/fill_config.py
     usecase: 操作に該当するルールを検索する
-    summary: セッションの設定で読む索引の、無効でないエントリの `rule` に出る変数参照の名前を返却する
+    summary: ツールの `project_dir`（無ければセッションのプロジェクト）で読み込む索引の、無効でないエントリの `rule` に出る変数参照の名前を返却する
     kind: 関数
     scope: internal
     args:
@@ -114,10 +120,15 @@ functions:
         required: true
         passing: positional
         description: フックが受け取った環境変数
+      - name: project_dir
+        type: object
+        required: true
+        passing: positional
+        description: ツールの引数 `project_dir` の値（引数が無ければ None）
     returns:
       type: tuple[str, ...]
       description: 変数参照の名前。重なりを落とし、出た順に並べる
     process: |-
-      1. `load_settings(env)` で設定を読み込む。SettingsReadError なら空のタプルを返却する
+      1. `project_dir` が絶対パスの文字列なら `{**env, PROJECT_DIR_ENV: project_dir}`、それ以外なら `env` で `load_settings` し、設定を読み込む（サーバーが `project_dir` を `CLAUDE_PROJECT_DIR` として扱うのとそろえる）。SettingsReadError なら空のタプルを返却する
       2. `settings.indexes` を順に `read_index(path, env)` で読み込む（ルール案内と同じ関数）。IndexReadError の索引は飛ばす
       3. 状態が `disabled` でないエントリの `raw["rule"]` を `variable_names` に引き渡し、名前を集める

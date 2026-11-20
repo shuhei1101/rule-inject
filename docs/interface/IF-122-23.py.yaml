@@ -194,7 +194,7 @@ constraints:
     constraint: '`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`。サーバー自身を扱うツール（`get_server_status`・`reload_settings`・`restart_server`・`update_server`）には当てない'
     notes: サーバー自身を扱うツールは、サーバーを起動した環境の設定を確かめるため
   - item: 入れる環境変数
-    constraint: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` と、セッションの設定で読み込む索引のエントリの `rule` に出る変数参照（`!{名前}`）の名前のうち、セッションにあるものだけを入れる。ほかの環境変数は入れない'
+    constraint: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` と、ツールの引数 `project_dir`（無ければセッションの `CLAUDE_PROJECT_DIR`）をプロジェクトとしてセッションの設定で読み込む索引のエントリの `rule` に出る変数参照（`!{名前}`）の名前のうち、セッションにあるものだけを入れる。ほかの環境変数は入れない'
     notes: 設定ファイル・既定の索引・既定の記録のフォルダの場所と、ルールの場所を決めるのがこれらの値。索引はルール案内と同じ読み取りで読む。引数は会話の記録に残るため、関係の無い値を出さない（[変数参照の展開の確認ログ](https://github.com/shuhei1101/rule-inject/pull/199#discussion_r4643448764)）
   - item: 上書き
     constraint: Claude Code が入れた `session_env` はフックの値で上書きする
