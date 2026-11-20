@@ -216,13 +216,13 @@ request:
     location: argument
     description: 応答の形式
     notes: '`json` のときは structuredContent と text に同じ JSON を入れる。`markdown` のときは同じ項目を Markdown の表で text に入れ、structuredContent を返却しない'
-  - name: config_path
-    type: str
+  - name: session_env
+    type: dict[str, str]
     required: false
-    default: なし（サーバーを起動した環境の `RULE_INJECT_CONFIG` で決める）
+    default: なし（サーバーを起動した環境の環境変数で決める）
     location: argument
-    description: 呼んだセッションの設定ファイルの場所
-    notes: インターフェース定義「ツールの引数への設定の記入」のフックが入れる。空文字は `RULE_INJECT_CONFIG` を持たないセッションを表す
+    description: 呼んだセッションの環境変数のうち、設定ファイルと既定の配置場所を決めるもの
+    notes: インターフェース定義「ツールの引数への設定の記入」のフックが入れる。キーは `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` のうちセッションにあるもの
 request_example: |-
   ```json
   {"project_dir": "/home/user/project", "format": "json"}
@@ -379,8 +379,8 @@ constraints:
   - item: 認可
     constraint: 制限なし
   - item: 設定ファイルの決め方
-    constraint: '`config_path` が空でない文字列のときはその値を `RULE_INJECT_CONFIG` として、空文字のときは `RULE_INJECT_CONFIG` が無いものとして、ルール案内の制約「設定ファイル」と同じ規則で設定ファイルを読む。`config_path` が無いときは、サーバーを起動した環境の `RULE_INJECT_CONFIG` で読む'
-    notes: フックとツールを呼んだセッションの判定を同じ設定ファイルにそろえる。応答の `config_path` は読んだ設定ファイルの場所
+    constraint: '`session_env` があるときは、サーバーの環境変数から `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` を除いて `session_env` を重ねた環境変数で、ルール案内の制約「設定ファイル」「索引」と同じ規則で設定ファイルと既定の配置場所を決める。`session_env` が無いときは、サーバーを起動した環境の環境変数で決める'
+    notes: フックとツールを呼んだセッションの判定を、同じ設定ファイル・同じ既定の配置場所にそろえる。応答の `config_path` は読んだ設定ファイルの場所
 refs:
   - SC-122-9#
 test_file: tests/integration/server/test_list_rules.py

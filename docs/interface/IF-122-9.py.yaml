@@ -89,13 +89,13 @@ request:
     description: 既読の記録を削除するセッションの識別子
     constraints: フックが記録ファイル名に使用する形式（`is_valid_session_id`）
     notes: インターフェース定義「既読の記録の確認」の `session_id` と同じ
-  - name: config_path
-    type: str
+  - name: session_env
+    type: dict[str, str]
     required: false
-    default: なし（サーバーを起動した環境の `RULE_INJECT_CONFIG` で決める）
+    default: なし（サーバーを起動した環境の環境変数で決める）
     location: argument
-    description: 呼んだセッションの設定ファイルの場所
-    notes: インターフェース定義「ルールの一覧」の `config_path` と同じ。記録のフォルダ（`global.state_dir`）をこの設定ファイルから取る
+    description: 呼んだセッションの環境変数のうち、設定ファイルと既定の配置場所を決めるもの
+    notes: インターフェース定義「ルールの一覧」の `session_env` と同じ。記録のフォルダ（`global.state_dir`、無ければ `XDG_STATE_HOME` の既定）をこの環境変数で決める
 request_example: |-
   ```json
   {"session_id": "0f6c2a8e-4b1d-4c3a-9e7f-2d5b8a1c6e90"}

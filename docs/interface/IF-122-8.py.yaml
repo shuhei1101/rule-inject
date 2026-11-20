@@ -159,7 +159,7 @@ flows:
       - '結果が `isError: true` で、設定ファイルの場所と知らないキーの理由が載っている'
     test: test_error_when_settings_unreadable
   - name: 正常系（セッションの設定で検索する）
-    summary: '`config_path` で指した設定ファイルで照合し、ルール案内と同じ止めるルールを返却する'
+    summary: '`session_env` の `RULE_INJECT_CONFIG` が指す設定ファイルで照合し、ルール案内と同じ止めるルールを返却する'
     setup:
       - name: Mock
         description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
@@ -171,7 +171,7 @@ flows:
       - name: 索引
         description: '`paths: ["**/*.py"]`・`on: [write]` のエントリ'
       - name: 引数
-        description: '`.py` の絶対パス・`operation: write`・`config_path` にセッションの設定ファイルの場所'
+        description: '`.py` の絶対パス・`operation: write`・`session_env` の `RULE_INJECT_CONFIG` にセッションの設定ファイルの場所'
     flow: |-
       <!-- map -->
 
@@ -182,7 +182,7 @@ flows:
         participant CF as セッションの設定ファイル
         participant IDX as 索引
 
-        C->>IF: project_dir・path・operation: write・config_path
+        C->>IF: project_dir・path・operation: write・session_env
         IF->>CF: 読む
         CF-->>IF: 索引の場所
         IF->>IDX: 読む
@@ -242,13 +242,13 @@ request:
     location: argument
     description: 応答の形式
     notes: インターフェース定義「ルールの一覧」の `format` と同じ
-  - name: config_path
-    type: str
+  - name: session_env
+    type: dict[str, str]
     required: false
-    default: なし（サーバーを起動した環境の `RULE_INJECT_CONFIG` で決める）
+    default: なし（サーバーを起動した環境の環境変数で決める）
     location: argument
-    description: 呼んだセッションの設定ファイルの場所
-    notes: インターフェース定義「ツールの引数への設定の記入」のフックが入れる。空文字は `RULE_INJECT_CONFIG` を持たないセッションを表す
+    description: 呼んだセッションの環境変数のうち、設定ファイルと既定の配置場所を決めるもの
+    notes: インターフェース定義「ルールの一覧」の `session_env` と同じ
 request_example: |-
   ```json
   {
