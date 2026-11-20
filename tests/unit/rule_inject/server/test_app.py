@@ -176,7 +176,7 @@ def test_build_server_when_session_env(
         "session_env": {"RULE_INJECT_CONFIG": str(session_config)},
     }
     # 実行
-    result = asyncio.run(server.call_tool("list_rules", arguments))
+    result: Any = asyncio.run(server.call_tool("list_rules", arguments))
     # 検証
     assert result.structured_content["config_path"] == str(session_config)
     assert result.structured_content["indexes"] == [str(index)]
