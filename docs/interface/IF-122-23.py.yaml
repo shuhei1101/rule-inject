@@ -108,6 +108,41 @@ flows:
       - 標準出力が空
       - 終了コードが `0`
     test: test_normal_when_input_unparsable
+  - name: 正常系（索引に変数参照がある）
+    summary: 索引の `rule` に出る `!{名前}` の値も `session_env` に入れる
+    setup:
+      - name: Mock
+        description: なし
+      - name: 設定ファイル
+        description: '`global.indexes` で索引を 1 つ指す'
+        notes: '`RULE_INJECT_CONFIG` で指す'
+      - name: 索引
+        description: '`rule: "!{RULE_ROOT}/a.md"` のエントリを 1 つ持つ'
+      - name: 環境変数
+        description: '`RULE_ROOT` と、索引に出ない別の環境変数を設定する'
+      - name: 入力
+        description: 正常系と同じ
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant H as ツールの引数への設定の記入
+        participant IDX as 索引
+
+        CC->>H: 標準入力（tool_name・tool_input）
+        H->>IDX: ルール案内と同じ読み取りで読む
+        IDX-->>H: rule に出る変数参照の名前
+        H-->>CC: permissionDecision allow・updatedInput（session_env に RULE_ROOT）<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`updatedInput.session_env` に `RULE_ROOT` とその値がある'
+      - '`updatedInput.session_env` に索引に出ない環境変数が無い'
+      - 終了コードが `0`
+    test: test_normal_when_index_has_variable
 identifier: fill_config
 idempotent: true
 side_effects: なし
@@ -159,8 +194,8 @@ constraints:
     constraint: '`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records`。サーバー自身を扱うツール（`get_server_status`・`reload_settings`・`restart_server`・`update_server`）には当てない'
     notes: サーバー自身を扱うツールは、サーバーを起動した環境の設定を確かめるため
   - item: 入れる環境変数
-    constraint: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` のうち、セッションにあるものだけを入れる。ほかの環境変数は入れない'
-    notes: 設定ファイル・既定の索引・既定の記録のフォルダの場所を決めるのがこの 3 つ。引数は会話の記録に残るため、関係の無い値を出さない
+    constraint: '`RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` と、セッションの設定で読み込む索引のエントリの `rule` に出る変数参照（`!{名前}`）の名前のうち、セッションにあるものだけを入れる。ほかの環境変数は入れない'
+    notes: 設定ファイル・既定の索引・既定の記録のフォルダの場所と、ルールの場所を決めるのがこれらの値。索引はルール案内と同じ読み取りで読む。引数は会話の記録に残るため、関係の無い値を出さない（[変数参照の展開の確認ログ](https://github.com/shuhei1101/rule-inject/pull/199#discussion_r4643448764)）
   - item: 上書き
     constraint: Claude Code が入れた `session_env` はフックの値で上書きする
     notes: フックとツールの判定を同じ設定ファイルにそろえるため

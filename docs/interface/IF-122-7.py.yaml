@@ -367,8 +367,8 @@ constraints:
     constraint: フックと同じ規則（設定ファイルの `global.indexes`・該当した `projects[].indexes`・既定の配置場所）を、`project_dir` を `CLAUDE_PROJECT_DIR` として適用する
     notes: 規則はインターフェース定義「ルール案内」の制約「索引」。フックと同じコードで読む
   - item: 変数参照
-    constraint: '`rule` の `!{名前}` はサーバーを起動した環境の環境変数で展開する'
-    notes: フックと同じ結果にするには、起動の側にも同じ環境変数を配置する
+    constraint: '`rule` の `!{名前}` は、制約「設定ファイルの決め方」と同じく `session_env` を重ねた環境変数で展開する。`session_env` が無いときは、サーバーを起動した環境の環境変数で展開する'
+    notes: '`session_env` にはフックが索引に出る名前の値を入れる（インターフェース定義「ツールの引数への設定の記入」の制約「入れる環境変数」）'
   - item: エントリのバージョン
     constraint: エントリのキーと値（索引に記載したまま）をキーの順に並べた JSON の SHA-256 の先頭 12 文字
     notes: コメント・引用符・字下げだけの違いでは変わらない
@@ -379,7 +379,7 @@ constraints:
   - item: 認可
     constraint: 制限なし
   - item: 設定ファイルの決め方
-    constraint: '`session_env` があるときは、サーバーの環境変数から `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` を除いて `session_env` を重ねた環境変数で、ルール案内の制約「設定ファイル」「索引」と同じ規則で設定ファイルと既定の配置場所を決める。`session_env` が無いときは、サーバーを起動した環境の環境変数で決める'
+    constraint: '`session_env` があるときは、サーバーの環境変数から `RULE_INJECT_CONFIG`・`XDG_CONFIG_HOME`・`XDG_STATE_HOME` を除いて `session_env` を重ねた環境変数で、ルール案内の制約「設定ファイル」「索引」と同じ規則で設定ファイルと既定の配置場所を決める。`session_env` のその他のキー（索引に出る変数参照の名前）も重ねる。`session_env` が無いときは、サーバーを起動した環境の環境変数で決める'
     notes: フックとツールを呼んだセッションの判定を、同じ設定ファイル・同じ既定の配置場所にそろえる。応答の `config_path` は読んだ設定ファイルの場所
 refs:
   - SC-122-9#
