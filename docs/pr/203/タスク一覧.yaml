@@ -89,4 +89,4 @@ tasks:
     status: todo
   - process: 結合テスト作成
     status: todo
-    note: テストは追加せず、既存のサーバーの起動の結合テストで instructions と description の文面を確かめる
+    note: IF-122-6 の異常系（プロンプトファイルが読めない）のテスト test_error_when_prompt_unreadable を一時のクローンからの起動で追加し、既存のサーバーの起動の結合テストで instructions と description の文面を確かめる
