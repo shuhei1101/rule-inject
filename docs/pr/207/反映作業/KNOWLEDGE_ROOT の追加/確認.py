@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from targets import KEY, SETTINGS_FILES, VALUE  # noqa: E402
+from targets import KEY, SETTINGS_FILES, VALUE
 
 REPO = Path("/home/shuhei2441/repo/rule-inject/.claude/worktrees/develop")
 LOAD = (

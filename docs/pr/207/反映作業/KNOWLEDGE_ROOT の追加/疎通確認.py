@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from targets import SETTINGS_FILES, VALUE  # noqa: E402
+from targets import SETTINGS_FILES, VALUE
 
 failed = False
 for path in SETTINGS_FILES:

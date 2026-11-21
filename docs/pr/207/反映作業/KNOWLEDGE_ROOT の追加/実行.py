@@ -7,9 +7,10 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from targets import KEY, SETTINGS_FILES, VALUE  # noqa: E402
+from targets import BACKUP_SUFFIX, KEY, SETTINGS_FILES, VALUE
 
 # 前提確認（全ての対象を読めてから書き換える）
 args = sys.argv[1:]
@@ -61,7 +62,7 @@ if dry_run or not plans:
     sys.exit(0)
 
 # 適用（対象ごとに一時ファイル → 検証 → 退避 → 置き換え）
-stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
+stamp = f"{datetime.now(ZoneInfo('Asia/Tokyo')):%Y%m%d-%H%M%S}"
 for path, updated in plans:
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as tmp:
         tmp.write(updated)
@@ -70,7 +71,7 @@ for path, updated in plans:
         new.unlink()
         print(f"{path} の検証: failed")
         sys.exit(1)
-    backup = path.with_name(f"{path.name}.bak-{stamp}")
+    backup = path.with_name(f"{path.name}.bak-{stamp}-{BACKUP_SUFFIX}")
     shutil.copy2(path, backup)
     new.replace(path)
     print(f"{path}: changed（退避: {backup.name}）")

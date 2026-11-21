@@ -18,3 +18,5 @@ SETTINGS_FILES = (
 )
 KEY = "KNOWLEDGE_ROOT"
 VALUE = "/home/shuhei2441/repo/knowledge/.claude/worktrees/develop"
+# 実行が取る退避の名前の末尾（切り戻しはこの末尾の退避だけを書き戻す）
+BACKUP_SUFFIX = "knowledge-root"
