@@ -7,6 +7,7 @@
 | ドキュメント | [docs/architecture/ARCH-122-1.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/architecture/ARCH-122-1.yaml) | サブシステムの分け方 | MCP サーバーの定義への参照を追加 |
 | ドキュメント | [docs/interface/index.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/interface/index.yaml) | ツールごとのインターフェース定義（IF-122-1〜12） | MCP サーバーの定義の `tools[].interface` から指す |
 | ドキュメント | [docs/scenario/SC-122-6.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/scenario/SC-122-6.yaml) | 接続時に作業の決まりを受け取る | 変更なし（回帰確認） |
+| ドキュメント | [docs/module/MOD-122-37.py.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/module/MOD-122-37.py.yaml) | `app.py` のモジュール構成（ツールの登録と annotations・単体テストの期待） | annotations とテストの期待をインターフェース定義の `read_only`・`destructive` に合わせる |
 | 実装 | [src/rule_inject/server/app.py](https://github.com/shuhei1101/rule-inject/blob/develop/src/rule_inject/server/app.py) | サーバーの組み立てとツールの登録・instructions・description | 設計書に合わせて修正 |
 
 ## 変更方針
