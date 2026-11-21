@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/unexpected-search-guide
+name: 検索結果の案内の想定外の例外の通知
+description: 検索結果の案内が想定外の例外で動かなかったことと、ログの場所を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  message:
+    type: string
+    required: true
+    description: 想定外の例外のクラス名と文面
+    example: 'RuntimeError: boom'
+  log_path:
+    type: string
+    required: true
+    description: その日のログのファイルの場所
+    example: '/home/user/.local/state/rule-inject/logs/20261121_rule-inject.log'
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          検索結果の案内が動きませんでした（{{ message }}）。詳しくはログ（{{ log_path }}）を確認してください。

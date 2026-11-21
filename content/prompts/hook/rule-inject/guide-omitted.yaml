@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/guide-omitted
+name: ルール案内の残りの件数
+description: ルール案内に記載しきれなかったルールの件数と、再試行したときに表示することを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  count:
+    type: integer
+    required: true
+    description: 記載しきれなかった・照合しなかった件数
+    example: 3
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          ほか {{ count }} 件のルールは、上のルールを参照して操作を再試行したときに表示します。

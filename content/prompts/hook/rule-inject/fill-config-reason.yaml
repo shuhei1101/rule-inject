@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/fill-config-reason
+name: 設定の記入の許可の理由
+description: rule-inject のツールの入力にセッションの設定を入れて許可した理由を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          rule-inject のツールの入力にセッションの設定を入れた

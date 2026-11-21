@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/tool-line
+name: 参照するツールの行
+description: ルールのパスの行の下に、ルールを参照するツールの名前と引数を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  tool:
+    type: string
+    required: true
+    description: ルールを参照する MCP のツールの完全名
+    example: 'mcp__docs__search_docs'
+  args:
+    type: string
+    required: true
+    description: ツールに指定する引数の 1 行の JSON
+    example: '{"filter": {"field": "id", "op": "eq", "values": ["python"]}}'
+  optional_args:
+    type: string
+    required: false
+    description: 省略してよい引数の 1 行の JSON。無ければ空文字
+    example: '{"sections": ["命名"]}'
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          ツール: {{ tool }} {{ args }}
+  - id: optional
+    when: optional_args
+    texts:
+      - lang: ja
+        text: |-
+          （省略可: {{ optional_args }}）

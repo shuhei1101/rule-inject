@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/guide-blocking-header
+name: 止める案内の 1 行目
+description: 操作を止めるルール案内の冒頭で、ルールを参照してから同じ操作を再試行することを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          この操作に関連する未読のルールがあります。下のルールを参照してから、同じ操作を再試行してください。

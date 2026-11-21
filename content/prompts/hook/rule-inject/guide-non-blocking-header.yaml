@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/guide-non-blocking-header
+name: 止めない案内の 1 行目
+description: 操作を止めないルール案内の冒頭で、参照は必要に応じてでよく、ルールごとに 1 回だけ表示することを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          この操作に関連する未読のルールがあります。必要に応じて下のルールを参照してください。この案内はルールごとにセッションで 1 回だけ表示します。

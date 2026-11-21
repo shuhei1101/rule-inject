@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/history-write-failure
+name: 既読の履歴に書き込めない通知の冒頭
+description: ルールは既読にしたが、既読の履歴に書き込めなかったことを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  locations:
+    type: string
+    required: true
+    description: 既読にしようとしたルールの場所を `, ` でつないだ文字列
+    example: '/home/user/rules/python.md'
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          次のルールを既読にしましたが、既読の履歴に書き込めませんでした（{{ locations }}）。

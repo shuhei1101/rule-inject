@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/search-header
+name: 検索結果の案内の 1 行目
+description: 検索結果の案内の冒頭で、参照は任意で、ルールごとに 1 回だけ表示することを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          検索結果のファイルに関連する未読のルールがあります（参照は任意です）。この案内はルールごとにセッションで 1 回だけ表示します。

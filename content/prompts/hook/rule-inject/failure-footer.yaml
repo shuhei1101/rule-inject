@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/failure-footer
+name: 失敗の通知の末尾
+description: 失敗の通知の末尾で、詳しい内容を記録したログの場所を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  log_path:
+    type: string
+    required: true
+    description: その日のログのファイルの場所
+    example: '/home/user/.local/state/rule-inject/logs/20261121_rule-inject.log'
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          詳しくはログ（{{ log_path }}）を確認してください。
