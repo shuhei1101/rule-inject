@@ -11,4 +11,4 @@ KNOWLEDGE_ROOT の追加:
   切り戻し: KNOWLEDGE_ROOT の追加/切り戻し.py
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
   確認方法: '認証領域ごとに、`settings.json` の `env` の `KNOWLEDGE_ROOT` が knowledge のクローンの場所で、その `env` だけを環境変数にしてフックと同じ索引の読み込み（`load_indexes`）でこのリポジトリの `rules.yaml` を読むと、読めない理由（変数参照を展開できない）が 0 件になる'
-  状態: todo
+  状態: done
