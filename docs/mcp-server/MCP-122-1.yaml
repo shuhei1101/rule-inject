@@ -39,3 +39,6 @@ tags:
     main: true
   - name: topic:MCPツール
   - name: tool:mcp
+refs:
+  - IF-122-6#
+  - IF-122-23#
