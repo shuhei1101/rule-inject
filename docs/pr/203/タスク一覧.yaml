@@ -80,8 +80,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T11:02:00.574044+00:00'
   - process: モジュール構成設計
-    status: todo
+    status: done
     note: MOD-122-37 の SERVER_INSTRUCTIONS の削除と build_server の読み込み、MOD-122-53 へのプロンプトファイルの読み込みの追加、本文の描画の仕方（要件の未確定）
+    updated_by: planner
+    updated_at: '2026-11-21T11:30:53.001205+00:00'
   - process: ドキュメント修正
     status: todo
     note: LAY-173-1・project-index.yaml・pyproject.toml
