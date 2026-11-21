@@ -58,3 +58,6 @@ scope_out:
   - item: '#197 の write_index_entry の引数の追加'
     reason: '受付判断で #197 を本件の後ろへ回した'
     plan: '#197'
+  - item: v8.2.0 の文字列の refs を related に対応付け、trace_related でたどれるようにする
+    reason: 配信元 rule-inject のどの種類も related の対応付けを持たず、対応付け方は shuhei1101/ai-monitor#3753 の対応とあわせて決まる（reviewer の対象外の報告）
+    plan: shuhei1101/ai-monitor#3753
