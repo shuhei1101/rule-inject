@@ -56,13 +56,13 @@ functions:
       1. `path = clone / PROMPTS_DIR / f"{prompt_id}.yaml"` を UTF-8 で読み、ruamel.yaml の `YAML(typ="safe")` で読み込む。`OSError`・`YAMLError` は `PromptLoadError(path, 理由)` にして送出する
       2. 最上位が `lang`（文字列）と `parts`（配列）を持つ辞書でなければ `PromptLoadError` を送出する
       3. `vars` の全ての名前を `None` にした辞書に `values` を重ねて変数の値にする（指定されなかった変数は `None`）
-      4. `parts` を並び順に確認し、`when` があれば `ENVIRONMENT.compile_expression(when, undefined_to_none=False)` を変数の値で評価し、`bool()` が偽の部品を飛ばす
+      4. `parts` を並び順に確認し、部品が辞書でないか `texts[]` の要素が `text`（文字列）を持つ辞書でなければ `PromptLoadError` を送出する。`when` があれば `ENVIRONMENT.compile_expression(when, undefined_to_none=False)` を変数の値で評価し、`bool()` が偽の部品を飛ばす
       5. 残った部品の `texts[]` から `lang` がトップレベルの `lang` と同じ本文を選ぶ。無い部品があれば `PromptLoadError`（部品の id）を送出する
       6. 本文を `ENVIRONMENT.from_string(text).render(**変数の値)` で描画する。4〜6 の `jinja2.TemplateError` は `PromptLoadError`（部品の id とエラーの内容）にして送出する
       7. 描画した本文を `""` でつなぎ、末尾の改行を除いて返却する
     exceptions:
       - name: PromptLoadError
-        condition: ファイルが無い・読めない・YAML の誤り・最上位の構造が違う・`lang` の本文が無い部品がある・本文か `when` を描画できない
+        condition: ファイルが無い・読めない・YAML の誤り・最上位・部品・`texts[]` の要素の構造が違う・`lang` の本文が無い部品がある・本文か `when` を描画できない
         message: '`path` にプロンプトファイルの場所、`reason` に理由'
     unit_tests:
       - name: test_load_prompt
@@ -99,3 +99,10 @@ functions:
         mock: なし
         expected: どちらも `PromptLoadError`（`when` も `None` に置き換わらない）
         exception: 未定義の変数
+      - name: test_load_prompt_when_invalid_part
+        case: 異常
+        summary: 部品か `texts[]` の要素の構造が違えば読み込みの失敗にする
+        condition: 部品が文字列のファイルと、`texts[]` の要素が `text` を持たないファイル
+        mock: なし
+        expected: どちらも `PromptLoadError`（構造が違う旨の `reason`）
+        exception: 部品・`texts[]` の要素の構造が違う

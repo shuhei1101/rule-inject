@@ -202,7 +202,7 @@ exceptions:
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ。`RULE_INJECT_PORT` が許す値の外'
     notes: 待ち受ける前に確認し、待ち受けずに、標準エラーへ設定ファイルの場所（環境変数のときはその名前）と理由を書き込み、0 以外の終了コードで終わる
   - name: PromptLoadError（プロンプトファイルが読めない）
-    condition: instructions かツールの description のプロンプトファイルが無い・YAML として読めない・`lang` の本文が無い・本文を描画できない
+    condition: instructions かツールの description のプロンプトファイルが無い・YAML として読めない・構造が違う・`lang` の本文が無い・本文を描画できない
     notes: 待ち受ける前に確認し、待ち受けずに、標準エラーへプロンプトファイルの場所と理由を書き込み、0 以外の終了コードで終わる
 constraints:
   - item: 待ち受けのアドレス
