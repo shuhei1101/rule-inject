@@ -79,6 +79,7 @@ subsystems:
     runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
     refs:
       - IF-122-6#
+      - MCP-122-1#
 lead: rule-inject のサブシステムと、Claude Code・ルールの配置場所との境界を示し、機能をどのサブシステムに配置するかを決めるときに参照する。
 external_systems:
   - name: Claude Code
