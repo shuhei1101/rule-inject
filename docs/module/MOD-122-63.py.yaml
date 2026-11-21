@@ -25,8 +25,8 @@ constants:
   - name: DECISION_REASON
     title: 許可の理由
     container: hooks/fill_config.py
-    summary: '`permissionDecisionReason` の文面'
-    value: '`"rule-inject のツールの入力にセッションの設定を入れた"`'
+    summary: '`permissionDecisionReason` の文面のプロンプトの名前。文面として指すときは `load_hook_prompt` で描画した本文を指す'
+    value: '`"fill-config-reason"`'
 functions:
   - name: fill_config
     title: ツールの引数への設定の記入の処理
@@ -56,6 +56,7 @@ functions:
       3. `SESSION_ENV_KEYS` のうち `env` にある名前と値を `session_env` に入れる
       4. `_index_variable_names(env, tool_input.get("project_dir"))` の名前のうち `env` にある名前と値を `session_env` に加える
       5. `{**tool_input, SESSION_ENV_ARG: session_env}` を `updatedInput` にして、`permissionDecision: allow`・`permissionDecisionReason: DECISION_REASON` とともに返却する
+      6. `DECISION_REASON` の読み込みが `PromptLoadError` を送出したときは、`permissionDecisionReason` を除いて返却し、`write_log(Component.FILL_CONFIG, operation="read_prompt", path=例外の path)` を記載する。ログのフォルダは `load_settings(env).log_dir`、SettingsReadError なら `default_log_dir(env)`
 
       標準入力が JSON として読めないときは `run_hook` が捕まえ、ログへ `unexpected` を書き込んで何も出さない（`HOOKS` の通知方は出力しない）
     unit_tests:
@@ -107,6 +108,13 @@ functions:
         condition: '`env` の `CLAUDE_PROJECT_DIR` が索引の無いフォルダ。`tool_input.project_dir` が直下に `rule: "!{OTHER_ROOT}/a.md"` の `rules.yaml` を持つ別のフォルダ。`env` に `OTHER_ROOT`'
         mock: なし（フォルダと索引は一時ファイル）
         expected: '`updatedInput.session_env` に `OTHER_ROOT` がある'
+      - name: test_fill_config_when_prompt_unreadable
+        case: 異常
+        summary: 許可の理由のプロンプトファイルが読めなければ理由を除いて入力を書き換える
+        condition: '`load_hook_prompt` を `PromptLoadError` を送出する関数に差し替え、`tool_name` が `search_rules` の完全名、`XDG_STATE_HOME` は一時フォルダ'
+        mock: '`load_hook_prompt` を差し替える'
+        expected: '`permissionDecision` が `allow`、`updatedInput.session_env` があり、`permissionDecisionReason` が無い。ログに `operation: read_prompt` が 1 行'
+        exception: プロンプトファイルが読めない
   - name: _index_variable_names
     title: 索引の変数参照の名前
     container: hooks/fill_config.py

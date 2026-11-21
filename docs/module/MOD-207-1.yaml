@@ -1,0 +1,184 @@
+id: MOD-207-1
+visibility: internal
+title: プラグイン / 共通 / prompts.py
+lead: フックの注入文のプロンプトファイルを名前で読み込み、標準ライブラリだけで注入する言語の本文を描画する処理を定め、フックの文面の読み込みを修正するときに参照する。
+test_files:
+  - tests/unit/rule_inject/shared/test_prompts.py
+constants:
+  - name: PLUGIN_ROOT
+    title: プラグインのルート
+    container: shared/prompts.py
+    summary: このファイルから導いたプラグインのルート（`src/rule_inject/shared/prompts.py` の 3 つ上のフォルダ）
+    value: '`Path(__file__).resolve().parents[3]`'
+  - name: HOOK_PROMPTS_DIR
+    title: フックのプロンプトファイルのフォルダ
+    container: shared/prompts.py
+    summary: プラグインのルートからのフックのプロンプトファイルのフォルダ（規約『プロンプトファイル』の `layout-03`）
+    value: '`Path("content") / "prompts" / "hook" / "rule-inject"`'
+  - name: VARIABLE_PATTERN
+    title: 変数の置き換えの形式
+    container: shared/prompts.py
+    summary: 本文の `{{ 名前 }}` の正規表現。名前をグループで取る
+    value: '`\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}`'
+  - name: WHEN_PATTERN
+    title: 部品の条件の形式
+    container: shared/prompts.py
+    summary: 部品の `when` として受け付ける形式（変数の名前 1 つ）
+    value: '`[A-Za-z_][A-Za-z0-9_]*`'
+functions:
+  - name: load_hook_prompt
+    title: フックのプロンプトの読み込み
+    container: shared/prompts.py
+    usecase: 共通
+    summary: 名前のプロンプトファイルを読み込み、`when` が真の部品の `lang` の本文の `{{ 名前 }}` を値で置き換えてつないだ文を返却する
+    kind: 関数
+    scope: public
+    args:
+      - name: name
+        type: str
+        required: true
+        passing: positional
+        description: プロンプトの名前（`HOOK_PROMPTS_DIR` からのファイル名から `.yaml` を除いたもの。例 `guide-blocking-header`）
+      - name: values
+        type: Mapping[str, object] | None
+        required: false
+        default: None
+        passing: positional
+        description: 本文と `when` に指定する変数の値
+      - name: root
+        type: Path
+        required: false
+        default: PLUGIN_ROOT
+        passing: keyword
+        description: プラグインのルート
+    returns:
+      type: str
+      description: 描画した文（末尾の改行を除く）
+    process: |-
+      1. `path = root / HOOK_PROMPTS_DIR / f"{name}.yaml"` を UTF-8 で読む。`OSError` は `PromptLoadError(str(path), 理由)` にして送出する
+      2. `_parse_prompt(text, path)` で最上位の `lang` と `parts[]`（部品ごとの `id`・`when`・`texts[]` の `lang` と `text`）を取り出す
+      3. `parts[]` を並び順に確認し、`when` があれば `values` のその名前の値の真偽で、偽の部品を飛ばす（`values` に無い名前は `PromptLoadError`）
+      4. 残った部品の `texts[]` から `lang` がトップレベルの `lang` と同じ本文を選ぶ。無い部品があれば `PromptLoadError`（部品の id）を送出する
+      5. 本文の `VARIABLE_PATTERN` を `str(values[名前])` に置き換える。`values` に無い名前と、置き換えた後の本文に残る `{{`・`{%`・`{#` は `PromptLoadError`（部品の id）を送出する
+      6. 描画した本文を `""` でつなぎ、末尾の改行を除いて返却する
+    exceptions:
+      - name: PromptLoadError
+        condition: ファイルが無い・読めない・`_parse_prompt` の誤り・`lang` の本文が無い部品がある・`when` か本文の変数が `values` に無い・置き換えられない Jinja2 の構文が残る
+        message: '`path` にプロンプトファイルの場所、`reason` に理由'
+    unit_tests:
+      - name: test_load_hook_prompt
+        case: 正常
+        summary: '`when` が真の部品の本文を変数で置き換えてつなぐ'
+        condition: '一時フォルダの `content/prompts/hook/rule-inject/a.yaml` に、`lang: ja`・`when` の無い部品（`{{ name }} さん`）・`when: flag` の部品（`！`）・`when: off` の部品を配置し、`{"name": "x", "flag": True, "off": ""}` と `root` に一時フォルダで呼ぶ'
+        mock: なし
+        expected: '`x さん！`'
+      - name: test_load_hook_prompt_when_missing
+        case: 異常
+        summary: ファイルが無ければ読み込みの失敗にする
+        condition: '`HOOK_PROMPTS_DIR` に名前のファイルが無い'
+        mock: なし
+        expected: '`PromptLoadError` で、`path` が名前のファイルの場所'
+        exception: ファイルが無い
+      - name: test_load_hook_prompt_when_no_lang_text
+        case: 異常
+        summary: 注入する言語の本文が無い部品があれば読み込みの失敗にする
+        condition: '`lang: ja` で、部品の `texts[]` が `lang: en` だけ'
+        mock: なし
+        expected: '`PromptLoadError` で、`reason` に部品の id'
+        exception: '`lang` の本文が無い'
+      - name: test_load_hook_prompt_when_undefined
+        case: 異常
+        summary: '`values` に無い変数は描画の失敗にする'
+        condition: '本文が `{{ missing }}` の部品と、`when: missing` の部品（別々のファイル）を `values` なしで読む'
+        mock: なし
+        expected: どちらも `PromptLoadError`
+        exception: 未定義の変数
+      - name: test_load_hook_prompt_when_unsupported_syntax
+        case: 異常
+        summary: 置き換えられない Jinja2 の構文は描画の失敗にする
+        condition: '本文が `{% if x %}a{% endif %}` の部品と、`when: "x == 1"` の部品（別々のファイル）'
+        mock: なし
+        expected: どちらも `PromptLoadError`
+        exception: 構文が残る
+      - name: test_hook_prompts_render
+        case: 正常
+        summary: 配布するフックのプロンプトファイルを全て描画できる
+        condition: '`PLUGIN_ROOT / HOOK_PROMPTS_DIR` の全てのファイルを、`vars` の `example` の値で読む'
+        mock: なし
+        expected: どのファイルも `PromptLoadError` を送出しない
+  - name: _parse_prompt
+    title: プロンプトファイルの読み取り
+    container: shared/prompts.py
+    usecase: 共通
+    summary: プロンプトファイルの YAML から、最上位の `lang` と `parts[]` の `id`・`when`・`texts[]` だけを標準ライブラリで読み取る
+    kind: 関数
+    scope: internal
+    args:
+      - name: text
+        type: str
+        required: true
+        passing: positional
+        description: プロンプトファイルの中身
+      - name: path
+        type: Path
+        required: true
+        passing: positional
+        description: 誤りの理由に載せるプロンプトファイルの場所
+    returns:
+      type: HookPrompt
+      description: 注入する言語と部品の並び
+    process: |-
+      1. `shared/yaml_lines.py` の行の読み取りでコメントと空行を落とし、字下げ 0 のキーの行を最上位のキーとして扱う。`lang`・`parts` 以外の最上位のキー（`id`・`name`・`description`・`kind`・`tags`・`vars`・`examples`）は、そのキーより深い字下げの行ごと読み飛ばす
+      2. `lang` は引用符を外した文字列にする
+      3. `parts` の下の `- ` で始まる行を部品の始まりとし、部品の `id`・`when`（引用符を外した文字列）と `texts` の下の要素の `lang` と、`text` のブロックスカラー（`|` か `|-`）の本文を取る。ブロックスカラーは最初の本文の行の字下げを外し、`|-` は末尾の改行を除く
+      4. `lang` か `parts` が無い、部品が `id` か `texts` を持たない、`texts` の要素が `lang` か `text` を持たない、`text` がブロックスカラーでないときは `PromptLoadError(str(path), 理由)` を送出する
+    exceptions:
+      - name: PromptLoadError
+        condition: 最上位・部品・`texts[]` の要素の構造が違う・`text` がブロックスカラーでない
+        message: '`path` にプロンプトファイルの場所、`reason` に構造が違う旨と行番号'
+    unit_tests:
+      - name: test_parse_prompt
+        case: 正常
+        summary: '`lang` と部品を取り出し、ほかの最上位のキーを読み飛ばす'
+        condition: 'モードラインのコメント・`vars`（入れ子の `example` を持つ）・`tags`・`lang: ja`・`when` を持つ部品と持たない部品・`text: |-` の 2 行の本文'
+        mock: なし
+        expected: '`lang` が `ja`、部品が 2 つで、1 つ目の `when` が無く 2 つ目の `when` が値を持つ。本文は字下げを外した 2 行で末尾の改行が無い'
+      - name: test_parse_prompt_when_invalid
+        case: 異常
+        summary: 構造が違えば読み取りの失敗にする
+        condition: '`parts` が無いファイルと、`text` がブロックスカラーでない（`text: a`）ファイル'
+        mock: なし
+        expected: どちらも `PromptLoadError`（行番号を含む `reason`）
+        exception: 構造が違う
+data_models:
+  - name: HookPrompt
+    title: フックのプロンプト
+    container: shared/prompts.py
+    usecase: 共通
+    role: DTO
+    summary: プロンプトファイルから読み取った注入する言語と部品の並び
+    properties:
+      - name: lang
+        type: str
+        description: 注入する言語
+      - name: parts
+        type: tuple[HookPromptPart, ...]
+        description: 部品（ファイルの並び順）
+  - name: HookPromptPart
+    title: フックのプロンプトの部品
+    container: shared/prompts.py
+    usecase: 共通
+    role: DTO
+    summary: 部品 1 つの id・条件・言語ごとの本文
+    properties:
+      - name: id
+        type: str
+        description: 部品の識別子
+      - name: when
+        type: str | None
+        description: 使用する条件の変数の名前（`WHEN_PATTERN`）。無ければ None
+      - name: texts
+        type: Mapping[str, str]
+        description: 言語 → 本文
+notes:
+  MCP サーバーの読み込みとの違い: MCP サーバーの `server/prompts.py`（MOD-203-1）は jinja2 と ruamel.yaml で描画する。フックは標準ライブラリだけで動くため、フックのプロンプトファイルの本文は `{{ 名前 }}` の置き換えだけ、`when` は変数の名前 1 つだけを使用する。この範囲の本文は、どちらの読み込みでも同じ文に描画される
