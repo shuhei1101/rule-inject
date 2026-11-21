@@ -1,0 +1,6 @@
+summary: スキルの手順（エージェントフロー）
+items:
+  - page: global-setup.yaml
+    summary: 端末の設定・MCP サーバーの起動・フックの確認を用意するスキル（`/rule-inject:global-setup`）
+  - page: setup.yaml
+    summary: リポジトリの索引を参照できる状態にしてチェックするスキル（`/rule-inject:setup`）

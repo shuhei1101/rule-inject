@@ -62,8 +62,8 @@ def test_build_server(clone_dir: Path) -> None:
     assert destructive == {
         "delete_index_entry",
         "delete_read_records",
-        "restart_server",
         "update_server",
+        "write_index_entry",
     }
 
 

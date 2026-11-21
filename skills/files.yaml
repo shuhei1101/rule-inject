@@ -5,6 +5,8 @@ files:
     tags:
       - topic:設定ファイル
     related:
+      - to: global-setup
+        type: implements
       - to: IF-122-20
         type: implements
   - path: setup/SKILL.md
@@ -13,5 +15,7 @@ files:
     tags:
       - topic:設定ファイル
     related:
+      - to: setup
+        type: implements
       - to: IF-122-21
         type: implements

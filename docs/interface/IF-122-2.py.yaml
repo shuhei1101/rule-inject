@@ -651,3 +651,5 @@ constraints:
 refs:
   - SC-122-19#
 test_file: tests/integration/server/test_write_index_entry.py
+read_only: false
+destructive: true

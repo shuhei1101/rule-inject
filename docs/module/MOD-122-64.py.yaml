@@ -1,0 +1,31 @@
+id: MOD-122-64
+visibility: internal
+title: プラグイン / SKILL.md の生成 / types.py
+lead: SKILL.md の生成で組み立てたファイルと、生成を止める誤りの型を定め、SKILL.md の生成の結果や誤りを修正するときに参照する。
+data_models:
+  - name: BuiltSkill
+    title: 組み立てた SKILL.md
+    container: features/build_skills/types.py
+    usecase: スキルを生成する
+    role: DTO
+    summary: '1 つの `type: skill` のエージェントフローから組み立てた SKILL.md（`@dataclass(frozen=True, slots=True, kw_only=True)`）'
+    properties:
+      - name: path
+        type: str
+        description: 書き出す先のリポジトリの直下からのパス（`skill.path`）
+      - name: content
+        type: str
+        description: 組み立てた SKILL.md の中身（末尾を改行 1 つで終える）
+classes:
+  - name: SkillBuildError
+    title: 生成の誤り
+    container: features/build_skills/types.py
+    usecase: スキルを生成する
+    role: 例外
+    summary: エージェントフローが読み込めない、組み立てに要るキーが無い、`skill.path` がリポジトリの外を指すことを表す。全ての原因をまとめて持つ
+    kind: クラス
+    inherits: Exception
+    properties:
+      - name: problems
+        type: tuple[str, ...]
+        description: '`{エージェントフローのパス}: {項目か理由}` の並び'

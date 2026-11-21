@@ -1,0 +1,15 @@
+# 結合テスト: 計画書の実行範囲の表の 3 ファイル
+# /tmp/pytest-of-shuhei2441 が root の所有で pytest の一時フォルダを作れないため、TMPDIR を /tmp/rule-inject-pr201-tmp にして実行した
+$ TMPDIR=/tmp/rule-inject-pr201-tmp uv run pytest tests/integration/build_skills/test_build_skills.py tests/integration/server/test_write_index_entry.py tests/integration/server/test_restart_server.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/chore-design-mcp-server-skill-design-docs
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 21 items
+
+tests/integration/build_skills/test_build_skills.py ...                  [ 14%]
+tests/integration/server/test_write_index_entry.py ...............       [ 85%]
+tests/integration/server/test_restart_server.py ...                      [100%]
+
+============================= 21 passed in 30.16s ==============================

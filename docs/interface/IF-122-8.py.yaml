@@ -334,3 +334,4 @@ refs:
   - SC-122-12#
   - IF-122-14#
 test_file: tests/integration/server/test_search_rules.py
+read_only: true

@@ -126,3 +126,9 @@ items:
     summary: 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り
   - page: MOD-122-33.py.yaml
     summary: 引数の読み取りと、結果の JSON の出力・終了コード
+  - page: MOD-122-64.py.yaml
+    summary: 組み立てた SKILL.md と、生成の誤りの型
+  - page: MOD-122-65.py.yaml
+    summary: エージェントフローの読み込みと SKILL.md の組み立て・書き出し
+  - page: MOD-122-66.py.yaml
+    summary: SKILL.md の生成のコマンドの出力と終了コード

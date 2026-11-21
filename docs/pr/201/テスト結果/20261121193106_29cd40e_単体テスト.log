@@ -1,0 +1,63 @@
+# 単体テスト（全 pass）: 実装の後
+# /tmp/pytest-of-shuhei2441 が root の所有で pytest の一時フォルダを作れないため、TMPDIR を /tmp/rule-inject-pr201-tmp にして実行した
+$ TMPDIR=/tmp/rule-inject-pr201-tmp uv run pytest tests/unit
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/chore-design-mcp-server-skill-design-docs
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 586 items
+
+tests/unit/hooks/test_run.py ....                                        [  0%]
+tests/unit/rule_inject/build_skills/test_main.py ..                      [  1%]
+tests/unit/rule_inject/features/build_skills/test_service.py ......      [  2%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  4%]
+................                                                         [  7%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [  9%]
+tests/unit/rule_inject/features/guidance/test_service.py ............... [ 11%]
+                                                                         [ 11%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 12%]
+tests/unit/rule_inject/features/index/check/test_service.py ...........  [ 14%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 15%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 17%]
+.................                                                        [ 20%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 20%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ...              [ 21%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 24%]
+...............................................................          [ 35%]
+tests/unit/rule_inject/features/index/test_yaml.py ....................  [ 38%]
+tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py .....  [ 39%]
+tests/unit/rule_inject/features/migrate/test_service.py ........         [ 40%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 43%]
+.............................                                            [ 48%]
+tests/unit/rule_inject/features/server_start/test_service.py .........   [ 50%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 50%]
+tests/unit/rule_inject/hooks/test_fill_config.py ............            [ 52%]
+tests/unit/rule_inject/hooks/test_record_read.py .................       [ 55%]
+tests/unit/rule_inject/hooks/test_rule_guide.py .....................    [ 59%]
+tests/unit/rule_inject/hooks/test_runner.py .....                        [ 60%]
+tests/unit/rule_inject/hooks/test_search_guide.py ........               [ 61%]
+tests/unit/rule_inject/hooks/test_start_server.py ........               [ 62%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 64%]
+tests/unit/rule_inject/hooks/test_work_rules.py .....                    [ 65%]
+tests/unit/rule_inject/migrate/test_main.py ...                          [ 65%]
+tests/unit/rule_inject/server/test_admin_tools.py .........              [ 67%]
+tests/unit/rule_inject/server/test_app.py .......                        [ 68%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 70%]
+tests/unit/rule_inject/server/test_clone.py ..........                   [ 72%]
+tests/unit/rule_inject/server/test_control.py .............              [ 74%]
+tests/unit/rule_inject/server/test_dev_docs.py ........                  [ 75%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 76%]
+tests/unit/rule_inject/server/test_main.py ....                          [ 76%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 77%]
+tests/unit/rule_inject/server/test_tools.py .............                [ 80%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 82%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 83%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 88%]
+..........................                                               [ 92%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ..........           [ 94%]
+tests/unit/rule_inject/shared/test_variables.py .......                  [ 95%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ....................... [ 99%]
+...                                                                      [100%]
+
+============================= 586 passed in 3.90s ==============================

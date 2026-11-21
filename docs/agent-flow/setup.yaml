@@ -1,0 +1,40 @@
+id: setup
+visibility: internal
+type: skill
+title: setup
+summary: リポジトリの索引が rule-inject に読まれる状態にして、索引のチェックの結果を示す
+tags:
+  - topic:設定ファイル
+  - topic:ルール索引
+  - topic:索引のチェック
+skill:
+  path: skills/setup/SKILL.md
+  arguments:
+    - name: index
+      hint: '[索引のパス]'
+      description: リポジトリの直下からの索引のパス。省くと直下の `rules.yaml`
+steps:
+  - name: 端末の設定を確認する
+    body: |-
+      - `RULE_INJECT_CONFIG`、`${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` の順にパスを決める
+      - ファイルが無ければ `/rule-inject:global-setup` を案内して止まる。何も記載しない
+  - name: 索引を確認する
+    body: '- 索引のファイルが無ければ、公開ドキュメント『索引の書式』を案内して止まる。何も記載しない'
+  - name: 別の場所の索引を登録する
+    when: '`$index` を指定したとき'
+    body: |-
+      - 端末の設定の `projects` に、`match` がリポジトリの絶対パスの要素を探す
+      - 要素があれば `indexes` へ追加し、無ければ `match` と `indexes` を持つ要素を追加する
+  - name: 索引をチェックする
+    body: |-
+      - MCP サーバーの `check_indexes` を、`project_dir` をリポジトリの絶対パスにして呼ぶ
+      - 呼べなければ、`/rule-inject:global-setup` かサーバーの起動を案内して止まる
+    calls:
+      - type: mcp
+        server: MCP-122-1#
+        tool: check_indexes
+        args:
+          required:
+            - project_dir
+  - name: 結果を示す
+    body: '- 参照する索引のパス・記載した要素・チェックの結果を示す'

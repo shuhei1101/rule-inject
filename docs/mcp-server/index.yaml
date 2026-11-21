@@ -1,0 +1,4 @@
+summary: MCP サーバーの接続の仕方と提供するツール
+items:
+  - page: MCP-122-1.yaml
+    summary: ルールと索引・既読の記録・サーバーの管理のツールを提供する rule-inject の MCP サーバー

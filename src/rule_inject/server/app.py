@@ -221,19 +221,22 @@ def build_server(
         )
 
     read_only = ToolAnnotations(read_only_hint=True, open_world_hint=False)
+    # 再起動はプロセスを入れ替えるが、設定や記録を失わせないため破壊的にしない
+    restartable = ToolAnnotations(destructive_hint=False, open_world_hint=False)
     destructive = ToolAnnotations(destructive_hint=True, open_world_hint=False)
     # 状態の確認は再起動の途中でも応答し、再起動は begin_restart が自分で断るため、包まずに登録する
     server.add_tool(get_server_status, annotations=read_only, structured_output=False)
-    server.add_tool(restart_server, annotations=destructive, structured_output=False)
+    server.add_tool(restart_server, annotations=restartable, structured_output=False)
     # それ以外は、再起動の途中なら断り、処理中の数を数える
     for function in (list_rules, search_rules, check_indexes, get_read_records, reload_settings):
         server.add_tool(control.guard(function), annotations=read_only, structured_output=False)
-    server.add_tool(
-        control.guard(write_index_entry),
-        annotations=ToolAnnotations(destructive_hint=False, open_world_hint=False),
-        structured_output=False,
-    )
-    for destructive_function in (delete_index_entry, delete_read_records, update_server):
+    # 索引のエントリの書き換え・削除、記録の削除、クローンの更新は破壊的にする
+    for destructive_function in (
+        write_index_entry,
+        delete_index_entry,
+        delete_read_records,
+        update_server,
+    ):
         server.add_tool(
             control.guard(destructive_function),
             annotations=destructive,

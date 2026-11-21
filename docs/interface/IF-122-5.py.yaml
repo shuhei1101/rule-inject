@@ -161,3 +161,4 @@ constraints:
 refs:
   - SC-122-1#
 test_file: tests/integration/server/test_get_server_status.py
+read_only: true

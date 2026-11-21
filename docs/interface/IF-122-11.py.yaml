@@ -735,3 +735,4 @@ constraints:
 refs:
   - SC-122-20#
 test_file: tests/integration/server/test_check_indexes.py
+read_only: true

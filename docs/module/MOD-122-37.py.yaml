@@ -74,7 +74,7 @@ functions:
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
       2. `MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)` を作る
-      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` はツールの引数に `session_env: dict[str, str] | None = None` を持ち、`_session_environment(env, session_env)` の環境変数を `env` として引き渡す（`write_index_entry` の `check_change` も、その環境変数で `partial(check_change, env=..., validator=validator)` を作って引き渡す）。`annotations` は `list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint`、`write_index_entry` が `destructiveHint: false`、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` が `destructiveHint: true` で、全て `openWorldHint: false`
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` はツールの引数に `session_env: dict[str, str] | None = None` を持ち、`_session_environment(env, session_env)` の環境変数を `env` として引き渡す（`write_index_entry` の `check_change` も、その環境変数で `partial(check_change, env=..., validator=validator)` を作って引き渡す）。`annotations` は、各ツールのインターフェース定義の `read_only`・`destructive` のとおりにする。`list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint: true`、`write_index_entry`・`delete_index_entry`・`delete_read_records`・`update_server` が `destructiveHint: true`、`restart_server` が `destructiveHint: false` で、全て `openWorldHint: false`
       4. `get_server_status` と `restart_server` を除くツールを `control.guard` で包んでから登録する（再起動の途中は断り、処理中の数を数える）。`restart_server` は `begin_restart` が自分で断る
       5. サーバーを返却する
     unit_tests:
@@ -83,7 +83,7 @@ functions:
         summary: 全てのツールを依存の引数なしで登録する
         condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
         mock: なし
-        expected: '`list_tools` が 11 の名前を返却し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command` が無く、`delete_index_entry`・`delete_read_records`・`restart_server`・`update_server` だけが `destructiveHint: true`'
+        expected: '`list_tools` が 11 の名前を返却し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command` が無く、`write_index_entry`・`delete_index_entry`・`delete_read_records`・`update_server` だけが `destructiveHint: true`'
       - name: test_build_server_when_restarting
         case: 異常
         summary: 再起動の途中は状態の確認だけを受け付ける

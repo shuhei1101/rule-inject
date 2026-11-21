@@ -1,0 +1,7 @@
+confirmations:
+  - topic: スキルの手順の原本
+    decision: 案 A。エージェントフローの設計書を原本にし、SKILL.md を設計書から生成するコマンドを rule-inject に作る
+    decided_by: 👍
+    approver: shuhei1101
+    commit: 4dc9eb6
+    thread: https://github.com/shuhei1101/rule-inject/pull/201#discussion_r4651850840

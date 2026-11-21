@@ -1,0 +1,44 @@
+id: MCP-122-1
+visibility: internal
+title: rule-inject の MCP
+lead: ルールと索引の一覧・検索・チェック・編集と、既読の記録の確認・削除、サーバーの状態の確認・設定の再読込・再起動・更新を提供する常駐の MCP サーバー。
+server: rule-inject
+repository: shuhei1101/rule-inject
+connection:
+  type: http
+  url: http://127.0.0.1:{RULE_INJECT_PORT}/mcp
+tools:
+  - name: list_rules
+    interface: IF-122-7#
+  - name: search_rules
+    interface: IF-122-8#
+  - name: check_indexes
+    interface: IF-122-11#
+  - name: write_index_entry
+    interface: IF-122-2#
+  - name: delete_index_entry
+    interface: IF-122-1#
+  - name: get_read_records
+    interface: IF-122-10#
+  - name: delete_read_records
+    interface: IF-122-9#
+  - name: get_server_status
+    interface: IF-122-5#
+  - name: reload_settings
+    interface: IF-122-12#
+  - name: restart_server
+    interface: IF-122-3#
+  - name: update_server
+    interface: IF-122-4#
+notes:
+  クライアント: |-
+    利用者の Claude Code が、プラグインの MCP の設定でつなぎ、全てのツールを使用する。エージェントの定義を持たないため `clients` は記載しない。
+    `list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` の引数 `session_env` は、フック『ツールの引数への設定の記入』（IF-122-23）が呼び出しの前に入れる。待ち受けと停止は『サーバーの起動』（IF-122-6）が定める。
+tags:
+  - name: topic:MCPサーバー
+    main: true
+  - name: topic:MCPツール
+  - name: tool:mcp
+refs:
+  - IF-122-6#
+  - IF-122-23#

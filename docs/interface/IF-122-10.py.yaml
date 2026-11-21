@@ -299,3 +299,4 @@ constraints:
 refs:
   - SC-122-15#
 test_file: tests/integration/server/test_get_read_records.py
+read_only: true

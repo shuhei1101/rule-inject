@@ -1,0 +1,101 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存のリポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 既存の設計書は揃っており、足りない MCP サーバー・スキルの設計書は設計の工程で作成する
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めの依頼ではない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: 未検証の技術機構に依存しない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: 利用者の操作の連鎖は変わらない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: 単一ユースケース設計
+    status: skipped
+    reason: 利用者の 1 操作の流れは変わらない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: モック作成
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: データ設計
+    status: skipped
+    reason: 利用者と決めるデータの構造は変わらない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: インターフェース定義設計
+    status: done
+    note: ユーザーの決定（案 A）で、エージェントフローの設計書から SKILL.md を生成するコマンドのインターフェース定義を追加する
+    updated_by: planner
+    updated_at: '2026-11-21T09:52:30.683792+00:00'
+  - process: エージェント・MCP サーバー設計
+    status: done
+    note: MCP サーバー rule-inject の定義（docs/mcp-server/）を template-mcp-server で作成する
+    updated_by: planner
+    updated_at: '2026-11-21T09:29:35.641177+00:00'
+  - process: エージェントフロー・LLM 呼び出し設計
+    status: done
+    note: 'スキル global-setup・setup を template-agent-flow の type: skill で作成する（docs/agent-flow/）。LLM の呼び出しは持たない'
+    updated_by: planner
+    updated_at: '2026-11-21T09:40:25.845281+00:00'
+  - process: 精度評価設計
+    status: skipped
+    reason: LLM・意思決定モデルを使用するノードを持たない（判定フローチャート『精度評価をするか』の q1 NO）。Issue でも対象外
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T09:11:16.598589+00:00'
+  - process: モジュール構成設計
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:13:07.980800+00:00'
+  - process: ドキュメント修正
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:22:06.353634+00:00'
+  - process: 単体テスト作成
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:28:22.761604+00:00'
+  - process: 実装
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:33:51.529213+00:00'
+  - process: 結合テスト作成
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:44:29.845833+00:00'

@@ -165,3 +165,5 @@ constraints:
 refs:
   - SC-122-14#
 test_file: tests/integration/server/test_delete_read_records.py
+read_only: false
+destructive: true

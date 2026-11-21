@@ -19,6 +19,15 @@ files:
         type: tests
       - to: IF-122-18
         type: see_also
+  - path: integration/build_skills/test_build_skills.py
+    name: SKILL.md の生成の結合テスト
+    description: SKILL.md の生成のコマンドを子プロセスとして起動し、書き出した SKILL.md・出力・終了コードを確認する結合テストで、SKILL.md の生成を修正したときに実行する。
+    tags:
+      - topic:スキル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/build_skills/__main__.py
+        type: tests
   - path: integration/plugin/test_migrate_settings.py
     name: 設定の移し替えの結合テスト
     description: 設定の移し替えのコマンドを子プロセスとして起動し、出力と終了コードを確認する結合テストで、設定の移し替えを修正したときに実行する。
@@ -676,4 +685,22 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/migrate/__main__.py
+        type: tests
+  - path: unit/rule_inject/features/build_skills/test_service.py
+    name: SKILL.md の生成の単体テスト
+    description: エージェントフローからの SKILL.md の組み立てと書き出しを確認する単体テストで、SKILL.md の生成を修正したときに実行する。
+    tags:
+      - topic:スキル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/build_skills/service.py
+        type: tests
+  - path: unit/rule_inject/build_skills/test_main.py
+    name: SKILL.md の生成の入口の単体テスト
+    description: SKILL.md の生成のコマンドの出力と終了コードを確認する単体テストで、入口を修正したときに実行する。
+    tags:
+      - topic:スキル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/build_skills/__main__.py
         type: tests

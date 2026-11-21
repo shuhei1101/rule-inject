@@ -78,7 +78,7 @@ flows:
 lead: 処理中の呼び出しの終わりを待って同じプロセスのまま再起動するツールの入出力を定め、サーバーの再起動を修正するときに参照する。
 identifier: restart_server
 idempotent: false
-side_effects: 待ち受けを閉じて再起動する（`destructiveHint`）。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書き込まない
+side_effects: 待ち受けを閉じて再起動する。`/mcp` の接続は切れる。設定ファイル・索引・既読の記録には書き込まない
 exclusivity: 再起動を始めた後の再起動・更新の呼び出しと、更新が動いている間の再起動の呼び出しは `RestartInProgressError` で断る
 request: []
 request_example: |-
@@ -136,3 +136,5 @@ refs:
   - SC-122-3#
   - LIB-122-6#
 test_file: tests/integration/server/test_restart_server.py
+read_only: false
+destructive: false

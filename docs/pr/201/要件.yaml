@@ -1,0 +1,74 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: run_only
+    detail: 端末のセットアップのスキルの手順書をエージェントフローの設計書から作り直すため、手順が変わっていないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-7.yaml
+    impact: run_only
+    detail: 索引の登録のスキルの手順書をエージェントフローの設計書から作り直すため、手順が変わっていないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-6.yaml
+    impact: run_only
+    detail: 接続時に受け取る作業の決まりの文面を MCP サーバーの設計書に合わせるため、受け取れることを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: run_only
+    detail: サーバーの組み立てを MCP サーバーの設計書に合わせるため、常駐させて接続できることを確かめる
+    depends_on: []
+docs:
+  - page: docs/mcp-server/index.yaml
+    new: true
+    change: MCP サーバーの定義のフォルダの目次を作成する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T09:29:32.996539+00:00'
+  - page: docs/agent-flow/index.yaml
+    new: true
+    change: エージェントフロー（スキル）のフォルダの目次を作成する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T09:40:23.428210+00:00'
+  - page: docs/index.yaml
+    new: false
+    change: MCP サーバーの定義とエージェントフローのフォルダの行を追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T09:40:23.428210+00:00'
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: docs/mcp-server/・docs/agent-flow/ と、実装を合わせるために増えるファイルのエントリを追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:13:05.328101+00:00'
+  - page: docs/architecture/ARCH-122-1.yaml
+    new: false
+    change: MCP サーバーのサブシステムの参照に MCP サーバーの定義を追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T09:29:32.996539+00:00'
+  - page: skills/files.yaml
+    new: false
+    change: スキルの SKILL.md の関連を、エージェントフローの設計書を指すように直す
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:21:54.632647+00:00'
+scope_out:
+  - item: 精度評価の設計書（evaluation・eval_criterion・eval_case）
+    reason: LLM・意思決定モデルを使用するノードを持たず、Issue でも対象外
+    plan: none
+  - item: エージェントの定義・起動の構成・LLM の呼び出しの設計書
+    reason: rule-inject はエージェントを起動せず、LLM を呼ばない（Issue の対象は MCP サーバーとスキル）
+    plan: none
+  - item: '#197 の write_index_entry の引数の追加'
+    reason: '受付判断で #197 を本件の後ろへ回した'
+    plan: '#197'
+  - item: v8.2.0 の文字列の refs を related に対応付け、trace_related でたどれるようにする
+    reason: 配信元 rule-inject のどの種類も related の対応付けを持たず、対応付け方は shuhei1101/ai-monitor#3753 の対応とあわせて決まる（reviewer の対象外の報告）
+    plan: shuhei1101/ai-monitor#3753
+  - item: MCP サーバーの instructions・ツールの description の本文をプロンプトファイル（`mcp/rule-inject/instructions`・`mcp/rule-inject/tools/{ツール}`）へ移す
+    reason: テンプレート『MCP サーバーの定義』は本文をプロンプトファイルに記載すると定めるが、rule-inject にはプロンプトファイルを読み込む仕組みが無く、作ると要件（設計書と食い違う実装を直す）の範囲を超える。今は `app.py` に直接記載したままにする（reviewer の回答）
+    plan: '#202'
