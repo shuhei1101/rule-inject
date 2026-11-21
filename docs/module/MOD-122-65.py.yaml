@@ -84,7 +84,7 @@ functions:
         message: 無い項目を全て `problems` に持つ
     process: |-
       1. `summary`・`skill.path`・`steps[].name` を確認し、無ければ `SkillBuildError` を送出する
-      2. frontmatter を `name`（`skill.name`、無ければ `skill.path` の親のフォルダ名）・`description`・`argument-hint`・`arguments`・`allowed-tools`・`skill.frontmatter` の順に、値があるキーだけ組み立てて `---` で囲む
+      2. frontmatter を `name`（`skill.name`、無ければ `skill.path` の親のフォルダ名）・`description`・`argument-hint`・`arguments`・`allowed-tools`・`skill.frontmatter` の順に、値があるキーだけ組み立てて `---` で囲む。書き出しは ruamel.yaml の `typ="safe"`・`default_flow_style=False`・`allow_unicode=True`・折り返さない幅（`width` を `sys.maxsize`）で、キーの順を組み立てた順のままにする（`sort_keys` をしない）
       3. 生成元のコメント・`# {title}`・`## 引数` の表（`skill.arguments` があるとき）・`## 手順` を続ける
       4. 工程ごとに `### {name}` と、`when`・`body`・`呼ぶもの:` の一覧を空行で区切って続ける
       5. 末尾を改行 1 つで終えた中身を `BuiltSkill` で返却する
@@ -94,7 +94,7 @@ functions:
         summary: frontmatter と本文を約束どおりに組み立てる
         condition: '`skill.arguments` 1 件と、`when` と `calls`（`mcp`・`tool`）を持つ工程と持たない工程を持つエージェントフロー'
         mock: なし
-        expected: frontmatter が `name`・`description`・`argument-hint`・`arguments` の順で、本文が生成元のコメント・見出し・引数の表・手順の順
+        expected: frontmatter が `name`・`description`・`argument-hint`・`arguments` の順で、長い `description` を折り返さずに 1 行で出し、本文が生成元のコメント・見出し・引数の表・手順の順
       - name: test_render_skill_when_frontmatter
         case: 正常
         summary: '`skill.frontmatter` を末尾に続け、`skill.arguments` が無ければ `arguments` と引数の表を出さない'
