@@ -10,14 +10,14 @@ tags:
   - topic:フック
 skill:
   path: skills/global-setup/SKILL.md
-  arguments:
-    - name: options
-      hint: '[--clone パス] [--config パス] [--index パス] [--service 名前] [--yes|--no]'
-      description: フラグで指定する引数。`--clone` は rule-inject のクローンのパス、`--config` は端末の設定のパス、`--index` は端末の設定を作るときの `global.indexes` の値、`--service` は systemd --user のサービス名（`.service` を付けない）。`--yes` は確認に了承、`--no` は確認に断りとして回答する
+  frontmatter:
+    argument-hint: '[--clone パス] [--config パス] [--index パス] [--service 名前] [--yes|--no]'
+  frontmatter_reason: フラグの文字列全体を `$ARGUMENTS` で受け取るため、名前付きの引数（`arguments`）を出さず、補完の書式だけを出す
 steps:
   - name: 引数をそろえる
     body: |-
-      - `$options` の引数で指定しなかった値は、`AskUserQuestion` で既定値を推奨の選択肢にして質問する
+      - `$ARGUMENTS` はフラグで指定する。`--clone` は rule-inject のクローンのパス、`--config` は端末の設定のパス、`--index` は端末の設定を作るときの `global.indexes` の値、`--service` は systemd --user のサービス名（`.service` を付けない）。`--yes` は確認に了承、`--no` は確認に断りとして回答する
+      - `$ARGUMENTS` の引数で指定しなかった値は、`AskUserQuestion` で既定値を推奨の選択肢にして質問する
       - 質問できないときに値が足りなければ、足りない引数を示して止まる
       - 済んでいる手順は飛ばして、続きから進む
     calls:
