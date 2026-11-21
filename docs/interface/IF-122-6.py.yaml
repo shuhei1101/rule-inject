@@ -173,6 +173,9 @@ exceptions:
   - name: SettingsReadError（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ。`RULE_INJECT_PORT` が許す値の外'
     notes: 待ち受ける前に確認し、待ち受けずに、標準エラーへ設定ファイルの場所（環境変数のときはその名前）と理由を書き込み、0 以外の終了コードで終わる
+  - name: PromptLoadError（プロンプトファイルが読めない）
+    condition: instructions かツールの description のプロンプトファイルが無い・YAML として読めない・`lang` の本文が無い・本文を描画できない
+    notes: 待ち受ける前に確認し、待ち受けずに、標準エラーへプロンプトファイルの場所と理由を書き込み、0 以外の終了コードで終わる
 constraints:
   - item: 待ち受けのアドレス
     constraint: '`127.0.0.1` だけ'
@@ -200,7 +203,7 @@ constraints:
     notes: ループバックだけで待ち受け、同じ端末の利用者だけが呼べる
   - item: instructions
     constraint: '`initialize` の応答の `instructions` に、新しいファイルは Write で空の内容で作り、案内されたルールを参照してから Edit で中身を記載する、という決まりと、その後ろに rule-inject の MCP のツールの選び方を事実の文で記載する。4,096 字以内。選び方は、この MCP のツールを呼ぶ場面（有効なルールの一覧・ファイルやツールの呼び出しにヒットするルールの検索・索引のエントリの編集と索引のチェック・既読の記録の確認と削除・設定ファイルを書き換えた後の再読込とサーバーの状態の確認・再起動・更新）、呼ばない場面（ルールの本文は案内された場所を Read で参照する・プロジェクトのコードや文書は grep・Read で探す・どのルールがヒットするかは索引を grep・Read せず `search_rules` で調べる・索引は Edit で編集せず `write_index_entry`・`delete_index_entry` で編集する）、ツール間の順序（エントリを書き換え・削除する前に `list_rules` で `position` と `rev` を取得する・ルールが案内されないときは `search_rules` でヒットするかを確認してから `get_read_records` で既読かを確認する）とする。ツールの引数と応答の説明は記載しない'
-    notes: 接続のたびに同じ文面。設定ファイルでは変えられない。SessionStart のフックはこの決まりを記載しない（[圧縮の後の通知](id:IF-122-15)）
+    notes: 文面の原本はプロンプトファイル `content/prompts/mcp/rule-inject/instructions.yaml` で、起動時に `lang` の本文を描画する。接続のたびに同じ文面。設定ファイルでは変えられない。SessionStart のフックはこの決まりを記載しない（[圧縮の後の通知](id:IF-122-15)）
 refs:
   - SC-122-4#
 test_file: tests/integration/server/test_server_start.py
