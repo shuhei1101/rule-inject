@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from rule_inject.hooks import fill_config as fill_config_module
 from rule_inject.hooks.fill_config import DECISION_REASON, fill_config
 from rule_inject.shared.errors import PromptLoadError
 from rule_inject.shared.prompts import load_hook_prompt
@@ -222,6 +222,8 @@ def test_fill_config_when_prompt_unreadable(
     def unreadable(name: str, values: object = None) -> str:
         raise PromptLoadError(f"/p/{name}.yaml", "FileNotFoundError: 無い")
 
+    # `rule_inject.hooks` が同じ名前の関数を公開するため、モジュールは import_module で取る
+    fill_config_module = importlib.import_module("rule_inject.hooks.fill_config")
     monkeypatch.setattr(fill_config_module, "load_hook_prompt", unreadable)
     # 実行
     result = fill_config(payload, env)
