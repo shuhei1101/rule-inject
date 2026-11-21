@@ -80,8 +80,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T12:06:55.267786+00:00'
   - process: モジュール構成設計
-    status: todo
+    status: done
     note: フックのプロンプトファイルの作成、MOD-122-4 ほかの文面の定数の削除、MOD-122-59 へのプロンプトファイルの読み込みの追加、標準ライブラリだけでの読み込みと描画（要件の未確定）
+    updated_by: planner
+    updated_at: '2026-11-21T12:42:20.266026+00:00'
   - process: ドキュメント修正
     status: todo
     note: rules.yaml・LAY-173-1・project-index.yaml
