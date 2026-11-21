@@ -95,7 +95,9 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T13:36:12.483899+00:00'
   - process: 実装
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T13:59:27.990910+00:00'
   - process: 結合テスト作成
     status: skipped
     reason: 足すテストが無い。生成の結合テストの削除は実装で行う
