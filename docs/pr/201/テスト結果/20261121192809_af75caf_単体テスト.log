@@ -1,0 +1,24 @@
+# 単体テスト（Red）: 実装の前
+# /tmp/pytest-of-shuhei2441 が root の所有で pytest の一時フォルダを作れないため、TMPDIR を /tmp/rule-inject-pr201-tmp にして実行した
+$ TMPDIR=/tmp/rule-inject-pr201-tmp uv run pytest tests/unit
+E       ModuleNotFoundError: No module named 'rule_inject.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.features.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.features.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.features.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.features.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.features.build_skills'
+E       ModuleNotFoundError: No module named 'rule_inject.features.build_skills'
+E       AssertionError: assert {'delete_inde...pdate_server'} == {'delete_inde..._index_entry'}
+FAILED tests/unit/rule_inject/build_skills/test_main.py::test_main - ModuleNo...
+FAILED tests/unit/rule_inject/build_skills/test_main.py::test_main_when_error
+FAILED tests/unit/rule_inject/features/build_skills/test_service.py::test_build_skills
+FAILED tests/unit/rule_inject/features/build_skills/test_service.py::test_build_skills_when_unreadable
+FAILED tests/unit/rule_inject/features/build_skills/test_service.py::test_build_skills_when_outside
+FAILED tests/unit/rule_inject/features/build_skills/test_service.py::test_render_skill
+FAILED tests/unit/rule_inject/features/build_skills/test_service.py::test_render_skill_when_frontmatter
+FAILED tests/unit/rule_inject/features/build_skills/test_service.py::test_render_skill_when_key_missing
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server - Asserti...
+======================== 9 failed, 577 passed in 4.27s =========================
+
+# fail の原因: build_skills の 8 件は実装のモジュール（rule_inject.build_skills・rule_inject.features.build_skills）が無いこと、test_build_server は app.py の annotations をまだインターフェース定義に合わせていないこと
