@@ -50,10 +50,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T09:11:16.598589+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: ユーザーの決定（案 A）で、エージェントフローの設計書から SKILL.md を生成するコマンドのインターフェース定義を追加する
     updated_by: planner
-    updated_at: '2026-11-21T09:48:23.738310+00:00'
+    updated_at: '2026-11-21T09:52:30.683792+00:00'
   - process: エージェント・MCP サーバー設計
     status: done
     note: MCP サーバー rule-inject の定義（docs/mcp-server/）を template-mcp-server で作成する
