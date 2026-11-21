@@ -197,6 +197,12 @@ functions:
         default: GUIDANCE_LIMIT
         passing: keyword
         description: 字数の上限
+      - name: summary_values
+        type: Mapping[str, object] | None
+        required: false
+        default: None
+        passing: keyword
+        description: '`summary` のプロンプトの本文に指定する変数の値（例: `RECORD_WRITE_FAILURE` の `locations`）'
     returns:
       type: str
       description: '`summary` のプロンプトの本文と `- {path}: {reason}` の行と、`FAILURE_FOOTER` を `log_path` で描画した本文'

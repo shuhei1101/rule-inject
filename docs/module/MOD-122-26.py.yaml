@@ -36,7 +36,7 @@ functions:
          - `mcp__` で始まるツールは、上の 2 つのどちらの場合も、`match_read_tool(entries, tool_name, tool_input)` の場所を後ろに加える（文書の `scope` と `read_by` によらない）
       3. 場所の重なりを除き、`hash_locations` で本文のハッシュを付ける。読み込めずハッシュを取れない場所は記録しない（通知しない。ログにも書き込まない）
       4. 行が無ければ None を返却する
-      5. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と、`RECORD_WRITE_FAILURE`（`locations` に場所を `, ` でつないだ文字列）を冒頭にした additionalContext にして返却する（履歴へは記載しない）
+      5. `append_record` で既読の記録へ追記する。RecordWriteError はログ（`write_record`）と、`RECORD_WRITE_FAILURE`（`build_failure_notice` の `summary_values` の `locations` に場所を `, ` でつないだ文字列）を冒頭にした additionalContext にして返却する（履歴へは記載しない）
       6. `append_history(state_dir, session_id, locations, method=..., tool=tool_name)` で、記録した行の場所を既読の履歴へ書き込む。method は Read が `ReadMethod.READ`、Bash が `ReadMethod.BASH`、MCP のツールが `ReadMethod.MCP`
       7. HistoryWriteError はログ（`write_history`）と、`HISTORY_WRITE_FAILURE`（`locations` は 5 と同じ）を冒頭にして場所と理由を記載した additionalContext にして返却する（既読の記録はそのまま残す）
     unit_tests:
