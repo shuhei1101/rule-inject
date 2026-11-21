@@ -46,11 +46,17 @@ categories:
       ```bash
       cd {AI Monitor のクローン} && PYTHONPATH=src uv run python -m ai_monitor.distribution import-site --version v{MAJOR}.{MINOR}.{PATCH} --root {rule-inject の作業ツリー}
       ```
-    effects: 1 は `index.yaml` を持つフォルダの `README.md`・`docs/_theme/_data/nav.project.yml`・`docs/guide/` の分類のトップページ（`はじめに.md`・`使用方法.md`・`リファレンス.md`）と、`docs/_config.yml` の `exclude` を上書きする。3 は `docs/_theme/` のうちそのバージョンの中身と違うファイルを上書きし、そのバージョンに無いファイルを削除する（`nav.project.yml` は書き換えない）
+
+      4. エージェントフローの設計書（`docs/agent-flow/`）を変えたら、`skills/` の SKILL.md を再生成し、設計書と一緒に commit する（AI Monitor のクローンは要らない）
+
+      ```bash
+      cd {rule-inject の作業ツリー} && uv run python -m rule_inject.build_skills
+      ```
+    effects: '1 は `index.yaml` を持つフォルダの `README.md`・`docs/_theme/_data/nav.project.yml`・`docs/guide/` の分類のトップページ（`はじめに.md`・`使用方法.md`・`リファレンス.md`）と、`docs/_config.yml` の `exclude` を上書きする。3 は `docs/_theme/` のうちそのバージョンの中身と違うファイルを上書きし、そのバージョンに無いファイルを削除する（`nav.project.yml` は書き換えない）。4 は `type: skill` のエージェントフローの `skill.path` の SKILL.md のうち、組み立てた中身と違うものを上書きする'
     verification:
       state: 済
       date: '2026-11-14'
-      detail: worktree で 1〜3 を実行し、どれも終了コード 0 で終わった。1 は `docs/README.md` と `docs/dev-command/README.md` だけを書き換えた（約 32 秒）。2 は 129 件の Markdown を `docs/generated/` に書き出し、Git の変更は出なかった（約 27 秒）。3 は `ai-monitor-theme.yaml` の `v0.3.0` を指定し、何も書き換えなかった（約 10 秒）。AI Monitor の 1・2 は配信元の設定を `dev-docs.yaml` の名前で参照するため、`project-index.yaml` を指す `dev-docs.yaml` を一時的に作って実行し、commit しなかった
+      detail: worktree で 1〜3 を実行し、どれも終了コード 0 で終わった。1 は `docs/README.md` と `docs/dev-command/README.md` だけを書き換えた（約 32 秒）。2 は 129 件の Markdown を `docs/generated/` に書き出し、Git の変更は出なかった（約 27 秒）。3 は `ai-monitor-theme.yaml` の `v0.3.0` を指定し、何も書き換えなかった（約 10 秒）。AI Monitor の 1・2 は配信元の設定を `dev-docs.yaml` の名前で参照するため、`project-index.yaml` を指す `dev-docs.yaml` を一時的に作って実行し、commit しなかった。2026-11-21 に worktree で 4 を 2 回実行し、1 回目は `skills/global-setup/SKILL.md`・`skills/setup/SKILL.md` を書き換えて終了コード 0、2 回目は何も出力せず終了コード 0 で終了した
   - name: 取り込み前の検査
     commands: 未確定
   - name: 管理作業
