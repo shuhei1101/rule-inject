@@ -85,8 +85,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T12:42:20.266026+00:00'
   - process: ドキュメント修正
-    status: todo
-    note: rules.yaml・LAY-173-1・project-index.yaml
+    status: done
+    note: LAY-173-1
+    updated_by: planner
+    updated_at: '2026-11-21T12:48:55.847906+00:00'
   - process: 単体テスト作成
     status: todo
   - process: 実装
