@@ -1,0 +1,31 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-6.yaml
+    impact: run_only
+    detail: 接続時に受け取る作業の決まりの文面は変わらないが、文面の読み出し元が変わるため回帰を確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: run_only
+    detail: サーバーの起動時にプロンプトファイルを読み込むため、常駐の起動が壊れないことを確かめる
+    depends_on: []
+docs:
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: content/prompts/mcp/rule-inject/ のフォルダとプロンプトファイルのエントリを追加する
+    status: todo
+  - page: project-index.yaml
+    new: false
+    change: content/prompts/**/*.yaml を指すプロンプトの文書の行を追加する
+    status: todo
+  - page: pyproject.toml
+    new: false
+    change: 本文の描画に jinja2 を使用する場合、server と dev の依存に追加する
+    status: todo
+scope_out:
+  - item: フックの注入文（圧縮の後の通知・ルールの案内など）の本文のプロンプトファイルへの移行
+    reason: 要望は MCP サーバーの instructions とツールの description に限る。規約『プロンプトファイル』はフックの注入文も対象にするため、同じ型の箇所として範囲に含めるかはレビューで確定する
+    plan: to_file
+  - item: ツールの引数の説明（入力の Schema の description）のプロンプトファイルへの移行
+    reason: 今の実装は引数に説明の文を持たず、移す本文が無い
+    plan: none
