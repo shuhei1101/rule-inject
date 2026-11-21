@@ -41,7 +41,9 @@ docs:
   - page: docs/layout/LAY-173-1.yaml
     new: false
     change: docs/mcp-server/・docs/agent-flow/ と、実装を合わせるために増えるファイルのエントリを追加する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:13:05.328101+00:00'
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: MCP サーバーのサブシステムの参照に MCP サーバーの定義を追加する
