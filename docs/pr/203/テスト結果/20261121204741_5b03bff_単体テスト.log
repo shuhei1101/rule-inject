@@ -1,0 +1,4 @@
+$ TMPDIR=/tmp/claude-1000/pytest-tmp uv run pytest tests/unit -q
+# TMPDIR は /tmp/pytest-of-shuhei2441 が別のユーザーの所有で pytest が一時フォルダを作れないため指定（コマンドの引数は変えていない）
+.....................                                                    [100%]
+597 passed in 4.02s
