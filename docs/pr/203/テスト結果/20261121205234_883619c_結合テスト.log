@@ -1,0 +1,4 @@
+$ TMPDIR=/tmp/claude-1000/pytest-tmp uv run pytest tests/integration/server/test_server_start.py tests/integration/server/test_update_server.py -q
+# テスト実行方法の TL-2 は個別実行のコマンドを持たないため、全件実行のコマンドに計画書の実行範囲の表の結合テストを渡した。TMPDIR は /tmp/pytest-of-shuhei2441 が別のユーザーの所有のため指定
+............                                                             [100%]
+12 passed in 18.53s

@@ -53,6 +53,10 @@
 
 | 変更したファイル | 結果 | 実行する結合テスト | 結合テストが無いエントリーポイント |
 | --- | --- | --- | --- |
+| `docs/pr/203/テスト結果/20261121205234_883619c_結合テスト.log` | R7 | -（設計書・PR ドキュメント・配信元の設定・管理用の YAML で、サーバーの動きに影響しない） | - |
+| `docs/pr/203/テスト結果/20261121205234_883619c_lint.log` | R7 | -（設計書・PR ドキュメント・配信元の設定・管理用の YAML で、サーバーの動きに影響しない） | - |
+| `tests/integration/server/conftest.py` | R7 | `tests/integration/server/test_server_start.py`・`tests/integration/server/test_update_server.py`（`start_clone_server` に `wait_ready` を追加し、この 2 つが使用する） | - |
+| `tests/integration/server/test_server_start.py` | R2 | `tests/integration/server/test_server_start.py` | - |
 | `content/prompts/mcp/rule-inject/instructions.yaml` | R7 | `tests/integration/server/test_server_start.py` | - |
 | `content/prompts/mcp/rule-inject/tools/check-indexes.yaml` | R7 | `tests/integration/server/test_server_start.py` | - |
 | `content/prompts/mcp/rule-inject/tools/delete-index-entry.yaml` | R7 | `tests/integration/server/test_server_start.py` | - |
@@ -98,3 +102,12 @@
 | `uv.lock` | R7 | `tests/integration/server/test_server_start.py`・`tests/integration/server/test_update_server.py` | - |
 
 `test_update_server.py` は `start_clone_server` で作業ブランチの HEAD の一時のクローンから起動するため、クローンの `content/prompts` を読む経路を確かめる。ほかのツールの結合テストもサーバーを起動するが、起動の経路は `test_server_start.py` と同じで、各ツールの振る舞いは変えていないため含めない。
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| [tests/integration/server/test_server_start.py](https://github.com/shuhei1101/rule-inject/blob/883619c/tests/integration/server/test_server_start.py) | 全実行 | 変更 | ✅ | `test_error_when_prompt_unreadable` を追加。ほかのケースで instructions とツールの一覧を確かめる<br>`テスト結果/20261121205234_883619c_結合テスト.log` |
+| [tests/integration/server/test_update_server.py](https://github.com/shuhei1101/rule-inject/blob/883619c/tests/integration/server/test_update_server.py) | 全実行 | 実行のみ | ✅ | 一時のクローンの `content/prompts` を読んで起動する経路<br>`テスト結果/20261121205234_883619c_結合テスト.log` |
+
+2 ファイルで 12 テスト pass。lint は違反なし（`テスト結果/20261121205234_883619c_lint.log`）。
