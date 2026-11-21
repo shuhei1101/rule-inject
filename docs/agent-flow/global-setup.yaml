@@ -11,25 +11,13 @@ tags:
 skill:
   path: skills/global-setup/SKILL.md
   arguments:
-    - name: clone
-      hint: '[--clone パス]'
-      description: rule-inject のクローンのパス
-    - name: config
-      hint: '[--config パス]'
-      description: 端末の設定のパス。省くと `RULE_INJECT_CONFIG`、`${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` の順
-    - name: index
-      hint: '[--index パス]'
-      description: 端末の設定を作るときの `global.indexes` の値
-    - name: service
-      hint: '[--service 名前]'
-      description: systemd --user のサービス名（`.service` を付けない）。省くと `rule-inject`
-    - name: answer
-      hint: '[--yes|--no]'
-      description: '`--yes` は確認に了承、`--no` は確認に断りとして回答する'
+    - name: options
+      hint: '[--clone パス] [--config パス] [--index パス] [--service 名前] [--yes|--no]'
+      description: フラグで指定する引数。`--clone` は rule-inject のクローンのパス、`--config` は端末の設定のパス、`--index` は端末の設定を作るときの `global.indexes` の値、`--service` は systemd --user のサービス名（`.service` を付けない）。`--yes` は確認に了承、`--no` は確認に断りとして回答する
 steps:
   - name: 引数をそろえる
     body: |-
-      - `$ARGUMENTS` の引数で指定しなかった値は、`AskUserQuestion` で既定値を推奨の選択肢にして質問する
+      - `$options` の引数で指定しなかった値は、`AskUserQuestion` で既定値を推奨の選択肢にして質問する
       - 質問できないときに値が足りなければ、足りない引数を示して止まる
       - 済んでいる手順は飛ばして、続きから進む
     calls:
@@ -87,6 +75,3 @@ steps:
       - 作ったもの・`env` に記載したキー・削除した登録・接続の結果を示す
       - このセッションで MCP を使用するには `/mcp` で再接続することを案内する。`env` を記載したときは Claude Code を再起動することを案内する
       - リポジトリの索引を登録する `/rule-inject:setup` を案内する
-    calls:
-      - type: skill
-        skill: setup#
