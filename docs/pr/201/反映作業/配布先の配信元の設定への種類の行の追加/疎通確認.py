@@ -6,7 +6,8 @@
 import sys
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
 
 CONFIG_NAMES = ("project-index.yaml", "dev-docs.yaml")
 # 引数の数の上限（スクリプト名と対象のリポジトリ）
@@ -27,8 +28,8 @@ def main():
         print("配信元の設定: failed")
         sys.exit(1)
     try:
-        yaml.safe_load(config.read_text(encoding="utf-8"))
-    except yaml.YAMLError as err:
+        YAML(typ="safe").load(config.read_text(encoding="utf-8"))
+    except YAMLError as err:
         print("配信元の設定: failed")
         print(err)
         sys.exit(1)

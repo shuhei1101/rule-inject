@@ -6,7 +6,7 @@
 import sys
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 CONFIG_NAMES = ("project-index.yaml", "dev-docs.yaml")
 # 引数の数の上限（スクリプト名と対象のリポジトリ）
@@ -34,7 +34,8 @@ def main():
         sys.exit(1)
     documents = {
         d.get("id"): d
-        for d in (yaml.safe_load(config.read_text(encoding="utf-8")) or {}).get("documents") or []
+        for d in (YAML(typ="safe").load(config.read_text(encoding="utf-8")) or {}).get("documents")
+        or []
     }
     failed = False
     for kid in KINDS:

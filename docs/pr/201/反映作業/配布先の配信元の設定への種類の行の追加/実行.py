@@ -9,7 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 CONFIG_NAMES = ("project-index.yaml", "dev-docs.yaml")
 # 種類の行の ID・タイトル・パス・除外・knowledge のスキーマ・metadata
@@ -173,7 +173,7 @@ def main():
     if config is None:
         fail("前提確認", f"配信元の設定が無い: {root}")
     text = config.read_text(encoding="utf-8")
-    data = yaml.safe_load(text) or {}
+    data = YAML(typ="safe").load(text) or {}
     documents = data.get("documents") or []
     ref = knowledge_ref(documents)
     if ref is None:
@@ -214,7 +214,7 @@ def main():
         return
 
     # 適用（検証 → 退避 → 置き換え）
-    parsed = yaml.safe_load(new_text) or {}
+    parsed = YAML(typ="safe").load(new_text) or {}
     ids = {doc.get("id") for doc in parsed.get("documents") or []}
     if not all(kind[0] in ids for kind in KINDS):
         fail("検証", "追加した行が YAML として読めない")
