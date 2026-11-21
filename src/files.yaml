@@ -170,6 +170,22 @@ files:
     related:
       - to: MOD-122-16
         type: implements
+  - path: rule_inject/features/build_skills/service.py
+    name: SKILL.md の生成の本体
+    description: エージェントフローの読み込みと SKILL.md の組み立て・書き出しを受け持ち、SKILL.md の生成の組み立て方を修正するときに参照する。
+    tags:
+      - topic:スキル
+    related:
+      - to: MOD-122-65
+        type: implements
+  - path: rule_inject/features/build_skills/types.py
+    name: SKILL.md の生成の型
+    description: 組み立てた SKILL.md と、生成を止める誤りの型を持ち、SKILL.md の生成の結果や誤りを調べるときに参照する。
+    tags:
+      - topic:スキル
+    related:
+      - to: MOD-122-64
+        type: implements
   - path: rule_inject/features/migrate/service.py
     name: 設定の移し替えの本体
     description: 端末の設定ファイルに適用する手順の算出と適用を受け持ち、設定の移し替えを修正するときに参照する。
@@ -303,6 +319,14 @@ files:
       - to: MOD-122-32
         type: implements
       - to: IF-122-15
+        type: implements
+  - path: rule_inject/build_skills/__main__.py
+    name: SKILL.md の生成のコマンド
+    description: SKILL.md の生成のコマンドで、書き換えたパスの出力と終了コードを受け持ち、コマンドの出力を修正するときに参照する。
+    tags:
+      - topic:スキル
+    related:
+      - to: MOD-122-66
         type: implements
   - path: rule_inject/migrate/__main__.py
     name: 設定の移し替えの入口
