@@ -359,3 +359,14 @@ documents:
       name: summary
       visibility: visibility
       tags: tags
+  - id: prompts
+    title: プロンプト
+    paths: ["content/prompts/**/*.yaml"]
+    schema:
+      source: knowledge
+      path: schemas/prompt.schema.yaml
+      ref: design-schemas/v8.2.0
+    metadata:
+      name: name
+      description: description
+      tags: tags
