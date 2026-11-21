@@ -50,8 +50,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T13:36:12.483899+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: IF-122-24 の削除と docs/interface/index.yaml の行の削除
+    updated_by: planner
+    updated_at: '2026-11-21T13:39:21.661107+00:00'
   - process: エージェント・MCP サーバー設計
     status: skipped
     reason: エージェント・MCP サーバーを変えない

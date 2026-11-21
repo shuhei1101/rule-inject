@@ -22,7 +22,9 @@ docs:
   - page: docs/interface/index.yaml
     new: false
     change: IF-122-24 の行を削除する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T13:39:20.626981+00:00'
   - page: docs/module/index.yaml
     new: false
     change: MOD-122-64・MOD-122-65・MOD-122-66 の行を削除する
