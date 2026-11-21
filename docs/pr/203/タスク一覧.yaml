@@ -85,8 +85,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T11:30:53.001205+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: LAY-173-1・project-index.yaml・pyproject.toml
+    updated_by: planner
+    updated_at: '2026-11-21T11:34:09.169376+00:00'
   - process: 単体テスト作成
     status: todo
   - process: 実装
