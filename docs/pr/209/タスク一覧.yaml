@@ -85,8 +85,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T13:43:54.318916+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: CMD-183-1 の SKILL.md の再生成の手順
+    updated_by: planner
+    updated_at: '2026-11-21T13:48:08.144302+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: 足すテストが無い。生成の単体テストの削除は実装で行う
