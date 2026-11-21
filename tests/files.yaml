@@ -677,3 +677,21 @@ files:
     related:
       - to: src/rule_inject/migrate/__main__.py
         type: tests
+  - path: unit/rule_inject/features/build_skills/test_service.py
+    name: SKILL.md の生成の単体テスト
+    description: エージェントフローからの SKILL.md の組み立てと書き出しを確認する単体テストで、SKILL.md の生成を修正したときに実行する。
+    tags:
+      - topic:スキル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/build_skills/service.py
+        type: tests
+  - path: unit/rule_inject/build_skills/test_main.py
+    name: SKILL.md の生成の入口の単体テスト
+    description: SKILL.md の生成のコマンドの出力と終了コードを確認する単体テストで、入口を修正したときに実行する。
+    tags:
+      - topic:スキル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/build_skills/__main__.py
+        type: tests
