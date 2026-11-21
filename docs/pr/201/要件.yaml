@@ -71,4 +71,4 @@ scope_out:
     plan: shuhei1101/ai-monitor#3753
   - item: MCP サーバーの instructions・ツールの description の本文をプロンプトファイル（`mcp/rule-inject/instructions`・`mcp/rule-inject/tools/{ツール}`）へ移す
     reason: テンプレート『MCP サーバーの定義』は本文をプロンプトファイルに記載すると定めるが、rule-inject にはプロンプトファイルを読み込む仕組みが無く、作ると要件（設計書と食い違う実装を直す）の範囲を超える。今は `app.py` に直接記載したままにする（reviewer の回答）
-    plan: to_file
+    plan: '#202'
