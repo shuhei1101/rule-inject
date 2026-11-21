@@ -38,3 +38,7 @@ docs:
     new: false
     change: content/prompts/ にフックのプロンプトファイルの配置を追加する
     status: todo
+scope_out:
+  - item: 失敗の通知に載る例外の理由の文（設定ファイルの値の誤り・索引の書式の誤りなど）のプロンプトファイルへの移行
+    reason: 例外のメッセージで、フックが組み立てる注入文の本文ではない
+    plan: none

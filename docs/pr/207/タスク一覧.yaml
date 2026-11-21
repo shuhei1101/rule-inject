@@ -50,8 +50,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T12:06:55.267786+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: IF-122-13・IF-122-14・IF-122-15・IF-122-16・IF-122-19 の出力の文面の原本をプロンプトファイルへ移し、プロンプトファイルが読めないときの振る舞いを加える。#204 の 9 件のルールの指し方（要件の未確定）を決める
+    updated_by: planner
+    updated_at: '2026-11-21T12:14:25.250448+00:00'
   - process: エージェント・MCP サーバー設計
     status: skipped
     reason: エージェントと MCP サーバーの定義を変えない。フックのプロンプトファイルはモジュール構成設計で作る
