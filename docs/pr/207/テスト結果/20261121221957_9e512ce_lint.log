@@ -1,0 +1,45 @@
+$ (TP-122-1 の lint 層の全件実行)
+All checks passed!
+520 files already formatted
+Success: no issues found in 147 source files
+Success: no issues found in 5 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 1 source file
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 73 files, 193 dependencies.
+------------------------------------
+
+hooks と server は features を使用し、features は shared を使用する KEPT
+features の機能どうしは import しない KEPT
+
+Contracts: 2 kept, 0 broken.
+ずれ 0 件
+ずれ 0 件
