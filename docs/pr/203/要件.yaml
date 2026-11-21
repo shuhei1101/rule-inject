@@ -35,3 +35,6 @@ scope_out:
   - item: ツールの引数の説明（入力の Schema の description）のプロンプトファイルへの移行
     reason: 今の実装は引数に説明の文を持たず、移す本文が無い
     plan: none
+  - item: rules.yaml の knowledge の Python のルール 9 件が KNOWLEDGE_ROOT を展開できず案内されない
+    reason: 作業 PR が変えない rules.yaml と端末の設定の問題で、要望に含まれない（reviewer からの対象外の逸脱の報告）
+    plan: '#204'
