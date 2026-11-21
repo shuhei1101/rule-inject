@@ -23,6 +23,7 @@
 | 工程 | 範囲 | 補足 |
 | --- | --- | --- |
 | インターフェース定義設計 | `747ac9e..61c5ab7` | ツールのインターフェース定義に `read_only`・`destructive` を記載した。`write_index_entry` は既存のエントリを書き換えるため `destructive: true` にし、実装の `destructiveHint` を設計書に合わせる |
+| インターフェース定義設計 | `61c5ab7..c3acc4f` | レビューの指摘の修正。`restart_server` は削除・上書きするデータを持たないため `destructive: false` にした |
 
 ## テスト結果
 
