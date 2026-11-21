@@ -1,0 +1,1 @@
+# MCP サーバーの instructions とツールの description をプロンプトファイルへ移し、読み込む仕組みを作る
