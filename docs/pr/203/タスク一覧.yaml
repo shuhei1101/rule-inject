@@ -55,8 +55,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T11:04:31.871554+00:00'
   - process: エージェント・MCP サーバー設計
-    status: todo
+    status: done
     note: テンプレート『MCP サーバーの定義』の決まりの id で、instructions とツールの description のプロンプトファイルを content/prompts/mcp/rule-inject/ に作る
+    updated_by: planner
+    updated_at: '2026-11-21T11:14:44.281691+00:00'
   - process: エージェントフロー・LLM 呼び出し設計
     status: skipped
     reason: エージェントフローと LLM の呼び出しを変えない

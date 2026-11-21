@@ -17,7 +17,9 @@ docs:
   - page: project-index.yaml
     new: false
     change: content/prompts/**/*.yaml を指すプロンプトの文書の行を追加する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:14:45.556962+00:00'
   - page: pyproject.toml
     new: false
     change: 本文の描画に jinja2 を使用する場合、server と dev の依存に追加する
