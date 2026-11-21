@@ -10,6 +10,7 @@ instructions: |-
 validators:
   - id: skill-md-check
     run: [project-index, skill-md, --check]
+    on: [write, delete]
 generators:
   - id: skill-md
     run: [project-index, skill-md]
@@ -308,6 +309,8 @@ documents:
       source: knowledge
       path: schemas/design/agent_flow.schema.yaml
       ref: design-schemas/v8.2.0
+    validators: [skill-md-check]
+    after_write: [skill-md]
     metadata:
       name: title
       description: summary
