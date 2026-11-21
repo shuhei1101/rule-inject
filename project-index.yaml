@@ -266,7 +266,6 @@ documents:
       visibility: visibility
       tags: tags[].name
       main_tags: tags[main].name
-      related: "**.refs[]"
   - id: mcp_server
     title: MCP サーバーの定義
     paths: ["docs/mcp-server/*.yaml"]
@@ -281,7 +280,6 @@ documents:
       visibility: visibility
       tags: tags[].name
       main_tags: tags[main].name
-      related: "**.refs[]"
   - id: launch
     title: 起動の構成
     paths: ["docs/launch/*.yaml"]
@@ -296,7 +294,6 @@ documents:
       visibility: visibility
       tags: tags[].name
       main_tags: tags[main].name
-      related: "**.refs[]"
   - id: agent_flow
     title: エージェントフロー
     paths: ["docs/agent-flow/*.yaml"]
@@ -310,7 +307,6 @@ documents:
       description: summary
       visibility: visibility
       tags: tags
-      related: "**.refs[]"
   - id: llm_call
     title: LLM の呼び出し
     paths: ["docs/llm-call/*.yaml"]
@@ -325,7 +321,6 @@ documents:
       visibility: visibility
       tags: tags[].name
       main_tags: tags[main].name
-      related: "**.refs[]"
   - id: evaluation
     title: 精度評価のスイート
     paths: ["docs/evaluation/**/*.yaml"]
@@ -340,7 +335,6 @@ documents:
       visibility: visibility
       tags: tags[].name
       main_tags: tags[main].name
-      related: "**.refs[]"
   - id: eval_criterion
     title: 精度評価の観点
     paths: ["docs/evaluation/**/criteria/*.yaml"]
