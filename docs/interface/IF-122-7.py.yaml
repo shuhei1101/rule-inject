@@ -384,3 +384,4 @@ constraints:
 refs:
   - SC-122-9#
 test_file: tests/integration/server/test_list_rules.py
+read_only: true

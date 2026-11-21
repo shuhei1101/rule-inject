@@ -225,3 +225,5 @@ constraints:
 refs:
   - SC-122-5#
 test_file: tests/integration/server/test_update_server.py
+read_only: false
+destructive: true

@@ -136,3 +136,5 @@ refs:
   - SC-122-3#
   - LIB-122-6#
 test_file: tests/integration/server/test_restart_server.py
+read_only: false
+destructive: true
