@@ -64,7 +64,7 @@ def test_load_prompt_when_missing(tmp_path: Path) -> None:
     from rule_inject.server.prompts import PromptLoadError, load_prompt
 
     # 実行・検証
-    with pytest.raises(PromptLoadError) as raised:
+    with pytest.raises(PromptLoadError, match="読めない") as raised:
         load_prompt(tmp_path, "a/missing")
     assert raised.value.path == tmp_path / "content" / "prompts" / "a" / "missing.yaml"
 
@@ -76,7 +76,7 @@ def test_load_prompt_when_invalid_yaml(tmp_path: Path) -> None:
     # 準備
     path = _write_prompt(tmp_path, "a/broken", "lang: ja\nparts: [\n")
     # 実行・検証
-    with pytest.raises(PromptLoadError) as raised:
+    with pytest.raises(PromptLoadError, match="読めない") as raised:
         load_prompt(tmp_path, "a/broken")
     assert raised.value.path == path
 
@@ -98,25 +98,51 @@ parts:
 """,
     )
     # 実行・検証
-    with pytest.raises(PromptLoadError) as raised:
+    with pytest.raises(PromptLoadError, match="部品 only-en に ja の本文がありません"):
         load_prompt(tmp_path, "a/english")
-    assert "only-en" in raised.value.reason
 
 
 @pytest.mark.parametrize(
-    "part",
+    ("part", "part_id"),
     [
-        "  - id: body\n    texts:\n      - lang: ja\n        text: '{{ missing }}'\n",
-        "  - id: cond\n    when: missing\n    texts:\n      - lang: ja\n        text: x\n",
+        pytest.param(
+            "  - id: body\n    texts:\n      - lang: ja\n        text: '{{ missing }}'\n",
+            "body",
+            id="body",
+        ),
+        pytest.param(
+            "  - id: cond\n    when: missing\n    texts:\n      - lang: ja\n        text: x\n",
+            "cond",
+            id="when",
+        ),
     ],
-    ids=["本文", "when"],
 )
-def test_load_prompt_when_undefined(tmp_path: Path, part: str) -> None:
+def test_load_prompt_when_undefined(tmp_path: Path, part: str, part_id: str) -> None:
     """`vars` に無い変数は描画の失敗にする（異常系）。"""
     from rule_inject.server.prompts import PromptLoadError, load_prompt
 
     # 準備
     _write_prompt(tmp_path, "a/undefined", "lang: ja\nparts:\n" + part)
     # 実行・検証
-    with pytest.raises(PromptLoadError):
+    with pytest.raises(
+        PromptLoadError, match=f"部品 {part_id} を描画できません: 'missing' is undefined"
+    ):
         load_prompt(tmp_path, "a/undefined")
+
+
+@pytest.mark.parametrize(
+    "parts",
+    [
+        pytest.param("  - not-a-dict\n", id="part"),
+        pytest.param("  - id: p\n    texts:\n      - lang: ja\n", id="text"),
+    ],
+)
+def test_load_prompt_when_invalid_part(tmp_path: Path, parts: str) -> None:
+    """部品か texts[] の要素の構造が違えば読み込みの失敗にする（異常系）。"""
+    from rule_inject.server.prompts import PromptLoadError, load_prompt
+
+    # 準備
+    _write_prompt(tmp_path, "a/invalid", "lang: ja\nparts:\n" + parts)
+    # 実行・検証
+    with pytest.raises(PromptLoadError, match="部品か texts\\[\\] の要素の構造が違います"):
+        load_prompt(tmp_path, "a/invalid")
