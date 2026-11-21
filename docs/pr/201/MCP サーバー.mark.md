@@ -1,0 +1,22 @@
+# MCP サーバー
+
+## 現状
+
+| 分類 | ページ / ファイル | 概要 | 補足 |
+| --- | --- | --- | --- |
+| ドキュメント | [docs/architecture/ARCH-122-1.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/architecture/ARCH-122-1.yaml) | サブシステムの分け方 | MCP サーバーの定義への参照を追加 |
+| ドキュメント | [docs/interface/index.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/interface/index.yaml) | ツールごとのインターフェース定義（IF-122-1〜12） | MCP サーバーの定義の `tools[].interface` から指す |
+| ドキュメント | [docs/scenario/SC-122-6.yaml](https://github.com/shuhei1101/rule-inject/blob/develop/docs/scenario/SC-122-6.yaml) | 接続時に作業の決まりを受け取る | 変更なし（回帰確認） |
+| 実装 | [src/rule_inject/server/app.py](https://github.com/shuhei1101/rule-inject/blob/develop/src/rule_inject/server/app.py) | サーバーの組み立てとツールの登録・instructions・description | 設計書に合わせて修正 |
+
+## 変更方針
+
+| 対象 | 方針 | 補足 |
+| --- | --- | --- |
+| MCP サーバーの定義 | `docs/mcp-server/` に `template-mcp-server` の設計書を 1 つ作成し、`server` を `rule-inject`、`connection` を `http`（`http://127.0.0.1:{RULE_INJECT_PORT}/mcp`）にする | `clients[]` は利用者の Claude Code が全てのツールを使用する 1 行。`inject` はフック `fill_config` が入れる引数 |
+| ツールの一覧 | `tools[]` に `app.py` が登録する全てのツールを並べ、インターフェース定義を指す | インターフェース定義の `read_only`・`destructive` と `ToolAnnotations` を揃える |
+| instructions・description | テンプレートの決まり（プロンプトファイル `mcp/rule-inject/instructions`・`mcp/rule-inject/tools/{ツール}`）と今の `app.py` の直書きを突き合わせ、設計書に合わせて置き場所と文面を直す | 置き場所はモジュール構成設計で確定する |
+
+## テスト結果
+
+なし

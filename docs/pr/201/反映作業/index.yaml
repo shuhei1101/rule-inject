@@ -1,0 +1,14 @@
+配布先の配信元の設定への種類の行の追加:
+  説明: 配信元の設定（project-index.yaml）の documents[] に、agent・mcp_server・launch・agent_flow・llm_call・evaluation・eval_criterion・eval_case の行を、既存の行と同じ knowledge のスキーマの参照（design-schemas/v8.2.0）で追加する。スクリプトは shuhei1101/ai-monitor の docs/pr/3744/反映作業/配布先の配信元の設定への種類の行の追加/（https://github.com/shuhei1101/ai-monitor/tree/9449e5d0e2d1b951cbe2d70549987cb4685d8236/docs/pr/3744/反映作業/配布先の配信元の設定への種類の行の追加）から写した。git の変更として作業ブランチへ入るので revert で戻せる
+  タグ: [配信元の設定]
+  実行者: planner
+  時期: マージの前
+  回数: 1 回限り
+  可逆: true
+  疎通確認: 配布先の配信元の設定への種類の行の追加/疎通確認.py
+  実行: 配布先の配信元の設定への種類の行の追加/実行.py
+  確認: 配布先の配信元の設定への種類の行の追加/確認.py
+  切り戻し: null
+  失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: 作業ブランチの worktree で project-index の describe(source rule-inject) を呼ぶと、種類の一覧に agent・mcp_server・launch・agent_flow・llm_call・evaluation・eval_criterion・eval_case が並ぶ
+  状態: todo

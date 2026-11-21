@@ -1,0 +1,56 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: run_only
+    detail: 端末のセットアップのスキルの手順書をエージェントフローの設計書から作り直すため、手順が変わっていないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-7.yaml
+    impact: run_only
+    detail: 索引の登録のスキルの手順書をエージェントフローの設計書から作り直すため、手順が変わっていないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-6.yaml
+    impact: run_only
+    detail: 接続時に受け取る作業の決まりの文面を MCP サーバーの設計書に合わせるため、受け取れることを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: run_only
+    detail: サーバーの組み立てを MCP サーバーの設計書に合わせるため、常駐させて接続できることを確かめる
+    depends_on: []
+docs:
+  - page: docs/mcp-server/index.yaml
+    new: true
+    change: MCP サーバーの定義のフォルダの目次を作成する
+    status: todo
+  - page: docs/agent-flow/index.yaml
+    new: true
+    change: エージェントフロー（スキル）のフォルダの目次を作成する
+    status: todo
+  - page: docs/index.yaml
+    new: false
+    change: MCP サーバーの定義とエージェントフローのフォルダの行を追加する
+    status: todo
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: docs/mcp-server/・docs/agent-flow/ と、実装を合わせるために増えるファイルのエントリを追加する
+    status: todo
+  - page: docs/architecture/ARCH-122-1.yaml
+    new: false
+    change: MCP サーバーのサブシステムの参照に MCP サーバーの定義を追加する
+    status: todo
+  - page: skills/files.yaml
+    new: false
+    change: スキルの SKILL.md の関連を、エージェントフローの設計書を指すように直す
+    status: todo
+scope_out:
+  - item: 精度評価の設計書（evaluation・eval_criterion・eval_case）
+    reason: LLM・意思決定モデルを使用するノードを持たず、Issue でも対象外
+    plan: none
+  - item: エージェントの定義・起動の構成・LLM の呼び出しの設計書
+    reason: rule-inject はエージェントを起動せず、LLM を呼ばない（Issue の対象は MCP サーバーとスキル）
+    plan: none
+  - item: '#197 の write_index_entry の引数の追加'
+    reason: '受付判断で #197 を本件の後ろへ回した'
+    plan: '#197'
