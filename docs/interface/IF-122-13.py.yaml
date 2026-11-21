@@ -250,6 +250,42 @@ flows:
       - '既定のログのフォルダのログに `component: start_server`・`operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
+  - name: 異常系（プロンプトファイルが読めない・出力しない）
+    summary: 起動を依頼した後に通知のプロンプトファイルが読めないとき、何も出力せず、ログへ記録する
+    setup:
+      - name: Mock
+        description: '`systemctl` を一時のフォルダのスクリプトに差し替え、起動の依頼に成功させる（プラグインを一時のフォルダへコピーし、コピーのフックを子プロセスとして起動する）'
+      - name: プロンプトファイル
+        description: コピーの起動を依頼した通知のプロンプトファイルを削除する
+      - name: MCP サーバー
+        description: 待ち受けのポートで応答しない
+      - name: 入力
+        description: '`hook_event_name: SessionStart`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as サーバーの起動の補助
+        participant U as systemd --user
+        participant PF as プロンプトファイル
+        participant LOG as ログ
+
+        CC->>S: 標準入力（SessionStart）
+        S->>U: ユニットの起動を依頼する（成功）
+        S->>PF: 読む（無い）
+        S->>LOG: read_prompt を追記する
+        S-->>CC: 出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - ユニットの起動を依頼している
+      - 'ログに `operation: read_prompt` の行が 1 行あり、`path` が削除したプロンプトファイル'
+      - 終了コードが `0`
+    test: test_error_when_prompt_unreadable
 lead: セッションの開始時に応答しない MCP サーバーのユニットへ起動を依頼するフックの入出力を定め、サーバーの起動の補助を修正するときに参照する。
 identifier: start_server
 idempotent: false
@@ -301,6 +337,9 @@ exceptions:
   - name: TimeoutError（応答の確認の待ちを過ぎる）
     condition: ポートへの接続が非機能要件「サーバーの応答の確認の待ち」を過ぎた
     notes: 応答しないものとして扱い、ログに書き込まずにユニットの確認へ進む
+  - name: PromptLoadError（プロンプトファイルが読めない）
+    condition: 出力する文面のプロンプトファイルが無い・読めない・構造が違う・`lang` の本文が無い・本文の変数を描画できない
+    notes: フックの中で捕まえ、起動の依頼はそのまま行い、何も出力せず、ログへ `read_prompt`（`path` はプロンプトファイル）を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -322,6 +361,8 @@ constraints:
     constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。書き込めないときは標準エラー出力へ出す
   - item: 依存
     constraint: 標準ライブラリだけで動く（サーバーの依存を読み込まない）
+  - item: 文面の原本
+    constraint: '`additionalContext` の文面（起動を依頼した通知・失敗の通知）の本文は、ルール案内の制約「文面の原本」と同じくプロンプトファイルに記載する。描画した文面はプロンプトファイルへ移す前と同じ'
 refs:
   - SC-122-22#
 test_file: tests/integration/plugin/test_start_server.py

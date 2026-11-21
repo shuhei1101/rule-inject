@@ -23,7 +23,7 @@ fields:
   title: 失敗の操作
   type: string
   required: true
-  description: '`read_settings` / `read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `check_unit` / `start_unit` / `unexpected` のいずれか'
+  description: '`read_settings` / `read_index` / `read_record` / `write_record` / `write_history` / `delete_record` / `delete_log` / `check_unit` / `start_unit` / `read_prompt` / `unexpected` のいずれか'
 - key: path
   title: 対象のパス
   type: string
