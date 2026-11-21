@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -111,12 +112,14 @@ def run_hook(
         no_config: bool = False,
         project_dir: Path | None = None,
         extra_env: Mapping[str, str] | None = None,
+        plugin_root: Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
         """hooks/run.py に name を引き渡して起動する。
 
         設定ファイルは、config_text があればその文字列で、無ければ記録フォルダとログのフォルダに
         index（`global.indexes`）と global_values を重ねた文字列で書き込み、`RULE_INJECT_CONFIG` で指す。
         no_config なら設定ファイルを引き渡さない。project_dir は `CLAUDE_PROJECT_DIR` を差し替え、extra_env を環境変数に追加する。
+        plugin_root があれば、そのフォルダの hooks/run.py を起動する。
         """
         env = {**base_env, **(extra_env or {})}
         if project_dir is not None:
@@ -136,7 +139,11 @@ def run_hook(
             )
             env["RULE_INJECT_CONFIG"] = str(config_path)
         return subprocess.run(
-            [sys.executable, str(HOOK_RUN), name],
+            [
+                sys.executable,
+                str((plugin_root / "hooks" / "run.py") if plugin_root else HOOK_RUN),
+                name,
+            ],
             input=json.dumps(payload),
             capture_output=True,
             text=True,
@@ -146,6 +153,30 @@ def run_hook(
         )
 
     return _run
+
+
+@pytest.fixture
+def plugin_copy(tmp_path: Path) -> Path:
+    """プラグインのフックの実行に要るフォルダ（hooks・src・content）を一時フォルダへコピーし、そのルートを返却する。"""
+    root = tmp_path / "plugin"
+    for name in ("hooks", "src", "content"):
+        shutil.copytree(
+            PROJECT_ROOT / name, root / name, ignore=shutil.ignore_patterns("__pycache__")
+        )
+    return root
+
+
+@pytest.fixture
+def remove_hook_prompt(plugin_copy: Path) -> Callable[[str], Path]:
+    """コピーのフックのプロンプトファイルを名前で削除し、削除したファイルの場所を返却する関数。"""
+
+    def _remove(name: str) -> Path:
+        """`content/prompts/hook/rule-inject/{name}.yaml` を削除する。"""
+        path = plugin_copy / "content" / "prompts" / "hook" / "rule-inject" / f"{name}.yaml"
+        path.unlink()
+        return path
+
+    return _remove
 
 
 @pytest.fixture

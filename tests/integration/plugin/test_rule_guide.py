@@ -1044,3 +1044,54 @@ def test_normal_when_reading_rule_itself_by_bash(
     # 検証
     assert completed.stdout == ""
     assert completed.returncode == 0
+
+
+def test_error_when_prompt_unreadable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    write_payload: Callable[..., dict[str, Any]],
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """案内文のプロンプトファイルが読めないとき、操作を止めずに何も出力せず、ログへ記録する（異常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
+    removed = remove_hook_prompt("guide-blocking-header")
+    # 実行
+    completed = run_hook("rule_guide", write_payload(), index=index, plugin_root=plugin_copy)
+    # 検証
+    assert completed.stdout == ""
+    logged = [entry for entry in read_log() if entry["operation"] == "read_prompt"]
+    assert [entry["path"] for entry in logged] == [str(removed)]
+    assert completed.returncode == 0
+
+
+def test_error_when_prompt_unreadable_non_blocking(
+    tmp_path: Path,
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    write_index: Callable[..., Path],
+    hook_payload: Callable[..., dict[str, Any]],
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """止めない案内のプロンプトファイルが読めないとき、何も出力せず案内済みの記録にも追記しない（異常系）。"""
+    # 準備
+    index = write_index({"rule": RULE, "paths": ["**/*.py"], "on": ["write"]})
+    removed = remove_hook_prompt("guide-non-blocking-header")
+    payload = hook_payload(
+        "PreToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(tmp_path / "src" / "app.py")},
+    )
+    # 実行
+    completed = run_hook("rule_guide", payload, index=index, plugin_root=plugin_copy)
+    # 検証
+    assert completed.stdout == ""
+    assert not (state_dir / f"{session_id}.guided.txt").exists()
+    logged = [entry for entry in read_log() if entry["operation"] == "read_prompt"]
+    assert [entry["path"] for entry in logged] == [str(removed)]
+    assert completed.returncode == 0

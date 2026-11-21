@@ -268,3 +268,34 @@ def test_error_when_settings_unreadable(
     assert logs[0]["component"] == "start_server"
     assert logs[0]["operation"] == "read_settings"
     assert completed.returncode == 0
+
+
+def test_error_when_prompt_unreadable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    fake_systemctl: Callable[..., dict[str, str]],
+    systemctl_calls: Callable[[], list[str]],
+    closed_port: int,
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """起動を依頼した後に通知のプロンプトファイルが読めないとき、何も出力せずログへ記録する（異常系）。"""
+    # 準備
+    env = fake_systemctl(closed_port)
+    removed = remove_hook_prompt("server-start")
+    payload = hook_payload("SessionStart", source="startup")
+    # 実行
+    completed = run_hook(
+        "start_server",
+        payload,
+        global_values={"server_service": SERVICE},
+        extra_env=env,
+        plugin_root=plugin_copy,
+    )
+    # 検証
+    assert completed.stdout == ""
+    assert f"--user start --no-block -- {SERVICE}" in systemctl_calls()
+    logged = [entry for entry in read_log() if entry["operation"] == "read_prompt"]
+    assert [entry["path"] for entry in logged] == [str(removed)]
+    assert completed.returncode == 0
