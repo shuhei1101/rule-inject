@@ -40,6 +40,7 @@ arguments:
 - 呼べなければ、`/rule-inject:global-setup` かサーバーの起動を案内して止まる
 
 呼ぶもの:
+
 - MCP `MCP-122-1#` の `check_indexes` `{required: [project_dir]}`
 
 ### 結果を示す

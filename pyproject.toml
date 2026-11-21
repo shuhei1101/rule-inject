@@ -85,7 +85,7 @@ root_package = "rule_inject"
 name = "hooks と server は features を使用し、features は shared を使用する"
 type = "layers"
 layers = [
-    "rule_inject.hooks | rule_inject.server | rule_inject.migrate | rule_inject.build_skills",
+    "rule_inject.hooks | rule_inject.server | rule_inject.migrate",
     "rule_inject.features",
     "rule_inject.shared",
 ]
@@ -94,7 +94,6 @@ layers = [
 name = "features の機能どうしは import しない"
 type = "independence"
 modules = [
-    "rule_inject.features.build_skills",
     "rule_inject.features.command",
     "rule_inject.features.document",
     "rule_inject.features.guidance",
