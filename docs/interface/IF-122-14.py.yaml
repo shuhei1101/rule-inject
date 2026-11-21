@@ -1375,6 +1375,44 @@ flows:
       - 'ログに `operation: read_prompt` の行が 1 行あり、`path` が削除したプロンプトファイル'
       - 終了コードが `0`
     test: test_error_when_prompt_unreadable
+  - name: 異常系（プロンプトファイルが読めない・止めない案内を記録しない）
+    summary: 止めない案内の案内文のプロンプトファイルが読めないとき、何も出力せず、案内済みの記録にも追記せず、ログへ記録する
+    setup:
+      - name: Mock
+        description: なし（プラグインを一時のフォルダへコピーし、コピーのフックを子プロセスとして起動する）
+      - name: プロンプトファイル
+        description: コピーの止めない案内の 1 行目のプロンプトファイルを削除する
+      - name: 索引
+        description: '`**/*.py` に `on: [write]` のエントリ'
+      - name: ログ
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+      - name: 入力
+        description: '`tool_name: Read`、`file_path` が `.py`'
+        notes: 操作の種別が `on` にヒットしないため止めない案内になる
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant G as ルール案内
+        participant PF as プロンプトファイル
+        participant ST as 案内済みの記録
+        participant LOG as ログ
+
+        CC->>G: 標準入力（PreToolUse・Read）
+        G->>PF: 読む（無い）
+        G->>LOG: read_prompt を追記する
+        G-->>CC: 出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 案内済みの記録にルールの場所が追記されていない
+      - 'ログに `operation: read_prompt` の行が 1 行あり、`path` が削除したプロンプトファイル'
+      - 終了コードが `0`
+    test: test_error_when_prompt_unreadable_non_blocking
 lead: 操作の対象にヒットする未読のルールを、操作を止めるか止めずに案内するフックの入出力を定め、ルール案内の判定や文面を修正するときに参照する。
 idempotent: false
 side_effects: 止めない案内に記載したルールの場所を、そのセッションの案内済みの記録へ 1 行ずつ追記する（既読の記録は読むだけ）
@@ -1486,7 +1524,7 @@ exceptions:
     notes: フックの中で捕まえ、設定ファイルを使用せず（既定値でも動かさず）索引を読まない。操作を止めずに `additionalContext` へ設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える。廃止したキー（`global.server_port`）のときは、理由に `global-setup` での移し替えを含める
   - name: PromptLoadError（プロンプトファイルが読めない）
     condition: 出力する文面のプロンプトファイルが無い・読めない・構造が違う・`lang` の本文が無い・本文の変数を描画できない
-    notes: フックの中で捕まえ、操作を止めずに何も出力せず、ログへ `read_prompt`（`path` はプロンプトファイル）を書き込んで終了コード 0 で終える
+    notes: フックの中で捕まえ、操作を止めずに何も出力せず案内済みの記録にも追記せず、ログへ `read_prompt`（`path` はプロンプトファイル）を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）

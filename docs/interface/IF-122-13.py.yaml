@@ -362,7 +362,7 @@ constraints:
   - item: 依存
     constraint: 標準ライブラリだけで動く（サーバーの依存を読み込まない）
   - item: 文面の原本
-    constraint: '`additionalContext` の文面（起動を依頼した通知・失敗の通知）の本文は、ルール案内の制約「文面の原本」と同じくプロンプトファイルに記載する。描画した文面はプロンプトファイルへ移す前と同じ'
+    constraint: '`additionalContext` の文面（起動を依頼した通知）の本文は、ルール案内の制約「文面の原本」と同じくプロンプトファイルに記載する。描画した文面はプロンプトファイルへ移す前と同じ'
 refs:
   - SC-122-22#
 test_file: tests/integration/plugin/test_start_server.py
