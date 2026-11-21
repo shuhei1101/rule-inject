@@ -1,0 +1,109 @@
+id: MOD-122-65
+visibility: internal
+title: プラグイン / SKILL.md の生成 / service.py
+lead: エージェントフローの読み込みと SKILL.md の組み立て・書き出しの関数を定め、SKILL.md の生成の組み立て方を修正するときに参照する。
+test_files:
+  - tests/unit/rule_inject/features/build_skills/test_service.py
+constants:
+  - name: FLOW_DIR
+    title: エージェントフローのフォルダ
+    container: features/build_skills/service.py
+    summary: 生成の対象を探すリポジトリの直下からのフォルダ
+    value: '`docs/agent-flow`'
+functions:
+  - name: build_skills
+    title: SKILL.md の生成
+    container: features/build_skills/service.py
+    usecase: スキルを生成する
+    summary: '全ての `type: skill` のエージェントフローから SKILL.md を組み立て、中身が違うものだけを書き出す'
+    kind: 関数
+    scope: public
+    args:
+      - name: root
+        type: Path
+        required: true
+        passing: positional
+        description: リポジトリの直下
+    returns:
+      type: tuple[str, ...]
+      description: 書き換えた SKILL.md のリポジトリの直下からのパス（昇順）
+    exceptions:
+      - name: SkillBuildError
+        condition: 読み込めないエージェントフロー・組み立てに要るキーの無いエージェントフロー・リポジトリの外を指す `skill.path` が 1 件でもある。このときはどのファイルも書き換えない
+        message: 全ての原因を `problems` に持つ
+    process: |-
+      1. `root / FLOW_DIR` の `*.yaml`（`index.yaml` を除く）を名前の昇順で ruamel.yaml の `typ="safe"` で読み込む。読み込めないものは `{パス}: {理由}` を記録する
+      2. `type` が `skill` のエージェントフローごとに `render_skill` を呼ぶ。`SkillBuildError` の `problems` を記録する
+      3. `skill.path` を `root` で解決し、`root` の外なら `{パス}: skill.path` を記録する
+      4. 記録が 1 件でもあれば、全てを持つ `SkillBuildError` を送出する
+      5. 組み立てた中身が今のファイルと違う（無いものを含む）`BuiltSkill` だけを、親のフォルダを作って UTF-8・LF で書き出す
+      6. 書き出したパスを昇順で返却する
+    unit_tests:
+      - name: test_build_skills
+        case: 正常
+        summary: 中身が違う SKILL.md だけを書き出す
+        condition: '`docs/agent-flow/` に SKILL.md が無い `type: skill`・生成済みの `type: skill`・`type` を持たないエージェントフローを配置した一時フォルダ'
+        mock: なし
+        expected: 返却値が 1 件目の `skill.path` だけで、生成済みの SKILL.md のバイト列が変わらず、`type` を持たないものからは作らない
+      - name: test_build_skills_when_unreadable
+        case: 異常
+        summary: 読み込めないエージェントフローがある
+        condition: 1 件が閉じていない引用符を持つ
+        mock: なし
+        expected: '`SkillBuildError` の `problems` にそのパスがあり、どのファイルも作らない'
+      - name: test_build_skills_when_outside
+        case: 異常
+        summary: '`skill.path` がリポジトリの外を指す'
+        condition: '`skill.path` が `../x/SKILL.md`'
+        mock: なし
+        expected: '`SkillBuildError` の `problems` に `{パス}: skill.path` がある'
+  - name: render_skill
+    title: SKILL.md の組み立て
+    container: features/build_skills/service.py
+    usecase: スキルを生成する
+    summary: '1 つの `type: skill` のエージェントフローから、インターフェース定義「SKILL.md の生成」の制約「組み立てる frontmatter」「組み立てる本文」「工程のセクション」のとおりに SKILL.md を組み立てる'
+    kind: 関数
+    scope: public
+    args:
+      - name: source
+        type: str
+        required: true
+        passing: positional
+        description: エージェントフローのリポジトリの直下からのパス（生成元のコメントと誤りに使用する）
+      - name: flow
+        type: Mapping[str, object]
+        required: true
+        passing: positional
+        description: 読み込んだエージェントフロー
+    returns:
+      type: BuiltSkill
+      description: 書き出す先と中身
+    exceptions:
+      - name: SkillBuildError
+        condition: '`summary`・`skill.path`・`steps[].name` のどれかが無い'
+        message: 無い項目を全て `problems` に持つ
+    process: |-
+      1. `summary`・`skill.path`・`steps[].name` を確認し、無ければ `SkillBuildError` を送出する
+      2. frontmatter を `name`（`skill.name`、無ければ `skill.path` の親のフォルダ名）・`description`・`argument-hint`・`arguments`・`allowed-tools`・`skill.frontmatter` の順に、値があるキーだけ組み立てて `---` で囲む
+      3. 生成元のコメント・`# {title}`・`## 引数` の表（`skill.arguments` があるとき）・`## 手順` を続ける
+      4. 工程ごとに `### {name}` と、`when`・`body`・`呼ぶもの:` の一覧を空行で区切って続ける
+      5. 末尾を改行 1 つで終えた中身を `BuiltSkill` で返却する
+    unit_tests:
+      - name: test_render_skill
+        case: 正常
+        summary: frontmatter と本文を約束どおりに組み立てる
+        condition: '`skill.arguments` 1 件と、`when` と `calls`（`mcp`・`tool`）を持つ工程と持たない工程を持つエージェントフロー'
+        mock: なし
+        expected: frontmatter が `name`・`description`・`argument-hint`・`arguments` の順で、本文が生成元のコメント・見出し・引数の表・手順の順
+      - name: test_render_skill_when_frontmatter
+        case: 正常
+        summary: '`skill.frontmatter` を末尾に続け、`skill.arguments` が無ければ `arguments` と引数の表を出さない'
+        condition: '`skill.frontmatter: {argument-hint: ...}` を持ち `skill.arguments` を持たない'
+        mock: なし
+        expected: frontmatter が `name`・`description`・`argument-hint` だけで、`## 引数` が無い
+      - name: test_render_skill_when_key_missing
+        case: 異常
+        summary: 組み立てに要るキーが無い
+        condition: '`skill.path` が無い'
+        mock: なし
+        expected: '`SkillBuildError` の `problems` に `{source}: skill.path`'
