@@ -9,6 +9,8 @@ items:
     summary: サブシステムの外部インターフェースと処理フロー（サブシステム結合テストの元）
   - page: mcp-server/
     summary: MCP サーバーの接続の仕方と提供するツール
+  - page: agent-flow/
+    summary: スキルの手順（エージェントフロー）
   - page: module/
     summary: クラス / 関数 / 関数型 インデックス（単体テストの元）
   - page: config/
