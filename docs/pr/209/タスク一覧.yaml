@@ -80,8 +80,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T13:36:12.483899+00:00'
   - process: モジュール構成設計
-    status: todo
+    status: done
     note: MOD-122-64〜66 の削除と docs/module/index.yaml の行の削除
+    updated_by: planner
+    updated_at: '2026-11-21T13:43:54.318916+00:00'
   - process: ドキュメント修正
     status: todo
     note: CMD-183-1 の SKILL.md の再生成の手順

@@ -28,7 +28,9 @@ docs:
   - page: docs/module/index.yaml
     new: false
     change: MOD-122-64・MOD-122-65・MOD-122-66 の行を削除する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T13:43:53.036840+00:00'
 scope_out:
   - item: エージェントフローの置き場所の移動
     reason: origin/develop で既に agent_flow の行の paths（docs/agent-flow/*.yaml）と同じ場所にあり、移すものが無い
