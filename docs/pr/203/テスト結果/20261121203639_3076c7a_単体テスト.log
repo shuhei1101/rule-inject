@@ -1,0 +1,23 @@
+$ TMPDIR=/tmp/claude-1000/pytest-tmp uv run pytest tests/unit -q
+# TMPDIR は /tmp/pytest-of-shuhei2441 が別のユーザーの所有で pytest が一時フォルダを作れないため指定（コマンドの引数は変えていない）
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+E       ModuleNotFoundError: No module named 'rule_inject.server.prompts'
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server_instructions
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server_descriptions
+FAILED tests/unit/rule_inject/server/test_app.py::test_build_server_when_prompt_missing
+FAILED tests/unit/rule_inject/server/test_main.py::test_main_when_prompt_unreadable
+FAILED tests/unit/rule_inject/server/test_prompts.py::test_load_prompt - Modu...
+FAILED tests/unit/rule_inject/server/test_prompts.py::test_load_prompt_when_missing
+FAILED tests/unit/rule_inject/server/test_prompts.py::test_load_prompt_when_invalid_yaml
+FAILED tests/unit/rule_inject/server/test_prompts.py::test_load_prompt_when_no_lang_text
+FAILED tests/unit/rule_inject/server/test_prompts.py::test_load_prompt_when_undefined[\u672c\u6587]
+FAILED tests/unit/rule_inject/server/test_prompts.py::test_load_prompt_when_undefined[when]
+10 failed, 585 passed in 9.95s
