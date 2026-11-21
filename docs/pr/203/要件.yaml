@@ -31,7 +31,7 @@ docs:
 scope_out:
   - item: フックの注入文（圧縮の後の通知・ルールの案内など）の本文のプロンプトファイルへの移行
     reason: 要望は MCP サーバーの instructions とツールの description に限る。規約『プロンプトファイル』はフックの注入文も対象にするため、同じ型の箇所として範囲に含めるかはレビューで確定する
-    plan: to_file
+    plan: '#205'
   - item: ツールの引数の説明（入力の Schema の description）のプロンプトファイルへの移行
     reason: 今の実装は引数に説明の文を持たず、移す本文が無い
     plan: none
