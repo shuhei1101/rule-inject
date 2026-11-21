@@ -5,10 +5,10 @@ KNOWLEDGE_ROOT の追加:
   時期: マージの前
   回数: 1 回限り
   可逆: true
-  疎通確認: null
-  実行: null
-  確認: null
-  切り戻し: null
+  疎通確認: KNOWLEDGE_ROOT の追加/疎通確認.py
+  実行: KNOWLEDGE_ROOT の追加/実行.py
+  確認: KNOWLEDGE_ROOT の追加/確認.py
+  切り戻し: KNOWLEDGE_ROOT の追加/切り戻し.py
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
-  確認方法: 新しく始めたセッションのフックの環境で `KNOWLEDGE_ROOT` が knowledge のクローンの場所を指し、rule-inject の `check_indexes` がこのリポジトリの `rules.yaml` に「変数参照を展開できない」を返さない
+  確認方法: '`~/.claude/settings.json` の `env` の `KNOWLEDGE_ROOT` が knowledge のクローンの場所（`/home/shuhei2441/repo/knowledge/.claude/worktrees/develop`）で、その下の `docs/rule/` に `rules.yaml` の 9 件のルールのファイルがある'
   状態: todo

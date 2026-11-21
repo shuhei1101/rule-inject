@@ -1,0 +1,14 @@
+前提確認: ok
+--- /home/shuhei2441/.claude/settings.json
++++ /home/shuhei2441/.claude/settings.json
+@@ -23,7 +23,8 @@
+     "MINDSTELLA_DISCORD_WEBHOOK_FILE": "/home/shuhei2441/.config/web-hook/mindstella.ini",
+     "MINDSTELLA_PREVIEW_START_HOOK": "/home/shuhei2441/.local/bin/mindstella-gw-hook start",
+     "MINDSTELLA_PREVIEW_STOP_HOOK": "/home/shuhei2441/.local/bin/mindstella-gw-hook stop",
+-    "SLOP_CHECK_WORD_LIST": "/home/shuhei2441/repo/knowledge/.claude/worktrees/develop/plugins/slop-check/hooks/post-tool-use/word-list-ai-slop.json"
++    "SLOP_CHECK_WORD_LIST": "/home/shuhei2441/repo/knowledge/.claude/worktrees/develop/plugins/slop-check/hooks/post-tool-use/word-list-ai-slop.json",
++    "KNOWLEDGE_ROOT": "/home/shuhei2441/repo/knowledge/.claude/worktrees/develop"
+   },
+   "attribution": {
+     "commit": "",
+env の書き換え: changed
