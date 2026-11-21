@@ -22,8 +22,10 @@ docs:
     updated_at: '2026-11-21T11:14:45.556962+00:00'
   - page: pyproject.toml
     new: false
-    change: 本文の描画に jinja2 を使用する場合、server と dev の依存に追加する
-    status: todo
+    change: jinja2>=3.1.6,<4 を server と dev の依存に追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:23:36.861669+00:00'
 scope_out:
   - item: フックの注入文（圧縮の後の通知・ルールの案内など）の本文のプロンプトファイルへの移行
     reason: 要望は MCP サーバーの instructions とツールの description に限る。規約『プロンプトファイル』はフックの注入文も対象にするため、同じ型の箇所として範囲に含めるかはレビューで確定する
