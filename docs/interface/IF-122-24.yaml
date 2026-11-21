@@ -1,0 +1,163 @@
+id: IF-122-24
+visibility: internal
+title: SKILL.md の生成
+lead: '`docs/agent-flow/` の `type: skill` のエージェントフローから、`skill.path` の SKILL.md を組み立てて書き出すコマンドの入出力を定め、スキルの生成を修正するときに参照する。'
+entry:
+  kind: operation
+  value: リポジトリの直下で起動するコマンド（`python -m rule_inject.build_skills`）。開発者の手元から呼ぶ
+identifier: build_skills
+idempotent: true
+read_only: false
+destructive: true
+side_effects: '`type: skill` のエージェントフローの `skill.path` の SKILL.md のうち、組み立てた中身と違うものを上書きする（無ければフォルダごと作る）'
+exclusivity: 制限なし（同じエージェントフローからは同じバイト列を書き出す）
+flows:
+  - name: 正常系
+    summary: 組み立てた中身が今の SKILL.md と違うエージェントフローだけ、SKILL.md を書き出す
+    setup:
+      - name: Mock
+        description: 差し替えない
+      - name: リポジトリ
+        description: '`docs/agent-flow/` に `a.yaml`・`b.yaml`・`c.yaml` を持つ一時フォルダ。`a.yaml` は `type: skill` で SKILL.md がまだ無い。`b.yaml` は `type: skill` で SKILL.md が今のエージェントフローから生成した状態。`c.yaml` は `type` を持たない（`flow`）'
+        notes: '`a.yaml` は `skill.arguments` を 1 件と、`when` と `calls`（`mcp`・`tool`）を持つ工程と、持たない工程を 1 つずつ持つ'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as 呼び出し元
+        participant G as SKILL.md の生成
+        participant F as リポジトリ
+        C->>G: リポジトリの直下で起動する
+        G->>F: docs/agent-flow/ の全てのエージェントフローを読み込む
+        F-->>G: エージェントフロー
+        G->>G: type が skill のエージェントフローを選び、SKILL.md の中身を組み立てる
+        G->>F: 中身が違う a.yaml の skill.path だけを書き出す
+        G-->>C: 書き換えた SKILL.md のパスと終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力が `a.yaml` の `skill.path` の 1 行だけ
+      - '`a.yaml` の `skill.path` の SKILL.md が、制約の「組み立てる frontmatter」と「組み立てる本文」のとおり'
+      - '`b.yaml` の `skill.path` の SKILL.md のバイト列が実行の前と同じ'
+      - '`c.yaml` からは SKILL.md を作らない'
+      - 続けてもう一度起動すると、標準出力が空で、どのファイルのバイト列も変わらない
+    test: test_normal
+  - name: 異常系（読み込めない・終了コード 2）
+    summary: YAML として読み込めないエージェントフローがあれば、どの SKILL.md も書き換えずに終わる
+    setup:
+      - name: Mock
+        description: 差し替えない
+      - name: リポジトリ
+        description: 正常系の一時フォルダで、`c.yaml` を YAML として読み込めない中身（閉じていない引用符）にしたもの
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as 呼び出し元
+        participant G as SKILL.md の生成
+        participant F as リポジトリ
+        C->>G: リポジトリの直下で起動する
+        G->>F: docs/agent-flow/ の全てのエージェントフローを読み込む
+        F-->>G: 読み込めないエージェントフロー
+        G-->>C: 読み込めないエージェントフローのパスと終了コード 2
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 2
+      - 標準エラーに `docs/agent-flow/c.yaml` が出る
+      - '`a.yaml` の SKILL.md が作られず、`b.yaml` の SKILL.md のバイト列が実行の前と同じ'
+    test: test_error_when_flow_unreadable
+  - name: 異常系（組み立てに要るキーが無い・終了コード 2）
+    summary: 組み立てに要るキーが無いエージェントフローがあれば、どの SKILL.md も書き換えずに終わる
+    setup:
+      - name: Mock
+        description: 差し替えない
+      - name: リポジトリ
+        description: 正常系の一時フォルダで、`b.yaml` の `skill.path` を削除したもの
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as 呼び出し元
+        participant G as SKILL.md の生成
+        participant F as リポジトリ
+        C->>G: リポジトリの直下で起動する
+        G->>F: docs/agent-flow/ の全てのエージェントフローを読み込む
+        F-->>G: エージェントフロー
+        G->>G: 組み立てに要るキーを確認する
+        G-->>C: キーが無いエージェントフローのパスと項目と終了コード 2
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 2
+      - 標準エラーに `docs/agent-flow/b.yaml` と `skill.path` が出る
+      - '`a.yaml` の SKILL.md が作られず、`b.yaml` の SKILL.md のバイト列が実行の前と同じ'
+    test: test_error_when_key_missing
+request:
+  - name: cwd
+    type: Path
+    required: true
+    location: argument
+    description: rule-inject のリポジトリの直下
+    notes: 引数は取らず、作業ディレクトリとして受け取る
+response:
+  - name: stdout
+    type: str
+    description: 書き換えた SKILL.md のリポジトリの直下からのパスを 1 行に 1 件、パスの昇順で出す。書き換えが無ければ空
+    example: skills/setup/SKILL.md
+  - name: stderr
+    type: str
+    description: 終了コード 2 のときの理由（原因のエージェントフローのパスと項目を含む）
+  - name: exit_code
+    type: Literal[0, 2]
+    description: 0 = 全ての SKILL.md が組み立てた中身と一致した（書き換えたものを含む）。 2 = エージェントフローが読み込めないか組み立てに要るキーが無く、どのファイルも書き換えなかった
+exceptions:
+  - name: なし（正常終了）
+    condition: '全ての `type: skill` のエージェントフローの SKILL.md を組み立て、違うものを書き出した'
+  - name: 終了コード 2
+    condition: 'エージェントフローが YAML として読み込めない、`type: skill` のエージェントフローに `summary`・`skill.path`・`steps[].name` が無い、`skill.path` がリポジトリの外を指す'
+constraints:
+  - item: 生成の対象
+    constraint: '`docs/agent-flow/*.yaml`（`index.yaml` を除く）のうち `type` が `skill` のエージェントフロー'
+  - item: スキーマの検査
+    constraint: このコマンドは knowledge のスキーマで検査しない（スキーマはリポジトリに写さず、書き込みの検査は project-index の `write_docs` が持つ）。組み立てに要るキーが無いときだけ終了コード 2 にする
+  - item: 書き出しの順序
+    constraint: 全てのエージェントフローの読み込み・キーの確認・全ての SKILL.md の組み立てを終えてから書き出す。書き出しの前に 1 件でも失敗したら、どのファイルも書き換えない
+  - item: 組み立てる frontmatter
+    constraint: |-
+      先頭と末尾を `---` の行で囲む YAML に、次の並びで記載する。値が無いキーは配置しない。
+      `name`: `skill.name`、無ければ `skill.path` の親のフォルダ名。
+      `description`: `summary`。
+      `argument-hint`: `skill.arguments[].hint` を半角空白でつないだ文字列。
+      `arguments`: `skill.arguments[].name` の配列。
+      `allowed-tools`: `skill.allowed_tools` の配列。
+      `skill.frontmatter` のキーを、その並びのまま続ける
+  - item: 組み立てる本文
+    constraint: |-
+      frontmatter の後ろに次の並びで記載する。
+      生成元のコメント: `<!-- {エージェントフローのパス} から生成した。このファイルを修正せず、設計書を修正して再生成する -->` の 1 行。
+      見出し: `# {title}`。`title` が無ければ `name`。
+      引数: `skill.arguments` があれば `## 引数` のセクションに、列を `引数`・`説明` にした表を配置し、`引数` のセルは `$名前` のインラインコード、`説明` のセルは `description`。
+      工程: `## 手順` のセクションに、`steps[]` の並びで工程ごとに `### {name}` のセクションを配置し、セクションの中は「工程のセクション」の約束どおり。
+      `refs`・`decisions` は本文に出さない
+  - item: 工程のセクション
+    constraint: |-
+      次の並びで記載し、間を空行で区切る。値が無いものは配置しない。
+      `when` があれば `{when}だけ行う。` の 1 行。
+      `body` をそのまま。
+      `calls` があれば、`calls[]` の並びで 1 件を 1 行の箇条書きにした `呼ぶもの:` の一覧。`tool` は `ツール \`{tool}\``、`mcp` は `MCP \`{server}\` の \`{tool}\``（`server` は参照先の『MCP サーバーの定義』を参照せず、記載した参照のまま出す）、`command` は `コマンド \`{command}\``、`skill` は `スキル \`{skill}\``、`flow` は `エージェントフロー \`{flow}\``。`args` があれば行の後ろに 1 行の YAML（フロースタイル）のインラインコードを添える
+  - item: 書き出す先
+    constraint: リポジトリの直下からの `skill.path`。解決したパスがリポジトリの外なら終了コード 2。文字コードは UTF-8、改行は LF で、末尾を改行 1 つで終える
+  - item: 処理時間
+    constraint: 制限なし（手元から呼ぶコマンド）
+refs:
+  - IF-122-20#
+  - IF-122-21#
+test_file: tests/integration/build_skills/test_build_skills.py
