@@ -60,8 +60,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T09:29:35.641177+00:00'
   - process: エージェントフロー・LLM 呼び出し設計
-    status: todo
+    status: done
     note: 'スキル global-setup・setup を template-agent-flow の type: skill で作成する（docs/agent-flow/）。LLM の呼び出しは持たない'
+    updated_by: planner
+    updated_at: '2026-11-21T09:40:25.845281+00:00'
   - process: 精度評価設計
     status: skipped
     reason: LLM・意思決定モデルを使用するノードを持たない（判定フローチャート『精度評価をするか』の q1 NO）。Issue でも対象外
