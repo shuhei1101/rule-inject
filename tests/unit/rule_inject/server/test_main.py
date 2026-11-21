@@ -139,3 +139,32 @@ def test_main_when_stopped(
     assert run_spy[0].port == free_port_env
     assert len(tracked) == 1
     assert run_spy[0].app is tracked[0]
+
+
+def test_main_when_prompt_unreadable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    free_port_env: int,
+    run_spy: list[Any],
+) -> None:
+    """プロンプトファイルが読めなければ待ち受けずに終わる（異常系）。"""
+    from rule_inject.server import __main__ as entry
+    from rule_inject.server.prompts import PromptLoadError
+
+    # 準備
+    prompt = tmp_path / "content" / "prompts" / "mcp" / "rule-inject" / "instructions.yaml"
+
+    def _build_server(*args: Any, **kwargs: Any) -> Any:
+        """プロンプトファイルが読めない組み立てを再現する。"""
+        raise PromptLoadError(prompt, "ファイルがありません")
+
+    monkeypatch.setattr(entry, "build_server", _build_server)
+    # 実行・検証
+    with pytest.raises(SystemExit) as raised:
+        entry.main()
+    err = capsys.readouterr().err
+    assert raised.value.code == 1
+    assert str(prompt) in err
+    assert "ファイルがありません" in err
+    assert run_spy == []
