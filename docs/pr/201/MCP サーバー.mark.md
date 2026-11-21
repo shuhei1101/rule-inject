@@ -26,6 +26,7 @@
 | インターフェース定義設計 | `61c5ab7..c3acc4f` | レビューの指摘の修正。`restart_server` は削除・上書きするデータを持たないため `destructive: false` にした |
 | エージェント・MCP サーバー設計 | `c3acc4f..3503545` | MCP サーバーの定義 MCP-122-1 を作成した（`c68d2e9` の反映作業で配信元の設定に種類の行を追加）。エージェントの定義・起動の構成は持たないため作成していない |
 | エージェント・MCP サーバー設計 | `3503545..b702216` | レビューの指摘の修正。`refs` に IF-122-6・IF-122-23 を記載した。書き込みを断っていたのは、反映作業で追加した種類の行の `related: "**.refs[]"`（辞書の `refs` を前提にした対応付け）で、`2915353` で外して既存の行に揃えた |
+| モジュール構成設計 | `b702216..55690de` | MOD-122-37 の annotations と `test_build_server` の期待を、インターフェース定義の `read_only`・`destructive` に合わせた（`write_index_entry` を `destructiveHint: true`、`restart_server` を `destructiveHint: false`） |
 
 ## テスト結果
 
