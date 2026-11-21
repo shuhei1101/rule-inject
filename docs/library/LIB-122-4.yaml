@@ -43,3 +43,4 @@ used_in:
   - src/rule_inject/features/index/edit/_yaml.py
   - src/rule_inject/features/index/edit/service.py
   - src/rule_inject/features/index/check/service.py
+  - src/rule_inject/server/prompts.py

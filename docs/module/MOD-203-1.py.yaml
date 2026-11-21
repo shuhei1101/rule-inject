@@ -1,0 +1,101 @@
+id: MOD-203-1
+visibility: internal
+title: MCP サーバー / サーバー / prompts.py
+lead: クローンのプロンプトファイルを id で読み込み、注入する言語の本文を描画する処理を定め、MCP サーバーの instructions やツールの description の読み込みを修正するときに参照する。
+test_files:
+  - tests/unit/rule_inject/server/test_prompts.py
+constants:
+  - name: PROMPTS_DIR
+    title: プロンプトファイルのフォルダ
+    container: server/prompts.py
+    summary: クローンの直下からのプロンプトファイルのフォルダ（規約『プロンプトファイル』の配置先）
+    value: '`Path("content") / "prompts"`'
+  - name: ENVIRONMENT
+    title: 描画の設定
+    container: server/prompts.py
+    summary: 部品の本文と `when` を描画・評価する jinja2 の `Environment`。設定は外部ライブラリ『jinja2』の `Environment` の行のとおり
+    value: '`Environment(undefined=StrictUndefined, autoescape=False, keep_trailing_newline=True, trim_blocks=True, lstrip_blocks=True)`'
+classes:
+  - name: PromptLoadError
+    title: プロンプトファイルの読み込みの失敗
+    container: server/prompts.py
+    usecase: MCPサーバーを常駐させる
+    role: 例外
+    summary: インターフェース定義「サーバーの起動」の `PromptLoadError`。`path`（プロンプトファイルの場所）と `reason`（読めない理由）を持つ
+    kind: クラス
+    inherits: Exception
+functions:
+  - name: load_prompt
+    title: プロンプトの読み込み
+    container: server/prompts.py
+    usecase: MCPサーバーを常駐させる
+    summary: クローンの `PROMPTS_DIR` から id のプロンプトファイルを読み込み、`when` が真の部品の `lang` の本文を並び順に描画してつないだ文を返却する
+    kind: 関数
+    scope: public
+    args:
+      - name: clone
+        type: Path
+        required: true
+        passing: positional
+        description: クローンの直下（`find_clone`）
+      - name: prompt_id
+        type: str
+        required: true
+        passing: positional
+        description: プロンプトの id（`PROMPTS_DIR` からのパスから `.yaml` を除いたもの。例 `mcp/rule-inject/instructions`）
+      - name: values
+        type: Mapping[str, object] | None
+        required: false
+        default: None
+        passing: keyword
+        description: 本文と `when` に指定する変数の値
+    returns:
+      type: str
+      description: 描画した文（末尾の改行を除く）
+    process: |-
+      1. `path = clone / PROMPTS_DIR / f"{prompt_id}.yaml"` を UTF-8 で読み、ruamel.yaml の `YAML(typ="safe")` で読み込む。`OSError`・`YAMLError` は `PromptLoadError(path, 理由)` にして送出する
+      2. 最上位が `lang`（文字列）と `parts`（配列）を持つ辞書でなければ `PromptLoadError` を送出する
+      3. `vars` の全ての名前を `None` にした辞書に `values` を重ねて変数の値にする（指定されなかった変数は `None`）
+      4. `parts` を並び順に確認し、`when` があれば `ENVIRONMENT.compile_expression(when, undefined_to_none=False)` を変数の値で評価し、`bool()` が偽の部品を飛ばす
+      5. 残った部品の `texts[]` から `lang` がトップレベルの `lang` と同じ本文を選ぶ。無い部品があれば `PromptLoadError`（部品の id）を送出する
+      6. 本文を `ENVIRONMENT.from_string(text).render(**変数の値)` で描画する。4〜6 の `jinja2.TemplateError` は `PromptLoadError`（部品の id とエラーの内容）にして送出する
+      7. 描画した本文を `""` でつなぎ、末尾の改行を除いて返却する
+    exceptions:
+      - name: PromptLoadError
+        condition: ファイルが無い・読めない・YAML の誤り・最上位の構造が違う・`lang` の本文が無い部品がある・本文か `when` を描画できない
+        message: '`path` にプロンプトファイルの場所、`reason` に理由'
+    unit_tests:
+      - name: test_load_prompt
+        case: 正常
+        summary: '`when` が真の部品の本文を変数で描画してつなぐ'
+        condition: "一時フォルダの `content/prompts/a/b.yaml` に、`lang: ja`・`vars` に `name`・`when` の無い部品（`{{ name }} さん` と改行）・`when: \"name == 'x'\"` の部品・`when: \"false\"` の部品を配置し、`values={\"name\": \"x\"}` で呼ぶ"
+        mock: なし
+        expected: '`when` の無い部品と真の部品の本文をつなぎ、末尾の改行を除いた文'
+      - name: test_load_prompt_when_missing
+        case: 異常
+        summary: ファイルが無ければ読み込みの失敗にする
+        condition: '`content/prompts` に id のファイルが無い'
+        mock: なし
+        expected: '`PromptLoadError` で、`path` が id のファイルの場所'
+        exception: ファイルが無い
+      - name: test_load_prompt_when_invalid_yaml
+        case: 異常
+        summary: YAML の誤りは読み込みの失敗にする
+        condition: 閉じていない括弧を持つファイル
+        mock: なし
+        expected: '`PromptLoadError`'
+        exception: YAML の誤り
+      - name: test_load_prompt_when_no_lang_text
+        case: 異常
+        summary: 注入する言語の本文が無い部品があれば読み込みの失敗にする
+        condition: '`lang: ja` で、部品の `texts[]` が `lang: en` だけ'
+        mock: なし
+        expected: '`PromptLoadError` で、`reason` に部品の id'
+        exception: '`lang` の本文が無い'
+      - name: test_load_prompt_when_undefined
+        case: 異常
+        summary: '`vars` に無い変数は描画の失敗にする'
+        condition: '本文が `{{ missing }}` の部品と、`when: "missing"` の部品（別々のファイル）'
+        mock: なし
+        expected: どちらも `PromptLoadError`（`when` も `None` に置き換わらない）
+        exception: 未定義の変数
