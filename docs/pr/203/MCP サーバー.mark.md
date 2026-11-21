@@ -26,6 +26,12 @@
 | 依存 | 本文の描画に jinja2 を使用する場合、`pyproject.toml` の `server` と `dev` に追加し、外部ライブラリの設計書を追加する | - |
 | 配信元の設定 | `project-index.yaml` に `content/prompts/**/*.yaml` を指すプロンプトの文書の行を追加する | スキーマは knowledge の `schemas/prompt.schema.yaml` |
 
+## 設計書の確定コミット
+
+| 工程 | 範囲 | 補足 |
+| --- | --- | --- |
+| インターフェース定義設計 | `85706a2..9624909` | - |
+
 ## テスト結果
 
 なし

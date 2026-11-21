@@ -50,8 +50,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T11:02:00.574044+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: IF-122-6 の制約「instructions」の文面の原本をプロンプトファイルへ移し、プロンプトファイルが読めないときの起動の失敗を異常系へ加える
+    updated_by: planner
+    updated_at: '2026-11-21T11:04:31.871554+00:00'
   - process: エージェント・MCP サーバー設計
     status: todo
     note: テンプレート『MCP サーバーの定義』の決まりの id で、instructions とツールの description のプロンプトファイルを content/prompts/mcp/rule-inject/ に作る
