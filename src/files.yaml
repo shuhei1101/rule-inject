@@ -387,6 +387,16 @@ files:
         type: implements
       - to: IF-122-6
         type: see_also
+  - path: rule_inject/server/prompts.py
+    name: プロンプトファイルの読み込み
+    description: クローンのプロンプトファイルを id で読み込んで注入する言語の本文を描画し、MCP サーバーの instructions やツールの description の読み込みを修正するときに参照する。
+    tags:
+      - topic:MCPサーバー
+      - topic:プロンプト
+      - tool:jinja2
+    related:
+      - to: MOD-203-1
+        type: implements
   - path: rule_inject/server/check_tools.py
     name: 索引のチェックのツール
     description: 索引のチェックのツールの本体と、続きの位置の文字列の変換を受け持ち、索引のチェックのツールの入出力を修正するときに参照する。

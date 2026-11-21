@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/write-index-entry
+name: write_index_entry の description
+description: rule-inject の MCP の write_index_entry が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          設定ファイルで読む索引に、エントリを末尾へ新規作成する（position なし）か、位置で指したエントリのキーを書き換える（position と expected_rev）。書き込んだ後の索引に新しい問題が出るときは書き込まない。

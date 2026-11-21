@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/get-server-status
+name: get_server_status の description
+description: rule-inject の MCP の get_server_status が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          サーバー自身の待ち受けのポート・プロセス ID・起動した時刻・バージョン・クローンの commit と、設定ファイルを読めるかを返却する。再起動の途中でも応答する。

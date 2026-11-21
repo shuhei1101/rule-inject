@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/delete-read-records
+name: delete_read_records の description
+description: rule-inject の MCP の delete_read_records が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          セッションの既読の記録と案内済みの記録をファイルごと削除し、既読だったルールの場所を返却する。削除したルールは、フックの次の呼び出しから未読として案内される。既読の履歴は削除しない。

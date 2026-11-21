@@ -1,0 +1,40 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-6.yaml
+    impact: run_only
+    detail: 接続時に受け取る作業の決まりの文面は変わらないが、文面の読み出し元が変わるため回帰を確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: run_only
+    detail: サーバーの起動時にプロンプトファイルを読み込むため、常駐の起動が壊れないことを確かめる
+    depends_on: []
+docs:
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: content/prompts/mcp/rule-inject/ のフォルダとプロンプトファイルのエントリを追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:30:54.442140+00:00'
+  - page: project-index.yaml
+    new: false
+    change: content/prompts/**/*.yaml を指すプロンプトの文書の行を追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:14:45.556962+00:00'
+  - page: pyproject.toml
+    new: false
+    change: jinja2>=3.1.6,<4 を server と dev の依存に追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:23:36.861669+00:00'
+scope_out:
+  - item: フックの注入文（圧縮の後の通知・ルールの案内など）の本文のプロンプトファイルへの移行
+    reason: 要望は MCP サーバーの instructions とツールの description に限る。規約『プロンプトファイル』はフックの注入文も対象にするため、同じ型の箇所として範囲に含めるかはレビューで確定する
+    plan: '#205'
+  - item: ツールの引数の説明（入力の Schema の description）のプロンプトファイルへの移行
+    reason: 今の実装は引数に説明の文を持たず、移す本文が無い
+    plan: none
+  - item: rules.yaml の knowledge の Python のルール 9 件が KNOWLEDGE_ROOT を展開できず案内されない
+    reason: 作業 PR が変えない rules.yaml と端末の設定の問題で、要望に含まれない（reviewer からの対象外の逸脱の報告）
+    plan: '#204'

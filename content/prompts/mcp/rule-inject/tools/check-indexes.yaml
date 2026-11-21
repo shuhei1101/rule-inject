@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/check-indexes
+name: check_indexes の description
+description: rule-inject の MCP の check_indexes が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          プロジェクトで読む索引を、フックが読めるか・JSON Schema に合うか・rule の場所にファイルがあるか・paths がプロジェクトのどのファイルにも該当しないエントリが無いか・タグのパターンが project-index の使用中のどのタグにも該当しないエントリが無いかで確認する。include_global でユーザー全体の索引の paths の該当しないエントリも確認し、辿る時間の上限で止まったときは unmatched_scan.next_cursor を cursor に引き渡して再度呼び出す。project-index に届かないときはタグの確認だけを飛ばし、tag_check に理由を返却する。

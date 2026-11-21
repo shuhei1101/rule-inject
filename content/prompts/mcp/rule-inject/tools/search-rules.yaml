@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/search-rules
+name: search_rules の description
+description: rule-inject の MCP の search_rules が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          ファイルのパス（operation とともに）か MCP のツールの呼び出し（tool_name と arguments）に該当するルールと、未読のときに操作を止めるかを返却する。

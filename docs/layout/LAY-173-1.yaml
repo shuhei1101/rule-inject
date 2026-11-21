@@ -57,6 +57,9 @@ content_types:
   - name: pages
     group: feature
     summary: 公開ドキュメントの GitHub Pages への配信
+  - name: prompt
+    group: role
+    summary: MCP サーバーの instructions とツールの description のプロンプトファイル
 entries:
   - type: folder
     name: .claude-plugin
@@ -497,6 +500,33 @@ entries:
   - type: file
     name: CLAUDE.md
     contents: Claude Code がリポジトリを開いたときに読み込む指示
+  - type: folder
+    name: content
+    contents: コードではない原本
+    children:
+      - type: folder
+        name: prompts
+        contents: プロンプトファイル（1 プロンプト 1 枚の YAML。id はこのフォルダからのパス）
+        children:
+          - type: folder
+            name: mcp
+            contents: MCP サーバーのプロンプトファイル
+            children:
+              - type: folder
+                name: rule-inject
+                contents: rule-inject の MCP サーバーの instructions のプロンプトファイル
+                content_types:
+                  - prompt
+                naming:
+                  - instructions.yaml
+                children:
+                  - type: folder
+                    name: tools
+                    contents: ツールごとの description のプロンプトファイル
+                    content_types:
+                      - prompt
+                    naming:
+                      - '{ツールの名前の _ を - にした名前}.yaml'
 gitignore:
   - pattern: docs/generated/
     reason: YAML の設計書から生成する Markdown

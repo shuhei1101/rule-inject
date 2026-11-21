@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/list-rules
+name: list_rules の description
+description: rule-inject の MCP の list_rules が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          プロジェクトで有効なルール（読む索引とエントリ）と、読めなかった索引・読み飛ばしたエントリ・無効のエントリを返却する。

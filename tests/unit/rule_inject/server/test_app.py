@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -36,11 +37,22 @@ INJECTED_NAMES = {
 }
 
 
+# リポジトリの直下（プロンプトファイルのコピー元）
+REPO_ROOT = Path(__file__).resolve().parents[4]
+
+
 @pytest.fixture
-def clone_dir(tmp_path: Path) -> Path:
-    """`version.ini` を配置したクローンの代わりのフォルダ。"""
+def bare_clone_dir(tmp_path: Path) -> Path:
+    """`version.ini` だけを配置したクローンの代わりのフォルダ。"""
     (tmp_path / "version.ini").write_text("v0.2.4\n", encoding="utf-8")
     return tmp_path
+
+
+@pytest.fixture
+def clone_dir(bare_clone_dir: Path) -> Path:
+    """`version.ini` とリポジトリの `content/prompts` のコピーを配置したクローンの代わりのフォルダ。"""
+    shutil.copytree(REPO_ROOT / "content" / "prompts", bare_clone_dir / "content" / "prompts")
+    return bare_clone_dir
 
 
 def test_build_server(clone_dir: Path) -> None:
@@ -69,32 +81,50 @@ def test_build_server(clone_dir: Path) -> None:
 
 def test_build_server_instructions(clone_dir: Path) -> None:
     """instructions を指定する（正常系）。"""
-    from rule_inject.server.app import SERVER_INSTRUCTIONS, build_server
+    from rule_inject.server.app import build_server
     from rule_inject.server.control import ServerControl
+    from rule_inject.server.prompts import load_prompt
 
     # 準備
     control = ServerControl(port=8783)
     # 実行
     server = build_server({}, control=control, clone=clone_dir)
     # 検証
-    assert server.instructions == SERVER_INSTRUCTIONS
-    assert len(SERVER_INSTRUCTIONS) <= 4096
-    assert "Write" in SERVER_INSTRUCTIONS
-    assert "空の内容" in SERVER_INSTRUCTIONS
-    assert "Edit" in SERVER_INSTRUCTIONS
-    assert "check_indexes" in SERVER_INSTRUCTIONS
-    assert "delete_index_entry" in SERVER_INSTRUCTIONS
-    assert "delete_read_records" in SERVER_INSTRUCTIONS
-    assert "get_read_records" in SERVER_INSTRUCTIONS
-    assert "get_server_status" in SERVER_INSTRUCTIONS
-    assert "list_rules" in SERVER_INSTRUCTIONS
-    assert "reload_settings" in SERVER_INSTRUCTIONS
-    assert "restart_server" in SERVER_INSTRUCTIONS
-    assert "search_rules" in SERVER_INSTRUCTIONS
-    assert "update_server" in SERVER_INSTRUCTIONS
-    assert "write_index_entry" in SERVER_INSTRUCTIONS
-    assert "Read" in SERVER_INSTRUCTIONS
-    assert "grep" in SERVER_INSTRUCTIONS
+    instructions = server.instructions
+    assert instructions == load_prompt(clone_dir, "mcp/rule-inject/instructions")
+    assert instructions is not None
+    assert len(instructions) <= 4096
+    for word in [*TOOL_NAMES, "Write", "空の内容", "Edit", "Read", "grep"]:
+        assert word in instructions
+
+
+def test_build_server_descriptions(clone_dir: Path) -> None:
+    """ツールの description にプロンプトファイルの文を指定する（正常系）。"""
+    from rule_inject.server.app import build_server
+    from rule_inject.server.control import ServerControl
+    from rule_inject.server.prompts import load_prompt
+
+    # 準備
+    server = build_server({}, control=ServerControl(port=8783), clone=clone_dir)
+    # 実行
+    tools = asyncio.run(server.list_tools())
+    # 検証
+    for tool in tools:
+        prompt_id = f"mcp/rule-inject/tools/{tool.name.replace('_', '-')}"
+        assert tool.description == load_prompt(clone_dir, prompt_id)
+
+
+def test_build_server_when_prompt_missing(bare_clone_dir: Path) -> None:
+    """プロンプトファイルが無ければサーバーを組み立てない（異常系）。"""
+    from rule_inject.server.app import build_server
+    from rule_inject.server.control import ServerControl
+    from rule_inject.server.prompts import PromptLoadError
+
+    # 実行・検証
+    with pytest.raises(PromptLoadError) as raised:
+        build_server({}, control=ServerControl(port=8783), clone=bare_clone_dir)
+    expected = bare_clone_dir / "content" / "prompts" / "mcp" / "rule-inject" / "instructions.yaml"
+    assert raised.value.path == expected
 
 
 def test_build_server_when_restarting(clone_dir: Path) -> None:

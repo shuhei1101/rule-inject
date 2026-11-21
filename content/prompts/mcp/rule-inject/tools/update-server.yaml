@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/update-server
+name: update_server の description
+description: rule-inject の MCP の update_server が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          サーバーのクローンで上流の commit を fast-forward で取り込み、依存を再インストール、設定の移し替えが要らなければ再起動する。移し替えが要るときは再起動せず、手順と global-setup を返却する。

@@ -114,3 +114,21 @@ def test_error_when_removed_key(
     assert str(config_path) in server.stderr_text()
     assert "global.server_port" in server.stderr_text()
     assert "global-setup" in server.stderr_text()
+
+
+def test_error_when_prompt_unreadable(
+    start_clone_server: Callable[..., Any],
+    clone_repos: Any,
+) -> None:
+    """プロンプトファイルが読めないとき、待ち受ける前に場所と理由を記載して終わる（異常系）。"""
+    # 準備
+    prompt = clone_repos.clone / "content" / "prompts" / "mcp" / "rule-inject" / "instructions.yaml"
+    prompt.unlink()
+    # 実行
+    server = start_clone_server(wait_ready=False)
+    server.process.wait(timeout=EXIT_TIMEOUT_SEC)
+    # 検証
+    assert server.process.returncode != 0
+    assert "Uvicorn running on" not in server.stderr_text()
+    assert str(prompt) in server.stderr_text()
+    assert "読めない" in server.stderr_text()

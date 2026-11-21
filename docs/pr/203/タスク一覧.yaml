@@ -1,0 +1,104 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存のリポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: MCP サーバーの設計書とモジュール構成の設計書が既にある
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めを依頼する Issue ではない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: プロンプトファイルの読み込みは project-index で実績のある構成で、未検証の技術機構に依存しない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: クライアントが受け取る文面を変えず、ユースケースの連鎖が変わらない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 単一ユースケース設計
+    status: skipped
+    reason: MCP サーバーへの接続時に作業の決まりを受け取るシナリオの流れは変わらない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: モック作成
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: データ設計
+    status: skipped
+    reason: 利用者と決めるデータの構造を変えない。プロンプトファイルの構造は knowledge のスキーマが持つ
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: インターフェース定義設計
+    status: done
+    note: IF-122-6 の制約「instructions」の文面の原本をプロンプトファイルへ移し、プロンプトファイルが読めないときの起動の失敗を異常系へ加える
+    updated_by: planner
+    updated_at: '2026-11-21T11:04:31.871554+00:00'
+  - process: エージェント・MCP サーバー設計
+    status: done
+    note: テンプレート『MCP サーバーの定義』の決まりの id で、instructions とツールの description のプロンプトファイルを content/prompts/mcp/rule-inject/ に作る
+    updated_by: planner
+    updated_at: '2026-11-21T11:14:44.281691+00:00'
+  - process: エージェントフロー・LLM 呼び出し設計
+    status: skipped
+    reason: エージェントフローと LLM の呼び出しを変えない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 精度評価設計
+    status: skipped
+    reason: LLM の出力を評価する機能を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-21T11:02:00.574044+00:00'
+  - process: モジュール構成設計
+    status: done
+    note: MOD-122-37 の SERVER_INSTRUCTIONS の削除と build_server の読み込み、MOD-122-53 へのプロンプトファイルの読み込みの追加、本文の描画の仕方（要件の未確定）
+    updated_by: planner
+    updated_at: '2026-11-21T11:30:53.001205+00:00'
+  - process: ドキュメント修正
+    status: done
+    note: LAY-173-1・project-index.yaml・pyproject.toml
+    updated_by: planner
+    updated_at: '2026-11-21T11:34:09.169376+00:00'
+  - process: 単体テスト作成
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:37:00.010639+00:00'
+  - process: 実装
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T11:42:57.534520+00:00'
+  - process: 結合テスト作成
+    status: done
+    note: IF-122-6 の異常系（プロンプトファイルが読めない）のテスト test_error_when_prompt_unreadable を一時のクローンからの起動で追加し、既存のサーバーの起動の結合テストで instructions と description の文面を確かめる
+    updated_by: planner
+    updated_at: '2026-11-21T11:53:49.033509+00:00'

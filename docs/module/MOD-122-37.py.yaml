@@ -7,7 +7,7 @@ constants:
   - name: SERVER_NAME
     title: サーバーの名前
     container: server/app.py
-    summary: '`MCPServer` の `name`'
+    summary: '`MCPServer` の `name`。プロンプトファイルの id（`mcp/{SERVER_NAME}/...`）にも使用する'
     value: '`"rule-inject"`'
   - name: UNMATCHED_SCAN_TIME_LIMIT
     title: プロジェクトのファイルを辿る時間の上限
@@ -19,13 +19,6 @@ constants:
     container: server/app.py
     summary: 非機能要件「project-index への問い合わせの待ち時間」の決定値（秒）。`build_server` の `dev_docs_timeout` の既定
     value: '`207`'
-  - name: SERVER_INSTRUCTIONS
-    title: サーバーの instructions
-    container: server/app.py
-    summary: '`MCPServer` の `instructions`。インターフェース定義「サーバーの起動」の制約「instructions」の文面'
-    value: '`rule-inject は、Claude Code がファイルを触る前に、そのファイルに該当する未読のルールを案内する。新しいファイルは Write で空の内容で作った時点でそのファイルに該当するルールが案内されるため、案内されたルールを参照してから Edit で中身を記載する。この MCP のツールは、ルールと索引そのものを扱う作業で呼ぶ。有効なルールの一覧は list_rules、ファイルやツールの呼び出しにヒットするルールの検索は search_rules、索引のエントリの編集と索引のチェックは write_index_entry・delete_index_entry・check_indexes、既読の記録の確認と削除は get_read_records・delete_read_records、設定ファイルを書き換えた後の再読込とサーバーの状態の確認・再起動・更新は reload_settings・get_server_status・restart_server・update_server で行う。ルールの本文は、案内された場所を Read で参照する。プロジェクトのコードや文書は grep・Read で探す。どのルールがヒットするかは、索引を grep・Read せずに search_rules で調べる。索引は Edit で編集せず、write_index_entry・delete_index_entry で編集する。エントリを書き換え・削除する前に、list_rules で position と rev を取得する。ルールが案内されないときは、search_rules でヒットするかを確認してから、get_read_records で既読かを確認する。`'
-    refs:
-      - IF-122-6#constraints[instructions]
 functions:
   - name: build_server
     title: サーバーの組み立て
@@ -73,15 +66,15 @@ functions:
       description: ツールを登録したサーバー
     process: |-
       1. `validator = load_validator()`、`locks = IndexLocks()`、`check = partial(check_change, env=env, validator=validator)` を作る
-      2. `MCPServer(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)` を作る
-      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` はツールの引数に `session_env: dict[str, str] | None = None` を持ち、`_session_environment(env, session_env)` の環境変数を `env` として引き渡す（`write_index_entry` の `check_change` も、その環境変数で `partial(check_change, env=..., validator=validator)` を作って引き渡す）。`annotations` は、各ツールのインターフェース定義の `read_only`・`destructive` のとおりにする。`list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint: true`、`write_index_entry`・`delete_index_entry`・`delete_read_records`・`update_server` が `destructiveHint: true`、`restart_server` が `destructiveHint: false` で、全て `openWorldHint: false`
+      2. `MCPServer(SERVER_NAME, instructions=load_prompt(clone, f"mcp/{SERVER_NAME}/instructions"))` を作る（`PromptLoadError` はそのまま送出する）
+      3. 各ツールを、依存（`env`・`validator`・`locks`・`check`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command`）を閉じ込めて引数をツールの引数だけにした関数で `add_tool(..., description=..., structured_output=False)` する（`partial` で引き渡すと依存の引数がツールの引数の Schema に残るため）。`description` はツールのプロンプトファイル `mcp/{SERVER_NAME}/tools/{ツールの名前の _ を - にした名前}` を `load_prompt` で読み込んだ文で、ツール関数には docstring を記載しない。`check_indexes`・`restart_server`・`update_server` は `async def` で閉じ込める。`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` はツールの引数に `session_env: dict[str, str] | None = None` を持ち、`_session_environment(env, session_env)` の環境変数を `env` として引き渡す（`write_index_entry` の `check_change` も、その環境変数で `partial(check_change, env=..., validator=validator)` を作って引き渡す）。`annotations` は、各ツールのインターフェース定義の `read_only`・`destructive` のとおりにする。`list_rules`・`search_rules`・`check_indexes`・`get_read_records`・`get_server_status`・`reload_settings` が `readOnlyHint: true`、`write_index_entry`・`delete_index_entry`・`delete_read_records`・`update_server` が `destructiveHint: true`、`restart_server` が `destructiveHint: false` で、全て `openWorldHint: false`
       4. `get_server_status` と `restart_server` を除くツールを `control.guard` で包んでから登録する（再起動の途中は断り、処理中の数を数える）。`restart_server` は `begin_restart` が自分で断る
       5. サーバーを返却する
     unit_tests:
       - name: test_build_server
         case: 正常
         summary: 全てのツールを依存の引数なしで登録する
-        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
+        condition: 空の `env`、`ServerControl`、`version.ini` とリポジトリの `content/prompts` のコピーを配置した一時フォルダの `clone`
         mock: なし
         expected: '`list_tools` が 11 の名前を返却し、どの入力の Schema にも `env`・`validator`・`locks`・`check_change`・`scan_time_limit`・`dev_docs_timeout`・`control`・`clone`・`run_command` が無く、`write_index_entry`・`delete_index_entry`・`delete_read_records`・`update_server` だけが `destructiveHint: true`'
       - name: test_build_server_when_restarting
@@ -94,13 +87,13 @@ functions:
       - name: test_build_server_instructions
         case: 正常
         summary: instructions を指定する
-        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
+        condition: 空の `env`、`ServerControl`、`version.ini` とリポジトリの `content/prompts` のコピーを配置した一時フォルダの `clone`
         mock: なし
-        expected: サーバーの `instructions` が `SERVER_INSTRUCTIONS` で、4,096 字以内で、登録した全てのツールの名前と `Read`・`grep` を含む
+        expected: サーバーの `instructions` がプロンプトファイル `mcp/rule-inject/instructions` を `load_prompt` で読み込んだ文で、4,096 字以内で、登録した全てのツールの名前と `Read`・`grep` を含む
       - name: test_build_server_session_env
         case: 正常
         summary: 設定を使用するツールだけが `session_env` を引数に持つ
-        condition: 空の `env`、`ServerControl`、`version.ini` を配置した一時フォルダの `clone`
+        condition: 空の `env`、`ServerControl`、`version.ini` とリポジトリの `content/prompts` のコピーを配置した一時フォルダの `clone`
         mock: なし
         expected: '`list_rules`・`search_rules`・`check_indexes`・`write_index_entry`・`delete_index_entry`・`get_read_records`・`delete_read_records` の入力の Schema に `session_env`（必須でない）があり、`get_server_status`・`reload_settings`・`restart_server`・`update_server` には無い'
       - name: test_build_server_when_session_env
@@ -109,6 +102,19 @@ functions:
         condition: サーバーの `env` の `RULE_INJECT_CONFIG` が索引の無い設定ファイル、`session_env` の `RULE_INJECT_CONFIG` が索引を 1 つ指す設定ファイル。`call_tool` で `list_rules` を呼ぶ
         mock: なし（設定ファイルと索引は一時ファイル）
         expected: '`config_path` が `session_env` の設定ファイル、`indexes` がその索引'
+      - name: test_build_server_descriptions
+        case: 正常
+        summary: ツールの description にプロンプトファイルの文を指定する
+        condition: 空の `env`、`ServerControl`、`version.ini` とリポジトリの `content/prompts` のコピーを配置した一時フォルダの `clone`
+        mock: なし
+        expected: '`list_tools` の各ツールの `description` が、`mcp/rule-inject/tools/{ツールの名前の _ を - にした名前}` を `load_prompt` で読み込んだ文と同じ'
+      - name: test_build_server_when_prompt_missing
+        case: 異常
+        summary: プロンプトファイルが無ければサーバーを組み立てない
+        condition: '`version.ini` だけを配置した一時フォルダの `clone`'
+        mock: なし
+        expected: '`PromptLoadError` で、`path` が `content/prompts/mcp/rule-inject/instructions.yaml`'
+        exception: プロンプトファイルが無い
   - name: _session_environment
     title: セッションの環境変数の重ね合わせ
     container: server/app.py

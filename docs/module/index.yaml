@@ -4,6 +4,8 @@ items:
     summary: 起動の入口
   - page: MOD-122-37.py.yaml
     summary: コンポジションルートとツールの登録
+  - page: MOD-203-1.py.yaml
+    summary: プロンプトファイルの読み込みと描画
   - page: MOD-122-43.py.yaml
     summary: ルールの一覧・検索・エントリの書き込み・削除のツール
   - page: MOD-122-38.py.yaml
