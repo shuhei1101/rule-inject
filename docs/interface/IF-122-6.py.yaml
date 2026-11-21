@@ -143,6 +143,34 @@ flows:
       - 終了コードが 0 以外
       - 標準エラーに、設定ファイルの場所と `global.server_port`・`global-setup` が記載されている
     test: test_error_when_removed_key
+  - name: 異常系（プロンプトファイルが読めない・PromptLoadError）
+    summary: 待ち受ける前にプロンプトファイルの誤りで終わる
+    setup:
+      - name: Mock
+        description: なし（作業ブランチの HEAD から一時フォルダへ作ったクローンの `src` で、起動のコマンドを子プロセスで実行する）
+      - name: プロンプトファイル
+        description: 一時のクローンから `content/prompts/mcp/rule-inject/instructions.yaml` を削除した状態
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant U as 利用者
+        participant SV as サーバーの起動
+        participant PF as プロンプトファイル
+
+        U->>SV: 起動のコマンド
+        SV->>PF: 読む
+        PF-->>SV: ファイルが無い
+        SV-->>U: 標準エラーにプロンプトファイルの場所と理由<br>0 以外の終了コード
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0 以外
+      - 標準エラーに待ち受けの開始の行（`Uvicorn running on`）が出ていない
+      - 標準エラーに、プロンプトファイルの場所（`instructions.yaml` のパス）と読めない理由が載っている
+    test: test_error_when_prompt_unreadable
 lead: 設定ファイルを読み込んで Streamable HTTP の MCP サーバーとして待ち受ける起動の手順を定め、サーバーの起動や停止を修正するときに参照する。
 identifier: server_start
 idempotent: false
