@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/restart-server
+name: restart_server の description
+description: rule-inject の MCP の restart_server が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          応答を返却した後、処理中のツールの呼び出しの終わりを待ってから待ち受けを閉じ、同じプロセスのまま再起動する。再接続してから get_server_status の started_at で確認する。

@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/reload-settings
+name: reload_settings の description
+description: rule-inject の MCP の reload_settings が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          設定ファイルを再読込、読めたかと読んだ値（読む索引・記録フォルダ・保持日数・project-index の接続先）を返却する。project_dir を引き渡すと、そのプロジェクトで読む索引を返却する。

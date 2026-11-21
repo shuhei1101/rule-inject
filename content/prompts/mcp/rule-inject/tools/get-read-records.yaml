@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/get-read-records
+name: get_read_records の description
+description: rule-inject の MCP の get_read_records が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          セッションの既読のルールごとに、今の本文が既読にした時点と同じか（current・changed・missing）と、既読の履歴に残る読んだ方法を返却する。session_id を省くと、既読の記録のあるセッションの一覧を最終更新の新しい順に返却する。

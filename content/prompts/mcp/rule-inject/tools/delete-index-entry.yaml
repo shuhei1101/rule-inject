@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: mcp/rule-inject/tools/delete-index-entry
+name: delete_index_entry の description
+description: rule-inject の MCP の delete_index_entry が何をして何を返却するかを伝える
+kind: tool
+lang: ja
+tags:
+  - tool:mcp
+  - topic:プロンプト
+  - topic:MCPツール
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          設定ファイルで読む索引から、位置と expected_rev で指したエントリを削除する。
