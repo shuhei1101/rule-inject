@@ -527,6 +527,17 @@ entries:
                       - prompt
                     naming:
                       - '{ツールの名前の _ を - にした名前}.yaml'
+          - type: folder
+            name: hook
+            contents: フックの注入文のプロンプトファイル
+            children:
+              - type: folder
+                name: rule-inject
+                contents: 'rule-inject のフックが出力する文面のプロンプトファイル（`kind: hook`。フックが標準ライブラリだけで読み込む）'
+                content_types:
+                  - prompt
+                naming:
+                  - '{文面の名前}.yaml'
 gitignore:
   - pattern: docs/generated/
     reason: YAML の設計書から生成する Markdown
