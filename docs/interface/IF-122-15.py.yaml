@@ -121,6 +121,41 @@ flows:
       - '既定のログのフォルダのログに `operation: read_settings` の行が 1 行ある'
       - 終了コードが `0`
     test: test_error_when_settings_unreadable
+  - name: 異常系（プロンプトファイルが読めない・出力しない）
+    summary: 圧縮の後に記録が残っていても、通知のプロンプトファイルが読めないときは何も出力せず、ログへ記録する
+    setup:
+      - name: Mock
+        description: なし（プラグインを一時のフォルダへコピーし、コピーのフックを子プロセスとして起動する）
+      - name: プロンプトファイル
+        description: コピーの記録が残っている通知のプロンプトファイルを削除する
+      - name: 既読の記録
+        description: そのセッションの記録ファイルを配置する
+      - name: 入力
+        description: '`source: compact`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant S as 圧縮の後の通知
+        participant ST as 記録ファイル
+        participant PF as プロンプトファイル
+        participant LOG as ログ
+
+        CC->>S: 標準入力（SessionStart・source: compact）
+        S->>ST: 有無を確認する（残っている）
+        S->>PF: 読む（無い）
+        S->>LOG: read_prompt を追記する
+        S-->>CC: 出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 'ログに `operation: read_prompt` の行が 1 行あり、`path` が削除したプロンプトファイル'
+      - 終了コードが `0`
+    test: test_error_when_prompt_unreadable
 lead: 圧縮の後に始まったセッションへ、削除できずに残った既読の記録と設定ファイルが読めない理由を通知するフックの入出力を定め、圧縮の後の通知を修正するときに参照する。
 idempotent: true
 side_effects: なし（既読の記録ファイルの有無を確認するだけ）
@@ -142,6 +177,9 @@ exceptions:
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`source: compact` で、`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: フックの中で捕まえ、削除できずに残った記録を確認せず、設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える
+  - name: PromptLoadError（プロンプトファイルが読めない）
+    condition: '`source: compact` で出力する文面のプロンプトファイルが無い・読めない・構造が違う・`lang` の本文が無い・本文の変数を描画できない'
+    notes: フックの中で捕まえ、何も出力せず、ログへ `read_prompt`（`path` はプロンプトファイル）を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -152,6 +190,8 @@ constraints:
     constraint: 失敗したときだけ ER 図「ログ」の形式で 1 行書き込む。書き込めないときは標準エラー出力へ出す
   - item: 設定ファイル
     constraint: '`source: compact` のときだけ、ルール案内の制約「設定ファイル」と同じく読む。使用するキーは `global.state_dir`・`global.log_dir`'
+  - item: 文面の原本
+    constraint: '`additionalContext` の文面（記録が残っている通知・設定ファイルが読めない通知）の本文は、ルール案内の制約「文面の原本」と同じくプロンプトファイルに記載する。描画した文面はプロンプトファイルへ移す前と同じ'
 identifier: work_rules
 request:
   - name: '`session_id`'
