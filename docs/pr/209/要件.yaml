@@ -1,0 +1,33 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: run_only
+    detail: 端末のセットアップのスキルの SKILL.md を別の生成で作り直すため、スキルの手順が変わっていないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-7.yaml
+    impact: run_only
+    detail: リポジトリの索引の登録のスキルの SKILL.md を別の生成で作り直すため、スキルの手順が変わっていないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: run_only
+    detail: pyproject.toml から生成のコマンドの記載を除くため、クローンから入れて常駐させられることを確かめる
+    depends_on: []
+docs:
+  - page: docs/dev-command/CMD-183-1.yaml
+    new: false
+    change: 生成・取り込みの 4 の SKILL.md の再生成のコマンドを project-index skill-md に書き換え、確認した記録を書き直す
+    status: todo
+  - page: docs/interface/index.yaml
+    new: false
+    change: IF-122-24 の行を削除する
+    status: todo
+  - page: docs/module/index.yaml
+    new: false
+    change: MOD-122-64・MOD-122-65・MOD-122-66 の行を削除する
+    status: todo
+scope_out:
+  - item: エージェントフローの置き場所の移動
+    reason: origin/develop で既に agent_flow の行の paths（docs/agent-flow/*.yaml）と同じ場所にあり、移すものが無い
+    plan: none
