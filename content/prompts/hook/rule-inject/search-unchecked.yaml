@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/search-unchecked
+name: 照合しなかった検索結果の件数
+description: 照合するパスの数の上限で照合しなかった検索結果の件数を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  count:
+    type: integer
+    required: true
+    description: 記載しきれなかった・照合しなかった件数
+    example: 3
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          検索結果のうち {{ count }} 件は照合していません。

@@ -10,6 +10,10 @@ from typing import Any
 from rule_inject.features.command import extract_result_paths, search_output_base
 from rule_inject.features.guidance import (
     GUIDANCE_LIMIT,
+    GUIDED_READ_FAILURE,
+    GUIDED_WRITE_FAILURE,
+    INDEX_FAILURE,
+    RECORD_READ_FAILURE,
     Guidance,
     build_failure_notice,
     build_search_guidance,
@@ -120,7 +124,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
             path=failure.path,
         )
     if loaded.failures:
-        notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
+        notices.append(build_failure_notice(INDEX_FAILURE, loaded.failures, log_path))
     # 読む操作として該当するルールを、場所ごとに 1 件へまとめる（出た順。参照するツールも合わせる）
     matched_rules = merge_matched(
         [rule for path in found.paths for rule in match_path(loaded.entries, path, "read")]
@@ -135,8 +139,8 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
             return current_read_locations(read_record(directory, session), matched)
 
         for read, summary in (
-            (read_current, "既読の記録を読めませんでした。"),
-            (read_guided, "案内済みの記録を読めませんでした。"),
+            (read_current, RECORD_READ_FAILURE),
+            (read_guided, GUIDED_READ_FAILURE),
         ):
             try:
                 excluded |= read(folder, session_id)
@@ -151,9 +155,7 @@ def search_guide(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, A
             append_guided(folder, session_id, guidance.shown)
         except RecordWriteError as exc:
             _log_record_failure(log_folder, LogOperation.WRITE_RECORD, session_id, exc)
-            notices.append(
-                build_failure_notice("案内済みの記録に書き込めませんでした。", [exc], log_path)
-            )
+            notices.append(build_failure_notice(GUIDED_WRITE_FAILURE, [exc], log_path))
             # 通知の分を除いた字数に、案内を再度収める
             guidance = _build(remaining, found.unchecked, notices)
     text = NOTICE_SEPARATOR.join(

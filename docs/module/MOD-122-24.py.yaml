@@ -7,8 +7,8 @@ constants:
   - name: SETTINGS_FAILURE_SUMMARY
     title: 設定ファイルの失敗の通知の冒頭
     container: hooks/_runner.py
-    summary: 設定ファイルを読み込めなかったときに `build_failure_notice` へ引き渡す 1 文
-    value: '`設定ファイルを読めませんでした`'
+    summary: 設定ファイルを読み込めなかったときに `build_failure_notice` へ引き渡す 1 文のプロンプトの名前
+    value: '`"settings-unreadable"`'
 function_types:
   - name: HookHandler
     title: フックの処理の関数型
@@ -83,6 +83,8 @@ functions:
       1. 標準入力を JSON として解釈する
       2. `handle(payload, env)` を呼び、None でなければ JSON を 1 行出す
       3. 例外は捕まえ、`write_log(component, operation="unexpected")` を記載し、`on_unexpected` の結果を出す。ログのフォルダは `load_settings(env).log_dir`、SettingsReadError なら `default_log_dir(env)`
+      4. 2 で送出された例外が `PromptLoadError` のときは、3 の代わりに `write_log(component, operation="read_prompt", path=例外の path)` を記載して何も出さない（ログのフォルダの決め方は 3 と同じ）
+      5. 3 の `on_unexpected` が `PromptLoadError` を送出したときも、`write_log(component, operation="read_prompt", path=例外の path)` を記載して何も出さない
     unit_tests:
       - name: test_run_hook
         case: 正常
@@ -108,6 +110,20 @@ functions:
         condition: handle が RuntimeError を送出する。`RULE_INJECT_CONFIG` が YAML として解釈できないファイルを指し、`XDG_STATE_HOME` は一時フォルダ
         mock: なし
         expected: '`{XDG_STATE_HOME}/rule-inject/logs` のログに `operation: unexpected` が 1 行、戻り値 0'
+      - name: test_run_hook_when_prompt_unreadable
+        case: 異常
+        summary: 処理のプロンプトファイルが読めなければ何も出さずにログへ書き込む
+        condition: handle が `PromptLoadError` を送出する
+        mock: なし（stdin / stdout は StringIO）
+        expected: 'stdout が空、ログに `operation: read_prompt` が 1 行で `path` が例外の path、`on_unexpected` を呼ばない、戻り値 0'
+        exception: プロンプトファイルが読めない
+      - name: test_run_hook_when_notice_prompt_unreadable
+        case: 異常
+        summary: 想定外の例外の通知のプロンプトファイルが読めなければ何も出さない
+        condition: handle が RuntimeError を、on_unexpected が `PromptLoadError` を送出する
+        mock: なし
+        expected: 'stdout が空、ログに `operation: unexpected` と `operation: read_prompt` が 1 行ずつ、戻り値 0'
+        exception: 通知のプロンプトファイルが読めない
   - name: log_settings_failure
     title: 設定ファイルの誤りのログ
     container: hooks/_runner.py

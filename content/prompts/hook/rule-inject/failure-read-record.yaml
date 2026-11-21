@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/failure-read-record
+name: 既読の記録が読めない通知の冒頭
+description: 既読の記録を読めなかったことを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          既読の記録を読めませんでした。

@@ -1,0 +1,122 @@
+$ TMPDIR=/home/shuhei2441/.cache/ri207-tmp uv run pytest tests/unit -p no:cacheprovider --continue-on-collection-errors
+# /tmp/pytest-of-shuhei2441 が root の所有で pytest の一時フォルダを作れないため TMPDIR を替えた。--continue-on-collection-errors は収集できたテストも回すために付けた
+# Red: 収集エラー 8 件は全て rule_inject.shared.prompts が無いこと（実装の無いこと）による。ほかのテストは既存の振る舞いで pass
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 514 items / 8 errors
+
+tests/unit/hooks/test_run.py ....                                        [  0%]
+tests/unit/rule_inject/build_skills/test_main.py ..                      [  1%]
+tests/unit/rule_inject/features/build_skills/test_service.py ......      [  2%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  5%]
+................                                                         [  8%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [ 10%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 11%]
+tests/unit/rule_inject/features/index/check/test_service.py ...........  [ 14%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 14%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 17%]
+.................                                                        [ 20%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 20%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ...              [ 21%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 24%]
+...............................................................          [ 37%]
+tests/unit/rule_inject/features/index/test_yaml.py ....................  [ 41%]
+tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py .....  [ 42%]
+tests/unit/rule_inject/features/migrate/test_service.py ........         [ 43%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 46%]
+.............................                                            [ 52%]
+tests/unit/rule_inject/features/server_start/test_service.py .........   [ 54%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 55%]
+tests/unit/rule_inject/hooks/test_start_server.py ........               [ 56%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 58%]
+tests/unit/rule_inject/migrate/test_main.py ...                          [ 58%]
+tests/unit/rule_inject/server/test_admin_tools.py .........              [ 60%]
+tests/unit/rule_inject/server/test_app.py .........                      [ 62%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 64%]
+tests/unit/rule_inject/server/test_clone.py ..........                   [ 66%]
+tests/unit/rule_inject/server/test_control.py .............              [ 68%]
+tests/unit/rule_inject/server/test_dev_docs.py ........                  [ 70%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 71%]
+tests/unit/rule_inject/server/test_main.py .....                         [ 72%]
+tests/unit/rule_inject/server/test_prompts.py ........                   [ 73%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 74%]
+tests/unit/rule_inject/server/test_tools.py .............                [ 77%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 80%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 81%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 86%]
+..........................                                               [ 91%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ..........           [ 93%]
+tests/unit/rule_inject/shared/test_variables.py .......                  [ 94%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ....................... [ 99%]
+...                                                                      [100%]
+
+==================================== ERRORS ====================================
+__ ERROR collecting tests/unit/rule_inject/features/guidance/test_service.py ___
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/features/guidance/test_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/features/guidance/test_service.py:23: in <module>
+    from rule_inject.shared.prompts import load_hook_prompt
+E   ModuleNotFoundError: No module named 'rule_inject.shared.prompts'
+______ ERROR collecting tests/unit/rule_inject/hooks/test_fill_config.py _______
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/hooks/test_fill_config.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_fill_config.py:13: in <module>
+    from rule_inject.shared.errors import PromptLoadError
+E   ImportError: cannot import name 'PromptLoadError' from 'rule_inject.shared.errors' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/src/rule_inject/shared/errors.py)
+______ ERROR collecting tests/unit/rule_inject/hooks/test_record_read.py _______
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/hooks/test_record_read.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_record_read.py:14: in <module>
+    from rule_inject.shared.prompts import load_hook_prompt
+E   ModuleNotFoundError: No module named 'rule_inject.shared.prompts'
+_______ ERROR collecting tests/unit/rule_inject/hooks/test_rule_guide.py _______
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/hooks/test_rule_guide.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_rule_guide.py:14: in <module>
+    from rule_inject.shared.prompts import load_hook_prompt
+E   ModuleNotFoundError: No module named 'rule_inject.shared.prompts'
+_________ ERROR collecting tests/unit/rule_inject/hooks/test_runner.py _________
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/hooks/test_runner.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_runner.py:13: in <module>
+    from rule_inject.shared.errors import PromptLoadError, SettingsReadError
+E   ImportError: cannot import name 'PromptLoadError' from 'rule_inject.shared.errors' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/src/rule_inject/shared/errors.py)
+______ ERROR collecting tests/unit/rule_inject/hooks/test_search_guide.py ______
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/hooks/test_search_guide.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_search_guide.py:15: in <module>
+    from rule_inject.shared.prompts import load_hook_prompt
+E   ModuleNotFoundError: No module named 'rule_inject.shared.prompts'
+_______ ERROR collecting tests/unit/rule_inject/hooks/test_work_rules.py _______
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/hooks/test_work_rules.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/hooks/test_work_rules.py:12: in <module>
+    from rule_inject.shared.prompts import load_hook_prompt
+E   ModuleNotFoundError: No module named 'rule_inject.shared.prompts'
+________ ERROR collecting tests/unit/rule_inject/shared/test_prompts.py ________
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/tests/unit/rule_inject/shared/test_prompts.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/shared/test_prompts.py:11: in <module>
+    from rule_inject.shared.errors import PromptLoadError
+E   ImportError: cannot import name 'PromptLoadError' from 'rule_inject.shared.errors' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts/src/rule_inject/shared/errors.py)
+=========================== short test summary info ============================
+ERROR tests/unit/rule_inject/features/guidance/test_service.py
+ERROR tests/unit/rule_inject/hooks/test_fill_config.py
+ERROR tests/unit/rule_inject/hooks/test_record_read.py
+ERROR tests/unit/rule_inject/hooks/test_rule_guide.py
+ERROR tests/unit/rule_inject/hooks/test_runner.py
+ERROR tests/unit/rule_inject/hooks/test_search_guide.py
+ERROR tests/unit/rule_inject/hooks/test_work_rules.py
+ERROR tests/unit/rule_inject/shared/test_prompts.py
+======================== 514 passed, 8 errors in 4.18s =========================

@@ -122,6 +122,8 @@ items:
     summary: 設定ファイルの YAML の一部だけを読む
   - page: MOD-122-50.py.yaml
     summary: '!{名前} を環境変数の値へ展開する'
+  - page: MOD-207-1.py.yaml
+    summary: フックのプロンプトファイルの読み込みと描画
   - page: MOD-122-47.py.yaml
     summary: 失敗を日付ごとのログ（JSON Lines）へ書き込み、古いログを削除する
   - page: MOD-122-51.py.yaml

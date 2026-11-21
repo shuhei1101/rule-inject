@@ -12,6 +12,7 @@ import pytest
 from rule_inject.features.guidance.service import READ_TOOL_NOTE, SEARCH_HEADER
 from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.search_guide import search_guide
+from rule_inject.shared.prompts import load_hook_prompt
 
 RULE = "/r/python.md"
 OTHER_RULE = "/r/other.md"
@@ -65,7 +66,7 @@ def test_search_guide(
     assert result is not None
     output = result["hookSpecificOutput"]
     assert output["hookEventName"] == "PostToolUse"
-    assert output["additionalContext"].startswith(SEARCH_HEADER)
+    assert output["additionalContext"].startswith(load_hook_prompt(SEARCH_HEADER))
     assert RULE in output["additionalContext"]
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
 
@@ -228,7 +229,7 @@ def test_search_guide_when_settings_unreadable(
     # 検証
     assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
-    assert SETTINGS_FAILURE_SUMMARY in context
+    assert load_hook_prompt(SETTINGS_FAILURE_SUMMARY) in context
     assert env["RULE_INJECT_CONFIG"] in context
     assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
     assert not (xdg_state_home / "rule-inject" / f"{session_id}.guided.txt").exists()
@@ -262,5 +263,5 @@ def test_search_guide_when_read_tool(
     # 検証
     assert result is not None
     lines = result["hookSpecificOutput"]["additionalContext"].splitlines()
-    assert lines[:2] == [SEARCH_HEADER, READ_TOOL_NOTE]
+    assert lines[:2] == [load_hook_prompt(SEARCH_HEADER), load_hook_prompt(READ_TOOL_NOTE)]
     assert lines[lines.index(f"- {RULE}") + 1] == "  ツール: mcp__docs__search_docs {}"

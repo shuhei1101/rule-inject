@@ -10,14 +10,12 @@ from rule_inject.features.record import is_valid_session_id, record_exists
 from rule_inject.hooks._runner import settings_failure_notice
 from rule_inject.shared.errors import SettingsReadError
 from rule_inject.shared.logger import Component, log_file_path
+from rule_inject.shared.prompts import load_hook_prompt
 from rule_inject.shared.settings import load_settings
 
 COMPACT_SOURCE = "compact"
-LEFTOVER_NOTICE = (
-    "圧縮の前に既読の記録を削除できませんでした。"
-    "読んだことになっているルールが案内されない場合があります。"
-    "記録ファイル: {record}。ログ: {log}"
-)
+# 削除できずに残った既読の記録を通知する文面のプロンプトの名前（変数 `record`・`log`）
+LEFTOVER_NOTICE = "compact-leftover"
 
 
 def work_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any] | None:
@@ -39,7 +37,9 @@ def work_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, Any
         return None
     # ある: 記録ファイルとログの場所を通知する
     log_path = log_file_path(settings.log_dir, datetime.now(UTC).date())
-    return _context(LEFTOVER_NOTICE.format(record=folder / f"{session_id}.txt", log=log_path))
+    return _context(
+        load_hook_prompt(LEFTOVER_NOTICE, {"record": folder / f"{session_id}.txt", "log": log_path})
+    )
 
 
 def _context(text: str) -> dict[str, Any]:

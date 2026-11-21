@@ -9,6 +9,7 @@ from typing import Any
 
 from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.work_rules import work_rules
+from rule_inject.shared.prompts import load_hook_prompt
 
 
 def test_work_rules(
@@ -75,7 +76,7 @@ def test_work_rules_when_settings_unreadable_after_compact(
     # 検証
     assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
-    assert context.startswith(SETTINGS_FAILURE_SUMMARY)
+    assert context.startswith(load_hook_prompt(SETTINGS_FAILURE_SUMMARY))
     assert env["RULE_INJECT_CONFIG"] in context
     assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
     logged = read_default_log()

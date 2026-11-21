@@ -40,6 +40,9 @@ enums:
       - value: start_unit
         title: ユニットの起動の依頼
         description: '`systemctl --user start --no-block` が 0 以外で終わったか、打ち切りの待ちを過ぎた'
+      - value: read_prompt
+        title: プロンプトの読み込み
+        description: フックのプロンプトファイルが無い・読めない・構造が違う・描画できない
   - name: Component
     title: 出した元
     container: shared/logger.py

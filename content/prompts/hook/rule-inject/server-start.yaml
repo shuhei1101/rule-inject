@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/server-start
+name: サーバーの起動を依頼した通知
+description: 応答しなかった MCP サーバーのユニットへ起動を依頼したことと、再接続して使用する方法を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  service:
+    type: string
+    required: true
+    description: 起動を依頼した systemd --user のユニットのサービス名
+    example: 'rule-inject'
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {{ service }} へ起動を依頼しました。サーバーが待ち受けを始めるまで数十秒かかります。このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に再接続すると使用できます。

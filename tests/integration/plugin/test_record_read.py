@@ -622,3 +622,36 @@ def test_normal_when_read_tool_args_unmatched(
     # 検証
     assert not (state_dir / f"{session_id}.txt").exists()
     assert completed.stdout == ""
+
+
+def test_error_when_prompt_unreadable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    rule_index: tuple[Path, Path],
+    state_dir: Path,
+    unwritable: Callable[[Path, int], Path],
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """既読の記録に書き込めず、通知のプロンプトファイルも読めないとき、何も出力せずログへ記録する（異常系）。"""
+    # 準備
+    index, rule = rule_index
+    state_dir.mkdir()
+    unwritable(state_dir, 0o555)
+    removed = remove_hook_prompt("record-write-failure")
+    payload = hook_payload(
+        "PostToolUse",
+        tool_name="Read",
+        tool_input={"file_path": str(rule)},
+        tool_response=WHOLE_READ,
+    )
+    # 実行
+    completed = run_hook("record_read", payload, index=index, plugin_root=plugin_copy)
+    # 検証
+    assert completed.stdout == ""
+    logged = read_log()
+    assert "write_record" in [entry["operation"] for entry in logged]
+    prompt_paths = [entry["path"] for entry in logged if entry["operation"] == "read_prompt"]
+    assert prompt_paths == [str(removed)]
+    assert completed.returncode == 0

@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/search-omitted
+name: 検索結果の案内の残りの件数
+description: 検索結果の案内に記載しきれなかったルールの件数と、次に関連したときに表示することを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  count:
+    type: integer
+    required: true
+    description: 記載しきれなかった・照合しなかった件数
+    example: 3
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          ほか {{ count }} 件のルールは、次に関連したときに表示します。

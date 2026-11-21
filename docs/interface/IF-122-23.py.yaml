@@ -143,6 +143,41 @@ flows:
       - '`updatedInput.session_env` に索引に出ない環境変数が無い'
       - 終了コードが `0`
     test: test_normal_when_index_has_variable
+  - name: 異常系（プロンプトファイルが読めない・理由を記載せずに入力を書き換える）
+    summary: 許可の理由のプロンプトファイルが読めないとき、理由を記載せずに入力を書き換え、ログへ記録する
+    setup:
+      - name: Mock
+        description: なし（プラグインを一時のフォルダへコピーし、コピーのフックを子プロセスとして起動する）
+      - name: プロンプトファイル
+        description: コピーの許可の理由のプロンプトファイルを削除する
+      - name: ログ
+        description: '`XDG_STATE_HOME` は空の一時フォルダを指す'
+      - name: 入力
+        description: '`tool_name` が `list_rules` の完全名'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant F as ツールの引数への設定の記入
+        participant PF as プロンプトファイル
+        participant LOG as ログ
+
+        CC->>F: 標準入力（PreToolUse・list_rules）
+        F->>PF: 読む（無い）
+        F->>LOG: read_prompt を追記する
+        F-->>CC: permissionDecision: allow・updatedInput<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - '`permissionDecision` が `allow`'
+      - '`updatedInput` に `session_env` が入っている'
+      - '`permissionDecisionReason` が無い'
+      - 'ログに `operation: read_prompt` の行が 1 行あり、`path` が削除したプロンプトファイル'
+      - 終了コードが `0`
+    test: test_error_when_prompt_unreadable
 identifier: fill_config
 idempotent: true
 side_effects: なし
@@ -186,6 +221,9 @@ exceptions:
   - name: Exception（想定外の例外）
     condition: 上のどれにも該当しない例外
     notes: 最上位で捕まえ、何も出さずにログへ `unexpected` を書き込んで終了コード 0 で終える
+  - name: PromptLoadError（プロンプトファイルが読めない）
+    condition: 許可の理由のプロンプトファイルが無い・読めない・構造が違う・`lang` の本文が無い
+    notes: フックの中で捕まえ、`permissionDecisionReason` を記載せずに `permissionDecision` と `updatedInput` を返し、ログへ `read_prompt`（`path` はプロンプトファイル）を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -204,6 +242,8 @@ constraints:
     notes: auto モードでは、`permissionDecision` なしで `updatedInput` を返すと書き換えた呼び出しが拒否されうる（https://code.claude.com/docs/en/hooks）。書き込み・削除を確認してから実行したい利用者は、設定に ask のルールを置く
   - item: 言語
     constraint: Python 3 の標準ライブラリだけ
+  - item: 文面の原本
+    constraint: '`permissionDecisionReason` の文面の本文は、ルール案内の制約「文面の原本」と同じくプロンプトファイルに記載する。描画した文面はプロンプトファイルへ移す前と同じ'
 test_file: tests/integration/plugin/test_fill_config.py
 refs:
   - SC-122-12#

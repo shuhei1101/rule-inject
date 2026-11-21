@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/read-tool-note
+name: 参照するツールがあるときの参照の方法
+description: 案内に参照するツールの行があるときの 2 行目で、ツールでの参照の仕方と Read で参照する場合を伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          `ツール:` の行があるルールは、そのツールで参照してください。記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。

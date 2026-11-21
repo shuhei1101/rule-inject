@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/read-note
+name: 参照するツールが無いときの参照の方法
+description: 案内に参照するツールの行が無いときの 2 行目で、パスを Read で参照することを伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          パスを Read で参照してください。

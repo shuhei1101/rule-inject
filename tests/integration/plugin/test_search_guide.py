@@ -407,3 +407,28 @@ def test_normal_with_read_tool(
     assert "そのツールで参照してください" in lines[1]
     assert read_lines(state_dir / f"{session_id}.guided.txt") == [RULE]
     assert completed.returncode == 0
+
+
+def test_error_when_prompt_unreadable(
+    state_dir: Path,
+    session_id: str,
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    two_rule_index: Path,
+    src_files: Path,
+    search_payload: Callable[..., dict[str, Any]],
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """案内文のプロンプトファイルが読めないとき、何も出力せず案内済みの記録にも追記しない（異常系）。"""
+    # 準備
+    removed = remove_hook_prompt("search-header")
+    payload = search_payload("Glob", {"filenames": ["src/app.py"], "numFiles": 1})
+    # 実行
+    completed = run_hook("search_guide", payload, index=two_rule_index, plugin_root=plugin_copy)
+    # 検証
+    assert completed.stdout == ""
+    assert not (state_dir / f"{session_id}.guided.txt").exists()
+    logged = [entry for entry in read_log() if entry["operation"] == "read_prompt"]
+    assert [entry["path"] for entry in logged] == [str(removed)]
+    assert completed.returncode == 0

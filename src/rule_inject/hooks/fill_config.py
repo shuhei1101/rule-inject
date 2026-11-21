@@ -7,7 +7,10 @@ from collections.abc import Mapping
 from typing import Any
 
 from rule_inject.features.index import read_index
-from rule_inject.shared.errors import IndexReadError, SettingsReadError
+from rule_inject.shared.errors import IndexReadError, PromptLoadError, SettingsReadError
+from rule_inject.shared.logger import Component, LogOperation, write_log
+from rule_inject.shared.paths import default_log_dir
+from rule_inject.shared.prompts import load_hook_prompt
 from rule_inject.shared.settings import PROJECT_DIR_ENV, SESSION_ENV_KEYS, load_settings
 from rule_inject.shared.variables import variable_names
 
@@ -27,7 +30,8 @@ TARGET_TOOLS = frozenset(
 )
 # `updatedInput` に入れる引数の名前
 SESSION_ENV_ARG = "session_env"
-DECISION_REASON = "rule-inject のツールの入力にセッションの設定を入れた"
+# `permissionDecisionReason` の文面のプロンプトの名前
+DECISION_REASON = "fill-config-reason"
 
 
 def _index_variable_names(env: Mapping[str, str], project_dir: object) -> tuple[str, ...]:
@@ -72,11 +76,30 @@ def fill_config(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
     for name in _index_variable_names(env, tool_input.get("project_dir")):
         if name in env:
             session_env[name] = env[name]
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "allow",
-            "permissionDecisionReason": DECISION_REASON,
-            "updatedInput": {**tool_input, SESSION_ENV_ARG: session_env},
-        }
+    output: dict[str, Any] = {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "allow",
+        "updatedInput": {**tool_input, SESSION_ENV_ARG: session_env},
     }
+    # 許可の理由のプロンプトファイルが読めなければ、理由を除いて入力の書き換えを続ける
+    try:
+        output["permissionDecisionReason"] = load_hook_prompt(DECISION_REASON)
+    except PromptLoadError as exc:
+        _log_prompt_failure(exc, env, payload.get("session_id"))
+    return {"hookSpecificOutput": output}
+
+
+def _log_prompt_failure(error: PromptLoadError, env: Mapping[str, str], session_id: object) -> None:
+    """許可の理由のプロンプトファイルを読めなかったことをログへ書き込む。"""
+    try:
+        log_folder = load_settings(env).log_dir
+    except SettingsReadError:
+        log_folder = default_log_dir(env)
+    write_log(
+        log_folder,
+        component=Component.FILL_CONFIG,
+        operation=LogOperation.READ_PROMPT,
+        reason=error.reason,
+        session_id=session_id if isinstance(session_id, str) else None,
+        path=error.path,
+    )

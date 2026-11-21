@@ -1,0 +1,42 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-16.yaml
+    impact: run_only
+    detail: 案内の文面の置き場所が変わる。受け取る文面は変わらない。Python のファイルに knowledge の Python のルールが案内される
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-17.yaml
+    impact: run_only
+    detail: 検索結果の案内の文面の置き場所が変わる。受け取る文面は変わらない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-22.yaml
+    impact: run_only
+    detail: サーバーの起動の補助の通知の文面の置き場所が変わる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-11.yaml
+    impact: run_only
+    detail: 圧縮の後の通知の文面の置き場所が変わる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-8.yaml
+    impact: run_only
+    detail: 既読の記録の失敗の通知の文面の置き場所が変わる
+    depends_on: []
+  - kind: composite
+    scenario: docs/scenario/SC-122-23.yaml
+    impact: run_only
+    detail: 止める案内の文面の置き場所が変わる。案内から再試行までの流れは変わらない
+    depends_on: []
+docs:
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: content/prompts/ にフックのプロンプトファイルの配置を追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T12:47:39.685539+00:00'
+scope_out:
+  - item: 失敗の通知に載る例外の理由の文（設定ファイルの値の誤り・索引の書式の誤りなど）のプロンプトファイルへの移行
+    reason: 例外のメッセージで、フックが組み立てる注入文の本文ではない
+    plan: none

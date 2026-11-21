@@ -11,6 +11,7 @@ import pytest
 
 from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.record_read import record_read
+from rule_inject.shared.prompts import load_hook_prompt
 
 # 本文が `test` のルールの本文のハッシュ
 HASH_TEST = "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
@@ -443,7 +444,7 @@ def test_record_read_when_settings_unreadable(
     # 検証
     assert result is not None
     context = result["hookSpecificOutput"]["additionalContext"]
-    assert SETTINGS_FAILURE_SUMMARY in context
+    assert load_hook_prompt(SETTINGS_FAILURE_SUMMARY) in context
     assert env["RULE_INJECT_CONFIG"] in context
     assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
     state_folder = xdg_state_home / "rule-inject"

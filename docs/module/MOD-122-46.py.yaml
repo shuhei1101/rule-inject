@@ -86,4 +86,11 @@ classes:
     summary: '`systemctl --user start --no-block` が 0 以外で終わったか、打ち切りの待ちを過ぎた。`path` は実行したコマンド'
     kind: クラス
     inherits: RuleInjectError
+  - name: PromptLoadError
+    title: プロンプトファイルを読めない
+    container: shared/errors.py
+    usecase: 共通
+    summary: フックのプロンプトファイルが無い・読めない・構造が違う・描画できない。`path` はプロンプトファイルの場所
+    kind: クラス
+    inherits: RuleInjectError
 lead: 設定ファイル・索引・既読の記録・既読の履歴・ログ・ユニットの操作で送出する例外を定め、失敗の扱いを修正するときに参照する。

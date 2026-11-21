@@ -82,3 +82,25 @@ def test_error_when_settings_unreadable(
     assert len(logged) == 1
     assert logged[0]["operation"] == "read_settings"
     assert completed.returncode == 0
+
+
+def test_error_when_prompt_unreadable(
+    run_hook: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    write_record: Callable[[Sequence[str]], Path],
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+    read_log: Callable[[], list[dict[str, Any]]],
+) -> None:
+    """圧縮の後に記録が残っていても、通知のプロンプトファイルが読めなければ何も出力せずログへ記録する（異常系）。"""
+    # 準備
+    write_record(["/r/a.md"])
+    removed = remove_hook_prompt("compact-leftover")
+    payload = hook_payload("SessionStart", source="compact")
+    # 実行
+    completed = run_hook("work_rules", payload, plugin_root=plugin_copy)
+    # 検証
+    assert completed.stdout == ""
+    logged = [entry for entry in read_log() if entry["operation"] == "read_prompt"]
+    assert [entry["path"] for entry in logged] == [str(removed)]
+    assert completed.returncode == 0

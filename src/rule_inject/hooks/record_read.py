@@ -37,6 +37,9 @@ from rule_inject.shared.paths import resolve_location
 from rule_inject.shared.settings import load_settings
 
 URL_SCHEMES = ("http://", "https://")
+# 既読の記録・既読の履歴に書き込めなかったときに `build_failure_notice` へ引き渡す 1 文のプロンプトの名前（変数 `locations`）
+RECORD_WRITE_FAILURE = "record-write-failure"
+HISTORY_WRITE_FAILURE = "history-write-failure"
 
 
 def _is_whole_file(tool_response: object) -> bool:
@@ -100,9 +103,13 @@ def _locations_and_method(
     return locations, ReadMethod.READ if tool_name == "Read" else ReadMethod.BASH
 
 
-def _failure_context(summary: str, error: RuleInjectError, log_path: Path) -> dict[str, Any]:
-    """書き込めなかった理由を記載した additionalContext を作る。"""
-    notice = build_failure_notice(summary, [error], log_path)
+def _failure_context(
+    summary: str, locations: list[str], error: RuleInjectError, log_path: Path
+) -> dict[str, Any]:
+    """書き込めなかった場所と理由を記載した additionalContext を作る。"""
+    notice = build_failure_notice(
+        summary, [error], log_path, summary_values={"locations": ", ".join(locations)}
+    )
     return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": notice}}
 
 
@@ -137,8 +144,12 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             session_id=session_id,
             path=exc.path,
         )
-        summary = f"次のルールを既読にできませんでした（{', '.join(locations)}）。"
-        return _failure_context(summary, exc, log_file_path(log_folder, datetime.now(UTC).date()))
+        return _failure_context(
+            RECORD_WRITE_FAILURE,
+            locations,
+            exc,
+            log_file_path(log_folder, datetime.now(UTC).date()),
+        )
     try:
         append_history(folder, session_id, locations, method=method, tool=tool_name)
     except HistoryWriteError as exc:
@@ -151,6 +162,10 @@ def record_read(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             session_id=session_id,
             path=exc.path,
         )
-        summary = f"次のルールを既読にしましたが、既読の履歴に書き込めませんでした（{', '.join(locations)}）。"
-        return _failure_context(summary, exc, log_file_path(log_folder, datetime.now(UTC).date()))
+        return _failure_context(
+            HISTORY_WRITE_FAILURE,
+            locations,
+            exc,
+            log_file_path(log_folder, datetime.now(UTC).date()),
+        )
     return None

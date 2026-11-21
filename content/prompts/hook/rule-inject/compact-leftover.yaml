@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/shuhei1101/knowledge/design-schemas/v8.2.0/schemas/prompt.schema.yaml
+id: hook/rule-inject/compact-leftover
+name: 圧縮の後に残った既読の記録の通知
+description: 圧縮の前に既読の記録を削除できず、読んだことになっているルールが案内されない場合があることを、記録とログの場所とあわせて伝える
+kind: hook
+lang: ja
+tags:
+  - topic:フック
+  - topic:プロンプト
+vars:
+  record:
+    type: string
+    required: true
+    description: 削除できずに残った既読の記録ファイルの場所
+    example: '/home/user/.local/state/rule-inject/abc.txt'
+  log:
+    type: string
+    required: true
+    description: その日のログのファイルの場所
+    example: '/home/user/.local/state/rule-inject/logs/20261121_rule-inject.log'
+parts:
+  - id: body
+    texts:
+      - lang: ja
+        text: |-
+          圧縮の前に既読の記録を削除できませんでした。読んだことになっているルールが案内されない場合があります。記録ファイル: {{ record }}。ログ: {{ log }}

@@ -611,6 +611,41 @@ flows:
       - どちらの回も、記録ファイルが作られていない
       - 標準出力が空
     test: test_normal_when_read_tool_args_unmatched
+  - name: 異常系（プロンプトファイルが読めない・出力しない）
+    summary: 既読の記録に書き込めず、通知のプロンプトファイルも読めないとき、何も出力せず、ログへ記録する
+    setup:
+      - name: Mock
+        description: なし（プラグインを一時のフォルダへコピーし、コピーのフックを子プロセスとして起動する）
+      - name: プロンプトファイル
+        description: コピーの既読にできなかった通知のプロンプトファイルを削除する
+      - name: 既読の記録
+        description: 記録のフォルダを書き込めない状態にする
+      - name: 入力
+        description: '`tool_name: Read`、`file_path` がルールの場所'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant CC as Claude Code
+        participant R as 既読の記録
+        participant ST as 記録ファイル
+        participant PF as プロンプトファイル
+        participant LOG as ログ
+
+        CC->>R: 標準入力（PostToolUse・Read）
+        R->>ST: 追記する（書き込めない）
+        R->>PF: 読む（無い）
+        R->>LOG: write_record と read_prompt を追記する
+        R-->>CC: 出力なし<br>終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が空
+      - 'ログに `operation: write_record` の行と `operation: read_prompt` の行（`path` が削除したプロンプトファイル）がある'
+      - 終了コードが `0`
+    test: test_error_when_prompt_unreadable
 lead: Read・Bash・MCP のツールで全体を読んだルールの場所を本文のハッシュと一緒に既読として記録するフックを定め、既読の判定を修正するときに参照する。
 idempotent: true
 side_effects: そのセッションの既読の記録ファイルへルールの場所と本文のハッシュを 1 行ずつ追記し、既読の履歴ファイルへ同じ場所の行を 1 行ずつ追記する
@@ -674,6 +709,9 @@ exceptions:
   - name: OSError / 書式の誤り（設定ファイルが読めない）
     condition: '`RULE_INJECT_CONFIG` が指すファイルが無い、または設定ファイル（指していなければ既定のパス）が読めない・書式に合わない・知らないキーか許す値の外の値を持つ'
     notes: フックの中で捕まえ、既定値で動かさず何も記録しない。`additionalContext`（PostToolUse）へ設定ファイルの場所と理由を記載し、既定のログのフォルダへ `read_settings` を書き込んで終了コード 0 で終える
+  - name: PromptLoadError（プロンプトファイルが読めない）
+    condition: 出力する文面のプロンプトファイルが無い・読めない・構造が違う・`lang` の本文が無い・本文の変数を描画できない
+    notes: フックの中で捕まえ、記録できたルールの既読はそのまま残し、何も出力せず、ログへ `read_prompt`（`path` はプロンプトファイル）を書き込んで終了コード 0 で終える
 constraints:
   - item: タイムアウト
     constraint: 1 秒（`hooks.json` の `timeout`）
@@ -705,6 +743,8 @@ constraints:
   - item: 参照するツールの一致
     constraint: '`read_tool` の `tool` がツールの完全名と同じで、`args`（JSON のオブジェクト）に記載した全てのキーが `tool_input` の最上位にあり、値が JSON の値として等しいときに一致とする。オブジェクトはキーの順を問わず、配列は順まで同じで、真偽値と数値は区別する。`tool_input` が `args` に無いキーを持っていても一致とする。`args` を持たない `read_tool` は、ツールの完全名が同じなら一致とする。`optional_args` は照合に使用しない（省いても、違う値でも一致とする）'
     notes: パターンでなく値で比べる（`*`・`re:` も文字どおりの値）。Claude Code が既定値の引数を加えて呼んでも既読にするため、`tool_input` の余分なキーは問わない
+  - item: 文面の原本
+    constraint: '`additionalContext` の文面（既読にできなかった通知・既読の履歴に書き込めなかった通知・設定ファイルが読めない通知・想定外の例外の通知）の本文は、ルール案内の制約「文面の原本」と同じくプロンプトファイルに記載する。描画した文面はプロンプトファイルへ移す前と同じ'
 identifier: record_read
 response:
   - name: '`hookSpecificOutput.hookEventName`'

@@ -1,0 +1,20 @@
+$ TMPDIR=/home/shuhei2441/.cache/ri207-tmp uv run pytest -p no:cacheprovider tests/integration/plugin/test_rule_guide.py tests/integration/plugin/test_search_guide.py tests/integration/plugin/test_record_read.py tests/integration/plugin/test_work_rules.py tests/integration/plugin/test_start_server.py tests/integration/plugin/test_fill_config.py tests/integration/plugin/test_discard_read.py tests/integration/plugin/test_sweep_read.py
+# 範囲は プラグイン.mark.md の「結合テストの実行範囲」の表。/tmp/pytest-of-shuhei2441 が root の所有のため TMPDIR を替えた
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-hooks-python-rules-and-hook-prompts
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 109 items
+
+tests/integration/plugin/test_rule_guide.py ............................ [ 25%]
+..............                                                           [ 38%]
+tests/integration/plugin/test_search_guide.py ...............            [ 52%]
+tests/integration/plugin/test_record_read.py ....................        [ 70%]
+tests/integration/plugin/test_work_rules.py .....                        [ 75%]
+tests/integration/plugin/test_start_server.py ........                   [ 82%]
+tests/integration/plugin/test_fill_config.py ......                      [ 88%]
+tests/integration/plugin/test_discard_read.py ....                       [ 91%]
+tests/integration/plugin/test_sweep_read.py .........                    [100%]
+
+============================= 109 passed in 6.18s ==============================

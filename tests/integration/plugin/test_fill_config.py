@@ -15,6 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 HOOK_RUN = PROJECT_ROOT / "hooks" / "run.py"
 HOOK_TIMEOUT_SEC = 30
 SEARCH_RULES = "mcp__plugin_rule-inject_rule-inject__search_rules"
+LIST_RULES = "mcp__plugin_rule-inject_rule-inject__list_rules"
 GET_SERVER_STATUS = "mcp__plugin_rule-inject_rule-inject__get_server_status"
 
 
@@ -22,10 +23,13 @@ GET_SERVER_STATUS = "mcp__plugin_rule-inject_rule-inject__get_server_status"
 def run_fill_config() -> Callable[..., subprocess.CompletedProcess[str]]:
     """環境変数を指定したとおりに組み立ててフック `fill_config` を子プロセスとして起動する factory。"""
 
-    def _run(env: Mapping[str, str], stdin: str) -> subprocess.CompletedProcess[str]:
-        """env だけを環境変数にし（`PATH` と `HOME` は引き継ぐ）、stdin を標準入力へ引き渡す。"""
+    def _run(
+        env: Mapping[str, str], stdin: str, *, plugin_root: Path | None = None
+    ) -> subprocess.CompletedProcess[str]:
+        """env だけを環境変数にし（`PATH` と `HOME` は引き継ぐ）、stdin を標準入力へ引き渡す。plugin_root があれば、その hooks/run.py を起動する。"""
+        hook_run = plugin_root / "hooks" / "run.py" if plugin_root else HOOK_RUN
         return subprocess.run(
-            [sys.executable, str(HOOK_RUN), "fill_config"],
+            [sys.executable, str(hook_run), "fill_config"],
             input=stdin,
             capture_output=True,
             text=True,
@@ -167,4 +171,39 @@ def test_normal_when_index_has_variable(
     session_env = json.loads(completed.stdout)["hookSpecificOutput"]["updatedInput"]["session_env"]
     assert session_env["RULE_ROOT"] == "/rules"
     assert "UNRELATED" not in session_env
+    assert completed.returncode == 0
+
+
+def test_error_when_prompt_unreadable(
+    tmp_path: Path,
+    isolated_env: dict[str, str],
+    run_fill_config: Callable[..., subprocess.CompletedProcess[str]],
+    hook_payload: Callable[..., dict[str, Any]],
+    plugin_copy: Path,
+    remove_hook_prompt: Callable[[str], Path],
+) -> None:
+    """許可の理由のプロンプトファイルが読めないとき、理由を記載せずに入力を書き換え、ログへ記録する（異常系）。"""
+    # 準備
+    xdg_state = tmp_path / "xdg_state"
+    env = {**isolated_env, "XDG_STATE_HOME": str(xdg_state)}
+    removed = remove_hook_prompt("fill-config-reason")
+    payload = hook_payload(
+        "PreToolUse", tool_name=LIST_RULES, tool_input={"project_dir": str(tmp_path)}
+    )
+    # 実行
+    completed = run_fill_config(env, json.dumps(payload), plugin_root=plugin_copy)
+    # 検証
+    output = json.loads(completed.stdout)["hookSpecificOutput"]
+    assert output["permissionDecision"] == "allow"
+    assert "session_env" in output["updatedInput"]
+    assert "permissionDecisionReason" not in output
+    log_lines = [
+        line
+        for log in sorted((xdg_state / "rule-inject" / "logs").glob("*_rule-inject.log"))
+        for line in log.read_text(encoding="utf-8").splitlines()
+    ]
+    logged = [json.loads(line) for line in log_lines]
+    assert [(entry["operation"], entry["path"]) for entry in logged] == [
+        ("read_prompt", str(removed))
+    ]
     assert completed.returncode == 0
