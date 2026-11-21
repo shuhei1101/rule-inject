@@ -55,8 +55,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T09:14:54.995837+00:00'
   - process: エージェント・MCP サーバー設計
-    status: todo
+    status: done
     note: MCP サーバー rule-inject の定義（docs/mcp-server/）を template-mcp-server で作成する
+    updated_by: planner
+    updated_at: '2026-11-21T09:29:35.641177+00:00'
   - process: エージェントフロー・LLM 呼び出し設計
     status: todo
     note: 'スキル global-setup・setup を template-agent-flow の type: skill で作成する（docs/agent-flow/）。LLM の呼び出しは持たない'
