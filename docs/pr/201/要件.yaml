@@ -67,3 +67,6 @@ scope_out:
   - item: v8.2.0 の文字列の refs を related に対応付け、trace_related でたどれるようにする
     reason: 配信元 rule-inject のどの種類も related の対応付けを持たず、対応付け方は shuhei1101/ai-monitor#3753 の対応とあわせて決まる（reviewer の対象外の報告）
     plan: shuhei1101/ai-monitor#3753
+  - item: MCP サーバーの instructions・ツールの description の本文をプロンプトファイル（`mcp/rule-inject/instructions`・`mcp/rule-inject/tools/{ツール}`）へ移す
+    reason: テンプレート『MCP サーバーの定義』は本文をプロンプトファイルに記載すると定めるが、rule-inject にはプロンプトファイルを読み込む仕組みが無く、作ると要件（設計書と食い違う実装を直す）の範囲を超える。今は `app.py` に直接記載したままにする（reviewer の回答）
+    plan: to_file
