@@ -12,3 +12,5 @@ items:
     summary: 常駐の MCP サーバーを Streamable HTTP で待ち受け、再起動で待ち受けを閉じる ASGI のサーバー
   - page: LIB-122-6.yaml
     summary: Streamable HTTP の応答を SSE で返却し、サーバーの停止を検知すると送信中のストリームをキャンセルするライブラリ
+  - page: LIB-203-1.yaml
+    summary: プロンプトファイルの部品の本文を描画するテンプレートエンジン

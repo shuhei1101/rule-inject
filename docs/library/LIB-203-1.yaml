@@ -1,0 +1,50 @@
+id: LIB-203-1
+visibility: internal
+title: jinja2
+kind: ライブラリ
+lead: 文字列のテンプレートを変数で描画し、テンプレートの式を評価する Python のテンプレートエンジン。
+purl: pkg:pypi/jinja2
+supplier: Pallets
+upstream: pallets/jinja
+dependency_scope: 任意
+adoption: 採用
+version:
+  current: 3.1.6
+  latest: 3.1.6
+  checked_on: '2026-11-21'
+  source: pyproject.toml
+  pinning: 範囲（`jinja2>=3.1.6,<4`）
+license: BSD-3-Clause（商用利用可）
+official_url: https://github.com/pallets/jinja
+docs_url: https://jinja.palletsprojects.com/
+selection:
+  candidates: jinja2 と、標準ライブラリだけで部品の本文を連結する案
+  decision: 規約『プロンプトファイル』が本文を Jinja2（StrictUndefined）、`when` を Jinja2 の式と定め、書式を変えずに描画できるのは jinja2 だけ。同じプロンプトファイルを project-index の `prompt-doc` が jinja2 で文書の画面に描画するため、同じエンジンと同じ `Environment` の設定で描画して画面と注入する文面を一致させる（[レビュー](https://github.com/shuhei1101/rule-inject/pull/203#discussion_r4652200716)）
+  consequences: 依存に jinja2 と markupsafe が加わる。テンプレートはリポジトリ内の開発者が書くファイルだけにし、利用者の入力をテンプレートの本文に入れない（`SandboxedEnvironment` を使用しない前提）
+catalogs:
+  - name: API
+    version: 3.1.6
+    entries:
+      - name: Environment
+        kind: クラス
+        purpose: 描画の設定を持ち、文字列のテンプレートと式を組み立てる
+        description: '`undefined=StrictUndefined`・`autoescape=False`・`keep_trailing_newline=True`・`trim_blocks=True`・`lstrip_blocks=True` で作る。プレーンテキストなのでエスケープしない'
+      - name: Environment.from_string
+        kind: メソッド
+        purpose: 文字列をテンプレートにし、`render(**vars)` で描画する
+        description: 未定義の変数は `render` で `UndefinedError`、構文の誤りは `from_string` の時点で `TemplateSyntaxError` を送出する
+      - name: Environment.compile_expression
+        kind: メソッド
+        purpose: 式を評価する関数を作る
+        description: '`undefined_to_none=False` で作り、結果を `bool()` で判定する。既定の `undefined_to_none=True` では、未定義の変数が `StrictUndefined` でも例外にならず `None` になる'
+      - name: TemplateError
+        kind: 例外
+        purpose: '`UndefinedError`・`TemplateSyntaxError` の親。描画の失敗をまとめて受ける'
+verification:
+  state: 済
+  date: '2026-11-21'
+  detail: |-
+    uv の隔離環境で 3.1.6 を使用し、`catalogs` の `Environment` の設定で次を確認した。
+    `a<b&c` を含む本文はエスケープされず、末尾の改行も残る。
+    `{% for %}` の行は `trim_blocks`・`lstrip_blocks` で空行を残さず `- 1\n- 2\n` になる。
+    本文の未定義の変数と、`undefined_to_none=False` で `bool()` した式の未定義の変数は `UndefinedError`、構文の誤りは `TemplateSyntaxError` になり、どちらも `TemplateError` で受けられた
