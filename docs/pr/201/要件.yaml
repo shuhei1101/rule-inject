@@ -53,7 +53,9 @@ docs:
   - page: skills/files.yaml
     new: false
     change: スキルの SKILL.md の関連を、エージェントフローの設計書を指すように直す
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-21T10:21:54.632647+00:00'
 scope_out:
   - item: 精度評価の設計書（evaluation・eval_criterion・eval_case）
     reason: LLM・意思決定モデルを使用するノードを持たず、Issue でも対象外
