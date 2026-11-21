@@ -20,6 +20,7 @@ from rule_inject.features.guidance.service import (
 )
 from rule_inject.features.index.types import MatchedRule, ReadTool
 from rule_inject.shared.errors import IndexReadError
+from rule_inject.shared.prompts import load_hook_prompt
 
 
 @pytest.fixture
@@ -41,8 +42,8 @@ def test_build_guidance_when_blocking() -> None:
     # 実行
     result = build_guidance(rules)
     # 検証
-    assert result.text.startswith(BLOCKING_HEADER)
-    assert BLOCKING_HEADER == (
+    assert result.text.startswith(load_hook_prompt(BLOCKING_HEADER))
+    assert load_hook_prompt(BLOCKING_HEADER) == (
         "この操作に関連する未読のルールがあります。"
         "下のルールを参照してから、同じ操作を再試行してください。"
     )
@@ -56,8 +57,8 @@ def test_build_guidance_when_not_blocking() -> None:
     # 実行
     result = build_guidance(rules)
     # 検証
-    assert result.text.startswith(NON_BLOCKING_HEADER)
-    assert NON_BLOCKING_HEADER == (
+    assert result.text.startswith(load_hook_prompt(NON_BLOCKING_HEADER))
+    assert load_hook_prompt(NON_BLOCKING_HEADER) == (
         "この操作に関連する未読のルールがあります。"
         "必要に応じて下のルールを参照してください。"
         "この案内はルールごとにセッションで 1 回だけ表示します。"
@@ -99,13 +100,13 @@ def test_build_guidance_when_read_tools() -> None:
     result = build_guidance(rules)
     # 検証
     assert result.text.splitlines() == [
-        BLOCKING_HEADER,
-        READ_TOOL_NOTE,
+        load_hook_prompt(BLOCKING_HEADER),
+        load_hook_prompt(READ_TOOL_NOTE),
         "- /r/a.md",
         '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}, "sections": ["命名"]}',
         "- /r/b.md",
     ]
-    assert READ_TOOL_NOTE == (
+    assert load_hook_prompt(READ_TOOL_NOTE) == (
         "`ツール:` の行があるルールは、そのツールで参照してください。"
         "記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。"
         "ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。"
@@ -119,8 +120,12 @@ def test_build_guidance_when_no_read_tools() -> None:
     # 実行
     result = build_guidance(rules)
     # 検証
-    assert result.text.splitlines() == [BLOCKING_HEADER, READ_NOTE, "- /r/b.md"]
-    assert READ_NOTE == "パスを Read で参照してください。"
+    assert result.text.splitlines() == [
+        load_hook_prompt(BLOCKING_HEADER),
+        load_hook_prompt(READ_NOTE),
+        "- /r/b.md",
+    ]
+    assert load_hook_prompt(READ_NOTE) == "パスを Read で参照してください。"
 
 
 def test_build_guidance_when_read_tool_too_long() -> None:
@@ -151,12 +156,12 @@ def test_build_guidance_when_tool_rule_omitted() -> None:
         MatchedRule(location="/r/b.md", blocking=True, read_tools=(read_tool,)),
     ]
     # 1 件目と件数の行だけが収まる上限
-    limit = len(BLOCKING_HEADER) + len(READ_TOOL_NOTE) + 120
+    limit = len(load_hook_prompt(BLOCKING_HEADER)) + len(load_hook_prompt(READ_TOOL_NOTE)) + 120
     # 実行
     result = build_guidance(rules, limit=limit)
     # 検証
-    assert result.text.splitlines()[1] == READ_NOTE
-    assert READ_TOOL_NOTE not in result.text
+    assert result.text.splitlines()[1] == load_hook_prompt(READ_NOTE)
+    assert load_hook_prompt(READ_TOOL_NOTE) not in result.text
     assert result.shown == ("/r/a.md",)
 
 
@@ -192,7 +197,7 @@ def test_build_failure_notice() -> None:
         IndexReadError(path="/i/b.yaml", reason="ValueError: 3行目: 許さないキー"),
     ]
     # 実行
-    result = build_failure_notice("索引を読めませんでした", errors, Path("/s/rule-inject.log"))
+    result = build_failure_notice(service.INDEX_FAILURE, errors, Path("/s/rule-inject.log"))
     # 検証
     assert "索引を読めませんでした" in result
     assert "- /i/a.yaml: FileNotFoundError: no such file" in result
@@ -210,8 +215,8 @@ def test_build_search_guidance() -> None:
         ]
     )
     # 検証
-    assert result.text.startswith(service.SEARCH_HEADER)
-    assert service.SEARCH_HEADER == (
+    assert result.text.startswith(load_hook_prompt(service.SEARCH_HEADER))
+    assert load_hook_prompt(service.SEARCH_HEADER) == (
         "検索結果のファイルに関連する未読のルールがあります（参照は任意です）。"
         "この案内はルールごとにセッションで 1 回だけ表示します。"
     )
@@ -255,8 +260,8 @@ def test_build_search_guidance_when_read_tools() -> None:
     result = service.build_search_guidance(rules)
     # 検証
     assert result.text.splitlines() == [
-        service.SEARCH_HEADER,
-        READ_TOOL_NOTE,
+        load_hook_prompt(service.SEARCH_HEADER),
+        load_hook_prompt(READ_TOOL_NOTE),
         "- /r/a.md",
         '  ツール: mcp__docs__search_docs {"filter": {"field": "id", "op": "eq", "values": ["python"]}}',
     ]

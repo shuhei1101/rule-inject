@@ -8,7 +8,10 @@ from typing import Any
 
 import pytest
 
+from rule_inject.hooks import fill_config as fill_config_module
 from rule_inject.hooks.fill_config import DECISION_REASON, fill_config
+from rule_inject.shared.errors import PromptLoadError
+from rule_inject.shared.prompts import load_hook_prompt
 
 TOOL_PREFIX = "mcp__plugin_rule-inject_rule-inject__"
 SEARCH_RULES = f"{TOOL_PREFIX}search_rules"
@@ -54,7 +57,7 @@ def test_fill_config(
     output = result["hookSpecificOutput"]
     assert output["hookEventName"] == "PreToolUse"
     assert output["permissionDecision"] == "allow"
-    assert output["permissionDecisionReason"] == DECISION_REASON
+    assert output["permissionDecisionReason"] == load_hook_prompt(DECISION_REASON)
     assert output["updatedInput"]["session_env"] == {
         "RULE_INJECT_CONFIG": env["RULE_INJECT_CONFIG"],
         "XDG_CONFIG_HOME": str(tmp_path / "xdg_config"),
@@ -202,3 +205,31 @@ def test_fill_config_when_project_dir_differs(
     # 検証
     assert result is not None
     assert result["hookSpecificOutput"]["updatedInput"]["session_env"]["OTHER_ROOT"] == "/other"
+
+
+def test_fill_config_when_prompt_unreadable(
+    tmp_path: Path,
+    hook_payload: Callable[..., dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    read_logs_in: Callable[[Path], list[dict[str, Any]]],
+) -> None:
+    """許可の理由のプロンプトファイルが読めなければ理由を除いて入力を書き換える（異常系）。"""
+    # 準備
+    xdg_state = tmp_path / "xdg_state"
+    env = {"XDG_STATE_HOME": str(xdg_state), "XDG_CONFIG_HOME": str(tmp_path / "xdg_config")}
+    payload = hook_payload("PreToolUse", tool_name=SEARCH_RULES, tool_input={"path": "/p/a.py"})
+
+    def unreadable(name: str, values: object = None) -> str:
+        raise PromptLoadError(f"/p/{name}.yaml", "FileNotFoundError: 無い")
+
+    monkeypatch.setattr(fill_config_module, "load_hook_prompt", unreadable)
+    # 実行
+    result = fill_config(payload, env)
+    # 検証
+    assert result is not None
+    output = result["hookSpecificOutput"]
+    assert output["permissionDecision"] == "allow"
+    assert "session_env" in output["updatedInput"]
+    assert "permissionDecisionReason" not in output
+    logged = read_logs_in(xdg_state / "rule-inject" / "logs")
+    assert [entry["operation"] for entry in logged] == ["read_prompt"]

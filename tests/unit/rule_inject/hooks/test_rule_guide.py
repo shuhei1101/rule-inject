@@ -11,6 +11,7 @@ import pytest
 
 from rule_inject.hooks._runner import SETTINGS_FAILURE_SUMMARY
 from rule_inject.hooks.rule_guide import guide_rules
+from rule_inject.shared.prompts import load_hook_prompt
 
 RULE = "/r/python.md"
 # 本文が `test` のルールの本文のハッシュ
@@ -365,7 +366,7 @@ def test_handle_when_settings_unreadable(
     output = result["hookSpecificOutput"]
     assert "permissionDecision" not in output
     context = output["additionalContext"]
-    assert SETTINGS_FAILURE_SUMMARY in context
+    assert load_hook_prompt(SETTINGS_FAILURE_SUMMARY) in context
     assert env["RULE_INJECT_CONFIG"] in context
     assert str(default_log_folder / f"{datetime.now(UTC):%Y%m%d}_rule-inject.log") in context
     logged = read_default_log()
