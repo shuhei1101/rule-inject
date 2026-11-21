@@ -1,0 +1,14 @@
+KNOWLEDGE_ROOT の追加:
+  説明: Claude Code のユーザーの設定 `~/.claude/settings.json` の `env` に、knowledge のクローンの場所を値に持つ `KNOWLEDGE_ROOT` を追加し、`rules.yaml` の `!{KNOWLEDGE_ROOT}` で指す knowledge の Python のルール 9 件をフックが読み込める状態にする。書き換える前に同じ場所へ `settings.json.bak-{日時}` を取る
+  タグ: [端末の設定, 環境変数]
+  実行者: planner
+  時期: マージの前
+  回数: 1 回限り
+  可逆: true
+  疎通確認: null
+  実行: null
+  確認: null
+  切り戻し: null
+  失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: 新しく始めたセッションのフックの環境で `KNOWLEDGE_ROOT` が knowledge のクローンの場所を指し、rule-inject の `check_indexes` がこのリポジトリの `rules.yaml` に「変数参照を展開できない」を返さない
+  状態: todo

@@ -30,10 +30,6 @@ use_cases:
     detail: 止める案内の文面の置き場所が変わる。案内から再試行までの流れは変わらない
     depends_on: []
 docs:
-  - page: rules.yaml
-    new: false
-    change: knowledge の Python のルール 9 件を、要件の未確定で決めた指し方で読み込める状態にする
-    status: todo
   - page: docs/layout/LAY-173-1.yaml
     new: false
     change: content/prompts/ にフックのプロンプトファイルの配置を追加する

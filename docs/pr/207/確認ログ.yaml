@@ -1,0 +1,7 @@
+confirmations:
+  - topic: '#204 の knowledge の Python のルール 9 件の指し方'
+    decision: rules.yaml はそのままにし、Claude Code の env に KNOWLEDGE_ROOT を追加する反映作業を置く（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/207#discussion_r4652434626
