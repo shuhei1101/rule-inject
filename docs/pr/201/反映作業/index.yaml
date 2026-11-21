@@ -11,4 +11,4 @@
   切り戻し: null
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
   確認方法: 作業ブランチの worktree で project-index の describe(source rule-inject) を呼ぶと、種類の一覧に agent・mcp_server・launch・agent_flow・llm_call・evaluation・eval_criterion・eval_case が並ぶ
-  状態: todo
+  状態: done
