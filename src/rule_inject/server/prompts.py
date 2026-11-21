@@ -34,6 +34,7 @@ def load_prompt(clone: Path, prompt_id: str, *, values: Mapping[str, object] | N
     path = clone / PROMPTS_DIR / f"{prompt_id}.yaml"
     # ファイルを読み、YAML として読み込む
     try:
+        # YAML の読み込み結果は型が決まらないため Any で受け、直後の isinstance で絞る
         document: Any = YAML(typ="safe").load(path.read_text(encoding="utf-8"))
     except (OSError, YAMLError) as exc:
         raise PromptLoadError(path, f"読めない: {exc}") from exc
@@ -50,18 +51,29 @@ def load_prompt(clone: Path, prompt_id: str, *, values: Mapping[str, object] | N
     variables.update(values or {})
     rendered: list[str] = []
     for part in document["parts"]:
+        # 部品が辞書で、texts[] の要素が text を持つ辞書か
+        if not isinstance(part, dict) or not all(
+            isinstance(item, dict) and isinstance(item.get("text"), str)
+            for item in part.get("texts") or []
+        ):
+            raise PromptLoadError(path, "部品か texts[] の要素の構造が違います")
         part_id = part.get("id")
-        try:
-            when = part.get("when")
-            # when があり偽: この部品を使わない（未定義の変数は None にせず例外にする）
-            if when is not None and not bool(
-                ENVIRONMENT.compile_expression(str(when), undefined_to_none=False)(**variables)
-            ):
+        when = part.get("when")
+        # when がある: 評価して偽ならこの部品を使わない（未定義の変数は None にせず例外にする）
+        if when is not None:
+            try:
+                matched = bool(
+                    ENVIRONMENT.compile_expression(str(when), undefined_to_none=False)(**variables)
+                )
+            except TemplateError as exc:
+                raise PromptLoadError(path, f"部品 {part_id} を描画できません: {exc}") from exc
+            if not matched:
                 continue
-            texts = [item["text"] for item in part.get("texts") or [] if item.get("lang") == lang]
-            # 注入する言語の本文が無い: 読み込みの失敗
-            if not texts:
-                raise PromptLoadError(path, f"部品 {part_id} に {lang} の本文がありません")
+        texts = [item["text"] for item in part.get("texts") or [] if item.get("lang") == lang]
+        # 注入する言語の本文が無い: 読み込みの失敗
+        if not texts:
+            raise PromptLoadError(path, f"部品 {part_id} に {lang} の本文がありません")
+        try:
             rendered.append(ENVIRONMENT.from_string(texts[0]).render(**variables))
         except TemplateError as exc:
             raise PromptLoadError(path, f"部品 {part_id} を描画できません: {exc}") from exc
