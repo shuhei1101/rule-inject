@@ -543,6 +543,16 @@ files:
     related:
       - to: src/rule_inject/server/app.py
         type: tests
+  - path: unit/rule_inject/server/test_prompts.py
+    name: プロンプトファイルの読み込みの単体テスト
+    description: プロンプトファイルの読み込みと描画の振る舞いを確認する単体テストで、プロンプトファイルの読み込みを修正したときに実行する。
+    tags:
+      - topic:MCPサーバー
+      - topic:プロンプト
+      - tool:pytest
+    related:
+      - to: src/rule_inject/server/prompts.py
+        type: tests
   - path: unit/rule_inject/server/test_check_tools.py
     name: 索引のチェックのツールの単体テスト
     description: 索引のチェックのツールの振る舞いを確認する単体テストで、索引のチェックのツールを修正したときに実行する。

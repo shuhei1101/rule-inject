@@ -10,6 +10,7 @@ import uvicorn
 from rule_inject.server.app import build_server
 from rule_inject.server.clone import find_clone
 from rule_inject.server.control import GRACEFUL_SHUTDOWN_TIMEOUT, ServerControl
+from rule_inject.server.prompts import PromptLoadError
 from rule_inject.shared.errors import SettingsReadError
 from rule_inject.shared.settings import load_settings
 
@@ -39,10 +40,14 @@ def main() -> None:
         sys.exit(FAILURE_EXIT_CODE)
     control = ServerControl(port=settings.server_port)
     clone = find_clone(Path(__file__).parent)
+    # プロンプトファイルが読めなければ、待ち受けずに場所と理由を記載して終わる
+    try:
+        mcp_server = build_server(env, control=control, clone=clone)
+    except PromptLoadError as exc:
+        print(f"{exc.path}: {exc.reason}", file=sys.stderr)
+        sys.exit(FAILURE_EXIT_CODE)
     # 停止の待ちが POST の要求の応答の送信の終わりまで数えられるよう、アプリを包む
-    app = control.track(
-        build_server(env, control=control, clone=clone).streamable_http_app(host=HOST)
-    )
+    app = control.track(mcp_server.streamable_http_app(host=HOST))
     # MCPServer.run は timeout_graceful_shutdown を引き渡せず、Server も外へ出さないため、uvicorn.Server で待ち受ける
     server = uvicorn.Server(
         uvicorn.Config(
