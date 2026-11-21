@@ -680,8 +680,11 @@ def start_clone_server(
     config.parent.mkdir()
     config.write_text("", encoding="utf-8")
 
-    def _start(*, fail_uv: bool = False) -> RunningServer:
-        """クローンのコードで起動し、待ち受けるまで待つ。fail_uv なら uv sync だけ失敗させる。"""
+    def _start(*, fail_uv: bool = False, wait_ready: bool = True) -> RunningServer:
+        """クローンのコードで起動し、待ち受けるまで待つ。fail_uv なら uv sync だけ失敗させる。
+
+        wait_ready でなければ 1 回だけ起動して待たない（起動に失敗する確認に使用する）。
+        """
 
         def _spawn_at(port: int, attempt: int) -> tuple[subprocess.Popen[bytes], Path]:
             """port を `RULE_INJECT_PORT` に引き渡して起動する。"""
@@ -701,7 +704,11 @@ def start_clone_server(
                 )
             return process, stderr_path
 
-        port, process, stderr_path = _launch(_spawn_at)
+        if wait_ready:
+            port, process, stderr_path = _launch(_spawn_at)
+        else:
+            port = _free_port()
+            process, stderr_path = _spawn_at(port, 0)
         server = RunningServer(
             port=port, process=process, config_path=config, stderr_path=stderr_path
         )
