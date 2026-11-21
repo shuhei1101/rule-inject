@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 from ruamel.yaml import YAML
 
-from rule_inject.shared import prompts
 from rule_inject.shared.errors import PromptLoadError
 from rule_inject.shared.prompts import (
     HOOK_PROMPTS_DIR,
