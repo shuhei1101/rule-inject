@@ -1,0 +1,40 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-16.yaml
+    impact: run_only
+    detail: 案内の文面の置き場所が変わる。受け取る文面は変わらない。Python のファイルに knowledge の Python のルールが案内される
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-17.yaml
+    impact: run_only
+    detail: 検索結果の案内の文面の置き場所が変わる。受け取る文面は変わらない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-22.yaml
+    impact: run_only
+    detail: サーバーの起動の補助の通知の文面の置き場所が変わる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-11.yaml
+    impact: run_only
+    detail: 圧縮の後の通知の文面の置き場所が変わる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-8.yaml
+    impact: run_only
+    detail: 既読の記録の失敗の通知の文面の置き場所が変わる
+    depends_on: []
+  - kind: composite
+    scenario: docs/scenario/SC-122-23.yaml
+    impact: run_only
+    detail: 止める案内の文面の置き場所が変わる。案内から再試行までの流れは変わらない
+    depends_on: []
+docs:
+  - page: rules.yaml
+    new: false
+    change: knowledge の Python のルール 9 件を、要件の未確定で決めた指し方で読み込める状態にする
+    status: todo
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: content/prompts/ にフックのプロンプトファイルの配置を追加する
+    status: todo
