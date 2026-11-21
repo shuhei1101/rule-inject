@@ -53,6 +53,10 @@ class UnitStartError(RuleInjectError):
     """`systemctl --user start --no-block` が 0 以外で終わったか、打ち切りの待ちを過ぎた。"""
 
 
+class PromptLoadError(RuleInjectError):
+    """フックのプロンプトファイルが無い・読めない・構造が違う・描画できない。"""
+
+
 def describe(exc: BaseException) -> str:
     """例外のクラス名と文面を 1 つの理由の文字列にする。"""
     return f"{type(exc).__name__}: {exc}"

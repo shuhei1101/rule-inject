@@ -48,6 +48,7 @@ class LogOperation(StrEnum):
     DELETE_LOG = "delete_log"
     CHECK_UNIT = "check_unit"
     START_UNIT = "start_unit"
+    READ_PROMPT = "read_prompt"
 
 
 def _utc_now() -> datetime:

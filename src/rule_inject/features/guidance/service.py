@@ -9,53 +9,51 @@ from typing import Any
 
 from rule_inject.features.guidance.types import Guidance, GuidedReadTool, GuidedRule
 from rule_inject.shared.errors import RuleInjectError
+from rule_inject.shared.prompts import load_hook_prompt
 
 # 案内文 1 つの字数の上限
 GUIDANCE_LIMIT = 10000
-BLOCKING_HEADER = (
-    "この操作に関連する未読のルールがあります。"
-    "下のルールを参照してから、同じ操作を再試行してください。"
-)
-NON_BLOCKING_HEADER = (
-    "この操作に関連する未読のルールがあります。"
-    "必要に応じて下のルールを参照してください。"
-    "この案内はルールごとにセッションで 1 回だけ表示します。"
-)
-# サーバーの起動の補助が起動を依頼したときの文面（{service} にサービス名を入れる）
-SERVER_START_NOTICE = (
-    "rule-inject の MCP サーバーが応答しなかったため、systemd --user のユニット {service} へ起動を依頼しました。"
-    "サーバーが待ち受けを始めるまで数十秒かかります。"
-    "このセッションで rule-inject の MCP のツールを使用するときは、/mcp で rule-inject に再接続すると使用できます。"
-)
-SEARCH_HEADER = (
-    "検索結果のファイルに関連する未読のルールがあります（参照は任意です）。"
-    "この案内はルールごとにセッションで 1 回だけ表示します。"
-)
+# 以下はフックのプロンプトファイルの名前（文面は `load_hook_prompt` で描画する）
+BLOCKING_HEADER = "guide-blocking-header"
+NON_BLOCKING_HEADER = "guide-non-blocking-header"
+# サーバーの起動の補助が起動を依頼したときの文面（変数 `service`）
+SERVER_START_NOTICE = "server-start"
+SEARCH_HEADER = "search-header"
 # 記載したルールに `ツール:` の行が 1 つでもあるときの 2 行目（参照の方法）
-READ_TOOL_NOTE = (
-    "`ツール:` の行があるルールは、そのツールで参照してください。"
-    "記載の引数は全て指定し、「省略可」の引数とその他の引数は任意です。"
-    "ツールを使用できない場合と、`ツール:` の行が無いルールは、パスを Read で参照してください。"
-)
+READ_TOOL_NOTE = "read-tool-note"
 # 記載したルールに `ツール:` の行が無いときの 2 行目（参照の方法）
-READ_NOTE = "パスを Read で参照してください。"
-# パスの行の下に配置する参照するツールの行の頭
-READ_TOOL_PREFIX = "  ツール: "
+READ_NOTE = "read-note"
+# 参照するツールの行（変数 `tool`・`args`・`optional_args`）
+TOOL_LINE = "tool-line"
+# 記載しきれなかったルールの件数の行（変数 `count`）
+OMITTED_LINE = "guide-omitted"
+SEARCH_OMITTED_LINE = "search-omitted"
+# 照合しなかった検索結果の件数の行（変数 `count`）
+UNCHECKED_LINE = "search-unchecked"
+# 失敗の通知の末尾のログの場所の行（変数 `log_path`）
+FAILURE_FOOTER = "failure-footer"
+# `build_failure_notice` へ引き渡す、何が起きたかの 1 文
+INDEX_FAILURE = "failure-index"
+RECORD_READ_FAILURE = "failure-read-record"
+GUIDED_READ_FAILURE = "failure-read-guided"
+GUIDED_WRITE_FAILURE = "failure-write-guided"
+# パスの行の下に配置する参照するツールの行の字下げ
+READ_TOOL_PREFIX = "  "
 
 
 def _omitted_line(count: int) -> str:
     """記載しきれなかったルールの件数の行を返却する。"""
-    return f"ほか {count} 件のルールは、上のルールを参照して操作を再試行したときに表示します。"
+    return load_hook_prompt(OMITTED_LINE, {"count": count})
 
 
 def _search_omitted_line(count: int) -> str:
     """検索結果の案内で記載しきれなかったルールの件数の行を返却する。"""
-    return f"ほか {count} 件のルールは、次に関連したときに表示します。"
+    return load_hook_prompt(SEARCH_OMITTED_LINE, {"count": count})
 
 
 def _unchecked_line(count: int) -> str:
     """照合しなかった検索結果のパスの件数の行を返却する。"""
-    return f"検索結果のうち {count} 件は照合していません。"
+    return load_hook_prompt(UNCHECKED_LINE, {"count": count})
 
 
 def _json_text(value: Mapping[str, Any]) -> str:
@@ -65,10 +63,16 @@ def _json_text(value: Mapping[str, Any]) -> str:
 
 def _tool_line(read_tool: GuidedReadTool) -> str:
     """参照するツール 1 つを `ツール:` の行にする（省略してよい引数があれば末尾に添える）。"""
-    line = f"{READ_TOOL_PREFIX}{read_tool.tool} {_json_text(read_tool.args)}"
-    if read_tool.optional_args:
-        line += f"（省略可: {_json_text(read_tool.optional_args)}）"
-    return line
+    optional_args = _json_text(read_tool.optional_args) if read_tool.optional_args else ""
+    line = load_hook_prompt(
+        TOOL_LINE,
+        {
+            "tool": read_tool.tool,
+            "args": _json_text(read_tool.args),
+            "optional_args": optional_args,
+        },
+    )
+    return f"{READ_TOOL_PREFIX}{line}"
 
 
 def _assemble(
@@ -81,7 +85,7 @@ def _assemble(
     """冒頭・参照の方法の後に、ルールごとにパスの行とツールの行を、末尾の行を追加しても上限に収まるところまで記載する。"""
     # 参照の方法の行は、ツールの行を持つルールが 1 つでもあれば長い方の字数で見積もる
     has_tools = any(rule.read_tools for rule in rules)
-    note_budget = len(READ_TOOL_NOTE if has_tools else READ_NOTE) + 1
+    note_budget = len(load_hook_prompt(READ_TOOL_NOTE if has_tools else READ_NOTE)) + 1
     body: list[str] = []
     used = len(header) + note_budget + sum(len(line) + 1 for line in trailer)
     shown: list[str] = []
@@ -104,7 +108,7 @@ def _assemble(
     if omitted:
         body.append(omitted_line(omitted))
     # 記載したルールにツールの行があるときだけ、ツールで参照する方法を伝える
-    note = READ_TOOL_NOTE if shown_tools else READ_NOTE
+    note = load_hook_prompt(READ_TOOL_NOTE if shown_tools else READ_NOTE)
     lines = [header, note, *body, *trailer]
     return Guidance(text="\n".join(lines), shown=tuple(shown))
 
@@ -115,7 +119,9 @@ def build_guidance(rules: Sequence[GuidedRule], *, limit: int = GUIDANCE_LIMIT) 
     ordered = [rule for rule in rules if rule.blocking] + [
         rule for rule in rules if not rule.blocking
     ]
-    header = BLOCKING_HEADER if any(rule.blocking for rule in rules) else NON_BLOCKING_HEADER
+    header = load_hook_prompt(
+        BLOCKING_HEADER if any(rule.blocking for rule in rules) else NON_BLOCKING_HEADER
+    )
     return _assemble(header, ordered, limit, _omitted_line, ())
 
 
@@ -125,12 +131,12 @@ def build_search_guidance(
     """検索で該当したファイルの未読・未案内のルールを、上限に収まる分だけ並べた案内文を返却する（`blocking` は確認しない）。"""
     # 照合しなかったパスがあれば、その件数を末尾に添える
     trailer = [_unchecked_line(unchecked)] if unchecked >= 1 else []
-    return _assemble(SEARCH_HEADER, rules, limit, _search_omitted_line, trailer)
+    return _assemble(load_hook_prompt(SEARCH_HEADER), rules, limit, _search_omitted_line, trailer)
 
 
 def build_server_start_notice(service: str) -> str:
-    """`SERVER_START_NOTICE` にサービス名を入れた文面を返却する。"""
-    return SERVER_START_NOTICE.format(service=service)
+    """`SERVER_START_NOTICE` をサービス名で描画した文面を返却する。"""
+    return load_hook_prompt(SERVER_START_NOTICE, {"service": service})
 
 
 def build_failure_notice(
@@ -138,12 +144,14 @@ def build_failure_notice(
     errors: Sequence[RuleInjectError],
     log_path: Path,
     *,
+    summary_values: Mapping[str, object] | None = None,
     limit: int = GUIDANCE_LIMIT,
 ) -> str:
-    """索引・記録の読み込み・書き込みの失敗を、場所と理由とログの場所つきの文にする。"""
-    footer = f"詳しくはログ（{log_path}）を確認してください。"
-    lines = [summary]
-    used = len(summary) + 1 + len(footer)
+    """索引・記録の読み込み・書き込みの失敗を、`summary` のプロンプトの本文と場所と理由とログの場所つきの文にする。"""
+    footer = load_hook_prompt(FAILURE_FOOTER, {"log_path": log_path})
+    summary_text = load_hook_prompt(summary, summary_values)
+    lines = [summary_text]
+    used = len(summary_text) + 1 + len(footer)
     for error in errors:
         line = f"- {error.path}: {error.reason}"
         # 上限を超える分は記載しない（場所はログに残っている）

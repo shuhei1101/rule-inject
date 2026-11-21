@@ -12,13 +12,13 @@ from typing import Any, TextIO
 
 from rule_inject.features.guidance import build_failure_notice
 from rule_inject.features.record.service import is_valid_session_id
-from rule_inject.shared.errors import SettingsReadError, describe
+from rule_inject.shared.errors import PromptLoadError, SettingsReadError, describe
 from rule_inject.shared.logger import Component, LogOperation, log_file_path, write_log
 from rule_inject.shared.paths import default_log_dir
 from rule_inject.shared.settings import load_settings
 
-# 設定ファイルを読めなかったときに `build_failure_notice` へ引き渡す 1 文
-SETTINGS_FAILURE_SUMMARY = "設定ファイルを読めませんでした"
+# 設定ファイルを読めなかったときに `build_failure_notice` へ引き渡す 1 文のプロンプトの名前
+SETTINGS_FAILURE_SUMMARY = "settings-unreadable"
 
 # 入力の JSON と環境変数を受け、標準出力へ返却する JSON（無ければ None）を返却する
 type HookHandler = Callable[[dict[str, Any], Mapping[str, str]], dict[str, Any] | None]
@@ -57,6 +57,28 @@ def settings_failure_notice(
     return build_failure_notice(SETTINGS_FAILURE_SUMMARY, [error], log_path)
 
 
+def _log_folder(env: Mapping[str, str]) -> Path:
+    """ログのフォルダを返却する。設定ファイルが読めなければ既定のログのフォルダにする。"""
+    try:
+        return load_settings(env).log_dir
+    except SettingsReadError:
+        return default_log_dir(env)
+
+
+def _log_prompt_failure(
+    component: Component, error: PromptLoadError, env: Mapping[str, str], session_id: str | None
+) -> None:
+    """プロンプトファイルを読めなかったことをログへ書き込む。"""
+    write_log(
+        _log_folder(env),
+        component=component,
+        operation=LogOperation.READ_PROMPT,
+        reason=error.reason,
+        session_id=session_id,
+        path=error.path,
+    )
+
+
 def run_hook(
     component: Component,
     handle: HookHandler,
@@ -74,12 +96,13 @@ def run_hook(
             payload.get("session_id") if is_valid_session_id(payload.get("session_id")) else None
         )
         output = handle(payload, env)
+    except PromptLoadError as exc:
+        # 文面のプロンプトファイルが読めない: 通知の文面も作れないため、ログにだけ書き込んで何も出さない
+        _log_prompt_failure(component, exc, env, session_id)
+        output = None
     except Exception as exc:  # noqa: BLE001 -- フックの最上位。操作を止めないため全ての例外を捕まえる
-        # 想定外の例外はログに書き込み、通知の文面を返却する。設定ファイルが読めなければ既定のログのフォルダへ書き込む
-        try:
-            log_folder = load_settings(env).log_dir
-        except SettingsReadError:
-            log_folder = default_log_dir(env)
+        # 想定外の例外はログに書き込み、通知の文面を返却する
+        log_folder = _log_folder(env)
         reason = describe(exc)
         write_log(
             log_folder,
@@ -88,7 +111,12 @@ def run_hook(
             reason=reason,
             session_id=session_id,
         )
-        output = on_unexpected(reason, log_file_path(log_folder, datetime.now(UTC).date()))
+        try:
+            output = on_unexpected(reason, log_file_path(log_folder, datetime.now(UTC).date()))
+        except PromptLoadError as notice_exc:
+            # 通知のプロンプトファイルが読めない: ログにだけ書き込んで何も出さない
+            _log_prompt_failure(component, notice_exc, env, session_id)
+            output = None
     if output is not None:
         stdout.write(json.dumps(output) + "\n")
     return 0

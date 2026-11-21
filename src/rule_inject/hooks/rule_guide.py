@@ -12,6 +12,10 @@ from typing import Any
 from rule_inject.features.command import READ_COMMANDS, extract_read_paths
 from rule_inject.features.guidance import (
     GUIDANCE_LIMIT,
+    GUIDED_READ_FAILURE,
+    GUIDED_WRITE_FAILURE,
+    INDEX_FAILURE,
+    RECORD_READ_FAILURE,
     Guidance,
     build_failure_notice,
     build_guidance,
@@ -151,7 +155,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             path=failure.path,
         )
     if loaded.failures:
-        notices.append(build_failure_notice("索引を読めませんでした。", loaded.failures, log_path))
+        notices.append(build_failure_notice(INDEX_FAILURE, loaded.failures, log_path))
     matched = _match(payload, loaded.entries)
     # そのセッションで読んだルールを除く（読んだ後に本文が変わったルールは未読のまま残す）。記録が読めなければ止めずに理由を通知する
     already_read: frozenset[str] = frozenset()
@@ -164,7 +168,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
         except RecordReadError as exc:
             record_failed = True
             _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)
-            notices.append(build_failure_notice("既読の記録を読めませんでした。", [exc], log_path))
+            notices.append(build_failure_notice(RECORD_READ_FAILURE, [exc], log_path))
     unread = [rule for rule in matched if rule.location not in already_read]
     if record_failed:
         # 既読か分からないため、止めずに案内する
@@ -177,9 +181,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
         except RecordReadError as exc:
             guided = frozenset()
             _log_record_failure(log_folder, LogOperation.READ_RECORD, session_id, exc)
-            notices.append(
-                build_failure_notice("案内済みの記録を読めませんでした。", [exc], log_path)
-            )
+            notices.append(build_failure_notice(GUIDED_READ_FAILURE, [exc], log_path))
         unread = [rule for rule in unread if rule.location not in guided]
     if not unread and not notices:
         return None
@@ -190,9 +192,7 @@ def guide_rules(payload: dict[str, Any], env: Mapping[str, str]) -> dict[str, An
             append_guided(folder, session_id, guidance.shown)
         except RecordWriteError as exc:
             _log_record_failure(log_folder, LogOperation.WRITE_RECORD, session_id, exc)
-            notices.append(
-                build_failure_notice("案内済みの記録に書き込めませんでした。", [exc], log_path)
-            )
+            notices.append(build_failure_notice(GUIDED_WRITE_FAILURE, [exc], log_path))
             # 通知の分を除いた字数に、案内を再度収める
             guidance = _build(unread, notices)
     return _output(guidance, unread, notices)

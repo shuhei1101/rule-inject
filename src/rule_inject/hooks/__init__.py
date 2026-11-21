@@ -15,14 +15,15 @@ from rule_inject.hooks.start_server import start_server
 from rule_inject.hooks.sweep_read import sweep_read
 from rule_inject.hooks.work_rules import work_rules
 from rule_inject.shared.logger import Component
+from rule_inject.shared.prompts import load_hook_prompt
 
 
-def _notice_of(event: str, subject: str) -> UnexpectedNotifier:
-    """想定外の例外を、additionalContext で通知する関数を作る。"""
+def _notice_of(event: str, prompt: str) -> UnexpectedNotifier:
+    """想定外の例外を、プロンプト `prompt` の文面の additionalContext で通知する関数を作る。"""
 
     def _notify(message: str, log_path: Path) -> dict[str, Any]:
         """何が動かなかったかと、ログの場所を通知する。"""
-        text = f"{subject}が動きませんでした（{message}）。詳しくはログ（{log_path}）を確認してください。"
+        text = load_hook_prompt(prompt, {"message": message, "log_path": log_path})
         return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
 
     return _notify
@@ -35,12 +36,20 @@ def _silent(message: str, log_path: Path) -> None:
 
 # run.py の引数の名前 → 出した元・処理・想定外の例外の通知方
 HOOKS: dict[str, tuple[Component, HookHandler, UnexpectedNotifier]] = {
-    "rule_guide": (Component.RULE_GUIDE, guide_rules, _notice_of("PreToolUse", "ルールの案内")),
-    "record_read": (Component.RECORD_READ, record_read, _notice_of("PostToolUse", "既読の記録")),
+    "rule_guide": (
+        Component.RULE_GUIDE,
+        guide_rules,
+        _notice_of("PreToolUse", "unexpected-rule-guide"),
+    ),
+    "record_read": (
+        Component.RECORD_READ,
+        record_read,
+        _notice_of("PostToolUse", "unexpected-record-read"),
+    ),
     "search_guide": (
         Component.SEARCH_GUIDE,
         search_guide,
-        _notice_of("PostToolUse", "検索結果の案内"),
+        _notice_of("PostToolUse", "unexpected-search-guide"),
     ),
     "discard_read": (Component.DISCARD_READ, discard_read, _silent),
     "work_rules": (Component.WORK_RULES, work_rules, _silent),
