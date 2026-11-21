@@ -50,8 +50,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-21T09:11:16.598589+00:00'
   - process: インターフェース定義設計
-    status: todo
+    status: done
     note: MCP サーバーの定義の tools[].interface が指すツールのインターフェース定義と、エージェントフローへ移すスキルのインターフェース定義（IF-122-20・IF-122-21）の扱いを、作成する設計書に合わせる
+    updated_by: planner
+    updated_at: '2026-11-21T09:14:54.995837+00:00'
   - process: エージェント・MCP サーバー設計
     status: todo
     note: MCP サーバー rule-inject の定義（docs/mcp-server/）を template-mcp-server で作成する

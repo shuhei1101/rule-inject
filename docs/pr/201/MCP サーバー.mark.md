@@ -17,6 +17,12 @@
 | ツールの一覧 | `tools[]` に `app.py` が登録する全てのツールを並べ、インターフェース定義を指す | インターフェース定義の `read_only`・`destructive` と `ToolAnnotations` を揃える |
 | instructions・description | テンプレートの決まり（プロンプトファイル `mcp/rule-inject/instructions`・`mcp/rule-inject/tools/{ツール}`）と今の `app.py` の直書きを突き合わせ、設計書に合わせて置き場所と文面を直す | 置き場所はモジュール構成設計で確定する |
 
+## 設計書の確定コミット
+
+| 工程 | 範囲 | 補足 |
+| --- | --- | --- |
+| インターフェース定義設計 | `747ac9e..61c5ab7` | ツールのインターフェース定義に `read_only`・`destructive` を記載した。`write_index_entry` は既存のエントリを書き換えるため `destructive: true` にし、実装の `destructiveHint` を設計書に合わせる |
+
 ## テスト結果
 
 なし
