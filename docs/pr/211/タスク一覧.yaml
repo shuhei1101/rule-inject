@@ -85,8 +85,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-22T07:22:09.026190+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: CMD-183-1 の SKILL.md の再生成の手順の削除と、LAY-173-1 の agent-flow の contents
+    updated_by: planner
+    updated_at: '2026-11-22T07:26:06.021503+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えず、足すテストが無い
