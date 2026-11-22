@@ -6,8 +6,6 @@ arguments:
 - index
 ---
 
-<!-- docs/agent-flow/setup.yaml から生成した。このファイルを修正せず、設計書を修正して再生成する -->
-
 # setup
 
 ## 引数

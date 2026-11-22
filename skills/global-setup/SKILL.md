@@ -4,8 +4,6 @@ description: 端末ごとに 1 回、rule-inject の端末の設定・MCP サー
 argument-hint: '[--clone パス] [--config パス] [--index パス] [--service 名前] [--yes|--no]'
 ---
 
-<!-- docs/agent-flow/global-setup.yaml から生成した。このファイルを修正せず、設計書を修正して再生成する -->
-
 # global-setup
 
 ## 手順
