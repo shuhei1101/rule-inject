@@ -1,0 +1,31 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: none
+    detail: 端末のセットアップのスキルの SKILL.md から生成元のコメントを削除するだけで、スキルの手順は変わらない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-7.yaml
+    impact: none
+    detail: 索引の登録のスキルの SKILL.md から生成元のコメントを削除するだけで、スキルの手順は変わらない
+    depends_on: []
+docs:
+  - page: docs/dev-command/CMD-183-1.yaml
+    new: false
+    change: 生成・取り込みの 4（SKILL.md の再生成）と、effects・verification の 4 の記述を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-22T07:26:04.591854+00:00'
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: agent-flow のフォルダの contents から「SKILL.md の生成元」を削除する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-22T07:26:04.591854+00:00'
+scope_out:
+  - item: project-index・knowledge での同じ生成の廃止
+    reason: 別のリポジトリの作業で、起点 Issue が knowledge は shuhei1101/knowledge#544、project-index は別の Issue で行うと定めている
+    plan: none
+  - item: エージェントフローの skill.path の削除
+    reason: skill.path は knowledge のスキーマの項目で、SKILL.md の置き場所を設計書から指すために生成をやめても要る
+    plan: none

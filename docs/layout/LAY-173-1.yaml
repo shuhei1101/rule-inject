@@ -243,7 +243,7 @@ entries:
         naming: ['MCP-{pr}-{n}.yaml', 'index.yaml']
       - type: folder
         name: agent-flow
-        contents: スキルのエージェントフローの設計書（SKILL.md の生成元）
+        contents: スキルのエージェントフローの設計書
         content_types: [design_doc]
         naming: ['{スキル名}.yaml', 'index.yaml']
       - type: folder
