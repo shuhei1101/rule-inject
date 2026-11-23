@@ -15,6 +15,7 @@ from common import (  # noqa: E402
     config_kind_ids,
     current_write_api_kinds,
     request,
+    set_write_api_kinds,
     source_row,
 )
 
@@ -64,18 +65,12 @@ if dry_run:
 backup = SETTINGS_PATH.with_name(f"{SETTINGS_PATH.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
 shutil.copy2(SETTINGS_PATH, backup)
 print(f"退避: ok（{backup}）")
-body = {
-    "expectedVersion": view["version"],
-    "source": {"direct_commit": {"write_api_kinds": KINDS}},
-}
 try:
-    status, result = request("PATCH", f"/settings/sources/{SOURCE_ID}", body)
+    applied, detail = set_write_api_kinds(KINDS)
 except RuntimeError as error:
+    applied, detail = False, str(error)
+if not applied:
     print("write_api_kinds の登録: failed")
-    print(error, file=sys.stderr)
-    sys.exit(1)
-if status != HTTP_OK:
-    print("write_api_kinds の登録: failed")
-    print(f"PATCH /settings/sources/{SOURCE_ID}: HTTP {status} {result}")
+    print(detail, file=sys.stderr)
     sys.exit(1)
 print("write_api_kinds の登録: changed")

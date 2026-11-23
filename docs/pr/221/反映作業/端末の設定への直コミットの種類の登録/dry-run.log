@@ -1,2 +1,44 @@
+$ python3 docs/pr/221/反映作業/端末の設定への直コミットの種類の登録/実行.py --dry-run
 前提確認: failed
 develop の project-index.yaml の direct_commit.kinds が登録する種類と違う: []
+(終了コード 1。develop の worktree にまだ direct_commit が無いマージの前の前提)
+
+$ RULE_INJECT_SOURCE_CONFIG=/home/shuhei2441/repo/rule-inject/.claude/worktrees/chore-dev-docs-direct-commit-kinds/project-index.yaml python3 docs/pr/221/反映作業/端末の設定への直コミットの種類の登録/実行.py --dry-run
+前提確認: ok
+--- /home/shuhei2441/.config/project-index/settings.yaml sources[id=rule-inject].direct_commit.write_api_kinds
++++ /home/shuhei2441/.config/project-index/settings.yaml sources[id=rule-inject].direct_commit.write_api_kinds
++architecture
++nonfunctional
++scenario
++interface
++module
++config
++er
++data
++external_api
++library
++test_procedure
++layout
++dev_command
++agent
++mcp_server
++launch
++agent_flow
++llm_call
++evaluation
++eval_criterion
++eval_case
++index
++glossary
++rule_index
++docs
++src
++hooks
++tests
++skills
++root
+write_api_kinds の登録: changed
+(終了コード 0)
+
+$ md5sum -c（流す前に控えた ~/.config/project-index/settings.yaml の md5）
+~/.config/project-index/settings.yaml: OK

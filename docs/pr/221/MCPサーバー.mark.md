@@ -21,7 +21,7 @@
 | --- | --- |
 | `direct_commit` | [要件](./要件.mark.md) の表のとおり、[18e80b0](https://github.com/shuhei1101/rule-inject/commit/18e80b0) で追加した |
 | 配信元の設定の検査 | project-index の `validate_source_config` で変更後の `project-index.yaml` を検査し、違反 0 件 |
-| 反映作業のスクリプト | 端末の設定の API（`PATCH /settings/sources/rule-inject`）で書き換える。`dry-run.log` は、develop の worktree の `project-index.yaml` にまだ `direct_commit` が無いため前提確認で `failed` になる（マージの前は満たせない前提）。作業ブランチの `project-index.yaml` を指して流すと計画まで通ることを確かめた |
+| 反映作業のスクリプト | 端末の設定の API（`PATCH /settings/sources/rule-inject`）で書き換える。`PATCH` は再試行に乗せず、失敗したら `GET` で適用済みかを判定し直してから送り直す。`dry-run.log` には、既定の develop の worktree を指した実行（マージの前は前提確認で `failed`）と、環境変数 `RULE_INJECT_SOURCE_CONFIG` で作業ブランチの `project-index.yaml` を指した実行（計画の差分と `changed`）と、実行の後に端末の設定のファイルが変わっていないことを残した |
 
 ## テスト結果
 
