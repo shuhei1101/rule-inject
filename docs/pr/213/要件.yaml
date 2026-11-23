@@ -37,10 +37,6 @@ docs:
     status: done
     updated_by: planner
     updated_at: '2026-11-23T03:53:20.280217+00:00'
-  - page: docs/guide/変更履歴.md
-    new: false
-    change: 検査の CLI とスキーマの追加を記載
-    status: todo
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: project-index が validators[] から検査の CLI を呼ぶ線と、外部システムの行の目的を追加
@@ -96,3 +92,6 @@ scope_out:
   - item: shuhei1101/project-index#258 へこの判断へのリンクを残す
     reason: 別のリポジトリの Issue への連絡で、このリポジトリの変更ではない。扱いの判断の任意の指摘
     plan: shuhei1101/project-index#269
+  - item: 変更履歴（docs/guide/変更履歴.md）の行
+    reason: このリポジトリは変更履歴の行をリリースの PR で追加する（release/v0.2.4 の「変更履歴に v0.2.4 の行を追加する」）。この PR では記載せず、リリースの PR が記載する
+    plan: none
