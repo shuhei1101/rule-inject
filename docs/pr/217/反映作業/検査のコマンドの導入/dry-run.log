@@ -1,0 +1,5 @@
+前提確認: ok
+依存の同期: changed（cd /home/shuhei2441/repo/rule-inject/.claude/worktrees/develop && uv sync --extra server）
+--- /dev/null
++++ /home/shuhei2441/.local/bin/rule-inject-validate-entry -> /home/shuhei2441/repo/rule-inject/.claude/worktrees/develop/.venv/bin/rule-inject-validate-entry
+リンクの作成: changed

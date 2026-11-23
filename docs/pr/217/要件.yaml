@@ -1,0 +1,11 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-26.yaml
+    impact: none
+    detail: 'このリポジトリの配信元の設定が、シナリオの前提（索引を records: rules で配信する行と、検査のコマンドを指す validators[]）を満たすようになる。流れと期待値は変わらない'
+    depends_on: []
+scope_out:
+  - item: 起票した各リポジトリの project-index.yaml への行と validators[] の追加そのもの
+    reason: '#215 の要望は起票までで、追加は起票した Issue がそれぞれのリポジトリで行う'
+    plan: none
+docs: []
