@@ -90,4 +90,8 @@ Red のログは `テスト結果/20261123125823_2783bf5_単体テスト.log`、
 
 ### 結合
 
-結合テスト作成の工程で記入する。
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_validate_entry.py` | 全実行 | 新規 | ✅ | IF-122-24 の 7 フロー（8 テスト）<br>`テスト結果/20261123130831_b90cb35_結合テスト.log` |
+| [tests/integration/server/test_check_indexes.py](https://github.com/shuhei1101/rule-inject/blob/b90cb35/tests/integration/server/test_check_indexes.py) | 全実行 | 実行のみ | ✅ | 回帰確認（同じログ） |
+| [tests/integration/server/test_write_index_entry.py](https://github.com/shuhei1101/rule-inject/blob/b90cb35/tests/integration/server/test_write_index_entry.py) | 全実行 | 実行のみ | ✅ | 回帰確認（同じログ）。3 ファイルで 40 テスト pass |

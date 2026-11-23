@@ -1,0 +1,27 @@
+$ uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run lint-imports
+# 結合テストのファイルだけを追加したため、Python の検査を回した（docs の mdmark check は前回のログ 20261123130310_60806c6_lint.log から文書を変えていない）
+All checks passed!
+524 files already formatted
+Success: no issues found in 142 source files
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 69 files, 193 dependencies.
+------------------------------------
+
+hooks と server は features を使用し、features は shared を使用する KEPT
+features の機能どうしは import しない KEPT
+
+Contracts: 2 kept, 0 broken.
