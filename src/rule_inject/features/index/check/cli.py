@@ -40,4 +40,3 @@ def main(argv: Sequence[str] | None = None) -> int:
     violations = [{"path": problem.location, "rule": problem.reason} for problem in problems]
     print(json.dumps(violations, ensure_ascii=False))
     return 0
-
