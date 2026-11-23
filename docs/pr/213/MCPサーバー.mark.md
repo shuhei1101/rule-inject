@@ -23,9 +23,9 @@
 | --- | --- | --- |
 | 検査の CLI | 標準入力のエントリ 1 件の YAML を、`write_index_entry` の書き込みのチェックと同じ判定（スキーマ・ルールの場所の実在・フックが読み飛ばすエントリ）で検査し、違反を `validators[]` の出力の書式（`path`・`rule` を持つ JSON の配列）で標準出力へ出す。合格は `[]` | `rule` の変数参照を展開できないエントリは違反にせず、ルールの場所の実在も確認しない。`PROJECT_INDEX_VALIDATE_ON` は参照しない（`validators[].on` は既定の `[write]`） |
 | ルールの場所の基準 | エントリの `rule` の相対パスを、索引のファイルの場所から解決する。索引のファイルの場所は CLI の引数で受ける | `validators[].run` は配信元のフォルダで実行される |
-| 判定の共有 | CLI と `write_index_entry` は同じ判定の関数を呼び、判定を 2 か所に持たない | - |
+| 判定の共有 | `check/service.py` に `check_entry` を追加し、エントリ 1 件だけの索引を `check_index_text` で確認する。CLI（`check/cli.py`）はこれを呼び、判定を 2 か所に持たない | MOD-122-8・MOD-122-64 |
 | 起動の方法 | `[project.scripts]` に `rule-inject-validate-entry` を登録し、`global-setup` が `uv tool dir --bin` にクローンの `.venv/bin/rule-inject-validate-entry` へのシンボリックリンクを作成する。`validators[].run` はコマンド名で記載し、公開ドキュメントに `project-index.yaml` の記載例を記載する | [要件](./要件.mark.md) の案 C |
-| スキーマ | 索引を配信する行の `schema` から、`records: rules` の要素をエントリとして検査できるスキーマを指せるようにする | `未確定`（[要件](./要件.mark.md)） |
+| スキーマ | 今の `src/rule_inject/features/index/check/index.schema.yaml` のまま、索引を配信する行の `schema` から `source: rule-inject`・`ref: {タグ}` で指す（`records: rules` の要素は `properties.rules.items` で検査される） | [要件](./要件.mark.md) の案 A |
 | 既存機能への影響 | `write_index_entry`・`check_indexes` の入出力は変えない | - |
 
 ## 設計書の確定コミット
@@ -36,6 +36,7 @@
 | 単一ユースケース設計 | `8d9db83..0d15aa1` | レビューの指摘の修正 |
 | インターフェース定義設計 | `ca4edeb..f472e81` | - |
 | インターフェース定義設計 | `f346340..65ea786` | レビューの指摘の修正（SC-122-18 の単一ユースケース設計の修正を含む） |
+| モジュール構成設計 | `db56537..42125e3` | アーキテクチャ図の修正を含む |
 
 ## テスト結果
 

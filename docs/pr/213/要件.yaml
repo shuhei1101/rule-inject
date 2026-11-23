@@ -40,7 +40,9 @@ docs:
   - page: docs/architecture/ARCH-122-1.yaml
     new: false
     change: project-index が validators[] から検査の CLI を呼ぶ線と、外部システムの行の目的を追加
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-23T03:48:36.034809+00:00'
   - page: docs/layout/LAY-173-1.yaml
     new: false
     change: 検査の CLI のファイルを追加
