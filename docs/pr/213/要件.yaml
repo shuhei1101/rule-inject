@@ -21,8 +21,8 @@ use_cases:
     depends_on: []
   - kind: single
     scenario: docs/scenario/SC-122-18.yaml
-    impact: run_only
-    detail: パッケージの定義にコマンドを追加するため、端末のセットアップが変わらず終わることを確かめる
+    impact: changed
+    detail: '`global-setup` が検査のコマンドへのリンクを PATH に作成し、検査のコマンドを PATH から実行できるようにする'
     depends_on: []
 docs:
   - page: docs/guide/索引の書式.md
@@ -55,7 +55,7 @@ docs:
     status: todo
   - page: docs/agent-flow/global-setup.yaml
     new: false
-    change: クローンを `uv tool install --editable` で入れ、検査のコマンドを PATH へ入れる工程を追加
+    change: '`uv tool dir --bin` にクローンの `.venv/bin/rule-inject-validate-entry` へのシンボリックリンクを作成する工程を追加'
     status: todo
   - page: skills/global-setup/SKILL.md
     new: false
@@ -63,7 +63,7 @@ docs:
     status: todo
   - page: docs/guide/セットアップ.md
     new: false
-    change: global-setup が検査のコマンドを PATH へ入れることと、PATH に無いときの対処を追加
+    change: global-setup が検査のコマンドへのリンクを PATH に作成することと、project-index のサーバーのユニットの `Environment=PATH=` に `uv tool dir --bin` が無いときに追加する対処を追加
     status: todo
 scope_out:
   - item: 索引を持つ各配信元の project-index.yaml に、索引を配信する行と検査を指す validators[] を追加する

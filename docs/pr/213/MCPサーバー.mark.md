@@ -21,10 +21,10 @@
 
 | 対象 | 方針 | 補足 |
 | --- | --- | --- |
-| 検査の CLI | 標準入力のエントリ 1 件の YAML を、`write_index_entry` の書き込みのチェックと同じ判定（スキーマ・ルールの場所の実在）で検査し、違反を `validators[]` の出力の書式（`path`・`rule`・`fix` を持つ JSON の配列）で標準出力へ出す。合格は `[]` | `PROJECT_INDEX_VALIDATE_ON` が `delete` のときは合格を返却する |
+| 検査の CLI | 標準入力のエントリ 1 件の YAML を、`write_index_entry` の書き込みのチェックと同じ判定（スキーマ・ルールの場所の実在・フックが読み飛ばすエントリ）で検査し、違反を `validators[]` の出力の書式（`path`・`rule` を持つ JSON の配列）で標準出力へ出す。合格は `[]` | `rule` の変数参照を展開できないエントリは違反にせず、ルールの場所の実在も確認しない。`PROJECT_INDEX_VALIDATE_ON` は参照しない（`validators[].on` は既定の `[write]`） |
 | ルールの場所の基準 | エントリの `rule` の相対パスを、索引のファイルの場所から解決する。索引のファイルの場所は CLI の引数で受ける | `validators[].run` は配信元のフォルダで実行される |
 | 判定の共有 | CLI と `write_index_entry` は同じ判定の関数を呼び、判定を 2 か所に持たない | - |
-| 起動の方法 | `[project.scripts]` に `rule-inject-validate-entry` を登録し、`global-setup` がクローンを `uv tool install --editable` で端末の PATH へ入れる。`validators[].run` はコマンド名で記載し、公開ドキュメントに `project-index.yaml` の記載例を記載する | [要件](./要件.mark.md) の案 C |
+| 起動の方法 | `[project.scripts]` に `rule-inject-validate-entry` を登録し、`global-setup` が `uv tool dir --bin` にクローンの `.venv/bin/rule-inject-validate-entry` へのシンボリックリンクを作成する。`validators[].run` はコマンド名で記載し、公開ドキュメントに `project-index.yaml` の記載例を記載する | [要件](./要件.mark.md) の案 C |
 | スキーマ | 索引を配信する行の `schema` から、`records: rules` の要素をエントリとして検査できるスキーマを指せるようにする | `未確定`（[要件](./要件.mark.md)） |
 | 既存機能への影響 | `write_index_entry`・`check_indexes` の入出力は変えない | - |
 
