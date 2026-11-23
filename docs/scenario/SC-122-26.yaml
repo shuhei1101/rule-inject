@@ -1,0 +1,161 @@
+id: SC-122-26
+visibility: internal
+title: 書き込みの検査で索引のエントリを検査する
+lead: 索引を配信する配信元で、project-index の書き込みが `validators[]` から rule-inject の検査を呼び、索引のエントリの違反を受け取る流れを示し、書き込みの検査を変えるときに参照する。
+primary_actor: project-index の書き込み（`write_docs`・画面のサーバーの書き込みの API）
+trigger: project-index が、索引を配信する行の文書（索引のエントリ）を書き込む前に `validators[]` のコマンドを実行する
+preconditions:
+  - '配信元の `project-index.yaml` に、索引を `records: rules` で配信する行があり、その行の `validators[]` が rule-inject の検査のコマンドを指す'
+  - 索引のファイルと、エントリの `rule` が指すルールの本文が配信元のフォルダにある
+stakeholders:
+  - name: 索引を書き換える利用者
+    interest: 画面や `write_docs` から書き込んだエントリが、`write_index_entry` で書き込んだときと同じ検査に合格している
+  - name: Claude Code のセッション
+    interest: 書き込まれた索引をフックが参照でき、エントリのルールが案内される
+success_guarantee: 合格したエントリだけが索引に書き込まれ、違反したエントリは違反の場所と理由とともに断られる。
+minimal_guarantee: 検査の CLI は索引のファイルを書き換えない。
+scenarios:
+  - name: 正常シナリオ（違反が無い）
+    setup:
+      - name: Mock
+        description: なし。テストが `validators[]` と同じく配信元のフォルダで検査の CLI を子プロセスとして起動し、標準入力にエントリを指定する
+        notes: project-index の代わりにテストがコマンドを実行する
+      - name: 配信元のフォルダ
+        description: 索引のファイルと、エントリの `rule` が指すルールの本文を持つ
+      - name: エントリ
+        description: 索引の書式どおりで、`rule` の場所にルールの本文があるエントリ 1 件の YAML
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>FS: ルールの場所を索引のファイルの場所から解決して確認する
+        FS-->>CLI: ある
+        CLI-->>PI: 違反の空の配列（標準出力）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が `[]`
+      - 索引のファイルが書き換わっていない
+    test: test_normal_when_no_violation
+  - name: 正常シナリオ（Schemaに違反する）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 配信元のフォルダ
+        description: 違反が無いシナリオと同じ
+      - name: エントリ
+        description: 索引の書式の値の範囲外のキーを持つエントリ 1 件の YAML
+        notes: '例: `paths: []`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反
+        CLI-->>PI: 違反の配列（標準出力。エントリの中の場所と理由）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力の違反に、エントリの中の場所（例 `paths`）と理由が載っている
+      - '`write_index_entry` に同じエントリを指定したときに断られる理由と同じ理由が載っている'
+    test: test_normal_when_schema_violated
+  - name: 正常シナリオ（ルールの場所にファイルが無い）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 配信元のフォルダ
+        description: 索引のファイルを持ち、エントリの `rule` が指す場所にファイルが無い
+      - name: エントリ
+        description: 索引の書式どおりで、`rule` の場所にファイルが無いエントリ 1 件の YAML
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>FS: ルールの場所を索引のファイルの場所から解決して確認する
+        FS-->>CLI: 無い
+        CLI-->>PI: 違反の配列（標準出力。`rule` と解決したルールの場所）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力の違反に、`rule` の場所と、解決したルールの場所にファイルが無いことが載っている
+    test: test_normal_when_rule_file_missing
+  - name: 正常シナリオ（削除の検査）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 環境変数
+        description: '`PROJECT_INDEX_VALIDATE_ON` に `delete`'
+        notes: '`delete_docs` が `on` に `delete` を持つ `validators[]` を実行するときの値'
+      - name: エントリ
+        description: '`rule` の場所にファイルが無いエントリ 1 件の YAML'
+        notes: 削除するエントリは検査しないことを見分ける
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の削除
+        participant CLI as 検査の CLI
+
+        PI->>CLI: 削除するエントリの YAML（標準入力）と削除の検査であること
+        CLI-->>PI: 違反の空の配列（標準出力）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が `[]`
+    test: test_normal_when_validate_on_delete
+  - name: 異常シナリオ（エントリがYAMLとして解析できない）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: エントリ
+        description: 閉じていないフロー形式のリストを持ち、YAML として解析できない文字列
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+
+        PI->>CLI: 解析できない文字列（標準入力）と索引のファイルの場所
+        CLI->>CLI: YAML として解析する
+        CLI-->>PI: 違反の配列（標準出力。解析できない理由）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力の違反が 1 件で、YAML として解析できない理由が載っている
+    test: test_error_when_entry_unparsable
+test_file: tests/e2e/単一ユースケース/test_validate_index_entry.py
+refs:
+  - IF-122-2#
+  - SC-122-19#
