@@ -258,9 +258,6 @@ documents:
     schema: src/rule_inject/features/index/check/index.schema.yaml
     records: rules
     validators: [rule_index_entry]
-    metadata:
-      id: rule
-      name: rule
   - id: agent
     title: エージェントの定義
     paths: ["docs/agent/*.yaml"]

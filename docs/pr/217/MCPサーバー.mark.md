@@ -26,10 +26,11 @@
 | 項目 | 内容 |
 | --- | --- |
 | `schema` の指し方 | [要件](./要件.mark.md) の推奨 A（リポジトリの中のパス）で記載した |
+| `metadata` | 記載しない（記載例どおり既定の ID `rules.yaml#{位置}`）。スキーマは同じ `rule` のエントリを複数許すため、`id: rule` にすると ID が重なり得る |
 | 配信元の設定の検査 | project-index の `validate_source_config` で変更後の `project-index.yaml` を検査し、違反 0 件 |
 | 今の索引の合格 | `rules.yaml` の 10 件のエントリを検査のコマンドへ 1 件ずつ指定し、全て `[]` |
 | 配信の確認 | project-index は Git の配信元の設定を `default_ref`（develop）から参照するため、作業ブランチの `ref` では `rule_index` の文書は返らない（0 件）。マージの後に `search_docs`（`kind: rule_index`）で 10 件返ることを確認する |
-| 起票した Issue | [shuhei1101/ai-monitor#3783](https://github.com/shuhei1101/ai-monitor/issues/3783)・[shuhei1101/alias-inject#143](https://github.com/shuhei1101/alias-inject/issues/143)・[shuhei1101/claude-balancer#368](https://github.com/shuhei1101/claude-balancer/issues/368)・[shuhei1101/dev-docs#320](https://github.com/shuhei1101/dev-docs/issues/320)・[shuhei1101/knowledge#565](https://github.com/shuhei1101/knowledge/issues/565)・[shuhei1101/mdmark#794](https://github.com/shuhei1101/mdmark/issues/794)・[shuhei1101/observability#123](https://github.com/shuhei1101/observability/issues/123)・[shuhei1101/project-index#270](https://github.com/shuhei1101/project-index/issues/270) |
+| 起票した Issue | [shuhei1101/ai-monitor#3783](https://github.com/shuhei1101/ai-monitor/issues/3783)・[shuhei1101/alias-inject#143](https://github.com/shuhei1101/alias-inject/issues/143)・[shuhei1101/claude-balancer#368](https://github.com/shuhei1101/claude-balancer/issues/368)・[shuhei1101/dev-docs#320](https://github.com/shuhei1101/dev-docs/issues/320)・[shuhei1101/knowledge#565](https://github.com/shuhei1101/knowledge/issues/565)・[shuhei1101/mdmark#794](https://github.com/shuhei1101/mdmark/issues/794)・[shuhei1101/observability#123](https://github.com/shuhei1101/observability/issues/123)・[shuhei1101/project-index#270](https://github.com/shuhei1101/project-index/issues/270)。dev-docs へ重複して起票した [shuhei1101/dev-docs#319](https://github.com/shuhei1101/dev-docs/issues/319) は #320 の重複として close した |
 | 起票しなかったリポジトリ | aituber・gui-support・mindstella・shuhdev-gateway・voice-paste（develop に `project-index.yaml` が無い） |
 
 ## テスト結果
