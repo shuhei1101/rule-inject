@@ -1,0 +1,14 @@
+検査のコマンドの導入:
+  説明: rule-inject の develop の worktree（MCP サーバーのクローン）で `uv sync --extra server` を流して `.venv/bin/rule-inject-validate-entry` を作り、`uv tool dir --bin`（~/.local/bin）に同じ名前のシンボリックリンクを作る（global-setup の「検査のコマンドの導入」と同じ手順）。project-index のサーバーは tmux のセッションで動き、PATH に ~/.local/bin を持つため、ユニットの PATH の追加は要らない
+  タグ: [コマンドの導入]
+  実行者: planner
+  時期: マージの前
+  回数: 1 回限り
+  可逆: true
+  疎通確認: null
+  実行: null
+  確認: null
+  切り戻し: null
+  失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
+  確認方法: '`command -v rule-inject-validate-entry` が ~/.local/bin のリンクを返し、`echo ''{}'' | rule-inject-validate-entry --index rules.yaml` の終了コードが 0'
+  状態: todo
