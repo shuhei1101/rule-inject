@@ -14,6 +14,11 @@ constants:
     container: features/index/check/service.py
     summary: 問題が索引全体にかかるときの場所
     value: '`"$"`'
+  - name: ENTRY_PREFIX
+    title: エントリ 1 件の索引の場所の先頭
+    container: features/index/check/service.py
+    summary: '`check_entry` が組み立てた索引の、そのエントリの場所の先頭'
+    value: '`"rules[0]"`'
 functions:
   - name: load_validator
     title: JSON Schema の読み込み
@@ -238,4 +243,71 @@ functions:
         condition: '書き込む前は問題が無く、書き込んだ後は `rules[0].paths: []` の内容'
         mock: なし
         expected: '`rules[0].paths: {jsonschema の message}` の 1 行'
+  - name: check_entry
+    title: エントリのチェック
+    container: features/index/check/service.py
+    usecase: 書き込みの検査で索引のエントリを検査する
+    summary: エントリ 1 件だけの索引を組み立てて `check_index_text` で確認し、場所をエントリの中の場所にした問題を返却する
+    kind: 関数
+    scope: public
+    args:
+      - name: index_path
+        type: str
+        required: true
+        passing: positional
+        description: 索引の絶対パス（`rule` を解くフォルダ）。ファイルは無くてもよい
+      - name: entry
+        type: Mapping[str, object]
+        required: true
+        passing: positional
+        description: 索引のエントリ 1 件（`YAML(typ="safe")` で読み込んだマップ）
+      - name: env
+        type: Mapping[str, str]
+        required: true
+        passing: positional
+        description: 環境変数（`rule` の変数参照の展開に使用する）
+      - name: validator
+        type: jsonschema.protocols.Validator
+        required: true
+        passing: keyword
+        description: '`load_validator` の戻り値'
+    returns:
+      type: tuple[IndexProblem, ...]
+      description: 問題の一覧。`location` はエントリの中の場所（`paths`・`rule` など。エントリ全体は `ROOT_LOCATION`）。並びは `check_index_text` と同じ
+    process: |-
+      1. `{rules: [entry]}` を `ruamel.yaml` のブロック形式で索引の内容の文字列にする（フックの読み取りが受け付ける書式）
+      2. `check_index_text(index_path, text, env, validator=validator)` で確認する
+      3. `entry` の `rule` が文字列で、`expand_variables(rule, env)` に展開できない名前が残るときは、`skipped_entry` と `missing_rule` を除く（`validators[]` の実行環境にセッションの環境変数が届かないため）
+      4. 各問題の `location` が `ENTRY_PREFIX` と等しければ `ROOT_LOCATION`、`ENTRY_PREFIX` と `.` で始まればその後ろ、それ以外（`hook_error` など）はそのままにした `IndexProblem` を返却する
+    unit_tests:
+      - name: test_check_entry
+        case: 正常
+        summary: 問題の無いエントリでは問題を返却しない
+        condition: ルールのファイルがあるエントリ（`tmp_path` の索引のパス）
+        mock: なし（`tmp_path` にルールのファイルを配置する）
+        expected: 空
+      - name: test_check_entry_when_violation
+        case: 正常
+        summary: スキーマの違反をエントリの中の場所で返却する
+        condition: '`paths: []` のエントリ'
+        mock: なし
+        expected: '`violation` が 1 件で、`location` が `paths`、`reason` が `check_index_text` の `rules[0].paths` の理由と同じ'
+      - name: test_check_entry_when_missing_rule
+        case: 正常
+        summary: ルールの場所にファイルが無いエントリを返却する
+        condition: ファイルが無い `rule` のエントリ
+        mock: なし
+        expected: '`missing_rule` が 1 件で、`location` が `rule`、`reason` が索引のフォルダから解いた場所'
+      - name: test_check_entry_when_skipped
+        case: 正常
+        summary: フックが読み飛ばすエントリを返却する
+        condition: '`paths: ["re:["]` のエントリと、URL の `rule` のエントリ（`pytest.mark.parametrize`）'
+        mock: なし
+        expected: '`skipped_entry` が 1 件で、`location` が `$`、`reason` が `check_index_text` の reason と同じ'
+      - name: test_check_entry_when_variable_unresolved
+        case: 正常
+        summary: 展開できない変数参照のエントリでは問題を返却しない
+        condition: '`env` に無い名前の変数参照を持つ `rule` のエントリ'
+        mock: なし
+        expected: 空（`skipped_entry`・`missing_rule` を返却しない）
 lead: 索引の JSON Schema によるチェックと、書き込む前と書き込んだ後の問題の比較を定め、索引のチェックを修正するときに参照する。

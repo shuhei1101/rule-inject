@@ -130,3 +130,5 @@ items:
     summary: 設定ファイルと索引の YAML に共通の、行・文字列・リストの読み取り
   - page: MOD-122-33.py.yaml
     summary: 引数の読み取りと、結果の JSON の出力・終了コード
+  - page: MOD-122-64.py.yaml
+    summary: 索引のエントリの検査のコマンドの引数・標準入力・違反の JSON の出力・終了コード
