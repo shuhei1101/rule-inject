@@ -82,7 +82,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-23T03:48:35.039142+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
+    note: 変更履歴・開発コマンド・files.yaml は実装で中身が定まるため更新ドキュメントの todo のまま残す
+    updated_by: planner
+    updated_at: '2026-11-23T03:53:31.925592+00:00'
   - process: 単体テスト作成
     status: todo
   - process: 実装
