@@ -5,8 +5,9 @@ lead: 索引を配信する配信元で、project-index の書き込みが `vali
 primary_actor: project-index の書き込み（`write_docs`・画面のサーバーの書き込みの API）
 trigger: project-index が、索引を配信する行の文書（索引のエントリ）を書き込む前に `validators[]` のコマンドを実行する
 preconditions:
-  - '配信元の `project-index.yaml` に、索引を `records: rules` で配信する行があり、その行の `validators[]` が rule-inject の検査のコマンドを指す'
+  - '配信元の `project-index.yaml` に、索引を `records: rules` で配信する行があり、その行の `validators[]` が rule-inject の検査のコマンドを指す（`on` は既定の `[write]`）'
   - 索引のファイルと、エントリの `rule` が指すルールの本文が配信元のフォルダにある
+  - 検査の CLI は project-index のサーバーのプロセスの環境で動き、Claude Code のセッションだけが持つ環境変数を参照できない
 stakeholders:
   - name: 索引を書き換える利用者
     interest: 画面や `write_docs` から書き込んだエントリが、`write_index_entry` で書き込んだときと同じ検査に合格している
@@ -106,38 +107,15 @@ scenarios:
     expected:
       - 標準出力の違反に、`rule` の場所と、解決したルールの場所にファイルが無いことが載っている
     test: test_normal_when_rule_file_missing
-  - name: 正常シナリオ（削除の検査）
+  - name: 正常シナリオ（フックが読み飛ばすエントリ）
     setup:
       - name: Mock
         description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
-      - name: 環境変数
-        description: '`PROJECT_INDEX_VALIDATE_ON` に `delete`'
-        notes: '`delete_docs` が `on` に `delete` を持つ `validators[]` を実行するときの値'
+      - name: 配信元のフォルダ
+        description: 違反が無いシナリオと同じ
       - name: エントリ
-        description: '`rule` の場所にファイルが無いエントリ 1 件の YAML'
-        notes: 削除するエントリは検査しないことを見分ける
-    flow: |-
-      <!-- map -->
-
-      ```mermaid
-      sequenceDiagram
-        participant PI as project-index の削除
-        participant CLI as 検査の CLI
-
-        PI->>CLI: 削除するエントリの YAML（標準入力）と削除の検査であること
-        CLI-->>PI: 違反の空の配列（標準出力）
-      ```
-
-      <!-- /map -->
-    expected:
-      - 標準出力が `[]`
-    test: test_normal_when_validate_on_delete
-  - name: 異常シナリオ（エントリがYAMLとして解析できない）
-    setup:
-      - name: Mock
-        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
-      - name: エントリ
-        description: 閉じていないフロー形式のリストを持ち、YAML として解析できない文字列
+        description: スキーマには合うが、フックが読み飛ばすエントリ 1 件の YAML
+        notes: '例: 解析できない正規表現の `paths: ["re:["]`。URL の `rule`（`https://` で始まる）も同じ結果になる'
     flow: |-
       <!-- map -->
 
@@ -145,16 +123,50 @@ scenarios:
       sequenceDiagram
         participant PI as project-index の書き込み
         participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
 
-        PI->>CLI: 解析できない文字列（標準入力）と索引のファイルの場所
-        CLI->>CLI: YAML として解析する
-        CLI-->>PI: 違反の配列（標準出力。解析できない理由）
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>CLI: フックと同じ読み取りでエントリを解析する
+        CLI-->>PI: 違反の配列（標準出力。フックが読み飛ばす理由）
       ```
 
       <!-- /map -->
     expected:
-      - 標準出力の違反が 1 件で、YAML として解析できない理由が載っている
-    test: test_error_when_entry_unparsable
+      - 標準出力の違反に、フックがそのエントリを読み飛ばす理由が載っている
+      - '`check_indexes` が同じエントリを読み飛ばすエントリとして返却する理由と同じ理由が載っている'
+    test: test_normal_when_entry_skipped_by_hook
+  - name: 正常シナリオ（変数参照を展開できない）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 環境変数
+        description: CLI のプロセスの環境に、`rule` の変数参照の名前を設定しない
+        notes: Claude Code のセッションだけが設定する変数を、project-index から参照できない状態を再現する
+      - name: エントリ
+        description: '`rule` に変数参照を持つエントリ 1 件の YAML'
+        notes: '例: `rule: "!{RULE_INJECT_TEST_UNSET}/python.md"`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>CLI: rule の変数参照を展開できず、ルールの場所の実在を確認しない
+        CLI-->>PI: 違反の空の配列（標準出力）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が `[]`
+    test: test_normal_when_variable_unresolved
 test_file: tests/e2e/単一ユースケース/test_validate_index_entry.py
 refs:
   - IF-122-2#
