@@ -310,4 +310,10 @@ functions:
         condition: '`env` に無い名前の変数参照を持つ `rule` のエントリ'
         mock: なし
         expected: 空（`skipped_entry`・`missing_rule` を返却しない）
+      - name: test_check_entry_when_hook_error
+        case: 正常
+        summary: フックが読み込めないエントリはその理由だけを返却する
+        condition: '`rule` を持たないエントリ'
+        mock: なし
+        expected: '`hook_error` が 1 件だけで、`location` が `$`'
 lead: 索引の JSON Schema によるチェックと、書き込む前と書き込んだ後の問題の比較を定め、索引のチェックを修正するときに参照する。
