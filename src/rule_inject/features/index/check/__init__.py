@@ -3,6 +3,7 @@
 from rule_inject.features.index.check.scan import scan_unmatched
 from rule_inject.features.index.check.service import (
     check_change,
+    check_entry,
     check_index,
     check_index_text,
     load_validator,
@@ -15,6 +16,7 @@ __all__ = [
     "TagPattern",
     "UnmatchedScan",
     "check_change",
+    "check_entry",
     "check_index",
     "check_index_text",
     "load_validator",

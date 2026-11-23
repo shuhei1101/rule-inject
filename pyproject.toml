@@ -5,6 +5,9 @@ description = "ファイルに該当するルールを案内する Claude Code �
 requires-python = ">=3.12"
 dependencies = []
 
+[project.scripts]
+rule-inject-validate-entry = "rule_inject.features.index.check.cli:main"
+
 [project.optional-dependencies]
 server = [
     "mcp>=2.2,<3",
