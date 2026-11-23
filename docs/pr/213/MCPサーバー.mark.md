@@ -1,0 +1,97 @@
+# MCPサーバー
+
+## 現状
+
+| 分類 | ページ / ファイル | 概要 | 補足 |
+| --- | --- | --- | --- |
+| ドキュメント | [docs/architecture/ARCH-122-1.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/architecture/ARCH-122-1.yaml) | サブシステムと外部システムの境界 | project-index から CLI を呼ぶ線と外部システムの行を追加 |
+| ドキュメント | [docs/interface/IF-122-2.py.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/interface/IF-122-2.py.yaml) | エントリの書き込み（`write_index_entry`） | 書き込みのチェックを CLI と同じ判定にそろえる元 |
+| ドキュメント | [docs/interface/IF-122-11.py.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/interface/IF-122-11.py.yaml) | 索引のチェック（`check_indexes`） | 判定の共有元。変えない |
+| ドキュメント | [docs/module/MOD-122-8.py.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/module/MOD-122-8.py.yaml) | 索引のチェックの service.py | CLI から呼ぶ判定の関数 |
+| ドキュメント | [docs/module/MOD-122-54.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/module/MOD-122-54.yaml) | 索引のチェックのサブフィーチャーの構成 | CLI のファイルを追加 |
+| ドキュメント | [docs/config/CFG-122-1.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/config/CFG-122-1.yaml) | 環境変数・索引のキー | CLI が参照する環境変数・引数があれば追加 |
+| ドキュメント | [docs/layout/LAY-173-1.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/layout/LAY-173-1.yaml) | フォルダ構成 | CLI のファイルを追加 |
+| ドキュメント | [docs/dev-command/CMD-183-1.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/docs/dev-command/CMD-183-1.yaml) | 開発コマンド | CLI を手元で実行するコマンドを追加 |
+| 実装 | [src/rule_inject/features/index/check/service.py](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/src/rule_inject/features/index/check/service.py) | スキーマの検査と、書き込む前と後の問題の比較 | CLI から呼ぶ |
+| 実装 | [src/rule_inject/features/index/check/index.schema.yaml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/src/rule_inject/features/index/check/index.schema.yaml) | 索引のスキーマ | 配信元の行の `schema` から指す |
+| 実装 | [src/rule_inject/features/index/edit/service.py](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/src/rule_inject/features/index/edit/service.py) | エントリの書き込みと書き込みのチェック | 判定を CLI と共有する |
+| 実装 | [pyproject.toml](https://github.com/shuhei1101/rule-inject/blob/78e19f57f4f54633c1954ffda46eb8ced351a55e/pyproject.toml) | パッケージの定義 | `[project.scripts]` が無い |
+
+## 変更方針
+
+| 対象 | 方針 | 補足 |
+| --- | --- | --- |
+| 検査の CLI | 標準入力のエントリ 1 件の YAML を、`write_index_entry` の書き込みのチェックと同じ判定（スキーマ・ルールの場所の実在・フックが読み飛ばすエントリ）で検査し、違反を `validators[]` の出力の書式（`path`・`rule` を持つ JSON の配列）で標準出力へ出す。合格は `[]` | `rule` の変数参照を展開できないエントリは違反にせず、ルールの場所の実在も確認しない。`PROJECT_INDEX_VALIDATE_ON` は参照しない（`validators[].on` は既定の `[write]`） |
+| ルールの場所の基準 | エントリの `rule` の相対パスを、索引のファイルの場所から解決する。索引のファイルの場所は CLI の引数で受ける | `validators[].run` は配信元のフォルダで実行される |
+| 判定の共有 | `check/service.py` に `check_entry` を追加し、エントリ 1 件だけの索引を `check_index_text` で確認する。CLI（`check/cli.py`）はこれを呼び、判定を 2 か所に持たない | MOD-122-8・MOD-122-64 |
+| 起動の方法 | `[project.scripts]` に `rule-inject-validate-entry` を登録し、`global-setup` が `uv tool dir --bin` にクローンの `.venv/bin/rule-inject-validate-entry` へのシンボリックリンクを作成する。`validators[].run` はコマンド名で記載し、公開ドキュメントに `project-index.yaml` の記載例を記載する | [要件](./要件.mark.md) の案 C |
+| スキーマ | 今の `src/rule_inject/features/index/check/index.schema.yaml` のまま、索引を配信する行の `schema` から `source: rule-inject`・`ref: {タグ}` で指す（`records: rules` の要素は `properties.rules.items` で検査される） | [要件](./要件.mark.md) の案 A |
+| 既存機能への影響 | `write_index_entry`・`check_indexes` の入出力は変えない | - |
+
+## 設計書の確定コミット
+
+| 工程 | 範囲 | 補足 |
+| --- | --- | --- |
+| 単一ユースケース設計 | `78e19f5..e15c9a3` | - |
+| 単一ユースケース設計 | `8d9db83..0d15aa1` | レビューの指摘の修正 |
+| インターフェース定義設計 | `ca4edeb..f472e81` | - |
+| インターフェース定義設計 | `f346340..65ea786` | レビューの指摘の修正（SC-122-18 の単一ユースケース設計の修正を含む） |
+| モジュール構成設計 | `db56537..42125e3` | アーキテクチャ図の修正を含む |
+
+## テスト結果
+
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | 全実行 | 変更 | ✅ | `check_entry` の 6 テストを追加。単体テスト全体で 612 テスト pass<br>`テスト結果/20261123130233_60806c6_単体テスト.log` |
+| `tests/unit/rule_inject/features/index/check/test_cli.py` | 全実行 | 新規 | ✅ | 3 テスト pass（同じログ） |
+
+Red のログは `テスト結果/20261123125823_2783bf5_単体テスト.log`、lint のログは `テスト結果/20261123130310_60806c6_lint.log`。
+
+### 結合テストの実行範囲
+
+| 変更したファイル | 結果 | 実行する結合テスト | 結合テストが無いエントリーポイント |
+| --- | --- | --- | --- |
+| `docs/agent-flow/global-setup.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/architecture/ARCH-122-1.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/dev-command/CMD-183-1.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/guide/セットアップ.md` | R7（参照する結合テストが無い） | - | - |
+| `docs/guide/リファレンス.md` | R7（参照する結合テストが無い） | - | - |
+| `docs/guide/索引の書式.md` | R7（参照する結合テストが無い） | - | - |
+| `docs/interface/IF-122-20.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/interface/IF-122-24.py.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/interface/index.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/module/MOD-122-64.py.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/module/MOD-122-8.py.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/module/index.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/MCPサーバー.mark.md` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/README.mark.md` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/タスク一覧.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/テスト結果/20261123125823_2783bf5_単体テスト.log` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/テスト結果/20261123130233_60806c6_単体テスト.log` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/テスト結果/20261123130310_60806c6_lint.log` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/要件.mark.md` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/要件.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/scenario/SC-122-18.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/scenario/SC-122-26.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/scenario/index.yaml` | R7（参照する結合テストが無い） | - | - |
+| `pyproject.toml` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_validate_entry.py`（新規作成） | - |
+| `skills/global-setup/SKILL.md` | R7（参照する結合テストが無い） | - | - |
+| `src/files.yaml` | R7（参照する結合テストが無い） | - | - |
+| `src/rule_inject/features/index/check/__init__.py` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_check_indexes.py`<br>`tests/integration/server/test_write_index_entry.py` | - |
+| `src/rule_inject/features/index/check/cli.py` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_validate_entry.py`（新規作成） | - |
+| `src/rule_inject/features/index/check/service.py` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_check_indexes.py`<br>`tests/integration/server/test_write_index_entry.py` | - |
+| `tests/files.yaml` | R7（参照する結合テストが無い） | - | - |
+| `tests/unit/rule_inject/features/index/check/test_cli.py` | R7（参照する結合テストが無い） | - | - |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | R7（参照する結合テストが無い） | - | - |
+
+`check_entry` は既存の `check_index_text` を変えずに上へ重ねたため、索引のチェックとエントリの書き込みの結合テストで判定が変わらないことを確認する。
+
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_validate_entry.py` | 全実行 | 新規 | ✅ | IF-122-24 の 7 フロー（8 テスト）<br>`テスト結果/20261123130831_b90cb35_結合テスト.log` |
+| [tests/integration/server/test_check_indexes.py](https://github.com/shuhei1101/rule-inject/blob/b90cb35/tests/integration/server/test_check_indexes.py) | 全実行 | 実行のみ | ✅ | 回帰確認（同じログ） |
+| [tests/integration/server/test_write_index_entry.py](https://github.com/shuhei1101/rule-inject/blob/b90cb35/tests/integration/server/test_write_index_entry.py) | 全実行 | 実行のみ | ✅ | 回帰確認（同じログ）。3 ファイルで 40 テスト pass |

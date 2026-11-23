@@ -7,7 +7,7 @@ scenarios:
       - name: Mock
         description: なし。実の Claude Code を `claude -p --plugin-dir {プラグイン}` で動かしてスキルを実行する
       - name: 環境変数
-        description: '`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`CLAUDE_CONFIG_DIR` をテスト用のフォルダへ向け、`RULE_INJECT_PORT` に空いているポートを指定する'
+        description: '`XDG_CONFIG_HOME`・`XDG_STATE_HOME`・`CLAUDE_CONFIG_DIR` をテスト用のフォルダへ向け、`RULE_INJECT_PORT` に空いているポートを指定する。`UV_TOOL_BIN_DIR` をテスト用のフォルダへ向け、利用者の `~/.local/bin` に触れない'
       - name: 引数
         description: クローンのパス・索引のパス・サービス名をスキルの引数で指定する
         notes: 引数で指定した値は質問しない。サービス名はテストごとに一意の `rule-inject-e2e-{乱数}` にし、利用者の `rule-inject` のユニットに触れない
@@ -29,6 +29,7 @@ scenarios:
         SK->>CF: 既定のパスに無いことを確認する
         SK->>CF: 雛形から作る
         SK->>SV: 起動する
+        SK->>SK: 検査のコマンドへのリンクを PATH に作成する
         SK->>SV: tools/list
         SV-->>SK: ツールの一覧
         SK->>H: 試しの入力で呼ぶ
@@ -42,6 +43,7 @@ scenarios:
       - '`settings.json` の `env` に `RULE_INJECT_CONFIG` が無い'
       - サーバーが `RULE_INJECT_PORT` で待ち受け、ツールの一覧を返却する
       - 結果に、作った端末の設定のパスと接続の結果が記載されている
+      - '`UV_TOOL_BIN_DIR` の `rule-inject-validate-entry` がクローンの `.venv/bin/rule-inject-validate-entry` を指し、`--index` とエントリを指定して実行すると終了コード 0 で `[]` を返却する'
     test: test_normal
   - name: 正常シナリオ（古い設定を移し替える）
     setup:

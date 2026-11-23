@@ -1,0 +1,173 @@
+id: SC-122-26
+visibility: internal
+title: 書き込みの検査で索引のエントリを検査する
+lead: 索引を配信する配信元で、project-index の書き込みが `validators[]` から rule-inject の検査を呼び、索引のエントリの違反を受け取る流れを示し、書き込みの検査を変えるときに参照する。
+primary_actor: project-index の書き込み（`write_docs`・画面のサーバーの書き込みの API）
+trigger: project-index が、索引を配信する行の文書（索引のエントリ）を書き込む前に `validators[]` のコマンドを実行する
+preconditions:
+  - '配信元の `project-index.yaml` に、索引を `records: rules` で配信する行があり、その行の `validators[]` が rule-inject の検査のコマンドを指す（`on` は既定の `[write]`）'
+  - 索引のファイルと、エントリの `rule` が指すルールの本文が配信元のフォルダにある
+  - 検査の CLI は project-index のサーバーのプロセスの環境で動き、Claude Code のセッションだけが持つ環境変数を参照できない
+stakeholders:
+  - name: 索引を書き換える利用者
+    interest: 画面や `write_docs` から書き込んだエントリが、`write_index_entry` で書き込んだときと同じ検査に合格している
+  - name: Claude Code のセッション
+    interest: 書き込まれた索引をフックが参照でき、エントリのルールが案内される
+success_guarantee: 合格したエントリだけが索引に書き込まれ、違反したエントリは違反の場所と理由とともに断られる。
+minimal_guarantee: 検査の CLI は索引のファイルを書き換えない。
+scenarios:
+  - name: 正常シナリオ（違反が無い）
+    setup:
+      - name: Mock
+        description: なし。テストが `validators[]` と同じく配信元のフォルダで検査の CLI を子プロセスとして起動し、標準入力にエントリを指定する
+        notes: project-index の代わりにテストがコマンドを実行する
+      - name: 配信元のフォルダ
+        description: 索引のファイルと、エントリの `rule` が指すルールの本文を持つ
+      - name: エントリ
+        description: 索引の書式どおりで、`rule` の場所にルールの本文があるエントリ 1 件の YAML
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>FS: ルールの場所を索引のファイルの場所から解決して確認する
+        FS-->>CLI: ある
+        CLI-->>PI: 違反の空の配列（標準出力）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が `[]`
+      - 索引のファイルが書き換わっていない
+    test: test_normal_when_no_violation
+  - name: 正常シナリオ（Schemaに違反する）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 配信元のフォルダ
+        description: 違反が無いシナリオと同じ
+      - name: エントリ
+        description: 索引の書式の値の範囲外のキーを持つエントリ 1 件の YAML
+        notes: '例: `paths: []`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反
+        CLI-->>PI: 違反の配列（標準出力。エントリの中の場所と理由）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力の違反に、エントリの中の場所（例 `paths`）と理由が載っている
+      - '`write_index_entry` に同じエントリを指定したときに断られる理由と同じ理由が載っている'
+    test: test_normal_when_schema_violated
+  - name: 正常シナリオ（ルールの場所にファイルが無い）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 配信元のフォルダ
+        description: 索引のファイルを持ち、エントリの `rule` が指す場所にファイルが無い
+      - name: エントリ
+        description: 索引の書式どおりで、`rule` の場所にファイルが無いエントリ 1 件の YAML
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>FS: ルールの場所を索引のファイルの場所から解決して確認する
+        FS-->>CLI: 無い
+        CLI-->>PI: 違反の配列（標準出力。`rule` と解決したルールの場所）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力の違反に、`rule` の場所と、解決したルールの場所にファイルが無いことが載っている
+    test: test_normal_when_rule_file_missing
+  - name: 正常シナリオ（フックが読み飛ばすエントリ）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 配信元のフォルダ
+        description: 違反が無いシナリオと同じ
+      - name: エントリ
+        description: スキーマには合うが、フックが読み飛ばすエントリ 1 件の YAML
+        notes: '例: 解析できない正規表現の `paths: ["re:["]`。URL の `rule`（`https://` で始まる）も同じ結果になる'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>CLI: フックと同じ読み取りでエントリを解析する
+        CLI-->>PI: 違反の配列（標準出力。フックが読み飛ばす理由）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力の違反に、フックがそのエントリを読み飛ばす理由が載っている
+      - '`check_indexes` が同じエントリを読み飛ばすエントリとして返却する理由と同じ理由が載っている'
+    test: test_normal_when_entry_skipped_by_hook
+  - name: 正常シナリオ（変数参照を展開できない）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 環境変数
+        description: CLI のプロセスの環境に、`rule` の変数参照の名前を設定しない
+        notes: Claude Code のセッションだけが設定する変数を、project-index から参照できない状態を再現する
+      - name: エントリ
+        description: '`rule` に変数参照を持つエントリ 1 件の YAML'
+        notes: '例: `rule: "!{RULE_INJECT_TEST_UNSET}/python.md"`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>CLI: rule の変数参照を展開できず、ルールの場所の実在を確認しない
+        CLI-->>PI: 違反の空の配列（標準出力）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が `[]`
+    test: test_normal_when_variable_unresolved
+test_file: tests/e2e/単一ユースケース/test_validate_index_entry.py
+refs:
+  - IF-122-2#
+  - SC-122-19#

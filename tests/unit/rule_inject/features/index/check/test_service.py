@@ -254,3 +254,112 @@ def test_check_change(
     # 検証
     assert len(lines) == 1
     assert lines[0].startswith("rules[0].paths: ")
+
+
+def test_check_entry(
+    tmp_path: Path,
+    rule_file: Callable[..., Path],
+    validator: Any,
+) -> None:
+    """問題の無いエントリでは問題を返却しない（正常系）。"""
+    from rule_inject.features.index.check import check_entry
+
+    # 準備
+    rule = rule_file()
+    entry = {"rule": str(rule)}
+    # 実行
+    problems = check_entry(str(tmp_path / "index.yaml"), entry, {}, validator=validator)
+    # 検証
+    assert problems == ()
+
+
+def test_check_entry_when_violation(tmp_path: Path, validator: Any) -> None:
+    """スキーマの違反をエントリの中の場所で返却する（正常系）。"""
+    from rule_inject.features.index.check import check_entry, check_index_text
+
+    # 準備
+    index_path = str(tmp_path / "index.yaml")
+    entry = {"rule": "/nonexistent/a.md", "paths": []}
+    # 実行
+    problems = check_entry(index_path, entry, {}, validator=validator)
+    # 検証
+    expected = next(
+        problem
+        for problem in check_index_text(
+            index_path,
+            "rules:\n  - rule: /nonexistent/a.md\n    paths: []\n",
+            {},
+            validator=validator,
+        ).problems
+        if problem.kind == "violation"
+    )
+    violations = [problem for problem in problems if problem.kind == "violation"]
+    assert [problem.location for problem in violations] == ["paths"]
+    assert violations[0].reason == expected.reason
+
+
+def test_check_entry_when_missing_rule(tmp_path: Path, validator: Any) -> None:
+    """ルールの場所にファイルが無いエントリを返却する（正常系）。"""
+    from rule_inject.features.index.check import check_entry
+
+    # 準備
+    entry = {"rule": "rules/missing.md"}
+    # 実行
+    problems = check_entry(str(tmp_path / "index.yaml"), entry, {}, validator=validator)
+    # 検証
+    assert [problem.kind for problem in problems] == ["missing_rule"]
+    assert problems[0].location == "rule"
+    assert problems[0].reason == str(tmp_path / "rules" / "missing.md")
+
+
+@pytest.mark.parametrize(
+    ("entry", "text"),
+    [
+        (
+            {"rule": "/r/a.md", "paths": ["re:["]},
+            "rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n",
+        ),
+        ({"rule": "https://example.com/a.md"}, "rules:\n  - rule: https://example.com/a.md\n"),
+    ],
+)
+def test_check_entry_when_skipped(
+    tmp_path: Path, validator: Any, entry: dict[str, Any], text: str
+) -> None:
+    """フックが読み飛ばすエントリを返却する（正常系）。"""
+    from rule_inject.features.index import read_index_text
+    from rule_inject.features.index.check import check_entry
+
+    # 準備
+    index_path = str(tmp_path / "index.yaml")
+    # 実行
+    problems = check_entry(index_path, entry, {}, validator=validator)
+    # 検証
+    expected_reason = read_index_text(index_path, text, {}).outcomes[0].reason
+    assert [problem.kind for problem in problems] == ["skipped_entry"]
+    assert problems[0].location == "$"
+    assert problems[0].reason == expected_reason
+
+
+def test_check_entry_when_variable_unresolved(tmp_path: Path, validator: Any) -> None:
+    """展開できない変数参照のエントリでは問題を返却しない（正常系）。"""
+    from rule_inject.features.index.check import check_entry
+
+    # 準備
+    entry = {"rule": "!{RULE_INJECT_TEST_UNSET}/python.md"}
+    # 実行
+    problems = check_entry(str(tmp_path / "index.yaml"), entry, {}, validator=validator)
+    # 検証
+    assert problems == ()
+
+
+def test_check_entry_when_hook_error(tmp_path: Path, validator: Any) -> None:
+    """フックが読み込めないエントリはその理由だけを返却する（正常系）。"""
+    from rule_inject.features.index.check import check_entry
+
+    # 準備
+    entry = {"paths": ["**/*.py"]}
+    # 実行
+    problems = check_entry(str(tmp_path / "index.yaml"), entry, {}, validator=validator)
+    # 検証
+    assert [problem.kind for problem in problems] == ["hook_error"]
+    assert problems[0].location == "$"

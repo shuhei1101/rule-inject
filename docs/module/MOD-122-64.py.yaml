@@ -1,0 +1,56 @@
+id: MOD-122-64
+visibility: internal
+title: MCP サーバー / 索引のチェック / cli.py
+lead: 索引のエントリの検査のコマンドの引数・標準入力の読み取り・違反の JSON の出力・終了コードを定め、検査のコマンドを修正するときに参照する。
+test_files:
+  - tests/unit/rule_inject/features/index/check/test_cli.py
+constants:
+  - name: FAILURE_EXIT_CODE
+    title: 失敗の終了コード
+    container: features/index/check/cli.py
+    summary: 標準入力を解析できないときの終了コード（インターフェース定義「索引のエントリの検査」）
+    value: '`1`'
+functions:
+  - name: main
+    title: 検査のコマンドの起点
+    container: features/index/check/cli.py
+    usecase: 書き込みの検査で索引のエントリを検査する
+    summary: '`--index` と標準入力のエントリを読み取り、`check_entry` の問題を違反の JSON の配列で標準出力へ出力する（`pyproject.toml` の `[project.scripts]` の `rule-inject-validate-entry`）'
+    kind: 関数
+    scope: public
+    args:
+      - name: argv
+        type: Sequence[str] | None
+        required: false
+        default: None
+        passing: positional
+        description: コマンドの引数。`None` は `sys.argv[1:]`
+    returns:
+      type: int
+      description: 終了コード。検査したときは違反の有無によらず 0
+    process: |-
+      1. `argparse` で必須の `--index` を読み取る（無ければ `argparse` が使用方法を標準エラーへ出力し、終了コード 2 で終わる）
+      2. 標準入力を `YAML(typ="safe")` で読み込む。`YAMLError` か、値がマップでないときは標準エラーへ理由を出力し、`FAILURE_EXIT_CODE` を返却する
+      3. `--index` を作業ディレクトリからの絶対パスにし、`check_entry(index_path, entry, os.environ, validator=load_validator())` で確認する
+      4. 問題ごとに `{"path": location, "rule": reason}` の配列を `json.dumps(..., ensure_ascii=False)` で標準出力へ出力し、`0` を返却する
+    unit_tests:
+      - name: test_main
+        case: 正常
+        summary: 問題を違反の JSON の配列で出力し、終了コード 0 を返却する
+        condition: '`--index rules.yaml`、標準入力にエントリ 1 件'
+        mock: '`check_entry`（`location: paths` の問題 1 件を返却する）・標準入力（`monkeypatch` で `io.StringIO`）'
+        expected: '戻り値が 0 で、標準出力が `[{"path": "paths", "rule": ...}]`。`check_entry` に作業ディレクトリから解いた絶対パスが渡っている'
+      - name: test_main_when_unparsable
+        case: 異常
+        summary: 標準入力を解析できない
+        condition: 標準入力に閉じていないフロー形式のリストと、マップでない値（`pytest.mark.parametrize`）
+        mock: 標準入力
+        expected: 戻り値が 1 で、標準エラーに理由があり、標準出力が空
+      - name: test_main_when_index_missing
+        case: 異常
+        summary: '`--index` が無い'
+        condition: 引数が空
+        mock: なし
+        expected: '`SystemExit(2)` で、標準エラーに `--index`'
+refs:
+  - IF-122-24#

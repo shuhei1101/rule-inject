@@ -88,6 +88,14 @@ files:
     related:
       - to: MOD-122-7
         type: implements
+  - path: rule_inject/features/index/check/cli.py
+    name: 索引のエントリの検査のコマンド
+    description: project-index の validators[] から呼ばれ、標準入力の索引のエントリを検査して違反を JSON の配列で出力し、検査のコマンドの引数や出力を変えるときに参照する。
+    tags:
+      - topic:索引のチェック
+    related:
+      - to: MOD-122-64
+        type: implements
   - path: rule_inject/features/index/check/service.py
     name: 索引のチェック
     description: 索引をスキーマで検査して問題を並べ、書き込む前と後の問題を比べ、索引のチェックの判定を変えるときに参照する。

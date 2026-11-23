@@ -28,6 +28,9 @@ overview:
     - id: DD
       label: project-index
       kind: external
+    - id: CLI
+      label: 検査のコマンド
+      kind: system
   edges:
     - from: U
       to: IDX
@@ -56,12 +59,19 @@ overview:
     - from: HOOK
       to: SRV
       label: 応答しないときの起動の依頼（systemd --user）
+    - from: DD
+      to: CLI
+      label: validators[] の実行
+    - from: CLI
+      to: RULE
+      label: 実在の確認
   frame:
     label: rule-inject
     nodes:
       - HOOK
       - SRV
       - STATE
+      - CLI
 repository:
   style: モノレポ
   repositories:
@@ -74,7 +84,7 @@ subsystems:
     runs_on: ユーザーの端末（Linux / WSL）
   - name: MCP サーバー
     scope: server
-    role: 有効なルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー。サーバーの状態の確認・設定の再読込・再起動と、クローンへ上流を取り込む更新は管理のツールで提供する
+    role: 有効なルールの一覧・検索、索引のチェックとエントリの作成・編集・削除を MCP のツールで提供する常駐のサーバー。サーバーの状態の確認・設定の再読込・再起動と、クローンへ上流を取り込む更新は管理のツールで提供する。索引のエントリ 1 件を検査するコマンド（`rule-inject-validate-entry`）も同じクローンの環境で提供する
     runtime: Python 3（mcp・jsonschema・ruamel.yaml）
     runs_on: ユーザーの端末（Linux / WSL）の 127.0.0.1
     refs:
@@ -90,7 +100,7 @@ external_systems:
       事前確認: 不要（Claude Code がフックを起動する）
     detail: LIB-122-1#
   - name: project-index
-    purpose: '`check_indexes` で、使用されているタグを取得する'
+    purpose: '`check_indexes` で、使用されているタグを取得する。索引を配信する配信元では、書き込みの前に `validators[]` から検査のコマンドを実行する'
     direction: 双方向
     protocol: MCP（Streamable HTTP）
     detail: API-122-1#

@@ -1,0 +1,14 @@
+$ TMPDIR=/home/shuhei2441/repo/tmp/pytest-pr213 uv run pytest tests/integration/server/test_check_indexes.py tests/integration/server/test_write_index_entry.py tests/integration/server/test_validate_entry.py
+# /tmp/pytest-of-shuhei2441 の持ち主が root のため、TMPDIR で pytest の一時フォルダを移した
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 40 items
+
+tests/integration/server/test_check_indexes.py .................         [ 42%]
+tests/integration/server/test_write_index_entry.py ...............       [ 80%]
+tests/integration/server/test_validate_entry.py ........                 [100%]
+
+============================== 40 passed in 5.50s ==============================

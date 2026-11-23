@@ -54,6 +54,16 @@ categories:
   - name: 取り込み前の検査
     commands: 未確定
   - name: 管理作業
-    commands: 未確定
+    commands: |-
+      1. 索引のエントリ 1 件を、project-index の `validators[]` と同じ検査のコマンドで確認する（索引のファイルのあるフォルダで実行する）
+
+      ```bash
+      printf 'rule: {ルールのパス}\npaths: ["**/*.py"]\n' | uv run rule-inject-validate-entry --index rules.yaml
+      ```
+    effects: 書き込まない（違反の JSON の配列を標準出力へ出すだけ）
+    verification:
+      state: 済
+      date: '2026-11-23'
+      detail: 'worktree で `rule: CLAUDE.md`・`paths: ["**/*.py"]` を指定して実行し、終了コード 0 で `[]` が出た。`paths: []` と無いルールでは 2 件の違反が出た'
 refs:
   - LAY-173-1#

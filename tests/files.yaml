@@ -252,6 +252,15 @@ files:
         type: tests
       - to: IF-122-4
         type: see_also
+  - path: integration/server/test_validate_entry.py
+    name: 索引のエントリの検査の結合テスト
+    description: 検査のコマンドを子プロセスで実行し、インターフェース定義『索引のエントリの検査』のフローを確認する結合テストで、検査のコマンドを修正したときに実行する。
+    tags:
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: IF-122-24
+        type: tests
   - path: integration/server/test_write_index_entry.py
     name: インターフェース定義『エントリの書き込み』の結合テスト
     description: 子プロセスの MCP サーバーの「エントリの書き込み」を MCP のクライアントから呼び出して確認する結合テストで、「エントリの書き込み」を修正したときに実行する。
@@ -335,6 +344,15 @@ files:
       - tool:pytest
     related:
       - to: src/rule_inject/features/index/check/scan.py
+        type: tests
+  - path: unit/rule_inject/features/index/check/test_cli.py
+    name: 索引のエントリの検査のコマンドの単体テスト
+    description: 検査のコマンドの引数・標準入力・出力・終了コードを確認する単体テストで、検査のコマンドを修正したときに実行する。
+    tags:
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/check/cli.py
         type: tests
   - path: unit/rule_inject/features/index/check/test_service.py
     name: 索引のチェックの単体テスト

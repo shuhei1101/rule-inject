@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import re
 from collections.abc import Mapping
 from importlib import resources
@@ -16,6 +17,7 @@ from rule_inject.features.index import read_index_text
 from rule_inject.features.index.check.types import IndexCheck, IndexProblem
 from rule_inject.features.index.types import EntryOutcome
 from rule_inject.shared.errors import IndexReadError, describe
+from rule_inject.shared.variables import expand_variables
 
 if TYPE_CHECKING:
     from jsonschema.protocols import Validator
@@ -28,6 +30,16 @@ ROOT_LOCATION = "$"
 ENTRY_LOCATION_PATTERN = re.compile(r"^rules\[[0-9]+\]")
 ENTRY_LOCATION_PLACEHOLDER = "rules[]"
 RULES_KEY = "rules"
+# `check_entry` が組み立てた索引の、そのエントリの場所の先頭
+ENTRY_PREFIX = "rules[0]"
+RULE_KEY = "rule"
+# エントリ 1 件の索引を書き出す YAML の書式（フックの読み取りが受け付けるブロック形式）
+ENTRY_YAML_WIDTH = 4096
+ENTRY_MAPPING_INDENT = 2
+ENTRY_SEQUENCE_INDENT = 4
+ENTRY_SEQUENCE_OFFSET = 2
+# 変数参照を展開できないエントリで除く問題の種類（ルールの場所を解けないため）
+UNRESOLVED_DROPPED_KINDS = ("skipped_entry", "missing_rule")
 
 
 def load_validator() -> Validator:
@@ -200,4 +212,54 @@ def check_change(
     return tuple(
         f"{problem.location}: {problem.reason}"
         for problem in new_problems(before, after, changed_rev)
+    )
+
+
+def _entry_index_text(entry: Mapping[str, object]) -> str:
+    """エントリ 1 件だけの索引を、フックの読み取りが受け付けるブロック形式の文字列にする。"""
+    yaml = YAML(typ="safe")
+    yaml.default_flow_style = False
+    yaml.width = ENTRY_YAML_WIDTH
+    yaml.indent(
+        mapping=ENTRY_MAPPING_INDENT, sequence=ENTRY_SEQUENCE_INDENT, offset=ENTRY_SEQUENCE_OFFSET
+    )
+    stream = io.StringIO()
+    yaml.dump({RULES_KEY: [dict(entry)]}, stream)
+    return stream.getvalue()
+
+
+def _entry_location(location: str) -> str:
+    """索引の中の場所を、エントリの中の場所にする（エントリ全体は `ROOT_LOCATION`）。"""
+    if location == ENTRY_PREFIX:
+        return ROOT_LOCATION
+    if location.startswith(f"{ENTRY_PREFIX}."):
+        return location[len(ENTRY_PREFIX) + 1 :]
+    return location
+
+
+def check_entry(
+    index_path: str,
+    entry: Mapping[str, object],
+    env: Mapping[str, str],
+    *,
+    validator: Validator,
+) -> tuple[IndexProblem, ...]:
+    """エントリ 1 件だけの索引を `check_index_text` で確認し、場所をエントリの中の場所にした問題を返却する。"""
+    result = check_index_text(index_path, _entry_index_text(entry), env, validator=validator)
+    problems = result.problems
+    # `validators[]` の実行環境にはセッションの環境変数が届かないため、展開できない変数参照は違反にしない
+    rule = entry.get(RULE_KEY)
+    if isinstance(rule, str) and expand_variables(rule, env).unresolved:
+        problems = tuple(
+            problem for problem in problems if problem.kind not in UNRESOLVED_DROPPED_KINDS
+        )
+    return tuple(
+        IndexProblem(
+            kind=problem.kind,
+            location=_entry_location(problem.location),
+            reason=problem.reason,
+            position=problem.position,
+            rev=problem.rev,
+        )
+        for problem in problems
     )

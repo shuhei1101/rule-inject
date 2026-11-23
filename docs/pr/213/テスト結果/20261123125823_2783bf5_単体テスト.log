@@ -1,0 +1,187 @@
+$ TMPDIR=/home/shuhei2441/repo/tmp/pytest-pr213 uv run pytest tests/unit --continue-on-collection-errors
+# /tmp/pytest-of-shuhei2441 の持ち主が root のため、TMPDIR で pytest の一時フォルダを移した。--continue-on-collection-errors は、実装の無い cli のテストの収集エラーで他のテストが止まらないようにした
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 608 items / 1 error
+
+tests/unit/hooks/test_run.py ....                                        [  0%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  3%]
+................                                                         [  5%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [  7%]
+tests/unit/rule_inject/features/guidance/test_service.py ............... [ 10%]
+                                                                         [ 10%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 11%]
+tests/unit/rule_inject/features/index/check/test_service.py ...........F [ 13%]
+FFFFFF                                                                   [ 14%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 14%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 16%]
+.................                                                        [ 19%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 19%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ...              [ 20%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 23%]
+...............................................................          [ 33%]
+tests/unit/rule_inject/features/index/test_yaml.py ....................  [ 37%]
+tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py .....  [ 37%]
+tests/unit/rule_inject/features/migrate/test_service.py ........         [ 39%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 41%]
+.............................                                            [ 46%]
+tests/unit/rule_inject/features/server_start/test_service.py .........   [ 48%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 48%]
+tests/unit/rule_inject/hooks/test_fill_config.py .............           [ 50%]
+tests/unit/rule_inject/hooks/test_record_read.py .................       [ 53%]
+tests/unit/rule_inject/hooks/test_rule_guide.py .....................    [ 57%]
+tests/unit/rule_inject/hooks/test_runner.py .......                      [ 58%]
+tests/unit/rule_inject/hooks/test_search_guide.py ........               [ 59%]
+tests/unit/rule_inject/hooks/test_start_server.py ........               [ 61%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 62%]
+tests/unit/rule_inject/hooks/test_work_rules.py .....                    [ 63%]
+tests/unit/rule_inject/migrate/test_main.py ...                          [ 63%]
+tests/unit/rule_inject/server/test_admin_tools.py .........              [ 65%]
+tests/unit/rule_inject/server/test_app.py .........                      [ 66%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 68%]
+tests/unit/rule_inject/server/test_clone.py ..........                   [ 70%]
+tests/unit/rule_inject/server/test_control.py .............              [ 72%]
+tests/unit/rule_inject/server/test_dev_docs.py ........                  [ 73%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 74%]
+tests/unit/rule_inject/server/test_main.py .....                         [ 75%]
+tests/unit/rule_inject/server/test_prompts.py ........                   [ 76%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 77%]
+tests/unit/rule_inject/server/test_tools.py .............                [ 79%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 81%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 83%]
+tests/unit/rule_inject/shared/test_prompts.py .........                  [ 84%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 88%]
+..........................                                               [ 92%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ..........           [ 94%]
+tests/unit/rule_inject/shared/test_variables.py .......                  [ 95%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ....................... [ 99%]
+...                                                                      [100%]
+
+==================================== ERRORS ====================================
+___ ERROR collecting tests/unit/rule_inject/features/index/check/test_cli.py ___
+ImportError while importing test module '/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/tests/unit/rule_inject/features/index/check/test_cli.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/rule_inject/features/index/check/test_cli.py:14: in <module>
+    from rule_inject.features.index.check import cli
+E   ImportError: cannot import name 'cli' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+=================================== FAILURES ===================================
+_______________________________ test_check_entry _______________________________
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry0')
+rule_file = <function rule_file.<locals>._make at 0x7ff5878dede0>
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+
+    def test_check_entry(
+        tmp_path: Path,
+        rule_file: Callable[..., Path],
+        validator: Any,
+    ) -> None:
+        """問題の無いエントリでは問題を返却しない（正常系）。"""
+>       from rule_inject.features.index.check import check_entry
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:265: ImportError
+_______________________ test_check_entry_when_violation ________________________
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry_when_violatio0')
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+
+    def test_check_entry_when_violation(tmp_path: Path, validator: Any) -> None:
+        """スキーマの違反をエントリの中の場所で返却する（正常系）。"""
+>       from rule_inject.features.index.check import check_entry, check_index_text
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:278: ImportError
+______________________ test_check_entry_when_missing_rule ______________________
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry_when_missing_0')
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+
+    def test_check_entry_when_missing_rule(tmp_path: Path, validator: Any) -> None:
+        """ルールの場所にファイルが無いエントリを返却する（正常系）。"""
+>       from rule_inject.features.index.check import check_entry
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:300: ImportError
+_ test_check_entry_when_skipped[entry0-rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n] _
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry_when_skipped_0')
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+entry = {'rule': '/r/a.md', 'paths': ['re:[']}
+text = "rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n"
+
+    @pytest.mark.parametrize(
+        ("entry", "text"),
+        [
+            ({"rule": "/r/a.md", "paths": ["re:["]}, "rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n"),
+            ({"rule": "https://example.com/a.md"}, "rules:\n  - rule: https://example.com/a.md\n"),
+        ],
+    )
+    def test_check_entry_when_skipped(
+        tmp_path: Path, validator: Any, entry: dict[str, Any], text: str
+    ) -> None:
+        """フックが読み飛ばすエントリを返却する（正常系）。"""
+        from rule_inject.features.index import read_index_text
+>       from rule_inject.features.index.check import check_entry
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:324: ImportError
+_ test_check_entry_when_skipped[entry1-rules:\n  - rule: https://example.com/a.md\n] _
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry_when_skipped_1')
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+entry = {'rule': 'https://example.com/a.md'}
+text = 'rules:\n  - rule: https://example.com/a.md\n'
+
+    @pytest.mark.parametrize(
+        ("entry", "text"),
+        [
+            ({"rule": "/r/a.md", "paths": ["re:["]}, "rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n"),
+            ({"rule": "https://example.com/a.md"}, "rules:\n  - rule: https://example.com/a.md\n"),
+        ],
+    )
+    def test_check_entry_when_skipped(
+        tmp_path: Path, validator: Any, entry: dict[str, Any], text: str
+    ) -> None:
+        """フックが読み飛ばすエントリを返却する（正常系）。"""
+        from rule_inject.features.index import read_index_text
+>       from rule_inject.features.index.check import check_entry
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:324: ImportError
+__________________ test_check_entry_when_variable_unresolved ___________________
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry_when_variable0')
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+
+    def test_check_entry_when_variable_unresolved(tmp_path: Path, validator: Any) -> None:
+        """展開できない変数参照のエントリでは問題を返却しない（正常系）。"""
+>       from rule_inject.features.index.check import check_entry
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:339: ImportError
+_______________________ test_check_entry_when_hook_error _______________________
+
+tmp_path = PosixPath('/home/shuhei2441/repo/tmp/pytest-pr213/pytest-of-shuhei2441/pytest-0/test_check_entry_when_hook_err0')
+validator = Draft202012Validator(schema={'$defs': {'arguments': {'additionalProperties': {'$ref': '#/$defs/patterns'}, 'minPropert...20-12/schema', 'additionalProperties': False, 'description': 'rule-inject ...囲の内側だけを受け付ける。', ...}, format_checker=None)
+
+    def test_check_entry_when_hook_error(tmp_path: Path, validator: Any) -> None:
+        """フックが読み込めないエントリはその理由だけを返却する（正常系）。"""
+>       from rule_inject.features.index.check import check_entry
+E       ImportError: cannot import name 'check_entry' from 'rule_inject.features.index.check' (/home/shuhei2441/repo/rule-inject/.claude/worktrees/feat-index-check-validator-cli/src/rule_inject/features/index/check/__init__.py)
+
+tests/unit/rule_inject/features/index/check/test_service.py:351: ImportError
+=========================== short test summary info ============================
+ERROR tests/unit/rule_inject/features/index/check/test_cli.py
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry_when_violation
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry_when_missing_rule
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry_when_skipped[entry0-rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n]
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry_when_skipped[entry1-rules:\n  - rule: https://example.com/a.md\n]
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry_when_variable_unresolved
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_check_entry_when_hook_error
+==================== 7 failed, 601 passed, 1 error in 4.08s ====================
