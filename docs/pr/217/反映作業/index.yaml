@@ -11,4 +11,4 @@
   切り戻し: 検査のコマンドの導入/切り戻し.sh
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
   確認方法: '`command -v rule-inject-validate-entry` が ~/.local/bin のリンクを返し、`echo ''{}'' | rule-inject-validate-entry --index rules.yaml` の終了コードが 0'
-  状態: todo
+  状態: done
