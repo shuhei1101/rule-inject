@@ -46,3 +46,5 @@ items:
     summary: クローンへ上流の commit を取り込み、依存を再インストールして再起動する（update_server）
   - page: IF-122-23.py.yaml
     summary: rule-inject の MCP のツールの引数に、セッションの設定ファイルの場所を入れる（PreToolUse）
+  - page: IF-122-24.py.yaml
+    summary: project-index の validators[] から呼ばれ、索引のエントリ 1 件を write_index_entry と同じ判定で検査するコマンド

@@ -1,0 +1,266 @@
+id: IF-122-24
+visibility: internal
+title: 索引のエントリの検査
+lead: project-index の `validators[]` から呼ばれ、標準入力の索引のエントリ 1 件を `write_index_entry` と同じ判定で検査して違反を標準出力へ返却するコマンドの入出力を定め、索引のエントリの検査を修正するときに参照する。
+entry:
+  kind: operation
+  value: '`rule-inject-validate-entry`（project-index の `validators[].run` が配信元のフォルダで実行するコマンド。`global-setup` が端末の PATH へ入れる）'
+identifier: validate_entry
+read_only: true
+idempotent: true
+exclusivity: 排他しない（索引のファイルを書き換えず、同時に呼ばれても結果が変わらない）
+side_effects: なし（索引のファイルとルールの本文を参照するだけで、書き換えない）
+request:
+  - name: --index
+    type: str
+    required: true
+    location: argument
+    description: 索引のファイルの、作業ディレクトリ（配信元のフォルダ）からのパスか絶対パス
+    example: rules.yaml
+    notes: エントリの `rule` の相対パスを、このファイルのあるフォルダから解決する。ファイルは無くてもよい（新しい索引の最初のエントリ）
+  - name: 標準入力
+    type: str
+    required: true
+    location: body
+    description: 索引のエントリ 1 件（`rules` の 1 要素）の YAML
+    constraints: YAML のマッピング
+response:
+  - name: 標準出力
+    type: list[object]
+    description: 違反の JSON の配列。合格は `[]`
+    notes: project-index の `validators[]` の出力の書式
+  - name: '[].path'
+    type: str
+    description: エントリの中の場所（`paths`・`rule` など）。エントリ全体にかかる違反は `$`
+    example: paths
+  - name: '[].rule'
+    type: str
+    description: 違反の理由。`check_indexes` が同じエントリに返却する問題の理由と同じ文言
+response_example: |-
+  ```json
+  [
+    {"path": "paths", "rule": "[] should be non-empty"},
+    {"path": "rule", "rule": "/src/docs/rule/python.md"}
+  ]
+  ```
+exceptions:
+  - name: なし（正常終了）
+    condition: エントリを検査した。違反の有無によらず終了コード 0
+    notes: project-index は 0 以外の終了コードを「検査を実行できなかった」違反にする
+  - name: 終了コード 2
+    condition: '`--index` が無い。標準エラーへ使用方法を出力する'
+  - name: 終了コード 1
+    condition: 標準入力が YAML として解析できないか、マッピングでない。標準エラーへ理由を出力する
+    notes: project-index の書き込みは解析できる YAML だけを指定するため、手で実行したときだけ起きる
+constraints:
+  - item: 判定
+    constraint: '`write_index_entry` の書き込みのチェックと同じ関数で、エントリ 1 件だけの索引として「フックと同じ読み取り → JSON Schema → ルールの場所の実在」を確認し、スキーマの違反・ルールの場所にファイルが無い・フックが読み飛ばすエントリを違反にする'
+    notes: 書き込む前と後の比較はしない（配信元のほかのエントリは project-index が別の文書として検査する）
+  - item: 変数参照
+    constraint: '`rule` の `!{名前}` を CLI のプロセスの環境で展開する。展開できない名前が残るエントリは違反にせず、ルールの場所の実在も確認しない'
+    notes: '`validators[]` の実行環境に Claude Code のセッションの環境変数が届かないため'
+  - item: スキーマの重複
+    constraint: スキーマの検査も実行し、project-index の行の `schema` の検査と同じ違反が重なることを受け入れる
+  - item: 検査の時点
+    constraint: '`validators[].on` は既定の `[write]` で記載する。`PROJECT_INDEX_VALIDATE_ON` は参照しない'
+  - item: 所要時間
+    constraint: project-index の `script_timeout_sec`（既定 30 秒）の中で終わる。依存の取得を実行のたびに行わない
+    notes: 端末に入れたコマンドを PATH から実行する。`uvx --from git+…` は初回の依存の取得で制限時間を超えうるため使用しない
+  - item: 起動の方法
+    constraint: '`validators[].run` は `["rule-inject-validate-entry", "--index", "{索引のパス}"]` のようにコマンド名で記載し、端末の絶対パスを記載しない'
+    notes: project-index は `/` を含まない先頭のコマンドを PATH から引く。端末の rule-inject のクローンと同じバージョンの判定になり、MCP サーバーの `write_index_entry` とずれない
+flows:
+  - name: 正常系
+    summary: 違反が無いエントリに空の配列を返却する
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 配信元のフォルダ
+        description: 索引のファイルとルールの本文を持つ一時フォルダ。作業ディレクトリにする
+      - name: 標準入力
+        description: 索引の書式どおりで、`rule` の場所にルールの本文があるエントリ 1 件
+      - name: 引数
+        description: '`--index rules.yaml`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+        participant FS as ルールの本文
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>FS: ルールの場所を確認する
+        IF-->>C: []（標準出力）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力が `[]`
+      - 索引のファイルが変わっていない
+    test: test_normal
+  - name: 正常系（Schemaに違反する）
+    summary: スキーマの違反を場所と理由つきで返却する
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 配信元のフォルダ
+        description: 正常系と同じ
+      - name: 標準入力
+        description: '`paths: []` のエントリ 1 件'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>C: 違反の配列（path: paths）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力の違反に `path` が `paths` の要素がある
+      - '`rule` が `check_indexes` のスキーマの違反の理由と同じ'
+    test: test_normal_when_schema_violated
+  - name: 正常系（ルールの場所にファイルが無い）
+    summary: 解決したルールの場所つきの違反を返却する
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 配信元のフォルダ
+        description: ルールの本文を持たない一時フォルダ
+      - name: 標準入力
+        description: '`rule` の場所にファイルが無いエントリ 1 件'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+        participant FS as ルールの本文
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>FS: ルールの場所を確認する
+        FS-->>IF: 無い
+        IF-->>C: 違反の配列（path: rule）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力の違反に `path` が `rule` の要素があり、`rule` に解決したルールの場所がある
+    test: test_normal_when_rule_file_missing
+  - name: 正常系（フックが読み飛ばすエントリ）
+    summary: フックが読み飛ばす理由を違反として返却する
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 配信元のフォルダ
+        description: 正常系と同じ
+      - name: 標準入力
+        description: '`paths: ["re:["]` のエントリ 1 件'
+        notes: URL の `rule` のエントリも同じフローで確認する
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>C: 違反の配列（path: $。読み飛ばす理由）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力の違反の `rule` が、`check_indexes` が返却する読み飛ばすエントリの理由と同じ
+    test: test_normal_when_entry_skipped_by_hook
+  - name: 正常系（変数参照を展開できない）
+    summary: 展開できない変数参照を違反にせず空の配列を返却する
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 環境変数
+        description: 子プロセスの環境から `RULE_INJECT_TEST_UNSET` を除く
+      - name: 標準入力
+        description: '`rule: "!{RULE_INJECT_TEST_UNSET}/python.md"` のエントリ 1 件'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>C: []（標準出力）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力が `[]`
+    test: test_normal_when_variable_unresolved
+  - name: 異常系（標準入力を解析できない・終了コード 1）
+    summary: 理由を標準エラーへ出力して終わる
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 標準入力
+        description: 閉じていないフロー形式のリストを持つ文字列
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+
+        C->>IF: --index・解析できない文字列（標準入力）
+        IF-->>C: 標準エラーに理由<br>終了コード 1
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 1
+      - 標準エラーに解析できない理由がある
+    test: test_error_when_input_unparsable
+  - name: 異常系（--indexが無い・終了コード 2）
+    summary: 使用方法を標準エラーへ出力して終わる
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 引数
+        description: '`--index` を指定しない'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+
+        C->>IF: エントリ（標準入力）
+        IF-->>C: 標準エラーに使用方法<br>終了コード 2
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 2
+      - 標準エラーに `--index` が必要な旨がある
+    test: test_error_when_index_missing
+test_file: tests/integration/server/test_validate_entry.py
+callers:
+  - SC-122-26#
+refs:
+  - IF-122-2#
+  - IF-122-11#
