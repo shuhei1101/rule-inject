@@ -286,7 +286,10 @@ def test_check_entry_when_violation(tmp_path: Path, validator: Any) -> None:
     expected = next(
         problem
         for problem in check_index_text(
-            index_path, "rules:\n  - rule: /nonexistent/a.md\n    paths: []\n", {}, validator=validator
+            index_path,
+            "rules:\n  - rule: /nonexistent/a.md\n    paths: []\n",
+            {},
+            validator=validator,
         ).problems
         if problem.kind == "violation"
     )
@@ -312,7 +315,10 @@ def test_check_entry_when_missing_rule(tmp_path: Path, validator: Any) -> None:
 @pytest.mark.parametrize(
     ("entry", "text"),
     [
-        ({"rule": "/r/a.md", "paths": ["re:["]}, "rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n"),
+        (
+            {"rule": "/r/a.md", "paths": ["re:["]},
+            "rules:\n  - rule: /r/a.md\n    paths:\n      - 're:['\n",
+        ),
         ({"rule": "https://example.com/a.md"}, "rules:\n  - rule: https://example.com/a.md\n"),
     ],
 )
