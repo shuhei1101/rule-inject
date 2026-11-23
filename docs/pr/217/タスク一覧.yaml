@@ -95,8 +95,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-23T04:30:14.416669+00:00'
   - process: 実装
-    status: todo
+    status: done
     note: project-index.yaml に索引を配信する行と validators[] を追加し、今の rules.yaml が検査に通ることを確かめる（違反があれば直す）。索引を持つ他の配信元のリポジトリへ同じ追加の Issue を起票する
+    updated_by: planner
+    updated_at: '2026-11-23T04:41:51.573163+00:00'
   - process: 結合テスト作成
     status: skipped
     reason: 'コードを変えない。検査のコマンドの結合テストは #213 の tests/integration/server/test_validate_entry.py が持つ'

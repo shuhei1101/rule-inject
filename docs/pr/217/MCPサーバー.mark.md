@@ -21,12 +21,23 @@
 | 配信の確認 | 追加した後に `search_docs` を `source: rule-inject`・`kind: rule_index` で呼び、エントリが文書として返ることを確認する | - |
 | 他のリポジトリへの起票 | 対象の各リポジトリの develop の `project-index.yaml` を確認し、持つリポジトリごとに `create_issue` で起票する。本文には索引のファイルのパス、記載例へのリンク、`ref` に rule-inject の次のリリースのタグを指すことと、事前に `global-setup` を再実行することを記載する | 起票した Issue の番号を `## 実装` に並べる |
 
+## 実装
+
+| 項目 | 内容 |
+| --- | --- |
+| `schema` の指し方 | [要件](./要件.mark.md) の推奨 A（リポジトリの中のパス）で記載した |
+| 配信元の設定の検査 | project-index の `validate_source_config` で変更後の `project-index.yaml` を検査し、違反 0 件 |
+| 今の索引の合格 | `rules.yaml` の 10 件のエントリを検査のコマンドへ 1 件ずつ指定し、全て `[]` |
+| 配信の確認 | project-index は Git の配信元の設定を `default_ref`（develop）から参照するため、作業ブランチの `ref` では `rule_index` の文書は返らない（0 件）。マージの後に `search_docs`（`kind: rule_index`）で 10 件返ることを確認する |
+| 起票した Issue | [shuhei1101/ai-monitor#3783](https://github.com/shuhei1101/ai-monitor/issues/3783)・[shuhei1101/alias-inject#143](https://github.com/shuhei1101/alias-inject/issues/143)・[shuhei1101/claude-balancer#368](https://github.com/shuhei1101/claude-balancer/issues/368)・[shuhei1101/dev-docs#320](https://github.com/shuhei1101/dev-docs/issues/320)・[shuhei1101/knowledge#565](https://github.com/shuhei1101/knowledge/issues/565)・[shuhei1101/mdmark#794](https://github.com/shuhei1101/mdmark/issues/794)・[shuhei1101/observability#123](https://github.com/shuhei1101/observability/issues/123)・[shuhei1101/project-index#270](https://github.com/shuhei1101/project-index/issues/270) |
+| 起票しなかったリポジトリ | aituber・gui-support・mindstella・shuhdev-gateway・voice-paste（develop に `project-index.yaml` が無い） |
+
 ## テスト結果
 
 ### 単体
 
-なし
+なし（コードを変えず、`project-index.yaml` の変更に対応する単体テストが無い）
 
 ### 結合
 
-なし
+なし（コードを変えない。検査のコマンドの結合テストは [tests/integration/server/test_validate_entry.py](https://github.com/shuhei1101/rule-inject/blob/84a2320/tests/integration/server/test_validate_entry.py) が持つ）
