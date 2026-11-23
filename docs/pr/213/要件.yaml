@@ -1,0 +1,68 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-26.yaml
+    impact: new
+    detail: 索引を配信する配信元で、project-index の書き込みが索引のエントリを rule-inject の検査にかけ、合格したエントリだけを書き込む
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-19.yaml
+    impact: run_only
+    detail: エントリの書き込みのチェックの判定を検査の CLI と共有するため、書き込みのチェックの結果が変わらないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-20.yaml
+    impact: run_only
+    detail: 索引のチェックの判定を検査の CLI と共有するため、チェックの結果が変わらないことを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-4.yaml
+    impact: run_only
+    detail: パッケージの定義にコマンドを追加するため、クローンから MCP サーバーを起動して接続できることを確かめる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-18.yaml
+    impact: run_only
+    detail: パッケージの定義にコマンドを追加するため、端末のセットアップが変わらず終わることを確かめる
+    depends_on: []
+docs:
+  - page: docs/guide/索引の書式.md
+    new: false
+    change: 索引を project-index の配信元の文書として配信する行と、検査の CLI を指す validators[] の記載例を追加
+    status: todo
+  - page: docs/guide/リファレンス.md
+    new: false
+    change: 検査の CLI の引数・標準入出力・終了コードを追加
+    status: todo
+  - page: docs/guide/変更履歴.md
+    new: false
+    change: 検査の CLI とスキーマの追加を記載
+    status: todo
+  - page: docs/architecture/ARCH-122-1.yaml
+    new: false
+    change: project-index が validators[] から検査の CLI を呼ぶ線と、外部システムの行の目的を追加
+    status: todo
+  - page: docs/layout/LAY-173-1.yaml
+    new: false
+    change: 検査の CLI のファイルを追加
+    status: todo
+  - page: docs/dev-command/CMD-183-1.yaml
+    new: false
+    change: 検査の CLI を手元で実行するコマンドを追加
+    status: todo
+  - page: files.yaml
+    new: false
+    change: 追加する CLI のソースとテストの行を追加
+    status: todo
+scope_out:
+  - item: 索引を持つ各配信元の project-index.yaml に、索引を配信する行と検査を指す validators[] を追加する
+    reason: 変更先が各配信元のリポジトリで、この PR の CLI とスキーマを前提にする後続
+    plan: to_file
+  - item: このリポジトリの project-index.yaml で rules.yaml を配信する
+    reason: 要望は CLI とスキーマを出すことで、配信元ごとの行の追加は後続に回す（#189・#195 が project-index.yaml を変更する）
+    plan: to_file
+  - item: write_index_entry に直コミットを適用する
+    reason: 別の経路の検討で、同じ内容の open の Issue がある
+    plan: '#197'
+  - item: shuhei1101/project-index#258 へこの判断へのリンクを残す
+    reason: 別のリポジトリの Issue への連絡で、このリポジトリの変更ではない。扱いの判断の任意の指摘
+    plan: to_file

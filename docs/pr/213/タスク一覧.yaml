@@ -1,0 +1,85 @@
+tasks:
+  - process: 初期構築
+    status: skipped
+    reason: 既存リポジトリのため対象外
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: リバースエンジニアリング
+    status: skipped
+    reason: 索引の検査の設計書（IF-122-11・IF-122-2・MOD-122-8）が既にある
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 方針決め
+    status: skipped
+    reason: 方針決めの依頼ではない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: PoC 検証
+    status: skipped
+    reason: validators[] の入出力（標準入力の YAML・標準出力の違反の JSON）は project-index の設定のリファレンスに定まっており、未検証の技術機構に依存しない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 複合ユースケース設計
+    status: skipped
+    reason: project-index の書き込みの検査から CLI を 1 回呼ぶ単一の操作で、単一ユースケースの連鎖を変えない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: デザインスタイル選定
+    status: skipped
+    reason: 画面を持たない（判定フローチャート『モック要否』で画面の追加・変更が無い）
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 画面一覧・画面遷移
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 単一ユースケース設計
+    status: todo
+  - process: モック作成
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: データ設計
+    status: skipped
+    reason: 索引のキーと値の範囲は変えず、既存のスキーマ（index.schema.yaml）を配信元から参照できる場所へ出すだけ
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: インターフェース定義設計
+    status: todo
+  - process: エージェント・MCP サーバー設計
+    status: skipped
+    reason: 呼び手が project-index の validators[] のコマンドで、MCP のツール・エージェントを追加しない（判定フローチャート『機能を呼ぶインターフェースの選び方』で CLI）
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: エージェントフロー・LLM 呼び出し設計
+    status: skipped
+    reason: LLM を呼ばない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 精度評価設計
+    status: skipped
+    reason: LLM・意思決定モデルのノードを持たない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 部品設計
+    status: skipped
+    reason: 画面を持たない
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: 画面設計
+    status: skipped
+    reason: 画面を持たない（判定フローチャート『画面設計要否』）
+    updated_by: planner
+    updated_at: '2026-11-23T03:04:52.891116+00:00'
+  - process: モジュール構成設計
+    status: todo
+  - process: ドキュメント修正
+    status: todo
+  - process: 単体テスト作成
+    status: todo
+  - process: 実装
+    status: todo
+  - process: 結合テスト作成
+    status: todo
