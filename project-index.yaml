@@ -252,6 +252,15 @@ documents:
       ref: design-schemas/v8.2.0
     records: files
     body_file: path
+  - id: rule_index
+    title: ルール索引のエントリ
+    paths: [rules.yaml]
+    schema: src/rule_inject/features/index/check/index.schema.yaml
+    records: rules
+    validators: [rule_index_entry]
+    metadata:
+      id: rule
+      name: rule
   - id: agent
     title: エージェントの定義
     paths: ["docs/agent/*.yaml"]
@@ -370,3 +379,6 @@ documents:
       name: name
       description: description
       tags: tags
+validators:
+  - id: rule_index_entry
+    run: [rule-inject-validate-entry, --index, rules.yaml]
