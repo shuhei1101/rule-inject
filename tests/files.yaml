@@ -336,6 +336,15 @@ files:
     related:
       - to: src/rule_inject/features/index/check/scan.py
         type: tests
+  - path: unit/rule_inject/features/index/check/test_cli.py
+    name: 索引のエントリの検査のコマンドの単体テスト
+    description: 検査のコマンドの引数・標準入力・出力・終了コードを確認する単体テストで、検査のコマンドを修正したときに実行する。
+    tags:
+      - topic:索引のチェック
+      - tool:pytest
+    related:
+      - to: src/rule_inject/features/index/check/cli.py
+        type: tests
   - path: unit/rule_inject/features/index/check/test_service.py
     name: 索引のチェックの単体テスト
     description: 索引のチェックの振る舞いを確認する単体テストで、索引のチェックを修正したときに実行する。
