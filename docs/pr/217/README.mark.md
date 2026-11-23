@@ -1,0 +1,1 @@
+# rule-inject の project-index.yaml で索引を配信して検査を追加し、他の配信元のリポジトリへ同じ追加の Issue を起票する
