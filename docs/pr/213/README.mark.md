@@ -1,0 +1,1 @@
+# 索引の検査を project-index の validators[] から呼べる CLI とスキーマとして出す
