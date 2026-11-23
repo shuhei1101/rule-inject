@@ -53,6 +53,18 @@ docs:
     new: false
     change: 追加する CLI のソースとテストの行を追加
     status: todo
+  - page: docs/agent-flow/global-setup.yaml
+    new: false
+    change: クローンを `uv tool install --editable` で入れ、検査のコマンドを PATH へ入れる工程を追加
+    status: todo
+  - page: skills/global-setup/SKILL.md
+    new: false
+    change: 検査のコマンドを PATH へ入れる手順を追加
+    status: todo
+  - page: docs/guide/セットアップ.md
+    new: false
+    change: global-setup が検査のコマンドを PATH へ入れることと、PATH に無いときの対処を追加
+    status: todo
 scope_out:
   - item: 索引を持つ各配信元の project-index.yaml に、索引を配信する行と検査を指す validators[] を追加する
     reason: 変更先が各配信元のリポジトリで、この PR の CLI とスキーマを前提にする後続
