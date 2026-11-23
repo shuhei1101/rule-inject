@@ -42,8 +42,50 @@
 
 ### 単体
 
-なし（ドキュメント修正の工程は公開ドキュメント・スキルの手順・エージェントフローだけを変え、規約『V字モデル』で対応する単体テストが無い）
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | 全実行 | 変更 | ✅ | `check_entry` の 6 テストを追加。単体テスト全体で 612 テスト pass<br>`テスト結果/20261123130233_60806c6_単体テスト.log` |
+| `tests/unit/rule_inject/features/index/check/test_cli.py` | 全実行 | 新規 | ✅ | 3 テスト pass（同じログ） |
+
+Red のログは `テスト結果/20261123125823_2783bf5_単体テスト.log`、lint のログは `テスト結果/20261123130310_60806c6_lint.log`。
+
+### 結合テストの実行範囲
+
+| 変更したファイル | 結果 | 実行する結合テスト | 結合テストが無いエントリーポイント |
+| --- | --- | --- | --- |
+| `docs/agent-flow/global-setup.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/architecture/ARCH-122-1.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/dev-command/CMD-183-1.yaml` | R7（参照する結合テストが無い） | - | - |
+| `"docs/guide/\343\202\273\343\203\203\343\203\210\343\202\242\343\203\203\343\203\227.md"` | R7（参照する結合テストが無い） | - | - |
+| `"docs/guide/\343\203\252\343\203\225\343\202\241\343\203\254\343\203\263\343\202\271.md"` | R7（参照する結合テストが無い） | - | - |
+| `"docs/guide/\347\264\242\345\274\225\343\201\256\346\233\270\345\274\217.md"` | R7（参照する結合テストが無い） | - | - |
+| `docs/interface/IF-122-20.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/interface/IF-122-24.py.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/interface/index.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/module/MOD-122-64.py.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/module/MOD-122-8.py.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/module/index.yaml` | R7（参照する結合テストが無い） | - | - |
+| `"docs/pr/213/MCP\343\202\265\343\203\274\343\203\220\343\203\274.mark.md"` | R7（参照する結合テストが無い） | - | - |
+| `docs/pr/213/README.mark.md` | R7（参照する結合テストが無い） | - | - |
+| `"docs/pr/213/\343\202\277\343\202\271\343\202\257\344\270\200\350\246\247.yaml"` | R7（参照する結合テストが無い） | - | - |
+| `"docs/pr/213/\343\203\206\343\202\271\343\203\210\347\265\220\346\236\234/20261123125823_2783bf5_\345\215\230\344\275\223\343\203\206\343\202\271\343\203\210.log"` | R7（参照する結合テストが無い） | - | - |
+| `"docs/pr/213/\350\246\201\344\273\266.mark.md"` | R7（参照する結合テストが無い） | - | - |
+| `"docs/pr/213/\350\246\201\344\273\266.yaml"` | R7（参照する結合テストが無い） | - | - |
+| `docs/scenario/SC-122-18.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/scenario/SC-122-26.yaml` | R7（参照する結合テストが無い） | - | - |
+| `docs/scenario/index.yaml` | R7（参照する結合テストが無い） | - | - |
+| `pyproject.toml` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_validate_entry.py`（新規作成） | - |
+| `skills/global-setup/SKILL.md` | R7（参照する結合テストが無い） | - | - |
+| `src/files.yaml` | R7（参照する結合テストが無い） | - | - |
+| `src/rule_inject/features/index/check/__init__.py` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_check_indexes.py`<br>`tests/integration/server/test_write_index_entry.py` | - |
+| `src/rule_inject/features/index/check/cli.py` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_validate_entry.py`（新規作成） | - |
+| `src/rule_inject/features/index/check/service.py` | R7（変更したファイルを参照する結合テストを調べた） | `tests/integration/server/test_check_indexes.py`<br>`tests/integration/server/test_write_index_entry.py` | - |
+| `tests/files.yaml` | R7（参照する結合テストが無い） | - | - |
+| `tests/unit/rule_inject/features/index/check/test_cli.py` | R7（参照する結合テストが無い） | - | - |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | R7（参照する結合テストが無い） | - | - |
+
+`check_entry` は既存の `check_index_text` を変えずに上へ重ねたため、索引のチェックとエントリの書き込みの結合テストで判定が変わらないことを確認する。
 
 ### 結合
 
-なし（同上。対応する結合テストが無い）
+結合テスト作成の工程で記入する。
