@@ -29,6 +29,8 @@ steps:
       - `command -v uv` で `uv` の絶対パスを取り出す
       - `--clone` のクローンで `uv sync --extra server` を実行する
       - `uv` が無いか失敗したら、導入の方法を示して止まる。何も記載しない
+      - `uv tool dir --bin` に、クローンの `.venv/bin/rule-inject-validate-entry` へのシンボリックリンクを `rule-inject-validate-entry` の名前で作成する。同じ名前のリンクがあれば作り直し、リンクでないファイルがあれば置き換えない
+      - リンクを作成できないか、`uv tool dir --bin` がこのセッションの PATH に無いときは、理由を記録して続ける（「結果を示す」で示す）
   - name: 端末の設定のパスを決める
     body: '- `--config`、`RULE_INJECT_CONFIG`、`${XDG_CONFIG_HOME:-~/.config}/rule-inject/settings.yaml` の順に使用する'
   - name: 設定を移し替える
@@ -74,4 +76,5 @@ steps:
     body: |-
       - 作ったもの・`env` に記載したキー・削除した登録・接続の結果を示す
       - このセッションで MCP を使用するには `/mcp` で再接続することを案内する。`env` を記載したときは Claude Code を再起動することを案内する
+      - 検査のコマンドを導入できなかったときは、理由と PATH へ追加する方法を示す。導入できたときも、project-index のサーバーのユニットの `Environment=PATH=` に `uv tool dir --bin` が無ければ追加するように案内する
       - リポジトリの索引を登録する `/rule-inject:setup` を案内する
