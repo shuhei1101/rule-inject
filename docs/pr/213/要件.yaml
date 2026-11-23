@@ -86,13 +86,13 @@ docs:
 scope_out:
   - item: 索引を持つ各配信元の project-index.yaml に、索引を配信する行と検査を指す validators[] を追加する
     reason: 変更先が各配信元のリポジトリで、この PR の CLI とスキーマを前提にする後続
-    plan: to_file
+    plan: '#215'
   - item: このリポジトリの project-index.yaml で rules.yaml を配信する
     reason: 要望は CLI とスキーマを出すことで、配信元ごとの行の追加は後続に回す（#189・#195 が project-index.yaml を変更する）
-    plan: to_file
+    plan: '#214'
   - item: write_index_entry に直コミットを適用する
     reason: 別の経路の検討で、同じ内容の open の Issue がある
     plan: '#197'
   - item: shuhei1101/project-index#258 へこの判断へのリンクを残す
     reason: 別のリポジトリの Issue への連絡で、このリポジトリの変更ではない。扱いの判断の任意の指摘
-    plan: to_file
+    plan: shuhei1101/project-index#269
