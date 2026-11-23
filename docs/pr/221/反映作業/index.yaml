@@ -1,14 +1,14 @@
 端末の設定への直コミットの種類の登録:
-  説明: 端末の設定（~/.config/project-index/settings.yaml）の `sources[]` の `rule-inject` の行に `direct_commit.write_api_kinds` を追加し、`project-index.yaml` の `direct_commit.kinds` の全ての種類の ID を並べる。書き換える前に同じフォルダへ `settings.yaml.bak-{YYYYMMDD-HHMMSS}` のバックアップを取り、書き換えた後に project-index の管理の MCP の `reload` で再読み込みする。切り戻しはバックアップを書き戻して `reload` する
+  説明: 端末の設定（~/.config/project-index/settings.yaml）の `sources[]` の `rule-inject` の行に `direct_commit.write_api_kinds` を追加し、`project-index.yaml` の `direct_commit.kinds` の全ての種類の ID を並べる。書き換える前に同じフォルダへ `settings.yaml.bak-{YYYYMMDD-HHMMSS}` のバックアップを取り、project-index の端末の設定の API（`PATCH /settings/sources/rule-inject`）で書き換えて再読み込みする。切り戻しは同じ API で `write_api_kinds` を空に戻す。前提確認で develop の worktree の `project-index.yaml` の `direct_commit.kinds` が登録する種類と一致することを確かめるため、マージした後に develop の worktree を最新にしてから叩く
   タグ: [端末の設定]
   実行者: planner
   時期: マージの後
   回数: 1 回限り
   可逆: true
-  疎通確認: null
-  実行: null
-  確認: null
-  切り戻し: null
+  疎通確認: 端末の設定への直コミットの種類の登録/疎通確認.py
+  実行: 端末の設定への直コミットの種類の登録/実行.py
+  確認: 端末の設定への直コミットの種類の登録/確認.py
+  切り戻し: 端末の設定への直コミットの種類の登録/切り戻し.py
   失敗時: 既定の対処を 1 回、2 回連続で失敗したら依頼元へ返す
-  確認方法: 端末の設定の `rule-inject` の行の `direct_commit.write_api_kinds` に `project-index.yaml` の `direct_commit.kinds` の全ての種類の ID があり、project-index の管理の MCP の `status` に `rule-inject` の直コミットの警告が無い
+  確認方法: 端末の設定の `rule-inject` の行の `direct_commit.write_api_kinds` に `project-index.yaml` の `direct_commit.kinds` の全ての種類の ID があり、`GET /settings/sources` の `rule-inject` の行の状態が `serving` で、違反と警告が無い
   状態: skipped
