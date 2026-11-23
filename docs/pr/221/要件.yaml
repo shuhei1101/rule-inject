@@ -1,0 +1,14 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-26.yaml
+    impact: none
+    detail: 画面からの直コミットで索引のエントリを書き込むときも、同じ書き込みの検査で違反を受け取る。流れは変わらない
+    depends_on: []
+scope_out:
+  - item: '`prompts`（`content/prompts/`）の直コミットの許可'
+    reason: フックが注入するプロンプトで、書き換えるとフックの出力が変わる成果物のため、PR を経ずに develop へ入れない
+    plan: none
+  - item: '`sources[].direct_commit.scope`（作業場所からの直コミット）の登録'
+    reason: 要望は dev-docs の画面からの直コミットで、書き込みの API の `write_api_kinds` だけで足りる。エージェントの書き込みは今までどおり作業 PR を経る
+    plan: none
+docs: []
