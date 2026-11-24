@@ -38,7 +38,7 @@ direct_commit:
     - {id: src, body: false}
     - {id: hooks, body: false}
     - {id: tests, body: false}
-    - {id: skills, body: false}
+    - skills
     - {id: root, body: false}
     - prompts
 documents:
