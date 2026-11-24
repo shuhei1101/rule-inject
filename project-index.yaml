@@ -40,6 +40,7 @@ direct_commit:
     - {id: tests, body: false}
     - {id: skills, body: false}
     - {id: root, body: false}
+    - prompts
 documents:
   - id: architecture
     title: アーキテクチャ図
