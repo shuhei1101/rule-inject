@@ -1,8 +1,10 @@
 docs:
   - page: project-index.yaml
     new: false
-    change: 'nav を記載し、タブを規約 dev-docs-navigation の 7 つの並びにし、サイドバーを 2 階層までのグループにまとめ、目次（kind: index）を並べない'
-    status: todo
+    change: 'nav を記載し、タブを規約 dev-docs-navigation の 7 つの並びにし、サイドバーを 2 階層までのグループにまとめ、目次（kind: index）を並べない。公開ドキュメントの行の exclude が files.yml 自身を除いていたのを直し、category を metadata に加える'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T09:19:53.583673+00:00'
 use_cases: []
 scope_out:
   - item: 配信元 rule-inject の検索の対象とメタデータ（documents[]）の見直し
@@ -11,3 +13,6 @@ scope_out:
   - item: dev-docs の目次の重なり
     reason: dev-docs の画面の不具合で、この配信元の設定では直らない
     plan: shuhei1101/dev-docs#226
+  - item: ルール索引のエントリ（rule_index）の、サイドバーに出す読める名前
+    reason: エントリは名前のキーを持たず、画面には rules.yaml#{番号} で出る。rule の場所を名前にすると、どれも !{KNOWLEDGE_ROOT}/docs/rul… と同じ頭で切れて見分けられないため、今回は入れない
+    plan: to_file
