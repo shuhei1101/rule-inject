@@ -49,7 +49,7 @@
 | `output` | 文字列 | 索引の数と各一覧の件数の 1 行 |
 | `config_path` | 文字列 / `null` | 読んだ設定ファイルの場所。設定ファイルを読まなかったとき（`RULE_INJECT_CONFIG` が無く、既定のパスにファイルも無いとき）は `null` |
 | `indexes` | 文字列のリスト | 読む索引の場所。フックが読む順 |
-| `entries[]` | オブジェクトのリスト | 有効なエントリ。`index`・`position`・`rev`・`rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`（記載が無いエントリは `null`） |
+| `entries[]` | オブジェクトのリスト | 有効なエントリ。`index`・`position`・`rev`・`rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`name`（記載が無いエントリは `null`） |
 | `unreadable_indexes[]` | オブジェクトのリスト | 読めない索引の `index` と `reason` |
 | `skipped_entries[]` | オブジェクトのリスト | 読み飛ばしたエントリの `index`・`position`・`rev`・`rule`・`reason` |
 | `disabled_entries[]` | オブジェクトのリスト | `enabled: false` のエントリの `index`・`position`・`rev`・`rule` |
@@ -167,7 +167,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 | 引数 | 型 | 必須 | 既定値 | 内容 |
 | --- | --- | --- | --- | --- |
 | `index` | 文字列 | ✅ | - | 書き込む索引の場所。絶対パスか `~` で始まるパス。設定ファイルで読む索引に限る |
-| `entry` | オブジェクト | ✅ | - | 書き込むキーと値。キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`。`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを指定する（指定しないキーはそのまま残る） |
+| `entry` | オブジェクト | ✅ | - | 書き込むキーと値。キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`・`name`。`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを指定する（指定しないキーはそのまま残る） |
 | `position` | 整数 | - | `rules` の末尾に新規作成する | 書き換えるエントリの位置。0 以上 |
 | `expected_rev` | 文字列 | - | なし | 書き換える前のエントリのバージョン。`position` を指定するときは必須 |
 | `remove_keys` | 文字列のリスト | - | キーを削除しない | エントリから削除するキー。`position` を指定するときだけ使用し、`entry` と同じキーは指定できない |
@@ -193,7 +193,7 @@ JSON Schema の場所は [索引の書式](索引の書式.md)。
 - 書き込みは、索引を読む → バージョンを比べる → 変更を適用する前と後をチェックする → 同じフォルダの一時ファイルに書き込んで置き換える、の順。書き込まなかったときは索引のファイルを変えない
 - チェックは `check_indexes` と同じ内容で、書き込んだ後にフックが読めないか、書き込む前に無かった問題が出るときだけ断る。もとからある問題では断らない
 - 対象のエントリの外の行（コメント・引用符・字下げ・キーの並び・改行）は変えない。字下げと改行は索引に合わせる
-- 新しく記載する文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符の文字列）で記載する
+- 新しく記載する文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符の文字列）、`name` は 1 行の文字列で記載する
 - 同じ索引への書き込みは、サーバーの中で 1 つずつ行う
 - 記載した内容は、再起動せずに次のツールの呼び出しとフックの呼び出しから有効になる
 
