@@ -439,7 +439,7 @@ nav:
           items:
             - page: architecture
             - page: nonfunctional
-            - page: layout
+            - {page: layout, title: フォルダ構成}
             - page: config
             - page: dev_command
             - page: test_procedure
@@ -479,6 +479,7 @@ nav:
                 - page: scenario/SC-122-2
                 - page: scenario/SC-122-3
                 - page: scenario/SC-122-5
+            - auto: {document: scenario}
         - group: インターフェース定義
           items:
             - group: フック
@@ -515,6 +516,7 @@ nav:
                 - page: interface/IF-122-20
                 - page: interface/IF-122-21
                 - page: interface/IF-122-22
+            - auto: {document: interface}
         - group: データ
           items:
             - page: er/ER-122-2
@@ -523,6 +525,8 @@ nav:
             - page: data/DATA-181-3
             - page: data/DATA-181-4
             - page: data/DATA-181-1
+            - auto: {document: er}
+            - auto: {document: data}
         - group: モジュール構成（プラグイン）
           items:
             - group: フック
@@ -617,6 +621,7 @@ nav:
                 - {page: module/MOD-122-8, title: "service.py"}
                 - {page: module/MOD-122-9, title: "tags.py"}
                 - {page: module/MOD-122-10, title: "types.py"}
+            - auto: {document: module}
         - group: スキルと MCP サーバー
           items:
             - page: mcp_server
@@ -640,6 +645,7 @@ nav:
             - page: library/LIB-122-2
             - page: library/LIB-203-1
             - page: external_api
+            - auto: {document: library}
     - title: 規約
       items:
         - group: ルール索引
