@@ -167,6 +167,37 @@ scenarios:
     expected:
       - 標準出力が `[]`
     test: test_normal_when_variable_unresolved
+  - name: 正常シナリオ（エントリが名前を持つ）
+    setup:
+      - name: Mock
+        description: 違反が無いシナリオと同じ（テストが検査の CLI を子プロセスとして起動する）
+      - name: 配信元のフォルダ
+        description: 違反が無いシナリオと同じ
+      - name: エントリ
+        description: 索引の書式どおりで、名前を持ち、`rule` の場所にルールの本文があるエントリ 1 件の YAML
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant PI as project-index の書き込み
+        participant CLI as 検査の CLI
+        participant SC as 索引の JSON Schema
+        participant FS as ルールの本文
+
+        PI->>CLI: エントリ 1 件の YAML（標準入力）と索引のファイルの場所
+        CLI->>SC: エントリを照らす
+        SC-->>CLI: 違反なし
+        CLI->>FS: ルールの場所を索引のファイルの場所から解決して確認する
+        FS-->>CLI: ある
+        CLI-->>PI: 違反の空の配列（標準出力）
+      ```
+
+      <!-- /map -->
+    expected:
+      - 標準出力が `[]`
+      - 索引のファイルが書き換わっていない
+    test: test_normal_when_entry_has_name
 test_file: tests/e2e/単一ユースケース/test_validate_index_entry.py
 refs:
   - IF-122-2#

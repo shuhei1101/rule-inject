@@ -11,7 +11,7 @@ use_cases:
     depends_on: []
   - kind: single
     scenario: docs/scenario/SC-122-26.yaml
-    impact: run_only
+    impact: changed
     detail: 名前を持つエントリも書き込みの検査に合格する
     depends_on: []
   - kind: single
