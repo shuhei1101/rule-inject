@@ -23,12 +23,12 @@ functions:
     process: |-
       1. コメント（`#` から行末。引用符の中を除く）と空行を落とす
       2. 最上位のキーは `default_on` と `rules` だけを許す
-      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` / `read_tool` / `enabled` だけを許す
+      3. `rules` の各要素（`- ` で始まるマップ）のキーは `rule` / `paths` / `exclude` / `tools` / `args` / `on` / `read_by` / `read_tool` / `enabled` / `name` だけを許す
       4. 値は文字列（引用符あり・なし）、フローのリスト（`[a, b]`）、ブロックのリスト（`- a`）だけを読み込む
       5. `args` は続く行に、エントリのキーより深い桁で `キー: リスト`（フローかブロックのリスト）を並べたブロックのマップだけを読み込む。キーは空白を含まない文字列（ドットを含んでよい）
       6. `read_by` は続く行に、エントリのキーより深い桁で `- ` で始まるマップを並べたブロックのリストだけを読み込む。各マップのキーは `tools`（必須。フローかブロックのリスト）と `args`（任意。エントリの `args` と同じブロックのマップを、そのキーより深い桁で）だけを許す
       7. `read_tool` は続く行に、エントリのキーより深い桁でキーを並べたブロックのマップだけを読み込む。キーは `tool`（必須。`mcp__` で始まる文字列）と `args`・`optional_args`（任意。文字列）だけを許す。`args`・`optional_args` は `json.loads` で読み込めて JSON のオブジェクトになる文字列だけを許し、文字列のまま返却する
-      8. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素・`tool` の無い `read_tool`・`mcp__` で始まらない `tool`・`read_tool` の同じ行の値・JSON として解釈できないかオブジェクトでない `read_tool.args`・`read_tool.optional_args` を含む）・`rule` の無いエントリ・`on` の外の値・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返却する
+      8. 許さないキー・形式（`args` のフローのマップ・空の `args`・`args` のキーの重複・空の `read_by`・`tools` の無い `read_by` の要素・`tool` の無い `read_tool`・`mcp__` で始まらない `tool`・`read_tool` の同じ行の値・JSON として解釈できないかオブジェクトでない `read_tool.args`・`read_tool.optional_args` を含む）・`rule` の無いエントリ・`on` の外の値・空の文字列の `name`・`enabled` の `true` / `false` 以外の値（リストを含む。引用符の有無はほかのキーと同じく区別しない）は行番号つきの ValueError にする。`enabled` の値は文字列 `true` / `false` のまま返却する
     exceptions:
       - name: ValueError
         condition: 許さないキー・形式・値がある
@@ -116,6 +116,19 @@ functions:
         case: 異常
         summary: '`read_tool` の書式の誤りを拒む'
         condition: '`args` だけを持つ `read_tool`・`tool: docs_search`・`read_tool: {tool: mcp__a}`・`read_tool` に `foo:` を持つ・`args` が JSON として解釈できない・`args` が JSON の配列・`optional_args` が JSON の配列のエントリ（7 通りをパラメータ化）'
+        mock: なし
+        expected: 行番号つきの ValueError
+        exception: 許さないキー・形式・値がある
+      - name: test_parse_index_when_name
+        case: 正常
+        summary: '`name` を読み込む'
+        condition: '`name: python-core-naming` のエントリと、`name` を記載しないエントリの 2 つ'
+        mock: なし
+        expected: 1 つ目の `name` が `"python-core-naming"`、2 つ目は `name` のキーを持たない
+      - name: test_parse_index_when_name_empty
+        case: 異常
+        summary: 空の `name` を拒む
+        condition: '`name: ""` のエントリ'
         mock: なし
         expected: 行番号つきの ValueError
         exception: 許さないキー・形式・値がある

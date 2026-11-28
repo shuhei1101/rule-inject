@@ -8,7 +8,7 @@ constants:
     title: 新しいエントリのキーの並び
     container: features/index/edit/service.py
     summary: 新規作成するエントリにキーを書き込む順。ここに無いキーは引き渡された順で後ろに配置する
-    value: '`("rule", "paths", "exclude", "tools", "args", "on", "read_by", "read_tool", "enabled")`'
+    value: '`("rule", "paths", "exclude", "tools", "args", "on", "read_by", "read_tool", "enabled", "name")`'
 functions:
   - name: write_entry
     title: エントリの書き込み
@@ -157,6 +157,12 @@ functions:
         mock: '`check_change`'
         expected: IndexEditError（reason に書式を保って書き込めない旨と `rules[1]` の `paths` の行の番号）で、ファイルは元のまま。`check_change` は呼ばれない
         exception: 索引が読み込めない・YAML として解釈できない・最上位がマップでない、`position` がエントリの数以上、書き込む前の内容をフックの読み取りが読み込めない、`expected_rev` が今のバージョンと違う、`check_change` が行を返却した、書き出した内容で対象のエントリの外の行が変わる
+      - name: test_write_entry_when_name_added
+        case: 正常
+        summary: 既にあるエントリに `name` を最後のキーの後ろへ記載する
+        condition: '`rule`・`paths`・`on` を持つエントリに `position: 0` で `entry: {name: python-core-naming}` を書き込む'
+        mock: なし（一時フォルダの索引）
+        expected: '差分が `on` の行の後ろの `name: python-core-naming` の 1 行だけ'
   - name: delete_entry
     title: エントリの削除
     container: features/index/edit/service.py

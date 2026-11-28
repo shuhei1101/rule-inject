@@ -85,6 +85,10 @@ data_models:
       - name: read_tool
         type: dict[str, Any] | None
         description: 索引に記載したままの `read_tool`。記載しないエントリは None
+      - name: name
+        type: str | None
+        default: None
+        description: 索引に記載したままの `name`。記載しないエントリは None
   - name: IndexIssue
     title: 索引ごとの理由
     container: server/types.py
