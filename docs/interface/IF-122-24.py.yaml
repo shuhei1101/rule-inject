@@ -258,6 +258,61 @@ flows:
       - 終了コードが 2
       - 標準エラーに `--index` が必要な旨がある
     test: test_error_when_index_missing
+  - name: 正常系（エントリが名前を持つ）
+    summary: '`name` を持つエントリに空の配列を返却する'
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 配信元のフォルダ
+        description: 正常系と同じ
+      - name: 標準入力
+        description: '正常系のエントリに `name: python-core-naming` を加えた 1 件'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+        participant FS as ルールの本文
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>FS: ルールの場所を確認する
+        IF-->>C: []（標準出力）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力が `[]`
+    test: test_normal_when_entry_has_name
+  - name: 正常系（名前が空の文字列）
+    summary: 空の `name` をスキーマの違反として返却する
+    setup:
+      - name: Mock
+        description: なし（コマンドを子プロセスで実行する）
+      - name: 配信元のフォルダ
+        description: 正常系と同じ
+      - name: 標準入力
+        description: '正常系のエントリに `name: ""` を加えた 1 件'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as project-index
+        participant IF as 索引のエントリの検査
+
+        C->>IF: --index・エントリ（標準入力）
+        IF-->>C: 違反の配列（path: name）・終了コード 0
+      ```
+
+      <!-- /map -->
+    expected:
+      - 終了コードが 0
+      - 標準出力の違反に `path` が `name` の要素がある
+      - '`write_index_entry` に同じエントリを指定したときに断られる理由と同じ理由が載っている'
+    test: test_normal_when_name_empty
 test_file: tests/integration/server/test_validate_entry.py
 callers:
   - SC-122-26#

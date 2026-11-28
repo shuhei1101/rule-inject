@@ -486,6 +486,40 @@ flows:
       - '`read_tool` がブロックのマップで、`args` が単一引用符で囲んだ 1 行の文字列'
       - インターフェース定義「ルールの一覧」で読むと、そのエントリの `read_tool` が指定した値
     test: test_normal_when_read_tool_written
+  - name: 正常系（エントリの名前を記載する）
+    summary: 位置で指したエントリに `name` を記載し、照合の結果を変えない
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: エントリを新規作成するフローと同じ
+      - name: 索引
+        description: '`name` を記載しないエントリを 1 つ持つ'
+        notes: 書き込みの前の内容を記録する
+      - name: 引数
+        description: '`position: 0`、`expected_rev`、`entry: {name: python-core-naming}`'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as write_index_entry
+        participant IDX as 索引
+
+        C->>IF: index・position 0・expected_rev・name
+        IF->>IDX: round-trip で読む
+        IDX-->>IF: 書式つきの内容
+        IF->>IF: name を記載し、チェックする
+        IF->>IDX: 一時ファイルに書き込み、置き換える
+        IF-->>C: position・rev・diff
+      ```
+
+      <!-- /map -->
+    expected:
+      - '書き込みの前との差分が `name: python-core-naming` の 1 行だけで、エントリの最後のキーの後ろにある'
+      - 索引を `load_indexes` で読むと、対象のエントリの `name` が `python-core-naming` で、`paths`・`on` は書き込みの前と同じ
+    test: test_normal_when_entry_name_written
 lead: 設定ファイルで読み込む索引へエントリを新規作成・書き換えするツールの入出力を定め、エントリの書き込みを修正するときに参照する。
 identifier: write_index_entry
 idempotent: false
@@ -510,7 +544,7 @@ request:
     required: true
     location: argument
     description: 書き込むキーと値
-    constraints: キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`
+    constraints: キーは `rule`・`paths`・`exclude`・`tools`・`args`・`on`・`read_by`・`read_tool`・`enabled`・`name`
     notes: '`position` が無いときは新しいエントリの全てのキー、あるときは書き換えるキーだけを指定する（指定しないキーはそのまま残る）'
   - name: position
     type: int
@@ -633,7 +667,7 @@ constraints:
     constraint: インターフェース定義「索引のチェック」と同じ順と内容（フックと同じ読み取り → JSON Schema → ルールの場所の実在）で、書き込む前と書き込んだ後の索引を確認する。書き込んだ後にフックが読めないか、書き込む前に無かった問題が出るときだけ断る
     notes: 問題はエントリのバージョンと理由で照らし合わせる（位置は新規作成・削除でずれるため）。書き換えたエントリの問題は、書き込む前に同じ理由があっても新しい問題として扱う。もとからある問題は、この書き込みで生じたものではないため書き込みを止めない
   - item: 書式の維持
-    constraint: '`ruamel.yaml` の round-trip で読み込みと書き込みをし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書き込む文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符で囲んだ 1 行の文字列）で記載する'
+    constraint: '`ruamel.yaml` の round-trip で読み込みと書き込みをし、対象のエントリ以外の行（コメント・引用符・字下げ・キーの並び・改行）を変えない。書き出した内容で対象のエントリの外の行が変わるときは書き込まない。新しく書き込む文字列のリストは 1 行のフロー形式、`args` はブロックのマップ、`read_by` はブロックのリスト、`read_tool` はブロックのマップ（`tool`・`args`・`optional_args` の順。`args`・`optional_args` は単一引用符で囲んだ 1 行の文字列）、`name` は 1 行の文字列で記載する'
     notes: 設定は PoC の結果（`width` 4096・`preserve_quotes`）。字下げは索引から推定し（推定できないときは mapping 2 / sequence 4 / offset 2）、改行は索引の改行に合わせる。`~`・アンカーなど round-trip が書き換える表記を他のエントリに持つ索引は、手で修正してもらう。フックの読み取りが受け付ける形式だけで書き込む。既にあるエントリへ無いキーを途中に書き込むと、挿入位置の直前のキーの後ろにあるコメント行は新しいキーの上に残る（コメントは対象のエントリの中のため、外の行を変えない確認には掛からない）
   - item: 新規作成の位置
     constraint: '`rules` の末尾。`rules` が無い索引では `rules` を追加する'
