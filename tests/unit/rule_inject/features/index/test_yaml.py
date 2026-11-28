@@ -248,12 +248,7 @@ def test_parse_index_when_read_tool_invalid(read_tool: str) -> None:
 def test_parse_index_when_name() -> None:
     """`name` を読み込む（正常系）。"""
     # 準備
-    text = (
-        "rules:\n"
-        "  - rule: ./a.md\n"
-        "    name: python-core-naming\n"
-        "  - rule: ./b.md\n"
-    )
+    text = "rules:\n  - rule: ./a.md\n    name: python-core-naming\n  - rule: ./b.md\n"
     # 実行
     _, entries = parse_index(text)
     # 検証

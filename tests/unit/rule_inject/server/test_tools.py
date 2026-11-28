@@ -63,10 +63,14 @@ def test_list_rules_when_entry_has_name(
     from rule_inject.server.tools import list_rules
 
     # 準備
-    index = make_index("rules:\n  - rule: /r/a.md\n    name: python-core-naming\n  - rule: /r/b.md\n")
+    index = make_index(
+        "rules:\n  - rule: /r/a.md\n    name: python-core-naming\n  - rule: /r/b.md\n"
+    )
     env = indexes_env(index)
     # 実行
-    result = list_rules(project_dir=str(project_dir), limit=100, cursor=None, format="json", env=env)
+    result = list_rules(
+        project_dir=str(project_dir), limit=100, cursor=None, format="json", env=env
+    )
     # 検証
     entries = result.structured_content["entries"]
     assert entries[0]["name"] == "python-core-naming"
