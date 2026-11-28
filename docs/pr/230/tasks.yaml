@@ -35,7 +35,9 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-28T10:33:26.532765+00:00'
   - process: 単一ユースケース設計
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T10:38:49.556134+00:00'
   - process: モック作成
     status: skipped
     reason: 画面を作らない。サイドバーは dev-docs が文書の名前から作る
