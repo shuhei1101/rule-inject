@@ -314,3 +314,13 @@ settings:
     allowed: 1〜64 文字の英数字 / `_` / `-`（`.service` を付けない）。それ以外の値は設定ファイルの誤りとして扱う
     reason: サーバーは端末に 1 つだけ常駐させるため、`projects` で分けない。そのため `global` だけに設定する
     visibility: user
+  - key: rules[].name
+    title: エントリの名前
+    file: 索引（*.yaml）
+    type: str
+    required: false
+    default: なし（project-index の文書の名前は `{索引のパス}#{位置}` になる）
+    description: エントリを見分けるための名前。照合・案内・既読の判定には使用せず、`list_rules` の応答と、索引を配信する配信元の文書の名前（dev-docs のサイドバー）に使用する
+    reload: immediate
+    allowed: 1 文字以上の文字列。同じ索引の中で重なってもよい。空の文字列は、その索引を読み込まず、索引を読み込めないときと同じく索引の場所と理由をコンテキストへ追加する
+    visibility: user
