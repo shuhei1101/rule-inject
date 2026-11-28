@@ -34,11 +34,15 @@ docs:
   - page: docs/guide/索引の書式.md
     new: false
     change: エントリのキーの表に名前のキーを追加する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T11:02:54.680204+00:00'
   - page: docs/guide/MCPツール.md
     new: false
     change: write_index_entry の引数と list_rules の応答に名前を追加する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T11:02:54.680204+00:00'
   - page: rules.yaml
     new: false
     change: 10 件のエントリに、サイドバーで見分けられる名前を記載する

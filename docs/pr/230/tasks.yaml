@@ -84,7 +84,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-28T10:58:28.864230+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
+    note: 『索引の書式』『MCP ツール』。rules.yaml と索引のスキーマは実装で修正する
+    updated_by: planner
+    updated_at: '2026-11-28T11:02:57.908443+00:00'
   - process: 単体テスト作成
     status: todo
   - process: 実装
