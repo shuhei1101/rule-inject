@@ -33,6 +33,14 @@
 
 ## テスト結果
 
+### 単体
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/unit/rule_inject/features/index/check/test_service.py` | `test_load_validator` | 変更 | ✅ | 条件のエントリに `name` を追加<br>`テスト結果/20261128201039_fc48bce_単体テスト.log` |
+| `tests/unit/rule_inject/features/index/edit/test_service.py` | `test_write_entry_when_name_added` | 新規 | ✅ | 実装の前から pass（`_insert_position` が `ENTRY_KEY_ORDER` に無いキーを末尾に記載する。5d7df8a）<br>`テスト結果/20261128201039_fc48bce_単体テスト.log` |
+| `tests/unit/rule_inject/server/test_tools.py` | `test_list_rules_when_entry_has_name` | 新規 | ✅ | `テスト結果/20261128201039_fc48bce_単体テスト.log` |
+
 ### ドキュメント修正
 
 『索引の書式』『MCP ツール』は公開ドキュメントで、規約『V字モデル』の対応表で対応する単体・結合テストが無いため実行していない。
