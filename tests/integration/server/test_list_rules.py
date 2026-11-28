@@ -173,3 +173,27 @@ def test_normal_when_entry_has_read_tool(
     entries = result.structured_content["entries"]
     assert entries[0]["read_tool"] == {"tool": "mcp__docs__search_docs", "args": arguments}
     assert entries[1]["read_tool"] is None
+
+
+def test_normal_when_entry_has_name(
+    tmp_path: Path,
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    running_server: Callable[..., Any],
+) -> None:
+    """`name` を記載したエントリは索引に記載したままの値を、記載しないエントリは None を返却する（正常系）。"""
+    # 準備
+    index = make_index(
+        "rules:\n"
+        f"  - rule: {tmp_path}/rules/a.md\n"
+        "    name: python-core-naming\n"
+        f"  - rule: {tmp_path}/rules/b.md\n",
+        "project/rules.yaml",
+    )
+    server = running_server(index)
+    # 実行
+    result = server.call("list_rules", project_dir=str(project_dir), format="json")
+    # 検証
+    entries = result.structured_content["entries"]
+    assert entries[0]["name"] == "python-core-naming"
+    assert entries[1]["name"] is None
