@@ -287,7 +287,7 @@ flows:
       - 標準出力が `[]`
     test: test_normal_when_entry_has_name
   - name: 正常系（名前が空の文字列）
-    summary: 空の `name` をスキーマの違反として返却する
+    summary: フックの読み取りが断る空の `name` を、エントリ全体の違反として返却する
     setup:
       - name: Mock
         description: なし（コマンドを子プロセスで実行する）
@@ -304,14 +304,15 @@ flows:
         participant IF as 索引のエントリの検査
 
         C->>IF: --index・エントリ（標準入力）
-        IF-->>C: 違反の配列（path: name）・終了コード 0
+        IF->>IF: フックと同じ読み取りでエントリを読む（空の name で読めない）
+        IF-->>C: 違反の配列（path: $）・終了コード 0
       ```
 
       <!-- /map -->
     expected:
       - 終了コードが 0
-      - 標準出力の違反に `path` が `name` の要素がある
-      - '`write_index_entry` に同じエントリを指定したときに断られる理由と同じ理由が載っている'
+      - 標準出力の違反に `path` が `$` で、`rule` に `name は空でない文字列で記載してください` を含む要素がある
+      - '`check_indexes` が同じエントリの索引に返却する、フックが読めない理由と同じ文言（行の番号を除く）'
     test: test_normal_when_name_empty
 test_file: tests/integration/server/test_validate_entry.py
 callers:
