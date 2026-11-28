@@ -90,6 +90,15 @@
 | `tests/unit/rule_inject/features/index/test_yaml.py` | R7（単体テストで、結合テストから参照しない） | - | - |
 | `tests/unit/rule_inject/server/test_tools.py` | R7（単体テストで、結合テストから参照しない） | - | - |
 
+### 結合
+
+| ファイル | メソッド | 変更種別 | 結果 | 補足 |
+| --- | --- | --- | --- | --- |
+| `tests/integration/server/test_write_index_entry.py` | `test_normal_when_entry_name_written` | 新規 | ✅ | IF-122-2「正常系（エントリの名前を記載する）」<br>`テスト結果/20261128202718_aca0cd7_結合テスト.log` |
+| `tests/integration/server/test_list_rules.py` | `test_normal_when_entry_has_name` | 新規 | ✅ | IF-122-7「正常系（名前を記載したエントリがある）」<br>`テスト結果/20261128202718_aca0cd7_結合テスト.log` |
+| `tests/integration/server/test_validate_entry.py` | `test_normal_when_entry_has_name`・`test_normal_when_name_empty` | 新規 | ✅ | IF-122-24 の 2 つのフロー<br>`テスト結果/20261128202718_aca0cd7_結合テスト.log` |
+| 実行範囲の表の 9 ファイル | 全実行 | 実行のみ | ✅ | 144 テスト pass（並列数 1）<br>`テスト結果/20261128202718_aca0cd7_結合テスト.log` |
+
 ### 単体
 
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
