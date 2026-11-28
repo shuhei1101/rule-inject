@@ -1,0 +1,52 @@
+$ (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; for d in docs/pr/*/反映作業/*/; do ls "$d"*.py > /dev/null 2>&1 || continue; uv run mypy "$d"*.py || rc=1; done; uv run lint-imports || rc=1; (cd docs && npx -y github:shuhei1101/mdmark#develop check) || rc=1; (cd docs/guide && npx -y github:shuhei1101/mdmark#develop check) || rc=1; exit $rc)
+Using CPython 3.12.13
+Creating virtual environment at: .venv
+   Building rule-inject @ file:///home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-test-procedure-skip-mypy-without-py
+      Built rule-inject @ file:///home/shuhei2441/repo/rule-inject/.claude/worktrees/fix-test-procedure-skip-mypy-without-py
+Installed 49 packages in 95ms
+All checks passed!
+548 files already formatted
+Success: no issues found in 142 source files
+Success: no issues found in 5 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 4 source files
+Success: no issues found in 1 source file
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 5 source files
+Success: no issues found in 3 source files
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 69 files, 193 dependencies.
+------------------------------------
+
+hooks と server は features を使用し、features は shared を使用する KEPT
+features の機能どうしは import しない KEPT
+
+Contracts: 2 kept, 0 broken.
+ずれ 0 件
+ずれ 0 件
+exit code: 0

@@ -85,8 +85,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-28T11:38:32.294618+00:00'
   - process: ドキュメント修正
-    status: todo
+    status: done
     note: TP-122-1.yaml の TL-4（lint）の全件のコマンドを、.py を持つ反映作業のフォルダだけ mypy を実行する形にし、description の記述を合わせる
+    updated_by: planner
+    updated_at: '2026-11-28T11:41:36.302477+00:00'
   - process: 単体テスト作成
     status: skipped
     reason: コードを変えないため対象外
