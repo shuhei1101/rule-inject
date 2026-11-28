@@ -60,12 +60,12 @@ notes:
 
     | 画面 | 起動 | 止め方 |
     | --- | --- | --- |
-    | 開発ドキュメントサーバー（dev-docs） | 下の「起動のコマンド」を実行する。一時のフォルダに 2 つの端末の設定を作り、作業ブランチの `project-index.yaml` を `storage.type: disk` で参照する project-index と、その project-index に接続する dev-docs を、空いているポートで裏で起動する。最後の行に出る閲覧 URL に、リポジトリの直下からのパスを続けて開く | 一時のフォルダの `pi.pid`・`dd.pid` の pid のプロセスを `ps` で確認してから `kill` で止め、一時のフォルダを削除する |
+    | 開発ドキュメントサーバー（dev-docs） | 下の「起動のコマンド」を実行する。一時のフォルダに 2 つの端末の設定を作り、作業ブランチの `project-index.yaml` を `storage.type: disk` で参照する project-index と、その project-index に接続する dev-docs を、空いているポートで裏で起動する。どちらかのプロセスが起動の途中で終わったら、そのログを出して止まる。最後の行に出る閲覧 URL に、リポジトリの直下からのパスを続けて開く | 一時のフォルダの `pi.pid`・`dd.pid` の pid のプロセスを `ps` で確認してから `kill` で止め、一時のフォルダを削除する |
 
     起動のコマンド（`{worktree}` は作業ブランチの worktree の直下、`{project-index のクローン}`・`{dev-docs のクローン}` は常駐の端末の設定の `clone`、`{knowledge のクローン}` は `KNOWLEDGE_ROOT` の値に置き換える）:
 
     ```bash
-    T=$(mktemp -d /tmp/rule-inject-screen.XXXX)
+    T=$(mktemp -d /tmp/rule-inject-screen.XXXX); echo "一時のフォルダ: $T"
     read PROJECT_INDEX_PORT DEV_DOCS_PORT < <(python3 -c 'import socket
     def free():
         s = socket.socket(); s.bind(("127.0.0.1", 0)); n = s.getsockname()[1]; s.close(); return n
@@ -89,11 +89,11 @@ notes:
     YAML
     PROJECT_INDEX_CONFIG="$T/project-index.yaml" PROJECT_INDEX_PORT=$PROJECT_INDEX_PORT PROJECT_INDEX_STATE_DIR="$T/pi-state" \
       nohup {project-index のクローン}/.venv/bin/project-index serve > "$T/pi.log" 2>&1 & echo $! > "$T/pi.pid"
-    until [ "$(curl -s "http://127.0.0.1:$PROJECT_INDEX_PORT/sources" | grep -o '"status":"serving"' | wc -l)" -eq 2 ]; do sleep 2; done
+    until [ "$(curl -s "http://127.0.0.1:$PROJECT_INDEX_PORT/sources" | grep -o '"status":"serving"' | wc -l)" -eq 2 ]; do kill -0 "$(cat "$T/pi.pid")" 2>/dev/null || { cat "$T/pi.log"; exit 1; }; sleep 2; done
     DEV_DOCS_CONFIG="$T/dev-docs.yaml" DEV_DOCS_PORT=$DEV_DOCS_PORT DEV_DOCS_STATE_DIR="$T/dd-state" KNOWLEDGE_ROOT={knowledge のクローン} \
       nohup {dev-docs のクローン}/.venv/bin/python -m dev_docs serve > "$T/dd.log" 2>&1 & echo $! > "$T/dd.pid"
-    until grep -q "Uvicorn running" "$T/dd.log"; do sleep 2; done
-    echo "閲覧 URL: http://127.0.0.1:$DEV_DOCS_PORT/rule-inject/  一時のフォルダ: $T"
+    until grep -q "Uvicorn running" "$T/dd.log"; do kill -0 "$(cat "$T/dd.pid")" 2>/dev/null || { cat "$T/dd.log"; exit 1; }; sleep 2; done
+    echo "閲覧 URL: http://127.0.0.1:$DEV_DOCS_PORT/rule-inject/"
     ```
 
     配信元の設定は起動時に参照するため、`project-index.yaml` を変えたら 2 つとも再起動する。
