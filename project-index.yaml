@@ -232,7 +232,7 @@ documents:
     title: 公開ドキュメント
     alias_type: doc
     paths: [docs/guide/files.yml]
-    exclude: ["*.yaml", "*.yml", README.md, index.md, はじめに.md, 使用方法.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
+    exclude: ["*.yaml", README.md, index.md, はじめに.md, 使用方法.md, リファレンス.md, _config.yml, default.html, sidebar-source.html, tab-link.html, app.js, style.css, llms.txt, search.json]
     schema:
       source: knowledge
       path: schemas/knowledge-files.schema.yaml
@@ -241,6 +241,7 @@ documents:
     body_file: path
     metadata:
       visibility: visibility
+      category: category
   - id: src
     title: ソースコード
     paths: [src/files.yaml]
@@ -413,3 +414,309 @@ documents:
 validators:
   - id: rule_index_entry
     run: [rule-inject-validate-entry, --index, rules.yaml]
+nav:
+  tabs:
+    - title: はじめに
+      items:
+        - group: コアコンセプト
+          items:
+            - page: docs/docs/guide/コアコンセプト-ルールの案内.md
+            - page: docs/docs/guide/コアコンセプト-MCPサーバー.md
+        - group: リリース
+          items:
+            - page: docs/docs/guide/変更履歴.md
+    - title: 使い方
+      items:
+        - group: 導入
+          items:
+            - page: docs/docs/guide/セットアップ.md
+        - group: 判定
+          items:
+            - page: docs/docs/guide/ルールにするか文書にするかを決める.md
+    - title: 設計書
+      items:
+        - group: 全体
+          items:
+            - page: architecture
+            - page: nonfunctional
+            - {page: layout, title: フォルダ構成}
+            - page: config
+            - page: dev_command
+            - page: test_procedure
+        - group: シナリオ
+          items:
+            - group: ルールの案内と既読の記録
+              items:
+                - page: scenario/SC-122-16
+                - page: scenario/SC-122-17
+                - page: scenario/SC-122-23
+                - page: scenario/SC-122-8
+                - page: scenario/SC-122-11
+                - page: scenario/SC-122-21
+                - page: scenario/SC-122-10
+                - page: scenario/SC-122-13
+                - page: scenario/SC-122-6
+            - group: 既読の記録の確認と削除
+              items:
+                - page: scenario/SC-122-15
+                - page: scenario/SC-122-14
+                - page: scenario/SC-122-24
+            - group: 索引
+              items:
+                - page: scenario/SC-122-7
+                - page: scenario/SC-122-19
+                - page: scenario/SC-122-25
+                - page: scenario/SC-122-20
+                - page: scenario/SC-122-26
+                - page: scenario/SC-122-12
+                - page: scenario/SC-122-9
+            - group: 導入と MCP サーバーの運用
+              items:
+                - page: scenario/SC-122-18
+                - page: scenario/SC-122-4
+                - page: scenario/SC-122-22
+                - page: scenario/SC-122-1
+                - page: scenario/SC-122-2
+                - page: scenario/SC-122-3
+                - page: scenario/SC-122-5
+            - auto: {document: scenario}
+        - group: インターフェース定義
+          items:
+            - group: フック
+              items:
+                - page: interface/IF-122-14
+                - page: interface/IF-122-19
+                - page: interface/IF-122-16
+                - page: interface/IF-122-18
+                - page: interface/IF-122-17
+                - page: interface/IF-122-15
+                - page: interface/IF-122-13
+                - page: interface/IF-122-23
+            - group: MCP のツール（索引）
+              items:
+                - page: interface/IF-122-7
+                - page: interface/IF-122-8
+                - page: interface/IF-122-2
+                - page: interface/IF-122-1
+                - page: interface/IF-122-11
+                - page: interface/IF-122-24
+            - group: MCP のツール（既読の記録）
+              items:
+                - page: interface/IF-122-10
+                - page: interface/IF-122-9
+            - group: MCP のツール（サーバー）
+              items:
+                - page: interface/IF-122-6
+                - page: interface/IF-122-5
+                - page: interface/IF-122-12
+                - page: interface/IF-122-3
+                - page: interface/IF-122-4
+            - group: スキルとコマンド
+              items:
+                - page: interface/IF-122-20
+                - page: interface/IF-122-21
+                - page: interface/IF-122-22
+            - auto: {document: interface}
+        - group: データ
+          items:
+            - page: er/ER-122-2
+            - page: er/ER-122-1
+            - page: data/DATA-181-2
+            - page: data/DATA-181-3
+            - page: data/DATA-181-4
+            - page: data/DATA-181-1
+            - auto: {document: er}
+            - auto: {document: data}
+        - group: モジュール構成（プラグイン）
+          items:
+            - group: フック
+              items:
+                - {page: module/MOD-122-58, title: 概要}
+                - {page: module/MOD-122-23, title: "__init__.py"}
+                - {page: module/MOD-122-24, title: "_runner.py"}
+                - {page: module/MOD-122-25, title: "discard_read.py"}
+                - {page: module/MOD-122-63, title: "fill_config.py"}
+                - {page: module/MOD-122-26, title: "record_read.py"}
+                - {page: module/MOD-122-27, title: "rule_guide.py"}
+                - {page: module/MOD-122-28, title: "run.py（プラグインの直下）"}
+                - {page: module/MOD-122-29, title: "search_guide.py"}
+                - {page: module/MOD-122-30, title: "start_server.py"}
+                - {page: module/MOD-122-31, title: "sweep_read.py"}
+                - {page: module/MOD-122-32, title: "work_rules.py"}
+            - group: 索引
+              items:
+                - {page: module/MOD-122-62, title: 概要}
+                - {page: module/MOD-122-6, title: "_yaml.py"}
+                - {page: module/MOD-122-14, title: "service.py"}
+                - {page: module/MOD-122-15, title: "types.py"}
+            - group: 案内
+              items:
+                - {page: module/MOD-122-61, title: 概要}
+                - {page: module/MOD-122-4, title: "service.py"}
+                - {page: module/MOD-122-5, title: "types.py"}
+            - group: 既読の記録
+              items:
+                - {page: module/MOD-122-60, title: 概要}
+                - {page: module/MOD-122-19, title: "service.py"}
+                - {page: module/MOD-122-20, title: "types.py"}
+            - group: コマンドの解析
+              items:
+                - {page: module/MOD-122-56, title: 概要}
+                - {page: module/MOD-122-1, title: "service.py"}
+            - group: MCP の結果の文書
+              items:
+                - {page: module/MOD-122-55, title: 概要}
+                - {page: module/MOD-122-2, title: "service.py"}
+                - {page: module/MOD-122-3, title: "types.py"}
+            - group: サーバーの起動
+              items:
+                - {page: module/MOD-122-57, title: 概要}
+                - {page: module/MOD-122-21, title: "service.py"}
+                - {page: module/MOD-122-22, title: "types.py"}
+            - group: 設定の移し替え
+              items:
+                - {page: module/MOD-122-16, title: "migrations/v0_2_3.py"}
+                - {page: module/MOD-122-17, title: "service.py"}
+                - {page: module/MOD-122-18, title: "types.py"}
+                - {page: module/MOD-122-33, title: "移し替えの入口 / __main__.py"}
+            - group: 共通
+              items:
+                - {page: module/MOD-122-59, title: 概要}
+                - {page: module/MOD-122-45, title: "_settings_yaml.py"}
+                - {page: module/MOD-122-46, title: "errors.py"}
+                - {page: module/MOD-122-47, title: "logger.py"}
+                - {page: module/MOD-122-48, title: "paths.py"}
+                - {page: module/MOD-207-1, title: "prompts.py"}
+                - {page: module/MOD-122-49, title: "settings.py"}
+                - {page: module/MOD-122-50, title: "variables.py"}
+                - {page: module/MOD-122-51, title: "yaml_lines.py"}
+        - group: モジュール構成（MCP サーバー）
+          items:
+            - group: サーバー
+              items:
+                - {page: module/MOD-122-53, title: 概要}
+                - {page: module/MOD-122-34, title: "__main__.py"}
+                - {page: module/MOD-122-35, title: "_format.py"}
+                - {page: module/MOD-122-36, title: "admin_tools.py"}
+                - {page: module/MOD-122-37, title: "app.py"}
+                - {page: module/MOD-122-38, title: "check_tools.py"}
+                - {page: module/MOD-122-39, title: "clone.py"}
+                - {page: module/MOD-122-40, title: "control.py"}
+                - {page: module/MOD-122-41, title: "dev_docs.py"}
+                - {page: module/MOD-203-1, title: "prompts.py"}
+                - {page: module/MOD-122-42, title: "record_tools.py"}
+                - {page: module/MOD-122-43, title: "tools.py"}
+                - {page: module/MOD-122-44, title: "types.py"}
+            - group: エントリの編集
+              items:
+                - {page: module/MOD-122-52, title: 概要}
+                - {page: module/MOD-122-11, title: "_yaml.py"}
+                - {page: module/MOD-122-12, title: "service.py"}
+                - {page: module/MOD-122-13, title: "types.py"}
+            - group: 索引のチェック
+              items:
+                - {page: module/MOD-122-54, title: 概要}
+                - {page: module/MOD-122-64, title: "cli.py"}
+                - {page: module/MOD-122-7, title: "scan.py"}
+                - {page: module/MOD-122-8, title: "service.py"}
+                - {page: module/MOD-122-9, title: "tags.py"}
+                - {page: module/MOD-122-10, title: "types.py"}
+            - auto: {document: module}
+        - group: スキルと MCP サーバー
+          items:
+            - page: mcp_server
+            - page: agent_flow/global-setup
+            - page: agent_flow/setup
+        - group: プロンプト
+          items:
+            - group: フックの注入文
+              items:
+                - auto: {document: prompts, filter: {field: id, op: prefix, values: [hook/]}}
+            - group: MCP の instructions とツールの説明
+              items:
+                - auto: {document: prompts, filter: {field: id, op: prefix, values: [mcp/]}}
+        - group: 外部ライブラリと外部 API
+          items:
+            - page: library/LIB-122-1
+            - page: library/LIB-122-3
+            - page: library/LIB-122-5
+            - page: library/LIB-122-6
+            - page: library/LIB-122-4
+            - page: library/LIB-122-2
+            - page: library/LIB-203-1
+            - page: external_api
+            - auto: {document: library}
+    - title: 規約
+      items:
+        - group: ルール索引
+          items:
+            - page: root/rules.yaml
+            - auto: {document: rule_index}
+    - title: コード
+      items:
+        - group: フック
+          items:
+            - page: hooks/hooks/hooks.json
+            - page: hooks/hooks/run.py
+            - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/hooks/]}}
+        - group: 機能
+          items:
+            - group: 索引
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/index/]}}
+            - group: 案内
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/guidance/]}}
+            - group: 既読の記録
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/record/]}}
+            - group: コマンドの解析
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/command/]}}
+            - group: MCP の結果の文書
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/document/]}}
+            - group: サーバーの起動
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/server_start/]}}
+            - group: 設定の移し替え
+              items:
+                - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/features/migrate/, src/rule_inject/migrate/]}}
+        - group: MCP サーバー
+          items:
+            - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/server/]}}
+        - group: 共通
+          items:
+            - auto: {document: src, filter: {field: id, op: prefix, values: [src/rule_inject/shared/]}}
+        - group: スキル
+          items:
+            - auto: {document: skills}
+        - group: テスト
+          items:
+            - group: 単体テスト
+              items:
+                - auto: {document: tests, filter: {field: id, op: prefix, values: [tests/unit/]}}
+            - group: 結合テスト
+              items:
+                - auto: {document: tests, filter: {field: id, op: prefix, values: [tests/integration/]}}
+            - group: 非機能テスト
+              items:
+                - auto: {document: tests, filter: {field: id, op: prefix, values: [tests/nfr/]}}
+        - group: リポジトリの直下
+          items:
+            - page: root/README.md
+            - page: root/CLAUDE.md
+    - title: リファレンス
+      items:
+        - group: 設定
+          items:
+            - page: docs/docs/guide/設定ファイル.md
+            - page: docs/docs/guide/環境変数.md
+            - page: docs/docs/guide/索引の書式.md
+        - group: MCP
+          items:
+            - page: docs/docs/guide/MCPツール.md
+            - page: docs/docs/guide/MCPの結果の書式.md
+    - title: 用語集
+      items:
+        - auto: {document: glossary}

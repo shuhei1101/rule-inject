@@ -1,0 +1,24 @@
+docs:
+  - page: project-index.yaml
+    new: false
+    change: 'nav を記載し、タブを規約 dev-docs-navigation の 7 つの並びにし、サイドバーを 2 階層までのグループにまとめ、目次（kind: index）を並べない。公開ドキュメントの行の exclude が files.yml 自身を除いていたのを直し、category を metadata に加える'
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T09:19:53.583673+00:00'
+use_cases: []
+scope_out:
+  - item: 配信元 rule-inject の検索の対象とメタデータ（documents[]）の見直し
+    reason: 要望はタブとサイドバーの構成（nav）で、検索の対象とメタデータは別の Issue の要望
+    plan: '#195'
+  - item: dev-docs の目次の重なり
+    reason: dev-docs の画面の不具合で、この配信元の設定では直らない
+    plan: shuhei1101/dev-docs#226
+  - item: ルール索引のエントリ（rule_index）の、サイドバーに出す読める名前
+    reason: エントリは名前のキーを持たず、画面には rules.yaml#{番号} で出る。rule の場所を名前にすると、どれも !{KNOWLEDGE_ROOT}/docs/rul… と同じ頭で切れて見分けられないため、今回は入れない
+    plan: '#226'
+  - item: '管理用の YAML（src/files.yaml・tests/files.yaml）に #207 で追加した 5 ファイルの行が無く、タブ「コード」に出ない'
+    reason: 範囲のファイルを作ったら管理用の YAML の行を修正する決まりから外れている。今回の要望（nav）に含まれない
+    plan: '#225'
+  - item: 設計書『テスト実行方法』に補足「画面の起動」（開発ドキュメントサーバーの行）が無い
+    reason: planner『実装』・reviewer『レビュー』が参照する補足が無い。今回の要望（nav）に含まれない
+    plan: '#224'

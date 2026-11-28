@@ -1,0 +1,7 @@
+confirmations:
+  - topic: 開発ドキュメントの画面（nav のタブの並びとサイドバーのグループ）をこの並びにしてよいか
+    decision: この画面で進める（推奨案 A）
+    decided_by: thumbs_up
+    approver: shuhei1101
+    commit:
+    thread: https://github.com/shuhei1101/rule-inject/pull/223#discussion_r4726427236
