@@ -56,15 +56,44 @@ layers:
       ```
 notes:
   画面の起動: |-
-    開発ドキュメントサーバー（dev-docs）の画面を、作業ブランチの `project-index.yaml` で開く手順。
-    一時のフォルダに端末の設定を作り、一時の project-index と dev-docs を起動する。
+    開発ドキュメントサーバー（dev-docs）の画面を、作業ブランチの `project-index.yaml` で開く。
 
-    | 対象 | 起動 |
-    | --- | --- |
-    | project-index | 端末の設定の `sources[]` に、配信元 `rule-inject`（`config` を作業ブランチの worktree の `project-index.yaml`・`storage.type` を `disk`）と、スキーマを参照する配信元 `knowledge` を並べる。`clone` は常駐の端末の設定と同じ project-index のクローンにする。`PROJECT_INDEX_CONFIG`・`PROJECT_INDEX_PORT`（空いているポート）・`PROJECT_INDEX_STATE_DIR`（一時のフォルダの中）を指定して、クローンの `.venv/bin/project-index serve` を起動する |
-    | dev-docs | 端末の設定を `version: "2"`・`clone` を常駐と同じ dev-docs のクローン・`project_index` を上の project-index の URL にする。`DEV_DOCS_CONFIG`・`DEV_DOCS_PORT`（空いているポート）・`DEV_DOCS_STATE_DIR`（一時のフォルダの中）・`KNOWLEDGE_ROOT` を指定して、クローンの `.venv/bin/python -m dev_docs serve` を起動する |
+    | 画面 | 起動 | 止め方 |
+    | --- | --- | --- |
+    | 開発ドキュメントサーバー（dev-docs） | 下の「起動のコマンド」を実行する。一時のフォルダに 2 つの端末の設定を作り、作業ブランチの `project-index.yaml` を `storage.type: disk` で参照する project-index と、その project-index に接続する dev-docs を、空いているポートで裏で起動する。最後の行に出る閲覧 URL に、リポジトリの直下からのパスを続けて開く | 一時のフォルダの `pi.pid`・`dd.pid` の pid のプロセスを `ps` で確認してから `kill` で止め、一時のフォルダを削除する |
 
-    - project-index の標準エラーに `Uvicorn running on http://127.0.0.1:{ポート}` が出て、`http://127.0.0.1:{PROJECT_INDEX_PORT}/sources` の 2 つの配信元が `serving` になってから画面を開く
-    - 画面は `http://127.0.0.1:{DEV_DOCS_PORT}/rule-inject/{リポジトリの直下からのパス}` で開く
-    - 配信元の設定は起動時に参照するため、`project-index.yaml` を変えたら 2 つとも再起動する
-    - 止めるときは、起動した 2 つのプロセスの pid を確認してから止め、一時のフォルダを削除する
+    起動のコマンド（`{worktree}` は作業ブランチの worktree の直下、`{project-index のクローン}`・`{dev-docs のクローン}` は常駐の端末の設定の `clone`、`{knowledge のクローン}` は `KNOWLEDGE_ROOT` の値に置き換える）:
+
+    ```bash
+    T=$(mktemp -d /tmp/rule-inject-screen.XXXX)
+    read PROJECT_INDEX_PORT DEV_DOCS_PORT < <(python3 -c 'import socket
+    def free():
+        s = socket.socket(); s.bind(("127.0.0.1", 0)); n = s.getsockname()[1]; s.close(); return n
+    print(free(), free())')
+    cat > "$T/project-index.yaml" <<YAML
+    version: "1"
+    clone: {project-index のクローン}
+    sources:
+      - id: rule-inject
+        config: [{worktree}/project-index.yaml]
+        storage: {type: disk}
+        scope: {read: ["/**"]}
+      - id: knowledge
+        config: [{knowledge のクローン}/project-index.yaml]
+        scope: {read: ["/**"]}
+    YAML
+    cat > "$T/dev-docs.yaml" <<YAML
+    version: "2"
+    clone: {dev-docs のクローン}
+    project_index: http://127.0.0.1:$PROJECT_INDEX_PORT
+    YAML
+    PROJECT_INDEX_CONFIG="$T/project-index.yaml" PROJECT_INDEX_PORT=$PROJECT_INDEX_PORT PROJECT_INDEX_STATE_DIR="$T/pi-state" \
+      nohup {project-index のクローン}/.venv/bin/project-index serve > "$T/pi.log" 2>&1 & echo $! > "$T/pi.pid"
+    until [ "$(curl -s "http://127.0.0.1:$PROJECT_INDEX_PORT/sources" | grep -o '"status":"serving"' | wc -l)" -eq 2 ]; do sleep 2; done
+    DEV_DOCS_CONFIG="$T/dev-docs.yaml" DEV_DOCS_PORT=$DEV_DOCS_PORT DEV_DOCS_STATE_DIR="$T/dd-state" KNOWLEDGE_ROOT={knowledge のクローン} \
+      nohup {dev-docs のクローン}/.venv/bin/python -m dev_docs serve > "$T/dd.log" 2>&1 & echo $! > "$T/dd.pid"
+    until grep -q "Uvicorn running" "$T/dd.log"; do sleep 2; done
+    echo "閲覧 URL: http://127.0.0.1:$DEV_DOCS_PORT/rule-inject/  一時のフォルダ: $T"
+    ```
+
+    配信元の設定は起動時に参照するため、`project-index.yaml` を変えたら 2 つとも再起動する。
