@@ -82,12 +82,13 @@
 | `src/rule_inject/features/index/edit/service.py` | R7（エントリの編集を使用するテストを調べた） | `tests/integration/server/test_write_index_entry.py`<br>`tests/integration/server/test_delete_index_entry.py` | - |
 | `src/rule_inject/server/tools.py` | R7（変えたのは `list_rules` の `_rule_entry` だけ） | `tests/integration/server/test_list_rules.py` | - |
 | `src/rule_inject/server/types.py` | R7（変えたのは `RuleEntry` だけで、`list_rules` の応答にだけ使用する） | `tests/integration/server/test_list_rules.py` | - |
+| `tests/integration/server/test_list_rules.py` | R2 | `tests/integration/server/test_list_rules.py` | - |
+| `tests/integration/server/test_validate_entry.py` | R2 | `tests/integration/server/test_validate_entry.py` | - |
+| `tests/integration/server/test_write_index_entry.py` | R2 | `tests/integration/server/test_write_index_entry.py` | - |
 | `tests/unit/rule_inject/features/index/check/test_service.py` | R7（単体テストで、結合テストから参照しない） | - | - |
 | `tests/unit/rule_inject/features/index/edit/test_service.py` | R7（単体テストで、結合テストから参照しない） | - | - |
 | `tests/unit/rule_inject/features/index/test_yaml.py` | R7（単体テストで、結合テストから参照しない） | - | - |
 | `tests/unit/rule_inject/server/test_tools.py` | R7（単体テストで、結合テストから参照しない） | - | - |
-
-結合テスト作成の工程で、IF-122-2・IF-122-7・IF-122-24 の `test_file` の結合テストを作った時点で、そのファイルの行を加える。
 
 ### 単体
 
