@@ -574,7 +574,7 @@ nav:
                 - {page: module/MOD-122-16, title: "migrations/v0_2_3.py"}
                 - {page: module/MOD-122-17, title: "service.py"}
                 - {page: module/MOD-122-18, title: "types.py"}
-                - {page: module/MOD-122-33, title: "__main__.py"}
+                - {page: module/MOD-122-33, title: "移し替えの入口 / __main__.py"}
             - group: 共通
               items:
                 - {page: module/MOD-122-59, title: 概要}
