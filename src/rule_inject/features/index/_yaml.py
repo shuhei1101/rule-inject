@@ -16,10 +16,22 @@ from rule_inject.shared.yaml_lines import (
 )
 
 TOP_KEYS = ("default_on", "rules")
-ENTRY_KEYS = ("rule", "paths", "exclude", "tools", "args", "on", "read_by", "read_tool", "enabled")
+ENTRY_KEYS = (
+    "rule",
+    "paths",
+    "exclude",
+    "tools",
+    "args",
+    "on",
+    "read_by",
+    "read_tool",
+    "enabled",
+    "name",
+)
 # 値がリストのエントリのキー（`rule` と `enabled` が文字列、`args` はキーごとのリストのマップ、`read_by` はマップのリスト）
 LIST_ENTRY_KEYS = ("paths", "exclude", "tools", "on")
 ENABLED_KEY = "enabled"
+NAME_KEY = "name"
 # `enabled` に書き込める値
 ENABLED_VALUES = ("true", "false")
 ARGS_KEY = "args"
@@ -205,6 +217,9 @@ def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int
             raise yaml_error(
                 current.number, f"{key} は {' か '.join(ENABLED_VALUES)} で記載してください"
             )
+        # `name` は空でない文字列だけを許す
+        if key == NAME_KEY and (not isinstance(entry[key], str) or not entry[key]):
+            raise yaml_error(current.number, f"{key} は空でない文字列で記載してください")
         # 次の行が同じ桁のキーなら、同じエントリの続き
         if position >= len(lines) or lines[position].indent != key_indent:
             return entry, position

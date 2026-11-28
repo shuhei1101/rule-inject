@@ -32,6 +32,8 @@ class RuleEntry(BaseModel):
     read_by: list[dict[str, Any]]
     # 索引に書き込んだままの `read_tool`。記載しないエントリは None
     read_tool: dict[str, Any] | None = None
+    # 索引に書き込んだままの `name`。記載しないエントリは None
+    name: str | None = None
 
 
 class IndexIssue(BaseModel):
