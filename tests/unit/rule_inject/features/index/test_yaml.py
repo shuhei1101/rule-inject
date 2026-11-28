@@ -268,5 +268,5 @@ def test_parse_index_when_name_empty() -> None:
     # 準備
     text = 'rules:\n  - rule: ./a.md\n    name: ""\n'
     # 実行・検証
-    with pytest.raises(ValueError, match=r"^3行目: "):
+    with pytest.raises(ValueError, match=r"^3行目: name は空でない文字列で記載してください$"):
         parse_index(text)
