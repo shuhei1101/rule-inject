@@ -16,3 +16,9 @@ scope_out:
   - item: ルール索引のエントリ（rule_index）の、サイドバーに出す読める名前
     reason: エントリは名前のキーを持たず、画面には rules.yaml#{番号} で出る。rule の場所を名前にすると、どれも !{KNOWLEDGE_ROOT}/docs/rul… と同じ頭で切れて見分けられないため、今回は入れない
     plan: to_file
+  - item: '管理用の YAML（src/files.yaml・tests/files.yaml）に #207 で追加した 5 ファイルの行が無く、タブ「コード」に出ない'
+    reason: 範囲のファイルを作ったら管理用の YAML の行を修正する決まりから外れている。今回の要望（nav）に含まれない
+    plan: '#225'
+  - item: 設計書『テスト実行方法』に補足「画面の起動」（開発ドキュメントサーバーの行）が無い
+    reason: planner『実装』・reviewer『レビュー』が参照する補足が無い。今回の要望（nav）に含まれない
+    plan: '#224'
