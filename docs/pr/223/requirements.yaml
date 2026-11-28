@@ -15,7 +15,7 @@ scope_out:
     plan: shuhei1101/dev-docs#226
   - item: ルール索引のエントリ（rule_index）の、サイドバーに出す読める名前
     reason: エントリは名前のキーを持たず、画面には rules.yaml#{番号} で出る。rule の場所を名前にすると、どれも !{KNOWLEDGE_ROOT}/docs/rul… と同じ頭で切れて見分けられないため、今回は入れない
-    plan: to_file
+    plan: '#226'
   - item: '管理用の YAML（src/files.yaml・tests/files.yaml）に #207 で追加した 5 ファイルの行が無く、タブ「コード」に出ない'
     reason: 範囲のファイルを作ったら管理用の YAML の行を修正する決まりから外れている。今回の要望（nav）に含まれない
     plan: '#225'
