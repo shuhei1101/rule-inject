@@ -33,6 +33,20 @@
 
 ## テスト結果
 
+### 結合テストの実行範囲
+
+| 変更したファイル | 結果 | 実行する結合テスト | 結合テストが無いエントリーポイント |
+| --- | --- | --- | --- |
+| `src/rule_inject/features/index/_yaml.py` | R7（`parse_index` は索引を読む全てのフックとツールが使用する。索引を読み込むテストを調べた） | `tests/integration/plugin/test_rule_guide.py`<br>`tests/integration/plugin/test_search_guide.py`<br>`tests/integration/plugin/test_record_read.py`<br>`tests/integration/server/test_list_rules.py`<br>`tests/integration/server/test_search_rules.py`<br>`tests/integration/server/test_check_indexes.py`<br>`tests/integration/server/test_write_index_entry.py`<br>`tests/integration/server/test_delete_index_entry.py`<br>`tests/integration/server/test_validate_entry.py` | - |
+| `src/rule_inject/features/index/check/index.schema.yaml` | R7（スキーマの検査を使用するテストを調べた） | `tests/integration/server/test_check_indexes.py`<br>`tests/integration/server/test_write_index_entry.py`<br>`tests/integration/server/test_validate_entry.py` | - |
+| `src/rule_inject/features/index/edit/service.py` | R7（エントリの編集を使用するテストを調べた） | `tests/integration/server/test_write_index_entry.py`<br>`tests/integration/server/test_delete_index_entry.py` | - |
+| `src/rule_inject/server/tools.py` | R7（変えたのは `list_rules` の `_rule_entry` だけ） | `tests/integration/server/test_list_rules.py` | - |
+| `src/rule_inject/server/types.py` | R7（変えたのは `RuleEntry` だけで、`list_rules` の応答にだけ使用する） | `tests/integration/server/test_list_rules.py` | - |
+| `rules.yaml` | R7（結合テストはテストごとの一時の索引を使用し、リポジトリの `rules.yaml` を参照しない） | - | - |
+| `tests/unit/**`（4 ファイル） | R7（単体テストで、結合テストから参照しない） | - | - |
+| `docs/**`（設計書・公開ドキュメント・PR ドキュメント・ログ） | R7（文書で、結合テストから参照しない） | - | - |
+| 作る予定の結合テスト | IF-122-2・IF-122-7・IF-122-24 の `test_file` | `tests/integration/server/test_write_index_entry.py::test_normal_when_entry_name_written`<br>`tests/integration/server/test_list_rules.py::test_normal_when_entry_has_name`<br>`tests/integration/server/test_validate_entry.py::test_normal_when_entry_has_name`<br>`tests/integration/server/test_validate_entry.py::test_normal_when_name_empty` | - |
+
 ### 単体
 
 | ファイル | メソッド | 変更種別 | 結果 | 補足 |
