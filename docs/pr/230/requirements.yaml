@@ -1,0 +1,64 @@
+use_cases:
+  - kind: single
+    scenario: docs/scenario/SC-122-19.yaml
+    impact: changed
+    detail: 索引のエントリを作成・書き換えするときに、エントリの名前も指定できる
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-9.yaml
+    impact: changed
+    detail: 有効なルールの一覧で、エントリの名前も受け取る
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-26.yaml
+    impact: changed
+    detail: 名前を持つエントリも書き込みの検査に合格する
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-20.yaml
+    impact: run_only
+    detail: 名前を持つ索引もスキーマの違反にならない
+    depends_on: []
+  - kind: single
+    scenario: docs/scenario/SC-122-16.yaml
+    impact: run_only
+    detail: 名前を持つ索引もフックが読み取り、今までどおり案内する
+    depends_on: []
+docs:
+  - page: docs/config/CFG-122-1.yaml
+    new: false
+    change: ルール索引のエントリのキーに、省略できる名前のキーを追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T10:49:36.703927+00:00'
+  - page: docs/guide/索引の書式.md
+    new: false
+    change: エントリのキーの表に名前のキーを追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T11:02:54.680204+00:00'
+  - page: docs/guide/MCPツール.md
+    new: false
+    change: write_index_entry の引数と list_rules の応答に名前を追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T11:02:54.680204+00:00'
+  - page: rules.yaml
+    new: false
+    change: 10 件のエントリに、サイドバーで見分けられる名前を記載する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T11:10:31.202585+00:00'
+  - page: src/rule_inject/features/index/check/index.schema.yaml
+    new: false
+    change: エントリの properties に名前のキーを追加する
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T11:10:31.202585+00:00'
+scope_out:
+  - item: 他のリポジトリの索引（knowledge の rules.yaml・AI Monitor の rules.global.yaml など）のエントリへの名前の記載
+    reason: 名前は省略できるキーで、どの配信元も索引を rule_index の行として配信していないため、サイドバーの表示に影響しない
+    plan: none
+  - item: 名前の無いエントリの名前を、ルールのファイル名から project-index が補う仕組み
+    reason: project-index の metadata は列の値を変換して名前にできず、project-index 側の機能追加になる。要望はエントリに名前のキーを持たせる案で満たせる
+    plan: none

@@ -184,6 +184,35 @@ flows:
       - 1 つ目のエントリの `read_tool` が `tool` と `args` を持ち、`args` が記載した JSON の文字列のまま
       - 2 つ目のエントリの `read_tool` が `None`
     test: test_normal_when_entry_has_read_tool
+  - name: 正常系（名前を記載したエントリがある）
+    summary: '`name` を記載したエントリは索引に記載したままの値を、記載しないエントリは `None` を返却する'
+    setup:
+      - name: Mock
+        description: なし（`127.0.0.1` の空いているポートで子プロセスとして起動したサーバーへ、MCP の Python SDK の Streamable HTTP のクライアントで接続し、ツールを呼ぶ）
+      - name: 設定ファイル
+        description: '`projects` にプロジェクトの直下を `match` とし索引を 1 つ持つ要素'
+      - name: 索引
+        description: '`name: python-core-naming` を記載したエントリと、記載しないエントリを 1 つずつ'
+    flow: |-
+      <!-- map -->
+
+      ```mermaid
+      sequenceDiagram
+        participant C as クライアント
+        participant IF as list_rules
+        participant IDX as 索引
+
+        C->>IF: project_dir
+        IF->>IDX: フックと同じ読み取りで読む
+        IDX-->>IF: エントリ
+        IF-->>C: entries
+      ```
+
+      <!-- /map -->
+    expected:
+      - 1 つ目のエントリの `name` が `python-core-naming`
+      - 2 つ目のエントリの `name` が `None`
+    test: test_normal_when_entry_has_name
 lead: プロジェクトで読み込む索引と有効なエントリを、読めない索引や無効のエントリの理由と一緒に返却するツールを定め、ルールの一覧を修正するときに参照する。
 identifier: list_rules
 idempotent: true
@@ -323,6 +352,10 @@ response:
     type: str | None
     description: 続きを取るときに `cursor` へ指定する値
     notes: 続きが無いときは `None`
+  - name: entries[].name
+    type: str | None
+    description: エントリの名前（索引に記載したまま）
+    notes: エントリが `name` を記載しないときは `None`
 response_example: |-
   ```json
   {

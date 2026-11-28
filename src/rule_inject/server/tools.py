@@ -113,6 +113,7 @@ def _rule_entry(content: IndexContent, outcome: EntryOutcome, entry: IndexEntry)
         on=[operation for operation in OPERATIONS if operation in entry.on],
         read_by=list(raw.get("read_by", [])),
         read_tool=dict(raw["read_tool"]) if "read_tool" in raw else None,
+        name=raw.get("name"),
     )
 
 

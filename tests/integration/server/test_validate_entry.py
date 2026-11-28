@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Callable
@@ -89,6 +90,50 @@ def test_normal_when_schema_violated(
     assert result.returncode == 0
     violations = json.loads(result.stdout)
     assert {"path": "paths", "rule": expected} in violations
+
+
+def test_normal_when_entry_has_name(
+    source_dir: Path, run_validate: Callable[..., subprocess.CompletedProcess[str]]
+) -> None:
+    """`name` を持つエントリに空の配列を返却する（正常系）。"""
+    # 実行
+    result = run_validate(
+        "rule: rules/python.md\npaths: ['**/*.py']\nname: python-core-naming\n",
+        "--index",
+        "rules.yaml",
+    )
+    # 検証
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == []
+
+
+def test_normal_when_name_empty(
+    source_dir: Path,
+    run_validate: Callable[..., subprocess.CompletedProcess[str]],
+) -> None:
+    """フックの読み取りが断る空の `name` を、エントリ全体の違反として返却する（正常系）。"""
+    from rule_inject.features.index.check import check_index_text, load_validator
+
+    # 準備
+    line_number = re.compile(r"\d+行目")
+    expected = next(
+        problem.reason
+        for problem in check_index_text(
+            str(source_dir / "rules.yaml"),
+            'rules:\n  - rule: rules/python.md\n    name: ""\n',
+            {},
+            validator=load_validator(),
+        ).problems
+        if problem.kind == "hook_error"
+    )
+    # 実行
+    result = run_validate('rule: rules/python.md\nname: ""\n', "--index", "rules.yaml")
+    # 検証
+    assert result.returncode == 0
+    violations = json.loads(result.stdout)
+    assert [violation["path"] for violation in violations] == ["$"]
+    assert "name は空でない文字列で記載してください" in violations[0]["rule"]
+    assert line_number.sub("", violations[0]["rule"]) == line_number.sub("", expected)
 
 
 def test_normal_when_rule_file_missing(

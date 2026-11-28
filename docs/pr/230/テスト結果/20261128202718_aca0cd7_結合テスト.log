@@ -1,0 +1,23 @@
+$ TMPDIR=/tmp/ri-230-tmp uv run pytest tests/integration/plugin/test_rule_guide.py tests/integration/plugin/test_search_guide.py tests/integration/plugin/test_record_read.py tests/integration/server/test_list_rules.py tests/integration/server/test_search_rules.py tests/integration/server/test_check_indexes.py tests/integration/server/test_write_index_entry.py tests/integration/server/test_delete_index_entry.py tests/integration/server/test_validate_entry.py
+# TMPDIR は /tmp/pytest-of-shuhei2441 が別のユーザーの所有で pytest の一時フォルダを作れないため、実行環境の一時フォルダだけを替えた（コマンドの引数・オプションは変えていない）
+# 結合テストの実行範囲の表の実行する結合テスト（9 ファイル）を並列数 1 で実行した
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/design-index-rule-index-entry-name
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 144 items
+
+tests/integration/plugin/test_rule_guide.py ............................ [ 19%]
+..............                                                           [ 29%]
+tests/integration/plugin/test_search_guide.py ...............            [ 39%]
+tests/integration/plugin/test_record_read.py ....................        [ 53%]
+tests/integration/server/test_list_rules.py .......                      [ 58%]
+tests/integration/server/test_search_rules.py ......                     [ 62%]
+tests/integration/server/test_check_indexes.py .................         [ 74%]
+tests/integration/server/test_write_index_entry.py ................      [ 85%]
+tests/integration/server/test_delete_index_entry.py ...........          [ 93%]
+tests/integration/server/test_validate_entry.py ..........               [100%]
+
+============================= 144 passed in 16.42s =============================

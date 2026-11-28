@@ -61,7 +61,7 @@ functions:
       description: '`respond(ListRulesResult, format)`'
     process: |-
       1. `_project_settings(project_dir, env)` で設定を読み込む
-      2. `settings.indexes` を順に `read_index` で読み込む。`IndexReadError` は `unreadable_indexes` に、状態が `effective` のエントリは `RuleEntry`（パターンと `read_tool` は `raw` のまま、`rule` と `on` は `entry` の値）に、`skipped` は `skipped_entries` に、`disabled` は `disabled_entries` に入れる
+      2. `settings.indexes` を順に `read_index` で読み込む。`IndexReadError` は `unreadable_indexes` に、状態が `effective` のエントリは `RuleEntry`（パターンと `read_tool`・`name` は `raw` のまま、`rule` と `on` は `entry` の値）に、`skipped` は `skipped_entries` に、`disabled` は `disabled_entries` に入れる
       3. 有効なエントリの `int(cursor or 0)` 番目から `limit` 件を取り、`cursor` があるときは `unreadable_indexes`・`skipped_entries`・`disabled_entries` を空にする
       4. `fit_page` で応答が `MAX_RESPONSE_CHARS` に収まる件数まで末尾から切り、残りがあれば `next_cursor` に次の位置を入れる
       5. `respond` で返却する
@@ -76,6 +76,12 @@ functions:
         condition: '有効なエントリ 3 件と無効のエントリ 1 件の索引を `limit: 2` で 2 回呼ぶ'
         mock: なし
         expected: 1 回目は 2 件で `next_cursor` が `"2"`、`disabled_entries` が 1 件。2 回目は 1 件で `next_cursor` が `None`、`disabled_entries` が空。どちらも `total` が 3
+      - name: test_list_rules_when_entry_has_name
+        case: 正常
+        summary: 索引の `name` を `RuleEntry` の `name` に入れる
+        condition: '`name: python-core-naming` のエントリと `name` を記載しないエントリの索引'
+        mock: なし
+        expected: 1 つ目の `name` が `"python-core-naming"`、2 つ目の `name` が `None`
   - name: search_rules
     title: ルールの検索
     container: server/tools.py

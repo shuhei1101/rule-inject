@@ -479,3 +479,33 @@ def test_normal_when_read_tool_written(
     assert after_lines.index("    read_tool:") < after_lines.index("    enabled: true")
     listed = server.call("list_rules", project_dir=str(project_dir), format="json")
     assert listed.structured_content["entries"][0]["read_tool"] == read_tool
+
+
+def test_normal_when_entry_name_written(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    running_server: Callable[..., Any],
+    list_revs: Callable[[Any], list[str]],
+) -> None:
+    """位置で指したエントリに `name` を記載し、照合の結果を変えない（正常系）。"""
+    # 準備
+    rule = make_index("# a\n", "rules/a.md")
+    before = f'rules:\n  - rule: {rule}\n    paths: ["**/*.py"]\n    on: [write]\n'
+    index = make_index(before)
+    server = running_server(index)
+    expected_rev = list_revs(server)[0]
+    before_entry = load_indexes([str(index)], {}).entries[0]
+    # 実行
+    server.call(
+        "write_index_entry",
+        project_dir=str(project_dir),
+        index=str(index),
+        position=0,
+        expected_rev=expected_rev,
+        entry={"name": "python-core-naming"},
+    )
+    # 検証
+    assert index.read_text(encoding="utf-8") == before + "    name: python-core-naming\n"
+    loaded = load_indexes([str(index)], {})
+    assert loaded.failures == ()
+    assert loaded.entries[0] == before_entry

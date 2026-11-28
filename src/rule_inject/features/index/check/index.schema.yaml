@@ -118,3 +118,8 @@ $defs:
         type: boolean
         title: 有効
         description: エントリを照合に使用するか。`false` のエントリは案内にも既読にも使用しない。
+      name:
+        type: string
+        minLength: 1
+        title: エントリの名前
+        description: エントリを見分けるための名前。照合・案内・既読の判定には使用しない。

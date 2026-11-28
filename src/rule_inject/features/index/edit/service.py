@@ -34,6 +34,7 @@ ENTRY_KEY_ORDER = (
     "read_by",
     "read_tool",
     "enabled",
+    "name",
 )
 # 改行
 LF = "\n"

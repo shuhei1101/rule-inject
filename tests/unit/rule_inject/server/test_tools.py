@@ -54,6 +54,29 @@ def test_list_rules_when_paged(
     assert second.structured_content["total"] == 3
 
 
+def test_list_rules_when_entry_has_name(
+    project_dir: Path,
+    make_index: Callable[..., Path],
+    indexes_env: Callable[..., dict[str, str]],
+) -> None:
+    """索引の `name` を `RuleEntry` の `name` に入れる（正常系）。"""
+    from rule_inject.server.tools import list_rules
+
+    # 準備
+    index = make_index(
+        "rules:\n  - rule: /r/a.md\n    name: python-core-naming\n  - rule: /r/b.md\n"
+    )
+    env = indexes_env(index)
+    # 実行
+    result = list_rules(
+        project_dir=str(project_dir), limit=100, cursor=None, format="json", env=env
+    )
+    # 検証
+    entries = result.structured_content["entries"]
+    assert entries[0]["name"] == "python-core-naming"
+    assert entries[1]["name"] is None
+
+
 def test_search_rules_when_same_rule(
     project_dir: Path,
     make_index: Callable[..., Path],
