@@ -1,0 +1,13 @@
+docs:
+  - page: project-index.yaml
+    new: false
+    change: 'nav を記載し、タブを規約 dev-docs-navigation の 7 つの並びにし、サイドバーを 2 階層までのグループにまとめ、目次（kind: index）を並べない'
+    status: todo
+use_cases: []
+scope_out:
+  - item: 配信元 rule-inject の検索の対象とメタデータ（documents[]）の見直し
+    reason: 要望はタブとサイドバーの構成（nav）で、検索の対象とメタデータは別の Issue の要望
+    plan: '#195'
+  - item: dev-docs の目次の重なり
+    reason: dev-docs の画面の不具合で、この配信元の設定では直らない
+    plan: shuhei1101/dev-docs#226
