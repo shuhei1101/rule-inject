@@ -44,7 +44,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-28T10:33:26.532765+00:00'
   - process: データ設計
-    status: todo
+    status: done
+    note: CFG-122-1 に rules[].name を追加
+    updated_by: planner
+    updated_at: '2026-11-28T10:49:35.421686+00:00'
   - process: インターフェース定義設計
     status: todo
   - process: エージェント・MCP サーバー設計

@@ -28,7 +28,9 @@ docs:
   - page: docs/config/CFG-122-1.yaml
     new: false
     change: ルール索引のエントリのキーに、省略できる名前のキーを追加する
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T10:49:36.703927+00:00'
   - page: docs/guide/索引の書式.md
     new: false
     change: エントリのキーの表に名前のキーを追加する
