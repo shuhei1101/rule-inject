@@ -31,6 +31,19 @@
 | モジュール構成設計 | `709344e..a535fc8` | - |
 | モジュール構成設計 | `244658b..ceca696` | レビューの提案の反映（`test_load_validator` の条件） |
 
+## 実装
+
+| 項目 | 内容 |
+| --- | --- |
+| 撮った画面の場面 | テスト実行方法の補足「画面の起動」で作業ブランチの `project-index.yaml` から開いた dev-docs の `rule-inject/rules.yaml`（タブ「規約」）のサイドバー（`1280x800`。`390x844` は左上のボタンで「文書の一覧」を開いた状態） |
+
+`rules.yaml` の 10 件のエントリは、サイドバーに `name` のとおりの互いに異なる名前で出る。
+最も長い `python-architecture-dependency-management` は末尾が省略されるが、省略の前の `python-architecture-dependen` で `python-architecture-layout` と見分けられる。
+
+![規約のサイドバー（1280x800）](./画像/規約のサイドバー_1280x800.png)
+
+![規約のサイドバー（390x844）](./画像/規約のサイドバー_390x844.png)
+
 ## テスト結果
 
 ### 結合テストの実行範囲
