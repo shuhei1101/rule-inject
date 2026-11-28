@@ -79,7 +79,10 @@ tasks:
     updated_by: planner
     updated_at: '2026-11-28T10:33:26.532765+00:00'
   - process: モジュール構成設計
-    status: todo
+    status: done
+    note: MOD-122-6・MOD-122-12・MOD-122-43・MOD-122-44
+    updated_by: planner
+    updated_at: '2026-11-28T10:58:28.864230+00:00'
   - process: ドキュメント修正
     status: todo
   - process: 単体テスト作成
