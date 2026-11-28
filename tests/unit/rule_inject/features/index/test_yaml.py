@@ -243,3 +243,30 @@ def test_parse_index_when_read_tool_invalid(read_tool: str) -> None:
     # 実行・検証
     with pytest.raises(ValueError, match="行目"):
         parse_index(text)
+
+
+def test_parse_index_when_name() -> None:
+    """`name` を読み込む（正常系）。"""
+    # 準備
+    text = (
+        "rules:\n"
+        "  - rule: ./a.md\n"
+        "    name: python-core-naming\n"
+        "  - rule: ./b.md\n"
+    )
+    # 実行
+    _, entries = parse_index(text)
+    # 検証
+    assert entries == [
+        {"rule": "./a.md", "name": "python-core-naming"},
+        {"rule": "./b.md"},
+    ]
+
+
+def test_parse_index_when_name_empty() -> None:
+    """空の `name` を拒む（異常系）。"""
+    # 準備
+    text = 'rules:\n  - rule: ./a.md\n    name: ""\n'
+    # 実行・検証
+    with pytest.raises(ValueError, match=r"^3行目: "):
+        parse_index(text)

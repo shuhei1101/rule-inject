@@ -182,6 +182,24 @@ def test_write_entry_when_update(
     assert after_lines[-4:] == before_lines[-4:]
 
 
+def test_write_entry_when_name_added(
+    make_index: Callable[..., Path],
+    make_check: Callable[..., CheckSpy],
+    write: Callable[..., Any],
+) -> None:
+    """既にあるエントリに `name` を最後のキーの後ろへ記載する（正常系）。"""
+    from rule_inject.features.index import entry_revs
+
+    # 準備
+    index = make_index(INDEX_TEXT)
+    check, _ = make_check()
+    expected_rev = entry_revs(INDEX_TEXT)[1]
+    # 実行
+    write(index, {"name": "python-core-naming"}, check, position=1, expected_rev=expected_rev)
+    # 検証
+    assert index.read_text(encoding="utf-8") == INDEX_TEXT + "    name: python-core-naming\n"
+
+
 def test_write_entry_when_dry_run(
     make_index: Callable[..., Path],
     make_check: Callable[..., CheckSpy],

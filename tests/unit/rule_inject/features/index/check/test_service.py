@@ -41,6 +41,7 @@ def test_load_validator() -> None:
                     "optional_args": '{"sections": ["命名"]}',
                 },
                 "enabled": True,
+                "name": "a",
             }
         ],
     }
