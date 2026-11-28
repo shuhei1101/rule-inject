@@ -1,0 +1,9 @@
+docs:
+  - page: docs/test-procedure/TP-122-1.yaml
+    new: false
+    change: TL-4（lint）の全件のコマンドを、.py を持つ反映作業のフォルダだけ mypy を実行する形にし、description の「作業のフォルダごとに mypy を実行する」を .py を持つフォルダに限る記述にする
+    status: todo
+scope_out:
+  - item: 設計書『テスト実行方法』の層ごとの実行場所と GitHub Actions への移行
+    reason: 同じ TP-122-1.yaml を変えるが、要望は lint の全件のコマンドの mypy のループの修正で、層ごとの実行場所は別の Issue の要望
+    plan: '#172'
