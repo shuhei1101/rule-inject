@@ -524,3 +524,25 @@ files:
     related:
       - to: MOD-122-51
         type: implements
+  - path: rule_inject/hooks/fill_config.py
+    name: ツールの引数への設定の記入
+    description: rule-inject の MCP のツールの呼び出し（PreToolUse）にセッションの設定を決める環境変数を入れ、ツールの引数への設定の記入を修正するときに参照する。
+    tags:
+      - topic:フック
+      - topic:設定ファイル
+      - topic:MCPサーバー
+      - tool:claude-code
+    related:
+      - to: MOD-122-63
+        type: implements
+      - to: IF-122-23
+        type: implements
+  - path: rule_inject/shared/prompts.py
+    name: フックのプロンプトファイルの読み込み
+    description: フックの注入文のプロンプトファイルを名前で読み込み、標準ライブラリだけで注入する言語の本文を描画し、フックの文面の読み込みを修正するときに参照する。
+    tags:
+      - topic:フック
+      - topic:プロンプト
+    related:
+      - to: MOD-207-1
+        type: implements

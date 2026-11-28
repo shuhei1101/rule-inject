@@ -705,3 +705,36 @@ files:
     related:
       - to: src/rule_inject/migrate/__main__.py
         type: tests
+  - path: integration/plugin/test_fill_config.py
+    name: ツールの引数への設定の記入フックの結合テスト
+    description: ツールの引数への設定の記入のフックを子プロセスとして起動し、標準入力の JSON から出力までを確認する結合テストで、ツールの引数への設定の記入のフックを修正したときに実行する。
+    tags:
+      - topic:フック
+      - topic:設定ファイル
+      - tool:claude-code
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/fill_config.py
+        type: tests
+      - to: IF-122-23
+        type: see_also
+  - path: unit/rule_inject/hooks/test_fill_config.py
+    name: ツールの引数への設定の記入の単体テスト
+    description: ツールの引数への設定の記入の振る舞いを確認する単体テストで、ツールの引数への設定の記入を修正したときに実行する。
+    tags:
+      - topic:フック
+      - topic:設定ファイル
+      - tool:pytest
+    related:
+      - to: src/rule_inject/hooks/fill_config.py
+        type: tests
+  - path: unit/rule_inject/shared/test_prompts.py
+    name: フックのプロンプトファイルの読み込みの単体テスト
+    description: フックのプロンプトファイルの読み込みと描画の振る舞いを確認する単体テストで、フックのプロンプトファイルの読み込みを修正したときに実行する。
+    tags:
+      - topic:フック
+      - topic:プロンプト
+      - tool:pytest
+    related:
+      - to: src/rule_inject/shared/prompts.py
+        type: tests

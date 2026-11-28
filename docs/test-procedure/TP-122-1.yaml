@@ -54,3 +54,17 @@ layers:
       ```bash
       (rc=0; uv run ruff check . || rc=1; uv run ruff format --check . || rc=1; uv run mypy . || rc=1; for d in docs/pr/*/反映作業/*/; do uv run mypy "$d"*.py || rc=1; done; uv run lint-imports || rc=1; (cd docs && npx -y github:shuhei1101/mdmark#develop check) || rc=1; (cd docs/guide && npx -y github:shuhei1101/mdmark#develop check) || rc=1; exit $rc)
       ```
+notes:
+  画面の起動: |-
+    開発ドキュメントサーバー（dev-docs）の画面を、作業ブランチの `project-index.yaml` で開く手順。
+    一時のフォルダに端末の設定を作り、一時の project-index と dev-docs を起動する。
+
+    | 対象 | 起動 |
+    | --- | --- |
+    | project-index | 端末の設定の `sources[]` に、配信元 `rule-inject`（`config` を作業ブランチの worktree の `project-index.yaml`・`storage.type` を `disk`）と、スキーマを参照する配信元 `knowledge` を並べる。`clone` は常駐の端末の設定と同じ project-index のクローンにする。`PROJECT_INDEX_CONFIG`・`PROJECT_INDEX_PORT`（空いているポート）・`PROJECT_INDEX_STATE_DIR`（一時のフォルダの中）を指定して、クローンの `.venv/bin/project-index serve` を起動する |
+    | dev-docs | 端末の設定を `version: "2"`・`clone` を常駐と同じ dev-docs のクローン・`project_index` を上の project-index の URL にする。`DEV_DOCS_CONFIG`・`DEV_DOCS_PORT`（空いているポート）・`DEV_DOCS_STATE_DIR`（一時のフォルダの中）・`KNOWLEDGE_ROOT` を指定して、クローンの `.venv/bin/python -m dev_docs serve` を起動する |
+
+    - project-index の標準エラーに `Uvicorn running on http://127.0.0.1:{ポート}` が出て、`http://127.0.0.1:{PROJECT_INDEX_PORT}/sources` の 2 つの配信元が `serving` になってから画面を開く
+    - 画面は `http://127.0.0.1:{DEV_DOCS_PORT}/rule-inject/{リポジトリの直下からのパス}` で開く
+    - 配信元の設定は起動時に参照するため、`project-index.yaml` を変えたら 2 つとも再起動する
+    - 止めるときは、起動した 2 つのプロセスの pid を確認してから止め、一時のフォルダを削除する
