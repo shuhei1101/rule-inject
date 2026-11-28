@@ -2,15 +2,21 @@ docs:
   - page: docs/test-procedure/TP-122-1.yaml
     new: false
     change: 補足に「画面の起動」を加え、作業ブランチの project-index.yaml を読む一時の project-index と dev-docs の起動と止め方を記載する（#224）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T10:04:33.501210+00:00'
   - page: src/files.yaml
     new: false
     change: rule_inject/hooks/fill_config.py（MOD-122-63）・rule_inject/shared/prompts.py（MOD-207-1）の行を、名前・概要文・タグ・関連 implements つきで加える（#225）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T10:04:33.501210+00:00'
   - page: tests/files.yaml
     new: false
     change: integration/plugin/test_fill_config.py・unit/rule_inject/hooks/test_fill_config.py・unit/rule_inject/shared/test_prompts.py の行を、名前・概要文・タグ・関連 tests つきで加える（#225）
-    status: todo
+    status: done
+    updated_by: planner
+    updated_at: '2026-11-28T10:04:33.501210+00:00'
 scope_out:
   - item: 配信元 rule-inject の検索の対象とメタデータ（documents[]）の見直し
     reason: '同じ管理用の YAML を変えるが、要望は #207 で追加した 5 ファイルの行の追加で、検索の対象の範囲とメタデータの付け方は別の Issue の要望'
