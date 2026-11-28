@@ -1,0 +1,192 @@
+$ TMPDIR=/tmp/ri-230-tmp uv run pytest tests/unit
+# TMPDIR は /tmp/pytest-of-shuhei2441 が別のユーザーの所有で pytest の一時フォルダを作れないため、実行環境の一時フォルダだけを替えた（コマンドの引数・オプションは変えていない）
+# 実装の前から pass したテスト: test_write_entry_when_name_added。src/rule_inject/features/index/edit/service.py の _insert_position（173-174 行目）が ENTRY_KEY_ORDER に無いキーを末尾に記載する（5d7df8a で入った振る舞い）。check_change は単体テストでは Mock のため、name を読めないフックの読み取りの影響を受けない
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/shuhei2441/repo/rule-inject/.claude/worktrees/design-index-rule-index-entry-name
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 616 items
+
+tests/unit/hooks/test_run.py ....                                        [  0%]
+tests/unit/rule_inject/features/command/test_service.py ................ [  3%]
+................                                                         [  5%]
+tests/unit/rule_inject/features/document/test_service.py ..........      [  7%]
+tests/unit/rule_inject/features/guidance/test_service.py ............... [  9%]
+                                                                         [  9%]
+tests/unit/rule_inject/features/index/check/test_cli.py ....             [ 10%]
+tests/unit/rule_inject/features/index/check/test_scan.py .......         [ 11%]
+tests/unit/rule_inject/features/index/check/test_service.py F........... [ 13%]
+......                                                                   [ 14%]
+tests/unit/rule_inject/features/index/check/test_tags.py ....            [ 15%]
+tests/unit/rule_inject/features/index/edit/test_service.py ............. [ 17%]
+..................                                                       [ 20%]
+tests/unit/rule_inject/features/index/edit/test_types.py .               [ 20%]
+tests/unit/rule_inject/features/index/edit/test_yaml.py ...              [ 20%]
+tests/unit/rule_inject/features/index/test_service.py .................. [ 23%]
+...............................................................          [ 34%]
+tests/unit/rule_inject/features/index/test_yaml.py ....................F [ 37%]
+F                                                                        [ 37%]
+tests/unit/rule_inject/features/migrate/migrations/test_v0_2_3.py .....  [ 38%]
+tests/unit/rule_inject/features/migrate/test_service.py ........         [ 39%]
+tests/unit/rule_inject/features/record/test_service.py ................. [ 42%]
+.............................                                            [ 47%]
+tests/unit/rule_inject/features/server_start/test_service.py .........   [ 48%]
+tests/unit/rule_inject/hooks/test_discard_read.py ....                   [ 49%]
+tests/unit/rule_inject/hooks/test_fill_config.py .............           [ 51%]
+tests/unit/rule_inject/hooks/test_record_read.py .................       [ 54%]
+tests/unit/rule_inject/hooks/test_rule_guide.py .....................    [ 57%]
+tests/unit/rule_inject/hooks/test_runner.py .......                      [ 58%]
+tests/unit/rule_inject/hooks/test_search_guide.py ........               [ 60%]
+tests/unit/rule_inject/hooks/test_start_server.py ........               [ 61%]
+tests/unit/rule_inject/hooks/test_sweep_read.py ........                 [ 62%]
+tests/unit/rule_inject/hooks/test_work_rules.py .....                    [ 63%]
+tests/unit/rule_inject/migrate/test_main.py ...                          [ 63%]
+tests/unit/rule_inject/server/test_admin_tools.py .........              [ 65%]
+tests/unit/rule_inject/server/test_app.py .........                      [ 66%]
+tests/unit/rule_inject/server/test_check_tools.py ...........            [ 68%]
+tests/unit/rule_inject/server/test_clone.py ..........                   [ 70%]
+tests/unit/rule_inject/server/test_control.py .............              [ 72%]
+tests/unit/rule_inject/server/test_dev_docs.py ........                  [ 73%]
+tests/unit/rule_inject/server/test_format.py ....                        [ 74%]
+tests/unit/rule_inject/server/test_main.py .....                         [ 75%]
+tests/unit/rule_inject/server/test_prompts.py ........                   [ 76%]
+tests/unit/rule_inject/server/test_record_tools.py ......                [ 77%]
+tests/unit/rule_inject/server/test_tools.py .F............               [ 79%]
+tests/unit/rule_inject/shared/test_logger.py ..............              [ 81%]
+tests/unit/rule_inject/shared/test_paths.py ........                     [ 83%]
+tests/unit/rule_inject/shared/test_prompts.py .........                  [ 84%]
+tests/unit/rule_inject/shared/test_settings.py ......................... [ 88%]
+..........................                                               [ 93%]
+tests/unit/rule_inject/shared/test_settings_yaml.py ..........           [ 94%]
+tests/unit/rule_inject/shared/test_variables.py .......                  [ 95%]
+tests/unit/rule_inject/shared/test_yaml_lines.py ....................... [ 99%]
+...                                                                      [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_load_validator ______________________________
+
+    def test_load_validator() -> None:
+        """同梱の Schema が Schema として正しく、書式どおりの索引を受け付ける（正常系）。"""
+        from rule_inject.features.index.check import load_validator
+    
+        # 準備
+        document: dict[str, Any] = {
+            "default_on": ["write"],
+            "rules": [
+                {
+                    "rule": "a.md",
+                    "paths": ["**/*.py"],
+                    "exclude": ["**/tests/**"],
+                    "tools": ["mcp__*__create_*"],
+                    "args": {"kind": ["rule"]},
+                    "on": ["read", "write"],
+                    "read_by": [{"tools": ["mcp__docs__get_doc"], "args": {"path": ["*.md"]}}],
+                    "read_tool": {
+                        "tool": "mcp__docs__search_docs",
+                        "args": '{"filter": {"field": "id", "op": "eq", "values": ["a"]}}',
+                        "optional_args": '{"sections": ["命名"]}',
+                    },
+                    "enabled": True,
+                    "name": "a",
+                }
+            ],
+        }
+        # 実行
+        validator = load_validator()
+        # 検証
+>       assert list(validator.iter_errors(document)) == []
+E       assert [<ValidationE...unexpected)">] == []
+E         
+E         Left contains one more item: <ValidationError: "Additional properties are not allowed ('name' was unexpected)">
+E         Use -v to get more diff
+
+tests/unit/rule_inject/features/index/check/test_service.py:51: AssertionError
+__________________________ test_parse_index_when_name __________________________
+
+    def test_parse_index_when_name() -> None:
+        """`name` を読み込む（正常系）。"""
+        # 準備
+        text = (
+            "rules:\n"
+            "  - rule: ./a.md\n"
+            "    name: python-core-naming\n"
+            "  - rule: ./b.md\n"
+        )
+        # 実行
+>       _, entries = parse_index(text)
+                     ^^^^^^^^^^^^^^^^^
+
+tests/unit/rule_inject/features/index/test_yaml.py:258: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/rule_inject/features/index/_yaml.py:254: in parse_index
+    entry, position = _read_entry(lines, position)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+lines = [Line(number=1, indent=0, text='rules:'), Line(number=2, indent=2, text='- rule: ./a.md'), Line(number=3, indent=4, text='name: python-core-naming'), Line(number=4, indent=2, text='- rule: ./b.md')]
+position = 2
+
+    def _read_entry(lines: list[Line], position: int) -> tuple[dict[str, Value], int]:
+        """`- ` で始まるエントリ 1 つを読み、次に読む行の位置を返却する。"""
+        first = lines[position]
+        after_mark = first.text[len(LIST_ITEM_MARK) :]
+        content = after_mark.lstrip(" ")
+        # `- ` の後ろのキーの桁に、続くキーがそろう
+        key_indent = first.indent + len(LIST_ITEM_MARK) + len(after_mark) - len(content)
+        current = Line(number=first.number, indent=key_indent, text=content)
+        entry: dict[str, Value] = {}
+        while True:
+            key, rest = split_key(current)
+            if key not in ENTRY_KEYS:
+>               raise yaml_error(current.number, f"許さないキーです: {key}")
+E               ValueError: 3行目: 許さないキーです: name
+
+src/rule_inject/features/index/_yaml.py:191: ValueError
+_______________________ test_parse_index_when_name_empty _______________________
+
+    def test_parse_index_when_name_empty() -> None:
+        """空の `name` を拒む（異常系）。"""
+        # 準備
+        text = 'rules:\n  - rule: ./a.md\n    name: ""\n'
+        # 実行・検証
+>       with pytest.raises(ValueError, match=r"^3行目: name は空でない文字列で記載してください$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       - 3行目: 許さないキーです: name
+E       + 3行目: name は空でない文字列で記載してください
+
+tests/unit/rule_inject/features/index/test_yaml.py:271: AssertionError
+_____________________ test_list_rules_when_entry_has_name ______________________
+
+project_dir = PosixPath('/tmp/ri-230-tmp/pytest-of-shuhei2441/pytest-2/test_list_rules_when_entry_has0/project')
+make_index = <function make_index.<locals>._make at 0x78b79efa6480>
+indexes_env = <function indexes_env.<locals>._make at 0x78b79efa6fc0>
+
+    def test_list_rules_when_entry_has_name(
+        project_dir: Path,
+        make_index: Callable[..., Path],
+        indexes_env: Callable[..., dict[str, str]],
+    ) -> None:
+        """索引の `name` を `RuleEntry` の `name` に入れる（正常系）。"""
+        from rule_inject.server.tools import list_rules
+    
+        # 準備
+        index = make_index("rules:\n  - rule: /r/a.md\n    name: python-core-naming\n  - rule: /r/b.md\n")
+        env = indexes_env(index)
+        # 実行
+        result = list_rules(project_dir=str(project_dir), limit=100, cursor=None, format="json", env=env)
+        # 検証
+        entries = result.structured_content["entries"]
+>       assert entries[0]["name"] == "python-core-naming"
+               ^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/unit/rule_inject/server/test_tools.py:72: IndexError
+=========================== short test summary info ============================
+FAILED tests/unit/rule_inject/features/index/check/test_service.py::test_load_validator
+FAILED tests/unit/rule_inject/features/index/test_yaml.py::test_parse_index_when_name
+FAILED tests/unit/rule_inject/features/index/test_yaml.py::test_parse_index_when_name_empty
+FAILED tests/unit/rule_inject/server/test_tools.py::test_list_rules_when_entry_has_name
+======================== 4 failed, 612 passed in 5.31s =========================
